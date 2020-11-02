@@ -1,4 +1,60 @@
 /**
+ * Calculate "stale datum" rows for a given datum primary key that has changed.
+ *
+ * This function will return 1-3 rows representing stale rows that must be re-calculated.
+ * It is designed so that the results can be inserted into `solardatm.agg_stale_datm`, like:
+ *
+ * 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+ * 	SELECT stream_id, ts_start, 'h' AS agg_kind
+ * 	FROM solardatm.calculate_stale_datm('11111'::uuid,'2020-10-07 08:00:40+13'::timestamptz)
+ * 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+ *
+ * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
+ * @param ts_in				the date of the datum that has changed
+ * @param tolerance 		the maximum time to look forward/backward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.calculate_stale_datm(
+		sid 		UUID,
+		ts_in 		TIMESTAMP WITH TIME ZONE,
+		tolerance 	INTERVAL DEFAULT interval '3 months'
+	) RETURNS TABLE (
+		stream_id	UUID,
+		ts_start 	TIMESTAMP WITH TIME ZONE
+	) LANGUAGE SQL STABLE ROWS 3 AS
+$$
+	WITH b AS (
+		-- curr hour
+		(
+			SELECT date_trunc('hour', ts_in) AS ts
+		)
+		UNION ALL
+		-- prev hour
+		(
+			SELECT date_trunc('hour', d.ts) AS ts
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts < ts_in
+				AND d.ts > ts_in - tolerance
+			ORDER BY d.stream_id, d.ts DESC
+			LIMIT 1
+		)
+		UNION ALL
+		-- next hour
+		(
+			SELECT date_trunc('hour', d.ts) AS ts
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts > ts_in
+				AND d.ts < ts_in + tolerance
+			ORDER BY d.stream_id, d.ts
+			LIMIT 1
+		)
+	)
+	SELECT DISTINCT sid, ts FROM b
+$$;
+
+
+/**
  * Store JSON datum values into the `solardatm.da_datm` table.
  *
  * This function accepts the "current" property name arrays as an optimisation when migrating
@@ -151,7 +207,7 @@ DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
 	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
 	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatum.datum_prop_count(jdata_json);
+	jdata_prop_count 	INTEGER 					:= solardatm.json_datum_prop_count(jdata_json);
 	ts_recv_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_recv);
 	is_insert 			BOOLEAN 					:= false;
 
@@ -184,24 +240,21 @@ BEGIN
 					p_i, p_a, p_s)
 	INTO p_i, p_a, p_s, is_insert;
 
-	/*
-	INSERT INTO solaragg.aud_datum_hourly (
-		ts_start, node_id, source_id, datum_count, prop_count)
-	VALUES (ts_post_hour, node, src, 1, jdata_prop_count)
-	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+	INSERT INTO solardatm.aud_datm_hourly (stream_id, ts_start, datum_count, prop_count)
+	VALUES (sid, ts_recv_hour, 1, jdata_prop_count)
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET datum_count = aud_datm_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
+		prop_count = aud_datm_hourly.prop_count + EXCLUDED.prop_count;
 
 	IF track THEN
-		INSERT INTO solaragg.agg_stale_datum (agg_kind, node_id, ts_start, source_id)
-		SELECT 'h' AS agg_kind, node_id, ts_start, source_id
-		FROM solardatum.calculate_stale_datum(node, src, cdate)
-		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calculate_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 
-		IF is_insert THEN
-			PERFORM solardatum.update_datum_range_dates(node, src, cdate);
-		END IF;
+		--IF is_insert THEN
+		--	PERFORM solardatm.update_datm_range_dates(sid, ddate);
+		--END IF;
 	END IF;
-	*/
 END;
 $$;

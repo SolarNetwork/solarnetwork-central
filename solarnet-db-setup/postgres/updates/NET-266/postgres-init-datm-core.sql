@@ -58,6 +58,12 @@ CREATE TABLE solardatm.da_datm_aux (
 	CONSTRAINT da_datm_aux_pkey PRIMARY KEY (stream_id, ts, atype)
 );
 
+/*
+	================================================================================================
+	Aggregate datm tables
+	================================================================================================
+*/
+
 -- agg hourly datum table
 CREATE TABLE solardatm.agg_datm_hourly (
 	stream_id	UUID NOT NULL,
@@ -97,165 +103,93 @@ CREATE TABLE solardatm.agg_datm_monthly (
 	CONSTRAINT agg_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
-/**
- * Add or update a datum record. The data is stored in the `solardatm.da_datm` table.
- *
- * @param ddate the datum timestamp
- * @param node 	the node ID
- * @param src 	the source ID
- * @param rdate the date the datum was received by SolarNetwork
- * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
- * @param track if `TRUE` then also insert results of `solardatum.calculate_stale_datum()`
- *                     into the `solaragg.agg_stale_datum` table and call
- *                     `solardatum.update_datum_range_dates()` to keep the
- *                     `solardatum.da_datum_range` table up-to-date
- */
-CREATE OR REPLACE FUNCTION solardatm.store_datum(
-	ddate 			TIMESTAMP WITH TIME ZONE,
-	node 			BIGINT,
-	src 			TEXT,
-	rdate 			TIMESTAMP WITH TIME ZONE,
-	jdata 			TEXT,
-	track 			BOOLEAN DEFAULT TRUE)
-  RETURNS void LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
-	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
-	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatum.datum_prop_count(jdata_json);
-	ts_recv_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_recv);
-	is_insert 			BOOLEAN 					:= false;
+-- "stale" aggregate queue table
+CREATE TABLE solardatm.agg_stale_datm (
+	stream_id	UUID NOT NULL,
+	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
+	agg_kind 	CHAR(1) NOT NULL,
+	created 	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT agg_stale_datm_pkey PRIMARY KEY (agg_kind, ts_start, stream_id)
+);
 
-	sid 	UUID;
+/*
+	================================================================================================
+	Audit statistics tables (to support fast queries for counts of data)
+	================================================================================================
+*/
 
-	-- property name arrays
-	p_i		TEXT[];
-	p_a		TEXT[];
-	p_s		TEXT[];
-BEGIN
-	-- get, or create, stream ID
-	INSERT INTO solardatm.da_datm_meta (node_id, source_id)
-	VALUES (node, src)
-	ON CONFLICT (node_id, source_id) DO NOTHING
-	RETURNING stream_id, names_i, names_a, names_s
-	INTO sid, p_i, p_a, p_s;
+-- audit hourly data
+CREATE TABLE solardatm.aud_datm_hourly (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	prop_count 				INTEGER NOT NULL DEFAULT 0,
+	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
+	CONSTRAINT aud_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
+);
 
-	IF NOT FOUND THEN
-		SELECT stream_id, names_i, names_a, names_s
-		FROM solardatm.da_datm_meta
-		WHERE node_id = node AND source_id = src
-		INTO sid, p_i, p_a, p_s;
-	END IF;
+-- audit daily data
+CREATE TABLE solardatm.aud_datum_daily (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+    prop_count 				BIGINT NOT NULL DEFAULT 0,
+    datum_q_count 			BIGINT NOT NULL DEFAULT 0,
+	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
+	datum_daily_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
+	processed_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	processed_hourly_count 	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	processed_io_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+);
 
-	SELECT * FROM solardatm.migrate_datum_json(sid, ts_crea, src, ts_recv,
-					jdata_json->'i',
-					jdata_json->'a',
-					jdata_json->'s',
-					solarcommon.json_array_to_text_array(jdata_json->'t'),
-					p_i, p_a, p_s)
-	INTO p_i, p_a, p_s, is_insert;
+-- audit monthly data
+CREATE TABLE solardatm.aud_datum_monthly (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+    prop_count 				BIGINT NOT NULL DEFAULT 0,
+    datum_q_count 			BIGINT NOT NULL DEFAULT 0,
+	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
+	datum_daily_count 		SMALLINT NOT NULL DEFAULT 0,
+	datum_monthly_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
+	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
+);
 
-	/*
-	INSERT INTO solaragg.aud_datum_hourly (
-		ts_start, node_id, source_id, datum_count, prop_count)
-	VALUES (ts_post_hour, node, src, 1, jdata_prop_count)
-	ON CONFLICT (node_id, ts_start, source_id) DO UPDATE
-	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+-- "stale" audit queue table
+CREATE TABLE solardatm.aud_datm_daily_stale (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	aud_kind 				CHAR(1) NOT NULL,
+	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_datm_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
+);
 
-	IF track THEN
-		INSERT INTO solaragg.agg_stale_datum (agg_kind, node_id, ts_start, source_id)
-		SELECT 'h' AS agg_kind, node_id, ts_start, source_id
-		FROM solardatum.calculate_stale_datum(node, src, cdate)
-		ON CONFLICT (agg_kind, node_id, ts_start, source_id) DO NOTHING;
-
-		IF is_insert THEN
-			PERFORM solardatum.update_datum_range_dates(node, src, cdate);
-		END IF;
-	END IF;
-	*/
-END;
-$$;
-
+/*
+	================================================================================================
+	General datm supporting functions
+	================================================================================================
+*/
 
 /**
- * Add or update a location datum record. The data is stored in the `solardatm.da_datm` table.
+ * Count the properties in a datum JSON object.
  *
- * @param ddate the datum timestamp
- * @param loc 	the location ID
- * @param src 	the source ID
- * @param rdate the date the datum was received by SolarNetwork
- * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
- * @param track if `TRUE` then also insert results of `solardatum.calculate_stale_datum()`
- *                     into the `solaragg.agg_stale_datum` table and call
- *                     `solardatum.update_datum_range_dates()` to keep the
- *                     `solardatum.da_datum_range` table up-to-date
+ * @param jdata the datum JSON, e.g. `{"i":{"a":1},"a":{"b":2},"s":{"c":3},"t":["d"]}`
+ *
+ * @returns the sum of the count of `i`, `a`, `s` object keys and the number of elements in the
+ *          `t` array
  */
-CREATE OR REPLACE FUNCTION solardatm.store_loc_datum(
-	ddate 			TIMESTAMP WITH TIME ZONE,
-	loc 			BIGINT,
-	src 			TEXT,
-	rdate 			TIMESTAMP WITH TIME ZONE,
-	jdata 			TEXT,
-	track 			BOOLEAN DEFAULT TRUE)
-  RETURNS void LANGUAGE plpgsql VOLATILE AS
+CREATE OR REPLACE FUNCTION solardatm.json_datum_prop_count(jdata jsonb)
+  RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
 $$
-DECLARE
-	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
-	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
-	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatum.datum_prop_count(jdata_json);
-	ts_recv_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_recv);
-	is_insert 			BOOLEAN 					:= false;
-
-	sid 	UUID;
-
-	-- property name arrays
-	p_i		TEXT[];
-	p_a		TEXT[];
-	p_s		TEXT[];
-BEGIN
-	-- get, or create, stream ID
-	INSERT INTO solardatm.da_loc_datm_meta (loc_id, source_id)
-	VALUES (loc, src)
-	ON CONFLICT (loc_id, source_id) DO NOTHING
-	RETURNING stream_id, names_i, names_a, names_s
-	INTO sid, p_i, p_a, p_s;
-
-	IF NOT FOUND THEN
-		SELECT stream_id, names_i, names_a, names_s
-		FROM solardatm.da_loc_datm_meta
-		WHERE loc_id = loc AND source_id = src
-		INTO sid, p_i, p_a, p_s;
-	END IF;
-
-	SELECT * FROM solardatm.migrate_loc_datum_json(sid, ts_crea, src, ts_recv,
-					jdata_json->'i',
-					jdata_json->'a',
-					jdata_json->'s',
-					solarcommon.json_array_to_text_array(jdata_json->'t'),
-					p_i, p_a, p_s)
-	INTO p_i, p_a, p_s, is_insert;
-
-	/*
-	INSERT INTO solaragg.aud_datum_hourly (
-		ts_start, loc_id, source_id, datum_count, prop_count)
-	VALUES (ts_post_hour, loc, src, 1, jdata_prop_count)
-	ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
-	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
-
-	IF track THEN
-		INSERT INTO solaragg.agg_stale_datum (agg_kind, loc_id, ts_start, source_id)
-		SELECT 'h' AS agg_kind, loc_id, ts_start, source_id
-		FROM solardatum.calculate_stale_datum(loc, src, cdate)
-		ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
-
-		IF is_insert THEN
-			PERFORM solardatum.update_datum_range_dates(loc, src, cdate);
-		END IF;
-	END IF;
-	*/
-END;
+	SELECT count(*)::INTEGER FROM (
+		SELECT jsonb_object_keys(jdata->'i')
+		UNION ALL
+		SELECT jsonb_object_keys(jdata->'a')
+		UNION ALL
+		SELECT jsonb_object_keys(jdata->'s')
+		UNION ALL
+		SELECT unnest(solarcommon.json_array_to_text_array(jdata->'t'))
+	) p
 $$;

@@ -152,7 +152,7 @@ DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
 	ts_recv 			TIMESTAMP WITH TIME ZONE	:= COALESCE(rdate, now());
 	jdata_json 			JSONB 						:= jdata::jsonb;
-	jdata_prop_count 	INTEGER 					:= solardatum.datum_prop_count(jdata_json);
+	jdata_prop_count 	INTEGER 					:= solardatm.json_datum_prop_count(jdata_json);
 	ts_recv_hour 		TIMESTAMP WITH TIME ZONE 	:= date_trunc('hour', ts_recv);
 	is_insert 			BOOLEAN 					:= false;
 
@@ -185,24 +185,17 @@ BEGIN
 					p_i, p_a, p_s)
 	INTO p_i, p_a, p_s, is_insert;
 
-	/*
-	INSERT INTO solaragg.aud_datum_hourly (
-		ts_start, loc_id, source_id, datum_count, prop_count)
-	VALUES (ts_post_hour, loc, src, 1, jdata_prop_count)
-	ON CONFLICT (loc_id, ts_start, source_id) DO UPDATE
-	SET datum_count = aud_datum_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datum_hourly.prop_count + EXCLUDED.prop_count;
+	INSERT INTO solardatm.aud_datm_hourly (stream_id, ts_start, datum_count, prop_count)
+	VALUES (sid, ts_recv_hour, 1, jdata_prop_count)
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET datum_count = aud_datm_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
+		prop_count = aud_datm_hourly.prop_count + EXCLUDED.prop_count;
 
 	IF track THEN
-		INSERT INTO solaragg.agg_stale_datum (agg_kind, loc_id, ts_start, source_id)
-		SELECT 'h' AS agg_kind, loc_id, ts_start, source_id
-		FROM solardatum.calculate_stale_datum(loc, src, cdate)
-		ON CONFLICT (agg_kind, loc_id, ts_start, source_id) DO NOTHING;
-
-		IF is_insert THEN
-			PERFORM solardatum.update_datum_range_dates(loc, src, cdate);
-		END IF;
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calculate_stale_datm(sid, ddate)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 	END IF;
-	*/
 END;
 $$;

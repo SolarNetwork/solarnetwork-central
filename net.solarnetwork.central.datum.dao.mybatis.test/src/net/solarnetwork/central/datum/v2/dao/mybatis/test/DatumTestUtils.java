@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.sql.Array;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -50,11 +51,12 @@ import org.hamcrest.Matchers;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.util.JsonUtils;
@@ -184,7 +186,7 @@ public final class DatumTestUtils {
 	 * @return the resulting stream metadata
 	 */
 	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStream(Logger log,
-			JdbcTemplate jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
+			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
 		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
@@ -306,6 +308,83 @@ public final class DatumTestUtils {
 			}
 		});
 		return result;
+	}
+
+	/**
+	 * Ingest a set of datum into the {@literal da_datm} table, using the
+	 * {@code solardatm.store_datum()} stored procedure that includes side
+	 * effects like "stale" and audit record management.
+	 * 
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param datums
+	 *        the datum to insert
+	 * @return the resulting stream metadata
+	 */
+	public static Map<NodeSourcePK, NodeDatumStreamMetadata> ingestDatumStream(Logger log,
+			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
+		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement datumStmt = con
+						.prepareCall("{call solardatm.store_datum(?,?,?,?,?)}")) {
+					final Timestamp now = Timestamp.from(Instant.now());
+					for ( GeneralNodeDatum d : datums ) {
+						final GeneralDatumSamples s = d.getSamples();
+						if ( s == null || s.isEmpty() ) {
+							continue;
+						}
+						if ( log != null ) {
+							log.debug("Inserting Datum {}", d);
+						}
+
+						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
+						result.computeIfAbsent(nspk, k -> {
+							return createMetadata(datums, k);
+						});
+						datumStmt.setTimestamp(1,
+								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
+						datumStmt.setObject(2, nspk.getNodeId());
+						datumStmt.setString(3, nspk.getSourceId());
+						datumStmt.setTimestamp(4, now);
+
+						String json = JsonUtils.getJSONString(s, null);
+						datumStmt.setString(5, json);
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+		return result;
+	}
+
+	/**
+	 * Get the available stale aggregate datum records.
+	 * 
+	 * @return the results, never {@literal null}
+	 */
+	public static List<Map<String, Object>> staleAggregateDatumStreams(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solardatm.agg_stale_datm ORDER BY agg_kind, ts_start, stream_id");
+	}
+
+	/**
+	 * Get the available stale aggregate datum records.
+	 * 
+	 * @param type
+	 *        the type of stale aggregate records to get
+	 * @return the results, never {@literal null}
+	 */
+	public static List<Map<String, Object>> staleAggregateDatumStreams(JdbcOperations jdbcTemplate,
+			Aggregation type) {
+		return jdbcTemplate.queryForList(
+				"SELECT * FROM solardatm.agg_stale_datm WHERE agg_kind = ? ORDER BY ts_start, stream_id",
+				type.getKey());
 	}
 
 }
