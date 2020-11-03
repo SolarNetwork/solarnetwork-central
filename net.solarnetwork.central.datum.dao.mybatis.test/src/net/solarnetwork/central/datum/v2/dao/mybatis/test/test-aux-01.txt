@@ -1,2 +1,0 @@
-# single datum auxiliary Reset record
-{"nodeId":1,"sourceId":"a","type":"Reset","created":"2020-06-01T12:00:00Z","final":{"a":{"w":100}},"start":{"a":{"w":10}}}
