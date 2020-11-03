@@ -438,4 +438,292 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 				});
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_oneResetExactlyAtStartWithoutLeading() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-18.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("30.5"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_oneResetExactlyAtEndWithoutTrailing() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-19.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("30.5"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_multiResetsWithin() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-20.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("36"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "36", "100", "210" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_adjacentResetsWithin() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-21.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("36"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "36", "100", "220" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetsExactlyAtStartAndEnd() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-22.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("31"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetsExactlyAtStartAndEndWithoutLeadingOrTrailing() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-23.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("31"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_onlyOneReset() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-24.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								nullValue());
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("0"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								nullValue());
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "0", "115", "5" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_twoResetInMiddle() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-25.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								nullValue());
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("5"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								nullValue());
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "5", "115", "200" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetJustBeforeStart() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-26.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("30"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetJustAfterEnd() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-27.txt", start, start.plusHours(1),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("30.000004167"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+					}
+				});
+	}
+
 }
