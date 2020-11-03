@@ -54,6 +54,10 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
@@ -149,6 +153,23 @@ public final class DatumTestUtils {
 	 */
 	public static NodeDatumStreamMetadata createMetadata(Iterable<GeneralNodeDatum> datums,
 			NodeSourcePK nspk) {
+		return createMetadata(UUID.randomUUID(), datums, nspk);
+	}
+
+	/**
+	 * Create a {@link NodeDatumStreamMetadata} out of a collection of
+	 * {@link GeneralNodeDatum} instances.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param datums
+	 *        the datums
+	 * @param nspk
+	 *        the specific node+source to create the metadata for
+	 * @return the metadata
+	 */
+	public static NodeDatumStreamMetadata createMetadata(UUID streamId,
+			Iterable<GeneralNodeDatum> datums, NodeSourcePK nspk) {
 		Set<String> iNames = new LinkedHashSet<>(4);
 		Set<String> aNames = new LinkedHashSet<>(4);
 		Set<String> sNames = new LinkedHashSet<>(4);
@@ -168,7 +189,7 @@ public final class DatumTestUtils {
 				sNames.addAll(s.getStatus().keySet());
 			}
 		}
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nspk.getNodeId(), nspk.getSourceId(),
+		return new BasicNodeDatumStreamMetadata(streamId, nspk.getNodeId(), nspk.getSourceId(),
 				iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
 				aNames.isEmpty() ? null : aNames.toArray(new String[aNames.size()]),
 				sNames.isEmpty() ? null : sNames.toArray(new String[sNames.size()]));
@@ -331,7 +352,8 @@ public final class DatumTestUtils {
 			@Override
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
 				try (CallableStatement datumStmt = con
-						.prepareCall("{call solardatm.store_datum(?,?,?,?,?)}")) {
+						.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
+					datumStmt.registerOutParameter(1, Types.VARCHAR);
 					final Timestamp now = Timestamp.from(Instant.now());
 					for ( GeneralNodeDatum d : datums ) {
 						final GeneralDatumSamples s = d.getSamples();
@@ -343,18 +365,20 @@ public final class DatumTestUtils {
 						}
 
 						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
-						result.computeIfAbsent(nspk, k -> {
-							return createMetadata(datums, k);
-						});
-						datumStmt.setTimestamp(1,
+						datumStmt.setTimestamp(2,
 								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
-						datumStmt.setObject(2, nspk.getNodeId());
-						datumStmt.setString(3, nspk.getSourceId());
-						datumStmt.setTimestamp(4, now);
+						datumStmt.setObject(3, nspk.getNodeId());
+						datumStmt.setString(4, nspk.getSourceId());
+						datumStmt.setTimestamp(5, now);
 
 						String json = JsonUtils.getJSONString(s, null);
-						datumStmt.setString(5, json);
+						datumStmt.setString(6, json);
 						datumStmt.execute();
+
+						UUID streamId = UUID.fromString(datumStmt.getString(1));
+						result.computeIfAbsent(nspk, k -> {
+							return createMetadata(streamId, datums, k);
+						});
 					}
 				}
 				return null;
@@ -368,9 +392,11 @@ public final class DatumTestUtils {
 	 * 
 	 * @return the results, never {@literal null}
 	 */
-	public static List<Map<String, Object>> staleAggregateDatumStreams(JdbcOperations jdbcTemplate) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solardatm.agg_stale_datm ORDER BY agg_kind, ts_start, stream_id");
+	public static List<StaleAggregateDatumEntity> staleAggregateDatumStreams(
+			JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm ORDER BY agg_kind, ts_start, stream_id",
+				StaleAggregateDatumEntityRowMapper.INSTANCE);
 	}
 
 	/**
@@ -380,11 +406,22 @@ public final class DatumTestUtils {
 	 *        the type of stale aggregate records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<Map<String, Object>> staleAggregateDatumStreams(JdbcOperations jdbcTemplate,
+	public static List<StaleAggregateDatumEntity> staleAggregateDatumStreams(JdbcOperations jdbcTemplate,
 			Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solardatm.agg_stale_datm WHERE agg_kind = ? ORDER BY ts_start, stream_id",
-				type.getKey());
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm WHERE agg_kind = ? ORDER BY ts_start, stream_id",
+				StaleAggregateDatumEntityRowMapper.INSTANCE, type.getKey());
+	}
+
+	/**
+	 * Get the available stale aggregate datum records.
+	 * 
+	 * @return the results, never {@literal null}
+	 */
+	public static List<AuditDatumHourlyEntity> auditDatumHourly(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts_start, datum_count, prop_count, datum_q_count FROM solardatm.aud_datm_hourly ORDER BY stream_id, ts_start",
+				AuditDatumHourlyEntityRowMapper.INSTANCE);
 	}
 
 }
