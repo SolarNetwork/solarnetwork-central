@@ -46,10 +46,12 @@ CREATE TABLE solardatm.da_datm (
 CREATE UNIQUE INDEX IF NOT EXISTS da_datm_unq_reverse ON solardatm.da_datm (stream_id, ts DESC);
 
 -- datum aux table
+CREATE TYPE solardatm.da_datm_aux_type AS ENUM ('Reset');
+
 CREATE TABLE solardatm.da_datm_aux (
 	stream_id	UUID NOT NULL,
 	ts			TIMESTAMP WITH TIME ZONE NOT NULL,
-	atype 		solardatum.da_datum_aux_type NOT NULL DEFAULT 'Reset'::solardatum.da_datum_aux_type,
+	atype 		solardatm.da_datm_aux_type NOT NULL DEFAULT 'Reset'::solardatm.da_datm_aux_type,
 	updated 	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	notes 		TEXT,
 	jdata_af 	JSONB,

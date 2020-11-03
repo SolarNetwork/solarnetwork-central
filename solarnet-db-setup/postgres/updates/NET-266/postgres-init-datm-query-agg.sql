@@ -151,7 +151,7 @@ $$
 			, unnest(ARRAY[1::SMALLINT, 2::SMALLINT]) AS rr
 		FROM solardatm.da_datm_aux aux
 		INNER JOIN solardatm.da_datm_meta m ON m.stream_id = aux.stream_id
-		WHERE aux.atype = 'Reset'::solardatum.da_datum_aux_type
+		WHERE aux.atype = 'Reset'::solardatm.da_datm_aux_type
 			AND aux.stream_id = sid
 			AND aux.ts >= start_ts - tolerance
 			AND aux.ts <= end_ts + tolerance
@@ -268,13 +268,29 @@ $$
 			) AS stat_i
 		FROM di d
 	)
-	-- calculate clock accumulation for data_a values per property
-	, wa AS (
+	-- eliminate excess leading accumulation due to reset records
+	, wa_intermediate AS (
 		SELECT
 			  p.idx AS idx
 			, p.val AS val
 			, d.ts
 			, d.rtype
+			, CASE
+				WHEN d.ts < start_ts AND lead(d.ts) OVER slot <= start_ts THEN 0
+				ELSE 1
+				END AS inc
+		FROM d
+		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+	)
+	-- calculate clock accumulation for data_a values per property
+	, wa AS (
+		SELECT
+			  p.idx AS idx
+			, p.val AS val
+			, p.ts
+			, p.rtype
 			, sum(CASE rtype WHEN 2 THEN 1 ELSE 0 END) OVER slice AS slice
 			, CASE rtype
 				WHEN 2 THEN 0
@@ -286,30 +302,29 @@ $$
 				ELSE NULL
 				END AS rend
 			, CASE
-				WHEN d.ts < start_ts
+				WHEN p.ts < start_ts
 					THEN 0
 
-				WHEN lag(d.ts) OVER slot + tolerance_clock < start_ts
+				WHEN lag(p.ts) OVER slot + tolerance_clock < start_ts
 					THEN 0
 
-				WHEN lag(d.ts) OVER slot < start_ts
-					THEN  EXTRACT(epoch FROM (d.ts - start_ts)) / EXTRACT(epoch FROM (d.ts - lag(d.ts) OVER slot))
+				WHEN lag(p.ts) OVER slot < start_ts
+					THEN  EXTRACT(epoch FROM (p.ts - start_ts)) / EXTRACT(epoch FROM (p.ts - lag(p.ts) OVER slot))
 
-				WHEN d.ts > end_ts + tolerance_clock
+				WHEN p.ts > end_ts + tolerance_clock
 					THEN 0
 
-				WHEN d.ts > end_ts AND lag(d.ts) OVER slot < end_ts
-					THEN EXTRACT(epoch FROM (end_ts - lag(d.ts) OVER slot)) / EXTRACT(epoch FROM (d.ts - lag(d.ts) OVER slot))
+				WHEN p.ts > end_ts AND lag(p.ts) OVER slot < end_ts
+					THEN EXTRACT(epoch FROM (end_ts - lag(p.ts) OVER slot)) / EXTRACT(epoch FROM (p.ts - lag(p.ts) OVER slot))
 
 				ELSE
 					1
 				END AS portion
-		FROM d
-		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-			, slice AS (PARTITION BY p.idx ORDER BY d.ts)
-			, reading AS (PARTITION BY p.idx, CASE WHEN d.ts < end_ts THEN 0 ELSE 1 END ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		FROM wa_intermediate p
+		WHERE p.inc = 1
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY p.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+			, slice AS (PARTITION BY p.idx ORDER BY p.ts)
+			, reading AS (PARTITION BY p.idx, CASE WHEN p.ts < end_ts THEN 0 ELSE 1 END ORDER BY p.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (

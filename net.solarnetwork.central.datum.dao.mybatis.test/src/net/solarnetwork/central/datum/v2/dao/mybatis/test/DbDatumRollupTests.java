@@ -41,6 +41,7 @@ import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
@@ -70,6 +71,28 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		List<AggregateDatumEntity> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
+			results = jdbcTemplate.query(
+					"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
+					AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
+					Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+		}
+		callback.doWithStream(datums, meta, streamId, results);
+	}
+
+	private void loadStreamWithAuxiliaryAndRollup(String resource, String auxResource,
+			ZonedDateTime aggStart, ZonedDateTime aggEnd, RollupCallback callback) throws IOException {
+		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
+		log.debug("Got test data: {}", datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		UUID streamId = null;
+		List<AggregateDatumEntity> results = Collections.emptyList();
+		if ( !meta.isEmpty() ) {
+			streamId = meta.values().iterator().next().getStreamId();
+			if ( auxResource != null ) {
+				List<GeneralNodeDatumAuxiliary> auxDatums = DatumTestUtils
+						.loadJsonDatumAuxiliaryResource("test-aux-01.txt", getClass());
+				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
+			}
 			results = jdbcTemplate.query(
 					"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 					AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
@@ -323,6 +346,36 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 								arrayOfDecimals(new String[] { "200", "1100", "1300" })));
 			}
 		});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-15.txt", "test-aux-01.txt", start,
+				start.plusHours(1), new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.45", "4.6"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("30.5"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
+										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+					}
+				});
 	}
 
 }

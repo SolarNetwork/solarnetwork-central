@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.BufferedReader;
@@ -53,6 +54,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
@@ -135,6 +137,53 @@ public final class DatumTestUtils {
 				}
 				GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
 				assertThat(format("Parsed JSON datum in row %d", row), d, notNullValue());
+				result.add(d);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Load JSON datum auxiliary from a classpath resource.
+	 * 
+	 * <p>
+	 * This method loads JSON datum auxiliary records from a resource, with one
+	 * JSON datum object per line. Empty lines or those starting with a
+	 * {@literal #} character are ignored. An example JSON datum looks like
+	 * this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{"nodeId":1,"sourceId":"a","type":"Reset","created":"2020-06-01T12:00:00Z","final":{"a":{"w":100}},"start":{"a":{"w":10}}}</code>
+	 * </pre>
+	 * 
+	 * @param resource
+	 *        the name of the resource to load
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @return the loaded data, never {@literal null}
+	 * @throws IOException
+	 *         if the resource cannot be found or parsed correctly
+	 */
+	public static List<GeneralNodeDatumAuxiliary> loadJsonDatumAuxiliaryResource(String resource,
+			Class<?> clazz) throws IOException {
+		List<GeneralNodeDatumAuxiliary> result = new ArrayList<>();
+		int row = 0;
+		try (BufferedReader r = new BufferedReader(
+				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+			while ( true ) {
+				String line = r.readLine();
+				if ( line == null ) {
+					break;
+				}
+				row++;
+				if ( line.isEmpty() || COMMENT.matcher(line).find() ) {
+					// skip empty/comment line
+					continue;
+				}
+				GeneralNodeDatumAuxiliary d = JsonUtils.getObjectFromJSON(line,
+						GeneralNodeDatumAuxiliary.class);
+				assertThat(format("Parsed JSON datum auxiliary in row %d", row), d, notNullValue());
 				result.add(d);
 			}
 		}
@@ -385,6 +434,46 @@ public final class DatumTestUtils {
 			}
 		});
 		return result;
+	}
+
+	/**
+	 * Insert auxiliary datum records for a given stream.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param streamId
+	 *        the stream ID to use
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
+			List<GeneralNodeDatumAuxiliary> datums) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement datumStmt = con.prepareStatement(
+						"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
+								+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
+					datumStmt.setString(1, streamId.toString());
+					for ( GeneralNodeDatumAuxiliary d : datums ) {
+						if ( log != null ) {
+							log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
+									d.getSampleDataFinal(), d.getSampleDataStart());
+						}
+						datumStmt.setTimestamp(2,
+								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
+						datumStmt.setString(3, d.getType().name());
+						datumStmt.setString(4, getJSONString(d.getSamplesFinal().getA(), null));
+						datumStmt.setString(5, getJSONString(d.getSamplesStart().getA(), null));
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
 	}
 
 	/**
