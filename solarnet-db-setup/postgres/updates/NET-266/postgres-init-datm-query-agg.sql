@@ -244,7 +244,7 @@ $$
 			, p.val AS val
 		FROM d
 		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE d.data_i IS NOT NULL
+		WHERE p.val IS NOT NULL
 			AND d.ts >= start_ts
 			AND d.ts < end_ts
 	)
@@ -306,7 +306,7 @@ $$
 				END AS portion
 		FROM d
 		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE d.data_a IS NOT NULL
+		WHERE p.val IS NOT NULL
 		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 			, slice AS (PARTITION BY p.idx ORDER BY d.ts)
 			, reading AS (PARTITION BY p.idx, CASE WHEN d.ts < end_ts THEN 0 ELSE 1 END ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
@@ -338,7 +338,7 @@ $$
 			, solarcommon.first(p.val ORDER BY d.ts DESC) AS val
 		FROM d
 		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE d.data_s IS NOT NULL
+		WHERE p.val IS NOT NULL
 		GROUP BY p.idx
 	)
 	-- join data_s property values back into arrays
