@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.arrayOfDecimals;
+import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -79,18 +80,18 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		callback.doWithStream(datums, meta, streamId, results);
 	}
 
-	private void loadStreamWithAuxiliaryAndRollup(String resource, String auxResource,
-			ZonedDateTime aggStart, ZonedDateTime aggEnd, RollupCallback callback) throws IOException {
-		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
-		log.debug("Got test data: {}", datums);
+	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,
+			ZonedDateTime aggEnd, RollupCallback callback) throws IOException {
+		List<?> data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass());
+		log.debug("Got test data: {}", data);
+		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
+		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
 		UUID streamId = null;
 		List<AggregateDatumEntity> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
-			if ( auxResource != null ) {
-				List<GeneralNodeDatumAuxiliary> auxDatums = DatumTestUtils
-						.loadJsonDatumAuxiliaryResource("test-aux-01.txt", getClass());
+			if ( !auxDatums.isEmpty() ) {
 				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
 			}
 			results = jdbcTemplate.query(
@@ -352,8 +353,8 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void resetRecord() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-		loadStreamWithAuxiliaryAndRollup("test-datum-15.txt", "test-aux-01.txt", start,
-				start.plusHours(1), new RollupCallback() {
+		loadStreamWithAuxiliaryAndRollup("test-datum-15.txt", start, start.plusHours(1),
+				new RollupCallback() {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
