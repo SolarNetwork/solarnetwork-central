@@ -314,6 +314,9 @@ $$
 				WHEN p.ts > end_ts + tolerance_clock
 					THEN 0
 
+				WHEN p.ts > end_ts AND lag(p.ts) OVER slot >= end_ts
+					THEN 0
+
 				WHEN p.ts > end_ts AND lag(p.ts) OVER slot < end_ts
 					THEN EXTRACT(epoch FROM (end_ts - lag(p.ts) OVER slot)) / EXTRACT(epoch FROM (p.ts - lag(p.ts) OVER slot))
 
