@@ -201,7 +201,7 @@ CREATE OR REPLACE FUNCTION solardatm.store_datum(
 	rdate 			TIMESTAMP WITH TIME ZONE,
 	jdata 			TEXT,
 	track 			BOOLEAN DEFAULT TRUE)
-  RETURNS void LANGUAGE plpgsql VOLATILE AS
+  RETURNS TEXT LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
 	ts_crea 			TIMESTAMP WITH TIME ZONE 	:= COALESCE(ddate, now());
@@ -256,5 +256,7 @@ BEGIN
 		--	PERFORM solardatm.update_datm_range_dates(sid, ddate);
 		--END IF;
 	END IF;
+
+	RETURN sid::text;
 END;
 $$;
