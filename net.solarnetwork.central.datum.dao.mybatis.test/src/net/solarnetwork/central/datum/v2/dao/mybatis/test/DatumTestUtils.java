@@ -519,6 +519,48 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Ingest a set of datum auxiliary into the {@literal da_datm_aux} table,
+	 * using the {@code solardatm.store_datum_aux()} stored procedure that
+	 * includes side effects like "stale" record management.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+			List<GeneralNodeDatumAuxiliary> datums) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement datumStmt = con
+						.prepareCall("{call solardatm.store_datum_aux(?,?,?,?,?,?,?,?)}")) {
+					for ( GeneralNodeDatumAuxiliary d : datums ) {
+						if ( log != null ) {
+							log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
+									d.getSampleDataFinal(), d.getSampleDataStart());
+						}
+						datumStmt.setTimestamp(1,
+								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
+						datumStmt.setObject(2, d.getNodeId());
+						datumStmt.setString(3, d.getSourceId());
+						datumStmt.setString(4, d.getType().name());
+						datumStmt.setNull(5, Types.VARCHAR);
+						datumStmt.setString(6, d.getSampleJsonFinal());
+						datumStmt.setString(7, d.getSampleJsonStart());
+						datumStmt.setNull(8, Types.VARCHAR);
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
 	 * Get the available stale aggregate datum records.
 	 * 
 	 * @return the results, never {@literal null}

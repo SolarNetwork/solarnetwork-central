@@ -260,3 +260,51 @@ BEGIN
 	RETURN sid::text;
 END;
 $$;
+
+
+/**
+ * Add or replace datum auxiliary record data.
+ *
+ * @param ddate 		the datum timestamp
+ * @param node 			the node ID
+ * @param src 			the source ID
+ * @param aux_type		the auxiliary type; must cast to solardatm.da_datm_aux_type, e.g. 'Reset'
+ * @param aux_notes 	optional text notes
+ * @param jdata_final 	the ending JSON datum object; only 'a' values are supported
+ * @param jdata_start 	the starting JSON datum object; only 'a' values are supported
+ * @param jmeta			optional JSON metadata
+ */
+CREATE OR REPLACE FUNCTION solardatm.store_datum_aux(
+		ddate 			TIMESTAMP WITH TIME ZONE,
+		node 			BIGINT,
+		src 			CHARACTER VARYING(64),
+		aux_type 		text,
+		aux_notes 		text,
+		jdata_final 	text,
+		jdata_start 	text,
+		jmeta 			text
+	) RETURNS void LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	sid 	UUID;
+BEGIN
+	INSERT INTO solardatm.da_datm_aux(stream_id, ts, atype, updated, notes, jdata_af, jdata_as, jmeta)
+	SELECT m.stream_id, ddate, aux_type::solardatm.da_datm_aux_type, CURRENT_TIMESTAMP, aux_notes,
+		(jdata_final::jsonb)->'a', (jdata_start::jsonb)->'a', jmeta::jsonb
+	FROM solardatm.da_datm_meta m
+	WHERE m.node_id = node AND m.source_id = src
+	ON CONFLICT (stream_id, ts, atype) DO UPDATE
+		SET notes = EXCLUDED.notes,
+			jdata_af = EXCLUDED.jdata_af,
+			jdata_as = EXCLUDED.jdata_as,
+			jmeta = EXCLUDED.jmeta,
+			updated = EXCLUDED.updated
+	RETURNING stream_id
+	INTO sid;
+
+	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+	SELECT stream_id, ts_start, 'h' AS agg_kind
+	FROM solardatm.calculate_stale_datm(sid, ddate)
+	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+END;
+$$;
