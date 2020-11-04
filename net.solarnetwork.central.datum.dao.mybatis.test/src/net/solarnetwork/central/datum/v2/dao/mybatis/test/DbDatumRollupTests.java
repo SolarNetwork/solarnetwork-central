@@ -26,6 +26,7 @@ import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -724,6 +725,82 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 								arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
 					}
 				});
+	}
+
+	@Test
+	public void status_coEqualMostFrequent() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-28.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(), nullValue());
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						nullValue());
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(), nullValue());
+				assertThat("Agg status has some co-equal most-frequent value",
+						result.getProperties().getStatus(),
+						anyOf(arrayContaining("A"), arrayContaining("C")));
+			}
+		});
+	}
+
+	@Test
+	public void status_mostFrequent() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-29.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(), nullValue());
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						nullValue());
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(), nullValue());
+				assertThat("Agg status is most frequent value", result.getProperties().getStatus(),
+						arrayContaining("B"));
+			}
+		});
+	}
+
+	@Test
+	public void status_multiPropMostFrequent() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-30.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatumEntity> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+				AggregateDatumEntity result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(), nullValue());
+				assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+						nullValue());
+				assertThat("Stats accumulating", result.getStatistics().getAccumulating(), nullValue());
+				assertThat("Agg status is most frequent value", result.getProperties().getStatus(),
+						arrayContaining("B", "DD"));
+			}
+		});
 	}
 
 }

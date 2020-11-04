@@ -188,7 +188,7 @@ $$;
 
 
 /**
- * Compute a rollup datm record for an aggregate time range, including "reset" auxiliary records.
+ * Compute a rollup datm record for a time range, including "reset" auxiliary records.
  *
  * The `data_i` output column contains the average values for the raw `data_i` properties within
  * the "clock" period.
@@ -349,11 +349,11 @@ $$
 			) AS read_a
 		FROM da d
 	)
-	-- calculate status statistics
+	-- calculate status statistics, as most-frequent status values
 	, ds AS (
 		SELECT
 			  p.idx
-			, solarcommon.first(p.val ORDER BY d.ts DESC) AS val
+			, mode() WITHIN GROUP (ORDER BY p.val) AS val
 		FROM d
 		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
@@ -376,6 +376,177 @@ $$
 	SELECT
 		sid AS stream_id
 		, start_ts AS ts_start
+		, di_ary.data_i
+		, da_ary.data_a
+		, ds_ary.data_s
+		, dt_ary.data_t
+		, di_ary.stat_i
+		, da_ary.read_a
+	FROM di_ary, da_ary, ds_ary, dt_ary
+$$;
+
+
+/**
+ * Find aggregate datm records for a time range.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
+		sid 		UUID,
+		start_ts 	TIMESTAMP WITH TIME ZONE,
+		end_ts 		TIMESTAMP WITH TIME ZONE,
+		kind 		CHARACTER
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start	TIMESTAMP WITH TIME ZONE,
+		data_i		NUMERIC[],					-- array of instantaneous property average values
+		data_a		NUMERIC[],					-- array of accumulating property clock difference values
+		data_s		TEXT[],						-- array of "last seen" status property values
+		data_t		TEXT[],						-- array of all tags seen over period
+		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
+		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
+	) LANGUAGE plpgsql STABLE ROWS 2000 AS
+$$
+BEGIN
+	RETURN QUERY EXECUTE format(
+		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+		'FROM solardatm.%I '
+		'WHERE stream_id = $1 AND ts_start >= $2 AND ts_start < $3'
+		, 'agg_datm_' || CASE kind WHEN 'd' THEN 'daily' WHEN 'M' THEN 'monthly' ELSE 'hourly' END)
+	USING sid, start_ts, end_ts;
+END;
+$$;
+
+
+/**
+ * Compute a higher-level rollup datm record of lower=level aggregate datum records over a time range.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
+ * @see solardatm.find_agg_datm_for_time_span()
+ */
+CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_for_time_span(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE,
+		kind 			CHARACTER
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start	TIMESTAMP WITH TIME ZONE,
+		data_i		NUMERIC[],					-- array of instantaneous property average values
+		data_a		NUMERIC[],					-- array of accumulating property clock difference values
+		data_s		TEXT[],						-- array of "last seen" status property values
+		data_t		TEXT[],						-- array of all tags seen over period
+		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
+		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
+	) LANGUAGE SQL STABLE ROWS 500 AS
+$$
+	WITH d AS (
+		SELECT * FROM solardatm.find_agg_datm_for_time_span(
+			sid,
+			start_ts,
+			end_ts,
+			kind
+		)
+	)
+	-- calculate instantaneous values per property
+	, wi AS (
+		SELECT
+			  p.idx
+			, p.val
+			, d.stat_i[p.idx][1] AS cnt
+			, d.stat_i[p.idx][2] AS min
+			, d.stat_i[p.idx][3] AS max
+			, sum(d.stat_i[p.idx][1]) OVER () AS tot_cnt
+		FROM d
+		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+	)
+	-- calculate instantaneous statistics
+	, di AS (
+		SELECT
+			idx
+			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999990.999999999')::numeric AS val
+			, sum(cnt) AS cnt
+			, min(min) AS val_min
+			, max(max) AS val_max
+		FROM wi
+		GROUP BY idx
+	)
+	-- join data_i and stat_i property values back into arrays
+	, di_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_i
+			, array_agg(
+				ARRAY[cnt, val_min, val_max] ORDER BY idx
+			) AS stat_i
+		FROM di
+	)
+	-- calculate accumulating values per property
+	, wa AS (
+		SELECT
+			  p.idx
+			, p.val
+			, first_value(d.read_a[p.idx][1]) OVER slot AS rstart
+			, last_value(d.read_a[p.idx][2]) OVER slot AS rend
+			, d.read_a[p.idx][3] AS rdiff
+		FROM d
+		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts_start RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+	)
+	-- calculate accumulating statistics
+	, da AS (
+		SELECT
+			idx
+			, to_char(sum(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, min(rstart) AS rstart
+			, min(rend) AS rend
+			, sum(rdiff) AS rdiff
+		FROM wa
+		GROUP BY idx
+	)
+	-- join data_a and read_a property values back into arrays
+	, da_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_a
+			, array_agg(
+				ARRAY[rstart, rend, rdiff] ORDER BY idx
+			) AS read_a
+		FROM da
+	)
+	-- calculate status statistics, as most-frequent status values
+	, ds AS (
+		SELECT
+			  p.idx
+			, mode() WITHIN GROUP (ORDER BY p.val) AS val
+		FROM d
+		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		GROUP BY p.idx
+	)
+	-- join data_s property values back into arrays
+	, ds_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_s
+		FROM ds
+	)
+	-- join data_t property values into mega array
+	, dt_ary AS (
+		SELECT
+			  array_agg(p.val ORDER BY d.ts_start) AS data_t
+		FROM d
+		INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
+		WHERE d.data_t IS NOT NULL
+	)
+	SELECT
+		sid AS stream_id,
+		start_ts AS ts_start
 		, di_ary.data_i
 		, da_ary.data_a
 		, ds_ary.data_s
