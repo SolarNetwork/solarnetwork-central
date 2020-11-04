@@ -218,9 +218,9 @@ public final class DatumUtils {
 	 *     "metadata": {
 	 *         "props": ["cpu_user", "net_bytes_in_eth0", "net_bytes_out_eth0", "alert"],
 	 *         "class": {
-	 *            "i": ["cpu_user"],
+	 *             "i": ["cpu_user"],
 	 *             "a": ["net_bytes_in_eth0", "net_bytes_out_eth0"],
-	 *             "s": ["status"]
+	 *             "s": ["alert"]
 	 *         }
 	 *     },
 	 *     "values": [
