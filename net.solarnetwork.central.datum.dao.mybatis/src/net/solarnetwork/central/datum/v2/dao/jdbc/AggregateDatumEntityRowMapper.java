@@ -81,7 +81,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEn
 		BigDecimal[][] stat_i = getArray(rs, 7);
 		BigDecimal[][] stat_a = getArray(rs, 8);
 
-		return new AggregateDatumEntity(streamId, ts, null,
+		return new AggregateDatumEntity(streamId, ts,
 				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t),
 				DatumPropertiesStatistics.statisticsOf(stat_i, stat_a));
 	}

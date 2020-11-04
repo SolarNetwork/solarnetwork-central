@@ -49,16 +49,14 @@ public class AggregateDatumEntity extends DatumEntity {
 	 * 
 	 * @param id
 	 *        the ID
-	 * @param received
-	 *        the date the datum was received by SolarNetwork
 	 * @param properties
 	 *        the properties
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(DatumPK id, Instant received, DatumProperties properties,
+	public AggregateDatumEntity(DatumPK id, DatumProperties properties,
 			DatumPropertiesStatistics statistics) {
-		super(id, received, properties);
+		super(id, null, properties);
 		this.statistics = statistics;
 	}
 
@@ -69,16 +67,14 @@ public class AggregateDatumEntity extends DatumEntity {
 	 *        the user ID
 	 * @param timestamp
 	 *        the timestamp
-	 * @param received
-	 *        the date the datum was received by SolarNetwork
 	 * @param properties
 	 *        the samples
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Instant received,
-			DatumProperties properties, DatumPropertiesStatistics statistics) {
-		super(streamId, timestamp, received, properties);
+	public AggregateDatumEntity(UUID streamId, Instant timestamp, DatumProperties properties,
+			DatumPropertiesStatistics statistics) {
+		super(streamId, timestamp, null, properties);
 		this.statistics = statistics;
 	}
 
@@ -94,8 +90,6 @@ public class AggregateDatumEntity extends DatumEntity {
 	 *        the user ID
 	 * @param timestamp
 	 *        the timestamp
-	 * @param received
-	 *        the date the datum was received by SolarNetwork
 	 * @param instantaneous
 	 *        the instantaneous values; must be {@code BigDecimal[]}
 	 * @param accumulating
@@ -109,10 +103,10 @@ public class AggregateDatumEntity extends DatumEntity {
 	 * @param accumulatingStats
 	 *        the accumulating statistic values; must be {@code BigDecimal[][]}
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Instant received, Object instantaneous,
+	public AggregateDatumEntity(UUID streamId, Instant timestamp, Object instantaneous,
 			Object accumulating, Object status, Object tags, Object instantaneousStats,
 			Object accumulatingStats) {
-		super(streamId, timestamp, received, instantaneous, accumulating, status, tags);
+		super(streamId, timestamp, null, instantaneous, accumulating, status, tags);
 		this.statistics = DatumPropertiesStatistics.statisticsOf((BigDecimal[][]) instantaneousStats,
 				(BigDecimal[][]) accumulatingStats);
 	}
