@@ -56,10 +56,13 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -561,8 +564,70 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Ingest a set of datum auxiliary into the {@literal da_datm_aux} table,
+	 * using the {@code solardatm.store_datum_aux()} stored procedure that
+	 * includes side effects like "stale" record management.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static boolean moveDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+			GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
+		return jdbcTemplate.execute(new ConnectionCallback<Boolean>() {
+
+			@Override
+			public Boolean doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement datumStmt = con
+						.prepareCall("{? = call solardatm.move_datum_aux(?,?,?,?,?,?,?,?,?,?,?,?)}")) {
+					if ( log != null ) {
+						log.debug("Moving GeneralNodeDatumAuxiliary {} -> {}", from, to.getId());
+					}
+					datumStmt.registerOutParameter(1, Types.BOOLEAN);
+					datumStmt.setTimestamp(2,
+							Timestamp.from(Instant.ofEpochMilli(from.getCreated().getMillis())));
+					datumStmt.setObject(3, from.getNodeId());
+					datumStmt.setString(4, from.getSourceId());
+					datumStmt.setString(5, from.getType().name());
+
+					datumStmt.setTimestamp(6,
+							Timestamp.from(Instant.ofEpochMilli(to.getCreated().getMillis())));
+					datumStmt.setObject(7, to.getNodeId());
+					datumStmt.setString(8, to.getSourceId());
+					datumStmt.setString(9, to.getType().name());
+
+					datumStmt.setNull(10, Types.VARCHAR);
+					datumStmt.setString(11, to.getSampleJsonFinal());
+					datumStmt.setString(12, to.getSampleJsonStart());
+					datumStmt.setNull(13, Types.VARCHAR);
+					datumStmt.execute();
+					return datumStmt.getBoolean(1);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Get the available datum auxiliary records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @return the results, never {@literal null}
+	 */
+	public static List<DatumAuxiliaryEntity> datumAuxiliary(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts, atype, updated, notes, jdata_af, jdata_as, jmeta FROM solardatm.da_datm_aux ORDER BY stream_id, ts, atype",
+				DatumAuxiliaryEntityRowMapper.INSTANCE);
+	}
+
+	/**
 	 * Get the available stale aggregate datum records.
 	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
 	public static List<StaleAggregateDatumEntity> staleAggregateDatumStreams(
@@ -575,6 +640,8 @@ public final class DatumTestUtils {
 	/**
 	 * Get the available stale aggregate datum records.
 	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
 	 * @param type
 	 *        the type of stale aggregate records to get
 	 * @return the results, never {@literal null}
@@ -589,6 +656,8 @@ public final class DatumTestUtils {
 	/**
 	 * Get the available stale aggregate datum records.
 	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
 	public static List<AuditDatumHourlyEntity> auditDatumHourly(JdbcOperations jdbcTemplate) {

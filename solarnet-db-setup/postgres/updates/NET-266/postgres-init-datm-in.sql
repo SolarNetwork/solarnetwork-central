@@ -308,3 +308,68 @@ BEGIN
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 END;
 $$;
+
+
+/**
+ * Update and move datum auxiliary record data.
+ *
+ * @param ddate_from 	the datum timestamp of the "old" record
+ * @param node_from 	the node ID of the "old" record
+ * @param src_from 		the source ID of the "old" record
+ * @param aux_type_from	the auxiliary type of the "old" record; must cast to solardatm.da_datm_aux_type
+ * @param ddate 		the datum timestamp
+ * @param node 			the node ID
+ * @param src 			the source ID
+ * @param aux_type		the auxiliary type; must cast to solardatm.da_datm_aux_type, e.g. 'Reset'
+ * @param aux_notes 	optional text notes
+ * @param jdata_final 	the ending JSON datum object; only 'a' values are supported
+ * @param jdata_start 	the starting JSON datum object; only 'a' values are supported
+ * @param jmeta			optional JSON metadata
+ */
+CREATE OR REPLACE FUNCTION solardatm.move_datum_aux(
+		ddate_from		TIMESTAMP WITH TIME ZONE,
+		node_from		BIGINT,
+		src_from		CHARACTER VARYING(64),
+		aux_type_from	text,
+
+		ddate 			TIMESTAMP WITH TIME ZONE,
+		node 			BIGINT,
+		src 			CHARACTER VARYING(64),
+		aux_type 		text,
+
+		aux_notes 		text,
+		jdata_final 	text,
+		jdata_start 	text,
+		jmeta 			text
+	) RETURNS BOOLEAN LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	sid 		UUID;
+	del_count 	INTEGER := 0;
+BEGIN
+	DELETE FROM solardatm.da_datm_aux
+	USING solardatm.da_datm_meta
+	WHERE da_datm_aux.stream_id = da_datm_meta.stream_id
+		AND da_datm_aux.ts = ddate_from
+		AND da_datm_meta.node_id = node_from
+		AND da_datm_meta.source_id = src_from
+		AND da_datm_aux.atype = aux_type_from::solardatm.da_datm_aux_type
+	RETURNING da_datm_aux.stream_id
+	INTO sid;
+
+	GET DIAGNOSTICS del_count = ROW_COUNT;
+
+	IF del_count > 0 THEN
+		-- insert stale record for deleted row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calculate_stale_datm(sid, ddate_from)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
+
+		-- insert new row
+		PERFORM solardatm.store_datum_aux(ddate, node, src, aux_type, aux_notes, jdata_final, jdata_start, jmeta);
+	END IF;
+
+	RETURN (del_count > 0);
+END;
+$$;

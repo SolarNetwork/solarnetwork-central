@@ -24,9 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
-import net.solarnetwork.central.datum.domain.BasePK;
 
 /**
  * Primary key for a datum stream.
@@ -35,12 +33,9 @@ import net.solarnetwork.central.datum.domain.BasePK;
  * @version 1.0
  * @since 2.8
  */
-public class DatumPK extends BasePK implements Serializable, Cloneable, Comparable<DatumPK> {
+public class DatumPK extends StreamPK implements Serializable, Cloneable, Comparable<DatumPK> {
 
-	private static final long serialVersionUID = -8674108064779256512L;
-
-	private final UUID streamId;
-	private final Instant timestamp;
+	private static final long serialVersionUID = 1829112080933789997L;
 
 	/**
 	 * Constructor.
@@ -51,61 +46,12 @@ public class DatumPK extends BasePK implements Serializable, Cloneable, Comparab
 	 *        the time stamp
 	 */
 	public DatumPK(UUID streamId, Instant timestamp) {
-		super();
-		this.streamId = streamId;
-		this.timestamp = timestamp;
+		super(streamId, timestamp);
 	}
 
 	@Override
 	protected DatumPK clone() {
 		return (DatumPK) super.clone();
-	}
-
-	@Override
-	protected void populateIdValue(StringBuilder buf) {
-		buf.append("s=");
-		if ( streamId != null ) {
-			buf.append(streamId);
-		}
-		buf.append(";t=");
-		if ( timestamp != null ) {
-			buf.append(timestamp.getEpochSecond()).append('.').append(timestamp.getNano());
-		}
-	}
-
-	@Override
-	protected void populateStringValue(StringBuilder buf) {
-		if ( streamId != null ) {
-			if ( buf.length() > 0 ) {
-				buf.append(", ");
-			}
-			buf.append("streamId=");
-			buf.append(streamId);
-		}
-		if ( timestamp != null ) {
-			if ( buf.length() > 0 ) {
-				buf.append(", ");
-			}
-			buf.append("timestamp=");
-			buf.append(timestamp);
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(streamId, timestamp);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ( this == obj ) {
-			return true;
-		}
-		if ( !(obj instanceof DatumPK) ) {
-			return false;
-		}
-		DatumPK other = (DatumPK) obj;
-		return Objects.equals(streamId, other.streamId) && Objects.equals(timestamp, other.timestamp);
 	}
 
 	/**
@@ -120,50 +66,7 @@ public class DatumPK extends BasePK implements Serializable, Cloneable, Comparab
 	 */
 	@Override
 	public int compareTo(DatumPK o) {
-		if ( this == o ) {
-			return 0;
-		}
-		if ( o == null ) {
-			return -1;
-		}
-		int result = 0;
-		if ( streamId != o.streamId ) {
-			if ( streamId == null ) {
-				return 1;
-			} else if ( o.streamId == null ) {
-				return -1;
-			}
-			result = streamId.compareTo(o.streamId);
-			if ( result != 0 ) {
-				return result;
-			}
-		}
-		if ( timestamp == o.timestamp ) {
-			return 0;
-		} else if ( timestamp == null ) {
-			return 1;
-		} else if ( o.timestamp == null ) {
-			return -1;
-		}
-		return timestamp.compareTo(o.timestamp);
-	}
-
-	/**
-	 * Get the stream ID.
-	 * 
-	 * @return the stream ID
-	 */
-	public UUID getStreamId() {
-		return streamId;
-	}
-
-	/**
-	 * Get the timestamp.
-	 * 
-	 * @return the timestamp
-	 */
-	public Instant getTimestamp() {
-		return timestamp;
+		return super.compareWith(o);
 	}
 
 }

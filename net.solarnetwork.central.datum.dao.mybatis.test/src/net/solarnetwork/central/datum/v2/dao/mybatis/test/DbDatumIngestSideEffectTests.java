@@ -31,21 +31,28 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Test DB functions for datum ingest, that populate "stale" records and update
@@ -283,6 +290,89 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				meta.getStreamId(), hour1.toInstant(), Aggregation.Hour, null));
 		assertStaleAggregateDatum("Reset in hour after", staleRows.get(1), new StaleAggregateDatumEntity(
 				meta.getStreamId(), hour1.plusHours(1).toInstant(), Aggregation.Hour, null));
+	}
+
+	@Test
+	public void reset_moveWithinHour() throws IOException {
+		List<GeneralNodeDatum> datums = loadJson("test-datum-16.txt");
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+
+		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
+		DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
+
+		// should have no "stale" aggregate rows yet
+		List<StaleAggregateDatumEntity> staleRows = staleAggregateDatumStreams(jdbcTemplate);
+		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
+
+		// now move reset
+		GeneralNodeDatumAuxiliary from = auxDatums.get(0);
+		GeneralNodeDatumSamples f = new GeneralNodeDatumSamples();
+		f.putAccumulatingSampleValue("w", new BigDecimal("116"));
+		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+		s.putAccumulatingSampleValue("w", new BigDecimal("6"));
+		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
+				from.getNodeId(), from.getCreated().plusMinutes(1), from.getSourceId()), f, s);
+
+		boolean moved = DatumTestUtils.moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
+		assertThat("Reset record moved", moved, equalTo(true));
+
+		staleRows = staleAggregateDatumStreams(jdbcTemplate);
+		assertThat("Stale aggregate record created for reset", staleRows, hasSize(1));
+
+		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		assertStaleAggregateDatum("Reset in hour", staleRows.get(0), new StaleAggregateDatumEntity(
+				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
+	}
+
+	@Test
+	public void reset_moveNodeId() throws IOException {
+		List<GeneralNodeDatum> datums = loadJson("test-datum-16.txt");
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+
+		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
+		DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
+
+		List<GeneralNodeDatum> datums2 = datums.stream().map(e -> {
+			GeneralNodeDatum clone = e.clone();
+			clone.setNodeId(2L);
+			return clone;
+		}).collect(Collectors.toList());
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas2 = insertDatumStream(log, jdbcTemplate,
+				datums2);
+		NodeDatumStreamMetadata meta2 = metas2.values().iterator().next();
+
+		// should have no "stale" aggregate rows yet
+		List<StaleAggregateDatumEntity> staleRows = staleAggregateDatumStreams(jdbcTemplate);
+		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
+
+		// now move reset
+		GeneralNodeDatumAuxiliary from = auxDatums.get(0);
+		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(
+				new GeneralNodeDatumAuxiliaryPK(meta2.getNodeId(), from.getCreated(),
+						from.getSourceId()),
+				from.getSamplesFinal(), from.getSamplesStart());
+
+		boolean moved = DatumTestUtils.moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
+		assertThat("Reset record moved", moved, equalTo(true));
+
+		List<DatumAuxiliaryEntity> auxList = DatumTestUtils.datumAuxiliary(jdbcTemplate);
+		log.debug("Datum auxiliary data: {}", auxList);
+
+		staleRows = staleAggregateDatumStreams(jdbcTemplate);
+		assertThat("Stale aggregate records created for reset", staleRows, hasSize(2));
+
+		Map<UUID, StaleAggregateDatumEntity> streamToStale = staleRows.stream()
+				.collect(Collectors.toMap(StaleAggregateDatumEntity::getStreamId, Function.identity()));
+
+		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		assertStaleAggregateDatum("Reset in hour node 1", streamToStale.get(meta.getStreamId()),
+				new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(), Aggregation.Hour,
+						null));
+		assertStaleAggregateDatum("Reset in hour node 2", streamToStale.get(meta2.getStreamId()),
+				new StaleAggregateDatumEntity(meta2.getStreamId(), hour.toInstant(), Aggregation.Hour,
+						null));
 	}
 
 	@Test

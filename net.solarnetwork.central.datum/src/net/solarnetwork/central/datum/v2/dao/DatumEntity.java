@@ -73,8 +73,8 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 	/**
 	 * Constructor.
 	 * 
-	 * @param userId
-	 *        the user ID
+	 * @param streamId
+	 *        the stream ID
 	 * @param timestamp
 	 *        the timestamp
 	 * @param received
@@ -94,8 +94,8 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 	 * mapping issues.
 	 * </p>
 	 * 
-	 * @param userId
-	 *        the user ID
+	 * @param streamId
+	 *        the stream ID
 	 * @param timestamp
 	 *        the timestamp
 	 * @param received
