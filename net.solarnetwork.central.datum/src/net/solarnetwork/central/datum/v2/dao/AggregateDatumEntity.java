@@ -22,23 +22,26 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 
 /**
- * Extension of {@link DatumEntity} to support aggregated (e.g. rollup)
+ * Extension of {@link DatumEntity} to support aggregated (e.g. "rollup")
  * entities.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public class AggregateDatumEntity extends DatumEntity {
+public class AggregateDatumEntity extends DatumEntity
+		implements AggregateDatum, Cloneable, Serializable {
 
 	private static final long serialVersionUID = 7976275982566577572L;
 
@@ -166,6 +169,7 @@ public class AggregateDatumEntity extends DatumEntity {
 	 * 
 	 * @return the statistics
 	 */
+	@Override
 	public DatumPropertiesStatistics getStatistics() {
 		return statistics;
 	}

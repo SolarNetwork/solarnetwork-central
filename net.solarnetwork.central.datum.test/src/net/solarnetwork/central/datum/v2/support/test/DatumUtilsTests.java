@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.support.test;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
@@ -37,6 +38,7 @@ import java.util.UUID;
 import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -243,4 +245,125 @@ public class DatumUtilsTests {
 
 	}
 
+	private static BigDecimal[] arrayOfDecimals(String... values) {
+		if ( values == null ) {
+			return null;
+		}
+		BigDecimal[] result = new BigDecimal[values.length];
+		for ( int i = 0, len = values.length; i < len; i++ ) {
+			result[i] = (values[i] != null ? new BigDecimal(values[i]) : null);
+		}
+		return result;
+	}
+
+	@Test
+	public void writeStatisticValues_typical() throws IOException {
+		// @formatter:off
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+				propertiesOf(
+						arrayOfDecimals("1.23", "2.34"), 
+						arrayOfDecimals("123456"),
+						null, null),
+				statisticsOf(
+						new BigDecimal[][] {
+								arrayOfDecimals("1.11", "2.22", "60"),
+								arrayOfDecimals("2.22", "3.33", "59") },
+						new BigDecimal[][] {
+								arrayOfDecimals("0", "123456") }));
+		// @formatter:on
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeStatisticValuesArray(generator, datum);
+		}
+		assertThat("JSON array generated", out.toString(),
+				equalTo(format("[%d,[1.11,2.22,60],[2.22,3.33,59],[0,123456]]",
+						datum.getTimestamp().toEpochMilli())));
+	}
+
+	@Test
+	public void writeStatisticValues_nullValues() throws IOException {
+		// @formatter:off
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+				propertiesOf(
+						arrayOfDecimals("1.23", null), 
+						arrayOfDecimals(null, "123456"),
+						null, null),
+				statisticsOf(
+						new BigDecimal[][] {
+								arrayOfDecimals("1.11", "2.22", "60"),
+								null },
+						new BigDecimal[][] {
+								null,
+								arrayOfDecimals("0", "123456") }));
+		// @formatter:on
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeStatisticValuesArray(generator, datum);
+		}
+		assertThat("JSON array generated", out.toString(),
+				equalTo(format("[%d,[1.11,2.22,60],null,null,[0,123456]]",
+						datum.getTimestamp().toEpochMilli())));
+	}
+
+	@Test
+	public void writeStatisticValues_missingTimestamp() throws IOException {
+		// @formatter:off
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), null,
+				propertiesOf(
+						arrayOfDecimals("1.23"),
+						null,
+						null, null),
+				statisticsOf(
+						new BigDecimal[][] {
+								arrayOfDecimals("1.11", "2.22", "60") },
+						null));
+		// @formatter:on
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeStatisticValuesArray(generator, datum);
+		}
+		assertThat("JSON array generated", out.toString(), equalTo("[null,[1.11,2.22,60]]"));
+	}
+
+	@Test
+	public void writeStatisticValues_missingInstantaneous() throws IOException {
+		// @formatter:off
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+				propertiesOf(
+						null, 
+						arrayOfDecimals("123456"),
+						null, null),
+				statisticsOf(
+						null,
+						new BigDecimal[][] {
+								arrayOfDecimals("0", "123456") }));
+		// @formatter:on
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeStatisticValuesArray(generator, datum);
+		}
+		assertThat("JSON array generated", out.toString(),
+				equalTo(format("[%d,[0,123456]]", datum.getTimestamp().toEpochMilli())));
+	}
+
+	@Test
+	public void writeStatisticValues_missingAccumulation() throws IOException {
+		// @formatter:off
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+				propertiesOf(
+						arrayOfDecimals("1.23"),
+						null,
+						null, null),
+				statisticsOf(
+						new BigDecimal[][] {
+							arrayOfDecimals("1.11", "2.22", "60") },
+						null));
+		// @formatter:on
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeStatisticValuesArray(generator, datum);
+		}
+		assertThat("JSON array generated", out.toString(),
+				equalTo(format("[%d,[1.11,2.22,60]]", datum.getTimestamp().toEpochMilli())));
+	}
 }

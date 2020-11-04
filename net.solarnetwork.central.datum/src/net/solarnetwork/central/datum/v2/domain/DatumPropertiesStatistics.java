@@ -57,6 +57,31 @@ public class DatumPropertiesStatistics implements Serializable {
 	}
 
 	/**
+	 * Get the overall number of array property values (first dimension).
+	 * 
+	 * <p>
+	 * This returns the sum of the length (first dimension) all the array fields
+	 * of this class.
+	 * </p>
+	 * 
+	 * @return the number of values (including {@literal null} values)
+	 */
+	public int getLength() {
+		return getInstantaneousLength() + getAccumulatingLength();
+	}
+
+	/**
+	 * Get the instantaneous values array length (first dimension).
+	 * 
+	 * @return the number of instantaneous values (including {@literal null}
+	 *         values)
+	 */
+	public int getInstantaneousLength() {
+		BigDecimal[][] array = getInstantaneous();
+		return (array != null ? array.length : 0);
+	}
+
+	/**
 	 * Get the instantaneous statistics.
 	 * 
 	 * @return the instantaneous statistics
@@ -73,6 +98,17 @@ public class DatumPropertiesStatistics implements Serializable {
 	 */
 	public void setInstantaneous(BigDecimal[][] instantaneous) {
 		this.instantaneous = instantaneous;
+	}
+
+	/**
+	 * Get the accumulating values array length (first dimension).
+	 * 
+	 * @return the number of accumulating values (including {@literal null}
+	 *         values)
+	 */
+	public int getAccumulatingLength() {
+		BigDecimal[][] array = getAccumulating();
+		return (array != null ? array.length : 0);
 	}
 
 	/**

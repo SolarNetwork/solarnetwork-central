@@ -28,8 +28,10 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.UUID;
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
@@ -53,6 +55,22 @@ public final class DatumUtils {
 		}
 		for ( BigDecimal n : array ) {
 			generator.writeNumber(n);
+		}
+	}
+
+	private static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[][] arrayOfArrays)
+			throws IOException {
+		if ( arrayOfArrays == null ) {
+			return;
+		}
+		for ( BigDecimal[] array : arrayOfArrays ) {
+			if ( array == null ) {
+				generator.writeNull();
+			} else {
+				generator.writeStartArray(array, array.length);
+				writeJsonArrayValues(generator, array);
+				generator.writeEndArray();
+			}
 		}
 	}
 
@@ -263,7 +281,11 @@ public final class DatumUtils {
 
 		generator.writeFieldName("metadata");
 		writeStreamMetadata(generator, metadata);
+		writeStreamPropertyValues(generator, datum, datumLength);
+	}
 
+	private static void writeStreamPropertyValues(JsonGenerator generator,
+			Iterator<? extends Datum> datum, int datumLength) throws IOException {
 		generator.writeFieldName("values");
 		if ( datum == null || datumLength < 1 ) {
 			generator.writeNull();
@@ -272,6 +294,157 @@ public final class DatumUtils {
 			while ( datum.hasNext() ) {
 				Datum d = datum.next();
 				writePropertyValuesArray(generator, d);
+			}
+			generator.writeEndArray();
+		}
+
+		generator.writeEndObject();
+	}
+
+	/**
+	 * Write aggregate datum statistic values as a JSON array.
+	 * 
+	 * <p>
+	 * The output array will contain the following elements:
+	 * <p>
+	 * 
+	 * <ul>
+	 * <li>The datum timestamp, as a millisecond epoch number value, or a
+	 * literal {@literal null}.</li>
+	 * <li>All instantaneous property statistics, as arrays of {@code [min, max,
+	 * count]} numbers.</li>
+	 * <li>All accumulating property values, as arrays of {@code [start, end]}
+	 * numbers.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * If any property array is {@literal null} or empty, no elements will be
+	 * contributed to the output JSON array. Any {@literal null} values
+	 * <i>within</i> a property array will contribute {@literal null} literals
+	 * to the output JSON array.
+	 * <p>
+	 * 
+	 * <p>
+	 * For example here is the JSON for a stream with one instantaneous and two
+	 * accumulating:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>[1325376000000, [0,10,60], [0,23445], [0,123]]</code>
+	 * </pre>
+	 * 
+	 * @param generator
+	 *        the generator to write to
+	 * @param datum
+	 *        the datum to write the sample values for
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	public static void writeStatisticValuesArray(JsonGenerator generator, AggregateDatum datum)
+			throws IOException {
+		if ( datum == null ) {
+			generator.writeNull();
+			return;
+		}
+
+		int len = 1; // for timestamp
+		DatumPropertiesStatistics stats = datum.getStatistics();
+		if ( stats != null ) {
+			len += stats.getLength();
+		}
+
+		generator.writeStartArray(datum, len);
+
+		// write timestamp
+		Instant ts = datum.getTimestamp();
+		if ( ts != null ) {
+			generator.writeNumber(ts.toEpochMilli());
+		} else {
+			generator.writeNull();
+		}
+
+		if ( stats != null ) {
+			// instantaneous values
+			writeJsonArrayValues(generator, stats.getInstantaneous());
+
+			// accumulating values
+			writeJsonArrayValues(generator, stats.getAccumulating());
+		}
+
+		generator.writeEndArray();
+	}
+
+	/**
+	 * Write a collection of datum as a JSON datum stream.
+	 * 
+	 * <p>
+	 * A datum stream consists of a string identifier, metadata object, and
+	 * array of property value arrays. For example here is the JSON for a stream
+	 * of 4 properties:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "streamId": "5970bf45-a1c9-4862-8bb8-1d687b370a55",
+	 *     "metadata": {
+	 *         "props": ["cpu_user", "net_bytes_in_eth0", "net_bytes_out_eth0", "alert"],
+	 *         "class": {
+	 *             "i": ["cpu_user"],
+	 *             "a": ["net_bytes_in_eth0", "net_bytes_out_eth0"],
+	 *             "s": ["alert"]
+	 *         }
+	 *     },
+	 *     "values": [
+	 *         [1325376000000, 3, 23445, 123, null],
+	 *         [1325376001000, 99, 23423, 243, "W9347"],
+	 *         [1325376002000, 4, 33452, 291, null]
+	 *     ]
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param generator
+	 *        the generator to write to
+	 * @param streamId
+	 *        the stream ID to write
+	 * @param metadata
+	 *        the metadata to write
+	 * @param datum
+	 *        the datum to write
+	 * @param datumLength
+	 *        the number of elements in the {@code datum} iterator
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @see #writeStreamMetadata(JsonGenerator, DatumStreamMetadata)
+	 * @see #writePropertyValuesArray(JsonGenerator, Datum)
+	 */
+	public static void writeAggregateStream(JsonGenerator generator, UUID streamId,
+			DatumStreamMetadata metadata, Iterator<AggregateDatum> datum, int datumLength)
+			throws IOException {
+		if ( datum == null ) {
+			generator.writeNull();
+			return;
+		}
+		generator.writeStartObject(null, 3);
+
+		generator.writeFieldName("streamId");
+		if ( streamId == null ) {
+			generator.writeNull();
+		} else {
+			generator.writeString(streamId.toString());
+		}
+
+		generator.writeFieldName("metadata");
+		writeStreamMetadata(generator, metadata);
+		writeStreamPropertyValues(generator, datum, datumLength);
+
+		generator.writeFieldName("stats");
+		if ( datum == null || datumLength < 1 ) {
+			generator.writeNull();
+		} else {
+			generator.writeStartArray(datum, datumLength);
+			while ( datum.hasNext() ) {
+				AggregateDatum d = datum.next();
+				writeStatisticValuesArray(generator, d);
 			}
 			generator.writeEndArray();
 		}
