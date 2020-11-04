@@ -128,7 +128,7 @@ public class DatumProperties implements Serializable {
 	 * Get the overall number of array property values.
 	 * 
 	 * <p>
-	 * This returns the sum of all the array fields of this class.
+	 * This returns the sum of the length of all the array fields of this class.
 	 * </p>
 	 * 
 	 * @return the number of values (including {@literal null} values)
@@ -174,7 +174,7 @@ public class DatumProperties implements Serializable {
 	 *         values)
 	 */
 	public int getAccumulatingLength() {
-		BigDecimal[] array = getInstantaneous();
+		BigDecimal[] array = getAccumulating();
 		return (array != null ? array.length : 0);
 	}
 
@@ -232,7 +232,7 @@ public class DatumProperties implements Serializable {
 	 * @return the number of tags (including {@literal null} values)
 	 */
 	public int getTagsLength() {
-		BigDecimal[] array = getInstantaneous();
+		String[] array = getTags();
 		return (array != null ? array.length : 0);
 	}
 
