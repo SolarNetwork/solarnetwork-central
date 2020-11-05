@@ -462,10 +462,11 @@ $$
 			, d.stat_i[p.idx][1] AS cnt
 			, d.stat_i[p.idx][2] AS min
 			, d.stat_i[p.idx][3] AS max
-			, sum(d.stat_i[p.idx][1]) OVER () AS tot_cnt
+			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
 		FROM d
 		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate instantaneous statistics
 	, di AS (

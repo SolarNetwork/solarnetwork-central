@@ -955,7 +955,12 @@ public final class DatumJsonUtils {
 			if ( names != null ) {
 				result = new BigDecimal[names.length][];
 				for ( int i = 0; i < names.length; i++ ) {
-					result[i] = map.get(names[i]);
+					BigDecimal[] array = map.get(names[i]);
+					if ( array == null ) {
+						// map array to null values... both "i" and "a" stats have 3 elements
+						array = new BigDecimal[] { null, null, null };
+					}
+					result[i] = array;
 				}
 			}
 		}

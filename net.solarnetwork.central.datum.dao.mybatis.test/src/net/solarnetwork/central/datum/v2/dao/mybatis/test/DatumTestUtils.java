@@ -54,6 +54,8 @@ import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
@@ -64,8 +66,13 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
@@ -90,6 +97,12 @@ public final class DatumTestUtils {
 	public static final Pattern AUX = Pattern.compile("\"type\"\\s*:\\s*\"Reset\"");
 
 	/**
+	 * Regex for a line containing {@literal "kind":"X"} where {@literal X} is
+	 * one of {@literal Hour}, {@literal Day}, or {@literal Month}.
+	 */
+	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month)\"");
+
+	/**
 	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
 	 * 
 	 * @param nums
@@ -103,6 +116,21 @@ public final class DatumTestUtils {
 			vals[i] = new BigDecimal(nums[i]);
 		}
 		return Matchers.arrayContaining(vals);
+	}
+
+	/**
+	 * Extract all elements of a specific class from a list.
+	 * 
+	 * @param <T>
+	 *        the type of element to extract
+	 * @param list
+	 *        the list to extract from
+	 * @param clazz
+	 *        the class of elements to extract
+	 * @return the list, never {@literal null}
+	 */
+	public static <T> List<T> elementsOf(List<?> list, Class<T> clazz) {
+		return list.stream().filter(clazz::isInstance).map(clazz::cast).collect(Collectors.toList());
 	}
 
 	/**
@@ -160,21 +188,6 @@ public final class DatumTestUtils {
 	}
 
 	/**
-	 * Extract all elements of a specific class from a list.
-	 * 
-	 * @param <T>
-	 *        the type of element to extract
-	 * @param list
-	 *        the list to extract from
-	 * @param clazz
-	 *        the class of elements to extract
-	 * @return the list, never {@literal null}
-	 */
-	public static <T> List<T> elementsOf(List<?> list, Class<T> clazz) {
-		return list.stream().filter(clazz::isInstance).map(clazz::cast).collect(Collectors.toList());
-	}
-
-	/**
 	 * Load JSON datum and datum auxiliary objects from a classpath resource.
 	 * 
 	 * <p>
@@ -228,6 +241,60 @@ public final class DatumTestUtils {
 				} else {
 					GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
 					assertThat(format("Parsed JSON datum in line %d", row), d, notNullValue());
+					result.add(d);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Load JSON aggregate datum objects from a classpath resource.
+	 * 
+	 * <p>
+	 * This method loads JSON aggregate datum records from a resource, with one
+	 * JSON datum object per line. Empty lines or those starting with a
+	 * {@literal #} character are ignored. An example JSON aggregate datum looks
+	 * like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[100,200,100]}}}</code>
+	 * </pre>
+	 * 
+	 * @param resource
+	 *        the name of the resource to load
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @param metadataProvider
+	 *        the metadata provider
+	 * @return the loaded data, never {@literal null}
+	 * @throws IOException
+	 *         if the resource cannot be found or parsed correctly
+	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
+	 *      ObjectDatumStreamMetadataProvider)
+	 */
+	public static List<AggregateDatum> loadJsonAggregateDatumResource(String resource, Class<?> clazz,
+			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
+		List<AggregateDatum> result = new ArrayList<>();
+		int row = 0;
+		JsonFactory factory = new JsonFactory();
+		try (BufferedReader r = new BufferedReader(
+				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+			while ( true ) {
+				String line = r.readLine();
+				if ( line == null ) {
+					break;
+				}
+				row++;
+				if ( line.isEmpty() || COMMENT.matcher(line).find() ) {
+					// skip empty/comment line
+					continue;
+				}
+				if ( AGG.matcher(line).find() ) {
+					JsonParser parser = factory.createParser(line);
+					AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, metadataProvider);
+					assertThat(format("Parsed JSON aggregate datum in line %d", row), d, notNullValue());
 					result.add(d);
 				}
 			}
@@ -513,6 +580,125 @@ public final class DatumTestUtils {
 						datumStmt.setString(3, d.getType().name());
 						datumStmt.setString(4, getJSONString(d.getSamplesFinal().getA(), null));
 						datumStmt.setString(5, getJSONString(d.getSamplesStart().getA(), null));
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	private static String insertAggStmt(Aggregation kind) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("insert into solardatm.agg_datm_");
+		switch (kind) {
+			case Day:
+				buf.append("hourly");
+				break;
+
+			case Month:
+				buf.append("monthly");
+				break;
+
+			default:
+				buf.append("hourly");
+				break;
+		}
+		buf.append(" (stream_id,ts_start,data_i,data_a,data_s,data_t,stat_i,read_a) ");
+		buf.append(
+				"VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?::numeric[][],?::numeric[][])");
+		return buf.toString();
+	}
+
+	/**
+	 * Insert aggregate datum records for a given stream.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void insertAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<AggregateDatum> datums) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement hourStmt = con.prepareStatement(insertAggStmt(Aggregation.Hour));
+						PreparedStatement dayStmt = con.prepareStatement(insertAggStmt(Aggregation.Day));
+						PreparedStatement monthStmt = con
+								.prepareStatement(insertAggStmt(Aggregation.Month))) {
+					for ( AggregateDatum d : datums ) {
+						Aggregation kind = (d.getAggregation() != null ? d.getAggregation()
+								: Aggregation.Hour);
+						PreparedStatement datumStmt;
+						switch (kind) {
+							case Day:
+								datumStmt = dayStmt;
+								break;
+
+							case Month:
+								datumStmt = monthStmt;
+								break;
+
+							default:
+								datumStmt = hourStmt;
+								break;
+						}
+						if ( log != null ) {
+							log.debug("Inserting {} AggregateDatum: {}", kind, d);
+						}
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+						DatumProperties props = d.getProperties();
+						if ( props != null && props.getInstantaneousLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
+							datumStmt.setArray(3, array);
+							array.free();
+						} else {
+							datumStmt.setNull(3, Types.ARRAY);
+						}
+						if ( props != null && props.getAccumulatingLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
+							datumStmt.setArray(4, array);
+							array.free();
+						} else {
+							datumStmt.setNull(4, Types.ARRAY);
+						}
+						if ( props != null && props.getStatusLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getStatus());
+							datumStmt.setArray(5, array);
+							array.free();
+						} else {
+							datumStmt.setNull(5, Types.ARRAY);
+						}
+						if ( props != null && props.getTagsLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getTags());
+							datumStmt.setArray(6, array);
+							array.free();
+						} else {
+							datumStmt.setNull(6, Types.ARRAY);
+						}
+
+						DatumPropertiesStatistics stats = d.getStatistics();
+						if ( stats != null && stats.getInstantaneousLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", stats.getInstantaneous());
+							datumStmt.setArray(7, array);
+							array.free();
+						} else {
+							datumStmt.setNull(7, Types.ARRAY);
+						}
+						if ( stats != null && stats.getAccumulatingLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", stats.getAccumulating());
+							datumStmt.setArray(8, array);
+							array.free();
+						} else {
+							datumStmt.setNull(8, Types.ARRAY);
+						}
+
 						datumStmt.execute();
 					}
 				}
