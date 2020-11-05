@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
@@ -58,7 +59,22 @@ public final class DatumJsonUtils {
 		// don't construct me
 	}
 
-	private static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[] array)
+	/**
+	 * Write the contents of a JSON array of {@link BigDecimal}.
+	 * 
+	 * <p>
+	 * This writes <b>just</b> the array contents, without the start/end JSON
+	 * array literals.
+	 * </p>
+	 * 
+	 * @param generator
+	 *        the generator
+	 * @param array
+	 *        the array whose contents should be written to {@code generator}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[] array)
 			throws IOException {
 		if ( array == null ) {
 			return;
@@ -68,7 +84,23 @@ public final class DatumJsonUtils {
 		}
 	}
 
-	private static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[][] arrayOfArrays)
+	/**
+	 * Write the contents of a two dimensional JSON array of {@link BigDecimal}.
+	 * 
+	 * <p>
+	 * This writes <b>just</b> the array contents, without the start/end JSON
+	 * array literals of the outer array. The inner arrays do have their
+	 * start/end JSON array literals included.
+	 * </p>
+	 * 
+	 * @param generator
+	 *        the generator
+	 * @param array
+	 *        the array whose contents should be written to {@code generator}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	public static void writeJsonArrayValues(JsonGenerator generator, BigDecimal[][] arrayOfArrays)
 			throws IOException {
 		if ( arrayOfArrays == null ) {
 			return;
@@ -84,8 +116,22 @@ public final class DatumJsonUtils {
 		}
 	}
 
-	private static void writeJsonArrayValues(JsonGenerator generator, String[] array)
-			throws IOException {
+	/**
+	 * Write the contents of a JSON array of strings.
+	 * 
+	 * <p>
+	 * This writes <b>just</b> the array contents, without the start/end JSON
+	 * array literals.
+	 * </p>
+	 * 
+	 * @param generator
+	 *        the generator
+	 * @param array
+	 *        the array whose contents should be written to {@code generator}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	public static void writeJsonArrayValues(JsonGenerator generator, String[] array) throws IOException {
 		if ( array == null ) {
 			return;
 		}
@@ -96,6 +142,23 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write datum stream metadata as a JSON object.
+	 * 
+	 * <p>
+	 * A datum stream metadata object consists of a properties name array and a
+	 * classification object with {@code i}, {@code a}, and {@code s} properties
+	 * name arrays. For example here is the JSON for a stream of 4 properties:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "props": ["cpu_user", "net_bytes_in_eth0", "net_bytes_out_eth0", "alert"],
+	 *     "class": {
+	 *         "i": ["cpu_user"],
+	 *         "a": ["net_bytes_in_eth0", "net_bytes_out_eth0"],
+	 *         "s": ["alert"]
+	 *     }
+	 * }</code>
+	 * </pre>
 	 * 
 	 * @param generator
 	 *        the generator to write to
@@ -162,7 +225,7 @@ public final class DatumJsonUtils {
 	}
 
 	/**
-	 * Write datum property values as a JSON array.
+	 * Write datum property values as a two dimensional JSON array.
 	 * 
 	 * <p>
 	 * The output array will contain the following elements:
@@ -183,6 +246,18 @@ public final class DatumJsonUtils {
 	 * <i>within</i> a property array will contribute {@literal null} literals
 	 * to the output JSON array.
 	 * <p>
+	 * 
+	 * <p>
+	 * An example JSON properties value array looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>[
+	 *     [1325376000000, 3, 23445, 123, null],
+	 *     [1325376001000, 99, 23423, 243, "W9347"],
+	 *     [1325376002000, 4, 33452, 291, null]
+	 * ]</code>
+	 * </pre>
 	 * 
 	 * @param generator
 	 *        the generator to write to
@@ -472,6 +547,157 @@ public final class DatumJsonUtils {
 		generator.writeEndObject();
 	}
 
+	/**
+	 * Parse a datum JSON object.
+	 * 
+	 * <p>
+	 * The {@code meta} argument will be used to encode the property names into
+	 * the two dimensional arrays used in the returned properties instance. It
+	 * will also be used to translate node/location/source ID values into stream
+	 * ID values. The datum can either provide
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "nodeId"   : 1,
+	 *     "sourceId" : "a",
+	 *     "ts"       : "2020-06-01T00:00:00Z",
+	 *     "samples"  : {
+	 *         "i" : {
+	 *             "x": 1.2,
+	 *             "y": 2.1
+	 *         },
+	 *         "a" : {
+	 *             "w": 100
+	 *         }
+	 *     }
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @param metadataProvider
+	 *        the stream metadata provider to translate property names with
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static Datum parseDatum(JsonParser parser, ObjectDatumStreamMetadataProvider metadataProvider)
+			throws IOException {
+		// read up to the next object end
+		UUID streamId = null;
+		Instant timestamp = null;
+		Instant received = null;
+
+		Long objectId = null;
+		String sourceId = null;
+
+		ObjectDatumStreamMetadata meta = null;
+		DatumProperties props = null;
+
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				parser.nextToken();
+				switch (parser.getCurrentName()) {
+					case "locationId":
+					case "nodeId":
+						objectId = parser.getLongValue();
+						if ( sourceId != null ) {
+							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
+						}
+						break;
+
+					case "sourceId":
+						sourceId = parser.getText();
+						if ( objectId != null ) {
+							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
+						}
+						break;
+
+					case "streamId":
+						streamId = UUID.fromString(parser.getText());
+						meta = metadataProvider.metadataForStreamId(streamId);
+						break;
+
+					case "ts":
+						timestamp = parseInstant(parser);
+						break;
+
+					case "rts":
+						received = parseInstant(parser);
+						break;
+
+					case "samples":
+						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+							props = parseDatumSamples(parser, meta);
+						}
+						break;
+
+				}
+			}
+		}
+
+		return new DatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp,
+				received != null ? received : Instant.now(), props);
+	}
+
+	/**
+	 * Parse an aggregate datum JSON object.
+	 * 
+	 * <p>
+	 * The {@code meta} argument will be used to encode the property names into
+	 * the two dimensional arrays used in the returned properties instance. It
+	 * will also be used to translate node/location/source ID values into stream
+	 * ID values. The datum can either provide
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "nodeId"   : 1,
+	 *     "sourceId" : "a",
+	 *     "ts"       : "2020-06-01T00:00:00Z",
+	 *     "kind"     : "Hour",
+	 *     "samples"  : {
+	 *         "i" : {
+	 *             "x": 1.2,
+	 *             "y": 2.1
+	 *         },
+	 *         "a" : {
+	 *             "w": 100
+	 *         }
+	 *     },
+	 *     "stats"    : {
+	 *         "i" : {
+	 *             "x": [6,1.2,1.7],
+	 *             "y": [6,2.1,7.1]
+	 *         },
+	 *         "ra" : {
+	 *             "w": [100,120,20]
+	 *         }
+	 *     }
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @param metadataProvider
+	 *        the stream metadata provider to translate property names with
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
 	public static AggregateDatum parseAggregateDatum(JsonParser parser,
 			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
 		// read up to the next object end
@@ -519,13 +745,7 @@ public final class DatumJsonUtils {
 						break;
 
 					case "ts":
-						if ( parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ) {
-							// parse as millisecond epoch value
-							timestamp = Instant.ofEpochMilli(parser.getLongValue());
-						} else {
-							// parse as ISO 8601
-							timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
-						}
+						timestamp = parseInstant(parser);
 						break;
 
 					case "samples":
@@ -544,11 +764,46 @@ public final class DatumJsonUtils {
 			}
 		}
 
-		// TODO
 		return new AggregateDatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp, kind,
 				props, stats);
 	}
 
+	/**
+	 * Parse a datum samples JSON object.
+	 * 
+	 * <p>
+	 * The {@code meta} argument will be used to encode the property names into
+	 * the two dimensional arrays used in the returned properties instance.
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "i" : {
+	 *         "x": 1.2,
+	 *         "y": 2.1
+	 *     },
+	 *     "a" : {
+	 *         "w": 100
+	 *     },
+	 *     "s" : {
+	 *         "state": "On"
+	 *     },
+	 *     "t" : ["A", "Ok"]
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @param meta
+	 *        the stream metadata to translate property names with
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
 	public static DatumProperties parseDatumSamples(JsonParser parser, ObjectDatumStreamMetadata meta)
 			throws IOException {
 		BigDecimal[] instantaneous = null;
@@ -564,21 +819,22 @@ public final class DatumJsonUtils {
 				parser.nextToken();
 				switch (parser.getCurrentName()) {
 					case "i":
-						instantaneous = decimalArrayForSamplesType(parser, meta,
+						instantaneous = parseDecimalArrayForSamplesType(parser, meta,
 								GeneralDatumSamplesType.Instantaneous);
 						break;
 
 					case "a":
-						accumulating = decimalArrayForSamplesType(parser, meta,
+						accumulating = parseDecimalArrayForSamplesType(parser, meta,
 								GeneralDatumSamplesType.Accumulating);
 						break;
 
 					case "s":
-						status = stringArrayForSamplesType(parser, meta, GeneralDatumSamplesType.Status);
+						status = parseStringArrayForSamplesType(parser, meta,
+								GeneralDatumSamplesType.Status);
 						break;
 
 					case "t":
-						tags = stringArrayForSamplesType(parser, meta, GeneralDatumSamplesType.Tag);
+						tags = parseStringArrayForSamplesType(parser, meta, GeneralDatumSamplesType.Tag);
 						break;
 				}
 			}
@@ -586,6 +842,38 @@ public final class DatumJsonUtils {
 		return DatumProperties.propertiesOf(instantaneous, accumulating, status, tags);
 	}
 
+	/**
+	 * Parse a datum samples statistics JSON object.
+	 * 
+	 * <p>
+	 * The {@code meta} argument will be used to encode the property names into
+	 * the two dimensional arrays used in the returned statistics instance.
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "i" : {
+	 *         "x": [6,1.2,1.7],
+	 *         "y": [6,2.1,7.1]
+	 *     },
+	 *     "ra" : {
+	 *         "w": [100,120,20]
+	 *     }
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @param meta
+	 *        the stream metadata to translate property names with
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
 	public static DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
 			ObjectDatumStreamMetadata meta) throws IOException {
 		BigDecimal[][] instantaneous = null;
@@ -599,12 +887,12 @@ public final class DatumJsonUtils {
 				parser.nextToken();
 				switch (parser.getCurrentName()) {
 					case "i":
-						instantaneous = decimalArrayOfArraysForSamplesType(parser, meta,
+						instantaneous = parseDecimalArrayOfArraysForSamplesType(parser, meta,
 								GeneralDatumSamplesType.Instantaneous);
 						break;
 
 					case "ra":
-						accumulating = decimalArrayOfArraysForSamplesType(parser, meta,
+						accumulating = parseDecimalArrayOfArraysForSamplesType(parser, meta,
 								GeneralDatumSamplesType.Accumulating);
 						break;
 				}
@@ -613,11 +901,11 @@ public final class DatumJsonUtils {
 		return DatumPropertiesStatistics.statisticsOf(instantaneous, accumulating);
 	}
 
-	private static BigDecimal[] decimalArrayForSamplesType(JsonParser parser,
+	private static BigDecimal[] parseDecimalArrayForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, GeneralDatumSamplesType type) throws IOException {
 		BigDecimal[] result = null;
 		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
-			Map<String, BigDecimal> map = parseNumberPropertiesObject(parser);
+			Map<String, BigDecimal> map = parseDecimalsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null ) {
 				result = new BigDecimal[names.length];
@@ -629,8 +917,8 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	private static String[] stringArrayForSamplesType(JsonParser parser, ObjectDatumStreamMetadata meta,
-			GeneralDatumSamplesType type) throws IOException {
+	private static String[] parseStringArrayForSamplesType(JsonParser parser,
+			ObjectDatumStreamMetadata meta, GeneralDatumSamplesType type) throws IOException {
 		String[] result = null;
 		if ( type == GeneralDatumSamplesType.Tag ) {
 			if ( parser.getCurrentToken() == JsonToken.START_ARRAY ) {
@@ -646,7 +934,7 @@ public final class DatumJsonUtils {
 				}
 			}
 		} else if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
-			Map<String, String> map = parseStringPropertiesObject(parser);
+			Map<String, String> map = parseStringsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null ) {
 				result = new String[names.length];
@@ -658,11 +946,11 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	private static BigDecimal[][] decimalArrayOfArraysForSamplesType(JsonParser parser,
+	private static BigDecimal[][] parseDecimalArrayOfArraysForSamplesType(JsonParser parser,
 			ObjectDatumStreamMetadata meta, GeneralDatumSamplesType type) throws IOException {
 		BigDecimal[][] result = null;
 		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
-			Map<String, BigDecimal[]> map = parseNumberStatisticsObject(parser);
+			Map<String, BigDecimal[]> map = parseDecimalArraysObject(parser);
 			String[] names = meta.propertyNamesForType(type);
 			if ( names != null ) {
 				result = new BigDecimal[names.length][];
@@ -674,8 +962,35 @@ public final class DatumJsonUtils {
 		return result;
 	}
 
-	public static Map<String, BigDecimal> parseNumberPropertiesObject(JsonParser parser)
-			throws IOException {
+	/**
+	 * Parse a JSON object with decimal property values.
+	 * 
+	 * <p>
+	 * This will parse the contents of a JSON object until a JSON end object
+	 * literal. The fields of the object are assumed to have decimal values
+	 * (string values are supported as well). The returned map contains the
+	 * field names with their associated decimal values.
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "x" : 1.1,
+	 *     "y" : -2.3,
+	 *     "z" : "19.95"
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static Map<String, BigDecimal> parseDecimalsObject(JsonParser parser) throws IOException {
 		Map<String, BigDecimal> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
@@ -684,18 +999,52 @@ public final class DatumJsonUtils {
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
 				t = parser.nextToken();
+				BigDecimal d = null;
 				if ( t == JsonToken.VALUE_NUMBER_INT || t == JsonToken.VALUE_NUMBER_FLOAT ) {
-					BigDecimal d = parser.getDecimalValue();
-					if ( d != null ) {
-						map.put(parser.getCurrentName(), d);
+					d = parser.getDecimalValue();
+				} else if ( t == JsonToken.VALUE_STRING ) {
+					try {
+						d = new BigDecimal(parser.getText());
+					} catch ( NumberFormatException e ) {
+						// ignore error
 					}
+				}
+				if ( d != null ) {
+					map.put(parser.getCurrentName(), d);
 				}
 			}
 		}
 		return map;
 	}
 
-	public static Map<String, String> parseStringPropertiesObject(JsonParser parser) throws IOException {
+	/**
+	 * Parse a JSON object with string property values.
+	 * 
+	 * <p>
+	 * This will parse the contents of a JSON object until a JSON end object
+	 * literal. The fields of the object are assumed to have string values. The
+	 * returned map contains the field names with their associated string
+	 * values.
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "alert" : "A",
+	 *     "state" : "On"
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static Map<String, String> parseStringsObject(JsonParser parser) throws IOException {
 		Map<String, String> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
 			JsonToken t = parser.currentToken();
@@ -713,7 +1062,34 @@ public final class DatumJsonUtils {
 		return map;
 	}
 
-	public static Map<String, BigDecimal[]> parseNumberStatisticsObject(JsonParser parser)
+	/**
+	 * Parse a JSON object with decimal array property values.
+	 * 
+	 * <p>
+	 * This will parse the contents of a JSON object until a JSON end object
+	 * literal. The fields of the object are assumed to have arrays of decimal
+	 * values. The returned map contains the field names with their associated
+	 * array values.
+	 * </p>
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{
+	 *     "x" : [60, 1.1, 9.8],
+	 *     "y" : [60, -2.2, 5.5]
+	 * }</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @return the parsed JSON object
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static Map<String, BigDecimal[]> parseDecimalArraysObject(JsonParser parser)
 			throws IOException {
 		Map<String, BigDecimal[]> map = new LinkedHashMap<>(8);
 		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
@@ -735,6 +1111,20 @@ public final class DatumJsonUtils {
 		return map;
 	}
 
+	/**
+	 * Parse a JSON array of decimal values.
+	 * 
+	 * <p>
+	 * This will parse the contents of a JSON array until a JSON end array
+	 * literal.
+	 * </p>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @return the parsed array
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
 	public static BigDecimal[] parseDecimalArray(JsonParser parser) throws IOException {
 		List<BigDecimal> list = new ArrayList<>(3);
 		while ( parser.nextToken() != JsonToken.END_ARRAY ) {
@@ -750,6 +1140,35 @@ public final class DatumJsonUtils {
 			}
 		}
 		return list.toArray(new BigDecimal[list.size()]);
+	}
+
+	/**
+	 * Parse a JSON string timestamp.
+	 * 
+	 * <p>
+	 * An example JSON object supported by this method looks like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>"2020-06-01T00:00:00Z"</code>
+	 * </pre>
+	 * 
+	 * @param parser
+	 *        the parser to read from
+	 * @return the parsed instant
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static Instant parseInstant(JsonParser parser) throws IOException {
+		Instant timestamp;
+		if ( parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ) {
+			// parse as millisecond epoch value
+			timestamp = Instant.ofEpochMilli(parser.getLongValue());
+		} else {
+			// parse as ISO 8601
+			timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
+		}
+		return timestamp;
 	}
 
 }
