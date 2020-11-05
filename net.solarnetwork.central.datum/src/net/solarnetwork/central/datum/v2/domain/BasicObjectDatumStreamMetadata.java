@@ -1,5 +1,5 @@
 /* ==================================================================
- * BasicNodeDatumStreamMetadata.java - 26/10/2020 9:22:48 pm
+ * BasicObjectDatumStreamMetadata.java - 5/11/2020 4:03:50 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -26,27 +26,30 @@ import java.util.Arrays;
 import java.util.UUID;
 
 /**
- * Basic implementation of {@link NodeDatumStreamMetadata}.
+ * Basic implementation of {@link ObjectDatumStreamMetadata}.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
-		implements NodeDatumStreamMetadata {
+public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
+		implements ObjectDatumStreamMetadata {
+
+	private final Long objectId;
+	private final String sourceId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * <p>
-	 * All arguments except {@code streamId}, {@code nodeId}, and
+	 * All arguments except {@code streamId}, {@code objectId}, and
 	 * {@code sourceId} are allowed to be {@literal null}. If any array is
 	 * empty, it will be treated as if it were {@literal null}.
 	 * </p>
 	 * 
 	 * @param streamId
 	 *        the stream ID
-	 * @param nodeId
+	 * @param objectId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
@@ -57,21 +60,28 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * @param statusProperties
 	 *        the status property names
 	 * @throws IllegalArgumentException
-	 *         if {@code streamId} or {@code nodeId} or {@code sourceId} is
+	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
 	 *         {@literal null}
 	 */
-	public BasicNodeDatumStreamMetadata(UUID streamId, Long nodeId, String sourceId,
+	public BasicObjectDatumStreamMetadata(UUID streamId, Long objectId, String sourceId,
 			String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
-				statusProperties);
+		super(streamId, instantaneousProperties, accumulatingProperties, statusProperties);
+		if ( objectId == null ) {
+			throw new IllegalArgumentException("The objectId argument must not be null.");
+		}
+		this.objectId = objectId;
+		if ( sourceId == null ) {
+			throw new IllegalArgumentException("The sourceId argument must not be null.");
+		}
+		this.sourceId = sourceId;
 	}
 
 	/**
 	 * Constructor.
 	 * 
 	 * <p>
-	 * All arguments except {@code streamId}, {@code nodeId}, and
+	 * All arguments except {@code streamId}, {@code objectId}, and
 	 * {@code sourceId} are allowed to be {@literal null}. The other arguments
 	 * are {@code Object} to work around MyBatis mapping issues. If any array is
 	 * empty, it will be treated as if it were {@literal null}.
@@ -79,7 +89,7 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * 
 	 * @param streamId
 	 *        the stream ID
-	 * @param nodeId
+	 * @param objectId
 	 *        the node ID
 	 * @param sourceId
 	 *        the source ID
@@ -90,9 +100,9 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 */
-	public BasicNodeDatumStreamMetadata(UUID streamId, Long nodeId, String sourceId,
+	public BasicObjectDatumStreamMetadata(UUID streamId, Long objectId, String sourceId,
 			Object instantaneousProperties, Object accumulatingProperties, Object statusProperties) {
-		this(streamId, nodeId, sourceId, (String[]) instantaneousProperties,
+		this(streamId, objectId, sourceId, (String[]) instantaneousProperties,
 				(String[]) accumulatingProperties, (String[]) statusProperties);
 	}
 
@@ -105,14 +115,14 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 			builder.append(getStreamId());
 			builder.append(", ");
 		}
-		if ( getObjectId() != null ) {
-			builder.append("nodeId=");
-			builder.append(getObjectId());
+		if ( objectId != null ) {
+			builder.append("objectId=");
+			builder.append(objectId);
 			builder.append(", ");
 		}
-		if ( getSourceId() != null ) {
+		if ( sourceId != null ) {
 			builder.append("sourceId=");
-			builder.append(getSourceId());
+			builder.append(sourceId);
 			builder.append(", ");
 		}
 		if ( getPropertyNames() != null ) {
@@ -124,8 +134,13 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	}
 
 	@Override
-	public Long getNodeId() {
-		return getObjectId();
+	public Long getObjectId() {
+		return objectId;
+	}
+
+	@Override
+	public String getSourceId() {
+		return sourceId;
 	}
 
 }

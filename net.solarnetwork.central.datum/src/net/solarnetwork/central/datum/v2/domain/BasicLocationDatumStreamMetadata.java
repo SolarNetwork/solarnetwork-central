@@ -32,11 +32,8 @@ import java.util.UUID;
  * @version 1.0
  * @since 2.8
  */
-public class BasicLocationDatumStreamMetadata extends BasicDatumStreamMetadata
+public class BasicLocationDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 		implements LocationDatumStreamMetadata {
-
-	private final Long locationId;
-	private final String sourceId;
 
 	/**
 	 * Constructor.
@@ -66,15 +63,8 @@ public class BasicLocationDatumStreamMetadata extends BasicDatumStreamMetadata
 	public BasicLocationDatumStreamMetadata(UUID streamId, Long locationId, String sourceId,
 			String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, instantaneousProperties, accumulatingProperties, statusProperties);
-		if ( locationId == null ) {
-			throw new IllegalArgumentException("The locationId argument must not be null.");
-		}
-		this.locationId = locationId;
-		if ( sourceId == null ) {
-			throw new IllegalArgumentException("The sourceId argument must not be null.");
-		}
-		this.sourceId = sourceId;
+		super(streamId, locationId, sourceId, instantaneousProperties, accumulatingProperties,
+				statusProperties);
 	}
 
 	/**
@@ -115,14 +105,14 @@ public class BasicLocationDatumStreamMetadata extends BasicDatumStreamMetadata
 			builder.append(getStreamId());
 			builder.append(", ");
 		}
-		if ( locationId != null ) {
+		if ( getLocationId() != null ) {
 			builder.append("locationId=");
-			builder.append(locationId);
+			builder.append(getLocationId());
 			builder.append(", ");
 		}
-		if ( sourceId != null ) {
+		if ( getSourceId() != null ) {
 			builder.append("sourceId=");
-			builder.append(sourceId);
+			builder.append(getSourceId());
 			builder.append(", ");
 		}
 		if ( getPropertyNames() != null ) {
@@ -135,12 +125,7 @@ public class BasicLocationDatumStreamMetadata extends BasicDatumStreamMetadata
 
 	@Override
 	public Long getLocationId() {
-		return locationId;
-	}
-
-	@Override
-	public String getSourceId() {
-		return sourceId;
+		return getObjectId();
 	}
 
 }

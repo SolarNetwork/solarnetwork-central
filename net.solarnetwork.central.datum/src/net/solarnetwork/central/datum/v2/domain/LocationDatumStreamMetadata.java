@@ -29,20 +29,17 @@ package net.solarnetwork.central.datum.v2.domain;
  * @version 1.0
  * @since 2.8
  */
-public interface LocationDatumStreamMetadata extends DatumStreamMetadata {
+public interface LocationDatumStreamMetadata extends DatumStreamMetadata, ObjectDatumStreamMetadata {
 
 	/**
 	 * Get the location ID.
 	 * 
+	 * <p>
+	 * This is an alias for {@link ObjectDatumStreamMetadata#getObjectId()}.
+	 * </p>
+	 * 
 	 * @return the location ID
 	 */
 	Long getLocationId();
-
-	/**
-	 * Get the source ID.
-	 * 
-	 * @return the source ID
-	 */
-	String getSourceId();
 
 }

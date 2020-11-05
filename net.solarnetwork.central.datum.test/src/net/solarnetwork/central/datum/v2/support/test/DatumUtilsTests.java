@@ -23,27 +23,47 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Test cases for the {@link DatumUtils} class.
@@ -52,6 +72,9 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
  * @version 1.0
  */
 public class DatumUtilsTests {
+
+	/** Regex for a line starting with a {@literal #} comment character. */
+	public static final Pattern COMMENT = Pattern.compile("\\s*#");
 
 	@Test
 	public void writePropertyValues_typical() throws IOException {
@@ -260,7 +283,8 @@ public class DatumUtilsTests {
 	@Test
 	public void writeStatisticValues_typical() throws IOException {
 		// @formatter:off
-		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+		AggregateDatumEntity datum = new AggregateDatumEntity(
+				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23", "2.34"), 
 						arrayOfDecimals("123456"),
@@ -284,7 +308,8 @@ public class DatumUtilsTests {
 	@Test
 	public void writeStatisticValues_nullValues() throws IOException {
 		// @formatter:off
-		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+		AggregateDatumEntity datum = new AggregateDatumEntity(
+				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23", null), 
 						arrayOfDecimals(null, "123456"),
@@ -309,7 +334,8 @@ public class DatumUtilsTests {
 	@Test
 	public void writeStatisticValues_missingTimestamp() throws IOException {
 		// @formatter:off
-		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), null,
+		AggregateDatumEntity datum = new AggregateDatumEntity(
+				UUID.randomUUID(), null, Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23"),
 						null,
@@ -329,7 +355,8 @@ public class DatumUtilsTests {
 	@Test
 	public void writeStatisticValues_missingInstantaneous() throws IOException {
 		// @formatter:off
-		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+		AggregateDatumEntity datum = new AggregateDatumEntity(
+				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
 						null, 
 						arrayOfDecimals("123456"),
@@ -350,7 +377,8 @@ public class DatumUtilsTests {
 	@Test
 	public void writeStatisticValues_missingAccumulation() throws IOException {
 		// @formatter:off
-		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(), Instant.now(),
+		AggregateDatumEntity datum = new AggregateDatumEntity(
+				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
 						arrayOfDecimals("1.23"),
 						null,
@@ -376,7 +404,8 @@ public class DatumUtilsTests {
 		UUID streamId = UUID.randomUUID();
 		// @formatter:off
 		List<AggregateDatum> datum = Arrays.asList(
-				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(3),
+				new AggregateDatumEntity(
+						UUID.randomUUID(), Instant.now().minusSeconds(3), Aggregation.Hour,
 						propertiesOf(
 								arrayOfDecimals("1.23", "2.34", "3.45"),
 								arrayOfDecimals("456", "567"),
@@ -393,7 +422,8 @@ public class DatumUtilsTests {
 									arrayOfDecimals("0", "567"),
 									}
 								)),
-				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(2),
+				new AggregateDatumEntity(
+						UUID.randomUUID(), Instant.now().minusSeconds(2), Aggregation.Hour,
 						propertiesOf(
 								arrayOfDecimals("1.234", "2.345", "3.456"),
 								arrayOfDecimals("4567", "5678"),
@@ -410,7 +440,8 @@ public class DatumUtilsTests {
 									arrayOfDecimals("567", "6245"),
 									}
 								)),
-				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(1),
+				new AggregateDatumEntity(
+						UUID.randomUUID(), Instant.now().minusSeconds(1), Aggregation.Hour,
 						propertiesOf(
 								arrayOfDecimals("1.2345", "2.3456", "3.4567"),
 								arrayOfDecimals("45678", "56789"),
@@ -457,7 +488,81 @@ public class DatumUtilsTests {
 						datum.get(2).getTimestamp().toEpochMilli(),
 						datum.get(2).getTimestamp().toEpochMilli()
 						)));
+		// @formatter:on
+	}
 
+	private static List<AggregateDatum> loadAggregateDatum(String resource, Class<?> clazz,
+			JsonFactory factory, ObjectDatumStreamMetadataProvider streamIdProvider) throws IOException {
+		List<AggregateDatum> result = new ArrayList<>();
+		int row = 0;
+		try (BufferedReader r = new BufferedReader(
+				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+			while ( true ) {
+				String line = r.readLine();
+				if ( line == null ) {
+					break;
+				}
+				row++;
+				if ( line.isEmpty() || COMMENT.matcher(line).find() ) {
+					// skip empty/comment line
+					continue;
+				}
+
+				JsonParser parser = factory.createParser(line);
+				AggregateDatum d = DatumUtils.parseAggregateDatum(parser, streamIdProvider);
+				assertThat(format("Parsed JSON aggregate datum in line %d", row), d, notNullValue());
+				result.add(d);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
+	 * 
+	 * @param nums
+	 *        the string numbers, which will be parsed as {@link BigDecimal}
+	 *        instances
+	 * @return the matcher
+	 */
+	public static Matcher<BigDecimal[]> arrayContainingDecimals(String... nums) {
+		BigDecimal[] vals = new BigDecimal[nums.length];
+		for ( int i = 0; i < nums.length; i++ ) {
+			vals[i] = new BigDecimal(nums[i]);
+		}
+		return Matchers.arrayContaining(vals);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void parseAggregateDatum_mappedNodeSourceId() throws IOException {
+		UUID streamId = UUID.randomUUID();
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, 1L, "a",
+				new String[] { "x", "y" }, new String[] { "w" }, null);
+		List<AggregateDatum> list = loadAggregateDatum("test-agg-datum-01.txt", getClass(),
+				new JsonFactory(), staticProvider(singleton(meta)));
+		assertThat("Parsed agg datum", list, hasSize(1));
+
+		AggregateDatum d = list.get(0);
+		assertThat("Stream ID mapped from parsed node + source ID", d.getStreamId(), equalTo(streamId));
+
+		Instant timestamp = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC).toInstant();
+		assertThat("Timestamp parsed", d.getTimestamp(), equalTo(timestamp));
+
+		assertThat("Aggregation parsed", d.getAggregation(), equalTo(Aggregation.Hour));
+
+		DatumProperties props = d.getProperties();
+		assertThat("Datum properties parsed", props, notNullValue());
+		assertThat("Agg instantaneous", props.getInstantaneous(), arrayContainingDecimals("1.2", "2.1"));
+		assertThat("Agg accumulating", props.getAccumulating(), arrayContainingDecimals("100"));
+
+		DatumPropertiesStatistics stats = d.getStatistics();
+		assertThat("Datum statistics parsed", stats, notNullValue());
+		assertThat("Stats instantaneous", stats.getInstantaneous(),
+				arrayContaining(arrayContainingDecimals(new String[] { "6", "1.2", "1.7" }),
+						arrayContainingDecimals(new String[] { "6", "2.1", "7.1" })));
+		assertThat("Stats accumulating", stats.getAccumulating(),
+				arrayContaining(arrayContainingDecimals(new String[] { "100", "120", "20" })));
 	}
 
 }

@@ -32,6 +32,7 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Map rollup aggregate rows into {@link AggregateDatumEntity} instances.
@@ -57,8 +58,33 @@ import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
  */
 public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEntity> {
 
-	/** A default instance. */
-	public static final AggregateDatumEntityRowMapper INSTANCE = new AggregateDatumEntityRowMapper();
+	/** A default instance for null aggregates. */
+	public static final AggregateDatumEntityRowMapper INSTANCE = new AggregateDatumEntityRowMapper(null);
+
+	/** A default instance for hourly aggregates. */
+	public static final AggregateDatumEntityRowMapper HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Hour);
+
+	/** A default instance for daily aggregates. */
+	public static final AggregateDatumEntityRowMapper DAY_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Day);
+
+	/** A default instance for monthly aggregates. */
+	public static final AggregateDatumEntityRowMapper MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Month);
+
+	private final Aggregation aggregation;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param aggregation
+	 *        the aggregation kind to assign
+	 */
+	public AggregateDatumEntityRowMapper(Aggregation aggregation) {
+		super();
+		this.aggregation = aggregation;
+	}
 
 	@SuppressWarnings("unchecked")
 	private static <T> T getArray(ResultSet rs, int colNum)
@@ -81,7 +107,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEn
 		BigDecimal[][] stat_i = getArray(rs, 7);
 		BigDecimal[][] stat_a = getArray(rs, 8);
 
-		return new AggregateDatumEntity(streamId, ts,
+		return new AggregateDatumEntity(streamId, ts, aggregation,
 				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t),
 				DatumPropertiesStatistics.statisticsOf(stat_i, stat_a));
 	}

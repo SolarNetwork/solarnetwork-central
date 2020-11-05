@@ -22,17 +22,27 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
@@ -460,6 +470,286 @@ public final class DatumUtils {
 		}
 
 		generator.writeEndObject();
+	}
+
+	public static AggregateDatum parseAggregateDatum(JsonParser parser,
+			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
+		// read up to the next object end
+		UUID streamId = null;
+		Instant timestamp = null;
+		Aggregation kind = null;
+
+		Long objectId = null;
+		String sourceId = null;
+
+		ObjectDatumStreamMetadata meta = null;
+		DatumProperties props = null;
+		DatumPropertiesStatistics stats = null;
+
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				parser.nextToken();
+				switch (parser.getCurrentName()) {
+					case "kind":
+						kind = Aggregation.forKey(parser.getText());
+						break;
+
+					case "locationId":
+					case "nodeId":
+						objectId = parser.getLongValue();
+						if ( sourceId != null ) {
+							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
+						}
+						break;
+
+					case "sourceId":
+						sourceId = parser.getText();
+						if ( objectId != null ) {
+							meta = metadataProvider.metadataForObjectSource(objectId, sourceId);
+						}
+						break;
+
+					case "streamId":
+						streamId = UUID.fromString(parser.getText());
+						meta = metadataProvider.metadataForStreamId(streamId);
+						break;
+
+					case "ts":
+						if ( parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ) {
+							// parse as millisecond epoch value
+							timestamp = Instant.ofEpochMilli(parser.getLongValue());
+						} else {
+							// parse as ISO 8601
+							timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
+						}
+						break;
+
+					case "samples":
+						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+							props = parseDatumSamples(parser, meta);
+						}
+						break;
+
+					case "stats":
+						if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+							stats = parseDatumSamplesStatistics(parser, meta);
+						}
+						break;
+
+				}
+			}
+		}
+
+		// TODO
+		return new AggregateDatumEntity(meta != null ? meta.getStreamId() : streamId, timestamp, kind,
+				props, stats);
+	}
+
+	public static DatumProperties parseDatumSamples(JsonParser parser, ObjectDatumStreamMetadata meta)
+			throws IOException {
+		BigDecimal[] instantaneous = null;
+		BigDecimal[] accumulating = null;
+		String[] status = null;
+		String[] tags = null;
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				parser.nextToken();
+				switch (parser.getCurrentName()) {
+					case "i":
+						instantaneous = decimalArrayForSamplesType(parser, meta,
+								GeneralDatumSamplesType.Instantaneous);
+						break;
+
+					case "a":
+						accumulating = decimalArrayForSamplesType(parser, meta,
+								GeneralDatumSamplesType.Accumulating);
+						break;
+
+					case "s":
+						status = stringArrayForSamplesType(parser, meta, GeneralDatumSamplesType.Status);
+						break;
+
+					case "t":
+						tags = stringArrayForSamplesType(parser, meta, GeneralDatumSamplesType.Tag);
+						break;
+				}
+			}
+		}
+		return DatumProperties.propertiesOf(instantaneous, accumulating, status, tags);
+	}
+
+	public static DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
+			ObjectDatumStreamMetadata meta) throws IOException {
+		BigDecimal[][] instantaneous = null;
+		BigDecimal[][] accumulating = null;
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				parser.nextToken();
+				switch (parser.getCurrentName()) {
+					case "i":
+						instantaneous = decimalArrayOfArraysForSamplesType(parser, meta,
+								GeneralDatumSamplesType.Instantaneous);
+						break;
+
+					case "ra":
+						accumulating = decimalArrayOfArraysForSamplesType(parser, meta,
+								GeneralDatumSamplesType.Accumulating);
+						break;
+				}
+			}
+		}
+		return DatumPropertiesStatistics.statisticsOf(instantaneous, accumulating);
+	}
+
+	private static BigDecimal[] decimalArrayForSamplesType(JsonParser parser,
+			ObjectDatumStreamMetadata meta, GeneralDatumSamplesType type) throws IOException {
+		BigDecimal[] result = null;
+		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+			Map<String, BigDecimal> map = parseNumberPropertiesObject(parser);
+			String[] names = meta.propertyNamesForType(type);
+			if ( names != null ) {
+				result = new BigDecimal[names.length];
+				for ( int i = 0; i < names.length; i++ ) {
+					result[i] = map.get(names[i]);
+				}
+			}
+		}
+		return result;
+	}
+
+	private static String[] stringArrayForSamplesType(JsonParser parser, ObjectDatumStreamMetadata meta,
+			GeneralDatumSamplesType type) throws IOException {
+		String[] result = null;
+		if ( type == GeneralDatumSamplesType.Tag ) {
+			if ( parser.getCurrentToken() == JsonToken.START_ARRAY ) {
+				List<String> tags = new ArrayList<>(4);
+				while ( parser.getCurrentToken() != JsonToken.END_ARRAY ) {
+					parser.nextToken();
+					if ( parser.getCurrentToken() == JsonToken.VALUE_STRING ) {
+						tags.add(parser.getText());
+					}
+				}
+				if ( !tags.isEmpty() ) {
+					result = tags.toArray(new String[tags.size()]);
+				}
+			}
+		} else if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+			Map<String, String> map = parseStringPropertiesObject(parser);
+			String[] names = meta.propertyNamesForType(type);
+			if ( names != null ) {
+				result = new String[names.length];
+				for ( int i = 0; i < names.length; i++ ) {
+					result[i] = map.get(names[i]);
+				}
+			}
+		}
+		return result;
+	}
+
+	private static BigDecimal[][] decimalArrayOfArraysForSamplesType(JsonParser parser,
+			ObjectDatumStreamMetadata meta, GeneralDatumSamplesType type) throws IOException {
+		BigDecimal[][] result = null;
+		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
+			Map<String, BigDecimal[]> map = parseNumberStatisticsObject(parser);
+			String[] names = meta.propertyNamesForType(type);
+			if ( names != null ) {
+				result = new BigDecimal[names.length][];
+				for ( int i = 0; i < names.length; i++ ) {
+					result[i] = map.get(names[i]);
+				}
+			}
+		}
+		return result;
+	}
+
+	public static Map<String, BigDecimal> parseNumberPropertiesObject(JsonParser parser)
+			throws IOException {
+		Map<String, BigDecimal> map = new LinkedHashMap<>(8);
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				t = parser.nextToken();
+				if ( t == JsonToken.VALUE_NUMBER_INT || t == JsonToken.VALUE_NUMBER_FLOAT ) {
+					BigDecimal d = parser.getDecimalValue();
+					if ( d != null ) {
+						map.put(parser.getCurrentName(), d);
+					}
+				}
+			}
+		}
+		return map;
+	}
+
+	public static Map<String, String> parseStringPropertiesObject(JsonParser parser) throws IOException {
+		Map<String, String> map = new LinkedHashMap<>(8);
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				t = parser.nextToken();
+				String v = parser.getText();
+				if ( v != null ) {
+					map.put(parser.getCurrentName(), v);
+				}
+			}
+		}
+		return map;
+	}
+
+	public static Map<String, BigDecimal[]> parseNumberStatisticsObject(JsonParser parser)
+			throws IOException {
+		Map<String, BigDecimal[]> map = new LinkedHashMap<>(8);
+		while ( parser.nextToken() != JsonToken.END_OBJECT ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.FIELD_NAME ) {
+				String name = parser.getCurrentName();
+				t = parser.nextToken();
+				if ( t == JsonToken.START_ARRAY ) {
+					BigDecimal[] d = parseDecimalArray(parser);
+					if ( d != null ) {
+						map.put(name, d);
+					}
+				}
+			}
+		}
+		return map;
+	}
+
+	public static BigDecimal[] parseDecimalArray(JsonParser parser) throws IOException {
+		List<BigDecimal> list = new ArrayList<>(3);
+		while ( parser.nextToken() != JsonToken.END_ARRAY ) {
+			JsonToken t = parser.currentToken();
+			if ( t == null ) {
+				return null;
+			}
+			if ( t == JsonToken.VALUE_NUMBER_INT || t == JsonToken.VALUE_NUMBER_FLOAT ) {
+				BigDecimal d = parser.getDecimalValue();
+				if ( d != null ) {
+					list.add(d);
+				}
+			}
+		}
+		return list.toArray(new BigDecimal[list.size()]);
 	}
 
 }

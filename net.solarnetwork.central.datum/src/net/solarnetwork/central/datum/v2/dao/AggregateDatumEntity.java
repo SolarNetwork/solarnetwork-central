@@ -31,6 +31,7 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Extension of {@link DatumEntity} to support aggregated (e.g. "rollup")
@@ -45,6 +46,7 @@ public class AggregateDatumEntity extends DatumEntity
 
 	private static final long serialVersionUID = 7976275982566577572L;
 
+	private final Aggregation aggregation;
 	private final DatumPropertiesStatistics statistics;
 
 	/**
@@ -52,14 +54,17 @@ public class AggregateDatumEntity extends DatumEntity
 	 * 
 	 * @param id
 	 *        the ID
+	 * @param aggregation
+	 *        the aggregation
 	 * @param properties
 	 *        the properties
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(DatumPK id, DatumProperties properties,
+	public AggregateDatumEntity(DatumPK id, Aggregation aggregation, DatumProperties properties,
 			DatumPropertiesStatistics statistics) {
 		super(id, null, properties);
+		this.aggregation = aggregation;
 		this.statistics = statistics;
 	}
 
@@ -70,14 +75,17 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the user ID
 	 * @param timestamp
 	 *        the timestamp
+	 * @param aggregation
+	 *        the aggregation
 	 * @param properties
 	 *        the samples
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, DatumProperties properties,
-			DatumPropertiesStatistics statistics) {
+	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
+			DatumProperties properties, DatumPropertiesStatistics statistics) {
 		super(streamId, timestamp, null, properties);
+		this.aggregation = aggregation;
 		this.statistics = statistics;
 	}
 
@@ -93,6 +101,8 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the user ID
 	 * @param timestamp
 	 *        the timestamp
+	 * @param aggregation
+	 *        the aggregation
 	 * @param instantaneous
 	 *        the instantaneous values; must be {@code BigDecimal[]}
 	 * @param accumulating
@@ -106,10 +116,11 @@ public class AggregateDatumEntity extends DatumEntity
 	 * @param accumulatingStats
 	 *        the accumulating statistic values; must be {@code BigDecimal[][]}
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Object instantaneous,
-			Object accumulating, Object status, Object tags, Object instantaneousStats,
-			Object accumulatingStats) {
+	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
+			Object instantaneous, Object accumulating, Object status, Object tags,
+			Object instantaneousStats, Object accumulatingStats) {
 		super(streamId, timestamp, null, instantaneous, accumulating, status, tags);
+		this.aggregation = aggregation;
 		this.statistics = DatumPropertiesStatistics.statisticsOf((BigDecimal[][]) instantaneousStats,
 				(BigDecimal[][]) accumulatingStats);
 	}
@@ -123,6 +134,10 @@ public class AggregateDatumEntity extends DatumEntity
 			builder.append(getId().getStreamId());
 			builder.append(", ts=");
 			builder.append(getId().getTimestamp());
+		}
+		if ( aggregation != null ) {
+			builder.append(", kind=");
+			builder.append(aggregation.getKey());
 		}
 		if ( getProperties() != null ) {
 			if ( getProperties().getInstantaneous() != null ) {
@@ -162,6 +177,11 @@ public class AggregateDatumEntity extends DatumEntity
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public Aggregation getAggregation() {
+		return aggregation;
 	}
 
 	/**

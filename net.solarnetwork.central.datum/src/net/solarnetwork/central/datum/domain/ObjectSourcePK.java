@@ -1,5 +1,5 @@
 /* ==================================================================
- * AggregateDatum.java - 5/11/2020 10:28:33 am
+ * ObjectSourcePK.java - 5/11/2020 3:08:00 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,32 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.domain;
-
-import net.solarnetwork.central.domain.Aggregation;
+package net.solarnetwork.central.datum.domain;
 
 /**
- * API for an aggregate "rollup" object that exists within a unique stream at a
- * specific point in time and a set of property values.
+ * API for an object + source ID combination.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
+ * @see NodeSourcePK
+ * @see LocationSourcePK
  */
-public interface AggregateDatum extends Datum {
+public interface ObjectSourcePK {
 
 	/**
-	 * Get the aggregation associated with this datum.
+	 * Get the object ID.
 	 * 
-	 * @return the aggregation
+	 * @return the object ID
 	 */
-	Aggregation getAggregation();
+	Long getObjectId();
 
 	/**
-	 * Get the property statistics.
+	 * Get the source ID.
 	 * 
-	 * @return the statistics
+	 * @return the source ID
 	 */
-	DatumPropertiesStatistics getStatistics();
+	String getSourceId();
 
 }
