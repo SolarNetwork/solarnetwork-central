@@ -281,11 +281,7 @@ public final class DatumUtils {
 
 		generator.writeFieldName("metadata");
 		writeStreamMetadata(generator, metadata);
-		writeStreamPropertyValues(generator, datum, datumLength);
-	}
 
-	private static void writeStreamPropertyValues(JsonGenerator generator,
-			Iterator<? extends Datum> datum, int datumLength) throws IOException {
 		generator.writeFieldName("values");
 		if ( datum == null || datumLength < 1 ) {
 			generator.writeNull();
@@ -375,12 +371,12 @@ public final class DatumUtils {
 	}
 
 	/**
-	 * Write a collection of datum as a JSON datum stream.
+	 * Write a collection of aggregate datum as a JSON datum stream.
 	 * 
 	 * <p>
-	 * A datum stream consists of a string identifier, metadata object, and
-	 * array of property value arrays. For example here is the JSON for a stream
-	 * of 4 properties:
+	 * An aggregate datum stream consists of a string identifier, metadata
+	 * object, and array of property value and statistic array pairs. For
+	 * example here is the JSON for a stream of 4 properties:
 	 * </p>
 	 * 
 	 * <pre>
@@ -396,11 +392,24 @@ public final class DatumUtils {
 	 *     },
 	 *     "values": [
 	 *         [1325376000000, 3, 23445, 123, null],
+	 *         [1325376000000, [0,10,60], [0,23445], [0,123]],
 	 *         [1325376001000, 99, 23423, 243, "W9347"],
-	 *         [1325376002000, 4, 33452, 291, null]
+	 *         [1325376001000, [0,10,60], [0,23445], [0,123]],
+	 *         [1325376002000, 4, 33452, 291, null],
+	 *         [1325376002000, [0,10,60], [0,23445], [0,123]]
 	 *     ]
 	 * }</code>
 	 * </pre>
+	 * 
+	 * <p>
+	 * The {@code values} array will thus contain {@code 2 × count(datum)}
+	 * elements: one array from
+	 * {@link #writePropertyValuesArray(JsonGenerator, Datum)} followed by
+	 * another array from
+	 * {@link #writeStatisticValuesArray(JsonGenerator, AggregateDatum)} for
+	 * each datum. The timestamp value will be identical for each pair.
+	 * </p>
+	 * 
 	 * 
 	 * @param generator
 	 *        the generator to write to
@@ -416,6 +425,7 @@ public final class DatumUtils {
 	 *         if any IO error occurs
 	 * @see #writeStreamMetadata(JsonGenerator, DatumStreamMetadata)
 	 * @see #writePropertyValuesArray(JsonGenerator, Datum)
+	 * @see #writeStatisticValuesArray(JsonGenerator, AggregateDatum)
 	 */
 	public static void writeAggregateStream(JsonGenerator generator, UUID streamId,
 			DatumStreamMetadata metadata, Iterator<AggregateDatum> datum, int datumLength)
@@ -435,15 +445,15 @@ public final class DatumUtils {
 
 		generator.writeFieldName("metadata");
 		writeStreamMetadata(generator, metadata);
-		writeStreamPropertyValues(generator, datum, datumLength);
 
-		generator.writeFieldName("stats");
+		generator.writeFieldName("values");
 		if ( datum == null || datumLength < 1 ) {
 			generator.writeNull();
 		} else {
-			generator.writeStartArray(datum, datumLength);
+			generator.writeStartArray(datum, datumLength * 2);
 			while ( datum.hasNext() ) {
 				AggregateDatum d = datum.next();
+				writePropertyValuesArray(generator, d);
 				writeStatisticValuesArray(generator, d);
 			}
 			generator.writeEndArray();

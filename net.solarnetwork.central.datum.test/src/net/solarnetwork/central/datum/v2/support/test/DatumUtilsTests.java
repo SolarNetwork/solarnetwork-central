@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
@@ -223,7 +224,7 @@ public class DatumUtilsTests {
 										new BigDecimal("3.456") },
 								new BigDecimal[] { new BigDecimal("4567"), new BigDecimal("5678") },
 								new String[] { "Onn" }, new String[] { "TAG" })),
-				new DatumEntity(streamId, Instant.now().minusSeconds(2), null,
+				new DatumEntity(streamId, Instant.now().minusSeconds(1), null,
 						propertiesOf(
 								new BigDecimal[] { new BigDecimal("1.2345"), new BigDecimal("2.3456"),
 										new BigDecimal("3.4567") },
@@ -366,4 +367,97 @@ public class DatumUtilsTests {
 		assertThat("JSON array generated", out.toString(),
 				equalTo(format("[%d,[1.11,2.22,60]]", datum.getTimestamp().toEpochMilli())));
 	}
+
+	@Test
+	public void writeAggregateStream_typical() throws IOException {
+		BasicDatumStreamMetadata metadata = new BasicDatumStreamMetadata(randomUUID(),
+				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
+				new String[] { "six" });
+		UUID streamId = UUID.randomUUID();
+		// @formatter:off
+		List<AggregateDatum> datum = Arrays.asList(
+				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(3),
+						propertiesOf(
+								arrayOfDecimals("1.23", "2.34", "3.45"),
+								arrayOfDecimals("456", "567"),
+								new String[] {"On"},
+								null),
+						statisticsOf(
+								new BigDecimal[][] {
+									arrayOfDecimals("1.11", "2.22", "60"),
+									arrayOfDecimals("2.22", "3.33", "59"),
+									arrayOfDecimals("3.33", "4.44", "58"),
+									},
+								new BigDecimal[][] {
+									arrayOfDecimals("0", "456"),
+									arrayOfDecimals("0", "567"),
+									}
+								)),
+				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(2),
+						propertiesOf(
+								arrayOfDecimals("1.234", "2.345", "3.456"),
+								arrayOfDecimals("4567", "5678"),
+								new String[] {"Onn"},
+								new String[] { "TAG" }),
+						statisticsOf(
+								new BigDecimal[][] {
+									arrayOfDecimals("1.111", "2.222", "600"),
+									arrayOfDecimals("2.222", "3.333", "599"),
+									arrayOfDecimals("3.333", "4.444", "588"),
+									},
+								new BigDecimal[][] {
+									arrayOfDecimals("456", "5023"),
+									arrayOfDecimals("567", "6245"),
+									}
+								)),
+				new AggregateDatumEntity(UUID.randomUUID(), Instant.now().minusSeconds(1),
+						propertiesOf(
+								arrayOfDecimals("1.2345", "2.3456", "3.4567"),
+								arrayOfDecimals("45678", "56789"),
+								new String[] {"Onnn"},
+								null),
+						statisticsOf(
+								new BigDecimal[][] {
+									arrayOfDecimals("1.1111", "2.2222", "6000"),
+									arrayOfDecimals("2.2222", "3.3333", "5999"),
+									arrayOfDecimals("3.3333", "4.4444", "5888"),
+									},
+								new BigDecimal[][] {
+									arrayOfDecimals("5023", "50701"),
+									arrayOfDecimals("6245", "63034"),
+									}
+								))
+				);
+		// @formatter:on
+
+		StringWriter out = new StringWriter();
+		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
+			DatumUtils.writeAggregateStream(generator, streamId, metadata, datum.iterator(),
+					datum.size());
+		}
+
+		// @formatter:off
+		assertThat("JSON object generated", out.toString(), equalTo("{\"streamId\":\""
+				+ streamId.toString()
+				+ "\",\"metadata\":{\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],"
+				+ "\"class\":{\"i\":[\"one\",\"two\",\"three\"],"
+				+ "\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
+				+ format(",\"values\":[" 
+								+ "[%d,1.23,2.34,3.45,456,567,\"On\"],"
+								+ "[%d,[1.11,2.22,60],[2.22,3.33,59],[3.33,4.44,58],[0,456],[0,567]],"
+								+ "[%d,1.234,2.345,3.456,4567,5678,\"Onn\",\"TAG\"],"
+								+ "[%d,[1.111,2.222,600],[2.222,3.333,599],[3.333,4.444,588],[456,5023],[567,6245]],"
+								+ "[%d,1.2345,2.3456,3.4567,45678,56789,\"Onnn\"],"
+								+ "[%d,[1.1111,2.2222,6000],[2.2222,3.3333,5999],[3.3333,4.4444,5888],[5023,50701],[6245,63034]]"
+								+ "]}",
+						datum.get(0).getTimestamp().toEpochMilli(),
+						datum.get(0).getTimestamp().toEpochMilli(),
+						datum.get(1).getTimestamp().toEpochMilli(),
+						datum.get(1).getTimestamp().toEpochMilli(),
+						datum.get(2).getTimestamp().toEpochMilli(),
+						datum.get(2).getTimestamp().toEpochMilli()
+						)));
+
+	}
+
 }
