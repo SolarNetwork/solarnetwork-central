@@ -52,9 +52,9 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
  * @version 1.0
  * @since 2.8
  */
-public final class DatumUtils {
+public final class DatumJsonUtils {
 
-	private DatumUtils() {
+	private DatumJsonUtils() {
 		// don't construct me
 	}
 
