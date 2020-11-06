@@ -84,7 +84,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void fregularHour() throws IOException {
+	public void regularHour() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		loadStreamAndRollup("test-agg-hour-datum-01.txt", Aggregation.Hour, start, start.plusHours(24),
 				new RollupCallback() {
@@ -108,6 +108,50 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 										arrayOfDecimals(new String[] { "48", "2.0", "7.8" })));
 						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
 								arrayContaining(arrayOfDecimals(new String[] { "100", "928", "828" })));
+					}
+				});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void oneRow() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-agg-hour-datum-02.txt", Aggregation.Hour, start, start.plusHours(24),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<AggregateDatum> datums, NodeDatumStreamMetadata meta,
+							UUID streamId, List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+
+						AggregateDatumEntity result = results.get(0);
+						log.debug("Got result: {}", result);
+
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+								arrayOfDecimals("1.2", "2.1"));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("100"));
+						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
+								arrayContaining(arrayOfDecimals(new String[] { "6", "1.1", "3.1" }),
+										arrayOfDecimals(new String[] { "6", "2.0", "7.1" })));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(new String[] { "100", "201", "101" })));
+					}
+				});
+	}
+
+	@Test
+	public void noRow() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-agg-hour-datum-03.txt", Aggregation.Hour, start, start.plusHours(24),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<AggregateDatum> datums, NodeDatumStreamMetadata meta,
+							UUID streamId, List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned", results, hasSize(0));
 					}
 				});
 	}

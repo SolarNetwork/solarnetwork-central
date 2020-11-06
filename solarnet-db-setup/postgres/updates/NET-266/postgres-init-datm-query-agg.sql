@@ -383,6 +383,7 @@ $$
 		, di_ary.stat_i
 		, da_ary.read_a
 	FROM di_ary, da_ary, ds_ary, dt_ary
+	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
 $$;
 
 
@@ -555,4 +556,5 @@ $$
 		, di_ary.stat_i
 		, da_ary.read_a
 	FROM di_ary, da_ary, ds_ary, dt_ary
+	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
 $$;
