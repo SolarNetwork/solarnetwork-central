@@ -1,5 +1,5 @@
 /* ==================================================================
- * StaleAggregateDatumEntity.java - 3/11/2020 12:58:01 pm
+ * StaleAuditDatumDailyEntity.java - 7/11/2020 10:39:07 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -25,24 +25,24 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
-import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.BasicIdentity;
 
 /**
- * Entity for a "stale" aggregation record, which is used to mark specific
- * aggregation time periods as needing to be (re)computed.
+ * Entity for a "stale" audit record, which is used to mark specific audit time
+ * periods as needing to be (re)computed.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
-		implements StaleAggregateDatum, Entity<StreamKindPK>, Cloneable, Serializable {
+public class StaleAuditDatumEntity extends BasicIdentity<StreamKindPK>
+		implements StaleAuditDatum, Entity<StreamKindPK>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 6192621556532302225L;
+	private static final long serialVersionUID = -5402116310790903113L;
 
 	private final Instant created;
 
@@ -58,8 +58,7 @@ public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
 	 * @param created
 	 *        the creation date
 	 */
-	public StaleAggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation kind,
-			Instant created) {
+	public StaleAuditDatumEntity(UUID streamId, Instant timestamp, Aggregation kind, Instant created) {
 		super(new StreamKindPK(streamId, timestamp, kind.getKey()));
 		this.created = created;
 	}
@@ -67,7 +66,7 @@ public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("StaleAggregateDatumEntity{");
+		builder.append("StaleAuditDatumEntity{");
 		if ( getKind() != null ) {
 			builder.append("kind=");
 			builder.append(getKind());

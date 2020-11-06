@@ -109,7 +109,7 @@ CREATE TABLE solardatm.agg_datm_monthly (
 CREATE TABLE solardatm.agg_stale_datm (
 	stream_id	UUID NOT NULL,
 	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
-	agg_kind 	CHAR(1) NOT NULL,
+	agg_kind 	CHARACTER NOT NULL,
 	created 	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT agg_stale_datm_pkey PRIMARY KEY (agg_kind, ts_start, stream_id)
 );
@@ -160,10 +160,10 @@ CREATE TABLE solardatm.aud_datum_monthly (
 );
 
 -- "stale" audit queue table
-CREATE TABLE solardatm.aud_datm_daily_stale (
+CREATE TABLE solardatm.aud_stale_datm_daily (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
-	aud_kind 				CHAR(1) NOT NULL,
+	aud_kind 				CHARACTER NOT NULL,
 	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_datm_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
 );
@@ -200,10 +200,14 @@ $$;
 /**
  * Get the metadata associated with a node datum or location datum stream.
  *
- * The `kind` output row will be `n` if the found metadata is for a node datum stream,
+ * The `kind` output column will be `n` if the found metadata is for a node datum stream,
  * or `l` for a location datum stream, by looking in the `da_datum_meta` and `da_loc_datum_meta`
  * tables for a matching stream ID. If the stream ID is found in both tables, the node metadata
  * will be returned.
+ *
+ * The `time_zone` output column will be the time zone associated with the location of the stream,
+ * either via the location of the node for a node stream or the location itself for a location
+ * stream. If no time zone is available, it will be returned as `UTC`.
  *
  * @param sid the stream ID to find metadata for
  */
@@ -219,16 +223,24 @@ CREATE OR REPLACE FUNCTION solardatm.find_metadata_for_stream(
 		names_a		TEXT[],
 		names_s		TEXT[],
 		jdata		JSONB,
-		kind		CHAR
+		kind		CHARACTER,
+		time_zone	CHARACTER VARYING(64)
 	) LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	SELECT * FROM (
-		SELECT stream_id, node_id AS obj_id, source_id, created, updated, names_i, names_a, names_s, jdata, 'n' AS kind
-		FROM solardatm.da_datm_meta
+		SELECT m.stream_id, m.node_id AS obj_id, m.source_id, m.created, m.updated
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'n' AS kind
+			, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_datm_meta m
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		WHERE stream_id = sid
 		UNION ALL
-		SELECT stream_id, loc_id AS obj_id, source_id, created, updated, names_i, names_a, names_s, jdata, 'l' AS kind
-		FROM solardatm.da_loc_datm_meta
+		SELECT m.stream_id, m.loc_id AS obj_id, m.source_id, m.created, m.updated
+			, m.names_i, m.names_a, m.names_s, m.jdata, 'l' AS kind
+			, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_loc_datm_meta m
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id
 		WHERE stream_id = sid
 	) m
 	LIMIT 1

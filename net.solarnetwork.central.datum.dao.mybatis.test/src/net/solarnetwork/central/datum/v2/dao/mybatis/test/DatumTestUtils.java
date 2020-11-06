@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -35,11 +36,13 @@ import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,19 +57,24 @@ import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.RowMapper;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
@@ -74,6 +82,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
@@ -650,7 +659,7 @@ public final class DatumTestUtils {
 		buf.append("insert into solardatm.agg_datm_");
 		switch (kind) {
 			case Day:
-				buf.append("hourly");
+				buf.append("daily");
 				break;
 
 			case Month:
@@ -854,6 +863,118 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Insert stale aggregate datum records.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param stales
+	 *        the stale datum to insert
+	 */
+	public static void insertStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<StaleAggregateDatum> stales) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement datumStmt = con.prepareStatement(
+						"INSERT INTO solardatm.agg_stale_datm (stream_id,ts_start,agg_kind) VALUES (?::uuid,?,?)")) {
+					for ( StaleAggregateDatum d : stales ) {
+						if ( log != null ) {
+							log.debug("Inserting {} StaleAggregateDatum: {}", d.getKind(), d);
+						}
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+						datumStmt.setString(3, d.getKind().getKey());
+
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	private static void debugStaleAggregateDatumTable(Logger log, JdbcOperations jdbcTemplate,
+			String msg) {
+		List<Map<String, Object>> staleRows = jdbcTemplate
+				.queryForList("SELECT * FROM solardatm.agg_stale_datm ORDER BY ts_start, stream_id");
+		log.debug("{}:\n{}", msg, staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
+	}
+
+	/**
+	 * Call the {@code solardatm.process_one_agg_stale_datm} stored procedure to
+	 * compute aggregate data.
+	 * 
+	 * @param log
+	 *        the logger to use
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param kinds
+	 *        the kinds of stale aggregate records to process; e.g.
+	 *        {@code Hour}, {@code Day}, or {@code Month}
+	 */
+	public static void processStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
+			Set<Aggregation> kinds) {
+		debugStaleAggregateDatumTable(log, jdbcTemplate, "Stale datum at start");
+
+		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel)
+				.collect(Collectors.toList());
+
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement cs = con
+						.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
+					for ( Aggregation kind : sortedKinds ) {
+						int processed = processKind(kind.getKey(), cs);
+						log.debug("Processed {} stale {} datum", processed, kind);
+						debugStaleAggregateDatumTable(log, jdbcTemplate,
+								"Stale datum after process " + kind);
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Call the {@code solardatm.process_one_agg_stale_datm} stored procedure to
+	 * compute aggregate data for all aggregate kinds.
+	 * 
+	 * @param log
+	 *        the logger to use
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @see #processStaleAggregateDatum(Logger, JdbcOperations, Set)
+	 */
+	public static void processStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate) {
+		processStaleAggregateDatum(log, jdbcTemplate,
+				EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month));
+	}
+
+	private static int processKind(String kind, CallableStatement cs) throws SQLException {
+		int processed = 0;
+		while ( true ) {
+			cs.setString(1, kind);
+			if ( cs.execute() ) {
+				try (ResultSet rs = cs.getResultSet()) {
+					if ( rs.next() ) {
+						processed++;
+					} else {
+						break;
+					}
+				}
+			} else {
+				break;
+			}
+		}
+		return processed;
+	}
+
+	/**
 	 * Get the metadata for a stream.
 	 * 
 	 * @param jdbcTemplate
@@ -913,6 +1034,35 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Get the available stale audit datum records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @return the results, never {@literal null}
+	 */
+	public static List<StaleAuditDatumEntity> staleAuditDatumDaily(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm_daily ORDER BY aud_kind, ts_start, stream_id",
+				StaleAuditDatumEntityRowMapper.INSTANCE);
+	}
+
+	/**
+	 * Get the available stale audit datum records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @param type
+	 *        the type of stale audit records to get
+	 * @return the results, never {@literal null}
+	 */
+	public static List<StaleAuditDatumEntity> staleAuditDatumDaily(JdbcOperations jdbcTemplate,
+			Aggregation type) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm_daily WHERE aud_kind = ? ORDER BY ts_start, stream_id",
+				StaleAuditDatumEntityRowMapper.INSTANCE, type.getKey());
+	}
+
+	/**
 	 * Get the available stale aggregate datum records.
 	 * 
 	 * @param jdbcTemplate
@@ -923,6 +1073,40 @@ public final class DatumTestUtils {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, datum_count, prop_count, datum_q_count FROM solardatm.aud_datm_hourly ORDER BY stream_id, ts_start",
 				AuditDatumHourlyEntityRowMapper.INSTANCE);
+	}
+
+	/**
+	 * Get all available aggregate datum records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @param kind
+	 *        the aggregation kind to load, e.g. {@code Hour}, {@code Day}, or
+	 *        {@code Month}
+	 * @return the results, never {@literal null}
+	 */
+	public static List<AggregateDatumEntity> aggregateDatum(JdbcOperations jdbcTemplate,
+			Aggregation kind) {
+		String tableName;
+		RowMapper<AggregateDatumEntity> mapper;
+		switch (kind) {
+			case Day:
+				tableName = "daily";
+				mapper = AggregateDatumEntityRowMapper.DAY_INSTANCE;
+				break;
+
+			case Month:
+				tableName = "monthly";
+				mapper = AggregateDatumEntityRowMapper.MONTH_INSTANCE;
+				break;
+
+			default:
+				tableName = "hourly";
+				mapper = AggregateDatumEntityRowMapper.HOUR_INSTANCE;
+		}
+		return jdbcTemplate.query(String.format(
+				"SELECT * FROM solardatm.agg_datm_%s ORDER BY stream_id, ts_start", tableName), mapper);
+
 	}
 
 }
