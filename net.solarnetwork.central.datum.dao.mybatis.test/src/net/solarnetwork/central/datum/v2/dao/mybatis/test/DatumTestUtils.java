@@ -65,12 +65,15 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
@@ -446,50 +449,104 @@ public final class DatumTestUtils {
 						datumStmt.execute();
 					}
 				}
-				try (PreparedStatement metaStmt = con.prepareStatement(
-						"insert into solardatm.da_datm_meta (stream_id,node_id,source_id,names_i,names_a,names_s) "
-								+ "VALUES (?::uuid,?,?,?::text[],?::text[],?::text[])")) {
-					for ( NodeDatumStreamMetadata meta : result.values() ) {
-						if ( log != null ) {
-							log.debug("Inserting NodeDatumStreamMetadata {}", meta);
-						}
-						metaStmt.setString(1, meta.getStreamId().toString());
-						metaStmt.setObject(2, meta.getNodeId());
-						metaStmt.setString(3, meta.getSourceId());
-
-						String[] iNames = meta
-								.propertyNamesForType(GeneralDatumSamplesType.Instantaneous);
-						if ( iNames == null || iNames.length < 1 ) {
-							metaStmt.setNull(4, Types.OTHER);
-						} else {
-							Array iArray = con.createArrayOf("TEXT", iNames);
-							metaStmt.setArray(4, iArray);
-						}
-
-						String[] aNames = meta
-								.propertyNamesForType(GeneralDatumSamplesType.Accumulating);
-						if ( aNames == null || aNames.length < 1 ) {
-							metaStmt.setNull(5, Types.OTHER);
-						} else {
-							Array aArray = con.createArrayOf("TEXT", aNames);
-							metaStmt.setArray(5, aArray);
-						}
-
-						String[] sNames = meta.propertyNamesForType(GeneralDatumSamplesType.Status);
-						if ( sNames == null || sNames.length < 1 ) {
-							metaStmt.setNull(6, Types.OTHER);
-						} else {
-							Array aArray = con.createArrayOf("TEXT", sNames);
-							metaStmt.setArray(6, aArray);
-						}
-
-						metaStmt.execute();
-					}
-				}
+				insertObjectDatumStreamMetadata(log, con, result.values());
 				return null;
 			}
 		});
 		return result;
+	}
+
+	private static String insertMetaStmt(String kind) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("insert into solardatm.da_");
+		buf.append(kind);
+		buf.append("_meta (stream_id,");
+		if ( kind.startsWith("loc") ) {
+			buf.append("loc_id");
+		} else {
+			buf.append("node_id");
+		}
+		buf.append(",source_id,names_i,names_a,names_s) ");
+		buf.append("VALUES (?::uuid,?,?,?::text[],?::text[],?::text[])");
+		return buf.toString();
+	}
+
+	/**
+	 * Insert node or location datum metadata.
+	 * 
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param metas
+	 *        the metadata to insert
+	 */
+	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<? extends ObjectDatumStreamMetadata> metas) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				insertObjectDatumStreamMetadata(log, con, metas);
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Insert datum or location datum stream metadata.
+	 * 
+	 * @param log
+	 *        an optional logger
+	 * @param con
+	 *        the JDBC connection to use
+	 * @param metas
+	 *        the metadata to insert, can be either ndoe or location
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static void insertObjectDatumStreamMetadata(Logger log, Connection con,
+			Iterable<? extends ObjectDatumStreamMetadata> metas) throws SQLException {
+		try (PreparedStatement nodeMetaStmt = con.prepareStatement(insertMetaStmt("datm"));
+				PreparedStatement locMetaStmt = con.prepareStatement(insertMetaStmt("loc_datm"))) {
+			for ( ObjectDatumStreamMetadata meta : metas ) {
+				if ( log != null ) {
+					log.debug("Inserting NodeDatumStreamMetadata {}", meta);
+				}
+				@SuppressWarnings("resource")
+				PreparedStatement metaStmt = (meta instanceof LocationDatumStreamMetadata ? locMetaStmt
+						: nodeMetaStmt);
+				metaStmt.setString(1, meta.getStreamId().toString());
+				metaStmt.setObject(2, meta.getObjectId());
+				metaStmt.setString(3, meta.getSourceId());
+
+				String[] iNames = meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous);
+				if ( iNames == null || iNames.length < 1 ) {
+					metaStmt.setNull(4, Types.OTHER);
+				} else {
+					Array iArray = con.createArrayOf("TEXT", iNames);
+					metaStmt.setArray(4, iArray);
+				}
+
+				String[] aNames = meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating);
+				if ( aNames == null || aNames.length < 1 ) {
+					metaStmt.setNull(5, Types.OTHER);
+				} else {
+					Array aArray = con.createArrayOf("TEXT", aNames);
+					metaStmt.setArray(5, aArray);
+				}
+
+				String[] sNames = meta.propertyNamesForType(GeneralDatumSamplesType.Status);
+				if ( sNames == null || sNames.length < 1 ) {
+					metaStmt.setNull(6, Types.OTHER);
+				} else {
+					Array aArray = con.createArrayOf("TEXT", sNames);
+					metaStmt.setArray(6, aArray);
+				}
+
+				metaStmt.execute();
+			}
+		}
 	}
 
 	/**
@@ -794,6 +851,22 @@ public final class DatumTestUtils {
 				}
 			}
 		});
+	}
+
+	/**
+	 * Get the metadata for a stream.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @param streamId
+	 *        the stream ID to get metadata for
+	 * @return the metadata, or {@literal null}
+	 */
+	public static ObjectDatumStreamMetadata streamMetadata(JdbcOperations jdbcTemplate, UUID streamId) {
+		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
+				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind FROM solardatm.find_metadata_for_stream(?::uuid)",
+				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
+		return (results.isEmpty() ? null : results.get(0));
 	}
 
 	/**

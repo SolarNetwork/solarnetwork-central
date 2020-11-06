@@ -195,3 +195,41 @@ $$
 		SELECT unnest(solarcommon.json_array_to_text_array(jdata->'t'))
 	) p
 $$;
+
+
+/**
+ * Get the metadata associated with a node datum or location datum stream.
+ *
+ * The `kind` output row will be `n` if the found metadata is for a node datum stream,
+ * or `l` for a location datum stream, by looking in the `da_datum_meta` and `da_loc_datum_meta`
+ * tables for a matching stream ID. If the stream ID is found in both tables, the node metadata
+ * will be returned.
+ *
+ * @param sid the stream ID to find metadata for
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_metadata_for_stream(
+		sid 		UUID
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		obj_id		BIGINT,
+		source_id	CHARACTER VARYING(64),
+		created		TIMESTAMP WITH TIME ZONE,
+		updated		TIMESTAMP WITH TIME ZONE,
+		names_i		TEXT[],
+		names_a		TEXT[],
+		names_s		TEXT[],
+		jdata		JSONB,
+		kind		CHAR
+	) LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT * FROM (
+		SELECT stream_id, node_id AS obj_id, source_id, created, updated, names_i, names_a, names_s, jdata, 'n' AS kind
+		FROM solardatm.da_datm_meta
+		WHERE stream_id = sid
+		UNION ALL
+		SELECT stream_id, loc_id AS obj_id, source_id, created, updated, names_i, names_a, names_s, jdata, 'l' AS kind
+		FROM solardatm.da_loc_datm_meta
+		WHERE stream_id = sid
+	) m
+	LIMIT 1
+$$;
