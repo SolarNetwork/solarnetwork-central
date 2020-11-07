@@ -1,6 +1,7 @@
 \i postgres-init-datm-core.sql
-\i postgres-init-datm-agg.sql
 \i postgres-init-datm-agg-query.sql
+\i postgres-init-datm-agg.sql
+\i postgres-init-datm-audit-query.sql
 \i postgres-init-datm-audit.sql
 \i postgres-init-datm-in.sql
 \i postgres-init-datm-migration.sql

@@ -1,3 +1,18 @@
+/**
+ * Compute a single stale aggregate datum rollup and store the results in the appropriate table.
+ *
+ * After saving the rollup value, if there is a higher-level aggregate above the given `kind` then
+ * a new stale aggregate datum record will be inserted into the `stale_agg_datum` table for that
+ * higher aggregate level. For example if `kind` is `h` then a `d` stale record will be inserted.
+ *
+ * When processing a `d` aggregate, 3 `aud_stale_datm_daily` records will be inserted for the
+ * `0`, `h`, and `d` aggregate levels, so the associated audit values for the stale aggregate
+ * period can be computed.
+ *
+ * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
+ * @see solardatm.rollup_datm_for_time_span()
+ * @see solardatm.rollup_agg_datm_for_time_span()
+ */
 CREATE OR REPLACE FUNCTION solardatm.process_one_agg_stale_datm(kind CHARACTER)
 	RETURNS SETOF solardatm.agg_stale_datm LANGUAGE plpgsql VOLATILE AS
 $$
