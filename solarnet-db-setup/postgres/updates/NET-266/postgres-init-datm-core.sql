@@ -124,14 +124,14 @@ CREATE TABLE solardatm.agg_stale_datm (
 CREATE TABLE solardatm.aud_datm_hourly (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
-	datum_count 			INTEGER NOT NULL DEFAULT 0,
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_count 			INTEGER NOT NULL DEFAULT 0,
 	CONSTRAINT aud_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
 -- audit daily data
-CREATE TABLE solardatm.aud_datum_daily (
+CREATE TABLE solardatm.aud_datm_daily (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
     prop_count 				BIGINT NOT NULL DEFAULT 0,
@@ -146,7 +146,7 @@ CREATE TABLE solardatm.aud_datum_daily (
 );
 
 -- audit monthly data
-CREATE TABLE solardatm.aud_datum_monthly (
+CREATE TABLE solardatm.aud_datm_monthly (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
     prop_count 				BIGINT NOT NULL DEFAULT 0,
@@ -166,6 +166,18 @@ CREATE TABLE solardatm.aud_stale_datm_daily (
 	aud_kind 				CHARACTER NOT NULL,
 	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_datm_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
+);
+
+-- track total accumulated counts per day
+CREATE TABLE solardatm.aud_acc_datm_daily (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_hourly_count 		INTEGER NOT NULL DEFAULT 0,
+	datum_daily_count 		INTEGER NOT NULL DEFAULT 0,
+	datum_monthly_count 	INTEGER NOT NULL DEFAULT 0,
+	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_acc_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
 /*
