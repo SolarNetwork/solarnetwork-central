@@ -76,6 +76,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMa
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
@@ -771,6 +772,161 @@ public final class DatumTestUtils {
 				return null;
 			}
 		});
+	}
+
+	/**
+	 * Insert audit datum records.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param streamId
+	 *        the stream ID to use
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+			List<AuditDatum> datums) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement hourStmt = con
+						.prepareStatement(insertAuditStmt(Aggregation.Hour));
+						PreparedStatement dayStmt = con
+								.prepareStatement(insertAuditStmt(Aggregation.Day));
+						PreparedStatement monthStmt = con
+								.prepareStatement(insertAuditStmt(Aggregation.Month));
+						PreparedStatement accStmt = con
+								.prepareStatement(insertAuditStmt(Aggregation.RunningTotal))) {
+
+					for ( AuditDatum d : datums ) {
+						if ( log != null ) {
+							log.debug("Inserting {} AuditDatum; {}", d.getAggregation(), d);
+						}
+						PreparedStatement datumStmt;
+						switch (d.getAggregation()) {
+							case Hour:
+								datumStmt = hourStmt;
+								break;
+
+							case Day:
+								datumStmt = dayStmt;
+								break;
+
+							case Month:
+								datumStmt = monthStmt;
+								break;
+
+							default:
+								datumStmt = accStmt;
+								break;
+						}
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+						switch (d.getAggregation()) {
+							case Hour:
+								datumStmt.setObject(3, d.getDatumPropertyCount());
+								datumStmt.setObject(4, d.getDatumQueryCount());
+								datumStmt.setObject(5, d.getDatumCount());
+								break;
+
+							case Day:
+								datumStmt.setObject(3, d.getDatumPropertyCount());
+								datumStmt.setObject(4, d.getDatumQueryCount());
+								datumStmt.setObject(5, d.getDatumCount());
+								datumStmt.setObject(6, d.getDatumHourlyCount());
+								datumStmt.setBoolean(7,
+										d.getDatumDailyCount().intValue() > 0 ? true : false);
+								break;
+
+							case Month:
+								datumStmt.setObject(3, d.getDatumPropertyCount());
+								datumStmt.setObject(4, d.getDatumQueryCount());
+								datumStmt.setObject(5, d.getDatumCount());
+								datumStmt.setObject(6, d.getDatumHourlyCount());
+								datumStmt.setObject(6, d.getDatumDailyCount());
+								datumStmt.setBoolean(8,
+										d.getDatumMonthlyCount().intValue() > 0 ? true : false);
+								break;
+
+							default:
+								datumStmt.setObject(3, d.getDatumCount());
+								datumStmt.setObject(4, d.getDatumHourlyCount());
+								datumStmt.setObject(5, d.getDatumDailyCount());
+								datumStmt.setObject(6, d.getDatumMonthlyCount());
+								break;
+						}
+
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	private static String insertAuditStmt(Aggregation kind) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("insert into solardatm.");
+		switch (kind) {
+			case Hour:
+				buf.append("aud_datm_hourly");
+				break;
+
+			case Day:
+				buf.append("aud_datm_daily");
+				break;
+
+			case Month:
+				buf.append("aud_datm_monthly");
+				break;
+
+			default:
+				buf.append("aud_acc_datm_daily");
+				break;
+		}
+		buf.append(" (stream_id,ts_start,");
+		switch (kind) {
+			case Hour:
+				buf.append("prop_count,datum_q_count,datum_count");
+				break;
+
+			case Day:
+				buf.append("prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres");
+				break;
+
+			case Month:
+				buf.append(
+						"prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
+				break;
+
+			default:
+				buf.append("datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count");
+				break;
+		}
+		buf.append(") VALUES (?::uuid,?,");
+		switch (kind) {
+			case Hour:
+				buf.append("?,?,?");
+				break;
+
+			case Day:
+				buf.append("?,?,?,?,?");
+				break;
+
+			case Month:
+				buf.append("?,?,?,?,?,?");
+				break;
+
+			default:
+				buf.append("?,?,?,?");
+				break;
+		}
+		buf.append(")");
+		return buf.toString();
 	}
 
 	/**
