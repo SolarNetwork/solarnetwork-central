@@ -65,7 +65,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
@@ -1069,7 +1069,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<AuditDatumHourlyEntity> auditDatumHourly(JdbcOperations jdbcTemplate) {
+	public static List<AuditDatumEntity> auditDatumHourly(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, datum_count, prop_count, datum_q_count FROM solardatm.aud_datm_hourly ORDER BY stream_id, ts_start",
 				AuditDatumHourlyEntityRowMapper.INSTANCE);

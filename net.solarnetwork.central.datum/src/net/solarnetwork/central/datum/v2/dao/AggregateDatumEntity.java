@@ -126,6 +126,11 @@ public class AggregateDatumEntity extends DatumEntity
 	}
 
 	@Override
+	public AggregateDatumEntity clone() {
+		return (AggregateDatumEntity) super.clone();
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AggregateDatumEntity{");

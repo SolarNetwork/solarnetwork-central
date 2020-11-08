@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
+import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.hourlyAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.ingestDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumAuxiliaryResource;
@@ -47,7 +48,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -73,18 +74,29 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getTimestamp()));
 	}
 
-	private static void assertAuditDatumHourly(String prefix, AuditDatumHourlyEntity audit,
-			AuditDatumHourlyEntity expected) {
-		assertThat(prefix + " hourly audit record stream ID", audit.getStreamId(),
-				equalTo(expected.getStreamId()));
-		assertThat(prefix + " hourly audit record timestamp", audit.getTimestamp(),
-				equalTo(expected.getTimestamp()));
-		assertThat(prefix + " hourly audit datum count", audit.getDatumCount(),
-				equalTo(expected.getDatumCount()));
-		assertThat(prefix + " hourly audit prop count", audit.getPropCount(),
-				equalTo(expected.getPropCount()));
-		assertThat(prefix + " hourly audit datum query count", audit.getDatumQueryCount(),
-				equalTo(expected.getDatumQueryCount()));
+	private static void assertAuditDatum(String prefix, AuditDatumEntity audit,
+			AuditDatumEntity expected) {
+		assertThat(prefix + " " + expected.getAggregation() + " audit record stream ID",
+				audit.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit record timestamp",
+				audit.getTimestamp(), equalTo(expected.getTimestamp()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit record aggregate",
+				audit.getAggregation(), equalTo(expected.getAggregation()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit datum count",
+				audit.getDatumCount(), equalTo(expected.getDatumCount()));
+		if ( expected.getAggregation() != Aggregation.RunningTotal ) {
+			assertThat(prefix + " " + expected.getAggregation() + " audit prop count",
+					audit.getDatumPropertyCount(), equalTo(expected.getDatumPropertyCount()));
+			assertThat(prefix + " " + expected.getAggregation() + " audit datum query count",
+					audit.getDatumQueryCount(), equalTo(expected.getDatumQueryCount()));
+		}
+		if ( expected.getAggregation() == Aggregation.Day
+				|| expected.getAggregation() == Aggregation.Month ) {
+			assertThat(prefix + " " + expected.getAggregation() + " audit datum hour count",
+					audit.getDatumHourlyCount(), equalTo(expected.getDatumHourlyCount()));
+			assertThat(prefix + " " + expected.getAggregation() + " audit monthly hour count",
+					audit.getDatumMonthlyCount(), equalTo(expected.getDatumMonthlyCount()));
+		}
 	}
 
 	private List<GeneralNodeDatum> loadJson(String resource) throws IOException {
@@ -120,10 +132,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
 				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
-		assertAuditDatumHourly("1 datum ingested", auditHourly.get(0), new AuditDatumHourlyEntity(
-				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 3, 0));
+		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
+				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
 	}
 
 	@Test
@@ -141,10 +153,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
 				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
-		assertAuditDatumHourly("1 datum ingested", auditHourly.get(0), new AuditDatumHourlyEntity(
-				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 3, 0));
+		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
+				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
 	}
 
 	@Test
@@ -163,10 +175,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(), Aggregation.Hour,
 						null));
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for two datum in same hour", auditHourly, hasSize(1));
-		assertAuditDatumHourly("2 datum ingested", auditHourly.get(0), new AuditDatumHourlyEntity(
-				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2, 6, 0));
+		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
+				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L));
 	}
 
 	@Test
@@ -189,10 +201,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(1).toInstant(),
 						Aggregation.Hour, null));
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for two datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("2 datum ingested", auditHourly.get(0), new AuditDatumHourlyEntity(
-				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2, 6, 0));
+		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
+				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L));
 	}
 
 	@Test
@@ -218,10 +230,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(2).toInstant(),
 						Aggregation.Hour, null));
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("One hourly audit record created for all datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("8 datum ingested", auditHourly.get(0), new AuditDatumHourlyEntity(
-				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 8, 24, 0));
+		assertAuditDatum("8 datum ingested", auditHourly.get(0), AuditDatumEntity
+				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 8L, 24L, 0L));
 	}
 
 	@Test
@@ -382,11 +394,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("Audit record counted instantaneous prop", auditHourly.get(0),
-				new AuditDatumHourlyEntity(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 1,
-						0));
+		assertAuditDatum("Audit record counted instantaneous prop", auditHourly.get(0),
+				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
 	}
 
 	@Test
@@ -396,11 +407,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("Audit record counted accumulating prop", auditHourly.get(0),
-				new AuditDatumHourlyEntity(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 1,
-						0));
+		assertAuditDatum("Audit record counted accumulating prop", auditHourly.get(0),
+				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
 	}
 
 	@Test
@@ -410,11 +420,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("Audit record counted status prop", auditHourly.get(0),
-				new AuditDatumHourlyEntity(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 1,
-						0));
+		assertAuditDatum("Audit record counted status prop", auditHourly.get(0),
+				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
 	}
 
 	@Test
@@ -424,11 +433,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("Audit record counted instantaneous prop + 2 tags", auditHourly.get(0),
-				new AuditDatumHourlyEntity(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1, 3,
-						0));
+		assertAuditDatum("Audit record counted instantaneous prop + 2 tags", auditHourly.get(0),
+				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
 	}
 
 	@Test
@@ -438,10 +446,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumHourlyEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
+		List<AuditDatumEntity> auditHourly = DatumTestUtils.auditDatumHourly(jdbcTemplate);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatumHourly("Audit record counted all props and tags", auditHourly.get(0),
-				new AuditDatumHourlyEntity(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 6, 19,
-						0));
+		assertAuditDatum("Audit record counted all props and tags", auditHourly.get(0),
+				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 6L, 19L, 0L));
 	}
 }

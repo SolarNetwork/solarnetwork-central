@@ -27,7 +27,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 
 /**
  * Map hourly datum audit rows into {@link AuditDatumHourlyEntity} instances.
@@ -49,16 +49,17 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumHourlyEntity;
  * @version 1.0
  * @since 3.8
  */
-public class AuditDatumHourlyEntityRowMapper implements RowMapper<AuditDatumHourlyEntity> {
+public class AuditDatumHourlyEntityRowMapper implements RowMapper<AuditDatumEntity> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<AuditDatumHourlyEntity> INSTANCE = new AuditDatumHourlyEntityRowMapper();
+	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumHourlyEntityRowMapper();
 
 	@Override
-	public AuditDatumHourlyEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = UUID.fromString(rs.getString(1));
 		Instant ts = rs.getTimestamp(2).toInstant();
-		return new AuditDatumHourlyEntity(streamId, ts, rs.getInt(3), rs.getInt(4), rs.getInt(5));
+		return AuditDatumEntity.hourlyAuditDatum(streamId, ts, rs.getLong(3), rs.getLong(4),
+				rs.getLong(5));
 	}
 
 }

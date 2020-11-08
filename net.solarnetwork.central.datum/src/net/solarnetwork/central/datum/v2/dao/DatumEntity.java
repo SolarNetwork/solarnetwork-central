@@ -117,6 +117,11 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 	}
 
 	@Override
+	public DatumEntity clone() {
+		return (DatumEntity) super.clone();
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("DatumEntity{");
