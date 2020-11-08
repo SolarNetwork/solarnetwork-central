@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
+import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,6 +41,10 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 
 /**
@@ -48,24 +55,95 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
  */
 public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
+	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+		return testStreamMetadata(1L, "a");
+	}
+
+	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
+	}
+
 	@Test
 	public void calcRaw() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
 		UUID streamId = meta.values().iterator().next().getStreamId();
-		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
 		// WHEN
 		Map<String, Object> result = jdbcTemplate.queryForMap(
 				"SELECT * FROM solardatm.calc_audit_datm_raw(?::uuid,?,?)", streamId.toString(),
-				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(1).toInstant()));
+				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(24).toInstant()));
 		assertThat("Row returned with result columns", result.keySet(),
 				containsInAnyOrder("stream_id", "ts_start", "datum_count"));
 		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
 		assertThat("Timestamp matches", result.get("ts_start"),
 				equalTo(Timestamp.from(start.toInstant())));
-		assertThat("Datum count within hour matches", result.get("datum_count"), equalTo(6));
+		assertThat("Datum count within hour matches", result.get("datum_count"), equalTo(7));
 	}
 
+	@Test
+	public void calcHourly() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-hour-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		log.debug("Got test data: {}", datums);
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		Map<String, Object> result = jdbcTemplate.queryForMap(
+				"SELECT * FROM solardatm.calc_audit_datm_hourly(?::uuid,?,?)", streamId.toString(),
+				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(24).toInstant()));
+		assertThat("Row returned with result columns", result.keySet(),
+				containsInAnyOrder("stream_id", "ts_start", "datum_hourly_count"));
+		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
+		assertThat("Timestamp matches", result.get("ts_start"),
+				equalTo(Timestamp.from(start.toInstant())));
+		assertThat("Hourly datum count within hour matches", result.get("datum_hourly_count"),
+				equalTo(8));
+	}
+
+	@Test
+	public void calcDaily() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-day-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		log.debug("Got test data: {}", datums);
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+		List<AuditDatum> hourlyAudits = new ArrayList<>();
+		long propCount = 0;
+		long datumQueryCount = 0;
+		for ( int i = 0; i < 8; i++ ) {
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			propCount += p;
+			datumQueryCount += q;
+			AuditDatumEntity audit = AuditDatumEntity.hourlyAuditDatum(streamId,
+					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
+			hourlyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, hourlyAudits);
+
+		// WHEN
+		Map<String, Object> result = jdbcTemplate.queryForMap(
+				"SELECT * FROM solardatm.calc_audit_datm_daily(?::uuid,?,?)", streamId.toString(),
+				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(24).toInstant()));
+		assertThat("Row returned with result columns", result.keySet(), containsInAnyOrder("stream_id",
+				"ts_start", "datum_daily_pres", "prop_count", "datum_q_count"));
+		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
+		assertThat("Timestamp matches", result.get("ts_start"),
+				equalTo(Timestamp.from(start.toInstant())));
+		assertThat("Daily datum present flag matches", result.get("datum_daily_pres"), equalTo(true));
+		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
+		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
+	}
 }

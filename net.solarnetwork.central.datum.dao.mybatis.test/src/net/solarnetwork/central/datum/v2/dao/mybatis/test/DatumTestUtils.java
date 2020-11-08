@@ -786,7 +786,7 @@ public final class DatumTestUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
-	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+	public static void insertAuditDatum(Logger log, JdbcOperations jdbcTemplate,
 			List<AuditDatum> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
