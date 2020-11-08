@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,6 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
 				"test-agg-day-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		log.debug("Got test data: {}", datums);
 		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -146,4 +146,60 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
 		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
 	}
+
+	@Test
+	public void calcMonthly() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+		List<AuditDatum> dailyAudits = new ArrayList<>();
+		int datumCount = 0;
+		int datumHourlyCount = 0;
+		int datumDailyCount = 0;
+		long propCount = 0;
+		long datumQueryCount = 0;
+		for ( int i = 0; i < 8; i++ ) {
+			long r = (i + 1) * 5000;
+			long h = (i + 1) * 720;
+			int d = 1; // day present
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			datumCount += r;
+			datumHourlyCount += h;
+			datumDailyCount += d;
+			propCount += p;
+			datumQueryCount += q;
+			AuditDatumEntity audit = AuditDatumEntity.dailyAuditDatum(streamId,
+					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
+			dailyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, dailyAudits);
+
+		// WHEN
+		Map<String, Object> result = jdbcTemplate.queryForMap(
+				"SELECT * FROM solardatm.calc_audit_datm_monthly(?::uuid,?,?)", streamId.toString(),
+				Timestamp.from(start.toInstant()), Timestamp.from(
+						start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(1).toInstant()));
+		assertThat("Row returned with result columns", result.keySet(),
+				containsInAnyOrder("stream_id", "ts_start", "datum_count", "datum_hourly_count",
+						"datum_daily_count", "datum_monthly_pres", "prop_count", "datum_q_count"));
+		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
+		assertThat("Timestamp matches", result.get("ts_start"),
+				equalTo(Timestamp.from(start.toInstant())));
+		assertThat("Raw datum count matches", result.get("datum_count"), equalTo(datumCount));
+		assertThat("Hourly datum count matches", result.get("datum_hourly_count"),
+				equalTo(datumHourlyCount));
+		assertThat("Daily datum count matches", result.get("datum_daily_count"),
+				equalTo(datumDailyCount));
+		assertThat("Monthly datum present flag matches", result.get("datum_monthly_pres"),
+				equalTo(true));
+		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
+		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
+	}
+
 }
