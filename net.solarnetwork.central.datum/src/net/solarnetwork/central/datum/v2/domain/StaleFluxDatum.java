@@ -1,5 +1,5 @@
 /* ==================================================================
- * StaleAggregateDatum.java - 7/11/2020 7:25:36 am
+ * StaleFluxDatum.java - 9/11/2020 7:23:52 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,59 +22,28 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
-import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.domain.Identity;
 
 /**
- * API for a "stale" aggregate datum record that represents a period of time for
- * a specific aggregation level that needs to be computed.
+ * API for a "stale" SolarFlux datum record that represents a stream at a
+ * specific aggregation level that needs to be published to SolarFlux.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface StaleAggregateDatum extends Identity<StreamKindPK> {
+public interface StaleFluxDatum {
 
 	/**
 	 * Get the unique ID of the stream that is stale.
-	 * 
-	 * <p>
-	 * This is a shortcut for {@code getId().getStreamId()}.
-	 * </p>
 	 * 
 	 * @return the stream ID
 	 */
 	UUID getStreamId();
 
 	/**
-	 * Get the associated timestamp of this datum.
-	 * 
-	 * <p>
-	 * This value represents the starting point in time stream is stale.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is a shortcut for {@code getId().getTimestamp()}.
-	 * </p>
-	 * 
-	 * @return the timestamp for this datum
-	 */
-	Instant getTimestamp();
-
-	/**
 	 * Get the type of aggregation that is stale.
-	 * 
-	 * <p>
-	 * This value represents the time period in the stream that is stale. Thus
-	 * the overall stale period is from {@code timestamp} to
-	 * {@code timestamp + kind}.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is a shortcut for {@code Aggregation.forKey(getId().getKind())}.
-	 * </p>
 	 * 
 	 * @return the kind
 	 */

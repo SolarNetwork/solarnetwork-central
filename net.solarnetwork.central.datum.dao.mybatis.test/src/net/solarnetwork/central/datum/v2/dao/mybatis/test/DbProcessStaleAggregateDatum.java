@@ -54,6 +54,7 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -93,6 +94,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 	private List<AggregateDatumEntity> aggDatum(Aggregation kind) {
 		List<AggregateDatumEntity> result = DatumTestUtils.aggregateDatum(jdbcTemplate, kind);
 		log.debug("Got {} data:\n{}", kind,
+				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
+		return result;
+	}
+
+	private List<StaleFluxDatum> staleFluxDatum(Aggregation kind) {
+		List<StaleFluxDatum> result = DatumTestUtils.staleFluxDatum(jdbcTemplate, kind);
+		log.debug("Got {} stale flux datum:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
 	}
@@ -141,6 +149,12 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
 						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+
+		// should have created stale flux Hour
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
+		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
+		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
+				equalTo(meta.getStreamId()));
 	}
 
 	@Test
@@ -183,6 +197,12 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 			assertThat("Stale audit timestamp is start of day", a.getTimestamp(),
 					equalTo(day.toInstant()));
 		}
+
+		// should have created stale flux Hour
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Day);
+		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
+		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
+				equalTo(meta.getStreamId()));
 	}
 
 	@Test
@@ -221,5 +241,11 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 			assertThat("Stale audit timestamp is start of day", a.getTimestamp(),
 					equalTo(month.toInstant()));
 		}
+
+		// should have created stale flux Hour
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Month);
+		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
+		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
+				equalTo(meta.getStreamId()));
 	}
 }

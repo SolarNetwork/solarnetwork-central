@@ -110,8 +110,24 @@ CREATE TABLE solardatm.agg_stale_datm (
 	stream_id	UUID NOT NULL,
 	ts_start	TIMESTAMP WITH TIME ZONE NOT NULL,
 	agg_kind 	CHARACTER NOT NULL,
-	created 	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	created 	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT agg_stale_datm_pkey PRIMARY KEY (agg_kind, ts_start, stream_id)
+);
+
+/**
+ * Holds records for stale aggregate SolarFlux publishing support. There is no time component to
+ * this table because SolarFlux cares only about the "most recent" value. Thus a record in this
+ * table means the "most recent" data for the associated stream + agg_kind needs to be published
+ * to SolarFlux.
+ *
+ * This table serves as a queue for updates. Any number of workers are expected to read from this
+ * table and publish the updated data to SolarFlux.
+ */
+CREATE TABLE solardatm.agg_stale_flux (
+	stream_id	UUID NOT NULL,
+	agg_kind  	CHARACTER NOT NULL,
+	created   	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT agg_stale_flux_pkey PRIMARY KEY (agg_kind, stream_id)
 );
 
 /*

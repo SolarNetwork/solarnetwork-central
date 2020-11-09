@@ -78,6 +78,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleFluxDatumRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
@@ -88,6 +89,7 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
@@ -1135,6 +1137,39 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Insert stale aggregate datum records.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param stales
+	 *        the stale datum to insert
+	 */
+	public static void insertStaleFluxDatum(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<StaleFluxDatum> stales) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement datumStmt = con.prepareStatement(
+						"INSERT INTO solardatm.agg_stale_flux (stream_id,agg_kind) VALUES (?::uuid,?)")) {
+					for ( StaleFluxDatum d : stales ) {
+						if ( log != null ) {
+							log.debug("Inserting {} StaleFluxDatum: {}", d.getKind(), d.getStreamId());
+						}
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setString(2, d.getKind().getKey());
+
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
 	 * Insert stale audit datum records.
 	 * 
 	 * @param log
@@ -1325,6 +1360,21 @@ public final class DatumTestUtils {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm WHERE aud_kind = ? ORDER BY ts_start, stream_id",
 				StaleAuditDatumEntityRowMapper.INSTANCE, type.getKey());
+	}
+
+	/**
+	 * Get the available stale flux datum records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @param type
+	 *        the type of stale flux records to get
+	 * @return the results, never {@literal null}
+	 */
+	public static List<StaleFluxDatum> staleFluxDatum(JdbcOperations jdbcTemplate, Aggregation type) {
+		return jdbcTemplate.query(
+				"SELECT stream_id, agg_kind FROM solardatm.agg_stale_flux WHERE agg_kind = ? ORDER BY stream_id",
+				StaleFluxDatumRowMapper.INSTANCE, type.getKey());
 	}
 
 	/**

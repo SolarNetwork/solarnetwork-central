@@ -143,6 +143,11 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
+		-- mark flux stale
+		INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
+		VALUES (stale.stream_id, kind)
+		ON CONFLICT (stream_id, agg_kind) DO NOTHING;
+
 		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;
 
 		RETURN NEXT stale;
