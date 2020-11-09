@@ -26,6 +26,9 @@ import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -1170,8 +1173,14 @@ public final class DatumJsonUtils {
 			// parse as millisecond epoch value
 			timestamp = Instant.ofEpochMilli(parser.getLongValue());
 		} else {
-			// parse as ISO 8601
-			timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
+			// parse as ISO 8601 instant
+			try {
+				timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
+			} catch ( DateTimeParseException e ) {
+				ZonedDateTime zdt = DateTimeFormatter.ISO_DATE_TIME.parse(parser.getText(),
+						ZonedDateTime::from);
+				timestamp = zdt.toInstant();
+			}
 		}
 		return timestamp;
 	}

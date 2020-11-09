@@ -170,38 +170,38 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AuditDatumEntity{");
+		if ( getId() != null ) {
+			builder.append("streamId=");
+			builder.append(getId().getStreamId());
+			builder.append(", ts=");
+			builder.append(getId().getTimestamp());
+		}
 		if ( aggregation != null ) {
-			builder.append("aggregation=");
-			builder.append(aggregation);
-			builder.append(", ");
+			builder.append(", kind=");
+			builder.append(aggregation.getKey());
 		}
 		if ( datumCount != null ) {
-			builder.append("datumCount=");
+			builder.append(", datumCount=");
 			builder.append(datumCount);
-			builder.append(", ");
 		}
 		if ( datumHourlyCount != null ) {
-			builder.append("datumHourlyCount=");
+			builder.append(", datumHourlyCount=");
 			builder.append(datumHourlyCount);
-			builder.append(", ");
 		}
 		if ( datumDailyCount != null ) {
-			builder.append("datumDailyCount=");
+			builder.append(", datumDailyCount=");
 			builder.append(datumDailyCount);
-			builder.append(", ");
 		}
 		if ( datumMonthlyCount != null ) {
-			builder.append("datumMonthlyCount=");
+			builder.append(", datumMonthlyCount=");
 			builder.append(datumMonthlyCount);
-			builder.append(", ");
 		}
 		if ( datumPropertyCount != null ) {
-			builder.append("datumPropertyCount=");
+			builder.append(", datumPropertyCount=");
 			builder.append(datumPropertyCount);
-			builder.append(", ");
 		}
 		if ( datumQueryCount != null ) {
-			builder.append("datumQueryCount=");
+			builder.append(", datumQueryCount=");
 			builder.append(datumQueryCount);
 		}
 		builder.append("}");
