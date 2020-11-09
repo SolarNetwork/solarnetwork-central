@@ -1,42 +1,3 @@
-/**
- * Calculate the current audit accumulative datum values for a stream.
- *
- * This produces an overall count of datum and aggregate datum within a stream.
- * For speed it relies on the pre-computed audit values in the `aud_datm_monthly` table.
- *
- * @param sid the stream ID to find audit counts for
- */
-CREATE OR REPLACE FUNCTION solardatm.calc_audit_acc_datm(sid UUID)
-	RETURNS TABLE (
-		stream_id				UUID,
-		ts_start 				TIMESTAMP WITH TIME ZONE,
-		datum_count 			INTEGER,
-		datum_hourly_count 		INTEGER,
-		datum_daily_count 		INTEGER,
-		datum_monthly_count 	INTEGER
-	) LANGUAGE SQL VOLATILE ROWS 1 AS
-$$
-	WITH acc AS (
-		SELECT
-			sum(d.datum_count) AS datum_count,
-			sum(d.datum_hourly_count) AS datum_hourly_count,
-			sum(d.datum_daily_count) AS datum_daily_count,
-			sum(CASE d.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS datum_monthly_count
-		FROM solardatm.aud_datm_monthly d
-		WHERE d.stream_id = sid
-	)
-	SELECT
-		sid,
-		date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE COALESCE(m.time_zone, 'UTC')) AT TIME ZONE COALESCE(m.time_zone, 'UTC'),
-		acc.datum_count::INTEGER,
-		acc.datum_hourly_count::INTEGER,
-		acc.datum_daily_count::INTEGER,
-		acc.datum_monthly_count::INTEGER
-	FROM acc
-	LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
-$$;
-
-
 CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_raw(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -150,4 +111,43 @@ $$
 		AND aud.ts_start >= start_ts
 		AND aud.ts_start < end_ts
 	GROUP BY aud.stream_id
+$$;
+
+
+/**
+ * Calculate the current audit accumulative datum values for a stream.
+ *
+ * This produces an overall count of datum and aggregate datum within a stream.
+ * For speed it relies on the pre-computed audit values in the `aud_datm_monthly` table.
+ *
+ * @param sid the stream ID to find audit counts for
+ */
+CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_acc(sid UUID)
+	RETURNS TABLE (
+		stream_id				UUID,
+		ts_start 				TIMESTAMP WITH TIME ZONE,
+		datum_count 			INTEGER,
+		datum_hourly_count 		INTEGER,
+		datum_daily_count 		INTEGER,
+		datum_monthly_count 	INTEGER
+	) LANGUAGE SQL VOLATILE ROWS 1 AS
+$$
+	WITH acc AS (
+		SELECT
+			sum(d.datum_count) AS datum_count,
+			sum(d.datum_hourly_count) AS datum_hourly_count,
+			sum(d.datum_daily_count) AS datum_daily_count,
+			sum(CASE d.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS datum_monthly_count
+		FROM solardatm.aud_datm_monthly d
+		WHERE d.stream_id = sid
+	)
+	SELECT
+		sid,
+		date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE COALESCE(m.time_zone, 'UTC')) AT TIME ZONE COALESCE(m.time_zone, 'UTC'),
+		acc.datum_count::INTEGER,
+		acc.datum_hourly_count::INTEGER,
+		acc.datum_daily_count::INTEGER,
+		acc.datum_monthly_count::INTEGER
+	FROM acc
+	LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
 $$;

@@ -17,7 +17,7 @@ $$
 		COALESCE(datum_hourly_count, 0) AS datum_hourly_count,
 		COALESCE(datum_daily_count, 0) AS datum_daily_count,
 		COALESCE(datum_monthly_count, 0) AS datum_monthly_count
-	FROM solardatm.calc_audit_acc_datm(sid)
+	FROM solardatm.calc_audit_datm_acc(sid)
 	ON CONFLICT (stream_id, ts_start) DO UPDATE
 	SET datum_count = EXCLUDED.datum_count,
 		datum_hourly_count = EXCLUDED.datum_hourly_count,

@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -200,6 +201,56 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 				equalTo(true));
 		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
 		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
+	}
+
+	@Test
+	public void calcRunningTotal() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+
+		List<AuditDatum> monthlyAudits = new ArrayList<>();
+		int datumCount = 0;
+		int datumHourlyCount = 0;
+		int datumDailyCount = 0;
+		for ( int i = 0; i < 8; i++ ) {
+			long r = (i + 1) * 5000;
+			long h = (i + 1) * 720;
+			int d = 1; // day present
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			datumCount += r;
+			datumHourlyCount += h;
+			datumDailyCount += d;
+			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
+					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
+					1, p, q);
+			monthlyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, monthlyAudits);
+
+		// WHEN
+		ZonedDateTime currDay = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
+		Map<String, Object> result = jdbcTemplate.queryForMap(
+				"SELECT * FROM solardatm.calc_audit_datm_acc(?::uuid)", streamId.toString());
+		assertThat("Row returned with result columns", result.keySet(),
+				containsInAnyOrder("stream_id", "ts_start", "datum_count", "datum_hourly_count",
+						"datum_daily_count", "datum_monthly_count"));
+		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
+		assertThat("Timestamp is start of current day", result.get("ts_start"),
+				equalTo(Timestamp.from(currDay.toInstant())));
+		assertThat("Raw datum count matches", result.get("datum_count"), equalTo(datumCount));
+		assertThat("Hourly datum count matches", result.get("datum_hourly_count"),
+				equalTo(datumHourlyCount));
+		assertThat("Daily datum count matches", result.get("datum_daily_count"),
+				equalTo(datumDailyCount));
+		assertThat("Monthly datum count matches", result.get("datum_monthly_count"),
+				equalTo(monthlyAudits.size()));
 	}
 
 }

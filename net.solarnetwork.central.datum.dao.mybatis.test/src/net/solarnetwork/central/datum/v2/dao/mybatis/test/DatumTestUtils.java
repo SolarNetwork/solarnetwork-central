@@ -847,7 +847,7 @@ public final class DatumTestUtils {
 								datumStmt.setObject(4, d.getDatumQueryCount());
 								datumStmt.setObject(5, d.getDatumCount());
 								datumStmt.setObject(6, d.getDatumHourlyCount());
-								datumStmt.setObject(6, d.getDatumDailyCount());
+								datumStmt.setObject(7, d.getDatumDailyCount());
 								datumStmt.setBoolean(8,
 										d.getDatumMonthlyCount().intValue() > 0 ? true : false);
 								break;
