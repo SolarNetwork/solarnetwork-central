@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -37,6 +38,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -44,7 +46,9 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -56,6 +60,15 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  */
 public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
+
+	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+		return testStreamMetadata(1L, "a");
+	}
+
+	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
+	}
 
 	private List<GeneralNodeDatum> loadJson(String resource) throws IOException {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
@@ -123,4 +136,41 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				Aggregation.Month, null));
 	}
 
+	@Test
+	public void processStaleHourly() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-hour-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		log.debug("Got test data: {}", datums);
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
+				Aggregation.Hour, Instant.now());
+		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+
+		// WHEN
+		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+
+		// THEN
+
+		// should have stored rollup in datum_hourly_count column of aud_datm_daily table
+		List<AuditDatumEntity> result = auditDatum(Aggregation.Day);
+		assertThat("Hour rollup result stored database", result, hasSize(1));
+
+		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
+				null, 8L, null, null, null);
+		assertAuditDatumId("Daily audit rollup", result.get(0), expected);
+		assertThat("Hourly datum count", result.get(0).getDatumHourlyCount(),
+				equalTo(expected.getDatumHourlyCount()));
+
+		// should have deleted stale Hour and inserted stale Day
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
+		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
+				meta.getStreamId(),
+				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
+				Aggregation.Month, null));
+	}
 }
