@@ -240,8 +240,8 @@ $$
 	-- calculate instantaneous values per property
 	, wi AS (
 		SELECT
-			  p.idx AS idx
-			, p.val AS val
+			  p.idx
+			, p.val
 		FROM d
 		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
@@ -271,8 +271,8 @@ $$
 	-- eliminate excess leading accumulation due to reset records
 	, wa_intermediate AS (
 		SELECT
-			  p.idx AS idx
-			, p.val AS val
+			  p.idx
+			, p.val
 			, d.ts
 			, d.rtype
 			, CASE
@@ -383,6 +383,208 @@ $$
 		, di_ary.stat_i
 		, da_ary.read_a
 	FROM di_ary, da_ary, ds_ary, dt_ary
+	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
+$$;
+
+
+/**
+ * Calculate the number of rollup datum would be returned for a time range and slot period.
+ *
+ * This is meant to compliment the `solardatm.rollup_datm_for_time_span_slots()` function to
+ * more quickly find the count of datum slots that are available. This function can be much
+ * faster to execute when only a count is needed.
+ *
+ * @param sid 				the stream ID to find the count of datm slots for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param secs				the slot period, in seconds; must be between 60 and 1800 and evenly
+ *                          divide into 1800
+ */
+CREATE OR REPLACE FUNCTION solardatm.count_datm_time_span_slots(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE,
+		secs			INTEGER DEFAULT 600
+	) RETURNS BIGINT LANGUAGE SQL STABLE AS
+$$
+	SELECT count(*) FROM (
+		SELECT DISTINCT solardatm.minute_time_slot(ts, solardatm.slot_seconds(secs))
+		FROM solardatm.da_datm
+		WHERE stream_id = sid
+			AND ts >= start_ts
+			AND ts < end_ts
+	) slots
+$$;
+
+
+/**
+ * Compute a rollup datm record for a time range into sub-hour "slots", including "reset" auxiliary records.
+ *
+ * The `data_i` output column contains the average values for the raw `data_i` properties within
+ * the "clock" period.
+ *
+ * The `stat_i` output column contains a tuple of [count, min, max] values for the raw `data_i`
+ * properties within the "clock" period.
+ *
+ * The `data_a` output column contains the accumulated difference of the raw `data_a` properties
+ * within the "clock" period.
+ *
+ * The `read_a` output column contains a tuple of [start, finish, difference] values for the raw
+ * `data_a` properties within the "reading" period.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param secs				the slot period, in seconds; must be between 60 and 1800 and evenly
+ *                          divide into 1800
+ * @param tolerance_clock 	the maximum time to look forward/backward for adjacent datm within
+ *                          the "clock" period
+ *
+ * @see solardatm.count_datm_time_span_slots()
+ * @see solardatm.find_datm_for_time_span_with_aux()
+ * @see solardatm.slot_seconds()
+ */
+CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span_slots(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE,
+		secs			INTEGER DEFAULT 600,
+		tolerance_clock INTERVAL DEFAULT interval '1 hour'
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start	TIMESTAMP WITH TIME ZONE,
+		data_i		NUMERIC[],					-- array of instantaneous property average values
+		data_a		NUMERIC[],					-- array of accumulating property clock difference values
+		data_s		TEXT[],						-- array of "last seen" status property values
+		data_t		TEXT[],						-- array of all tags seen over period
+		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
+	) LANGUAGE SQL STABLE ROWS 500 AS
+$$
+	-- grab raw data + reset records, constrained by stream/date range
+	WITH d AS (
+		SELECT *, (ts >= start_ts AND ts < end_ts) AS inc
+		FROM solardatm.find_datm_for_time_span_with_aux(
+			sid,
+			start_ts,
+			end_ts,
+			tolerance_clock
+		)
+	)
+	-- calculate instantaneous statistis per property
+	, di AS (
+		SELECT
+			  p.idx
+			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
+			, to_char(avg(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, count(p.val) AS cnt
+			, min(p.val) AS val_min
+			, max(p.val) AS val_max
+		FROM d
+		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val AND d.inc
+		GROUP BY p.idx, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+	)
+	-- join data_i and stat_i property values back into arrays
+	, di_ary AS (
+		SELECT
+			   ts_start
+			,  array_agg(val ORDER BY idx) AS data_i
+			, array_agg(
+				ARRAY[cnt, val_min, val_max] ORDER BY idx
+			) AS stat_i
+		FROM di
+		GROUP BY ts_start
+	)
+	-- calculate clock accumulation for data_a values per property
+	, wa AS (
+		SELECT
+			  p.idx
+			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300)) AS ts_start
+			, COALESCE(p.val - lag(p.val) OVER slot, 0)::numeric AS diff_before
+			, COALESCE(lead(p.val) OVER slot - p.val, 0)::numeric AS diff_after
+			, CASE
+				-- start of slot; allocate only end ortion of accumulation within this slot
+				WHEN lag(d.ts) OVER slot < solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))
+					THEN EXTRACT('epoch' FROM d.ts - solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
+
+				ELSE 1
+				END as portion_before
+			, CASE
+				-- end of slot; allocate only start portion of accumulation within this slot
+				WHEN solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(/*secs*/300)) > solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))
+					THEN EXTRACT('epoch' FROM solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(/*secs*/300)) - d.ts) / EXTRACT('epoch' FROM lead(d.ts) OVER slot - d.ts)
+
+				ELSE 0
+				END as portion_after
+		FROM d
+		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+	)
+	-- calculate accumulating statistics
+	, da AS (
+		SELECT
+			  idx
+			, ts_start
+			, to_char(sum((diff_before * portion_before) + (diff_after * portion_after)), 'FM999999999999999999990.999999999')::numeric AS cdiff
+		FROM wa
+		GROUP BY idx, ts_start
+	)
+	-- join accumulating property values back into arrays
+	, da_ary AS (
+		SELECT
+			  ts_start
+			, array_agg(cdiff ORDER BY idx) AS data_a
+		FROM da
+		GROUP BY ts_start
+	)
+	-- calculate status statistics, as most-frequent status values
+	, ds AS (
+		SELECT
+			  p.idx
+			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
+			, mode() WITHIN GROUP (ORDER BY p.val) AS val
+		FROM d
+		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL AND d.inc
+		GROUP BY p.idx, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+	)
+	-- join data_s property values back into arrays
+	, ds_ary AS (
+		SELECT
+			  ts_start
+			, array_agg(val ORDER BY idx) AS data_s
+		FROM ds
+		GROUP BY ts_start
+	)
+	-- join data_t property values into mega array
+	, dt_ary AS (
+		SELECT
+			solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
+			, array_agg(p.val ORDER BY d.ts) AS data_t
+		FROM d
+		INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
+		WHERE d.data_t IS NOT NULL AND d.inc
+		GROUP BY solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+	)
+	, slots AS (
+		SELECT DISTINCT solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
+		FROM d
+		WHERE inc
+	)
+	SELECT
+		sid AS stream_id
+		, slots.ts_start
+		, di_ary.data_i
+		, da_ary.data_a
+		, ds_ary.data_s
+		, dt_ary.data_t
+		, di_ary.stat_i
+	FROM slots
+	LEFT OUTER JOIN di_ary ON di_ary.ts_start = slots.ts_start
+	LEFT OUTER JOIN da_ary ON da_ary.ts_start = slots.ts_start
+	LEFT OUTER JOIN ds_ary ON ds_ary.ts_start = slots.ts_start
+	LEFT OUTER JOIN dt_ary ON dt_ary.ts_start = slots.ts_start
 	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
 $$;
 

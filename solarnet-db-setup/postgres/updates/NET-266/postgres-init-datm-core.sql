@@ -273,3 +273,44 @@ $$
 	) m
 	LIMIT 1
 $$;
+
+
+/**
+ * Return a valid minute-level time slot seconds value for an arbitrary input value.
+ *
+ * This function is meant to validate and correct inappropriate input for minute level
+ * time slot second values, which must be between 60 and 1800 and evenly divide into 1800.
+ *
+ * @param secs the seconds to validate
+ * @returns integer seconds value, possibly different than the input seconds value
+ */
+CREATE OR REPLACE FUNCTION solardatm.slot_seconds(secs INTEGER DEFAULT 600)
+	RETURNS INTEGER LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT CASE
+		WHEN secs < 60 OR secs > 1800 OR 1800 % secs <> 0 THEN 600
+	ELSE
+		secs
+	END
+$$;
+
+
+/**
+ * Return a normalized minute time-slot timestamp for a given timestamp and slot interval.
+ *
+ * This function returns the appropriate minute-level time aggregate `ts_start` value for a given
+ * timestamp. For example passing <b>600</b> for `secs` will return a timestamp who is truncated to
+ * `:00`,`:10`, `:20`, `:30`, `:40`, or `:50`.
+ *
+ * @param ts the timestamp to normalize
+ * @param secs the slot seconds
+ * @returns normalized timestamp
+ */
+CREATE OR REPLACE FUNCTION solardatm.minute_time_slot(ts TIMESTAMP WITH TIME ZONE, secs INTEGER DEFAULT 600)
+  RETURNS TIMESTAMP WITH TIME ZONE LANGUAGE SQL IMMUTABLE AS
+$$
+	SELECT date_trunc('hour', ts) + (
+		ceil(extract('epoch' from ts) - extract('epoch' from date_trunc('hour', ts)))
+		- ceil(extract('epoch' from ts))::bigint % secs
+	) * interval '1 second'
+$$;
