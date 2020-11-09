@@ -35,6 +35,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,52 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getAggregation()));
 	}
 
+	private List<AuditDatum> insertTestAuditDatumHourly(ZonedDateTime start, UUID streamId) {
+		List<AuditDatum> hourlyAudits = new ArrayList<>();
+		for ( int i = 0; i < 8; i++ ) {
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			AuditDatumEntity audit = AuditDatumEntity.hourlyAuditDatum(streamId,
+					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
+			hourlyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, hourlyAudits);
+		return hourlyAudits;
+	}
+
+	private List<AuditDatum> insertTestAuditDatumDaily(ZonedDateTime start, UUID streamId) {
+		List<AuditDatum> dailyAudits = new ArrayList<>();
+		for ( int i = 0; i < 8; i++ ) {
+			long r = (i + 1) * 5000;
+			long h = (i + 1) * 720;
+			int d = 1; // day present
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			AuditDatumEntity audit = AuditDatumEntity.dailyAuditDatum(streamId,
+					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
+			dailyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, dailyAudits);
+		return dailyAudits;
+	}
+
+	private List<AuditDatum> insertTestAuditDatumMonthly(ZonedDateTime start, UUID streamId) {
+		List<AuditDatum> monthlyAudits = new ArrayList<>();
+		for ( int i = 0; i < 8; i++ ) {
+			long r = (i + 1) * 5000;
+			long h = (i + 1) * 720;
+			int d = 1; // day present
+			long p = (i + 1) * 2L;
+			long q = (i + 1) * 100L;
+			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
+					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
+					1, p, q);
+			monthlyAudits.add(audit);
+		}
+		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, monthlyAudits);
+		return monthlyAudits;
+	}
+
 	@Test
 	public void processStaleRaw() throws IOException {
 		// GIVEN
@@ -142,7 +189,6 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
 				"test-agg-hour-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		log.debug("Got test data: {}", datums);
 		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -165,12 +211,134 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 		assertThat("Hourly datum count", result.get(0).getDatumHourlyCount(),
 				equalTo(expected.getDatumHourlyCount()));
 
-		// should have deleted stale Hour and inserted stale Day
+		// should have deleted stale Hour and inserted stale Month
 		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
 				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
 				Aggregation.Month, null));
+	}
+
+	@Test
+	public void processStaleDaily() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-day-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		List<AuditDatum> hourAuditData = insertTestAuditDatumHourly(day, meta.getStreamId());
+
+		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
+				Aggregation.Day, Instant.now());
+		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+
+		// WHEN
+		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+
+		// THEN
+
+		// should have stored rollup in datum_daily_pres, prop_count, datum_q_count column of aud_datm_daily table
+		List<AuditDatumEntity> result = auditDatum(Aggregation.Day);
+		assertThat("Hour rollup result stored database", result, hasSize(1));
+
+		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
+				null, null, 1, hourAuditData.stream().mapToLong(AuditDatum::getDatumPropertyCount).sum(),
+				hourAuditData.stream().mapToLong(AuditDatum::getDatumQueryCount).sum());
+		assertAuditDatumId("Daily audit rollup", result.get(0), expected);
+		assertThat("Daily datum count", result.get(0).getDatumDailyCount(),
+				equalTo(expected.getDatumDailyCount()));
+		assertThat("Daily datum property count", result.get(0).getDatumPropertyCount(),
+				equalTo(expected.getDatumPropertyCount()));
+		assertThat("Daily datum query count", result.get(0).getDatumQueryCount(),
+				equalTo(expected.getDatumQueryCount()));
+
+		// should have deleted stale Day and inserted stale Month
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
+		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
+				meta.getStreamId(),
+				day.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toInstant(),
+				Aggregation.Month, null));
+	}
+
+	@Test
+	public void processStaleMonthly() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
+				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+
+		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		List<AuditDatum> dayAuditDatum = insertTestAuditDatumDaily(day, meta.getStreamId());
+		List<AuditDatum> monthAuditDatum = insertTestAuditDatumMonthly(
+				day.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(1), meta.getStreamId());
+
+		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
+				Aggregation.Month, Instant.now());
+		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+
+		// WHEN
+		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
+
+		// THEN
+
+		// should have stored rollup in datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
+		// prop_count, datum_q_count column of aud_datm_monthly table
+		List<AuditDatumEntity> result = auditDatum(Aggregation.Month);
+		assertThat("Hour rollup result stored database (with existing Month data)", result, hasSize(9));
+
+		AuditDatumEntity expectedMonth = AuditDatumEntity.monthlyAuditDatum(meta.getStreamId(),
+				day.toInstant(), dayAuditDatum.stream().mapToLong(AuditDatum::getDatumCount).sum(),
+				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumHourlyCount).sum(),
+				dayAuditDatum.stream().mapToInt(AuditDatum::getDatumDailyCount).sum(), 1,
+				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumPropertyCount).sum(),
+				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumQueryCount).sum());
+		assertAuditDatumId("Daily audit rollup", result.get(0), expectedMonth);
+		assertThat("Month datum count", result.get(0).getDatumCount(),
+				equalTo(expectedMonth.getDatumCount()));
+		assertThat("Month hourly datum count", result.get(0).getDatumHourlyCount(),
+				equalTo(expectedMonth.getDatumHourlyCount()));
+		assertThat("Month daily datum count", result.get(0).getDatumDailyCount(),
+				equalTo(expectedMonth.getDatumDailyCount()));
+		assertThat("Month monthly datum count", result.get(0).getDatumMonthlyCount(),
+				equalTo(expectedMonth.getDatumMonthlyCount()));
+		assertThat("Month datum property count", result.get(0).getDatumPropertyCount(),
+				equalTo(expectedMonth.getDatumPropertyCount()));
+		assertThat("Month datum query count", result.get(0).getDatumQueryCount(),
+				equalTo(expectedMonth.getDatumQueryCount()));
+
+		// should have deleted stale Month
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		assertThat("No stale aggregate records remain", staleRows, hasSize(0));
+
+		// should have calculated accumulative audit data
+		List<AuditDatumEntity> resultAcc = auditDatum(Aggregation.RunningTotal);
+
+		ZonedDateTime today = ZonedDateTime.now(day.getZone()).truncatedTo(ChronoUnit.DAYS);
+		AuditDatumEntity expectedAcc = AuditDatumEntity.accumulativeAuditDatum(meta.getStreamId(),
+				today.toInstant(),
+				expectedMonth.getDatumCount()
+						+ monthAuditDatum.stream().mapToLong(AuditDatum::getDatumCount).sum(),
+				expectedMonth.getDatumHourlyCount()
+						+ monthAuditDatum.stream().mapToLong(AuditDatum::getDatumHourlyCount).sum(),
+				expectedMonth.getDatumDailyCount()
+						+ monthAuditDatum.stream().mapToInt(AuditDatum::getDatumDailyCount).sum(),
+				expectedMonth.getDatumMonthlyCount()
+						+ monthAuditDatum.stream().mapToInt(AuditDatum::getDatumMonthlyCount).sum());
+
+		assertThat("Accumulative rollup result stored database", resultAcc, hasSize(1));
+		assertAuditDatumId("Accumulative audit rollup", resultAcc.get(0), expectedAcc);
+		assertThat("Accumulative datum count", resultAcc.get(0).getDatumCount(),
+				equalTo(expectedAcc.getDatumCount()));
+		assertThat("Accumulative hourly datum count", resultAcc.get(0).getDatumHourlyCount(),
+				equalTo(expectedAcc.getDatumHourlyCount()));
+		assertThat("Accumulative daily datum count", resultAcc.get(0).getDatumDailyCount(),
+				equalTo(expectedAcc.getDatumDailyCount()));
+		assertThat("Accumulative monthly datum count", resultAcc.get(0).getDatumMonthlyCount(),
+				equalTo(expectedAcc.getDatumMonthlyCount()));
 	}
 }

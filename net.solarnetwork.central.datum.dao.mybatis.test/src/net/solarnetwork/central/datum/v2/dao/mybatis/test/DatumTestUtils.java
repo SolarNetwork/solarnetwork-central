@@ -1376,25 +1376,27 @@ public final class DatumTestUtils {
 		RowMapper<AuditDatumEntity> mapper;
 		switch (kind) {
 			case Day:
-				tableName = "daily";
+				tableName = "aud_datm_daily";
 				mapper = AuditDatumDailyEntityRowMapper.INSTANCE;
 				break;
 
 			case Month:
-				tableName = "monthly";
+				tableName = "aud_datm_monthly";
 				mapper = AuditDatumMonthlyEntityRowMapper.INSTANCE;
 				break;
 
 			case RunningTotal:
-				tableName = "acc";
+				tableName = "aud_acc_datm_daily";
 				mapper = AuditDatumAccumulativeEntityRowMapper.INSTANCE;
+				break;
 
 			default:
-				tableName = "hourly";
+				tableName = "aud_datm_hourly";
 				mapper = AuditDatumHourlyEntityRowMapper.INSTANCE;
 		}
-		return jdbcTemplate.query(String.format(
-				"SELECT * FROM solardatm.aud_datm_%s ORDER BY stream_id, ts_start", tableName), mapper);
+		return jdbcTemplate.query(
+				String.format("SELECT * FROM solardatm.%s ORDER BY stream_id, ts_start", tableName),
+				mapper);
 
 	}
 

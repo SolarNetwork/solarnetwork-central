@@ -54,7 +54,7 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 public class AuditDatumMonthlyEntityRowMapper implements RowMapper<AuditDatumEntity> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumDailyEntityRowMapper();
+	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumMonthlyEntityRowMapper();
 
 	@Override
 	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
