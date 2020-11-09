@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 
 /**
- * Map hourly datum audit rows into {@link AuditDatumEntity} instances.
+ * Map daily datum audit rows into {@link AuditDatumEntity} instances.
  * 
  * <p>
  * The expected column order in the SQL results is:
@@ -42,23 +42,26 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
  * <li>prop_count</li>
  * <li>datum_q_count</li>
  * <li>datum_count</li>
+ * <li>datum_hourly_count</li>
+ * <li>datum_daily_pres</li>
  * </ol>
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class AuditDatumHourlyEntityRowMapper implements RowMapper<AuditDatumEntity> {
+public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatumEntity> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumHourlyEntityRowMapper();
+	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumDailyEntityRowMapper();
 
 	@Override
 	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = UUID.fromString(rs.getString(1));
 		Instant ts = rs.getTimestamp(2).toInstant();
-		return AuditDatumEntity.hourlyAuditDatum(streamId, ts, rs.getLong(4), rs.getLong(5),
-				rs.getLong(3));
+		boolean dayPresent = rs.getBoolean(7);
+		return AuditDatumEntity.dailyAuditDatum(streamId, ts, rs.getLong(5), rs.getLong(6),
+				dayPresent ? 1 : 0, rs.getLong(3), rs.getLong(4));
 	}
 
 }

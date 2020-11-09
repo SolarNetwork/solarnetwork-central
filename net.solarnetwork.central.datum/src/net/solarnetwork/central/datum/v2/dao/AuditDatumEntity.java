@@ -125,7 +125,24 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 				datumDailyCount, datumMonthlyCount, datumPropertyCount, datumQueryCount);
 	}
 
-	public static AuditDatumEntity accumulatedAuditDatum(UUID streamId, Instant timestamp,
+	/**
+	 * Create an accumulative "running total" audit datum.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param timestamp
+	 *        the time
+	 * @param datumCount
+	 *        the datum count
+	 * @param datumHourlyCount
+	 *        the hourly datum count
+	 * @param datumDailyCount
+	 *        the daily datum count
+	 * @param datumMonthlyCount
+	 *        the monthly datum count
+	 * @return the audit datum
+	 */
+	public static AuditDatumEntity accumulativeAuditDatum(UUID streamId, Instant timestamp,
 			Long datumCount, Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.RunningTotal, datumCount,
 				datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null);

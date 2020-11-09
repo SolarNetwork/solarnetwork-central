@@ -58,6 +58,8 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
  */
 public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
+	private static final String TEST_TZ_ALT = "America/Los_Angeles";
+
 	private BasicNodeDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a");
 	}
@@ -253,8 +255,6 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		assertThat("Monthly datum count matches", result.get("datum_monthly_count"),
 				equalTo(monthlyAudits.size()));
 	}
-
-	private static final String TEST_TZ_ALT = "America/Los_Angeles";
 
 	@Test
 	public void calcRunningTotal_tz() throws IOException {

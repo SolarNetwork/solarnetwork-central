@@ -159,15 +159,6 @@ CREATE TABLE solardatm.aud_datm_monthly (
 	CONSTRAINT aud_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
--- "stale" audit queue table
-CREATE TABLE solardatm.aud_stale_datm_daily (
-	stream_id				UUID NOT NULL,
-	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
-	aud_kind 				CHARACTER NOT NULL,
-	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT aud_datm_daily_stale_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
-);
-
 -- track total accumulated counts per day
 CREATE TABLE solardatm.aud_acc_datm_daily (
 	stream_id				UUID NOT NULL,
@@ -178,6 +169,15 @@ CREATE TABLE solardatm.aud_acc_datm_daily (
 	datum_monthly_count 	INTEGER NOT NULL DEFAULT 0,
 	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT aud_acc_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+);
+
+-- "stale" audit queue table
+CREATE TABLE solardatm.aud_stale_datm (
+	stream_id				UUID NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	aud_kind 				CHARACTER NOT NULL,
+	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_stale_datm_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
 );
 
 /*

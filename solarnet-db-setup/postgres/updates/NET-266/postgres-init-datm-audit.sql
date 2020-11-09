@@ -1,48 +1,27 @@
 /**
- * Populate an audit accumulative datum daily record for a stream for the current day.
+ * Compute a single stale audit datum rollup and store the results in the
+ * `solardatm.aud_datm_daily`, `solardatm.aud_datm_monthly`, and/or `aud_acc_datm_daily` tables.
  *
- * This inserts/updates the `solardatm.calc_audit_acc_datm` table.
+ * After saving the rollup value for any kind except `M`, a new stale audit datum record will be
+ * inserted into the `aud_stale_datm` table for the `M` kind.
  *
- * @param sid the stream ID to populate the audit counts for
- */
-CREATE OR REPLACE FUNCTION solardatm.populate_audit_acc_datm_daily(sid UUID)
-	RETURNS void LANGUAGE SQL VOLATILE AS
-$$
-	INSERT INTO solardatm.aud_acc_datm_daily (stream_id, ts_start,
-		datum_count, datum_hourly_count, datum_daily_count, datum_monthly_count)
-	SELECT
-		sid,
-		ts_start,
-		COALESCE(datum_count, 0) AS datum_count,
-		COALESCE(datum_hourly_count, 0) AS datum_hourly_count,
-		COALESCE(datum_daily_count, 0) AS datum_daily_count,
-		COALESCE(datum_monthly_count, 0) AS datum_monthly_count
-	FROM solardatm.calc_audit_datm_acc(sid)
-	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET datum_count = EXCLUDED.datum_count,
-		datum_hourly_count = EXCLUDED.datum_hourly_count,
-		datum_daily_count = EXCLUDED.datum_daily_count,
-		datum_monthly_count = EXCLUDED.datum_monthly_count,
-		processed = CURRENT_TIMESTAMP;
-$$;
-
-
-/**
+ * @param kind 				the aggregate kind: '0', 'h', 'd', or 'M' for raw, daily, hourly, monthly
  *
  * @see solardatm.calc_audit_datm_raw()
  * @see solardatm.calc_audit_datm_hourly()
  * @see solardatm.calc_audit_datm_daily()
- *
+ * @see solardatm.calc_audit_datm_monthly()
+ * @see solardatm.calc_audit_datm_acc()
  */
-CREATE OR REPLACE FUNCTION solardatm.process_one_stale_aud_datm_daily(kind CHARACTER)
+CREATE OR REPLACE FUNCTION solardatm.process_one_aud_stale_datm(kind CHARACTER)
   RETURNS INTEGER LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
-	stale 					solardatm.aud_stale_datm_daily;
+	stale 					solardatm.aud_stale_datm;
 	meta					record;
 	tz						TEXT;
 	curs 					CURSOR FOR
-							SELECT * FROM solardatm.aud_stale_datm_daily
+							SELECT * FROM solardatm.aud_stale_datm
 							WHERE aud_kind = kind LIMIT 1 FOR UPDATE SKIP LOCKED;
 	result_cnt 				INTEGER := 0;
 BEGIN
@@ -50,11 +29,9 @@ BEGIN
 	FETCH NEXT FROM curs INTO stale;
 
 	IF FOUND THEN
-		IF kind = 'M' THEN
-			-- get stream time zone; will determine if node or location stream
-			SELECT * FROM solardatm.find_metadata_for_stream(stale.stream_id) INTO meta;
-			tz := COALESCE(meta.time_zone, 'UTC');
-		END IF;
+		-- get stream time zone; will determine if node or location stream
+		SELECT * FROM solardatm.find_metadata_for_stream(stale.stream_id) INTO meta;
+		tz := COALESCE(meta.time_zone, 'UTC');
 
 		CASE kind
 			WHEN '0' THEN
@@ -121,7 +98,22 @@ BEGIN
 					AND a.ts_start <> stale.ts_start;
 
 				-- recalculate full accumulated audit counts for today
-				PERFORM solardatm.populate_audit_acc_datm_daily(stale.stream_id);
+				INSERT INTO solardatm.aud_acc_datm_daily (stream_id, ts_start,
+					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_count,
+					processed)
+				SELECT stream_id, ts_start,
+					COALESCE(datum_count, 0) AS datum_count,
+					COALESCE(datum_hourly_count, 0) AS datum_hourly_count,
+					COALESCE(datum_daily_count, 0) AS datum_daily_count,
+					COALESCE(datum_monthly_count, 0) AS datum_monthly_count,
+					CURRENT_TIMESTAMP
+				FROM solardatm.calc_audit_datm_acc(stale.stream_id)
+				ON CONFLICT (stream_id, ts_start) DO UPDATE
+				SET datum_count = EXCLUDED.datum_count,
+					datum_hourly_count = EXCLUDED.datum_hourly_count,
+					datum_daily_count = EXCLUDED.datum_daily_count,
+					datum_monthly_count = EXCLUDED.datum_monthly_count,
+					processed = EXCLUDED.processed;
 			ELSE
 				-- in case node tz changed, remove record(s) from other zone
 				-- daily records clean 1 day on either side
@@ -132,7 +124,7 @@ BEGIN
 					AND ts_start <> stale.ts_start;
 
 				-- recalculate monthly audit based on updated daily values
-				INSERT INTO solardatm.stale_aud_datum_daily (stream_id, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
 				VALUES (
 					stale.stream_id,
 					date_trunc('month', stale.ts_start AT TIME ZONE tz) AT TIME ZONE tz,
@@ -141,7 +133,7 @@ BEGIN
 		END CASE;
 
 		-- remove processed stale record
-		DELETE FROM solardatm.stale_aud_datm_daily WHERE CURRENT OF curs;
+		DELETE FROM solardatm.aud_stale_datm WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
 	CLOSE curs;

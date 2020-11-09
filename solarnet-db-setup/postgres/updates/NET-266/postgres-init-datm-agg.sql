@@ -5,7 +5,7 @@
  * a new stale aggregate datum record will be inserted into the `stale_agg_datum` table for that
  * higher aggregate level. For example if `kind` is `h` then a `d` stale record will be inserted.
  *
- * When processing a `d` aggregate, 3 `aud_stale_datm_daily` records will be inserted for the
+ * When processing a `d` aggregate, 3 `aud_stale_datm` records will be inserted for the
  * `0`, `h`, and `d` aggregate levels, so the associated audit values for the stale aggregate
  * period can be computed.
  *
@@ -123,22 +123,22 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to raw audit data
-				INSERT INTO solardatm.aud_stale_datm_daily (stream_id, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
 				VALUES (stale.stream_id, date_trunc('day', local_ts_start) AT TIME ZONE tz, '0')
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to hourly audit data
-				INSERT INTO solardatm.aud_stale_datm_daily (stream_id, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
 				VALUES (stale.stream_id, date_trunc('day', local_ts_start) AT TIME ZONE tz, 'h')
 				ON CONFLICT DO NOTHING;
 
 				-- handle update to daily audit data
-				INSERT INTO solardatm.aud_stale_datm_daily (stream_id, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
 				VALUES (stale.stream_id, date_trunc('day', local_ts_start) AT TIME ZONE tz, 'd')
 				ON CONFLICT DO NOTHING;
 			ELSE
 				-- handle update to monthly audit data
-				INSERT INTO solardatm.aud_stale_datm_daily (stream_id, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
 				VALUES (stale.stream_id, date_trunc('month', local_ts_start) AT TIME ZONE tz, 'M')
 				ON CONFLICT DO NOTHING;
 		END CASE;
