@@ -1,3 +1,12 @@
+/**
+ * Calculate raw audit datum values for a stream.
+ *
+ * This relies on the `da_datm` table.
+ *
+ * @param sid 				the stream ID to find audit datum for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_raw(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -20,6 +29,15 @@ $$
 $$;
 
 
+/**
+ * Calculate hourly audit datum values for a stream.
+ *
+ * For speed it relies on the pre-computed audit values in the `agg_datm_hourly` table.
+ *
+ * @param sid 				the stream ID to find audit datum for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_hourly(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -42,6 +60,16 @@ $$
 $$;
 
 
+/**
+ * Calculate daily audit datum values for a stream.
+ *
+ * For speed it relies on the pre-computed audit values in the `agg_datm_daily` and
+ * `aud_datm_hourly` tables.
+ *
+ * @param sid 				the stream ID to find audit datum for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_daily(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
@@ -75,6 +103,16 @@ $$
 $$;
 
 
+/**
+ * Calculate monthly audit datum values for a stream.
+ *
+ * For speed it relies on the pre-computed audit values in the `agg_datm_monthly` and
+ * `aud_datm_daily` tables.
+ *
+ * @param sid 				the stream ID to find audit datum for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_monthly(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
