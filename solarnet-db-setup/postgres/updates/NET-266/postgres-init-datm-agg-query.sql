@@ -429,9 +429,6 @@ $$;
  * The `data_a` output column contains the accumulated difference of the raw `data_a` properties
  * within the "clock" period.
  *
- * The `read_a` output column contains a tuple of [start, finish, difference] values for the raw
- * `data_a` properties within the "reading" period.
- *
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
@@ -457,7 +454,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span_slots(
 		data_a		NUMERIC[],					-- array of accumulating property clock difference values
 		data_s		TEXT[],						-- array of "last seen" status property values
 		data_t		TEXT[],						-- array of all tags seen over period
-		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
+		stat_i		NUMERIC[][]					-- array of instantaneous property [count,min,max] statistic tuples
 	) LANGUAGE SQL STABLE ROWS 500 AS
 $$
 	-- grab raw data + reset records, constrained by stream/date range
@@ -481,7 +478,7 @@ $$
 			, max(p.val) AS val_max
 		FROM d
 		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val AND d.inc
+		WHERE p.val IS NOT NULL AND d.inc
 		GROUP BY p.idx, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
 	)
 	-- join data_i and stat_i property values back into arrays
@@ -499,20 +496,20 @@ $$
 	, wa AS (
 		SELECT
 			  p.idx
-			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300)) AS ts_start
+			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
 			, COALESCE(p.val - lag(p.val) OVER slot, 0)::numeric AS diff_before
 			, COALESCE(lead(p.val) OVER slot - p.val, 0)::numeric AS diff_after
 			, CASE
 				-- start of slot; allocate only end ortion of accumulation within this slot
-				WHEN lag(d.ts) OVER slot < solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))
-					THEN EXTRACT('epoch' FROM d.ts - solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
+				WHEN lag(d.ts) OVER slot < solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+					THEN EXTRACT('epoch' FROM d.ts - solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
 
 				ELSE 1
 				END as portion_before
 			, CASE
 				-- end of slot; allocate only start portion of accumulation within this slot
-				WHEN solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(/*secs*/300)) > solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(/*secs*/300))
-					THEN EXTRACT('epoch' FROM solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(/*secs*/300)) - d.ts) / EXTRACT('epoch' FROM lead(d.ts) OVER slot - d.ts)
+				WHEN solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(secs)) > solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+					THEN EXTRACT('epoch' FROM solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(secs)) - d.ts) / EXTRACT('epoch' FROM lead(d.ts) OVER slot - d.ts)
 
 				ELSE 0
 				END as portion_after

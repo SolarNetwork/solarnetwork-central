@@ -122,6 +122,21 @@ public final class DatumTestUtils {
 	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month)\"");
 
 	/**
+	 * Get an array of {@link BigDecimal} instances from string values.
+	 * 
+	 * @param nums
+	 *        the string numbers
+	 * @return the array
+	 */
+	public static BigDecimal[] decimalArray(String... nums) {
+		BigDecimal[] vals = new BigDecimal[nums.length];
+		for ( int i = 0; i < nums.length; i++ ) {
+			vals[i] = new BigDecimal(nums[i]);
+		}
+		return vals;
+	}
+
+	/**
 	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
 	 * 
 	 * @param nums
@@ -130,10 +145,7 @@ public final class DatumTestUtils {
 	 * @return the matcher
 	 */
 	public static Matcher<BigDecimal[]> arrayOfDecimals(String... nums) {
-		BigDecimal[] vals = new BigDecimal[nums.length];
-		for ( int i = 0; i < nums.length; i++ ) {
-			vals[i] = new BigDecimal(nums[i]);
-		}
+		BigDecimal[] vals = decimalArray(nums);
 		return Matchers.arrayContaining(vals);
 	}
 
