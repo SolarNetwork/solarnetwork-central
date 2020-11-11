@@ -66,6 +66,18 @@ CREATE TABLE solardatm.da_datm_aux (
 	================================================================================================
 */
 
+-- type, so use in aggregate functions
+CREATE TYPE solardatm.agg_datm AS (
+	stream_id	UUID,
+	ts_start	TIMESTAMP WITH TIME ZONE,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][]
+);
+
 -- agg hourly datum table
 CREATE TABLE solardatm.agg_datm_hourly (
 	stream_id	UUID NOT NULL,
