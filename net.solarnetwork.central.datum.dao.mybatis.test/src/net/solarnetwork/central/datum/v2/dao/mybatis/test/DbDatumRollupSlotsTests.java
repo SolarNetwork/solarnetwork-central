@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.decimalArray;
+import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
@@ -87,7 +89,6 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		callback.doWithStream(datums, meta, streamId, results);
 	}
 
-	/*-
 	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,
 			ZonedDateTime aggEnd, Aggregation agg, RollupCallback callback) throws IOException {
 		List<?> data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass());
@@ -113,7 +114,6 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		}
 		callback.doWithStream(datums, meta, streamId, results);
 	}
-	*/
 
 	private void assertAgg(String prefix, AggregateDatum result, AggregateDatum expected) {
 		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
@@ -178,4 +178,141 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 				});
 	}
 
+	@Test
+	public void reset_inMiddle_10min() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-32.txt", start, start.plusHours(1),
+				Aggregation.TenMinute, new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
+
+						assertAgg("10min slot 1", results.get(0),
+								agg(streamId, start.plusSeconds(600 * 0), Aggregation.TenMinute,
+										decimalArray("1.35", "2.35"), decimalArray("28.125"),
+										new BigDecimal[][] { decimalArray("6", "1.1", "1.6"),
+												decimalArray("6", "2.1", "2.6") }));
+						assertAgg("10min slot 2", results.get(1),
+								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 3", results.get(2),
+								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
+												decimalArray("6", "2.2", "2.7") }));
+						assertAgg("10min slot 4", results.get(3),
+								agg(streamId, start.plusSeconds(600 * 3), Aggregation.TenMinute,
+										decimalArray("1.4", "2.4"), decimalArray("27.5"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 5", results.get(4),
+								agg(streamId, start.plusSeconds(600 * 4), Aggregation.TenMinute,
+										decimalArray("1.525", "2.525"), decimalArray("187"),
+										new BigDecimal[][] { decimalArray("8", "1.0", "1.9"),
+												decimalArray("8", "2.0", "2.9") }));
+						assertAgg("10min slot 6", results.get(5),
+								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("438.823529412"),
+										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
+												decimalArray("9", "2.1", "2.9") }));
+					}
+				});
+	}
+
+	@Test
+	public void reset_exactlyAtStart_10min() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-33.txt", start, start.plusHours(1),
+				Aggregation.TenMinute, new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
+
+						assertAgg("10min slot 1", results.get(0),
+								agg(streamId, start.plusSeconds(600 * 0), Aggregation.TenMinute,
+										decimalArray("1.35", "2.35"), decimalArray("28.125"),
+										new BigDecimal[][] { decimalArray("6", "1.1", "1.6"),
+												decimalArray("6", "2.1", "2.6") }));
+						assertAgg("10min slot 2", results.get(1),
+								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 3", results.get(2),
+								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
+												decimalArray("6", "2.2", "2.7") }));
+						assertAgg("10min slot 4", results.get(3),
+								agg(streamId, start.plusSeconds(600 * 3), Aggregation.TenMinute,
+										decimalArray("1.4", "2.4"), decimalArray("24.5"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 5", results.get(4),
+								agg(streamId, start.plusSeconds(600 * 4), Aggregation.TenMinute,
+										decimalArray("1.525", "2.525"), decimalArray("370"),
+										new BigDecimal[][] { decimalArray("8", "1.0", "1.9"),
+												decimalArray("8", "2.0", "2.9") }));
+						assertAgg("10min slot 6", results.get(5),
+								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("438.823529412"),
+										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
+												decimalArray("9", "2.1", "2.9") }));
+					}
+				});
+	}
+
+	@Test
+	public void reset_twoInMiddle_10min() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamWithAuxiliaryAndRollup("test-datum-34.txt", start, start.plusHours(1),
+				Aggregation.TenMinute, new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<GeneralNodeDatum> datums,
+							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							List<AggregateDatumEntity> results) {
+						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
+
+						assertAgg("10min slot 1", results.get(0),
+								agg(streamId, start.plusSeconds(600 * 0), Aggregation.TenMinute,
+										decimalArray("1.35", "2.35"), decimalArray("28.125"),
+										new BigDecimal[][] { decimalArray("6", "1.1", "1.6"),
+												decimalArray("6", "2.1", "2.6") }));
+						assertAgg("10min slot 2", results.get(1),
+								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 3", results.get(2),
+								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
+												decimalArray("6", "2.2", "2.7") }));
+						assertAgg("10min slot 4", results.get(3),
+								agg(streamId, start.plusSeconds(600 * 3), Aggregation.TenMinute,
+										decimalArray("1.4", "2.4"), decimalArray("27.5"),
+										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
+												decimalArray("5", "2.0", "2.9") }));
+						assertAgg("10min slot 5", results.get(4),
+								agg(streamId, start.plusSeconds(600 * 4), Aggregation.TenMinute,
+										decimalArray("1.525", "2.525"), decimalArray("99"),
+										new BigDecimal[][] { decimalArray("8", "1.0", "1.9"),
+												decimalArray("8", "2.0", "2.9") }));
+						assertAgg("10min slot 6", results.get(5),
+								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
+										decimalArray("1.5", "2.5"), decimalArray("43.882352941"),
+										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
+												decimalArray("9", "2.1", "2.9") }));
+					}
+				});
+	}
 }

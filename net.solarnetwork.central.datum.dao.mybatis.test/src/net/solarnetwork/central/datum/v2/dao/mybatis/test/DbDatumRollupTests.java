@@ -482,6 +482,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatumEntity result = results.get(0);
 						log.debug("Got result: {}", result);
+
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
@@ -717,7 +718,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
 								arrayOfDecimals("1.45", "4.6"));
 						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
-								arrayOfDecimals("30.000004167"));
+								arrayOfDecimals("30"));
 						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
 								arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
 										arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));

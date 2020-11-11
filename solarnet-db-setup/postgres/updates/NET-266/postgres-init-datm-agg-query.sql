@@ -112,7 +112,7 @@ $$;
  * including "reset" auxiliary records.
  *
  * The output `rtype` column will be 0, 1, or 2 if the row is a "raw" datum, "final reset" datum,
- * or "starting reset" datum.
+ * or "starting reset" datum. Reset records for final/start share the same timestamp.
  *
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
@@ -145,7 +145,7 @@ $$
 	, aux AS (
 		SELECT
 			  m.stream_id
-			, aux.ts - unnest(ARRAY['1 millisecond','0'])::interval AS ts
+			, aux.ts
 			, m.names_a
 			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
 			, unnest(ARRAY[1::SMALLINT, 2::SMALLINT]) AS rr
@@ -171,19 +171,31 @@ $$
 			, min(aux.rr) AS rr
 		FROM aux
 		INNER JOIN jsonb_each(aux.jdata_a) AS p(key,val) ON TRUE
-		GROUP BY aux.stream_id, aux.ts
+		GROUP BY aux.stream_id, aux.ts, aux.rr
+	)
+	-- find min, max ts out of raw + resets to eliminate extra leading/trailing from combined results
+	, ts_range AS (
+		SELECT min_ts, max_ts
+		FROM (
+				SELECT COALESCE(max(ts), start_ts) AS min_ts
+				FROM (
+					SELECT max(ts) FROM d WHERE ts <= start_ts
+					UNION ALL
+					SELECT max(ts) FROM resets WHERE ts <= start_ts
+				) l(ts)
+			) min, (
+				SELECT COALESCE(min(ts), end_ts) AS max_ts
+				FROM (
+					SELECT min(ts) FROM d WHERE ts >= end_ts
+					UNION ALL
+					SELECT min(ts) FROM resets WHERE ts >= end_ts
+				) r(ts)
+			) max
 	)
 	-- combine raw datm with reset datm
-	, combined AS (
-		SELECT * FROM d
-		UNION ALL
-		SELECT * FROM resets
-	)
-	-- group all results by time so that reset records with the same time as a raw record
-	-- override the raw record
-	SELECT DISTINCT ON (ts) stream_id, ts, data_i, data_a, data_s, data_t, rr
-	FROM combined
-	ORDER BY ts, rr DESC
+	SELECT d.* FROM d, ts_range WHERE d.ts >= ts_range.min_ts AND d.ts <= ts_range.max_ts
+	UNION ALL
+	SELECT resets.* FROM resets, ts_range WHERE resets.ts >= ts_range.min_ts AND resets.ts <= ts_range.max_ts
 $$;
 
 
@@ -230,7 +242,8 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 $$
 	-- grab raw data + reset records, constrained by stream/date range
 	WITH d AS (
-		SELECT * FROM solardatm.find_datm_for_time_span_with_aux(
+		SELECT *, (ts >= start_ts AND ts < end_ts) AS inc
+		FROM solardatm.find_datm_for_time_span_with_aux(
 			sid,
 			start_ts,
 			end_ts,
@@ -244,9 +257,7 @@ $$
 			, p.val
 		FROM d
 		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-			AND d.ts >= start_ts
-			AND d.ts < end_ts
+		WHERE p.val IS NOT NULL AND d.inc
 	)
 	-- calculate instantaneous statistics
 	, di AS (
@@ -268,86 +279,62 @@ $$
 			) AS stat_i
 		FROM di d
 	)
-	-- eliminate excess leading accumulation due to reset records
-	, wa_intermediate AS (
+	-- calculate clock accumulation for data_a values per property
+	, wa AS (
 		SELECT
 			  p.idx
 			, p.val
 			, d.ts
 			, d.rtype
+			, COALESCE(CASE
+				WHEN rtype <> 2 THEN p.val - lag(p.val) OVER slot
+				ELSE 0::numeric
+				END, 0)::numeric AS diff
 			, CASE
-				WHEN d.ts < start_ts AND lead(d.ts) OVER slot <= start_ts THEN 0
+				-- too much time between rows for clock diff, or no time passed
+				WHEN d.ts - lag(d.ts) OVER slot > tolerance_clock OR d.ts = lag(d.ts) OVER slot
+					THEN 0
+
+				-- before bounds
+				WHEN d.ts < start_ts
+					THEN 0
+
+				-- crossing start of slot; allocate only end portion of accumulation within this slot
+				WHEN lag(d.ts) OVER slot < start_ts
+					THEN EXTRACT('epoch' FROM d.ts - start_ts) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
+
+				-- crossing end of slot; allocate only start portion of accumulation within this slot
+				WHEN d.ts > end_ts AND lag(d.ts) OVER slot < end_ts
+					THEN EXTRACT('epoch' FROM end_ts - lag(d.ts) OVER slot) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
+
 				ELSE 1
-				END AS inc
+				END as portion
+			, (ts < end_ts AND NOT (ts <= start_ts AND rtype = 1)
+				OR (ts = end_ts AND rtype = 1)) AS rinc
 		FROM d
 		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-	)
-	-- calculate clock accumulation for data_a values per property
-	, wa AS (
-		SELECT
-			  p.idx AS idx
-			, p.val AS val
-			, p.ts
-			, p.rtype
-			, sum(CASE rtype WHEN 2 THEN 1 ELSE 0 END) OVER slice AS slice
-			, CASE rtype
-				WHEN 2 THEN 0
-				ELSE COALESCE(p.val - lag(p.val) OVER slice, 0::numeric)
-				END AS diff
-			, first_value(p.val) OVER slot AS rstart
-			, CASE
-				WHEN row_number() OVER slot = row_number() OVER reading THEN last_value(p.val) OVER reading
-				ELSE NULL
-				END AS rend
-			, CASE
-				WHEN p.ts < start_ts
-					THEN 0
-
-				WHEN lag(p.ts) OVER slot + tolerance_clock < start_ts
-					THEN 0
-
-				WHEN lag(p.ts) OVER slot < start_ts
-					THEN  EXTRACT(epoch FROM (p.ts - start_ts)) / EXTRACT(epoch FROM (p.ts - lag(p.ts) OVER slot))
-
-				WHEN p.ts > end_ts + tolerance_clock
-					THEN 0
-
-				WHEN p.ts > end_ts AND lag(p.ts) OVER slot >= end_ts
-					THEN 0
-
-				WHEN p.ts > end_ts AND lag(p.ts) OVER slot < end_ts
-					THEN EXTRACT(epoch FROM (end_ts - lag(p.ts) OVER slot)) / EXTRACT(epoch FROM (p.ts - lag(p.ts) OVER slot))
-
-				ELSE
-					1
-				END AS portion
-		FROM wa_intermediate p
-		WHERE p.inc = 1
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY p.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-			, slice AS (PARTITION BY p.idx ORDER BY p.ts)
-			, reading AS (PARTITION BY p.idx, CASE WHEN p.ts < end_ts THEN 0 ELSE 1 END ORDER BY p.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts, d.rtype RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (
 		SELECT
-			w.idx
-			, to_char(sum(w.diff * w.portion) FILTER (WHERE w.portion > 0), 'FM999999999999999999990.999999999')::numeric AS cdiff
-			, to_char(sum(w.diff) FILTER (WHERE w.ts < end_ts), 'FM999999999999999999990.999999999')::numeric AS rdiff
-			, min(w.rstart) AS rstart
-			, min(w.rend) AS rend
-		FROM wa w
-		GROUP BY w.idx
+			  idx
+			, to_char(sum(diff * portion), 'FM999999999999999999990.999999999')::numeric AS cdiff
+			, to_char(sum(diff) FILTER (WHERE rinc), 'FM999999999999999999990.999999999')::numeric AS rdiff
+			, solarcommon.first(val ORDER BY ts, rtype) FILTER (WHERE rinc) AS rstart
+			, solarcommon.first(val ORDER BY ts DESC, rtype DESC) FILTER (WHERE rinc) AS rend
+		FROM wa
+		GROUP BY idx
 	)
-	-- join data_i and meta_i property values back into arrays
+	-- join accumulating property values back into arrays
 	, da_ary AS (
 		SELECT
-			  array_agg(d.cdiff ORDER BY d.idx) AS data_a
+			  array_agg(cdiff ORDER BY idx) AS data_a
 			, array_agg(
-				ARRAY[d.rdiff, d.rstart, d.rend] ORDER BY d.idx
+				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
-		FROM da d
+		FROM da
 	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
@@ -356,7 +343,7 @@ $$
 			, mode() WITHIN GROUP (ORDER BY p.val) AS val
 		FROM d
 		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
+		WHERE p.val IS NOT NULL AND d.inc
 		GROUP BY p.idx
 	)
 	-- join data_s property values back into arrays
@@ -371,7 +358,7 @@ $$
 			  array_agg(p.val ORDER BY d.ts) AS data_t
 		FROM d
 		INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
-		WHERE d.data_t IS NOT NULL
+		WHERE d.data_t IS NOT NULL AND d.inc
 	)
 	SELECT
 		sid AS stream_id
@@ -500,13 +487,21 @@ $$
 			, COALESCE(p.val - lag(p.val) OVER slot, 0)::numeric AS diff_before
 			, COALESCE(lead(p.val) OVER slot - p.val, 0)::numeric AS diff_after
 			, CASE
-				-- start of slot; allocate only end ortion of accumulation within this slot
+				-- reset record
+				WHEN rtype = 2
+					THEN 0
+
+				-- start of slot; allocate only end portion of accumulation within this slot
 				WHEN lag(d.ts) OVER slot < solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
 					THEN EXTRACT('epoch' FROM d.ts - solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))) / EXTRACT('epoch' FROM d.ts - lag(d.ts) OVER slot)
 
 				ELSE 1
 				END as portion_before
 			, CASE
+				-- reset record
+				WHEN rtype = 2
+					THEN 0
+
 				-- end of slot; allocate only start portion of accumulation within this slot
 				WHEN solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(secs)) > solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
 					THEN EXTRACT('epoch' FROM solardatm.minute_time_slot(lead(d.ts) OVER slot, solardatm.slot_seconds(secs)) - d.ts) / EXTRACT('epoch' FROM lead(d.ts) OVER slot - d.ts)
@@ -516,7 +511,7 @@ $$
 		FROM d
 		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts, d.rtype RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (

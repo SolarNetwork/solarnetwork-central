@@ -1,4 +1,5 @@
 # higher frequency hour of data on imperfect times, with leading/trailing data
+# reset record in middle of slot
 
 {"nodeId":1,"sourceId":"a","created":"2020-06-01T11:59:10Z","samples":{"i":{"x":1.0,"y":2.0},"a":{"w":100}}}
 
@@ -46,29 +47,32 @@
 
 # expected avg(x)     == (1.3+1.4+1.5+1.6+1.7+1.8+1.9+1.0)/8 == 1.525
 # expected avg(y)     == (2.3+2.4+2.5+2.6+2.7+2.8+2.9+2.0)/8 == 2.525
-# expected clock diff == (215-210)*(0/110) +5+5+5+5+5+5+5+ (255-250)*(40/100) == 37
+# expected clock diff == (215-210)*(0/110) +5+5+5+ (232-230) + 50+50+50 + (2550-2500)*(40/100) == 187
 
 {"nodeId":1,"sourceId":"a","created":"2020-06-01T12:40:00Z","samples":{"i":{"x":1.3,"y":2.3},"a":{"w":215}}}
 {"nodeId":1,"sourceId":"a","created":"2020-06-01T12:41:00Z","samples":{"i":{"x":1.4,"y":2.4},"a":{"w":220}}}
 {"nodeId":1,"sourceId":"a","created":"2020-06-01T12:42:00Z","samples":{"i":{"x":1.5,"y":2.5},"a":{"w":225}}}
 {"nodeId":1,"sourceId":"a","created":"2020-06-01T12:43:40Z","samples":{"i":{"x":1.6,"y":2.6},"a":{"w":230}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:45:20Z","samples":{"i":{"x":1.7,"y":2.7},"a":{"w":235}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:47:00Z","samples":{"i":{"x":1.8,"y":2.8},"a":{"w":240}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:48:50Z","samples":{"i":{"x":1.9,"y":2.9},"a":{"w":245}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:49:20Z","samples":{"i":{"x":1.0,"y":2.0},"a":{"w":250}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:44:00Z","type":"Reset","final":{"a":{"w":232}},"start":{"a":{"w":2350}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:45:20Z","samples":{"i":{"x":1.7,"y":2.7},"a":{"w":2350}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:47:00Z","samples":{"i":{"x":1.8,"y":2.8},"a":{"w":2400}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:48:50Z","samples":{"i":{"x":1.9,"y":2.9},"a":{"w":2450}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:49:20Z","samples":{"i":{"x":1.0,"y":2.0},"a":{"w":2500}}}
 
 # expected avg(x)     == (1.1+1.2+1.3+1.4+1.5+1.6+1.7+1.8+1.9)/9 == 1.5
 # expected avg(7)     == (2.1+2.2+2.3+2.4+2.5+2.6+2.7+2.8+2.9)/9 == 2.5
-# expected clock diff == (255-250)*(60/100) +5+5+5+5+5+5+5+5+ (300-295)*(30/170) == 43.882352941
+# expected clock diff == (2550-2500)*(60/100) +50+50+50+50+50+50+50+50+ (3000-2950)*(30/170) == 438.823529412
 
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:51:00Z","samples":{"i":{"x":1.1,"y":2.1},"a":{"w":255}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:52:10Z","samples":{"i":{"x":1.2,"y":2.2},"a":{"w":260}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:53:00Z","samples":{"i":{"x":1.3,"y":2.3},"a":{"w":265}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:54:30Z","samples":{"i":{"x":1.4,"y":2.4},"a":{"w":270}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:55:00Z","samples":{"i":{"x":1.5,"y":2.5},"a":{"w":275}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:56:40Z","samples":{"i":{"x":1.6,"y":2.6},"a":{"w":280}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:57:20Z","samples":{"i":{"x":1.7,"y":2.7},"a":{"w":285}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:58:50Z","samples":{"i":{"x":1.8,"y":2.8},"a":{"w":290}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:59:30Z","samples":{"i":{"x":1.9,"y":2.9},"a":{"w":295}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:51:00Z","samples":{"i":{"x":1.1,"y":2.1},"a":{"w":2550}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:52:10Z","samples":{"i":{"x":1.2,"y":2.2},"a":{"w":2600}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:53:00Z","samples":{"i":{"x":1.3,"y":2.3},"a":{"w":2650}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:54:30Z","samples":{"i":{"x":1.4,"y":2.4},"a":{"w":2700}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:55:00Z","samples":{"i":{"x":1.5,"y":2.5},"a":{"w":2750}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:56:40Z","samples":{"i":{"x":1.6,"y":2.6},"a":{"w":2800}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:57:20Z","samples":{"i":{"x":1.7,"y":2.7},"a":{"w":2850}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:58:50Z","samples":{"i":{"x":1.8,"y":2.8},"a":{"w":2900}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:59:30Z","samples":{"i":{"x":1.9,"y":2.9},"a":{"w":2950}}}
 
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T13:02:20Z","samples":{"i":{"x":2.0,"y":3.0},"a":{"w":300}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T13:02:20Z","samples":{"i":{"x":2.0,"y":3.0},"a":{"w":3000}}}
