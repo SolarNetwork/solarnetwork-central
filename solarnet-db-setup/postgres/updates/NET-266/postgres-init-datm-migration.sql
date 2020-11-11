@@ -90,7 +90,7 @@ CREATE OR REPLACE FUNCTION solardatm.agg_json_datum_to_datm(
 		OUT ts_start	TIMESTAMP WITH TIME ZONE,
 		OUT data_i		NUMERIC[],					-- array of instantaneous property average values
 		OUT data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		OUT data_s		TEXT[],						-- array of "last seen" status property values
+		OUT data_s		TEXT[],						-- array of status property values
 		OUT data_t		TEXT[],						-- array of all tags seen over period
 		OUT stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
 		OUT read_a		NUMERIC[][] 				-- array of accumulating property reading [start,finish,diff] tuples

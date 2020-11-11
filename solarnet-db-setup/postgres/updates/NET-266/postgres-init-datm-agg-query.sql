@@ -234,7 +234,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 		ts_start	TIMESTAMP WITH TIME ZONE,
 		data_i		NUMERIC[],					-- array of instantaneous property average values
 		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of "last seen" status property values
+		data_s		TEXT[],						-- array of status property values
 		data_t		TEXT[],						-- array of all tags seen over period
 		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
 		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
@@ -439,7 +439,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span_slots(
 		ts_start	TIMESTAMP WITH TIME ZONE,
 		data_i		NUMERIC[],					-- array of instantaneous property average values
 		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of "last seen" status property values
+		data_s		TEXT[],						-- array of status property values
 		data_t		TEXT[],						-- array of all tags seen over period
 		stat_i		NUMERIC[][]					-- array of instantaneous property [count,min,max] statistic tuples
 	) LANGUAGE SQL STABLE ROWS 500 AS
@@ -597,12 +597,12 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
 	) RETURNS TABLE(
 		stream_id 	UUID,
 		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],					-- array of instantaneous property average values
-		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of "last seen" status property values
-		data_t		TEXT[],						-- array of all tags seen over period
-		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
-		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
+		data_i		NUMERIC[],
+		data_a		NUMERIC[],
+		data_s		TEXT[],
+		data_t		TEXT[],
+		stat_i		NUMERIC[][],
+		read_a		NUMERIC[][]
 	) LANGUAGE plpgsql STABLE ROWS 2000 AS
 $$
 BEGIN
@@ -635,7 +635,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_for_time_span(
 		ts_start	TIMESTAMP WITH TIME ZONE,
 		data_i		NUMERIC[],					-- array of instantaneous property average values
 		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of "last seen" status property values
+		data_s		TEXT[],						-- array of status property values
 		data_t		TEXT[],						-- array of all tags seen over period
 		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
 		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
