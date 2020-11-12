@@ -263,6 +263,33 @@ $$;
 
 
 /**
+ * Find hours with datum data over a time range in streams and mark them as "stale" for aggregate
+ * processing.
+ *
+ * This function will insert into the `solardatm.agg_stale_datm` table records for all hours
+ * of available data matching the given search criteria.
+ *
+ * @param sid 				the stream IDs to find hours for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ *
+ * @see solardatm.find_datm_hours()
+ */
+CREATE OR REPLACE FUNCTION solardatm.mark_stale_datm_hours(
+		sid 			UUID[],
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+	SELECT d.stream_id, d.ts_start, 'h'
+	FROM unnest(sid) AS ids(stream_id)
+	INNER JOIN solardatm.find_datm_hours(ids.stream_id, start_ts, end_ts) d ON d.stream_id = ids.stream_id
+	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING
+$$;
+
+
+/**
  * Add or replace datum auxiliary record data.
  *
  * @param ddate 		the datum timestamp
