@@ -1,3 +1,13 @@
+/**
+ * Aggregate datum rollup state transition function, to rollup aggregate datum into a higher-level
+ * aggregate datum.
+ *
+ * Note that the `read_a` calculation is not supported and will be generated as `NULL`.
+ *
+ * @param start_ts the timestamp to assign to the output aggregate
+ *
+ * @see solardatm.rollup_agg_datm_ffunc()
+ */
 CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_sfunc(agg_state solardatm.agg_datm, el solardatm.agg_datm, start_ts TIMESTAMP WITH TIME ZONE)
 RETURNS solardatm.agg_datm LANGUAGE plpgsql IMMUTABLE AS
 $$
@@ -97,6 +107,13 @@ BEGIN
 END;
 $$;
 
+
+/**
+ * Aggregate datum rollup final transition function, to rollup aggregate datum into a higher-level
+ * aggregate datum.
+ *
+ * @see solardatm.rollup_agg_datm_sfunc()
+ */
 CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_ffunc(agg_state solardatm.agg_datm)
 RETURNS solardatm.agg_datm LANGUAGE plpgsql STRICT IMMUTABLE AS
 $$
@@ -146,9 +163,16 @@ BEGIN
 END;
 $$;
 
--- NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
---       but can be used for other specialised queries like HOD and DOW aggregates so they don't
---       have to duplicate all the aggregation logic involved
+
+/**
+ * Aggregate datum rollup aggregate, to rollup aggregate datum into a higher-level aggregate datum.
+ *
+ * The `TIMESTAMP` argument is used as the output `ts_start` column value.
+ *
+ * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
+ *       but can be used for other specialised queries like HOD and DOW aggregates so they don't
+ *       have to duplicate all the aggregation logic involved
+ */
 CREATE AGGREGATE solardatm.rollup_agg_datm(solardatm.agg_datm, TIMESTAMP WITH TIME ZONE) (
     stype 		= solardatm.agg_datm,
     sfunc 		= solardatm.rollup_agg_datm_sfunc,
