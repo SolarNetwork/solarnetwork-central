@@ -84,6 +84,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.StaleFluxDatumRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
@@ -675,6 +676,70 @@ public final class DatumTestUtils {
 		});
 	}
 
+	/**
+	 * Insert datum records.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void insertDatum(Logger log, JdbcOperations jdbcTemplate, Iterable<Datum> datums) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement datumStmt = con.prepareStatement("INSERT INTO solardatm.da_datm "
+						+ "(stream_id,ts,received,data_i,data_a,data_s,data_t) VALUES "
+						+ "(?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])")) {
+					datumStmt.setTimestamp(3, Timestamp.from(Instant.now()));
+					for ( Datum d : datums ) {
+						if ( log != null ) {
+							log.debug("Inserting Datum: {}", d);
+						}
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+						DatumProperties props = d.getProperties();
+						if ( props != null && props.getInstantaneousLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
+							datumStmt.setArray(4, array);
+							array.free();
+						} else {
+							datumStmt.setNull(4, Types.ARRAY);
+						}
+						if ( props != null && props.getAccumulatingLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
+							datumStmt.setArray(5, array);
+							array.free();
+						} else {
+							datumStmt.setNull(5, Types.ARRAY);
+						}
+						if ( props != null && props.getStatusLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getStatus());
+							datumStmt.setArray(6, array);
+							array.free();
+						} else {
+							datumStmt.setNull(6, Types.ARRAY);
+						}
+						if ( props != null && props.getTagsLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getTags());
+							datumStmt.setArray(7, array);
+							array.free();
+						} else {
+							datumStmt.setNull(7, Types.ARRAY);
+						}
+
+						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
 	private static String insertAggStmt(Aggregation kind) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("insert into solardatm.agg_datm_");
@@ -698,7 +763,7 @@ public final class DatumTestUtils {
 	}
 
 	/**
-	 * Insert aggregate datum records for a given stream.
+	 * Insert aggregate datum records.
 	 * 
 	 * @param log
 	 *        a logger for debug message

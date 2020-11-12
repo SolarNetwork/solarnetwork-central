@@ -143,10 +143,14 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
-		-- mark flux stale
-		INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
-		VALUES (stale.stream_id, kind)
-		ON CONFLICT (stream_id, agg_kind) DO NOTHING;
+		-- mark flux stale if processed record is for the "current" time
+		IF local_ts_start = date_trunc(
+							CASE kind WHEN 'h' THEN 'hour' WHEN 'd' THEN 'day' ELSE 'month' END
+							, CURRENT_TIMESTAMP AT TIME ZONE tz) THEN
+			INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
+			VALUES (stale.stream_id, kind)
+			ON CONFLICT (stream_id, agg_kind) DO NOTHING;
+		END IF;
 
 		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;
 

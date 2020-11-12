@@ -24,19 +24,23 @@ package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.decimalArray;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +52,13 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
@@ -150,11 +157,32 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(),
 						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
 
-		// should have created stale flux Hour
+		// should not have created stale SolarFlux Hour because not current hour
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
+		assertThat("No stale flux record created for time in past", staleFluxRows, hasSize(0));
+	}
+
+	@Test
+	public void processStaleHour_currDayToFlux() throws IOException {
+		// GIVEN
+		ZonedDateTime hour = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS);
+		DatumEntity d = new DatumEntity(UUID.randomUUID(), hour.toInstant(), Instant.now(),
+				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null));
+		DatumTestUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
+		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(d.getStreamId(),
+						hour.toInstant(), Aggregation.Hour, Instant.now())));
+
+		// WHEN
+		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+
+		// THEN
+
+		// should have created stale SolarFlux Hour because current hour
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
 		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
 		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
-				equalTo(meta.getStreamId()));
+				equalTo(d.getStreamId()));
 	}
 
 	@Test
@@ -198,11 +226,35 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 					equalTo(day.toInstant()));
 		}
 
-		// should have created stale flux Hour
+		// should not have created stale SolarFlux Day because not current day
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Day);
+		assertThat("No stale flux record created for time in past", staleFluxRows, hasSize(0));
+	}
+
+	@Test
+	public void processStaleDay_currDayToFlux() throws IOException {
+		// GIVEN
+		ZonedDateTime day = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
+		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), day.toInstant(),
+				Aggregation.Hour,
+				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
+				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
+						null));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
+						day.toInstant(), Aggregation.Day, Instant.now())));
+
+		// WHEN
+		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+
+		// THEN
+
+		// should have created stale SolarFlux Hour because current day
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Day);
 		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
 		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
-				equalTo(meta.getStreamId()));
+				equalTo(agg.getStreamId()));
 	}
 
 	@Test
@@ -242,10 +294,36 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 					equalTo(month.toInstant()));
 		}
 
-		// should have created stale flux Hour
+		// should not have created stale SolarFlux Month because not current day
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Month);
+		assertThat("No stale flux record created for time in past", staleFluxRows, hasSize(0));
+	}
+
+	@Test
+	public void processStaleMonth_currDayToFlux() throws IOException {
+		// GIVEN
+		ZonedDateTime month = ZonedDateTime.now(ZoneOffset.UTC).with(TemporalAdjusters.firstDayOfMonth())
+				.truncatedTo(ChronoUnit.DAYS);
+		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), month.toInstant(),
+				Aggregation.Day,
+				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
+				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
+						null));
+		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
+						month.toInstant(), Aggregation.Month, Instant.now())));
+
+		// WHEN
+		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
+
+		// THEN
+
+		// should have created stale SolarFlux Hour because current day
 		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Month);
 		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
 		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
-				equalTo(meta.getStreamId()));
+				equalTo(agg.getStreamId()));
 	}
+
 }
