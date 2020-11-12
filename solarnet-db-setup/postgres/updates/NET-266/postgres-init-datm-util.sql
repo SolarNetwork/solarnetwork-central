@@ -29,7 +29,7 @@ $$;
  *
  * @see solardatm.rollup_agg_datm_sfunc()
  */
-CREATE OR REPLACE FUNCTION solardatm.calc_datm_at_sfunc(agg_state solardatm.agg_datm_at)
+CREATE OR REPLACE FUNCTION solardatm.calc_datm_at_ffunc(agg_state solardatm.agg_datm_at)
 RETURNS solardatm.da_datm LANGUAGE plpgsql STRICT IMMUTABLE AS
 $$
 DECLARE
@@ -54,10 +54,9 @@ BEGIN
 		, di AS (
 			SELECT
 				  p.idx
-				, to_char(sum(val) * min(portion), 'FM999999999999999999990.999999999')::numeric AS val
-				, count(p.val) AS cnt
-				, min(p.val) AS val_min
-				, max(p.val) AS val_max
+				, to_char(solarcommon.first(val ORDER BY ts) +
+					(solarcommon.first(val ORDER BY ts DESC) - solarcommon.first(val ORDER BY ts)) * min(portion)
+					, 'FM999999999999999999990.999999999')::numeric AS val
 			FROM d
 			INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
 			WHERE p.val IS NOT NULL
@@ -67,9 +66,6 @@ BEGIN
 		, di_ary AS (
 			SELECT
 				   array_agg(val ORDER BY idx) AS data_i
-				, array_agg(
-					ARRAY[cnt, val_min, val_max] ORDER BY idx
-				) AS stat_i
 			FROM di
 		)
 		-- calculate accumulating values per property
@@ -130,7 +126,16 @@ BEGIN
 END;
 $$;
 
-DROP AGGREGATE IF EXISTS solardatm.calc_datm_at(solardatm.da_datm, TIMESTAMP WITH TIME ZONE);
+
+/**
+ * Aggregate datum rollup aggregate, to rollup aggregate datum into a higher-level aggregate datum.
+ *
+ * The `TIMESTAMP` argument is used as the output `ts_start` column value.
+ *
+ * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
+ *       but can be used for other specialised queries like HOD and DOW aggregates so they don't
+ *       have to duplicate all the aggregation logic involved
+ */
 CREATE AGGREGATE solardatm.calc_datm_at(solardatm.da_datm, TIMESTAMP WITH TIME ZONE) (
     stype 		= solardatm.agg_datm_at,
     sfunc 		= solardatm.calc_datm_at_sfunc,

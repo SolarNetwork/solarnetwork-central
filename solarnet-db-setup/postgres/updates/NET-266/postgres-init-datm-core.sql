@@ -374,7 +374,7 @@ $$;
  * @param ts_at				the date of the datum to find adjacent datm for
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
  */
-CREATE OR REPLACE FUNCTION solardatm.find_datum_around(
+CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
 		sid 		UUID,
 		ts_at 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT interval '1 months'
@@ -421,7 +421,7 @@ $$
 				END AS inc
 		FROM b
 	)
-	SELECT stream_id, ts, data_i, data_a, data_s, data_t
+	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
 	FROM d
 	WHERE inc
 $$;

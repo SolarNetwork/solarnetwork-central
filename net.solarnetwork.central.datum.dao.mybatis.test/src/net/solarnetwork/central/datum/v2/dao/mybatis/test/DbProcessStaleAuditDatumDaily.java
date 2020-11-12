@@ -78,7 +78,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	}
 
 	private List<AuditDatumEntity> auditDatum(Aggregation kind) {
-		List<AuditDatumEntity> result = DatumTestUtils.auditDatum(jdbcTemplate, kind);
+		List<AuditDatumEntity> result = DatumTestUtils.listAuditDatum(jdbcTemplate, kind);
 		log.debug("Got {} audit data:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
@@ -175,7 +175,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 		assertThat("Datum count", result.get(0).getDatumCount(), equalTo(expected.getDatumCount()));
 
 		// should have deleted stale Hour and inserted stale Day
-		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -212,7 +212,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getDatumHourlyCount()));
 
 		// should have deleted stale Hour and inserted stale Month
-		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -256,7 +256,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getDatumQueryCount()));
 
 		// should have deleted stale Day and inserted stale Month
-		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -312,7 +312,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expectedMonth.getDatumQueryCount()));
 
 		// should have deleted stale Month
-		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.staleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatumEntity> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
 		assertThat("No stale aggregate records remain", staleRows, hasSize(0));
 
 		// should have calculated accumulative audit data

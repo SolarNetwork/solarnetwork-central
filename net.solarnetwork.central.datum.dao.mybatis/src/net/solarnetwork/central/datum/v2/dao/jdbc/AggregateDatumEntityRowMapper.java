@@ -59,18 +59,19 @@ import net.solarnetwork.central.domain.Aggregation;
 public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEntity> {
 
 	/** A default instance for null aggregates. */
-	public static final AggregateDatumEntityRowMapper INSTANCE = new AggregateDatumEntityRowMapper(null);
+	public static final RowMapper<AggregateDatumEntity> INSTANCE = new AggregateDatumEntityRowMapper(
+			null);
 
 	/** A default instance for hourly aggregates. */
-	public static final AggregateDatumEntityRowMapper HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatumEntity> HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Hour);
 
 	/** A default instance for daily aggregates. */
-	public static final AggregateDatumEntityRowMapper DAY_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatumEntity> DAY_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Day);
 
 	/** A default instance for monthly aggregates. */
-	public static final AggregateDatumEntityRowMapper MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatumEntity> MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Month);
 
 	private final Aggregation aggregation;
@@ -87,8 +88,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEn
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T getArray(ResultSet rs, int colNum)
-			/* , Class<T> type) */ throws SQLException {
+	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);
 		if ( a == null ) {
 			return null;

@@ -67,6 +67,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
@@ -75,6 +76,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumDailyEntityRowMapper
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumMonthlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
@@ -1310,7 +1312,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<DatumAuxiliaryEntity> datumAuxiliary(JdbcOperations jdbcTemplate) {
+	public static List<DatumAuxiliaryEntity> listDatumAuxiliary(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts, atype, updated, notes, jdata_af, jdata_as, jmeta FROM solardatm.da_datm_aux ORDER BY stream_id, ts, atype",
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
@@ -1323,7 +1325,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAggregateDatumEntity> staleAggregateDatum(JdbcOperations jdbcTemplate) {
+	public static List<StaleAggregateDatumEntity> listStaleAggregateDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm ORDER BY agg_kind, ts_start, stream_id",
 				StaleAggregateDatumEntityRowMapper.INSTANCE);
@@ -1338,7 +1340,7 @@ public final class DatumTestUtils {
 	 *        the type of stale aggregate records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAggregateDatumEntity> staleAggregateDatum(JdbcOperations jdbcTemplate,
+	public static List<StaleAggregateDatumEntity> listStaleAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm WHERE agg_kind = ? ORDER BY ts_start, stream_id",
@@ -1352,7 +1354,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAuditDatumEntity> staleAuditDatum(JdbcOperations jdbcTemplate) {
+	public static List<StaleAuditDatumEntity> listStaleAuditDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm ORDER BY aud_kind, ts_start, stream_id",
 				StaleAuditDatumEntityRowMapper.INSTANCE);
@@ -1367,7 +1369,7 @@ public final class DatumTestUtils {
 	 *        the type of stale audit records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAuditDatumEntity> staleAuditDatum(JdbcOperations jdbcTemplate,
+	public static List<StaleAuditDatumEntity> listStaleAuditDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm WHERE aud_kind = ? ORDER BY ts_start, stream_id",
@@ -1383,10 +1385,23 @@ public final class DatumTestUtils {
 	 *        the type of stale flux records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleFluxDatum> staleFluxDatum(JdbcOperations jdbcTemplate, Aggregation type) {
+	public static List<StaleFluxDatum> listStaleFluxDatum(JdbcOperations jdbcTemplate,
+			Aggregation type) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, agg_kind FROM solardatm.agg_stale_flux WHERE agg_kind = ? ORDER BY stream_id",
 				StaleFluxDatumRowMapper.INSTANCE, type.getKey());
+	}
+
+	/**
+	 * Get all available datum records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @return the results, never {@literal null}
+	 */
+	public static List<DatumEntity> listDatum(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query("SELECT * FROM solardatm.da_datm ORDER BY stream_id, ts",
+				DatumEntityRowMapper.INSTANCE);
 	}
 
 	/**
@@ -1399,7 +1414,7 @@ public final class DatumTestUtils {
 	 *        {@code Month}
 	 * @return the results, never {@literal null}
 	 */
-	public static List<AggregateDatumEntity> aggregateDatum(JdbcOperations jdbcTemplate,
+	public static List<AggregateDatumEntity> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
 		String tableName;
 		RowMapper<AggregateDatumEntity> mapper;
@@ -1420,7 +1435,6 @@ public final class DatumTestUtils {
 		}
 		return jdbcTemplate.query(String.format(
 				"SELECT * FROM solardatm.agg_datm_%s ORDER BY stream_id, ts_start", tableName), mapper);
-
 	}
 
 	/**
@@ -1433,7 +1447,7 @@ public final class DatumTestUtils {
 	 *        {@code Month}
 	 * @return the results, never {@literal null}
 	 */
-	public static List<AuditDatumEntity> auditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
+	public static List<AuditDatumEntity> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;
 		RowMapper<AuditDatumEntity> mapper;
 		switch (kind) {

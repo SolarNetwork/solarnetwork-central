@@ -90,7 +90,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.staleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -105,7 +105,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.staleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -122,7 +122,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(streamIds, start.minusYears(1).toInstant(), start.toInstant());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.staleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -139,7 +139,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(streamIds, start.toInstant(), start.plusYears(1).toInstant());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.staleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("All matching hours marked stale", stales, hasSize(2));
 		Set<Instant> staleDates = stales.stream().map(StaleAggregateDatumEntity::getTimestamp)
 				.collect(Collectors.toSet());
