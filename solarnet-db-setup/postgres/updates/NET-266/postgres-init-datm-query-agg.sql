@@ -56,6 +56,7 @@ $$;
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
+ *
  * @see solarnet.get_season_monday_start()
  */
 CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_dow_seasonal(
@@ -158,6 +159,8 @@ $$;
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
+ *
+ * @see solarnet.get_season_monday_start()
  */
 CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_hod_seasonal(
 		sid 			UUID,
@@ -199,4 +202,64 @@ $$
 		, (r).data_t
 		, (r).stat_i
 	FROM d
+$$;
+
+
+/**
+ * Find aggregated data for a given node over a time range.
+ *
+ * The purpose of this function is to find as few as possible records of already aggregated data
+ * so they can be combined into a single running total aggregate result. It relies on the
+ * `agg_datm_monthly`, `agg_datm_daily`, and `agg_datum_hourly` tables to execute as quickly as
+ * possible.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
+CREATE OR REPLACE FUNCTION solaragg.find_agg_datm_running_total(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start	TIMESTAMP WITH TIME ZONE,
+		data_i		NUMERIC[],
+		data_a		NUMERIC[],
+		data_s		TEXT[],
+		data_t		TEXT[],
+		stat_i		NUMERIC[][],
+		read_a 		NUMERIC[][]
+	) LANGUAGE SQL STABLE ROWS 250 AS
+$$
+	WITH meta AS (
+		SELECT * FROM solardatm.find_metadata_for_stream(sid)
+	)
+
+	SELECT d.*
+	FROM solardatm.agg_datm_monthly d
+	INNER JOIN meta ON meta.stream_id = d.stream_id
+	WHERE d.stream_id = sid
+		AND d.ts_start >= start_ts
+		AND d.ts_start < date_trunc('month', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
+
+	UNION ALL
+
+	SELECT d.*
+	FROM solardatm.agg_datm_daily d
+	INNER JOIN meta ON meta.stream_id = d.stream_id
+	WHERE d.stream_id = sid
+		AND d.ts_start >= date_trunc('month', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
+		AND d.ts_start < date_trunc('day', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
+
+	UNION ALL
+
+	SELECT d.*
+	FROM solardatm.agg_datm_hourly d
+	INNER JOIN meta ON meta.stream_id = d.stream_id
+	WHERE d.stream_id = sid
+		AND d.ts_start >= date_trunc('day', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
+		AND d.ts_start < end_ts
+
+	ORDER BY ts_start
 $$;
