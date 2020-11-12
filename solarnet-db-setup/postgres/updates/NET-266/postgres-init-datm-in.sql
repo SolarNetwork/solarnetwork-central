@@ -6,14 +6,14 @@
  *
  * 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
  * 	SELECT stream_id, ts_start, 'h' AS agg_kind
- * 	FROM solardatm.calculate_stale_datm('11111'::uuid,'2020-10-07 08:00:40+13'::timestamptz)
+ * 	FROM solardatm.calc_stale_datm('11111'::uuid,'2020-10-07 08:00:40+13'::timestamptz)
  * 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
  *
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_in				the date of the datum that has changed
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
  */
-CREATE OR REPLACE FUNCTION solardatm.calculate_stale_datm(
+CREATE OR REPLACE FUNCTION solardatm.calc_stale_datm(
 		sid 		UUID,
 		ts_in 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT interval '3 months'
@@ -249,7 +249,7 @@ BEGIN
 	IF track THEN
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calculate_stale_datm(sid, ddate)
+		FROM solardatm.calc_stale_datm(sid, ddate)
 		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 
 		--IF is_insert THEN
@@ -331,7 +331,7 @@ BEGIN
 
 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 	SELECT stream_id, ts_start, 'h' AS agg_kind
-	FROM solardatm.calculate_stale_datm(sid, ddate)
+	FROM solardatm.calc_stale_datm(sid, ddate)
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 END;
 $$;
@@ -390,7 +390,7 @@ BEGIN
 		-- insert stale record for deleted row
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calculate_stale_datm(sid, ddate_from)
+		FROM solardatm.calc_stale_datm(sid, ddate_from)
 		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 
 		-- insert new row

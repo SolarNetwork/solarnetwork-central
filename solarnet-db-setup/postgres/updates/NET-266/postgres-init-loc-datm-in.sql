@@ -194,7 +194,7 @@ BEGIN
 	IF track THEN
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calculate_stale_datm(sid, ddate)
+		FROM solardatm.calc_stale_datm(sid, ddate)
 		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 	END IF;
 
