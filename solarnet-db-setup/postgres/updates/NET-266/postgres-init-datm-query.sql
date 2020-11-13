@@ -102,6 +102,70 @@ $$;
 
 
 /**
+ * Find the datum that exist immediately before and after a point in time for a stream.
+ *
+ * If a datum exists exactly at the given timestamp, that datum alone will be returned.
+ * Otherwise up to two datum will be returned, one immediately before and one immediately after
+ * the given timestamp.
+ *
+ * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param tolerance 		the maximum time to look forward/backward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
+		sid 		UUID,
+		ts_at 		TIMESTAMP WITH TIME ZONE,
+		tolerance 	INTERVAL DEFAULT interval '1 months'
+	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
+$$
+	WITH b AS (
+		-- exact
+		(
+			SELECT d.*, 0 AS rtype
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts = ts_at
+		)
+		UNION ALL
+		-- prev
+		(
+			SELECT d.*, 1 AS rtype
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts < ts_at
+				AND d.ts > ts_at - tolerance
+			ORDER BY d.stream_id, d.ts DESC
+			LIMIT 1
+		)
+		UNION ALL
+		-- next
+		(
+			SELECT d.*, 1 AS rtype
+			FROM solardatm.da_datm d
+			WHERE d.stream_id = sid
+				AND d.ts > ts_at
+				AND d.ts < ts_at + tolerance
+			ORDER BY d.stream_id, d.ts
+			LIMIT 1
+		)
+	)
+	, d AS (
+		-- choose exact if available, fall back to before/after otherwise
+		SELECT b.*
+			, CASE
+				WHEN rtype = 0 THEN TRUE
+				WHEN rtype = 1 AND rank() OVER (ORDER BY rtype) = 1 THEN TRUE
+				ELSE FALSE
+				END AS inc
+		FROM b
+	)
+	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
+	FROM d
+	WHERE inc
+$$;
+
+
+/**
  * Project the values of a datum stream at a specific point in time, by deriving from the previous
  * and next values from the same stream.
  *

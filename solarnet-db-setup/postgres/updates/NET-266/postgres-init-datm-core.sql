@@ -364,64 +364,36 @@ $$;
 
 
 /**
- * Find the datum that exist immediately before and after a point in time for a stream.
+ * Calculate the minimum number of absolute time spans required for a given set of streams.
  *
- * If a datum exists exactly at the given timestamp, that datum alone will be returned.
- * Otherwise up to two datum will be returned, one immediately before and one immediately after
- * the given timestamp.
+ * The time zones of each node are used to group them into rows where all streams have the
+ * same absolute start/end dates.
  *
- * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
- * @param ts_at				the date of the datum to find adjacent datm for
- * @param tolerance 		the maximum time to look forward/backward for adjacent datm
+ * @param nodes 	the list of nodes with streams to resolve absolute dates for
+ * @param sources 	a list of source IDs to include in the results (optional)
+ * @param min_ts 	the starting local date
+ * @param max_ts 	the ending local date
  */
-CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
-		sid 		UUID,
-		ts_at 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '1 months'
-	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
+CREATE OR REPLACE FUNCTION solardatm.time_ranges_local(
+		nodes			BIGINT[],
+		sources			TEXT[],
+		min_ts			TIMESTAMP,
+		max_ts			TIMESTAMP
+	) RETURNS TABLE (
+		ts_start 		TIMESTAMP WITH TIME ZONE,
+		ts_end 			TIMESTAMP WITH TIME ZONE,
+		time_zone 		TEXT,
+		stream_ids		UUID[]
+	) LANGUAGE SQL STABLE AS
 $$
-	WITH b AS (
-		-- exact
-		(
-			SELECT d.*, 0 AS rtype
-			FROM solardatm.da_datm d
-			WHERE d.stream_id = sid
-				AND d.ts = ts_at
-		)
-		UNION ALL
-		-- prev
-		(
-			SELECT d.*, 1 AS rtype
-			FROM solardatm.da_datm d
-			WHERE d.stream_id = sid
-				AND d.ts < ts_at
-				AND d.ts > ts_at - tolerance
-			ORDER BY d.stream_id, d.ts DESC
-			LIMIT 1
-		)
-		UNION ALL
-		-- next
-		(
-			SELECT d.*, 1 AS rtype
-			FROM solardatm.da_datm d
-			WHERE d.stream_id = sid
-				AND d.ts > ts_at
-				AND d.ts < ts_at + tolerance
-			ORDER BY d.stream_id, d.ts
-			LIMIT 1
-		)
-	)
-	, d AS (
-		-- choose exact if available, fall back to before/after otherwise
-		SELECT b.*
-			, CASE
-				WHEN rtype = 0 THEN TRUE
-				WHEN rtype = 1 AND rank() OVER (ORDER BY rtype) = 1 THEN TRUE
-				ELSE FALSE
-				END AS inc
-		FROM b
-	)
-	SELECT stream_id, ts, received, data_i, data_a, data_s, data_t
-	FROM d
-	WHERE inc
+	SELECT
+		min_ts AT TIME ZONE nlt.time_zone AS sdate,
+		max_ts AT TIME ZONE nlt.time_zone AS edate,
+		nlt.time_zone AS time_zone,
+		array_agg(meta.stream_id) AS stream_ids
+	FROM solardatm.da_datm_meta meta
+	INNER JOIN solarnet.node_local_time nlt ON nlt.node_id = meta.node_id
+	WHERE meta.node_id = ANY(nodes)
+		AND (COALESCE(cardinality(sources), 0) < 1 OR meta.source_id = ANY(sources))
+	GROUP BY nlt.time_zone
 $$;
