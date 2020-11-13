@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
-import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -51,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.hamcrest.Matcher;
@@ -170,19 +170,54 @@ public final class DatumTestUtils {
 		if ( expected.getProperties() != null ) {
 			if ( expected.getProperties().getInstantaneous() != null ) {
 				assertThat(prefix + " instantaneous", result.getProperties().getInstantaneous(),
-						arrayContaining(expected.getProperties().getInstantaneous()));
+						Matchers.arrayContaining(expected.getProperties().getInstantaneous()));
 			}
 			if ( expected.getProperties().getAccumulating() != null ) {
 				assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
-						arrayContaining(expected.getProperties().getAccumulating()));
+						Matchers.arrayContaining(expected.getProperties().getAccumulating()));
 			}
 			if ( expected.getProperties().getStatus() != null ) {
 				assertThat(prefix + " status", result.getProperties().getStatus(),
-						arrayContaining(expected.getProperties().getStatus()));
+						Matchers.arrayContaining(expected.getProperties().getStatus()));
 			}
 			if ( expected.getProperties().getTags() != null ) {
 				assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
-						arrayContaining(expected.getProperties().getAccumulating()));
+						Matchers.arrayContaining(expected.getProperties().getAccumulating()));
+			}
+		}
+	}
+
+	/**
+	 * Assert one datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertAggregateDatum(String prefix, AggregateDatum result,
+			AggregateDatum expected) {
+		assertDatum(prefix, result, expected);
+		if ( expected.getStatistics() != null ) {
+			if ( expected.getStatistics().getInstantaneous() != null ) {
+				List<Matcher<? super BigDecimal[]>> m = new ArrayList<>(
+						expected.getStatistics().getInstantaneousLength());
+				for ( BigDecimal[] a : expected.getStatistics().getInstantaneous() ) {
+					m.add(Matchers.arrayContaining(a));
+				}
+				assertThat(prefix + " instantaneous stats", result.getStatistics().getInstantaneous(),
+						Matchers.arrayContaining(m));
+			}
+			if ( expected.getStatistics().getAccumulating() != null ) {
+				List<Matcher<? super BigDecimal[]>> m = new ArrayList<>(
+						expected.getStatistics().getAccumulatingLength());
+				for ( BigDecimal[] a : expected.getStatistics().getAccumulating() ) {
+					m.add(Matchers.arrayContaining(a));
+				}
+				assertThat(prefix + " instantaneous stats", result.getStatistics().getAccumulating(),
+						Matchers.arrayContaining(m));
 			}
 		}
 	}
@@ -345,6 +380,41 @@ public final class DatumTestUtils {
 	 */
 	public static List<AggregateDatum> loadJsonAggregateDatumResource(String resource, Class<?> clazz,
 			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
+		return loadJsonAggregateDatumResource(resource, clazz, metadataProvider, null);
+	}
+
+	/**
+	 * Load JSON aggregate datum objects from a classpath resource.
+	 * 
+	 * <p>
+	 * This method loads JSON aggregate datum records from a resource, with one
+	 * JSON datum object per line. Empty lines or those starting with a
+	 * {@literal #} character are ignored. An example JSON aggregate datum looks
+	 * like this:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[100,200,100]}}}</code>
+	 * </pre>
+	 * 
+	 * @param resource
+	 *        the name of the resource to load
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @param metadataProvider
+	 *        the metadata provider
+	 * @param an
+	 *        optional function to map the parsed datum with
+	 * @return the loaded data, never {@literal null}
+	 * @throws IOException
+	 *         if the resource cannot be found or parsed correctly
+	 * @see DatumJsonUtils#parseAggregateDatum(JsonParser,
+	 *      ObjectDatumStreamMetadataProvider)
+	 */
+	public static List<AggregateDatum> loadJsonAggregateDatumResource(String resource, Class<?> clazz,
+			ObjectDatumStreamMetadataProvider metadataProvider,
+			Function<AggregateDatum, AggregateDatum> mapper) throws IOException {
+
 		List<AggregateDatum> result = new ArrayList<>();
 		int row = 0;
 		JsonFactory factory = new JsonFactory();
@@ -363,6 +433,9 @@ public final class DatumTestUtils {
 				if ( AGG.matcher(line).find() ) {
 					JsonParser parser = factory.createParser(line);
 					AggregateDatum d = DatumJsonUtils.parseAggregateDatum(parser, metadataProvider);
+					if ( mapper != null ) {
+						d = mapper.apply(d);
+					}
 					assertThat(format("Parsed JSON aggregate datum in line %d", row), d, notNullValue());
 					result.add(d);
 				}

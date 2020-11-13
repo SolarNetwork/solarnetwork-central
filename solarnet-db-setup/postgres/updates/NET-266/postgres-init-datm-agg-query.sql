@@ -15,6 +15,130 @@
 */
 
 /**
+ * Find the datum with the smallest timestamp for a given stream, i.e. the "first" datum in a stream.
+ *
+ * Using this function can force the fastest index lookup for a single stream, when multiple streams
+ * are being queried.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least(
+		sid 		UUID,
+		kind 		CHARACTER
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY EXECUTE format(
+		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+		'FROM solardatm.%I '
+		'WHERE stream_id = $1 ORDER BY ts_start LIMIT 1'
+		, CASE kind
+			WHEN 'd' THEN 'agg_datm_daily'
+			WHEN 'M' THEN 'agg_datm_monthly'
+			ELSE 'agg_datm_hourly' END)
+	USING sid;
+END;
+$$;
+
+
+/**
+ * Find the datum with the smallest timestamp for a set of streams, i.e. the "first" datum in each
+ * stream.
+ *
+ * @param sids the stream IDs to search for
+ * @see solardatm.find_agg_time_least(uuid)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least(
+		sids 		UUID[],
+		kind 		CHARACTER
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE AS
+$$
+	SELECT d.*
+	FROM unnest(sids) ids(stream_id)
+	INNER JOIN solardatm.find_agg_time_least(ids.stream_id, kind) d ON TRUE
+$$;
+
+
+/**
+ * Find the datum with the largest timestamp for a given stream, i.e. the "last" datum in a stream.
+ *
+ * Using this function can force the fastest index lookup for a single stream, when multiple streams
+ * are being queried.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest(
+		sid 		UUID,
+		kind 		CHARACTER
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 1 AS
+$$
+BEGIN
+	RETURN QUERY EXECUTE format(
+		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+		'FROM solardatm.%I '
+		'WHERE stream_id = $1 ORDER BY ts_start DESC LIMIT 1'
+		, CASE kind
+			WHEN 'd' THEN 'agg_datm_daily'
+			WHEN 'M' THEN 'agg_datm_monthly'
+			ELSE 'agg_datm_hourly' END)
+	USING sid;
+END;
+$$;
+
+
+/**
+ * Find the datum with the largest timestamp for a set of streams, i.e. the "last" datum in each
+ * stream.
+ *
+ * @param sids the stream IDs to search for
+ * @see solardatm.find_agg_time_greatest(uuid)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest(
+		sids 		UUID[],
+		kind 		CHARACTER
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE AS
+$$
+	SELECT d.*
+	FROM unnest(sids) ids(stream_id)
+	INNER JOIN solardatm.find_agg_time_greatest(ids.stream_id, kind) d ON TRUE
+$$;
+
+
+/**
+ * Find aggregate datm records for a time range.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
+		sid 		UUID,
+		start_ts 	TIMESTAMP WITH TIME ZONE,
+		end_ts 		TIMESTAMP WITH TIME ZONE,
+		kind 		CHARACTER
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start	TIMESTAMP WITH TIME ZONE,
+		data_i		NUMERIC[],
+		data_a		NUMERIC[],
+		data_s		TEXT[],
+		data_t		TEXT[],
+		stat_i		NUMERIC[][],
+		read_a		NUMERIC[][]
+	) LANGUAGE plpgsql STABLE ROWS 2000 AS
+$$
+BEGIN
+	RETURN QUERY EXECUTE format(
+		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+		'FROM solardatm.%I '
+		'WHERE stream_id = $1 AND ts_start >= $2 AND ts_start < $3'
+		, 'agg_datm_' || CASE kind WHEN 'd' THEN 'daily' WHEN 'M' THEN 'monthly' ELSE 'hourly' END)
+	USING sid, start_ts, end_ts;
+END;
+$$;
+
+/**
  * Find datm records for an aggregate time range, supporting both "clock" and "reading" spans.
  *
  * @param sid 				the stream ID to find datm for
