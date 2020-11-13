@@ -7,14 +7,30 @@
  * @param sid the stream ID
  * @see the `solardatm.find_time_range(uuid[])` function
  */
-CREATE OR REPLACE FUNCTION solardatm.find_time_least(sid uuid)
-	RETURNS solardatm.da_datm LANGUAGE sql STABLE AS
+CREATE OR REPLACE FUNCTION solardatm.find_time_least(sid UUID)
+	RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	SELECT *
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
 	ORDER BY ts
 	LIMIT 1
+$$;
+
+
+/**
+ * Find the datum with the smallest timestamp for a set of streams, i.e. the "first" datum in each
+ * stream.
+ *
+ * @param sids the stream IDs to search for
+ * @see solardatm.find_time_least(uuid)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_least(sids UUID[])
+	RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE AS
+$$
+	SELECT d.*
+	FROM unnest(sids) ids(stream_id)
+	INNER JOIN solardatm.find_time_least(ids.stream_id) d ON TRUE
 $$;
 
 
@@ -27,14 +43,30 @@ $$;
  * @param sid the stream ID
  * @see the `solardatm.find_time_range(uuid[])` function
  */
-CREATE OR REPLACE FUNCTION solardatm.find_time_greatest(sid uuid)
-	RETURNS solardatm.da_datm LANGUAGE sql STABLE AS
+CREATE OR REPLACE FUNCTION solardatm.find_time_greatest(sid UUID)
+	RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	SELECT *
 	FROM solardatm.da_datm
 	WHERE stream_id = sid
 	ORDER BY ts DESC
 	LIMIT 1
+$$;
+
+
+/**
+ * Find the datum with the largest timestamp for a set of streams, i.e. the "last" datum in each
+ * stream.
+ *
+ * @param sids the stream IDs to search for
+ * @see solardatm.find_time_greatest(uuid)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_greatest(sids UUID[])
+	RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE AS
+$$
+	SELECT d.*
+	FROM unnest(sids) ids(stream_id)
+	INNER JOIN solardatm.find_time_greatest(ids.stream_id) d ON TRUE
 $$;
 
 
@@ -47,7 +79,7 @@ $$;
  * @param stream_ids the stream IDs to return results for
  */
 CREATE OR REPLACE FUNCTION solardatm.find_time_range(stream_ids uuid[])
-	RETURNS SETOF solardatm.da_datm LANGUAGE sql ROWS 200 STABLE AS
+	RETURNS SETOF solardatm.da_datm LANGUAGE SQL ROWS 200 STABLE AS
 $$
 	WITH ids AS (
 		SELECT unnest(stream_ids) AS stream_id

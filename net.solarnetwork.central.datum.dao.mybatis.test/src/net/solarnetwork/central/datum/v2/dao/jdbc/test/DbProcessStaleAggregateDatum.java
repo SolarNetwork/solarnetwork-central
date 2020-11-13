@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.decimalArray;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.listStaleAggregateDatum;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ingestDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;

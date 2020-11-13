@@ -20,11 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.BufferedReader;
@@ -150,6 +152,39 @@ public final class DatumTestUtils {
 	public static Matcher<BigDecimal[]> arrayOfDecimals(String... nums) {
 		BigDecimal[] vals = decimalArray(nums);
 		return Matchers.arrayContaining(vals);
+	}
+
+	/**
+	 * Assert one datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertDatum(String prefix, Datum result, Datum expected) {
+		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
+		if ( expected.getProperties() != null ) {
+			if ( expected.getProperties().getInstantaneous() != null ) {
+				assertThat(prefix + " instantaneous", result.getProperties().getInstantaneous(),
+						arrayContaining(expected.getProperties().getInstantaneous()));
+			}
+			if ( expected.getProperties().getAccumulating() != null ) {
+				assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
+						arrayContaining(expected.getProperties().getAccumulating()));
+			}
+			if ( expected.getProperties().getStatus() != null ) {
+				assertThat(prefix + " status", result.getProperties().getStatus(),
+						arrayContaining(expected.getProperties().getStatus()));
+			}
+			if ( expected.getProperties().getTags() != null ) {
+				assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
+						arrayContaining(expected.getProperties().getAccumulating()));
+			}
+		}
 	}
 
 	/**

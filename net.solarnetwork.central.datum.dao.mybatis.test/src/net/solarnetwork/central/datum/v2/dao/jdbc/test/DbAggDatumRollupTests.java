@@ -20,10 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.arrayOfDecimals;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;

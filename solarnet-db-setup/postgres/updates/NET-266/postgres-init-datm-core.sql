@@ -412,7 +412,7 @@ $$
 		)
 	)
 	, d AS (
-		-- choose extact if available, fall back to before/after otherwise
+		-- choose exact if available, fall back to before/after otherwise
 		SELECT b.*
 			, CASE
 				WHEN rtype = 0 THEN TRUE

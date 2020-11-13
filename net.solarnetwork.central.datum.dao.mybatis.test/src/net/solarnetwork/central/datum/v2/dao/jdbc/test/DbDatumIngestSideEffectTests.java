@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.hourlyAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumAuxiliaryResource;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.loadJsonDatumResource;
-import static net.solarnetwork.central.datum.v2.dao.mybatis.test.DatumTestUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ingestDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumAuxiliaryResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
