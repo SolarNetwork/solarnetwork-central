@@ -30,11 +30,7 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.JdbcDatumSupportDao;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Test cases for the {@link JdbcDatumSupportDao} class.
  * 
  * @author matt
  * @version 1.0
