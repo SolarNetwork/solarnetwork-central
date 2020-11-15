@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCriteria.java - 23/10/2020 1:58:16 pm
+ * DatumAuditDao.java - 14/11/2020 4:33:41 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,36 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.RecentCriteria;
-import net.solarnetwork.dao.SortCriteria;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.dao.FilterResults;
 
 /**
- * Search criteria for {@link Datum}.
+ * API for datum audit information.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface AuditDatumDao {
+
+	/**
+	 * Find audit record counts for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 */
+	FilterResults<AuditDatum, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter);
+
+	/**
+	 * Find accumulative audit record counts for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 */
+	FilterResults<AuditDatum, DatumPK> findAccumulativeAuditDatumFiltered(
+			AuditDatumCriteria filter);
 
 }

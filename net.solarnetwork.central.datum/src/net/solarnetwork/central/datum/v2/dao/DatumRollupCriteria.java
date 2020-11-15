@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCriteria.java - 23/10/2020 1:58:16 pm
+ * DatumRollupCriteria.java - 14/11/2020 4:55:30 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,34 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.RecentCriteria;
-import net.solarnetwork.dao.SortCriteria;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 
 /**
- * Search criteria for {@link Datum}.
+ * Search criteria for datum rollup queries.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface DatumRollupCriteria {
+
+	/**
+	 * Get the rollup type.
+	 * 
+	 * <p>
+	 * This should always return the first value from
+	 * {@link #getDatumRollupTypes()}.
+	 * </p>
+	 * 
+	 * @return the rollup, or {@literal null} for no rollup
+	 */
+	DatumRollupType getDatumRollupType();
+
+	/**
+	 * Get an ordered list of rollup types.
+	 * 
+	 * @return the rollup values, or {@literal null} for no rollup
+	 */
+	DatumRollupType[] getDatumRollupTypes();
 
 }

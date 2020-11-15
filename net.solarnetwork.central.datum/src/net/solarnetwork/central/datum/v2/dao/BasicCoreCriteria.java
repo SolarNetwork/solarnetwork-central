@@ -33,11 +33,12 @@ import net.solarnetwork.domain.SimplePagination;
  * @version 1.0
  */
 public class BasicCoreCriteria extends SimplePagination
-		implements LocationCriteria, NodeCriteria, SourceCriteria {
+		implements LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
+	private Long[] userIds;
 
 	/**
 	 * Set a single location ID.
@@ -156,6 +157,46 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	public void setSourceIds(String[] sourceIds) {
 		this.sourceIds = sourceIds;
+	}
+
+	/**
+	 * Set a single user ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single user ID at a
+	 * time. The user ID is still stored on the {@code userIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code userIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the ID of the user
+	 */
+	@JsonSetter
+	public void setUserId(Long userId) {
+		this.userIds = (userId == null ? null : new Long[] { userId });
+	}
+
+	@Override
+	@JsonIgnore
+	public Long getUserId() {
+		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);
+	}
+
+	@Override
+	public Long[] getUserIds() {
+		return userIds;
+	}
+
+	/**
+	 * Set a list of user IDs to filter on.
+	 * 
+	 * @param userIds
+	 *        The user IDs to filter on.
+	 */
+	public void setUserIds(Long[] userIds) {
+		this.userIds = userIds;
 	}
 
 }

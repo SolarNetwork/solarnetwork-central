@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Basic implementation of {@link DatumCriteria}.
@@ -35,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
  * @version 1.0
  * @since 2.8
  */
-public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria {
+public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria {
 
 	private UUID[] streamIds;
 	private Instant startDate;
@@ -44,6 +46,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	private LocalDateTime localEndDate;
 	private boolean mostRecent = false;
 	private boolean withoutTotalResultsCount = true;
+	private Aggregation aggregation;
+	private Aggregation partialAggregation;
+	private DatumRollupType[] datumRollupTypes;
 
 	@Override
 	public Instant getStartDate() {
@@ -170,6 +175,57 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	@Override
 	public boolean isWithoutTotalResultsCount() {
 		return withoutTotalResultsCount;
+	}
+
+	@Override
+	public Aggregation getAggregation() {
+		return aggregation;
+	}
+
+	/**
+	 * Set the aggregation level to use.
+	 * 
+	 * @param aggregation
+	 *        the aggregation to set
+	 */
+	public void setAggregation(Aggregation aggregation) {
+		this.aggregation = aggregation;
+	}
+
+	@Override
+	public Aggregation getPartialAggregation() {
+		return partialAggregation;
+	}
+
+	/**
+	 * Set the partial aggregation to include.
+	 * 
+	 * @param partialAggregation
+	 *        the partialAggregation to set
+	 */
+	public void setPartialAggregation(Aggregation partialAggregation) {
+		this.partialAggregation = partialAggregation;
+	}
+
+	@Override
+	public DatumRollupType getDatumRollupType() {
+		DatumRollupType[] types = getDatumRollupTypes();
+		return types != null && types.length > 0 ? types[0] : null;
+	}
+
+	@Override
+	public DatumRollupType[] getDatumRollupTypes() {
+		return datumRollupTypes;
+	}
+
+	/**
+	 * Set the datum rollup types.
+	 * 
+	 * @param datumRollupTypes
+	 *        the types to set
+	 */
+	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
+		this.datumRollupTypes = datumRollupTypes;
 	}
 
 }

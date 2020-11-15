@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCriteria.java - 23/10/2020 1:58:16 pm
+ * DatumAuditCriteria.java - 14/11/2020 4:42:27 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,21 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.RecentCriteria;
 import net.solarnetwork.dao.SortCriteria;
 
 /**
- * Search criteria for {@link Datum}.
+ * Search criteria for audit datum.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface AuditDatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
+		NodeMetadataCriteria, LocationMetadataCriteria, UserCriteria, AggregationCriteria,
+		OptimizedQueryCriteria, PaginationCriteria, SortCriteria, DatumRollupCriteria {
 
 }

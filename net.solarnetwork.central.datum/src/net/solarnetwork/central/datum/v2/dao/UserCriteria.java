@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCriteria.java - 23/10/2020 1:58:16 pm
+ * UserCriteria.java - 15/11/2020 12:52:35 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,31 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.RecentCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * Search criteria for {@link Datum}.
+ * Search criteria for user related data.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
  */
-public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface UserCriteria {
+
+	/**
+	 * Get the first user ID.
+	 * 
+	 * <p>
+	 * This returns the first available user ID from the {@link #getUserIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first user ID, or {@literal null} if not available
+	 */
+	Long getUserId();
+
+	/**
+	 * Get an array of user IDs.
+	 * 
+	 * @return array of user IDs (may be {@literal null})
+	 */
+	Long[] getUserIds();
 
 }
