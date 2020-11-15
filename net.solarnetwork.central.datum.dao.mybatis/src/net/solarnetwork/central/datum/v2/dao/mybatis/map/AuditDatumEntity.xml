@@ -30,6 +30,24 @@
 		</if>
 	</sql>
 	
+	<sql id="fragment-AuditDatumEntity-acc-Day-result">
+		<include refid="fragment-AuditDatumEntity-pk-result"/>
+		<choose>
+			<when test="rollups != null">
+				SUM(aud.datum_count) AS aud_datum_count,
+				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
+				SUM(aud.datum_daily_count) AS aud_datum_daily_count,
+				SUM(aud.datum_monthly_count) AS aud_datum_monthly_count
+			</when>
+			<otherwise>
+				aud.datum_count AS aud_datum_count,
+				aud.datum_hourly_count AS aud_datum_hourly_count,
+				aud.datum_daily_count AS aud_datum_daily_count,
+				aud.datum_monthly_count AS aud_datum_monthly_count
+			</otherwise>
+		</choose>
+	</sql>
+
 	<sql id="fragment-AuditDatumEntity-Hour-result">
 		<include refid="fragment-AuditDatumEntity-pk-result"/>
 		<choose>
@@ -175,6 +193,18 @@
 			<when test='aggregation == "Month"'>solardatm.aud_datm_monthly aud</when>
 			<otherwise>solardatm.aud_datm_daily aud</otherwise>
 		</choose>
+		INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = aud.stream_id
+		INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
+		<include refid="fragment-findall-AuditDatumEntity-where"/>
+		<include refid="fragment-findall-AuditDatumEntity-rollup-group"/>
+		<include refid="fragment-findall-AuditDatumEntity-order"/>
+	</select>
+
+	<select id="find-AuditDatumEntity-acc-for-filter" parameterType="map"
+		resultMap="AuditDatumEntity-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-AuditDatumEntity-acc-Day-result"/>			
+		FROM solardatm.aud_acc_datm_daily aud
 		INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = aud.stream_id
 		INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
 		<include refid="fragment-findall-AuditDatumEntity-where"/>

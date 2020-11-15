@@ -57,7 +57,7 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 
 		AuditDatumForFilter("find-AuditDatumEntity-for-filter"),
 
-		AccumulativeAuditDatumForFilter("find-AuditDatumEntity-for-acc-filter");
+		AccumulativeAuditDatumForFilter("find-AuditDatumEntity-acc-for-filter");
 
 		private final String queryName;
 

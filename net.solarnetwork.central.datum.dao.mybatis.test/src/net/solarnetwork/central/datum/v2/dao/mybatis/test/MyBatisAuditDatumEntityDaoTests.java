@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
@@ -60,6 +61,20 @@ public class MyBatisAuditDatumEntityDaoTests extends AbstractMyBatisDaoTestSuppo
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
+		assertThat("No data available", results.getReturnedResultCount(), equalTo(0));
 	}
 
+	@Test
+	public void findAuditDatum_acc_forUser_noData() {
+		// GIVEN
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setUserId(TEST_USER_ID);
+		FilterResults<AuditDatum, DatumPK> results = dao.findAccumulativeAuditDatumFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("No data available", results.getReturnedResultCount(), equalTo(0));
+	}
 }
