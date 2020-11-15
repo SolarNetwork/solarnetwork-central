@@ -31,7 +31,7 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
-import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -50,7 +50,7 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 	public static final String AGGREGATION_PROPERTY = "aggregation";
 
 	/** The query parameter for an {@code Aggregation} string value. */
-	public static final String ROLLUPS_PROPERTY = "rollup";
+	public static final String ROLLUPS_PROPERTY = "rollups";
 
 	/** Query name enumeration. */
 	public enum QueryName {
@@ -125,21 +125,21 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 		return sqlProps;
 	}
 
-	private FilterResults<AuditDatum, DatumPK> filter(AuditDatumCriteria filter, QueryName query) {
+	private FilterResults<AuditDatumRollup, DatumPK> filter(AuditDatumCriteria filter, QueryName query) {
 		final String queryName = query.getQueryName();
 		final Map<String, Object> sqlProps = sqlParametersForAuditDatumCriteria(filter);
-		final List<AuditDatum> data = selectList(queryName, sqlProps, null, null);
+		final List<AuditDatumRollup> data = selectList(queryName, sqlProps, null, null);
 		return new BasicFilterResults<>(data);
 
 	}
 
 	@Override
-	public FilterResults<AuditDatum, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter) {
+	public FilterResults<AuditDatumRollup, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter) {
 		return filter(filter, QueryName.AuditDatumForFilter);
 	}
 
 	@Override
-	public FilterResults<AuditDatum, DatumPK> findAccumulativeAuditDatumFiltered(
+	public FilterResults<AuditDatumRollup, DatumPK> findAccumulativeAuditDatumFiltered(
 			AuditDatumCriteria filter) {
 		return filter(filter, QueryName.AccumulativeAuditDatumForFilter);
 	}

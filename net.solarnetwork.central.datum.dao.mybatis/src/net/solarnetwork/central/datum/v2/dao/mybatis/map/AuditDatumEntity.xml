@@ -2,11 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.datum.v2.dao.mybatis.AuditDatumEntity">
 
-	<resultMap id="AuditDatumEntity-FullResult" type="net.solarnetwork.central.datum.v2.dao.AuditDatumEntity">
+	<resultMap id="AuditDatumEntityRollup-FullResult" type="net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup">
 		<constructor>
-			<idArg column="aud_stream_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<idArg column="aud_node_id" javaType="java.lang.Long"/>
+			<idArg column="aud_source_id" javaType="java.lang.String"/>
 			<idArg column="aud_ts" javaType="java.time.Instant"/>
-			<arg column="aud_agg_kind"/>
+			<arg column="aud_agg_kind" javaType="net.solarnetwork.central.domain.Aggregation"/>
 			<arg column="aud_datum_count" javaType="java.lang.Long"/>
 			<arg column="aud_datum_hourly_count" javaType="java.lang.Long"/>
 			<arg column="aud_datum_daily_count" javaType="java.lang.Integer"/>
@@ -17,17 +18,39 @@
 	</resultMap>
 
 	<sql id="fragment-AuditDatumEntity-pk-result">
-		<if test='rollups == null or rollups["All"] == null'>
-			<if test='rollups == null or rollups["Time"] != null'>
-				aud.ts_start AS aud_ts,
-			</if>
-			<if test='rollups == null or rollups["Node"] != null'>
-				meta.node_id AS aud_node_id,
-			</if>
-			<if test='rollups == null or rollups["Source"] != null'>
-				meta.source_id AS aud_source_id,
-			</if>
-		</if>
+		<choose>
+			<when test='rollups == null or rollups["All"] == null'>
+				<choose>
+					<when test='rollups == null or rollups["Time"] != null'>
+						aud.ts_start AS aud_ts,
+					</when>
+					<otherwise>
+						NULL::timestamptz AS aud_ts,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test='rollups == null or rollups["Node"] != null'>
+						meta.node_id AS aud_node_id,
+					</when>
+					<otherwise>
+						NULL::bigint AS aud_node_id,
+					</otherwise>
+				</choose>
+				<choose>
+					<when test='rollups == null or rollups["Source"] != null'>
+						meta.source_id AS aud_source_id,
+					</when>
+					<otherwise>
+						NULL::text AS aud_source_id,
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				NULL::timestamptz AS aud_ts,
+				NULL::bigint AS aud_node_id,
+				NULL::text AS aud_source_id,
+			</otherwise>
+		</choose>
 	</sql>
 	
 	<sql id="fragment-AuditDatumEntity-acc-Day-result">
@@ -37,15 +60,18 @@
 				SUM(aud.datum_count) AS aud_datum_count,
 				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
 				SUM(aud.datum_daily_count) AS aud_datum_daily_count,
-				SUM(aud.datum_monthly_count) AS aud_datum_monthly_count
+				SUM(aud.datum_monthly_count) AS aud_datum_monthly_count,
 			</when>
 			<otherwise>
 				aud.datum_count AS aud_datum_count,
 				aud.datum_hourly_count AS aud_datum_hourly_count,
 				aud.datum_daily_count AS aud_datum_daily_count,
-				aud.datum_monthly_count AS aud_datum_monthly_count
+				aud.datum_monthly_count AS aud_datum_monthly_count,
 			</otherwise>
 		</choose>
+		'RunningTotal' AS aud_agg_kind,
+		NULL::bigint AS aud_datum_prop_count,
+		NULL::bigint AS aud_datum_query_count
 	</sql>
 
 	<sql id="fragment-AuditDatumEntity-Hour-result">
@@ -54,14 +80,18 @@
 			<when test="rollups != null">
 				SUM(aud.datum_count) AS aud_datum_count,
 				SUM(aud.prop_count) AS aud_datum_prop_count,
-				SUM(aud.datum_q_count) AS aud_datum_query_count
+				SUM(aud.datum_q_count) AS aud_datum_query_count,
 			</when>
 			<otherwise>
 				aud.datum_count AS aud_datum_count,
 				aud.prop_count AS aud_datum_prop_count,
-				aud.datum_q_count AS aud_datum_query_count
+				aud.datum_q_count AS aud_datum_query_count,
 			</otherwise>
 		</choose>
+		'Hour' AS aud_agg_kind,
+		NULL::bigint AS aud_datum_hourly_count,
+		NULL::bigint AS aud_datum_daily_count,
+		NULL::bigint AS aud_datum_monthly_count
 	</sql>
 
 	<sql id="fragment-AuditDatumEntity-Day-result">
@@ -72,16 +102,18 @@
 				SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,
 				SUM(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,
 				SUM(aud.prop_count) AS aud_datum_prop_count,
-				SUM(aud.datum_q_count) AS aud_datum_query_count
+				SUM(aud.datum_q_count) AS aud_datum_query_count,
 			</when>
 			<otherwise>
 				aud.datum_count AS aud_datum_count,
 				aud.datum_hourly_count AS aud_datum_hourly_count,
 				CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,
 				aud.prop_count AS aud_datum_prop_count,
-				aud.datum_q_count AS aud_datum_query_count
+				aud.datum_q_count AS aud_datum_query_count,
 			</otherwise>
 		</choose>
+		'Day' AS aud_agg_kind,
+		NULL::bigint AS aud_datum_monthly_count
 	</sql>
 
 	<sql id="fragment-AuditDatumEntity-Month-result">
@@ -93,7 +125,7 @@
 				SUM(aud.datum_daily_count) AS aud_datum_daily_count,
 				SUM(CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count,
 				SUM(aud.prop_count) AS aud_datum_prop_count,
-				SUM(aud.datum_q_count) AS aud_datum_query_count
+				SUM(aud.datum_q_count) AS aud_datum_query_count,
 			</when>
 			<otherwise>
 				aud.datum_count AS aud_datum_count,
@@ -101,9 +133,10 @@
 				aud.datum_daily_count AS aud_datum_daily_count,
 				CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count,
 				aud.prop_count AS aud_datum_prop_count,
-				aud.datum_q_count AS aud_datum_query_count
+				aud.datum_q_count AS aud_datum_query_count,
 			</otherwise>
 		</choose>
+		'Month' AS aud_agg_kind
 	</sql>
 
 	<sql id="fragment-findall-AuditDatumEntity-where">
@@ -174,7 +207,7 @@
 	</sql>
 	
 	<select id="find-AuditDatumEntity-for-filter" parameterType="map"
-			resultMap="AuditDatumEntity-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+			resultMap="AuditDatumEntityRollup-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
 		SELECT
 		<choose>
 			<when test='aggregation == "Hour"'>
@@ -201,7 +234,7 @@
 	</select>
 
 	<select id="find-AuditDatumEntity-acc-for-filter" parameterType="map"
-		resultMap="AuditDatumEntity-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		resultMap="AuditDatumEntityRollup-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-AuditDatumEntity-acc-Day-result"/>			
 		FROM solardatm.aud_acc_datm_daily aud

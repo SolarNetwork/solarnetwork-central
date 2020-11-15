@@ -226,6 +226,11 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	}
 
 	@Override
+	public AuditDatumEntity clone() {
+		return (AuditDatumEntity) super.clone();
+	}
+
+	@Override
 	public UUID getStreamId() {
 		DatumPK id = getId();
 		return (id != null ? id.getStreamId() : null);

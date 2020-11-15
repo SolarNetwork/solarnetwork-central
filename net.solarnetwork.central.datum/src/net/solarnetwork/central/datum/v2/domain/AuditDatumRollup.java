@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumAuditDao.java - 14/11/2020 4:33:41 pm
+ * AuditDatumRollup.java - 16/11/2020 4:42:12 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,38 +20,28 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
-
-import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.dao.FilterResults;
+package net.solarnetwork.central.datum.v2.domain;
 
 /**
- * API for datum audit information.
+ * Extension of {@link AuditDatum} to support aggregate rollups.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
  */
-public interface AuditDatumDao {
+public interface AuditDatumRollup extends AuditDatum {
 
 	/**
-	 * Find audit record counts for a given search criteria.
+	 * Get the node ID, when rolled up by node.
 	 * 
-	 * @param filter
-	 *        the search criteria
-	 * @return the matching records
+	 * @return the node ID
 	 */
-	FilterResults<AuditDatumRollup, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter);
+	Long getNodeId();
 
 	/**
-	 * Find accumulative audit record counts for a given search criteria.
+	 * Get the source ID, when rolled up by source.
 	 * 
-	 * @param filter
-	 *        the search criteria
-	 * @return the matching records
+	 * @return the source ID
 	 */
-	FilterResults<AuditDatumRollup, DatumPK> findAccumulativeAuditDatumFiltered(
-			AuditDatumCriteria filter);
+	String getSourceId();
 
 }
