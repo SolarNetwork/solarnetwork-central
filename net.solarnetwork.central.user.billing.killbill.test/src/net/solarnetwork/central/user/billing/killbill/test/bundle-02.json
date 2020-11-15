@@ -1,8 +1,0 @@
-{
-  "className": "org.killbill.billing.entitlement.api.SubscriptionApiException",
-  "code": 1083,
-  "message": "Could not find a bundle matching key IN_23412",
-  "causeClassName": "org.killbill.billing.subscription.api.user.SubscriptionBaseApiException",
-  "causeMessage": "Could not find a bundle matching key IN_23412",
-  "stackTrace": []
-}
