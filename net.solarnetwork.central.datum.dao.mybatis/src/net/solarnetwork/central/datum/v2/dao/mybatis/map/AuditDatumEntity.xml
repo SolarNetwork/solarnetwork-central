@@ -233,13 +233,32 @@
 		<include refid="fragment-findall-AuditDatumEntity-order"/>
 	</select>
 
+	<sql id="fragment-accumulative-most-recent-cte">
+		most_recent AS (
+			SELECT aud.stream_id, max(aud.ts_start) as ts_start
+			FROM solardatm.aud_acc_datm_daily aud
+			INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = aud.stream_id
+			INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
+			<include refid="fragment-findall-AuditDatumEntity-where"/>
+			GROUP BY aud.stream_id
+		)
+	</sql>
+
 	<select id="find-AuditDatumEntity-acc-for-filter" parameterType="map"
 		resultMap="AuditDatumEntityRollup-FullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		<if test="filter.mostRecent == true">
+			WITH
+				<include refid="fragment-accumulative-most-recent-cte"/>
+		</if>
 		SELECT
 			<include refid="fragment-AuditDatumEntity-acc-Day-result"/>			
 		FROM solardatm.aud_acc_datm_daily aud
 		INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = aud.stream_id
 		INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
+		<if test="filter.mostRecent == true">
+			INNER JOIN most_recent ON aud.stream_id = most_recent.stream_id
+					AND aud.ts_start = most_recent.ts_start
+		</if>
 		<include refid="fragment-findall-AuditDatumEntity-where"/>
 		<include refid="fragment-findall-AuditDatumEntity-rollup-group"/>
 		<include refid="fragment-findall-AuditDatumEntity-order"/>
