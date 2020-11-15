@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
@@ -49,6 +50,71 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	private Aggregation aggregation;
 	private Aggregation partialAggregation;
 	private DatumRollupType[] datumRollupTypes;
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicDatumCriteria{");
+		if ( getNodeIds() != null ) {
+			builder.append("nodeIds=");
+			builder.append(Arrays.toString(getNodeIds()));
+			builder.append(", ");
+		}
+		if ( getSourceIds() != null ) {
+			builder.append("sourceIds=");
+			builder.append(Arrays.toString(getSourceIds()));
+			builder.append(", ");
+		}
+		if ( getUserIds() != null ) {
+			builder.append("userIds=");
+			builder.append(Arrays.toString(getUserIds()));
+		}
+		if ( streamIds != null ) {
+			builder.append("streamIds=");
+			builder.append(Arrays.toString(streamIds));
+			builder.append(", ");
+		}
+		if ( startDate != null ) {
+			builder.append("startDate=");
+			builder.append(startDate);
+			builder.append(", ");
+		}
+		if ( endDate != null ) {
+			builder.append("endDate=");
+			builder.append(endDate);
+			builder.append(", ");
+		}
+		if ( localStartDate != null ) {
+			builder.append("localStartDate=");
+			builder.append(localStartDate);
+			builder.append(", ");
+		}
+		if ( localEndDate != null ) {
+			builder.append("localEndDate=");
+			builder.append(localEndDate);
+			builder.append(", ");
+		}
+		builder.append("mostRecent=");
+		builder.append(mostRecent);
+		builder.append(", ");
+		if ( aggregation != null ) {
+			builder.append("aggregation=");
+			builder.append(aggregation);
+			builder.append(", ");
+		}
+		if ( partialAggregation != null ) {
+			builder.append("partialAggregation=");
+			builder.append(partialAggregation);
+			builder.append(", ");
+		}
+		if ( datumRollupTypes != null ) {
+			builder.append("datumRollupTypes=");
+			builder.append(Arrays.toString(datumRollupTypes));
+			builder.append(", ");
+		}
+		builder.append("}");
+		return builder.toString();
+	}
 
 	@Override
 	public Instant getStartDate() {
