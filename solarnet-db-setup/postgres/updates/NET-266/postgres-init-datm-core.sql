@@ -31,6 +31,17 @@ CREATE TABLE solardatm.da_loc_datm_meta (
 	CONSTRAINT da_loc_datm_meta_unq UNIQUE (loc_id, source_id)
 );
 
+-- type to use in aggregate functions regardless of physical table
+CREATE TYPE solardatm.datm_rec AS (
+	stream_id	UUID,
+	ts			TIMESTAMP WITH TIME ZONE,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	rtype		SMALLINT
+);
+
 -- datum table
 CREATE TABLE solardatm.da_datm (
 	stream_id	UUID NOT NULL,
@@ -70,6 +81,19 @@ CREATE TABLE solardatm.da_datm_aux (
 CREATE TYPE solardatm.agg_datm AS (
 	stream_id	UUID,
 	ts_start	TIMESTAMP WITH TIME ZONE,
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][]
+);
+
+-- type to use in aggregate diff functions regardless of physical table
+CREATE TYPE solardatm.agg_datm_diff AS (
+	stream_id	UUID,
+	ts_start	TIMESTAMP WITH TIME ZONE,
+	ts_end		TIMESTAMP WITH TIME ZONE,
 	data_i		NUMERIC[],
 	data_a		NUMERIC[],
 	data_s		TEXT[],

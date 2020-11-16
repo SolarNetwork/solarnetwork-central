@@ -102,7 +102,8 @@ $$;
 
 
 /**
- * Find the datum that exist immediately before and after a point in time for a stream.
+ * Find the datum that exist immediately before and after a point in time for a stream, within a
+ * time tolerance.
  *
  * If a datum exists exactly at the given timestamp, that datum alone will be returned.
  * Otherwise up to two datum will be returned, one immediately before and one immediately after

@@ -232,6 +232,60 @@ $$;
 
 
 /**
+ * Find datm auxiliary records for a time range.
+ *
+ * The output `rtype` column will be 1, or 2 if the row is a "final reset" datum
+ * or "starting reset" datum. Reset records for final/start share the same timestamp.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (inclusive)
+ * @param aux_type			the auxiliary type to look for
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_aux_for_time_span(
+		sid 		UUID,
+		start_ts 	TIMESTAMP WITH TIME ZONE,
+		end_ts 		TIMESTAMP WITH TIME ZONE,
+		aux_type 	solardatm.da_datm_aux_type DEFAULT 'Reset'::solardatm.da_datm_aux_type
+	) RETURNS TABLE(
+		stream_id 	UUID,
+		ts 			TIMESTAMP WITH TIME ZONE,
+		data_a		NUMERIC[],
+		rtype		SMALLINT
+	) LANGUAGE SQL STABLE ROWS 50 AS
+$$
+	-- find reset records for same time range, split into two rows for each record: final
+	-- and starting accumulating values
+	WITH aux AS (
+		SELECT
+			  m.stream_id
+			, aux.ts
+			, m.names_a
+			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
+			, unnest(ARRAY[1::SMALLINT, 2::SMALLINT]) AS rr
+		FROM solardatm.da_datm_aux aux
+		INNER JOIN solardatm.da_datm_meta m ON m.stream_id = aux.stream_id
+		WHERE aux.atype = aux_type
+			AND aux.stream_id = sid
+			AND aux.ts >= start_ts
+			AND aux.ts <= end_ts
+	)
+	-- convert reset record rows into datm rows by turning jdata_a JSON into data_a value array,
+	-- respecting the array order defined by solardatm.da_datm_meta.names_a and excluding values
+	-- not defined there
+	SELECT
+		  aux.stream_id
+		, aux.ts
+		, array_agg(p.val::text::numeric ORDER BY array_position(aux.names_a, p.key::text))
+			FILTER (WHERE array_position(aux.names_a, p.key::text) IS NOT NULL)::numeric[] AS data_a
+		, min(aux.rr) AS rtype
+	FROM aux
+	INNER JOIN jsonb_each(aux.jdata_a) AS p(key,val) ON TRUE
+	GROUP BY aux.stream_id, aux.ts, aux.rr
+$$;
+
+
+/**
  * Find datm records for an aggregate time range, supporting both "clock" and "reading" spans,
  * including "reset" auxiliary records.
  *
@@ -266,36 +320,20 @@ $$
 	)
 	-- find reset records for same time range, split into two rows for each record: final
 	-- and starting accumulating values
-	, aux AS (
-		SELECT
-			  m.stream_id
-			, aux.ts
-			, m.names_a
-			, unnest(ARRAY[aux.jdata_af, aux.jdata_as]) AS jdata_a
-			, unnest(ARRAY[1::SMALLINT, 2::SMALLINT]) AS rr
-		FROM solardatm.da_datm_aux aux
-		INNER JOIN solardatm.da_datm_meta m ON m.stream_id = aux.stream_id
-		WHERE aux.atype = 'Reset'::solardatm.da_datm_aux_type
-			AND aux.stream_id = sid
-			AND aux.ts >= start_ts - tolerance
-			AND aux.ts <= end_ts + tolerance
-	)
-	-- convert reset record rows into datm rows by turning jdata_a JSON into data_a value array,
-	-- respecting the array order defined by solardatm.da_datm_meta.names_a and excluding values
-	-- not defined there
 	, resets AS (
 		SELECT
 			  aux.stream_id
 			, aux.ts
 			, NULL::numeric[] AS data_i
-			, array_agg(p.val::text::numeric ORDER BY array_position(aux.names_a, p.key::text))
-				FILTER (WHERE array_position(aux.names_a, p.key::text) IS NOT NULL)::numeric[] AS data_a
+			, aux.data_a
 			, NULL::text[] AS data_s
 			, NULL::text[] AS data_t
-			, min(aux.rr) AS rr
-		FROM aux
-		INNER JOIN jsonb_each(aux.jdata_a) AS p(key,val) ON TRUE
-		GROUP BY aux.stream_id, aux.ts, aux.rr
+			, aux.rtype AS rr
+		FROM solardatm.find_datm_aux_for_time_span(
+			sid,
+			start_ts - tolerance,
+			end_ts + tolerance
+		) aux
 	)
 	-- find min, max ts out of raw + resets to eliminate extra leading/trailing from combined results
 	, ts_range AS (
