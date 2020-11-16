@@ -149,11 +149,14 @@ public final class DatumJsonUtils {
 	 * <p>
 	 * A datum stream metadata object consists of a properties name array and a
 	 * classification object with {@code i}, {@code a}, and {@code s} properties
-	 * name arrays. For example here is the JSON for a stream of 4 properties:
+	 * name arrays. A {@code tz} property will be included if the stream
+	 * provides a time zone ID. For example here is the JSON for a stream of 4
+	 * properties:
 	 * </p>
 	 * 
 	 * <pre>
 	 * <code>{
+	 *     "tz"   : "UTC",
 	 *     "props": ["cpu_user", "net_bytes_in_eth0", "net_bytes_out_eth0", "alert"],
 	 *     "class": {
 	 *         "i": ["cpu_user"],
@@ -178,6 +181,13 @@ public final class DatumJsonUtils {
 		}
 
 		generator.writeStartObject(metadata, 2);
+
+		// tz
+		String timeZoneId = metadata.getTimeZoneId();
+		if ( timeZoneId != null ) {
+			generator.writeFieldName("tz");
+			generator.writeString(timeZoneId);
+		}
 
 		// props
 

@@ -49,6 +49,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param objectId
 	 *        the node ID
 	 * @param sourceId
@@ -63,10 +65,10 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
 	 *         {@literal null}
 	 */
-	public BasicObjectDatumStreamMetadata(UUID streamId, Long objectId, String sourceId,
-			String[] instantaneousProperties, String[] accumulatingProperties,
+	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
+			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, instantaneousProperties, accumulatingProperties, statusProperties);
+		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
 		if ( objectId == null ) {
 			throw new IllegalArgumentException("The objectId argument must not be null.");
 		}
@@ -89,6 +91,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param objectId
 	 *        the node ID
 	 * @param sourceId
@@ -100,9 +104,10 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 */
-	public BasicObjectDatumStreamMetadata(UUID streamId, Long objectId, String sourceId,
-			Object instantaneousProperties, Object accumulatingProperties, Object statusProperties) {
-		this(streamId, objectId, sourceId, (String[]) instantaneousProperties,
+	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
+			String sourceId, Object instantaneousProperties, Object accumulatingProperties,
+			Object statusProperties) {
+		this(streamId, timeZoneId, objectId, sourceId, (String[]) instantaneousProperties,
 				(String[]) accumulatingProperties, (String[]) statusProperties);
 	}
 

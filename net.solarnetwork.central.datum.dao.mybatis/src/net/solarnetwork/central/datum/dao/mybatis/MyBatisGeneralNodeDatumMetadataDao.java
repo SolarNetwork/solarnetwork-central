@@ -43,7 +43,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralNodeDatumMetadataDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisGeneralNodeDatumMetadataDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatumMetadata, NodeSourcePK>
@@ -65,14 +65,6 @@ public class MyBatisGeneralNodeDatumMetadataDao
 	 */
 	public MyBatisGeneralNodeDatumMetadataDao() {
 		super(GeneralNodeDatumMetadata.class, NodeSourcePK.class);
-	}
-
-	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-		if ( n != null ) {
-			return n.longValue();
-		}
-		return null;
 	}
 
 	private String getQueryForFilter(GeneralNodeDatumMetadataFilter filter) {

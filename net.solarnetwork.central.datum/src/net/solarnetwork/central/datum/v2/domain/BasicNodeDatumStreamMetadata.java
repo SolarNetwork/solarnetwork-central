@@ -46,6 +46,8 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -60,10 +62,10 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 *         if {@code streamId} or {@code nodeId} or {@code sourceId} is
 	 *         {@literal null}
 	 */
-	public BasicNodeDatumStreamMetadata(UUID streamId, Long nodeId, String sourceId,
+	public BasicNodeDatumStreamMetadata(UUID streamId, String timeZoneId, Long nodeId, String sourceId,
 			String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
+		super(streamId, timeZoneId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
 				statusProperties);
 	}
 
@@ -79,6 +81,8 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -90,9 +94,9 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * @param statusProperties
 	 *        the status property names; must be a {@code String[]}
 	 */
-	public BasicNodeDatumStreamMetadata(UUID streamId, Long nodeId, String sourceId,
+	public BasicNodeDatumStreamMetadata(UUID streamId, String timeZoneId, Long nodeId, String sourceId,
 			Object instantaneousProperties, Object accumulatingProperties, Object statusProperties) {
-		this(streamId, nodeId, sourceId, (String[]) instantaneousProperties,
+		this(streamId, timeZoneId, nodeId, sourceId, (String[]) instantaneousProperties,
 				(String[]) accumulatingProperties, (String[]) statusProperties);
 	}
 

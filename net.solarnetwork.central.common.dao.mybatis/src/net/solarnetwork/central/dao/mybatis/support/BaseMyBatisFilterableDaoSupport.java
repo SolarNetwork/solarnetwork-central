@@ -22,18 +22,14 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import net.solarnetwork.central.domain.Filter;
-import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -42,11 +38,12 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  * @since 2.7
  */
-public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F>
-		extends BaseMyBatisGenericDaoSupport<T, K> implements FilterableDao<M, K, F> {
+public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F extends PaginationCriteria>
+		extends BaseMyBatisGenericDaoSupport<T, K>
+		implements FilterableDao<M, K, F>, FilterResultsFactory<M, K, F> {
 
 	private final Class<? extends M> matchType;
 
@@ -93,29 +90,6 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	}
 
 	/**
-	 * Create a results instance from query results.
-	 * 
-	 * @param filter
-	 *        the query filter
-	 * @param sqlProps
-	 *        the SQL parameters
-	 * @param rows
-	 *        the resulting rows
-	 * @param totalCount
-	 *        the total count
-	 * @param offset
-	 *        the offset of the first result
-	 * @param returnedCount
-	 *        the maximum number of results
-	 * @return the result instance
-	 */
-	protected FilterResults<M, K> createResults(F filter, Map<String, Object> sqlProps, Iterable<M> rows,
-			Long totalCount, Integer offset, Integer returnedCount) {
-		return new BasicFilterResults<M, K>(rows,
-				(totalCount != null ? totalCount : returnedCount.longValue()), offset, returnedCount);
-	}
-
-	/**
 	 * Perform a filter search using standardized semantics.
 	 * 
 	 * <p>
@@ -123,25 +97,10 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li>Create a SQL parameters map with a
-	 * {@link BaseMyBatisGenericDaoSupport#FILTER_PROPERTY} key and {@code f}
-	 * value.</li>
-	 * <li>If {@code filter} implements {@link SortCriteria} and provides sort
-	 * descriptors, those will be set as the SQL parameter
-	 * {@link BaseMyBatisGenericDaoSupport#SORT_DESCRIPTORS_PROPERTY}. Otherwise
-	 * the {@code sorts} argument will be set.</li>
-	 * <li>Call {@link #postProcessFilterProperties(Object, Map)}</li>
-	 * <li>If {@code filter} implements {@link PaginationCriteria} and provides
-	 * pagination values, those will be used in preference to the {@code offset}
-	 * and {@code max} method arguments.</li>
-	 * <li>If {@code max} is not {@literal null} then call
-	 * {@link #executeFilterCountQuery(String, Object, Map)}</li>
+	 * <li>Compute the MyBatis query name by calling
+	 * {@link #getFilteredQuery(String, Object)}.</li>
 	 * <li>Call
-	 * {@link net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao.selectList(String,
-	 * Object, Integer, Integer)}</li>
-	 * <li>Call
-	 * {@link #createResults(Object, Map, Iterable, Long, Integer, Integer)} and
-	 * return the result.</li>
+	 * {@link BaseMyBatisDao#selectFiltered(String, Object, List, Integer, Integer, java.util.function.BiConsumer)}.</li>
 	 * </ol>
 	 * 
 	 * @param filter
@@ -153,90 +112,22 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * @param max
 	 *        the maximum number of results
 	 * @return the results
+	 * @see BaseMyBatisDao#selectFiltered(String, Object, List, Integer,
+	 *      Integer, java.util.function.BiConsumer)
 	 */
 	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Integer offset,
 			Integer max) {
 		final String filterDomain = matchType.getSimpleName();
 		final String query = getFilteredQuery(filterDomain, filter);
-		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
-		sqlProps.put(FILTER_PROPERTY, filter);
-
-		// if filter is SortCriteria and provides sort values, use those over method args
-		if ( filter instanceof SortCriteria && ((SortCriteria) filter).getSorts() != null
-				&& !((SortCriteria) filter).getSorts().isEmpty() ) {
-			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, ((SortCriteria) filter).getSorts());
-		} else if ( sorts != null && sorts.size() > 0 ) {
-			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sorts);
-		}
-
-		postProcessFilterProperties(filter, sqlProps);
-
-		// if filter is PaginationCriteria and provides pagination values, don't use MyBatis pagination
-		Integer m = max;
-		Integer o = offset;
-		if ( filter instanceof PaginationCriteria ) {
-			PaginationCriteria pagination = (PaginationCriteria) filter;
-			if ( pagination.getMax() != null && pagination.getMax().intValue() > 0
-					&& pagination.getOffset() != null && pagination.getOffset().intValue() >= 0 ) {
-				max = pagination.getMax();
-				m = null;
-				offset = pagination.getOffset();
-				o = null;
-			}
-		}
-
-		// attempt count first, if max NOT null or specified as -1; if filter is instance of OptimizedQueryCriteria
-		// check the withoutTotalResultsCount flag
-		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 && !((filter instanceof OptimizedQueryCriteria)
-				&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
-			Long n = executeFilterCountQuery(query + "-count", filter, sqlProps);
-			if ( n != null ) {
-				totalCount = n.longValue();
-			}
-		}
-
-		List<M> rows = selectList(query, sqlProps, o, m);
-
-		FilterResults<M, K> results = createResults(filter, sqlProps, rows,
-				(totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
-
-		return results;
+		return selectFiltered(query, filter, sorts, offset, max, this::postProcessFilterProperties,
+				this);
 	}
 
-	/**
-	 * Execute a count query for a filter.
-	 * 
-	 * <p>
-	 * If the query throws an {@link IllegalArgumentException} this method
-	 * assumes that means the query name was not found, and will simply return
-	 * {@literal null}.
-	 * </p>
-	 * 
-	 * @param countQueryName
-	 *        the query name
-	 * @param filter
-	 *        the filter
-	 * @param sqlProps
-	 *        the SQL properties
-	 * @return the count
-	 */
-	protected Long executeFilterCountQuery(final String countQueryName, F filter,
-			final Map<String, ?> sqlProps) {
-		try {
-			return selectLong(countQueryName, sqlProps);
-		} catch ( RuntimeException e ) {
-			Throwable cause = e;
-			while ( cause.getCause() != null ) {
-				cause = cause.getCause();
-			}
-			if ( cause instanceof IllegalArgumentException ) {
-				log.warn("Count query not supported: {}", countQueryName, e);
-			} else {
-				throw e;
-			}
-		}
-		return null;
+	@Override
+	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
+			Iterable<M> rows, Long totalCount, Integer offset, Integer returnedCount) {
+		return DaoUtils.filterResults(rows, filter, totalCount,
+				(returnedCount != null ? returnedCount : 0));
 	}
 
 }

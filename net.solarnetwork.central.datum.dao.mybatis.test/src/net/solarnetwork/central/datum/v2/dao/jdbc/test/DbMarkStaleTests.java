@@ -99,7 +99,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		insertDatumStream(log, jdbcTemplate, datums);
+		insertDatumStream(log, jdbcTemplate, datums, "UTC");
 
 		// WHEN
 		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
@@ -114,7 +114,8 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID[] streamIds = meta.values().stream().map(NodeDatumStreamMetadata::getStreamId)
 				.toArray(UUID[]::new);
 
@@ -131,7 +132,8 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID[] streamIds = meta.values().stream().map(NodeDatumStreamMetadata::getStreamId)
 				.toArray(UUID[]::new);
 

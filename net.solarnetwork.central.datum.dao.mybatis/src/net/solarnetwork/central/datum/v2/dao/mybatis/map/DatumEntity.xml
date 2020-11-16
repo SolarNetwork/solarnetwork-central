@@ -66,6 +66,7 @@
 	
 	<sql id="fragment-DatumStreamMetadata-full-result">
 		smeta.stream_id AS stream_meta_stream_id,
+		COALESCE(l.time_zone, 'UTC') AS stream_meta_time_zone,
 		smeta.names_i AS stream_meta_names_i,
 		smeta.names_a AS stream_meta_names_a,
 		smeta.names_s AS stream_meta_names_s
@@ -82,6 +83,7 @@
 	<resultMap id="NodeDatumStreamMetadata-FullResult" type="net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata">
 		<constructor>
 			<idArg column="stream_meta_stream_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<arg column="stream_meta_time_zone" javaType="String"/>
 			<arg column="stream_meta_node_id" javaType="Long"/>
 			<arg column="stream_meta_source_id" javaType="String"/>
 			<arg column="stream_meta_names_i" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
@@ -93,8 +95,9 @@
 	<select id="find-NodeDatumStreamMetadata-for-filter" parameterType="map" resultMap="NodeDatumStreamMetadata-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-NodeDatumStreamMetadata-full-result"/>
-		FROM
-			solardatm.da_datm_meta smeta
+		FROM solardatm.da_datm_meta smeta
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = smeta.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 		<where>
 			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
 				AND smeta.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
@@ -119,6 +122,7 @@
 	<resultMap id="LocationDatumStreamMetadata-FullResult" type="net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata">
 		<constructor>
 			<idArg column="stream_meta_stream_id" javaType="java.util.UUID" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			<arg column="stream_meta_time_zone" javaType="String"/>
 			<arg column="stream_meta_loc_id" javaType="Long"/>
 			<arg column="stream_meta_source_id" javaType="String"/>
 			<arg column="stream_meta_names_i" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
@@ -130,8 +134,8 @@
 	<select id="find-LocationDatumStreamMetadata-for-filter" parameterType="map" resultMap="LocationDatumStreamMetadata-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-LocationDatumStreamMetadata-full-result"/>
-		FROM
-			solardatm.da_loc_datm_meta smeta
+		FROM solardatm.da_loc_datm_meta smeta
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = smeta.loc_id
 		<where>
 			<if test="filter.locationIds != null and filter.locationIds.length > 0">
 				AND smeta.loc_id = ANY(#{filter.locationIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
@@ -144,6 +148,10 @@
 			</if>
 		</where>
 	</select>
+	
+	<!-- 
+		Datum
+	 -->
 	
 	<sql id="fragment-findall-DatumEntity-DatumEntity-from">
 		FROM solardatm.da_datm datum

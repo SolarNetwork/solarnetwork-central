@@ -109,7 +109,8 @@ public class DbFindTimeGreatestTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
@@ -131,7 +132,7 @@ public class DbFindTimeGreatestTests extends BaseDatumJdbcTestSupport {
 			d.setSourceId("b");
 		});
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
-				concat(datums_a.stream(), datums_b.stream()).collect(toList()));
+				concat(datums_a.stream(), datums_b.stream()).collect(toList()), "UTC");
 		UUID streamId_a = null;
 		UUID streamId_b = null;
 		for ( NodeDatumStreamMetadata meta : metas.values() ) {
@@ -178,7 +179,7 @@ public class DbFindTimeGreatestTests extends BaseDatumJdbcTestSupport {
 			d.setSourceId("b");
 		});
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
-				concat(datums_a.stream(), datums_b.stream()).collect(toList()));
+				concat(datums_a.stream(), datums_b.stream()).collect(toList()), "UTC");
 		UUID streamId_a = null;
 		for ( NodeDatumStreamMetadata meta : metas.values() ) {
 			if ( meta.getSourceId().equals("a") ) {

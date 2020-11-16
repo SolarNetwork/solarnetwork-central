@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.mybatis.test;
 
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -33,6 +34,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
@@ -64,13 +66,17 @@ import net.solarnetwork.central.datum.dao.mybatis.test.AbstractMyBatisDaoTestSup
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils;
 import net.solarnetwork.central.datum.v2.dao.mybatis.MyBatisDatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
@@ -89,7 +95,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Before
 	public void setup() {
-		dao = new MyBatisDatumEntityDao();
+		dao = new MyBatisDatumEntityDao(jdbcTemplate);
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 	}
 
@@ -180,7 +186,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		Iterable<NodeDatumStreamMetadata> results = dao.getNodeDatumStreamMetadata(filter);
+		Iterable<NodeDatumStreamMetadata> results = dao.findNodeDatumStreamMetadata(filter);
 
 		assertThat("Results returned", results, notNullValue());
 		Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
@@ -235,7 +241,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		Iterable<LocationDatumStreamMetadata> results = dao.getLocationDatumStreamMetadata(filter);
+		Iterable<LocationDatumStreamMetadata> results = dao.findLocationDatumStreamMetadata(filter);
 
 		assertThat("Results returned", results, notNullValue());
 		Map<UUID, LocationDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
@@ -246,7 +252,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 			final UUID streamId = streamIds.get(i);
 			LocationDatumStreamMetadata meta = metas.get(streamId);
 			assertThat("Stream ID " + idx, meta.getStreamId(), equalTo(streamId));
-			assertThat("Node ID " + idx, meta.getLocationId(), equalTo((long) idx));
+			assertThat("Location ID " + idx, meta.getLocationId(), equalTo((long) idx));
 			assertThat("Source ID" + idx, meta.getSourceId(), equalTo(format("s%d", idx)));
 			assertThat("Instantaneous property names " + idx,
 					meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
@@ -257,6 +263,71 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat("Status property names " + idx,
 					meta.propertyNamesForType(GeneralDatumSamplesType.Status), arrayContaining("f"));
 		}
+	}
+
+	@Test
+	public void metadataForStream_notFound() {
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		ObjectDatumStreamMetadata result = dao.metadataForStream(UUID.randomUUID());
+
+		assertThat("Metadata not found", result, nullValue());
+	}
+
+	@Test
+	public void metadataForStream_node() {
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		ObjectDatumStreamMetadata result = dao.metadataForStream(meta.getStreamId());
+
+		assertThat("Metadata found", result, notNullValue());
+		assertThat("Node metadata returned", result, instanceOf(NodeDatumStreamMetadata.class));
+		assertThat("Stream ID", result.getStreamId(), equalTo(meta.getStreamId()));
+		assertThat("Time zone ID", result.getTimeZoneId(), equalTo(meta.getTimeZoneId()));
+		assertThat("Object ID", result.getObjectId(), equalTo(meta.getNodeId()));
+		assertThat("Source ID", result.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Instantaneous property names",
+				meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
+				arrayContaining("a", "b", "c"));
+		assertThat("Accumulating property names",
+				meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
+				arrayContaining("d", "e"));
+		assertThat("Status property names", meta.propertyNamesForType(GeneralDatumSamplesType.Status),
+				arrayContaining("f"));
+	}
+
+	@Test
+	public void metadataForStream_location() {
+		BasicLocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(),
+				TEST_TZ, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		ObjectDatumStreamMetadata result = dao.metadataForStream(meta.getStreamId());
+
+		assertThat("Metadata found", result, notNullValue());
+		assertThat("Location metadata returned", result, instanceOf(LocationDatumStreamMetadata.class));
+		assertThat("Stream ID", result.getStreamId(), equalTo(meta.getStreamId()));
+		assertThat("Time zone ID", result.getTimeZoneId(), equalTo(meta.getTimeZoneId()));
+		assertThat("Object ID", result.getObjectId(), equalTo(meta.getLocationId()));
+		assertThat("Source ID", result.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Instantaneous property names",
+				meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
+				arrayContaining("a", "b", "c"));
+		assertThat("Accumulating property names",
+				meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
+				arrayContaining("d", "e"));
+		assertThat("Status property names", meta.propertyNamesForType(GeneralDatumSamplesType.Status),
+				arrayContaining("f"));
 	}
 
 	// UUID sorter that matches how Postgres orders UUIDS (byte by byte)
@@ -294,7 +365,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
-		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
+		assertThat("Result total count", results.getTotalResults(), nullValue());
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 
@@ -325,7 +396,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
 
 		Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport
-				.stream(dao.getNodeDatumStreamMetadata(new BasicDatumCriteria()).spliterator(), false)
+				.stream(dao.findNodeDatumStreamMetadata(new BasicDatumCriteria()).spliterator(), false)
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 
 		// WHEN
@@ -336,7 +407,7 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
-		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
+		assertThat("Result total count", results.getTotalResults(), nullValue());
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 

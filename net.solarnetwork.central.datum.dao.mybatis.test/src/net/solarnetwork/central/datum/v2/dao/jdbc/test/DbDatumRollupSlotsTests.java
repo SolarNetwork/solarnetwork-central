@@ -72,7 +72,8 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 			Aggregation agg, RollupCallback callback) throws IOException {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
 		log.debug("Got test data: {}", datums);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = null;
 		List<AggregateDatumEntity> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
@@ -95,7 +96,8 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = null;
 		List<AggregateDatumEntity> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {

@@ -117,7 +117,7 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 	}
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
 				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
 	}
 
@@ -135,7 +135,8 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 	public void processStaleHour() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJson("test-datum-01.txt", 0, 6);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// WHEN

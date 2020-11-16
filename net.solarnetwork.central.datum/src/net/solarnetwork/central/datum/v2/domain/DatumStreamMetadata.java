@@ -42,6 +42,13 @@ public interface DatumStreamMetadata {
 	UUID getStreamId();
 
 	/**
+	 * Get the time zone ID associated with this stream.
+	 * 
+	 * @return the time zone ID, or {@literal null} if not known
+	 */
+	String getTimeZoneId();
+
+	/**
 	 * Get all property names included in the stream.
 	 * 
 	 * @return the property names

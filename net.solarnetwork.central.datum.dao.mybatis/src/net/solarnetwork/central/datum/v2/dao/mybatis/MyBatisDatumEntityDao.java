@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
@@ -37,13 +38,16 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -67,7 +71,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class MyBatisDatumEntityDao
 		extends BaseMyBatisFilterableDaoSupport<DatumEntity, DatumPK, Datum, DatumCriteria>
-		implements DatumEntityDao {
+		implements DatumEntityDao, DatumStreamMetadataDao {
 
 	/** Query name enumeration. */
 	public enum QueryName {
@@ -92,15 +96,21 @@ public class MyBatisDatumEntityDao
 		}
 	}
 
+	private final JdbcOperations jdbcTemplate;
+
 	/**
 	 * Constructor.
+	 * 
+	 * @param jdbcTemplate
+	 *        a JDBC operations to use
 	 */
-	public MyBatisDatumEntityDao() {
+	public MyBatisDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super(DatumEntity.class, DatumPK.class, DatumEntity.class);
+		this.jdbcTemplate = jdbcTemplate;
 	}
 
 	@Override
-	protected FilterResults<Datum, DatumPK> createResults(DatumCriteria filter,
+	public FilterResults<Datum, DatumPK> createFilterResults(DatumCriteria filter,
 			Map<String, Object> sqlProps, Iterable<Datum> rows, Long totalCount, Integer offset,
 			Integer returnedCount) {
 		final String queryName = filter.getLocationId() != null
@@ -116,17 +126,26 @@ public class MyBatisDatumEntityDao
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	@Override
-	public Iterable<NodeDatumStreamMetadata> getNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
+	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
 		final Map<String, Object> sqlProps = Collections.singletonMap(FILTER_PROPERTY, filter);
 		return selectList(QueryName.NodeMetadataForFilter.getQueryName(), sqlProps, null, null);
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	@Override
-	public Iterable<LocationDatumStreamMetadata> getLocationDatumStreamMetadata(
+	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
 			LocationMetadataCriteria filter) {
 		final Map<String, Object> sqlProps = Collections.singletonMap(FILTER_PROPERTY, filter);
 		return selectList(QueryName.LocationMetadataForFilter.getQueryName(), sqlProps, null, null);
+	}
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	@Override
+	public ObjectDatumStreamMetadata metadataForStream(UUID streamId) {
+		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
+				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone FROM solardatm.find_metadata_for_stream(?::uuid)",
+				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
+		return (results.isEmpty() ? null : results.get(0));
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

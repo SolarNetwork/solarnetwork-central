@@ -107,7 +107,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 	}
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
 				new String[] { "x", "y" }, new String[] { "w" }, null);
 	}
 

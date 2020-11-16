@@ -25,8 +25,6 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.util.List;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SortDescriptor;
@@ -54,25 +52,5 @@ public interface DatumEntityDao
 	default DatumStreamFilterResults findFiltered(DatumCriteria filter) {
 		return findFiltered(filter, null, null, null);
 	}
-
-	/**
-	 * Find all available node datum stream metadata for a given search filter.
-	 * 
-	 * @param filter
-	 *        the search filter
-	 * @return the matching results, never {@literal null}
-	 */
-	Iterable<NodeDatumStreamMetadata> getNodeDatumStreamMetadata(NodeMetadataCriteria filter);
-
-	/**
-	 * Find all available location datum stream metadata for a given search
-	 * filter.
-	 * 
-	 * @param filter
-	 *        the search filter
-	 * @return the matching results, never {@literal null}
-	 */
-	Iterable<LocationDatumStreamMetadata> getLocationDatumStreamMetadata(
-			LocationMetadataCriteria filter);
 
 }

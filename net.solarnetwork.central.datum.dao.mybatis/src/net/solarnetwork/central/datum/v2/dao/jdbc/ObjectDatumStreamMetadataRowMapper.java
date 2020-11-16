@@ -46,7 +46,8 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
  * <li>names_a</li>
  * <li>names_s</li>
  * <li>jdata</li>
- * <li>kind - only required if dynamic type is used</li>
+ * <li>kind - only used if dynamic type is used</li>
+ * <li>timezone</li>
  * </ol>
  *
  * @author matt
@@ -114,7 +115,7 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 			a.free();
 		}
 
-		// String jmeta = rs.getString(7);
+		// TODO String jmeta = rs.getString(7);
 
 		MetadataKind k = this.kind;
 		if ( this.kind == MetadataKind.Dynamic ) {
@@ -122,12 +123,15 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 			k = ("l".equalsIgnoreCase(kindStr) ? MetadataKind.Location : MetadataKind.Node);
 		}
 
+		String timeZoneId = rs.getString(9);
+
 		if ( k == MetadataKind.Location ) {
-			return new BasicLocationDatumStreamMetadata(streamId, objId, sourceId, namesI, namesA,
-					namesS);
+			return new BasicLocationDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI,
+					namesA, namesS);
 		}
 
-		return new BasicNodeDatumStreamMetadata(streamId, objId, sourceId, namesI, namesA, namesS);
+		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI, namesA,
+				namesS);
 	}
 
 }

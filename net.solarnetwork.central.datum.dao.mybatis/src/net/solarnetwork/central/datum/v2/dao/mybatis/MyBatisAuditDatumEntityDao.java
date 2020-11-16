@@ -22,19 +22,15 @@
 
 package net.solarnetwork.central.datum.v2.dao.mybatis;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -75,7 +71,7 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 		}
 	}
 
-	private Aggregation aggregationForAuditDatumCriteria(AuditDatumCriteria filter) {
+	private static Aggregation aggregationForAuditDatumCriteria(AuditDatumCriteria filter) {
 		// limit aggregation to specific supported ones
 		Aggregation aggregation = Aggregation.Day;
 		if ( filter != null && filter.getAggregation() != null ) {
@@ -93,14 +89,8 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 		return aggregation;
 	}
 
-	private Map<String, Object> sqlParametersForAuditDatumCriteria(AuditDatumCriteria filter) {
-		final Map<String, Object> sqlProps = new HashMap<String, Object>(3);
-		sqlProps.put(BaseMyBatisGenericDaoSupport.FILTER_PROPERTY, filter);
-
-		if ( filter.getSorts() != null && filter.getSorts().size() > 0 ) {
-			sqlProps.put(BaseMyBatisGenericDaoSupport.SORT_DESCRIPTORS_PROPERTY, filter.getSorts());
-		}
-
+	private void processSqlParametersForAuditDatumCriteria(AuditDatumCriteria filter,
+			Map<String, Object> sqlProps) {
 		// limit aggregation to specific supported ones
 		Aggregation aggregation = aggregationForAuditDatumCriteria(filter);
 		sqlProps.put(AGGREGATION_PROPERTY, aggregation.name());
@@ -122,15 +112,12 @@ public class MyBatisAuditDatumEntityDao extends BaseMyBatisDao implements AuditD
 				sqlProps.put(ROLLUPS_PROPERTY, rollups);
 			}
 		}
-		return sqlProps;
 	}
 
 	private FilterResults<AuditDatumRollup, DatumPK> filter(AuditDatumCriteria filter, QueryName query) {
 		final String queryName = query.getQueryName();
-		final Map<String, Object> sqlProps = sqlParametersForAuditDatumCriteria(filter);
-		final List<AuditDatumRollup> data = selectList(queryName, sqlProps, null, null);
-		return new BasicFilterResults<>(data);
-
+		return selectFiltered(queryName, filter, null, null, null,
+				this::processSqlParametersForAuditDatumCriteria);
 	}
 
 	@Override

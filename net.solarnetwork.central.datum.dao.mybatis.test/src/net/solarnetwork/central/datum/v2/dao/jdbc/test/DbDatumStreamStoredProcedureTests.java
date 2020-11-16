@@ -58,8 +58,8 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void findStreamMetadata_node() {
 		// GIVEN
-		BasicNodeDatumStreamMetadata m = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), 1L, "a",
-				new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
+		BasicNodeDatumStreamMetadata m = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", 1L,
+				"a", new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
 		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
 
 		// WHEN
@@ -69,6 +69,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		assertThat("Node metadata found", result, notNullValue());
 		assertThat("Node metadata instance returned", result, instanceOf(NodeDatumStreamMetadata.class));
 		assertThat("Stream ID matches", result.getStreamId(), equalTo(m.getStreamId()));
+		assertThat("Time zone matches", result.getTimeZoneId(), equalTo(m.getTimeZoneId()));
 
 		NodeDatumStreamMetadata nodeMeta = (NodeDatumStreamMetadata) result;
 		assertThat("Node ID matches", nodeMeta.getNodeId(), equalTo(m.getNodeId()));
@@ -86,8 +87,9 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void findStreamMetadata_location() {
 		// GIVEN
-		BasicLocationDatumStreamMetadata m = new BasicLocationDatumStreamMetadata(UUID.randomUUID(), 1L,
-				"a", new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
+		BasicLocationDatumStreamMetadata m = new BasicLocationDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", 1L, "a", new String[] { "b", "c", "d" }, new String[] { "e", "f" },
+				new String[] { "g" });
 		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
 
 		// WHEN
@@ -98,6 +100,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		assertThat("Location metadata instance returned", result,
 				instanceOf(LocationDatumStreamMetadata.class));
 		assertThat("Stream ID matches", result.getStreamId(), equalTo(m.getStreamId()));
+		assertThat("Time zone matches", result.getTimeZoneId(), equalTo(m.getTimeZoneId()));
 
 		LocationDatumStreamMetadata nodeMeta = (LocationDatumStreamMetadata) result;
 		assertThat("Node ID matches", nodeMeta.getLocationId(), equalTo(m.getLocationId()));
@@ -115,10 +118,11 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void findStreamMetadata_nodeOverLocation() {
 		// GIVEN
-		BasicNodeDatumStreamMetadata m = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), 1L, "a",
-				new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
-		BasicLocationDatumStreamMetadata m2 = new BasicLocationDatumStreamMetadata(m.getStreamId(), 2L,
-				"h", new String[] { "i", "j", "k" }, new String[] { "l", "m" }, new String[] { "n" });
+		BasicNodeDatumStreamMetadata m = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", 1L,
+				"a", new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
+		BasicLocationDatumStreamMetadata m2 = new BasicLocationDatumStreamMetadata(m.getStreamId(),
+				"UTC", 2L, "h", new String[] { "i", "j", "k" }, new String[] { "l", "m" },
+				new String[] { "n" });
 		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Arrays.asList(m, m2));
 
 		// WHEN
@@ -129,6 +133,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		assertThat("Node metadata instance returned, when same stream ID exists for location", result,
 				instanceOf(NodeDatumStreamMetadata.class));
 		assertThat("Stream ID matches", result.getStreamId(), equalTo(m.getStreamId()));
+		assertThat("Time zone matches", result.getTimeZoneId(), equalTo(m.getTimeZoneId()));
 
 		NodeDatumStreamMetadata nodeMeta = (NodeDatumStreamMetadata) result;
 		assertThat("Node ID matches", nodeMeta.getNodeId(), equalTo(m.getNodeId()));

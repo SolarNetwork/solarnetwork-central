@@ -143,8 +143,8 @@ public class MyBatisAuditDatumEntityDaoTests extends AbstractMyBatisDaoTestSuppo
 	}
 
 	private void setupTestStream(Long nodeId, String sourceId, UUID streamId) {
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, nodeId, sourceId,
-				null, null, null);
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", nodeId,
+				sourceId, null, null, null);
 		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 	}
 

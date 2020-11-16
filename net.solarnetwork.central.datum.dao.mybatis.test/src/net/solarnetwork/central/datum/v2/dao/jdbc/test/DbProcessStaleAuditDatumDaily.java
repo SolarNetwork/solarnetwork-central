@@ -67,7 +67,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	}
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
 				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
 	}
 
@@ -152,7 +152,8 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	public void processStaleRaw() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJson("test-datum-01.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);

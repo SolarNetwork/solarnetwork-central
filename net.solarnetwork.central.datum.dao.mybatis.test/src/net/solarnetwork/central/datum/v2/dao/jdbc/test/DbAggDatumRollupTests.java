@@ -60,11 +60,12 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 	}
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata() {
-		return testStreamMetadata(1L, "a");
+		return testStreamMetadata(1L, "a", TEST_TZ);
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
+			String timeZoneId) {
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), timeZoneId, nodeId, sourceId,
 				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
 	}
 

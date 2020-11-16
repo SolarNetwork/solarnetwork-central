@@ -56,7 +56,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link GeneralLocationDatumDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisGeneralLocationDatumDao
 		extends BaseMyBatisGenericDao<GeneralLocationDatum, GeneralLocationDatumPK> implements
@@ -330,14 +330,6 @@ public class MyBatisGeneralLocationDatumDao
 			}
 		}
 		return (result.isEmpty() ? null : result);
-	}
-
-	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-		if ( n != null ) {
-			return n.longValue();
-		}
-		return null;
 	}
 
 	@Override

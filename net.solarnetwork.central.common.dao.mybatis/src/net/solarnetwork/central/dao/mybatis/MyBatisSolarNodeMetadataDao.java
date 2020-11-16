@@ -40,7 +40,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * MyBatis implementation of {@link SolarNodeMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNodeMetadata, Long>
 		implements SolarNodeMetadataDao {
@@ -53,14 +53,6 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 	 */
 	public MyBatisSolarNodeMetadataDao() {
 		super(SolarNodeMetadata.class, Long.class);
-	}
-
-	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-		if ( n != null ) {
-			return n.longValue();
-		}
-		return null;
 	}
 
 	private String getQueryForFilter(SolarNodeMetadataFilter filter) {

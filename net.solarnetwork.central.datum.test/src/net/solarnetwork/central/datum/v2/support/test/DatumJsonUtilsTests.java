@@ -170,7 +170,7 @@ public class DatumJsonUtilsTests {
 
 	@Test
 	public void writeStreamMetadata_typical() throws IOException {
-		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(),
+		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
 				new String[] { "six" });
 		StringWriter out = new StringWriter();
@@ -178,58 +178,60 @@ public class DatumJsonUtilsTests {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
-				"{\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"));
+				"{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"));
 	}
 
 	@Test
 	public void writeStreamMetadata_noInstantaneous() throws IOException {
-		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), null,
+		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC", null,
 				new String[] { "four", "five" }, new String[] { "six" });
 		StringWriter out = new StringWriter();
 		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
-				"{\"props\":[\"four\",\"five\",\"six\"],\"class\":{\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"));
+				"{\"tz\":\"UTC\",\"props\":[\"four\",\"five\",\"six\"],\"class\":{\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"));
 	}
 
 	@Test
 	public void writeStreamMetadata_noAccumulating() throws IOException {
-		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(),
+		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, null, new String[] { "six" });
 		StringWriter out = new StringWriter();
 		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
-				"{\"props\":[\"one\",\"two\",\"three\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"s\":[\"six\"]}}"));
+				"{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"s\":[\"six\"]}}"));
 	}
 
 	@Test
 	public void writeStreamMetadata_noStatus() throws IOException {
-		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(),
+		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" }, null);
 		StringWriter out = new StringWriter();
 		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
 		assertThat("JSON object generated", out.toString(), equalTo(
-				"{\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"]}}"));
+				"{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"]}}"));
 	}
 
 	@Test
 	public void writeStreamMetadata_none() throws IOException {
-		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), null, null, null);
+		BasicDatumStreamMetadata meta = new BasicDatumStreamMetadata(randomUUID(), "UTC", null, null,
+				null);
 		StringWriter out = new StringWriter();
 		try (JsonGenerator generator = JsonFactory.builder().build().createGenerator(out)) {
 			DatumJsonUtils.writeStreamMetadata(generator, meta);
 		}
-		assertThat("JSON object generated", out.toString(), equalTo("{\"props\":null,\"class\":null}"));
+		assertThat("JSON object generated", out.toString(),
+				equalTo("{\"tz\":\"UTC\",\"props\":null,\"class\":null}"));
 	}
 
 	@Test
 	public void writeStream_typical() throws IOException {
-		BasicDatumStreamMetadata metadata = new BasicDatumStreamMetadata(randomUUID(),
+		BasicDatumStreamMetadata metadata = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
 				new String[] { "six" });
 		UUID streamId = UUID.randomUUID();
@@ -260,7 +262,7 @@ public class DatumJsonUtilsTests {
 		}
 		assertThat("JSON object generated", out.toString(), equalTo("{\"streamId\":\""
 				+ streamId.toString()
-				+ "\",\"metadata\":{\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
+				+ "\",\"metadata\":{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],\"class\":{\"i\":[\"one\",\"two\",\"three\"],\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
 				+ format(
 						",\"values\":[[%d,1.23,2.34,3.45,456,567,\"On\"],[%d,1.234,2.345,3.456,4567,5678,\"Onn\",\"TAG\"],[%d,1.2345,2.3456,3.4567,45678,56789,\"Onnn\"]]}",
 						datum.get(0).getTimestamp().toEpochMilli(),
@@ -398,7 +400,7 @@ public class DatumJsonUtilsTests {
 
 	@Test
 	public void writeAggregateStream_typical() throws IOException {
-		BasicDatumStreamMetadata metadata = new BasicDatumStreamMetadata(randomUUID(),
+		BasicDatumStreamMetadata metadata = new BasicDatumStreamMetadata(randomUUID(), "UTC",
 				new String[] { "one", "two", "three" }, new String[] { "four", "five" },
 				new String[] { "six" });
 		UUID streamId = UUID.randomUUID();
@@ -470,7 +472,7 @@ public class DatumJsonUtilsTests {
 		// @formatter:off
 		assertThat("JSON object generated", out.toString(), equalTo("{\"streamId\":\""
 				+ streamId.toString()
-				+ "\",\"metadata\":{\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],"
+				+ "\",\"metadata\":{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],"
 				+ "\"class\":{\"i\":[\"one\",\"two\",\"three\"],"
 				+ "\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
 				+ format(",\"values\":[" 
@@ -537,7 +539,7 @@ public class DatumJsonUtilsTests {
 	@Test
 	public void parseAggregateDatum_mappedNodeSourceId() throws IOException {
 		UUID streamId = UUID.randomUUID();
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, 1L, "a",
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", 1L, "a",
 				new String[] { "x", "y" }, new String[] { "w" }, null);
 		List<AggregateDatum> list = loadAggregateDatum("test-agg-datum-01.txt", getClass(),
 				new JsonFactory(), staticProvider(singleton(meta)));

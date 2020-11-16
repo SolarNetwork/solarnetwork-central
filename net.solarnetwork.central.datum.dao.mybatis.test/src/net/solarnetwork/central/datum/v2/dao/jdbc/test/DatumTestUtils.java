@@ -455,8 +455,8 @@ public final class DatumTestUtils {
 	 * @return the metadata
 	 */
 	public static NodeDatumStreamMetadata createMetadata(Iterable<GeneralNodeDatum> datums,
-			NodeSourcePK nspk) {
-		return createMetadata(UUID.randomUUID(), datums, nspk);
+			String timeZoneId, NodeSourcePK nspk) {
+		return createMetadata(UUID.randomUUID(), timeZoneId, datums, nspk);
 	}
 
 	/**
@@ -465,13 +465,15 @@ public final class DatumTestUtils {
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param datums
 	 *        the datums
 	 * @param nspk
 	 *        the specific node+source to create the metadata for
 	 * @return the metadata
 	 */
-	public static NodeDatumStreamMetadata createMetadata(UUID streamId,
+	public static NodeDatumStreamMetadata createMetadata(UUID streamId, String timeZoneId,
 			Iterable<GeneralNodeDatum> datums, NodeSourcePK nspk) {
 		Set<String> iNames = new LinkedHashSet<>(4);
 		Set<String> aNames = new LinkedHashSet<>(4);
@@ -492,8 +494,8 @@ public final class DatumTestUtils {
 				sNames.addAll(s.getStatus().keySet());
 			}
 		}
-		return new BasicNodeDatumStreamMetadata(streamId, nspk.getNodeId(), nspk.getSourceId(),
-				iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
+		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, nspk.getNodeId(),
+				nspk.getSourceId(), iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
 				aNames.isEmpty() ? null : aNames.toArray(new String[aNames.size()]),
 				sNames.isEmpty() ? null : sNames.toArray(new String[sNames.size()]));
 	}
@@ -510,7 +512,7 @@ public final class DatumTestUtils {
 	 * @return the resulting stream metadata
 	 */
 	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStream(Logger log,
-			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
+			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
@@ -531,7 +533,7 @@ public final class DatumTestUtils {
 
 						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
 						NodeDatumStreamMetadata meta = result.computeIfAbsent(nspk, k -> {
-							return createMetadata(datums, k);
+							return createMetadata(datums, timeZoneId, k);
 						});
 						datumStmt.setString(1, meta.getStreamId().toString());
 						datumStmt.setTimestamp(2,
@@ -702,7 +704,7 @@ public final class DatumTestUtils {
 	 * @return the resulting stream metadata
 	 */
 	public static Map<NodeSourcePK, NodeDatumStreamMetadata> ingestDatumStream(Logger log,
-			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums) {
+			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
@@ -734,7 +736,7 @@ public final class DatumTestUtils {
 
 						UUID streamId = UUID.fromString(datumStmt.getString(1));
 						result.computeIfAbsent(nspk, k -> {
-							return createMetadata(streamId, datums, k);
+							return createMetadata(streamId, timeZoneId, datums, k);
 						});
 					}
 				}
@@ -1473,7 +1475,7 @@ public final class DatumTestUtils {
 	 */
 	public static ObjectDatumStreamMetadata streamMetadata(JdbcOperations jdbcTemplate, UUID streamId) {
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
-				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind FROM solardatm.find_metadata_for_stream(?::uuid)",
+				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone FROM solardatm.find_metadata_for_stream(?::uuid)",
 				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
 		return (results.isEmpty() ? null : results.get(0));
 	}

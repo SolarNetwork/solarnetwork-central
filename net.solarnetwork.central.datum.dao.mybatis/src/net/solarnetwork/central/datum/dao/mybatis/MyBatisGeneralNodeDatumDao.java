@@ -78,7 +78,7 @@ import net.solarnetwork.util.JsonUtils;
  * MyBatis implementation of {@link GeneralNodeDatumDao}.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class MyBatisGeneralNodeDatumDao
 		extends BaseMyBatisGenericDao<GeneralNodeDatum, GeneralNodeDatumPK> implements
@@ -403,6 +403,24 @@ public class MyBatisGeneralNodeDatumDao
 	}
 
 	/**
+	 * Store datum.
+	 * 
+	 * <p>
+	 * This method throws an {@link UnsupportedOperationException}. Use
+	 * {@link net.solarnetwork.central.datum.v2.dao.mybatis.MyBatisDatumEntityDao#save(net.solarnetwork.central.datum.v2.dao.DatumEntity)}
+	 * instead.
+	 * </p>
+	 * 
+	 * @param datum
+	 *        the datum to store
+	 */
+	@Override
+	public GeneralNodeDatumPK store(GeneralNodeDatum datum) {
+		throw new UnsupportedOperationException(
+				"Update calling code to use the net.solarnetwork.central.datum.v2.dao.DatumEntityDao API!");
+	}
+
+	/**
 	 * Get the filter query name for a given domain.
 	 * 
 	 * @param filter
@@ -706,26 +724,6 @@ public class MyBatisGeneralNodeDatumDao
 			}
 		}
 		return (result.isEmpty() ? null : result);
-	}
-
-	private Long executeCountQuery(final String countQueryName, final Map<String, ?> sqlProps) {
-		try {
-			Number n = getSqlSession().selectOne(countQueryName, sqlProps);
-			if ( n != null ) {
-				return n.longValue();
-			}
-		} catch ( RuntimeException e ) {
-			Throwable cause = e;
-			while ( cause.getCause() != null ) {
-				cause = cause.getCause();
-			}
-			if ( cause instanceof IllegalArgumentException ) {
-				log.warn("Count query not supported: {}", countQueryName, e);
-			} else {
-				throw e;
-			}
-		}
-		return null;
 	}
 
 	@Override

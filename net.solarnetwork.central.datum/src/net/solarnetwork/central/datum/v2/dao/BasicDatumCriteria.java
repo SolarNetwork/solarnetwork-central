@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -38,7 +39,8 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 2.8
  */
-public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriteria, AuditDatumCriteria {
+public class BasicDatumCriteria extends BasicCoreCriteria
+		implements DatumCriteria, AuditDatumCriteria, ReadingDatumCriteria {
 
 	private UUID[] streamIds;
 	private Instant startDate;
@@ -50,6 +52,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	private Aggregation aggregation;
 	private Aggregation partialAggregation;
 	private DatumRollupType[] datumRollupTypes;
+	private DatumReadingType readingType;
 
 	@Override
 	public String toString() {
@@ -94,9 +97,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 			builder.append(localEndDate);
 			builder.append(", ");
 		}
-		builder.append("mostRecent=");
-		builder.append(mostRecent);
-		builder.append(", ");
+		if ( mostRecent ) {
+			builder.append("mostRecent=true, ");
+		}
 		if ( aggregation != null ) {
 			builder.append("aggregation=");
 			builder.append(aggregation);
@@ -110,6 +113,11 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 		if ( datumRollupTypes != null ) {
 			builder.append("datumRollupTypes=");
 			builder.append(Arrays.toString(datumRollupTypes));
+			builder.append(", ");
+		}
+		if ( readingType != null ) {
+			builder.append("readingType=");
+			builder.append(readingType);
 			builder.append(", ");
 		}
 		builder.append("}");
@@ -292,6 +300,21 @@ public class BasicDatumCriteria extends BasicCoreCriteria implements DatumCriter
 	 */
 	public void setDatumRollupTypes(DatumRollupType[] datumRollupTypes) {
 		this.datumRollupTypes = datumRollupTypes;
+	}
+
+	@Override
+	public DatumReadingType getReadingType() {
+		return readingType;
+	}
+
+	/**
+	 * Set the reading type.
+	 * 
+	 * @param readingType
+	 *        the type to set
+	 */
+	public void setReadingType(DatumReadingType readingType) {
+		this.readingType = readingType;
 	}
 
 }

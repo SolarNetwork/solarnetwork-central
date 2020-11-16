@@ -35,6 +35,7 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
 public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 
 	private final UUID streamId;
+	private final String timeZoneId;
 	private final String[] instantaneousProperties;
 	private final String[] accumulatingProperties;
 	private final String[] statusProperties;
@@ -49,6 +50,8 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param instantaneousProperties
 	 *        the instantaneous property names
 	 * @param accumulatingProperties
@@ -58,13 +61,14 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 	 * @throws IllegalArgumentException
 	 *         if {@code streamId} is {@literal null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, String[] instantaneousProperties,
+	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, String[] instantaneousProperties,
 			String[] accumulatingProperties, String[] statusProperties) {
 		super();
 		if ( streamId == null ) {
 			throw new IllegalArgumentException("The streamId argument must not be null.");
 		}
 		this.streamId = streamId;
+		this.timeZoneId = timeZoneId;
 		this.instantaneousProperties = instantaneousProperties != null
 				&& instantaneousProperties.length > 0 ? instantaneousProperties : null;
 		this.accumulatingProperties = accumulatingProperties != null && accumulatingProperties.length > 0
@@ -87,6 +91,8 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 	 * 
 	 * @param streamId
 	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param instantaneousProperties
 	 *        the instantaneous property names; must be a {@code String[]}
 	 * @param accumulatingProperties
@@ -96,19 +102,20 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata {
 	 * @throws IllegalArgumentException
 	 *         if {@code streamId} is {@literal null}
 	 */
-	public BasicDatumStreamMetadata(UUID streamId, Object instantaneousProperties,
+	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, Object instantaneousProperties,
 			Object accumulatingProperties, Object statusProperties) {
-		this(streamId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
+		this(streamId, timeZoneId, (String[]) instantaneousProperties, (String[]) accumulatingProperties,
 				(String[]) statusProperties);
 	}
 
-	/**
-	 * Get the stream ID.
-	 * 
-	 * @return the stream ID
-	 */
+	@Override
 	public UUID getStreamId() {
 		return streamId;
+	}
+
+	@Override
+	public String getTimeZoneId() {
+		return timeZoneId;
 	}
 
 	/**

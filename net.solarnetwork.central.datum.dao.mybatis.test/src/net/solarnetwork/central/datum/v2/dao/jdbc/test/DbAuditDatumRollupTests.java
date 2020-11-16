@@ -61,11 +61,12 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	private static final String TEST_TZ_ALT = "America/Los_Angeles";
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata() {
-		return testStreamMetadata(1L, "a");
+		return testStreamMetadata(1L, "a", TEST_TZ);
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), nodeId, sourceId,
+	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
+			String timeZoneId) {
+		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), timeZoneId, nodeId, sourceId,
 				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
 	}
 
@@ -73,7 +74,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	public void calcRaw() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				TEST_TZ);
 		UUID streamId = meta.values().iterator().next().getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 

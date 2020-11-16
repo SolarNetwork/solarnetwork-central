@@ -103,7 +103,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
@@ -118,7 +119,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
@@ -133,7 +135,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
@@ -155,7 +158,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
@@ -177,7 +181,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
