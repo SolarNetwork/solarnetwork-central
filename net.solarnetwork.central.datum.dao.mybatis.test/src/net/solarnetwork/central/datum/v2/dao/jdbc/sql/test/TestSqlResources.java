@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * TestSqlFixtures.java - 17/11/2020 2:43:29 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,16 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 /**
- * Search criteria for node metadata.
+ * Package interface for test SQL resources.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface TestSqlResources {
 
 }

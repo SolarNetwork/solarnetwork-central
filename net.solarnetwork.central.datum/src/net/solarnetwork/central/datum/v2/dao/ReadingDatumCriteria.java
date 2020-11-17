@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * ReadingDatumCriteria.java - 17/11/2020 7:43:19 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,14 +22,29 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SortCriteria;
+
 /**
- * Search criteria for node metadata.
+ * Search criteria for datum reading results.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface ReadingDatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
+		NodeMetadataCriteria, LocationMetadataCriteria, UserCriteria, AggregationCriteria,
+		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+
+	/**
+	 * Get the datum reading type.
+	 * 
+	 * @return the type
+	 */
+	DatumReadingType getReadingType();
 
 }

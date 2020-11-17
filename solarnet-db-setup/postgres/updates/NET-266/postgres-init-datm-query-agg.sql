@@ -217,7 +217,7 @@ $$;
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
  */
-CREATE OR REPLACE FUNCTION solaragg.find_agg_datm_running_total(
+CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_running_total(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE

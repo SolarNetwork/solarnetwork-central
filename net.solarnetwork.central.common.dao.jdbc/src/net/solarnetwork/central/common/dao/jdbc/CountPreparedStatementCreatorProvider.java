@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * CountPreparedStatementCreator.java - 17/11/2020 5:09:14 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,16 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao.jdbc;
+
+import org.springframework.jdbc.core.PreparedStatementCreator;
 
 /**
- * Search criteria for node metadata.
+ * Provider of {@link PreparedStatementCreator} instances for a count result.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 2.1
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface CountPreparedStatementCreatorProvider {
+
+	/**
+	 * Get the {@link PreparedStatementCreator} to ues for count results.
+	 * 
+	 * @return a creator
+	 */
+	PreparedStatementCreator countPreparedStatementCreator();
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * ReadingDatumDao.java - 17/11/2020 7:41:09 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,14 +22,26 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.dao.FilterResults;
+
 /**
- * Search criteria for node metadata.
+ * API for datum reading information.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface ReadingDatumDao {
+
+	/**
+	 * Find datum reading for a given search criteria.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the matching records
+	 */
+	FilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(ReadingDatumCriteria filter);
 
 }

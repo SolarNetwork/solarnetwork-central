@@ -1,5 +1,5 @@
 /* ==================================================================
- * AggregateDatumEntity.java - 30/10/2020 4:33:26 pm
+ * ReadingDatumEntity.java - 17/11/2020 11:31:40 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -27,27 +27,25 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
-import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
- * Extension of {@link DatumEntity} to support aggregated (e.g. "rollup")
- * entities.
+ * Extension of {@link AggregateDatumEntity} to support reading entities.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public class AggregateDatumEntity extends DatumEntity
-		implements AggregateDatum, Cloneable, Serializable {
+public class ReadingDatumEntity extends AggregateDatumEntity
+		implements ReadingDatum, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 7976275982566577572L;
+	private static final long serialVersionUID = -78598605399387148L;
 
-	private final Aggregation aggregation;
-	private final DatumPropertiesStatistics statistics;
+	private final Instant endTimestamp;
 
 	/**
 	 * Constructor.
@@ -56,16 +54,17 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the ID
 	 * @param aggregation
 	 *        the aggregation
+	 * @param endTimestamp
+	 *        the end timestamp
 	 * @param properties
 	 *        the properties
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(DatumPK id, Aggregation aggregation, DatumProperties properties,
-			DatumPropertiesStatistics statistics) {
-		super(id, null, properties);
-		this.aggregation = aggregation;
-		this.statistics = statistics;
+	public ReadingDatumEntity(DatumPK id, Aggregation aggregation, Instant endTimestamp,
+			DatumProperties properties, DatumPropertiesStatistics statistics) {
+		super(id, aggregation, properties, statistics);
+		this.endTimestamp = endTimestamp;
 	}
 
 	/**
@@ -77,16 +76,17 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the timestamp
 	 * @param aggregation
 	 *        the aggregation
+	 * @param endTimestamp
+	 *        the end timestamp
 	 * @param properties
 	 *        the samples
 	 * @param statistics
 	 *        the statistics
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
-			DatumProperties properties, DatumPropertiesStatistics statistics) {
-		super(streamId, timestamp, null, properties);
-		this.aggregation = aggregation;
-		this.statistics = statistics;
+	public ReadingDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
+			Instant endTimestamp, DatumProperties properties, DatumPropertiesStatistics statistics) {
+		super(streamId, timestamp, aggregation, properties, statistics);
+		this.endTimestamp = endTimestamp;
 	}
 
 	/**
@@ -103,6 +103,8 @@ public class AggregateDatumEntity extends DatumEntity
 	 *        the timestamp
 	 * @param aggregation
 	 *        the aggregation
+	 * @param endTimestamp
+	 *        the end timestamp
 	 * @param instantaneous
 	 *        the instantaneous values; must be {@code BigDecimal[]}
 	 * @param accumulating
@@ -116,33 +118,32 @@ public class AggregateDatumEntity extends DatumEntity
 	 * @param accumulatingStats
 	 *        the accumulating statistic values; must be {@code BigDecimal[][]}
 	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
-			Object instantaneous, Object accumulating, Object status, Object tags,
+	public ReadingDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
+			Instant endTimestamp, Object instantaneous, Object accumulating, Object status, Object tags,
 			Object instantaneousStats, Object accumulatingStats) {
-		super(streamId, timestamp, null, instantaneous, accumulating, status, tags);
-		this.aggregation = aggregation;
-		this.statistics = DatumPropertiesStatistics.statisticsOf((BigDecimal[][]) instantaneousStats,
-				(BigDecimal[][]) accumulatingStats);
+		super(streamId, timestamp, aggregation, instantaneous, accumulating, status, tags,
+				instantaneousStats, accumulatingStats);
+		this.endTimestamp = endTimestamp;
 	}
 
 	@Override
-	public AggregateDatumEntity clone() {
-		return (AggregateDatumEntity) super.clone();
+	public ReadingDatumEntity clone() {
+		return (ReadingDatumEntity) super.clone();
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("AggregateDatumEntity{");
+		builder.append("ReadingDatumEntity{");
 		if ( getId() != null ) {
 			builder.append("streamId=");
 			builder.append(getId().getStreamId());
 			builder.append(", ts=");
 			builder.append(getId().getTimestamp());
 		}
-		if ( aggregation != null ) {
+		if ( getAggregation() != null ) {
 			builder.append(", kind=");
-			builder.append(aggregation.getKey());
+			builder.append(getAggregation().getKey());
 		}
 		if ( getProperties() != null ) {
 			if ( getProperties().getInstantaneous() != null ) {
@@ -162,18 +163,18 @@ public class AggregateDatumEntity extends DatumEntity
 				builder.append(Arrays.toString(getProperties().getTags()));
 			}
 		}
-		if ( statistics != null ) {
-			if ( statistics.getInstantaneous() != null ) {
+		if ( getStatistics() != null ) {
+			if ( getStatistics().getInstantaneous() != null ) {
 				builder.append(", si=[");
-				for ( BigDecimal[] a : statistics.getInstantaneous() ) {
+				for ( BigDecimal[] a : getStatistics().getInstantaneous() ) {
 					builder.append(Arrays.toString(a));
 					builder.append(",");
 				}
 				builder.replace(builder.length() - 1, builder.length(), "]");
 			}
-			if ( statistics.getAccumulating() != null ) {
+			if ( getStatistics().getAccumulating() != null ) {
 				builder.append(", sa=[");
-				for ( BigDecimal[] a : statistics.getAccumulating() ) {
+				for ( BigDecimal[] a : getStatistics().getAccumulating() ) {
 					builder.append(Arrays.toString(a));
 					builder.append(",");
 				}
@@ -185,18 +186,8 @@ public class AggregateDatumEntity extends DatumEntity
 	}
 
 	@Override
-	public Aggregation getAggregation() {
-		return aggregation;
-	}
-
-	/**
-	 * Get the property statistics.
-	 * 
-	 * @return the statistics
-	 */
-	@Override
-	public DatumPropertiesStatistics getStatistics() {
-		return statistics;
+	public Instant getEndTimestamp() {
+		return endTimestamp;
 	}
 
 }

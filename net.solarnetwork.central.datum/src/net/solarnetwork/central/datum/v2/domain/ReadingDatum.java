@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * ReadingDatum.java - 17/11/2020 7:51:57 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,16 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.datum.v2.domain;
+
+import java.time.Instant;
 
 /**
- * Search criteria for node metadata.
+ * API for a "reading" object that represents a calculated reading for a
+ * specific time period.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface ReadingDatum extends AggregateDatum {
+
+	/**
+	 * Get the timestamp associated with the end of the reading.
+	 * 
+	 * <p>
+	 * The {@link Datum#getTimestamp()} value represents the starting timestamp
+	 * of this reading. The start and end timestamp values can be equal, for
+	 * reading calculations for a single point in time, or different for
+	 * calculations representing a time range.
+	 * </p>
+	 * 
+	 * @return the end timestamp
+	 */
+	Instant getEndTimestamp();
 
 }

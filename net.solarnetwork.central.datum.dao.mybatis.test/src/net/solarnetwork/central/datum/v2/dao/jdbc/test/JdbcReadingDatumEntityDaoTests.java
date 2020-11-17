@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * JdbcReadingDatumEntityDaoTests.java - 17/11/2020 7:28:08 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,16 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+
+import org.junit.Before;
+import org.junit.Test;
+import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcReadingDatumEntityDao;
 
 /**
- * Search criteria for node metadata.
+ * Test cases for the {@link JdbcReadingDatumEntityDao} class.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
+
+	private JdbcReadingDatumEntityDao dao;
+
+	@Before
+	public void setup() {
+		dao = new JdbcReadingDatumEntityDao(jdbcTemplate);
+	}
+
+	@Test
+	public void foo() {
+
+	}
 
 }
