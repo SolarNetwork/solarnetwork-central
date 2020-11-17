@@ -191,12 +191,10 @@ BEGIN
 		FROM di
 	)
 	-- calculate accumulating values per property
-	-- NOTE: read_a accumulation not supported as first/last calculation not implemented
 	, wa AS (
 		SELECT
 			  p.idx
 			, p.val
-			, s.stat[1] AS val_diff
 			, s.stat[2] AS val_start
 			, s.stat[3] AS val_end
 			, 0 AS rtype
@@ -206,7 +204,6 @@ BEGIN
 		SELECT
 			  p.idx
 			, p.val
-			, NULL::NUMERIC AS val_diff
 			, NULL::NUMERIC AS val_start
 			, NULL::NUMERIC AS val_end
 			, 1 AS rtype
@@ -219,7 +216,7 @@ BEGIN
 			, CASE el.rtype
 				WHEN 2 THEN
 					-- reset record; just keep previous value
-					min(val) FILTER (WHERE rtype = 0)
+					COALESCE(min(val) FILTER (WHERE rtype = 0), 0)
 				ELSE
 					-- previous value + (curr value - last end)
 					COALESCE(min(val) FILTER (WHERE rtype = 0), 0)
@@ -228,7 +225,14 @@ BEGIN
 				END AS val
 
 			-- start value as first value
-			, COALESCE(min(val_start) FILTER (WHERE rtype = 0), min(val) FILTER (WHERE rtype = 1)) AS val_start
+			, COALESCE(min(val_start) FILTER (WHERE rtype = 0),
+				CASE el.rtype
+					WHEN 1 THEN
+						-- reset final record does not count as start value
+						NULL::NUMERIC
+					ELSE
+						min(val) FILTER (WHERE rtype = 1)
+				END) AS val_start
 
 			-- end value as current value
 			, min(val) FILTER (WHERE rtype = 1) AS val_end

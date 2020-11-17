@@ -151,7 +151,30 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void calcDiffDatum_resetInMiddle() throws IOException {
+	public void calcDiffDatum_oneResetExactlyAtStart() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-15.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start reset", result.getTimestamp(),
+				equalTo(start.toInstant()));
+		assertThat("End timestamp is reading end", result.getEndTimestamp(),
+				equalTo(end.minusMinutes(1).toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("30"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void calcDiffDatum_oneResetInMiddle() throws IOException {
 		// GIVEN
 		UUID streamId = loadStreamWithAuxiliary("test-datum-16.txt");
 
@@ -172,4 +195,49 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 				arrayContaining(arrayOfDecimals(new String[] { "35", "100", "25" })));
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void calcDiffDatum_oneResetExactlyAtEnd() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-17.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start", result.getTimestamp(),
+				equalTo(start.minusMinutes(1).toInstant()));
+		assertThat("End timestamp is reading end reset", result.getEndTimestamp(),
+				equalTo(end.toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("31"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void calcDiffDatum_oneResetExactlyAtStartWithoutLeading() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-18.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start reset", result.getTimestamp(),
+				equalTo(start.toInstant()));
+		assertThat("End timestamp is reading end", result.getEndTimestamp(),
+				equalTo(end.minusMinutes(1).toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("30"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
+	}
 }

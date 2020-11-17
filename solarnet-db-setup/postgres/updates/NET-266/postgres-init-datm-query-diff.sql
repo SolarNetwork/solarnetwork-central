@@ -92,7 +92,8 @@ $$
 		, NULL::TEXT[] AS data_s
 		, NULL::TEXT[] AS data_t
 		, d.rtype
-	FROM d, ts_range WHERE d.ts >= ts_range.min_ts AND d.ts <= ts_range.max_ts
+	FROM d, ts_range
+	WHERE d.ts >= ts_range.min_ts AND d.ts <= ts_range.max_ts
 	UNION ALL
 	SELECT resets.stream_id
 		, resets.ts
@@ -101,7 +102,10 @@ $$
 		, NULL::TEXT[] AS data_s
 		, NULL::TEXT[] AS data_t
 		, resets.rtype
-	FROM resets, ts_range WHERE resets.ts >= ts_range.min_ts AND resets.ts <= ts_range.max_ts
+	FROM resets, ts_range
+	WHERE resets.ts >= ts_range.min_ts
+		-- exclude any reading start record at exactly the end date
+		AND (resets.ts < ts_range.max_ts OR resets.rtype < 2)
 $$;
 
 /*
