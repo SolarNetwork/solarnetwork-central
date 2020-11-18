@@ -173,7 +173,7 @@ $$
 		ORDER BY d.stream_id, d.ts DESC
 		LIMIT 1
 		)
-		UNION ALL
+		UNION
 		(
 		-- earliest on/after start within range; in case nothing before start
 		SELECT d.stream_id, d.ts
@@ -184,7 +184,7 @@ $$
 		ORDER BY d.stream_id, d.ts
 		LIMIT 1
 		)
-		UNION ALL
+		UNION
 		(
 		-- earliest on/after end
 		SELECT d.stream_id, d.ts
@@ -195,7 +195,7 @@ $$
 		ORDER BY d.stream_id, d.ts
 		LIMIT 1
 		)
-		UNION ALL
+		UNION
 		(
 		-- latest on/before end, in case nothing after end
 		SELECT d.stream_id, d.ts

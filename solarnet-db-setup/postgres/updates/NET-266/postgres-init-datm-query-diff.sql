@@ -14,7 +14,7 @@ $$
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
-		UNION ALL
+		UNION
 		-- next after start
 		(
 			SELECT d.*, 1::SMALLINT AS rtype
@@ -25,7 +25,7 @@ $$
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
-		UNION ALL
+		UNION
 		-- prev before end
 		(
 			SELECT d.*, 0::SMALLINT AS rtype
@@ -105,7 +105,7 @@ $$
 	FROM resets, ts_range
 	WHERE resets.ts >= ts_range.min_ts
 		-- exclude any reading start record at exactly the end date
-		AND (resets.ts < ts_range.max_ts OR resets.rtype < 2)
+		AND (resets.ts < end_ts OR resets.rtype < 2)
 $$;
 
 /*

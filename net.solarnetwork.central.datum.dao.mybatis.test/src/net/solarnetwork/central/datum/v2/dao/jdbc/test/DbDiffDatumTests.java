@@ -240,4 +240,143 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
 				arrayContaining(arrayOfDecimals(new String[] { "30", "10", "40" })));
 	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_oneResetExactlyAtEndWithoutTrailing() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-19.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start", result.getTimestamp(),
+				equalTo(start.minusMinutes(1).toInstant()));
+		assertThat("End timestamp is reading end reset", result.getEndTimestamp(),
+				equalTo(end.toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("31"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_multiResetsWithin() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-20.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start", result.getTimestamp(),
+				equalTo(start.minusMinutes(1).toInstant()));
+		assertThat("End timestamp is reading end", result.getEndTimestamp(),
+				equalTo(end.minusMinutes(1).toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("36"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "36", "100", "210" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_adjacentResetsWithin() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-21.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start", result.getTimestamp(),
+				equalTo(start.minusMinutes(1).toInstant()));
+		assertThat("End timestamp is reading end", result.getEndTimestamp(),
+				equalTo(end.minusMinutes(1).toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("36"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "36", "100", "220" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetsExactlyAtStartAndEnd() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-22.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start reset", result.getTimestamp(),
+				equalTo(start.toInstant()));
+		assertThat("End timestamp is reading end reset", result.getEndTimestamp(),
+				equalTo(end.toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("31"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_resetsExactlyAtStartAndEndWithoutLeadingOrTrailing() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-23.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start reset", result.getTimestamp(),
+				equalTo(start.toInstant()));
+		assertThat("End timestamp is reading end reset", result.getEndTimestamp(),
+				equalTo(end.toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("31"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "31", "10", "41" })));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void resetRecord_onlyOneReset() throws IOException {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-24.txt");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Timestamp is reading start (way back)", result.getTimestamp(),
+				equalTo(ZonedDateTime.of(2000, 6, 1, 12, 9, 0, 0, ZoneOffset.UTC).toInstant()));
+		assertThat("End timestamp is reading end reset (within)", result.getEndTimestamp(),
+				equalTo(start.plusMinutes(20).toInstant()));
+		assertThat("Agg instantaneous", result.getProperties().getInstantaneous(), nullValue());
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("100"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "100", "15", "5" })));
+	}
+
 }
