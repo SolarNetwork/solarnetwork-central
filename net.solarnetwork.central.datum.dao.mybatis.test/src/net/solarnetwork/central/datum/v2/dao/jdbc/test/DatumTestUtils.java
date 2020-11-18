@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -42,7 +44,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -61,6 +65,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.util.FileCopyUtils;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -71,8 +76,10 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumAccumulativeEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumDailyEntityRowMapper;
@@ -93,6 +100,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
@@ -127,6 +135,21 @@ public final class DatumTestUtils {
 	 */
 	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month)\"");
 
+	/** Sort for typed datum by timestamp. */
+	public static Comparator<TypedDatumEntity> SORT_TYPED_DATUM_BY_TS = new SortTypedDatumByTimestamp();
+
+	private static class SortTypedDatumByTimestamp implements Comparator<TypedDatumEntity> {
+
+		@Override
+		public int compare(TypedDatumEntity o1, TypedDatumEntity o2) {
+			int c = o1.getTimestamp().compareTo(o2.getTimestamp());
+			if ( c == 0 ) {
+				c = Integer.compare(o1.getType(), o2.getType());
+			}
+			return c;
+		}
+	}
+
 	/**
 	 * Get an array of {@link BigDecimal} instances from string values.
 	 * 
@@ -156,6 +179,28 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Create a {@link Matcher} for a string that compares to the contents of a
+	 * text resource.
+	 * 
+	 * @param resource
+	 *        the name of the resource
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @return the matcher
+	 * @throws RuntimeException
+	 *         if the resource cannot be loaded
+	 */
+	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz) {
+		try {
+			String txt = FileCopyUtils.copyToString(new InputStreamReader(
+					clazz.getResourceAsStream(resource), Charset.forName("UTF-8")));
+			return Matchers.equalToIgnoringWhiteSpace(txt);
+		} catch ( IOException e ) {
+			throw new RuntimeException("Error reading text resource [" + resource + "]", e);
+		}
+	}
+
+	/**
 	 * Assert one datum has values that match another.
 	 * 
 	 * @param prefix
@@ -166,6 +211,7 @@ public final class DatumTestUtils {
 	 *        the expected datum
 	 */
 	public static void assertDatum(String prefix, Datum result, Datum expected) {
+		assertThat(prefix + " datum returned", result, notNullValue());
 		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
 		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
 		if ( expected.getProperties() != null ) {
@@ -189,7 +235,7 @@ public final class DatumTestUtils {
 	}
 
 	/**
-	 * Assert one datum has values that match another.
+	 * Assert one aggregate datum has values that match another.
 	 * 
 	 * @param prefix
 	 *        an assertion message prefix
@@ -221,6 +267,47 @@ public final class DatumTestUtils {
 						Matchers.arrayContaining(m));
 			}
 		}
+	}
+
+	/**
+	 * Assert one reading datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertReadingDatum(String prefix, ReadingDatum result, ReadingDatum expected) {
+		DatumTestUtils.assertAggregateDatum(prefix, result, expected);
+		assertThat(prefix + " end timestamp", result.getEndTimestamp(),
+				equalTo(expected.getEndTimestamp()));
+	}
+
+	/**
+	 * Create a {@link ReadingDatum} out of statistic data.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param agg
+	 *        the aggregate
+	 * @param start
+	 *        the start date
+	 * @param end
+	 *        the end date
+	 * @param stats
+	 *        the aggregate statistics
+	 * @return the datum
+	 */
+	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, BigDecimal[]... stats) {
+		BigDecimal[] acc = new BigDecimal[stats.length];
+		for ( int i = 0; i < stats.length; i++ ) {
+			acc[i] = stats[i][0];
+		}
+		return new ReadingDatumEntity(streamId, start.toInstant(), agg, end.toInstant(),
+				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
 	}
 
 	/**
@@ -625,6 +712,69 @@ public final class DatumTestUtils {
 			}
 		});
 		return result;
+	}
+
+	/**
+	 * Insert a set of datum into the {@literal da_datm} table.
+	 * 
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param resource
+	 *        the datum resource to parse and insert
+	 * @param clazz
+	 *        the resource class
+	 * @param timeZoneId
+	 *        the datum time zone to use
+	 * @return the resulting stream metadata
+	 * @throws IOException
+	 *         if any error occurs parsing the resource
+	 */
+	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStreamWithAuxiliary(Logger log,
+			JdbcOperations jdbcTemplate, String resource, Class<?> clazz, String timeZoneId)
+			throws IOException {
+		List<?> data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, clazz);
+		log.debug("Got test data: {}", data);
+		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
+		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+				timeZoneId);
+		UUID streamId = null;
+		if ( !meta.isEmpty() ) {
+			streamId = meta.values().iterator().next().getStreamId();
+			if ( !auxDatums.isEmpty() ) {
+				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
+			}
+		}
+		return meta;
+	}
+
+	/**
+	 * Insert a set of datum for a single stream into the {@literal da_datm}
+	 * table.
+	 * 
+	 * @param log
+	 *        an optional logger
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param resource
+	 *        the datum resource to parse and insert
+	 * @param clazz
+	 *        the resource class
+	 * @param timeZoneId
+	 *        the datum time zone to use
+	 * @return the resulting stream ID
+	 */
+	public static UUID insertOneDatumStreamWithAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+			String resource, Class<?> clazz, String timeZoneId) {
+		try {
+			return insertDatumStreamWithAuxiliary(log, jdbcTemplate, resource, clazz, timeZoneId)
+					.values().iterator().next().getStreamId();
+		} catch ( IOException e ) {
+			throw new RuntimeException("Unable to load datum resource " + resource, e);
+		}
+
 	}
 
 	private static String insertMetaStmt(String kind) {

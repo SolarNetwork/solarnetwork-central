@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -31,9 +32,6 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,12 +43,10 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDifferencePreparedStatementCreator;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.TestSqlResources;
@@ -66,21 +62,12 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private static Matcher<String> equalToTextResource(String resource) {
-		try {
-			String txt = FileCopyUtils.copyToString(new InputStreamReader(
-					TestSqlResources.class.getResourceAsStream(resource), Charset.forName("UTF-8")));
-			return Matchers.equalToIgnoringWhiteSpace(txt);
-		} catch ( IOException e ) {
-			throw new RuntimeException("Error reading text resource [" + resource + "]", e);
-		}
-	}
-
 	@Test
-	public void sql_nodes_absoluteDates() {
+	public void sql_diff_nodes_absoluteDates() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusMonths(1).toInstant());
@@ -89,14 +76,16 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource("reading-datum-nodes-dates.sql"));
+		assertThat("SQL matches", sql,
+				equalToTextResource("reading-diff-nodes-dates.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void sql_nodesAndSources_absoluteDates() {
+	public void sql_diff_nodesAndSources_absoluteDates() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setStartDate(start.toInstant());
@@ -106,14 +95,16 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource("reading-datum-nodesAndSources-dates.sql"));
+		assertThat("SQL matches", sql,
+				equalToTextResource("reading-diff-nodesAndSources-dates.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void sql_nodesAndSourcesAndUsers_absoluteDates() {
+	public void sql_diff_nodesAndSourcesAndUsers_absoluteDates() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
@@ -124,15 +115,16 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("reading-datum-nodesAndSourcesAndUsers-dates.sql"));
+		assertThat("SQL matches", sql, equalToTextResource(
+				"reading-diff-nodesAndSourcesAndUsers-dates.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void sql_nodesAndSourcesAndUsers_absoluteDates_orderByNodeSourceTime() {
+	public void sql_diff_nodesAndSourcesAndUsers_absoluteDates_orderByNodeSourceTime() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
@@ -144,15 +136,18 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource(
-				"reading-datum-nodesAndSourcesAndUsers-dates-orderByNodeSourceTime.sql"));
+		assertThat("SQL matches", sql,
+				equalToTextResource(
+						"reading-diff-nodesAndSourcesAndUsers-dates-orderByNodeSourceTime.sql",
+						TestSqlResources.class));
 	}
 
 	@Test
-	public void sql_nodesAndSourcesAndUsers_localDates() {
+	public void sql_diff_nodesAndSourcesAndUsers_localDates() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
@@ -163,8 +158,26 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"reading-diff-nodesAndSourcesAndUsers-localDates.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_diffWithin_nodes_absoluteDates() {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.DifferenceWithin);
+		filter.setNodeId(1L);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMonths(1).toInstant());
+
+		// WHEN
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+
+		// THEN
 		assertThat("SQL matches", sql,
-				equalToTextResource("reading-datum-nodesAndSourcesAndUsers-localDates.sql"));
+				equalToTextResource("reading-diffwithin-nodes-dates.sql", TestSqlResources.class));
 	}
 
 	@Test
@@ -172,6 +185,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
@@ -225,6 +239,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);

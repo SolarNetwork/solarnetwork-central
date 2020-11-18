@@ -56,15 +56,15 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.TypedDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 
 /**
- * Test cases for the {@code solardatm.find_datm_diff_rows} database stored
- * procedures.
+ * Test cases for the {@code solardatm.find_datm_diff_within_rows} database
+ * stored procedures.
  * 
  * @author matt
  * @version 1.0
  */
-public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
+public class DbDatumDiffWithinRowsTests extends BaseDatumJdbcTestSupport {
 
-	private List<TypedDatumEntity> calcDiffDatum(UUID streamId, Instant from, Instant to) {
+	private List<TypedDatumEntity> calcDiffWithinDatum(UUID streamId, Instant from, Instant to) {
 		return jdbcTemplate.execute(new ConnectionCallback<List<TypedDatumEntity>>() {
 
 			@Override
@@ -72,8 +72,9 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 					throws SQLException, DataAccessException {
 				List<TypedDatumEntity> result = new ArrayList<>();
 				try (CallableStatement stmt = con
-						.prepareCall("{call solardatm.find_datm_diff_rows(?::uuid,?,?)}")) {
-					log.debug("Querying for stream {} diff rows between {} - {}", streamId, from, to);
+						.prepareCall("{call solardatm.find_datm_diff_within_rows(?::uuid,?,?)}")) {
+					log.debug("Querying for stream {} diff within rows between {} - {}", streamId, from,
+							to);
 					stmt.setString(1, streamId.toString());
 					stmt.setTimestamp(2, Timestamp.from(from));
 					stmt.setTimestamp(3, Timestamp.from(to));
@@ -87,7 +88,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 					}
 				}
 				Collections.sort(result, SORT_TYPED_DATUM_BY_TS);
-				log.debug("Got diff rows:\n{}",
+				log.debug("Got diff within rows:\n{}",
 						result.stream().map(Object::toString).collect(joining("\n")));
 				return result;
 			}
@@ -112,12 +113,12 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_empty() {
+	public void calcDiffWithinDatum_empty() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
 		// WHEN
-		List<TypedDatumEntity> results = calcDiffDatum(UUID.randomUUID(), start.toInstant(),
+		List<TypedDatumEntity> results = calcDiffWithinDatum(UUID.randomUUID(), start.toInstant(),
 				start.plusDays(1).toInstant());
 
 		// THEN
@@ -125,7 +126,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_typical() throws IOException {
+	public void calcDiffWithinDatum_typical() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-02.txt", getClass());
 		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
@@ -135,28 +136,30 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		ZonedDateTime end = start.plusHours(1);
-		List<TypedDatumEntity> results = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+		List<TypedDatumEntity> results = calcDiffWithinDatum(streamId, start.toInstant(),
+				end.toInstant());
 
 		// THEN
 		assertThat("Start/end results returned", results, hasSize(2));
-		assertThat("Start", results.get(0).getTimestamp(), equalTo(start.minusMinutes(1).toInstant()));
+		assertThat("Start", results.get(0).getTimestamp(), equalTo(start.plusMinutes(9).toInstant()));
 		assertThat("End", results.get(1).getTimestamp(), equalTo(end.minusMinutes(1).toInstant()));
 	}
 
 	@Test
-	public void calcDiffDatum_resetInMiddle() throws IOException {
+	public void calcDiffWithinDatum_resetInMiddle() throws IOException {
 		// GIVEN
 		UUID streamId = loadStreamWithAuxiliary("test-datum-16.txt");
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		ZonedDateTime end = start.plusHours(1);
-		List<TypedDatumEntity> results = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+		List<TypedDatumEntity> results = calcDiffWithinDatum(streamId, start.toInstant(),
+				end.toInstant());
 
 		// THEN
 		assertThat("Start/reset_f/reset_s/end results returned", results, hasSize(4));
 		assertThat("Start timestamp", results.get(0).getTimestamp(),
-				equalTo(start.minusMinutes(1).toInstant()));
+				equalTo(start.plusMinutes(9).toInstant()));
 		assertThat("Reset final timestamp", results.get(1).getTimestamp(),
 				equalTo(start.plusMinutes(20).toInstant()));
 		assertThat("Reset start timestamp", results.get(2).getTimestamp(),

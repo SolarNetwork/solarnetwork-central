@@ -69,8 +69,8 @@ public class ReadingDifferencePreparedStatementCreator
 	 */
 	public ReadingDifferencePreparedStatementCreator(ReadingDatumCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument must not be null.");
+		if ( filter == null || filter.getReadingType() == null ) {
+			throw new IllegalArgumentException("The filter argument and reading type must not be null.");
 		}
 		this.filter = filter;
 	}
@@ -87,7 +87,21 @@ public class ReadingDifferencePreparedStatementCreator
 		buf.append("SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*\n");
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.find_datm_diff_rows(s.stream_id");
+		buf.append("INNER JOIN solardatm.");
+		switch (filter.getReadingType()) {
+			case Difference:
+				buf.append("find_datm_diff_rows");
+				break;
+
+			case DifferenceWithin:
+				buf.append("find_datm_diff_within_rows");
+				break;
+
+			default:
+				throw new UnsupportedOperationException(
+						"Reading type " + filter.getReadingType() + " not supported.");
+		}
+		buf.append("(s.stream_id");
 		if ( useLocalDates() ) {
 			buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
 		} else {

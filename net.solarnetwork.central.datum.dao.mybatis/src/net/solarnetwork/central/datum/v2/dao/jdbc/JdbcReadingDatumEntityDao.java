@@ -69,6 +69,7 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 		PreparedStatementCreator creator = null;
 		switch (filter.getReadingType()) {
 			case Difference:
+			case DifferenceWithin:
 				creator = new ReadingDifferencePreparedStatementCreator(filter);
 				break;
 
