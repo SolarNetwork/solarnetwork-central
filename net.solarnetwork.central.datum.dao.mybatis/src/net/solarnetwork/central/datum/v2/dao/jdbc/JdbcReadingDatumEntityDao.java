@@ -70,6 +70,7 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 		switch (filter.getReadingType()) {
 			case Difference:
 			case DifferenceWithin:
+			case NearestDifference:
 				creator = new ReadingDifferencePreparedStatementCreator(filter);
 				break;
 

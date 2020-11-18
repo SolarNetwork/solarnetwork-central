@@ -29,12 +29,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Period;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 
 /**
@@ -45,6 +47,12 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
  */
 public class ReadingDifferencePreparedStatementCreator
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
+
+	/**
+	 * The default time tolerance used for the
+	 * {@link DatumReadingType#NearestDifference} query.
+	 */
+	public static Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
 
 	private static final Map<String, String> SORT_KEY_MAPPING;
 	static {
@@ -93,6 +101,10 @@ public class ReadingDifferencePreparedStatementCreator
 				buf.append("find_datm_diff_rows");
 				break;
 
+			case NearestDifference:
+				buf.append("find_datm_diff_near_rows");
+				break;
+
 			case DifferenceWithin:
 				buf.append("find_datm_diff_within_rows");
 				break;
@@ -106,6 +118,9 @@ public class ReadingDifferencePreparedStatementCreator
 			buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
 		} else {
 			buf.append(", ?, ?");
+		}
+		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
+			buf.append(", ?");
 		}
 		buf.append(") d ON TRUE\n");
 		buf.append("GROUP BY s.stream_id");
@@ -136,6 +151,13 @@ public class ReadingDifferencePreparedStatementCreator
 					Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now()));
 			stmt.setTimestamp(++p,
 					Timestamp.from(filter.getEndDate() != null ? filter.getEndDate() : now()));
+		}
+		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
+			Period t = filter.getTimeTolerance();
+			if ( t == null ) {
+				t = DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE;
+			}
+			stmt.setObject(++p, t, Types.OTHER);
 		}
 		return stmt;
 	}

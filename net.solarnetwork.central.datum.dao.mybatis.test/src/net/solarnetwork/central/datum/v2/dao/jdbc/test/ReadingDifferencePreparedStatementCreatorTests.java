@@ -39,6 +39,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.easymock.Capture;
@@ -181,6 +182,24 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 	}
 
 	@Test
+	public void sql_diffNear_nodes_absoluteDates() {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.NearestDifference);
+		filter.setNodeId(1L);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMonths(1).toInstant());
+
+		// WHEN
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql,
+				equalToTextResource("reading-diffnear-nodes-dates.sql", TestSqlResources.class));
+	}
+
+	@Test
 	public void prep_nodesAndSourcesAndUsers_absoluteDates() throws SQLException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -280,6 +299,66 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+	}
+
+	@Test
+	public void prep_nodesAndSourcesAndUsers_nearDiff() throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.NearestDifference);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setUserId(2L);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMonths(1).toInstant());
+		filter.setTimeTolerance(Period.ofDays(7));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		Array userIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
+		stmt.setArray(3, userIdsArray);
+		userIdsArray.free();
+
+		Capture<Timestamp> startCaptor = new Capture<>();
+		stmt.setTimestamp(eq(4), capture(startCaptor));
+
+		Capture<Timestamp> endCaptor = new Capture<>();
+		stmt.setTimestamp(eq(5), capture(endCaptor));
+
+		Capture<Object> toleranceCaptor = new Capture<>();
+		stmt.setObject(eq(6), capture(toleranceCaptor), eq(Types.OTHER));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		assertThat("Start timestamp", startCaptor.getValue(),
+				equalTo(Timestamp.from(filter.getStartDate())));
+		assertThat("End timestamp", endCaptor.getValue(), equalTo(Timestamp.from(filter.getEndDate())));
+		assertThat("Tolerance prarameter", toleranceCaptor.getValue(),
+				equalTo(filter.getTimeTolerance()));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 	}
 

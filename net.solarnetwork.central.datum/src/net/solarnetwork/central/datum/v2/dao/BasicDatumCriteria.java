@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Arrays;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -53,6 +54,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private Aggregation partialAggregation;
 	private DatumRollupType[] datumRollupTypes;
 	private DatumReadingType readingType;
+	private Period timeTolerance;
 
 	@Override
 	public String toString() {
@@ -315,6 +317,21 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setReadingType(DatumReadingType readingType) {
 		this.readingType = readingType;
+	}
+
+	@Override
+	public Period getTimeTolerance() {
+		return timeTolerance;
+	}
+
+	/**
+	 * Set the time tolerance.
+	 * 
+	 * @param timeTolerance
+	 *        the period to set
+	 */
+	public void setTimeTolerance(Period timeTolerance) {
+		this.timeTolerance = timeTolerance;
 	}
 
 }

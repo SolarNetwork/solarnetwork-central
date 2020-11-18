@@ -323,4 +323,21 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 				start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "10", "40")));
 	}
 
+	@Test
+	public void calcDiffDatum_leadingWayBack() {
+		// GIVEN
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-35.txt",
+				getClass(), "UTC");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertReadingDatum("Leading long before start used", result,
+				readingWith(streamId, null, start.minusMonths(4).minusMinutes(1), end.minusMinutes(1),
+						decimalArray("30", "100", "130")));
+	}
+
 }

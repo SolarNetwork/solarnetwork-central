@@ -34,7 +34,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -51,9 +53,13 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
  * @author matt
  * @version 1.0
  */
-public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
+public class DbDiffNearDatumTests extends BaseDatumJdbcTestSupport {
 
 	private ReadingDatum calcDiffDatum(UUID streamId, Instant from, Instant to) {
+		return calcDiffDatum(streamId, from, to, Period.ofDays(7));
+	}
+
+	private ReadingDatum calcDiffDatum(UUID streamId, Instant from, Instant to, Period tolerance) {
 		return jdbcTemplate.execute(new ConnectionCallback<ReadingDatum>() {
 
 			@Override
@@ -61,19 +67,20 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 				try (PreparedStatement stmt = con.prepareStatement(
 				// @formatter:off
 								"SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).* "
-								+"FROM solardatm.find_datm_diff_within_rows(?::uuid,?,?) d "
+								+"FROM solardatm.find_datm_diff_near_rows(?::uuid,?,?,?) d "
 								+"HAVING (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).stream_id IS NOT NULL"
 								// @formatter:on
 				)) {
-					log.debug("Calculating datum diff within {} from {} - {}", streamId, from, to);
+					log.debug("Calculating datum diff {} from {} - {}", streamId, from, to);
 					stmt.setString(1, streamId.toString());
 					stmt.setTimestamp(2, Timestamp.from(from));
 					stmt.setTimestamp(3, Timestamp.from(to));
+					stmt.setObject(4, tolerance, Types.OTHER);
 					if ( stmt.execute() ) {
 						try (ResultSet rs = stmt.getResultSet()) {
 							if ( rs.next() ) {
 								ReadingDatum d = ReadingDatumEntityRowMapper.INSTANCE.mapRow(rs, 1);
-								log.debug("Calculated datum diff within: {}", d);
+								log.debug("Calculated datum diff: {}", d);
 								return d;
 							}
 						}
@@ -109,8 +116,8 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
-		assertReadingDatum("Typical readings", result, readingWith(streamId, null, start.plusMinutes(9),
-				end.minusMinutes(1), decimalArray("25", "105", "130")));
+		assertReadingDatum("Typical readings just before start/end range", result, readingWith(streamId,
+				null, start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "100", "130")));
 	}
 
 	@Test
@@ -142,7 +149,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("One reset in middle", result, readingWith(streamId, null,
-				start.plusMinutes(9), end.minusMinutes(1), decimalArray("30", "105", "25")));
+				start.minusMinutes(1), end.minusMinutes(1), decimalArray("35", "100", "25")));
 	}
 
 	@Test
@@ -158,7 +165,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("One reset exactly at end", result,
-				readingWith(streamId, null, start.plusMinutes(9), end, decimalArray("26", "15", "41")));
+				readingWith(streamId, null, start.minusMinutes(1), end, decimalArray("31", "10", "41")));
 	}
 
 	@Test
@@ -190,7 +197,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("One reset exactly at end without leading", result,
-				readingWith(streamId, null, start.plusMinutes(9), end, decimalArray("26", "15", "41")));
+				readingWith(streamId, null, start.minusMinutes(1), end, decimalArray("31", "10", "41")));
 	}
 
 	@Test
@@ -206,7 +213,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("Multi resets within", result, readingWith(streamId, null,
-				start.plusMinutes(9), end.minusMinutes(1), decimalArray("31", "105", "210")));
+				start.minusMinutes(1), end.minusMinutes(1), decimalArray("36", "100", "210")));
 	}
 
 	@Test
@@ -222,7 +229,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("Adjacent resets within", result, readingWith(streamId, null,
-				start.plusMinutes(9), end.minusMinutes(1), decimalArray("31", "105", "220")));
+				start.minusMinutes(1), end.minusMinutes(1), decimalArray("36", "100", "220")));
 	}
 
 	@Test
@@ -269,8 +276,8 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
-		assertReadingDatum("Only one reset with way-back start", result, readingWith(streamId, null,
-				end.minusMinutes(40), end.minusMinutes(40), decimalArray("0", "5", "5")));
+		assertReadingDatum("Only one reset", result, readingWith(streamId, null, start.plusMinutes(20),
+				end.minusMinutes(40), decimalArray("0", "5", "5")));
 	}
 
 	@Test
@@ -302,7 +309,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("Reset just before start", result, readingWith(streamId, null,
-				start.plusMinutes(9), end.minusMinutes(1), decimalArray("25", "15", "40")));
+				start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "10", "40")));
 	}
 
 	@Test
@@ -318,7 +325,7 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertReadingDatum("Reset just after end", result, readingWith(streamId, null,
-				start.plusMinutes(9), end.minusMinutes(1), decimalArray("25", "15", "40")));
+				start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "10", "40")));
 	}
 
 	@Test
@@ -336,4 +343,5 @@ public class DbDiffWithinDatumTests extends BaseDatumJdbcTestSupport {
 		assertReadingDatum("Leading before start + tolerance is ignored", result, readingWith(streamId,
 				null, start.plusMinutes(9), end.minusMinutes(1), decimalArray("25", "105", "130")));
 	}
+
 }

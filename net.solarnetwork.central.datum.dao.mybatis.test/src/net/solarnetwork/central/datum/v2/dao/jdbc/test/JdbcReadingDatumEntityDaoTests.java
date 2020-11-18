@@ -36,6 +36,7 @@ import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -294,6 +295,36 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 					statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
 			i++;
 		}
+	}
+
+	@Test
+	public void diffNear_nodeAndSource() {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-02.txt").values().iterator().next()
+				.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.NearestDifference);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setTimeTolerance(Period.ofDays(7));
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReadingDatum d = results.iterator().next();
+		assertReading("Node and source", d,
+				new ReadingDatumEntity(streamId, start.plusMinutes(9).toInstant(), null,
+						start.plusHours(1).minusMinutes(1).toInstant(),
+						propertiesOf(null, decimalArray("25"), null, null),
+						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
 	}
 
 	@Test
