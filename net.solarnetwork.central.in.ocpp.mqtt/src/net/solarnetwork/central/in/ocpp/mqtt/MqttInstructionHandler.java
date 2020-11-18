@@ -180,7 +180,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 
 				Action action = null;
 				String actionName = json.path("action").textValue();
-				JsonNode payload = json.path("payload");
+				JsonNode payload = json.path("message");
 				if ( actionName != null ) {
 					for ( T a : actionClass.getEnumConstants() ) {
 						if ( a.name().equals(actionName) ) {
