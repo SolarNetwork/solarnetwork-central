@@ -59,11 +59,11 @@ public final class DaoUtils {
 	 */
 	public static <M extends Identity<K>, K> FilterResults<M, K> filterResults(Iterable<M> data,
 			PaginationCriteria criteria, Long totalResults, int returnedResults) {
+		int offset = 0;
 		if ( criteria != null && criteria.getMax() != null ) {
-			int offset = criteria.getOffset() != null ? criteria.getOffset() : 0;
-			return new BasicFilterResults<>(data, totalResults, offset, returnedResults);
+			offset = criteria.getOffset() != null ? criteria.getOffset() : 0;
 		}
-		return new BasicFilterResults<>(data);
+		return new BasicFilterResults<>(data, totalResults, offset, returnedResults);
 	}
 
 }

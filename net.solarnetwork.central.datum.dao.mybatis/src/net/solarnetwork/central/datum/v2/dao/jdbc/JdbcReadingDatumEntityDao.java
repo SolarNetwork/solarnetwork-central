@@ -76,14 +76,17 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 		}
 
 		Long totalResults = null;
-		if ( creator instanceof CountPreparedStatementCreatorProvider ) {
+		if ( filter.getMax() != null && creator instanceof CountPreparedStatementCreatorProvider ) {
 			totalResults = DatumSqlUtils.executeCountQuery(jdbcTemplate,
 					((CountPreparedStatementCreatorProvider) creator).countPreparedStatementCreator());
 		}
 
 		List<ReadingDatum> data = jdbcTemplate.query(creator,
 				new ReadingDatumEntityRowMapper(filter.getAggregation()));
-		return DaoUtils.filterResults(data, filter, null, data.size());
+		if ( filter.getMax() == null ) {
+			totalResults = (long) data.size();
+		}
+		return DaoUtils.filterResults(data, filter, totalResults, data.size());
 	}
 
 }

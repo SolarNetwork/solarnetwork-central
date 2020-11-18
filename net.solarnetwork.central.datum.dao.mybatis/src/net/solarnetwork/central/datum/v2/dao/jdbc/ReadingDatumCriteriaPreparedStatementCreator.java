@@ -132,7 +132,7 @@ public class ReadingDatumCriteriaPreparedStatementCreator
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
 			appendCoreSql(buf);
-			return buf.toString();
+			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}
 
 		@Override

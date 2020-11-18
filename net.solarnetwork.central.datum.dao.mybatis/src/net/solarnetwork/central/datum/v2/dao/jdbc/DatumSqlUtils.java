@@ -183,6 +183,17 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Wrap a SQL query with a {@literal SELECT COUNT(*)} clause.
+	 * 
+	 * @param sql
+	 *        the SQL query to wrap
+	 * @return the wrapped query
+	 */
+	public static String wrappedCountQuery(String sql) {
+		return "SELECT COUNT(*) FROM (" + sql + ") AS q";
+	}
+
+	/**
 	 * Execute a query for a count result.
 	 * 
 	 * @param jdbcTemplate

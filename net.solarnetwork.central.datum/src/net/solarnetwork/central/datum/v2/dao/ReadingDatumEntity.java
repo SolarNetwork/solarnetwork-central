@@ -141,6 +141,10 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 			builder.append(", ts=");
 			builder.append(getId().getTimestamp());
 		}
+		if ( endTimestamp != null ) {
+			builder.append(", tsEnd=");
+			builder.append(endTimestamp);
+		}
 		if ( getAggregation() != null ) {
 			builder.append(", kind=");
 			builder.append(getAggregation().getKey());
