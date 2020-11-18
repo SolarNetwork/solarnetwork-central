@@ -31,11 +31,18 @@ import static org.junit.Assert.assertThat;
 import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
@@ -48,7 +55,12 @@ import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -175,25 +187,50 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		d1.getSamples().putAccumulatingSampleValue(WH_PROP, data[0]);
 		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), nodeId, sourceId);
 		d2.getSamples().putAccumulatingSampleValue(WH_PROP, data[1]);
-		result.add(dao.store(d1));
-		result.add(dao.store(d2));
+
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = DatumTestUtils.ingestDatumStream(log,
+				jdbcTemplate, Arrays.asList(d1, d2), "UTC");
+		result.add(d1.getId());
+		result.add(d2.getId());
 
 		if ( ts2 != null ) {
 			GeneralNodeDatum d3 = getTestInstance(ts2.minusMinutes(1), nodeId, sourceId);
 			d3.getSamples().putAccumulatingSampleValue(WH_PROP, data[2]);
 			GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), nodeId, sourceId);
 			d4.getSamples().putAccumulatingSampleValue(WH_PROP, data[3]);
-			result.add(dao.store(d3));
-			result.add(dao.store(d4));
+
+			DatumTestUtils.ingestDatumStream(log, jdbcTemplate, Arrays.asList(d3, d4), "UTC");
+			result.add(d3.getId());
+			result.add(d4.getId());
 
 			if ( processAggregateStaleData ) {
 				// query depends on aggregate data
-				processAggregateStaleData();
+				DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate);
 
-				DateTimeFormatter dateFormat = ISODateTimeFormat.date().withZone(ts.getZone());
-				assertThat("Aggregate days", sqlDatesFromLocalDates(getDatumAggregateDaily(nodeId)),
-						contains(sqlDates(dateFormat.print(ts.minusDays(1)), dateFormat.print(ts),
-								dateFormat.print(ts2.minusDays(1)), dateFormat.print(ts2))));
+				UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
+				List<AggregateDatumEntity> aggs = DatumTestUtils
+						.listAggregateDatum(jdbcTemplate, Aggregation.Day).stream()
+						.filter(e -> streamId.equals(e.getStreamId())).collect(Collectors.toList());
+				List<Instant> days = aggs.stream().map(AggregateDatumEntity::getTimestamp)
+						.collect(Collectors.toList());
+				assertThat("Aggregate days", days,
+						contains(
+								ZonedDateTime
+										.ofInstant(Instant.ofEpochMilli(ts.getMillis()),
+												ZoneId.of(TEST_TZ))
+										.truncatedTo(ChronoUnit.DAYS).minusDays(1).toInstant(),
+								ZonedDateTime
+										.ofInstant(Instant.ofEpochMilli(ts.getMillis()),
+												ZoneId.of(TEST_TZ))
+										.truncatedTo(ChronoUnit.DAYS).toInstant(),
+								ZonedDateTime
+										.ofInstant(Instant.ofEpochMilli(ts2.getMillis()),
+												ZoneId.of(TEST_TZ))
+										.truncatedTo(ChronoUnit.DAYS).minusDays(1).toInstant(),
+								ZonedDateTime
+										.ofInstant(Instant.ofEpochMilli(ts2.getMillis()),
+												ZoneId.of(TEST_TZ))
+										.truncatedTo(ChronoUnit.DAYS).toInstant()));
 			}
 		}
 
