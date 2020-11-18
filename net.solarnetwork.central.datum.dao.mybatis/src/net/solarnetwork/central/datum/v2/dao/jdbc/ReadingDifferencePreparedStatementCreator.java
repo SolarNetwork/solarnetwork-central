@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,14 +43,17 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
  * @author matt
  * @version 1.0
  */
-public class ReadingDatumCriteriaPreparedStatementCreator
+public class ReadingDifferencePreparedStatementCreator
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private static final Map<String, String> SORT_KEY_MAPPING;
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("timestamp", "ts_start");
+		map.put("created", "ts");
+		map.put("node", "node_id");
+		map.put("source", "source_id");
 		map.put("stream", "stream_id");
+		map.put("time", "ts");
 		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -63,7 +67,7 @@ public class ReadingDatumCriteriaPreparedStatementCreator
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public ReadingDatumCriteriaPreparedStatementCreator(ReadingDatumCriteria filter) {
+	public ReadingDifferencePreparedStatementCreator(ReadingDatumCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");
@@ -81,6 +85,7 @@ public class ReadingDatumCriteriaPreparedStatementCreator
 		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
 		buf.append(")\n");
 		buf.append("SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*\n");
+		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.find_datm_diff_rows(s.stream_id");
 		if ( useLocalDates() ) {
@@ -96,7 +101,12 @@ public class ReadingDatumCriteriaPreparedStatementCreator
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		appendCoreSql(buf);
-		DatumSqlUtils.orderBySorts(filter.getSorts(), SORT_KEY_MAPPING, buf);
+		StringBuilder order = new StringBuilder();
+		int idx = DatumSqlUtils.orderBySorts(filter.getSorts(), SORT_KEY_MAPPING, order);
+		if ( idx > 0 ) {
+			buf.append("\nORDER BY ");
+			buf.append(order.substring(idx));
+		}
 		return buf.toString();
 	}
 
@@ -105,8 +115,8 @@ public class ReadingDatumCriteriaPreparedStatementCreator
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
 		if ( useLocalDates() ) {
-			stmt.setTimestamp(++p, Timestamp.valueOf(filter.getLocalStartDate()));
-			stmt.setTimestamp(++p, Timestamp.valueOf(filter.getLocalEndDate()));
+			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
+			stmt.setObject(++p, filter.getLocalEndDate(), Types.TIMESTAMP);
 		} else {
 			stmt.setTimestamp(++p,
 					Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now()));

@@ -29,16 +29,23 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ele
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -66,13 +73,19 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 	private JdbcReadingDatumEntityDao dao;
 
 	private Map<NodeSourcePK, NodeDatumStreamMetadata> loadStreamWithAuxiliary(String resource) {
+		return loadStreamWithAuxiliary(resource, null, null);
+	}
+
+	private Map<NodeSourcePK, NodeDatumStreamMetadata> loadStreamWithAuxiliary(String resource,
+			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper) {
 		List<?> data;
 		try {
-			data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass());
+			data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass(), datumMapper,
+					auxMapper);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
-		log.debug("Got test data: {}", data);
+		log.debug("Got test data:\n{}", data.stream().map(Object::toString).collect(joining("\n")));
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
@@ -153,6 +166,134 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 						start.plusHours(1).minusMinutes(1).toInstant(),
 						propertiesOf(null, decimalArray("30"), null, null),
 						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
+	}
+
+	@Test
+	public void diff_nodeAndSource_localDates() {
+		// GIVEN
+		final ZoneId tz = ZoneId.of("America/Chicago");
+		setupTestLocation(1L, tz.getId());
+		setupTestNode(1L, 1L);
+		UUID streamId = loadStreamWithAuxiliary("test-datum-02.txt").values().iterator().next()
+				.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setLocalStartDate(start.withZoneSameInstant(tz).toLocalDateTime());
+		filter.setLocalEndDate(start.plusHours(1).withZoneSameInstant(tz).toLocalDateTime());
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReadingDatum d = results.iterator().next();
+		assertReading("Node and source", d,
+				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), null,
+						start.plusHours(1).minusMinutes(1).toInstant(),
+						propertiesOf(null, decimalArray("30"), null, null),
+						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
+	}
+
+	@Test
+	public void diff_nodesAndSources_orderByNodeSourceTime() {
+		// GIVEN
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = new LinkedHashMap<>(4);
+		for ( int i = 0; i < 5; i++ ) {
+			final Long nodeId = (long) (i + 1);
+			final String sourceId = Character.toString((char) ('a' + i));
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
+				d.setNodeId(nodeId);
+				d.setSourceId(sourceId);
+			}, null));
+		}
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
+		filter.setNodeIds(metas.keySet().stream().map(NodeSourcePK::getNodeId).toArray(Long[]::new));
+		filter.setSourceIds(
+				metas.keySet().stream().map(NodeSourcePK::getSourceId).toArray(String[]::new));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setSorts(sorts("node", "source", "time"));
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo((long) metas.size()));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(metas.size()));
+
+		int i = 0;
+		for ( ReadingDatum d : results ) {
+			final Long nodeId = (long) (i + 1);
+			final String sourceId = Character.toString((char) ('a' + i));
+			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
+			assertReading("Node and source " + i, d, new ReadingDatumEntity(streamId,
+					start.minusMinutes(1).toInstant(), null,
+					start.plusHours(1).minusMinutes(1).toInstant(),
+					propertiesOf(null, decimalArray("30"), null, null),
+					statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
+			i++;
+		}
+	}
+
+	@Test
+	public void diff_nodesAndSources_localDates_orderByNodeSourceTime() {
+		// GIVEN
+		List<ZoneId> zones = Arrays.asList(ZoneId.of("Pacific/Auckland"), ZoneId.of("Asia/Kolkata"),
+				ZoneId.of("Europe/Paris"), ZoneId.of("UTC"), ZoneId.of("America/Montreal"));
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = new LinkedHashMap<>(4);
+		for ( int i = 0; i < 5; i++ ) {
+			final long id = i + 1;
+			final Long nodeId = id;
+			final String sourceId = Character.toString((char) ('a' + i));
+			final ZoneId zone = zones.get(i);
+			setupTestLocation(id, zone.getId());
+			setupTestNode(id, id);
+			metas.putAll(loadStreamWithAuxiliary("test-datum-02.txt", d -> {
+				d.setNodeId(nodeId);
+				d.setSourceId(sourceId);
+				d.setCreated(d.getCreated().withZoneRetainFields(DateTimeZone.forID(zone.getId())));
+			}, null));
+		}
+
+		LocalDateTime start = LocalDateTime.of(2020, 6, 2, 0, 0, 0, 0);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.Difference);
+		filter.setNodeIds(metas.keySet().stream().map(NodeSourcePK::getNodeId).toArray(Long[]::new));
+		filter.setSourceIds(
+				metas.keySet().stream().map(NodeSourcePK::getSourceId).toArray(String[]::new));
+		filter.setLocalStartDate(start);
+		filter.setLocalEndDate(start.plusHours(1));
+		filter.setSorts(sorts("node", "source", "time"));
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo((long) metas.size()));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(metas.size()));
+
+		int i = 0;
+		for ( ReadingDatum d : results ) {
+			final Long nodeId = (long) (i + 1);
+			final String sourceId = Character.toString((char) ('a' + i));
+			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
+			assertReading("Node and source " + i, d, new ReadingDatumEntity(streamId,
+					start.minusMinutes(1).atZone(zones.get(i)).toInstant(), null,
+					start.plusHours(1).minusMinutes(1).atZone(zones.get(i)).toInstant(),
+					propertiesOf(null, decimalArray("30"), null, null),
+					statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
+			i++;
+		}
 	}
 
 }

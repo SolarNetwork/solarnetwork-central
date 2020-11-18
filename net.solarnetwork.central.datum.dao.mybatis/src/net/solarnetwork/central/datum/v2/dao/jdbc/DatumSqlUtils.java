@@ -53,17 +53,26 @@ public final class DatumSqlUtils {
 	 * Generate SQL {@literal ORDER BY} criteria for a set of
 	 * {@link SortDescriptor}.
 	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal , key} for each key.
+	 * The leading comma and space characters are <b>not</b> stripped, but the
+	 * returned value indicates the number of characters to trim from the
+	 * results if needed.
+	 * </p>
+	 * 
 	 * @param sorts
 	 *        the sorts
 	 * @param sortKeyMapping
 	 *        the mapping of sort keys to SQL sort names
 	 * @param buf
 	 *        the buffer to append the SQL to
+	 * @return the number of leading "joining" characters added to {@code buf};
+	 *         will either be {@literal 0} or {@literal 2}
 	 */
-	public static void orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
+	public static int orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
 			StringBuilder buf) {
 		if ( sorts == null || sortKeyMapping == null || sortKeyMapping.isEmpty() ) {
-			return;
+			return 0;
 		}
 		for ( SortDescriptor sort : sorts ) {
 			String sqlName = sortKeyMapping.get(sort.getSortKey());
@@ -74,10 +83,17 @@ public final class DatumSqlUtils {
 				}
 			}
 		}
+		return 2;
 	}
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find node metadata.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
 	 * 
 	 * @param filter
 	 *        the search criteria
@@ -119,8 +135,8 @@ public final class DatumSqlUtils {
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, StringBuilder buf) {
-		buf.append(
-				"SELECT meta.stream_id, meta.node_id, meta.source_id, meta.names_i, meta.names_a, meta.names_s, meta.jdata, l.time_zone\n");
+		buf.append("SELECT meta.stream_id, meta.node_id, meta.source_id, meta.names_i, meta.names_a\n");
+		buf.append("\t, meta.names_s, meta.jdata, COALESCE(l.time_zone, 'UTC') AS time_zone\n");
 		buf.append("FROM solardatm.da_datm_meta meta\n");
 		if ( filter.getUserIds() != null ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
@@ -133,7 +149,7 @@ public final class DatumSqlUtils {
 			paramCount += whereNodeMetadata(filter, where);
 			if ( where.length() > 0 ) {
 				buf.append("WHERE ");
-				buf.append(where.delete(0, 5));
+				buf.append(where.substring(5));
 			}
 		}
 		return paramCount;

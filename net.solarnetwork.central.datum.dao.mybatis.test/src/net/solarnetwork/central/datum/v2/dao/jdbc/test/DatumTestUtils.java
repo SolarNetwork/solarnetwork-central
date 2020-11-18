@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -294,6 +295,24 @@ public final class DatumTestUtils {
 	/**
 	 * Load JSON datum and datum auxiliary objects from a classpath resource.
 	 * 
+	 * @param resource
+	 *        the name of the resource to load
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @return the loaded data, never {@literal null}
+	 * @throws IOException
+	 *         if the resource cannot be found or parsed correctly
+	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Function,
+	 *      Consumer)
+	 */
+	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz)
+			throws IOException {
+		return loadJsonDatumAndAuxiliaryResource(resource, clazz, null, null);
+	}
+
+	/**
+	 * Load JSON datum and datum auxiliary objects from a classpath resource.
+	 * 
 	 * <p>
 	 * This method loads JSON datum and datum auxiliary records from a resource,
 	 * with one JSON datum object per line. Empty lines or those starting with a
@@ -317,11 +336,16 @@ public final class DatumTestUtils {
 	 *        the name of the resource to load
 	 * @param clazz
 	 *        the class to load the resource from
+	 * @param datumMapper
+	 *        optional consumer to adjust datum with
+	 * @param auxMapper
+	 *        optional consumer to adjust auxiliary datum with
 	 * @return the loaded data, never {@literal null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
 	 */
-	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz)
+	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz,
+			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper)
 			throws IOException {
 		List<Object> result = new ArrayList<>();
 		int row = 0;
@@ -340,10 +364,16 @@ public final class DatumTestUtils {
 				if ( AUX.matcher(line).find() ) {
 					GeneralNodeDatumAuxiliary d = JsonUtils.getObjectFromJSON(line,
 							GeneralNodeDatumAuxiliary.class);
+					if ( auxMapper != null ) {
+						auxMapper.accept(d);
+					}
 					assertThat(format("Parsed JSON datum auxiliary in line %d", row), d, notNullValue());
 					result.add(d);
 				} else {
 					GeneralNodeDatum d = JsonUtils.getObjectFromJSON(line, GeneralNodeDatum.class);
+					if ( datumMapper != null ) {
+						datumMapper.accept(d);
+					}
 					assertThat(format("Parsed JSON datum in line %d", row), d, notNullValue());
 					result.add(d);
 				}

@@ -40,6 +40,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.easymock.Capture;
@@ -51,17 +52,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDatumCriteriaPreparedStatementCreator;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDifferencePreparedStatementCreator;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.TestSqlResources;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 
 /**
- * Test cases for the {@link ReadingDatumCriteriaPreparedStatementCreator}
- * class.
+ * Test cases for the {@link ReadingDifferencePreparedStatementCreator} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class ReadingDatumCriteriaPreparedStatementCreatorTests {
+public class ReadingDifferencePreparedStatementCreatorTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -85,7 +86,7 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDatumCriteriaPreparedStatementCreator(filter).getSql();
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource("reading-datum-nodes-dates.sql"));
@@ -102,7 +103,7 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDatumCriteriaPreparedStatementCreator(filter).getSql();
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource("reading-datum-nodesAndSources-dates.sql"));
@@ -120,11 +121,31 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDatumCriteriaPreparedStatementCreator(filter).getSql();
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("reading-datum-nodesAndSourcesAndUsers-dates.sql"));
+	}
+
+	@Test
+	public void sql_nodesAndSourcesAndUsers_absoluteDates_orderByNodeSourceTime() {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setUserId(2L);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusMonths(1).toInstant());
+		filter.setSorts(SimpleSortDescriptor.sorts("node", "source", "time"));
+
+		// WHEN
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"reading-datum-nodesAndSourcesAndUsers-dates-orderByNodeSourceTime.sql"));
 	}
 
 	@Test
@@ -139,7 +160,7 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
 
 		// WHEN
-		String sql = new ReadingDatumCriteriaPreparedStatementCreator(filter).getSql();
+		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -187,7 +208,7 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new ReadingDatumCriteriaPreparedStatementCreator(filter)
+		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
 				.createPreparedStatement(con);
 
 		// THEN
@@ -198,4 +219,53 @@ public class ReadingDatumCriteriaPreparedStatementCreatorTests {
 		assertThat("End timestamp", endCaptor.getValue(), equalTo(Timestamp.from(filter.getEndDate())));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 	}
+
+	@Test
+	public void prep_nodesAndSourcesAndUsers_localDates() throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setUserId(2L);
+		filter.setLocalStartDate(start.toLocalDateTime());
+		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		Array userIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
+		stmt.setArray(3, userIdsArray);
+		userIdsArray.free();
+
+		stmt.setObject(eq(4), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+
+		stmt.setObject(eq(5), eq(filter.getLocalEndDate()), eq(Types.TIMESTAMP));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+	}
+
 }
