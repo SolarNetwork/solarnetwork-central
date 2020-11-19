@@ -29,7 +29,6 @@ package net.solarnetwork.central.datum.v2.dao;
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria
-		extends NodeCriteria, SourceCriteria, StreamCriteria, UserCriteria {
+public interface NodeMetadataCriteria extends NodeCriteria, StreamMetadataCriteria {
 
 }

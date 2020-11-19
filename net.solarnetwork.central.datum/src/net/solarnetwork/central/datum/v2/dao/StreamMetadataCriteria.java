@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * StreamMetadataCriteria.java - 19/11/2020 4:05:59 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.dao.SortCriteria;
+
 /**
- * Search criteria for node metadata.
+ * Search criteria for stream metadata related data.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 3.8
  */
-public interface LocationMetadataCriteria extends LocationCriteria, StreamMetadataCriteria {
+public interface StreamMetadataCriteria
+		extends StreamCriteria, SourceCriteria, UserCriteria, SortCriteria {
 
 }

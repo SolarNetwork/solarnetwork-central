@@ -24,7 +24,6 @@ package net.solarnetwork.central.datum.v2.dao.mybatis;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,16 +37,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -71,7 +63,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class MyBatisDatumEntityDao
 		extends BaseMyBatisFilterableDaoSupport<DatumEntity, DatumPK, Datum, DatumCriteria>
-		implements DatumEntityDao, DatumStreamMetadataDao {
+		implements DatumEntityDao {
 
 	/** Query name enumeration. */
 	public enum QueryName {
@@ -122,30 +114,6 @@ public class MyBatisDatumEntityDao
 		return new BasicDatumStreamFilterResults(meta, rows, totalCount,
 				(offset != null ? offset.intValue() : 0),
 				(returnedCount != null ? returnedCount.intValue() : 0));
-	}
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	@Override
-	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
-		final Map<String, Object> sqlProps = Collections.singletonMap(FILTER_PROPERTY, filter);
-		return selectList(QueryName.NodeMetadataForFilter.getQueryName(), sqlProps, null, null);
-	}
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	@Override
-	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
-			LocationMetadataCriteria filter) {
-		final Map<String, Object> sqlProps = Collections.singletonMap(FILTER_PROPERTY, filter);
-		return selectList(QueryName.LocationMetadataForFilter.getQueryName(), sqlProps, null, null);
-	}
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	@Override
-	public ObjectDatumStreamMetadata metadataForStream(UUID streamId) {
-		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
-				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone FROM solardatm.find_metadata_for_stream(?::uuid)",
-				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
-		return (results.isEmpty() ? null : results.get(0));
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

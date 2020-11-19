@@ -1764,6 +1764,23 @@ public final class DatumTestUtils {
 	}
 
 	/**
+	 * Get all available node metadata records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @return the results, never {@literal null}
+	 */
+	public static List<NodeDatumStreamMetadata> listNodeMetadata(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id,m.node_id,source_id,names_i,names_a,names_s"
+						+ ",jdata,'n'::CHARACTER AS kind,COALESCE(l.time_zone, 'UTC') AS time_zone "
+						+ "FROM solardatm.da_datm_meta m "
+						+ "LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id "
+						+ "LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id ORDER BY node_id",
+				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
+	}
+
+	/**
 	 * Get all available aggregate datum records.
 	 * 
 	 * @param jdbcTemplate

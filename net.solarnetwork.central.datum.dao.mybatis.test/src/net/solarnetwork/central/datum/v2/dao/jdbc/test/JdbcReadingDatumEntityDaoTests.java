@@ -27,6 +27,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
@@ -320,11 +321,8 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
 
 		ReadingDatum d = results.iterator().next();
-		assertReading("Node and source", d,
-				new ReadingDatumEntity(streamId, start.plusMinutes(9).toInstant(), null,
-						start.plusHours(1).minusMinutes(1).toInstant(),
-						propertiesOf(null, decimalArray("25"), null, null),
-						statisticsOf(null, new BigDecimal[][] { decimalArray("30", "100", "130") })));
+		assertReading("Node and source", d, readingWith(streamId, null, start.minusMinutes(1),
+				start.plusHours(1).minusMinutes(1), decimalArray("30", "100", "130")));
 	}
 
 	@Test
@@ -349,11 +347,8 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
 
 		ReadingDatum d = results.iterator().next();
-		assertReading("Node and source", d,
-				new ReadingDatumEntity(streamId, start.plusMinutes(9).toInstant(), null,
-						start.plusHours(1).minusMinutes(1).toInstant(),
-						propertiesOf(null, decimalArray("25"), null, null),
-						statisticsOf(null, new BigDecimal[][] { decimalArray("25", "105", "130") })));
+		assertReading("Node and source", d, readingWith(streamId, null, start.plusMinutes(9),
+				start.plusHours(1).minusMinutes(1), decimalArray("25", "105", "130")));
 	}
 
 }

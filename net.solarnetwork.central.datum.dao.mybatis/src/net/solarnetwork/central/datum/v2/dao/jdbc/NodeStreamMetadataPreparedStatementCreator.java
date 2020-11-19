@@ -1,5 +1,5 @@
 /* ==================================================================
- * StreamMetadataPreparedStatementCreator.java - 19/11/2020 3:21:24 pm
+ * NodeStreamMetadataPreparedStatementCreator.java - 19/11/2020 3:21:24 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,27 +22,27 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 
 /**
- * Generate dynamic SQL for a "find metadata for streams" query.
+ * Generate dynamic SQL for a "find node metadata" query.
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class StreamMetadataPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+public class NodeStreamMetadataPreparedStatementCreator
+		implements PreparedStatementCreator, SqlProvider {
 
-	private final StreamMetadataCriteria filter;
+	private final NodeMetadataCriteria filter;
 
 	/**
 	 * Constructor.
@@ -52,10 +52,10 @@ public class StreamMetadataPreparedStatementCreator implements PreparedStatement
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public StreamMetadataPreparedStatementCreator(StreamMetadataCriteria filter) {
+	public NodeStreamMetadataPreparedStatementCreator(NodeMetadataCriteria filter) {
 		super();
-		if ( filter == null || filter.getStreamIds() == null || filter.getStreamIds().length < 1 ) {
-			throw new IllegalArgumentException("The filter argument and stream IDs must not be null.");
+		if ( filter == null ) {
+			throw new IllegalArgumentException("The filter argument must not be null.");
 		}
 		this.filter = filter;
 	}
@@ -63,12 +63,9 @@ public class StreamMetadataPreparedStatementCreator implements PreparedStatement
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append(
-				"SELECT m.stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone\n");
-		buf.append("FROM unnest(?) s(stream_id)\n");
-		buf.append("INNER JOIN solardatm.find_metadata_for_stream(s.stream_id) m ON TRUE");
+		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), STREAM_METADATA_SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(), NODE_STREAM_METADATA_SORT_KEY_MAPPING, order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
@@ -79,9 +76,7 @@ public class StreamMetadataPreparedStatementCreator implements PreparedStatement
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		Array array = con.createArrayOf("uuid", filter.getStreamIds());
-		stmt.setArray(1, array);
-		array.free();
+		DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
 		return stmt;
 	}
 

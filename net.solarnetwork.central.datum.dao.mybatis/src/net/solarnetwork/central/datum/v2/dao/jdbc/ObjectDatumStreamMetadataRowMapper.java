@@ -29,6 +29,8 @@ import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -59,6 +61,16 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 	/** A default mapper instance using {@link MetadataKind#Dynamic}. */
 	public static final RowMapper<ObjectDatumStreamMetadata> INSTANCE = new ObjectDatumStreamMetadataRowMapper(
 			MetadataKind.Dynamic);
+
+	/** A default mapper instance using {@link MetadataKind#Node}. */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static final RowMapper<NodeDatumStreamMetadata> NODE_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+			MetadataKind.Node);
+
+	/** A default mapper instance using {@link MetadataKind#Location}. */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static final RowMapper<LocationDatumStreamMetadata> LOCATION_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+			MetadataKind.Location);
 
 	/**
 	 * The type of metadata to parse.

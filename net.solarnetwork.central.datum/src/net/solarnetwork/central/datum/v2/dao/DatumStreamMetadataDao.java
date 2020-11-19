@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
@@ -39,11 +38,11 @@ public interface DatumStreamMetadataDao {
 	/**
 	 * Get the metadata associated with a datum stream.
 	 * 
-	 * @param streamId
-	 *        the stream ID to get the metadata for
+	 * @param filter
+	 *        the search filter
 	 * @return the metadata, or {@literal null} if not available
 	 */
-	ObjectDatumStreamMetadata metadataForStream(UUID streamId);
+	ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter);
 
 	/**
 	 * Find all available node datum stream metadata for a given search filter.

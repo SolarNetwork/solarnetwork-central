@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.DATUM_STREAM_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -97,7 +97,7 @@ public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatem
 		StringBuilder buf = new StringBuilder();
 		appendCoreSql(buf);
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), DATUM_STREAM_SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(), NODE_STREAM_SORT_KEY_MAPPING, order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
