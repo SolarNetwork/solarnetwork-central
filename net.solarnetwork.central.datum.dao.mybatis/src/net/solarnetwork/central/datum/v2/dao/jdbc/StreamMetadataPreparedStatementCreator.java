@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCalculatedAtPreparedStatementCreator.java - 19/11/2020 2:16:06 pm
+ * StreamMetadataPreparedStatementCreator.java - 19/11/2020 3:21:24 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,36 +22,25 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static java.time.Instant.now;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.DATUM_STREAM_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 
 /**
- * Generate dynamic SQL for a {@link DatumCriteria} "calculate datum at a point
- * in time" query.
+ * Generate dynamic SQL for a "find metadata for streams" query.
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
-
-	/**
-	 * The default time tolerance used for the
-	 * {@link net.solarnetwork.central.datum.domain.DatumReadingType#CalculatedAt}
-	 * query.
-	 */
-	public static Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);
+public class StreamMetadataPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
 
 	private final DatumCriteria filter;
 
@@ -63,41 +52,23 @@ public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatem
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public DatumCalculatedAtPreparedStatementCreator(DatumCriteria filter) {
+	public StreamMetadataPreparedStatementCreator(DatumCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument must not be null.");
+		if ( filter == null || filter.getStreamIds() == null || filter.getStreamIds().length < 1 ) {
+			throw new IllegalArgumentException("The filter argument and stream IDs must not be null.");
 		}
 		this.filter = filter;
-	}
-
-	private boolean useLocalDates() {
-		return (filter.getLocalStartDate() != null);
-	}
-
-	private void appendCoreSql(StringBuilder buf) {
-		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
-		buf.append(")\n");
-		buf.append("SELECT (solardatm.calc_datm_at(d, ?)).*\n");
-		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
-		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.find_datm_around(s.stream_id");
-		if ( useLocalDates() ) {
-			buf.append(", ? AT TIME ZONE s.time_zone");
-		} else {
-			buf.append(", ?");
-		}
-		buf.append(", ?) d ON TRUE\n");
-		buf.append("GROUP BY s.stream_id");
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		appendCoreSql(buf);
+		buf.append(
+				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone\n");
+		buf.append("FROM unnest(?) s(stream_id)\n");
+		buf.append("INNER JOIN solardatm.find_metadata_for_stream(s.stream_id) m ON TRUE");
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), DATUM_STREAM_SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(), STREAM_METADATA_SORT_KEY_MAPPING, order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
@@ -108,18 +79,9 @@ public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatem
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
-		if ( useLocalDates() ) {
-			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
-		} else {
-			stmt.setTimestamp(++p,
-					Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now()));
-		}
-		Period t = filter.getTimeTolerance();
-		if ( t == null ) {
-			t = DEFAULT_CALCULATED_AT_TIME_TOLERANCE;
-		}
-		stmt.setObject(++p, t, Types.OTHER);
+		Array array = con.createArrayOf("uuid", filter.getStreamIds());
+		stmt.setArray(1, array);
+		array.free();
 		return stmt;
 	}
 

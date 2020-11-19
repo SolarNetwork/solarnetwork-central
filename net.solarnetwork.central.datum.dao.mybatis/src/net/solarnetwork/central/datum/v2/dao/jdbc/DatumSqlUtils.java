@@ -27,6 +27,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -47,6 +49,110 @@ public final class DatumSqlUtils {
 
 	private DatumSqlUtils() {
 		// don't construct me
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by stream metadata.
+	 * 
+	 * <p>
+	 * This map contains the following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>loc -&gt; obj_id</li>
+	 * <li>node -&gt; obj_id</li>
+	 * <li>obj -&gt; obj_id</li>
+	 * <li>source -&gt; source_id</li>
+	 * <li>stream -&gt; stream_id</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> STREAM_METADATA_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.put("loc", "obj_id");
+		map.put("node", "obj_id");
+		map.put("obj", "obj_id");
+		map.put("source", "source_id");
+		map.put("stream", "stream_id");
+		STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by datum stream metadata.
+	 * 
+	 * <p>
+	 * This map contains the following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>node -&gt; node_id</li>
+	 * <li>source -&gt; source_id</li>
+	 * <li>stream -&gt; stream_id</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> DATUM_STREAM_METADATA_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.put("node", "node_id");
+		map.put("source", "source_id");
+		map.put("stream", "stream_id");
+		DATUM_STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by datum stream columns.
+	 * 
+	 * <p>
+	 * This map contains the entries from
+	 * {@link #DATUM_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>created -&gt; ts</li>
+	 * <li>time -&gt; ts</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> DATUM_STREAM_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(5);
+		map.putAll(DATUM_STREAM_METADATA_SORT_KEY_MAPPING);
+		map.put("created", "ts");
+		map.put("time", "ts");
+		DATUM_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by aggregate datum stream columns.
+	 * 
+	 * <p>
+	 * This map contains the entries from
+	 * {@link #DATUM_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>created -&gt; ts_start</li>
+	 * <li>time -&gt; ts_start</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> AGG_DATUM_STREAM_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.putAll(DATUM_STREAM_METADATA_SORT_KEY_MAPPING);
+		map.put("created", "ts_start");
+		map.put("time", "ts_start");
+		AGG_DATUM_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
 	/**

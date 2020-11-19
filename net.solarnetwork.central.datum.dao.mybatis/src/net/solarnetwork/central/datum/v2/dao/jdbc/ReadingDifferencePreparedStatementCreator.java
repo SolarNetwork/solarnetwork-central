@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.time.Instant.now;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.DATUM_STREAM_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,9 +32,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Period;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -55,17 +54,6 @@ public class ReadingDifferencePreparedStatementCreator
 	 */
 	public static Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
 
-	private static final Map<String, String> SORT_KEY_MAPPING;
-	static {
-		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("created", "ts");
-		map.put("node", "node_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
-		map.put("time", "ts");
-		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
-	}
-
 	private final ReadingDatumCriteria filter;
 
 	/**
@@ -85,8 +73,7 @@ public class ReadingDifferencePreparedStatementCreator
 	}
 
 	private boolean useLocalDates() {
-		return (filter != null && filter.getLocalStartDate() != null
-				&& filter.getLocalStartDate() != null);
+		return (filter.getLocalStartDate() != null && filter.getLocalStartDate() != null);
 	}
 
 	private void appendCoreSql(StringBuilder buf) {
@@ -132,7 +119,7 @@ public class ReadingDifferencePreparedStatementCreator
 		StringBuilder buf = new StringBuilder();
 		appendCoreSql(buf);
 		StringBuilder order = new StringBuilder();
-		int idx = DatumSqlUtils.orderBySorts(filter.getSorts(), SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(), DATUM_STREAM_SORT_KEY_MAPPING, order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
