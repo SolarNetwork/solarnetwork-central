@@ -1,5 +1,5 @@
 /* ==================================================================
- * StreamMetadataPreparedStatementCreator.java - 19/11/2020 3:21:24 pm
+ * SelectStreamMetadata.java - 19/11/2020 3:21:24 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
@@ -40,7 +40,7 @@ import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
  * @version 1.0
  * @since 3.8
  */
-public class StreamMetadataPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+public class SelectStreamMetadata implements PreparedStatementCreator, SqlProvider {
 
 	private final StreamMetadataCriteria filter;
 
@@ -52,7 +52,7 @@ public class StreamMetadataPreparedStatementCreator implements PreparedStatement
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public StreamMetadataPreparedStatementCreator(StreamMetadataCriteria filter) {
+	public SelectStreamMetadata(StreamMetadataCriteria filter) {
 		super();
 		if ( filter == null || filter.getStreamIds() == null || filter.getStreamIds().length < 1 ) {
 			throw new IllegalArgumentException("The filter argument and stream IDs must not be null.");

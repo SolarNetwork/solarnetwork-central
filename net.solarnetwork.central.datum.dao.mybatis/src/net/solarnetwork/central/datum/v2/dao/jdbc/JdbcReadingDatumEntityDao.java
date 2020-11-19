@@ -31,6 +31,7 @@ import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorPro
 import net.solarnetwork.central.dao.mybatis.support.DaoUtils;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.dao.FilterResults;
@@ -73,7 +74,7 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 			case Difference:
 			case DifferenceWithin:
 			case NearestDifference:
-				creator = new ReadingDifferencePreparedStatementCreator(filter);
+				creator = new SelectReadingDifference(filter);
 				break;
 
 			// TODO

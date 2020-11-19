@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
@@ -37,6 +37,7 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 
 /**
  * Generate dynamic SQL for a {@link ReadingDatumCriteria} difference query.
@@ -45,7 +46,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
  * @version 1.0
  * @since 3.8
  */
-public class ReadingDifferencePreparedStatementCreator
+public class SelectReadingDifference
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/**
@@ -64,7 +65,7 @@ public class ReadingDifferencePreparedStatementCreator
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public ReadingDifferencePreparedStatementCreator(ReadingDatumCriteria filter) {
+	public SelectReadingDifference(ReadingDatumCriteria filter) {
 		super();
 		if ( filter == null || filter.getReadingType() == null ) {
 			throw new IllegalArgumentException("The filter argument and reading type must not be null.");

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumCalculatedAtPreparedStatementCreator.java - 19/11/2020 2:16:06 pm
+ * SelectDatumCalculatedAt.java - 19/11/2020 2:16:06 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING;
@@ -35,6 +35,7 @@ import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 
 /**
  * Generate dynamic SQL for a {@link DatumCriteria} "calculate datum at a point
@@ -44,7 +45,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
  * @version 1.0
  * @since 3.8
  */
-public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlProvider {
 
 	/**
 	 * The default time tolerance used for the
@@ -63,7 +64,7 @@ public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatem
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public DatumCalculatedAtPreparedStatementCreator(DatumCriteria filter) {
+	public SelectDatumCalculatedAt(DatumCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");

@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocationStreamMetadataPreparedStatementCreator.java - 19/11/2020 3:21:24 pm
+ * SelectNodeStreamMetadata.java - 19/11/2020 3:21:24 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,9 +20,9 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.LOCATION_STREAM_METADATA_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,19 +30,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 
 /**
- * Generate dynamic SQL for a "find location metadata" query.
+ * Generate dynamic SQL for a "find node metadata" query.
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class LocationStreamMetadataPreparedStatementCreator
+public class SelectNodeStreamMetadata
 		implements PreparedStatementCreator, SqlProvider {
 
-	private final LocationMetadataCriteria filter;
+	private final NodeMetadataCriteria filter;
 
 	/**
 	 * Constructor.
@@ -52,7 +53,7 @@ public class LocationStreamMetadataPreparedStatementCreator
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public LocationStreamMetadataPreparedStatementCreator(LocationMetadataCriteria filter) {
+	public SelectNodeStreamMetadata(NodeMetadataCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");
@@ -63,9 +64,9 @@ public class LocationStreamMetadataPreparedStatementCreator
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		DatumSqlUtils.locationMetadataFilterSql(filter, buf);
+		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), LOCATION_STREAM_METADATA_SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(), NODE_STREAM_METADATA_SORT_KEY_MAPPING, order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
@@ -76,7 +77,7 @@ public class LocationStreamMetadataPreparedStatementCreator
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		DatumSqlUtils.locationMetadataFilterPrepare(filter, con, stmt, 0);
+		DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
 		return stmt;
 	}
 

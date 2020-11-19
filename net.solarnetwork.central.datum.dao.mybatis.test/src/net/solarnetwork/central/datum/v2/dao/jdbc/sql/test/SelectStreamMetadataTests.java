@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocationStreamMetadataPreparedStatementCreatorTests.java - 19/11/2020 3:51:12 pm
+ * StreamMetadataPreparedStatementCreatorTests.java - 19/11/2020 3:51:12 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
@@ -36,64 +36,89 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.LocationStreamMetadataPreparedStatementCreator;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.TestSqlResources;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 
 /**
- * Test cases for the {@link LocationStreamMetadataPreparedStatementCreator}
- * class.
+ * Test cases for the {@link SelectStreamMetadata} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class LocationStreamMetadataPreparedStatementCreatorTests {
+public class SelectStreamMetadataTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Test
-	public void sql_streamMeta_locsAndSources() {
+	public void sql_streamMeta() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
+		filter.setStreamId(UUID.randomUUID());
 
 		// WHEN
-		String sql = new LocationStreamMetadataPreparedStatementCreator(filter).getSql();
+		String sql = new SelectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource("stream-meta.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_orderByObjSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(UUID.randomUUID());
+		filter.setSorts(SimpleSortDescriptor.sorts("obj", "source"));
+
+		// WHEN
+		String sql = new SelectStreamMetadata(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
-				equalToTextResource("loc-stream-meta-locsAndSources.sql", TestSqlResources.class));
+				equalToTextResource("stream-meta-orderByObjSource.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void sql_streamMeta_locsAndSourcesAndUsers() {
+	public void sql_streamMeta_orderByNodeSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setStreamId(UUID.randomUUID());
+		filter.setSorts(SimpleSortDescriptor.sorts("node", "source"));
 
 		// WHEN
-		String sql = new LocationStreamMetadataPreparedStatementCreator(filter).getSql();
+		String sql = new SelectStreamMetadata(filter).getSql();
 
 		// THEN
-		assertThat("SQL matches", sql, equalToTextResource("loc-stream-meta-locsAndSourcesAndUsers.sql",
-				TestSqlResources.class));
+		assertThat("SQL matches", sql,
+				equalToTextResource("stream-meta-orderByObjSource.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void prep_streamMeta_locsAndSourcesAndUsers() throws SQLException {
+	public void sql_streamMeta_orderByLocSource() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setStreamId(UUID.randomUUID());
+		filter.setSorts(SimpleSortDescriptor.sorts("loc", "source"));
+
+		// WHEN
+		String sql = new SelectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql,
+				equalToTextResource("stream-meta-orderByObjSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void prep_streamMeta() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(UUID.randomUUID());
 
 		Connection con = EasyMock.createMock(Connection.class);
 		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
@@ -102,30 +127,20 @@ public class LocationStreamMetadataPreparedStatementCreatorTests {
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
 
-		Array locIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getLocationIds()))).andReturn(locIdsArray);
-		stmt.setArray(1, locIdsArray);
-		locIdsArray.free();
-
-		Array sourceIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
-		stmt.setArray(2, sourceIdsArray);
-		sourceIdsArray.free();
-
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
+		Array streamIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("uuid"), aryEq(filter.getStreamIds()))).andReturn(streamIdsArray);
+		stmt.setArray(1, streamIdsArray);
+		streamIdsArray.free();
 
 		// WHEN
-		replay(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new LocationStreamMetadataPreparedStatementCreator(filter)
+		replay(con, stmt, streamIdsArray);
+		PreparedStatement result = new SelectStreamMetadata(filter)
 				.createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
+		verify(con, stmt, streamIdsArray);
 	}
 
 }

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
@@ -49,17 +49,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDifferencePreparedStatementCreator;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.TestSqlResources;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 
 /**
- * Test cases for the {@link ReadingDifferencePreparedStatementCreator} class.
+ * Test cases for the {@link SelectReadingDifference} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class ReadingDifferencePreparedStatementCreatorTests {
+public class SelectReadingDifferenceTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -74,7 +73,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -93,7 +92,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -113,7 +112,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource(
@@ -134,7 +133,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setSorts(SimpleSortDescriptor.sorts("node", "source", "time"));
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -156,7 +155,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource(
@@ -174,7 +173,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -192,7 +191,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 		filter.setEndDate(start.plusMonths(1).toInstant());
 
 		// WHEN
-		String sql = new ReadingDifferencePreparedStatementCreator(filter).getSql();
+		String sql = new SelectReadingDifference(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -241,7 +240,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
+		PreparedStatement result = new SelectReadingDifference(filter)
 				.createPreparedStatement(con);
 
 		// THEN
@@ -293,7 +292,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
+		PreparedStatement result = new SelectReadingDifference(filter)
 				.createPreparedStatement(con);
 
 		// THEN
@@ -348,7 +347,7 @@ public class ReadingDifferencePreparedStatementCreatorTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new ReadingDifferencePreparedStatementCreator(filter)
+		PreparedStatement result = new SelectReadingDifference(filter)
 				.createPreparedStatement(con);
 
 		// THEN

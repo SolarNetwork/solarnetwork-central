@@ -36,6 +36,9 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectLocationStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectNodeStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -112,21 +115,21 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	@Override
 	public ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter) {
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
-				new StreamMetadataPreparedStatementCreator(filter),
+				new SelectStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.INSTANCE);
 		return (results.isEmpty() ? null : results.get(0));
 	}
 
 	@Override
 	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
-		return jdbcTemplate.query(new NodeStreamMetadataPreparedStatementCreator(filter),
+		return jdbcTemplate.query(new SelectNodeStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
 	}
 
 	@Override
 	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
 			LocationMetadataCriteria filter) {
-		return jdbcTemplate.query(new LocationStreamMetadataPreparedStatementCreator(filter),
+		return jdbcTemplate.query(new SelectLocationStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
 	}
 

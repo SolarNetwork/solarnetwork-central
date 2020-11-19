@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
@@ -42,16 +42,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.NodeStreamMetadataPreparedStatementCreator;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.TestSqlResources;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectNodeStreamMetadata;
 
 /**
- * Test cases for the {@link NodeStreamMetadataPreparedStatementCreator} class.
+ * Test cases for the {@link SelectNodeStreamMetadata} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class NodeStreamMetadataPreparedStatementCreatorTests {
+public class SelectNodeStreamMetadataTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -63,7 +62,7 @@ public class NodeStreamMetadataPreparedStatementCreatorTests {
 		filter.setSourceId("a");
 
 		// WHEN
-		String sql = new NodeStreamMetadataPreparedStatementCreator(filter).getSql();
+		String sql = new SelectNodeStreamMetadata(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -79,7 +78,7 @@ public class NodeStreamMetadataPreparedStatementCreatorTests {
 		filter.setUserId(1L);
 
 		// WHEN
-		String sql = new NodeStreamMetadataPreparedStatementCreator(filter).getSql();
+		String sql = new SelectNodeStreamMetadata(filter).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource(
@@ -118,7 +117,7 @@ public class NodeStreamMetadataPreparedStatementCreatorTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new NodeStreamMetadataPreparedStatementCreator(filter)
+		PreparedStatement result = new SelectNodeStreamMetadata(filter)
 				.createPreparedStatement(con);
 
 		// THEN
