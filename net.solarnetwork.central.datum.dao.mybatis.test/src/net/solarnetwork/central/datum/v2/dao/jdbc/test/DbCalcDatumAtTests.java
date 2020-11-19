@@ -23,8 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertOneDatumStreamWithAuxiliary;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -39,18 +38,13 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 
 /**
  * Test cases for the database aggregate function to interpolate datum at a
@@ -61,7 +55,7 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
  */
 public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 
-	public DatumEntity calcDatumAt(UUID streamId, Instant at) {
+	private DatumEntity calcDatumAt(UUID streamId, Instant at) {
 		return jdbcTemplate.execute(new ConnectionCallback<DatumEntity>() {
 
 			@Override
@@ -102,10 +96,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 	public void calcDatumAt_wayBeforeMatch() throws IOException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
-				"UTC");
-		UUID streamId = metas.values().iterator().next().getStreamId();
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-01.txt",
+				getClass(), "UTC");
 
 		// WHEN
 		DatumEntity d = calcDatumAt(streamId, start.minusYears(1).toInstant());
@@ -118,10 +110,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 	public void calcDatumAt_wayAfterMatch() throws IOException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
-				"UTC");
-		UUID streamId = metas.values().iterator().next().getStreamId();
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-01.txt",
+				getClass(), "UTC");
 
 		// WHEN
 		DatumEntity d = calcDatumAt(streamId, start.plusYears(1).toInstant());
@@ -134,10 +124,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 	public void calcDatumAt_oneEigth() throws IOException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
-				"UTC");
-		UUID streamId = metas.values().iterator().next().getStreamId();
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-01.txt",
+				getClass(), "UTC");
 
 		// WHEN
 		Instant at = start.plusSeconds(75).toInstant();
@@ -157,10 +145,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 	public void calcDatumAt_fourFifths() throws IOException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
-				"UTC");
-		UUID streamId = metas.values().iterator().next().getStreamId();
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-01.txt",
+				getClass(), "UTC");
 
 		// WHEN
 		Instant at = start.plusMinutes(8).toInstant();
@@ -180,10 +166,8 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 	public void calcDatumAt_exactDatum() throws IOException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
-				"UTC");
-		UUID streamId = metas.values().iterator().next().getStreamId();
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-01.txt",
+				getClass(), "UTC");
 
 		// WHEN
 		Instant at = start.plusMinutes(10).toInstant();
@@ -198,4 +182,5 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		assertThat("Accumulated exact", d.getProperties().getAccumulating(),
 				arrayContaining(decimalArray("105")));
 	}
+
 }
