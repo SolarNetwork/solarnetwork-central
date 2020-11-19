@@ -53,6 +53,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 
 /**
@@ -63,14 +64,13 @@ import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
  */
 public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 
-	private List<DatumEntity> findTimeLeast(UUID[] streamIds) {
-		return jdbcTemplate.execute(new ConnectionCallback<List<DatumEntity>>() {
+	private List<Datum> findTimeLeast(UUID[] streamIds) {
+		return jdbcTemplate.execute(new ConnectionCallback<List<Datum>>() {
 
 			@Override
-			public List<DatumEntity> doInConnection(Connection con)
-					throws SQLException, DataAccessException {
+			public List<Datum> doInConnection(Connection con) throws SQLException, DataAccessException {
 				log.debug("Finding time least for streams {}", Arrays.toString(streamIds));
-				List<DatumEntity> result = new ArrayList<>(streamIds.length);
+				List<Datum> result = new ArrayList<>(streamIds.length);
 				try (CallableStatement stmt = con
 						.prepareCall("{call solardatm.find_time_least(?::uuid[])}")) {
 					Array array = con.createArrayOf("uuid", streamIds);
@@ -80,7 +80,7 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 						try (ResultSet rs = stmt.getResultSet()) {
 							int i = 0;
 							while ( rs.next() ) {
-								DatumEntity d = DatumEntityRowMapper.INSTANCE.mapRow(rs, ++i);
+								Datum d = DatumEntityRowMapper.INSTANCE.mapRow(rs, ++i);
 								result.add(d);
 							}
 						}
@@ -98,7 +98,7 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 
 		// WHEN
-		List<DatumEntity> results = findTimeLeast(new UUID[] { UUID.randomUUID() });
+		List<Datum> results = findTimeLeast(new UUID[] { UUID.randomUUID() });
 
 		// THEN
 		assertThat("No result from no data", results, hasSize(0));
@@ -113,7 +113,7 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
 		// WHEN
-		List<DatumEntity> results = findTimeLeast(new UUID[] { streamId });
+		List<Datum> results = findTimeLeast(new UUID[] { streamId });
 
 		// THEN
 		assertThat("Result for one stream", results, hasSize(1));
@@ -145,14 +145,14 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		}
 
 		// WHEN
-		List<DatumEntity> results = findTimeLeast(new UUID[] { streamId_a, streamId_b });
+		List<Datum> results = findTimeLeast(new UUID[] { streamId_a, streamId_b });
 
 		// THEN
 		assertThat("Results for two streams", results, hasSize(2));
 
-		DatumEntity datum_a = null;
-		DatumEntity datum_b = null;
-		for ( DatumEntity d : results ) {
+		Datum datum_a = null;
+		Datum datum_b = null;
+		for ( Datum d : results ) {
 			if ( d.getStreamId().equals(streamId_a) ) {
 				datum_a = d;
 			} else if ( d.getStreamId().equals(streamId_b) ) {
@@ -189,13 +189,13 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		}
 
 		// WHEN
-		List<DatumEntity> results = findTimeLeast(new UUID[] { streamId_a, UUID.randomUUID() });
+		List<Datum> results = findTimeLeast(new UUID[] { streamId_a, UUID.randomUUID() });
 
 		// THEN
 		assertThat("Results for one stream given two in criteria", results, hasSize(1));
 
-		DatumEntity datum_a = null;
-		for ( DatumEntity d : results ) {
+		Datum datum_a = null;
+		for ( Datum d : results ) {
 			if ( d.getStreamId().equals(streamId_a) ) {
 				datum_a = d;
 			}

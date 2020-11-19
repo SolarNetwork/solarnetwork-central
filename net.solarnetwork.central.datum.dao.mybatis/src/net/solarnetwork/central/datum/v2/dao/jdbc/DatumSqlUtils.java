@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,9 +36,12 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -269,6 +273,21 @@ public final class DatumSqlUtils {
 		return 2;
 	}
 
+	/**
+	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getSourceIds() != null ) {
@@ -337,6 +356,39 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Generate SQL {@literal WHERE} criteria to find location metadata.
+	 * 
+	 * <p>
+	 * The filter is assumed to be for location metadata if a location ID is
+	 * available; otherwise node metadata is assumed.
+	 * </p>
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int whereDatumMetadata(DatumCriteria filter, StringBuilder buf) {
+		int paramCount = 0;
+		if ( filter.getLocationId() != null ) {
+			buf.append("\tAND meta.loc_id = ANY(?)\n");
+			paramCount += 1;
+		} else if ( filter.getNodeId() != null ) {
+			buf.append("\tAND meta.node_id = ANY(?)\n");
+			paramCount += 1;
+		}
+		paramCount += whereStreamMetadata(filter, buf);
+		return paramCount;
+	}
+
+	/**
 	 * Generate SQL query to find node metadata.
 	 * 
 	 * @param filter
@@ -345,7 +397,7 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
-	 * @see #nodeMetadataFilterPrepare(NodeMetadataCriteria, Connection,
+	 * @see #prepareNodeMetadataFilter(NodeMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, StringBuilder buf) {
@@ -379,7 +431,7 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
-	 * @see #locationMetadataFilterPrepare(LocationMetadataCriteria, Connection,
+	 * @see #prepareLocationMetadataFilter(LocationMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
 	public static int locationMetadataFilterSql(LocationMetadataCriteria filter, StringBuilder buf) {
@@ -418,7 +470,7 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int streamMetadataFilterPrepare(StreamMetadataCriteria filter, Connection con,
+	public static int prepareStreamMetadataFilter(StreamMetadataCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getSourceIds() != null ) {
@@ -455,10 +507,10 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, StringBuilder)
-	 * @see #streamMetadataFilterPrepare(StreamMetadataCriteria, Connection,
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int nodeMetadataFilterPrepare(NodeMetadataCriteria filter, Connection con,
+	public static int prepareNodeMetadataFilter(NodeMetadataCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getNodeIds() != null ) {
@@ -466,7 +518,7 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			parameterOffset = streamMetadataFilterPrepare(filter, con, stmt, parameterOffset);
+			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
 		}
 		return parameterOffset;
 	}
@@ -486,10 +538,10 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @see #locationMetadataFilterSql(NodeMetadataCriteria, StringBuilder)
-	 * @see #streamMetadataFilterPrepare(StreamMetadataCriteria, Connection,
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int locationMetadataFilterPrepare(LocationMetadataCriteria filter, Connection con,
+	public static int prepareLocationMetadataFilter(LocationMetadataCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getLocationIds() != null ) {
@@ -497,7 +549,133 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			parameterOffset = streamMetadataFilterPrepare(filter, con, stmt, parameterOffset);
+			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query to find datum metadata.
+	 * 
+	 * <p>
+	 * The first parameter set If a location ID is provided on the filter, then
+	 * the filter is assumed to be for location metadata; otherwise node
+	 * metadata is assumed.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @see #whereDatumMetadata(DatumCriteria, StringBuilder)
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int prepareDatumMetadataFilter(DatumCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter != null ) {
+			if ( filter.getLocationId() != null ) {
+				Array array = con.createArrayOf("bigint", filter.getLocationIds());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			} else if ( filter.getNodeId() != null ) {
+				Array array = con.createArrayOf("bigint", filter.getNodeIds());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int whereDateRange(DateRangeCriteria filter, StringBuilder buf) {
+		int paramCount = 0;
+		if ( filter.getStartDate() != null ) {
+			buf.append("\tAND datum.ts >= ?\n");
+			paramCount += 1;
+		}
+		if ( filter.getEndDate() != null ) {
+			buf.append("\tAND datum.ts < ?\n");
+			paramCount += 1;
+		}
+		return paramCount;
+	}
+
+	/**
+	 * Prepare a SQL query date range filter.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static int prepareDateRangeFilter(DateRangeCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter.getStartDate() != null ) {
+			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getStartDate()));
+		}
+		if ( filter.getEndDate() != null ) {
+			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getEndDate()));
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query limit/offset.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter != null && filter.getMax() != null ) {
+			int max = filter.getMax();
+			if ( max > 0 ) {
+				int offset = 0;
+				if ( filter.getOffset() != null ) {
+					offset = filter.getOffset();
+				}
+				stmt.setInt(++parameterOffset, max);
+				stmt.setInt(++parameterOffset, offset);
+			}
 		}
 		return parameterOffset;
 	}

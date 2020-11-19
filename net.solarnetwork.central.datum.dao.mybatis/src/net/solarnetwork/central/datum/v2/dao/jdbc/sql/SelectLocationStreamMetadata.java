@@ -77,7 +77,7 @@ public class SelectLocationStreamMetadata
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		DatumSqlUtils.locationMetadataFilterPrepare(filter, con, stmt, 0);
+		DatumSqlUtils.prepareLocationMetadataFilter(filter, con, stmt, 0);
 		return stmt;
 	}
 

@@ -152,7 +152,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
-		int count = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Node IDs parameter set", count, equalTo(1));
@@ -174,7 +174,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, sourceIdsArray);
-		int count = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Source IDs parameter set", count, equalTo(1));
@@ -196,7 +196,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, streamIdsArray);
-		int count = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Stream IDs parameter set", count, equalTo(1));
@@ -218,7 +218,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, userIdsArray);
-		int count = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("User IDs parameter set", count, equalTo(1));
@@ -246,7 +246,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		int count = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Node IDs and source IDs parameters set", count, equalTo(2));

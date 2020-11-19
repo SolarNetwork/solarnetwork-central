@@ -43,8 +43,8 @@ import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 
 /**
  * Test cases for the database aggregate function to interpolate datum at a
@@ -55,11 +55,11 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
  */
 public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 
-	private DatumEntity calcDatumAt(UUID streamId, Instant at) {
-		return jdbcTemplate.execute(new ConnectionCallback<DatumEntity>() {
+	private Datum calcDatumAt(UUID streamId, Instant at) {
+		return jdbcTemplate.execute(new ConnectionCallback<Datum>() {
 
 			@Override
-			public DatumEntity doInConnection(Connection con) throws SQLException, DataAccessException {
+			public Datum doInConnection(Connection con) throws SQLException, DataAccessException {
 				try (CallableStatement stmt = con
 						.prepareCall("{call solardatm.calc_datm_at(?::uuid,?)}")) {
 					log.debug("Calculating datum stream {} at {}", streamId, at);
@@ -68,7 +68,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 					if ( stmt.execute() ) {
 						try (ResultSet rs = stmt.getResultSet()) {
 							if ( rs.next() ) {
-								DatumEntity d = DatumEntityRowMapper.INSTANCE.mapRow(rs, 1);
+								Datum d = DatumEntityRowMapper.INSTANCE.mapRow(rs, 1);
 								log.debug("Calculated datum at {}: {}", at, d);
 								return d;
 							}
@@ -86,7 +86,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
 		// WHEN
-		DatumEntity d = calcDatumAt(UUID.randomUUID(), start.toInstant());
+		Datum d = calcDatumAt(UUID.randomUUID(), start.toInstant());
 
 		// THEN
 		assertThat("No result from no input", d, nullValue());
@@ -100,7 +100,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 				getClass(), "UTC");
 
 		// WHEN
-		DatumEntity d = calcDatumAt(streamId, start.minusYears(1).toInstant());
+		Datum d = calcDatumAt(streamId, start.minusYears(1).toInstant());
 
 		// THEN
 		assertThat("No result from too-early date", d, nullValue());
@@ -114,7 +114,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 				getClass(), "UTC");
 
 		// WHEN
-		DatumEntity d = calcDatumAt(streamId, start.plusYears(1).toInstant());
+		Datum d = calcDatumAt(streamId, start.plusYears(1).toInstant());
 
 		// THEN
 		assertThat("No result from too-early date", d, nullValue());
@@ -129,7 +129,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		Instant at = start.plusSeconds(75).toInstant();
-		DatumEntity d = calcDatumAt(streamId, at);
+		Datum d = calcDatumAt(streamId, at);
 
 		// THEN
 		assertThat("Result between datum available", d, notNullValue());
@@ -150,7 +150,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		Instant at = start.plusMinutes(8).toInstant();
-		DatumEntity d = calcDatumAt(streamId, at);
+		Datum d = calcDatumAt(streamId, at);
 
 		// THEN
 		assertThat("Result between datum available", d, notNullValue());
@@ -171,7 +171,7 @@ public class DbCalcDatumAtTests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		Instant at = start.plusMinutes(10).toInstant();
-		DatumEntity d = calcDatumAt(streamId, at);
+		Datum d = calcDatumAt(streamId, at);
 
 		// THEN
 		assertThat("Result between datum available", d, notNullValue());

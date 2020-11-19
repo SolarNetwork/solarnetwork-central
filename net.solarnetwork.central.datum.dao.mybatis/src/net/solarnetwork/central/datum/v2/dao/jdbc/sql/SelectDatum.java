@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -29,8 +30,10 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 
 /**
@@ -40,7 +43,8 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
  * @version 1.0
  * @since 3.8
  */
-public class SelectDatum implements PreparedStatementCreator, SqlProvider {
+public class SelectDatum
+		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumCriteria filter;
 	private final DatumPK id;
@@ -79,29 +83,131 @@ public class SelectDatum implements PreparedStatementCreator, SqlProvider {
 		this.id = id;
 	}
 
+	private void sqlFrom(StringBuilder buf) {
+		buf.append("FROM solardatm.da_datm datum\n");
+		if ( filter == null ) {
+			return;
+		}
+		if ( filter.getStreamId() == null ) {
+			if ( filter.getLocationId() != null ) {
+				buf.append(
+						"INNER JOIN solardatm.da_loc_datm_meta meta ON meta.stream_id = datum.stream_id\n");
+			} else if ( filter.getNodeId() != null ) {
+				buf.append(
+						"INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = datum.stream_id\n");
+			}
+		}
+	}
+
+	private void sqlWhere(StringBuilder buf) {
+		if ( id != null ) {
+			buf.append("WHERE datum.stream_id = ? AND datum.ts = ?");
+			return;
+		}
+		StringBuilder where = new StringBuilder();
+		if ( filter.getStreamId() != null ) {
+			where.append("\tAND datum.stream_id = ANY(?)\n");
+		} else {
+			DatumSqlUtils.whereDatumMetadata(filter, where);
+		}
+		DatumSqlUtils.whereDateRange(filter, where);
+		if ( where.length() > 0 ) {
+			buf.append("WHERE").append(where.substring(4));
+		}
+	}
+
+	private void sqlOrderBy(StringBuilder buf) {
+		if ( filter == null ) {
+			return;
+		}
+		buf.append("ORDER BY ");
+
+		StringBuilder order = new StringBuilder();
+		int idx = 0;
+		if ( filter.getSorts() != null && !filter.getSorts().isEmpty() ) {
+			idx = DatumSqlUtils.orderBySorts(filter.getSorts(),
+					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
+							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
+					buf);
+		}
+		if ( idx < 1 ) {
+			order.append("datum.stream_id, datum.ts");
+		}
+		buf.append(order.substring(idx));
+	}
+
+	private void sqlLimit(StringBuilder buf) {
+		if ( filter != null && filter.getMax() != null ) {
+			int max = filter.getMax();
+			if ( max > 0 ) {
+				buf.append("\nLIMIT ? OFFSET ?");
+			}
+		}
+	}
+
+	private void sqlCore(StringBuilder buf) {
+		buf.append(
+				"SELECT datum.stream_id, datum.ts, datum.received, datum.data_i, datum.data_a, datum.data_s, datum.data_t\n");
+		sqlFrom(buf);
+		sqlWhere(buf);
+	}
+
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append("SELECT stream_id, ts, received, data_i, data_a, data_s, data_t\n");
-		buf.append("FROM solardatm.da_datm\n");
-		if ( id != null ) {
-			buf.append("WHERE stream_id = ? AND ts = ?");
-		} else {
-			// TODO
-		}
+		sqlCore(buf);
+		sqlOrderBy(buf);
+		sqlLimit(buf);
 		return buf.toString();
+	}
+
+	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		if ( id != null ) {
+			stmt.setObject(++p, id.getStreamId(), Types.OTHER);
+			stmt.setTimestamp(++p, Timestamp.from(id.getTimestamp()));
+			return p;
+		}
+		if ( filter.getStreamId() != null ) {
+			Array a = con.createArrayOf("uuid", filter.getStreamIds());
+			stmt.setArray(++p, a);
+			a.free();
+		} else {
+			p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
+		}
+
+		p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+
+		return p;
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		if ( id != null ) {
-			stmt.setObject(1, id.getStreamId(), Types.OTHER);
-			stmt.setTimestamp(2, Timestamp.from(id.getTimestamp()));
-		} else {
-			// TODO
-		}
+		int p = prepareCore(con, stmt, 0);
+		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;
 	}
 
+	@Override
+	public PreparedStatementCreator countPreparedStatementCreator() {
+		return new CountPreparedStatementCreator();
+	}
+
+	private final class CountPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+
+		@Override
+		public String getSql() {
+			StringBuilder buf = new StringBuilder();
+			sqlCore(buf);
+			return DatumSqlUtils.wrappedCountQuery(buf.toString());
+		}
+
+		@Override
+		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+			PreparedStatement stmt = con.prepareStatement(getSql());
+			prepareCore(con, stmt, 0);
+			return stmt;
+		}
+
+	}
 }

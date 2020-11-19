@@ -78,7 +78,6 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
@@ -1789,7 +1788,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<DatumEntity> listDatum(JdbcOperations jdbcTemplate) {
+	public static List<Datum> listDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query("SELECT * FROM solardatm.da_datm ORDER BY stream_id, ts",
 				DatumEntityRowMapper.INSTANCE);
 	}

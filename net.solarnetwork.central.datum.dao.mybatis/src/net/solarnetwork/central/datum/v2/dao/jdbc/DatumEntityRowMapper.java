@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 
 /**
@@ -53,10 +54,10 @@ import net.solarnetwork.central.datum.v2.domain.DatumProperties;
  * @version 1.0
  * @since 3.8
  */
-public class DatumEntityRowMapper implements RowMapper<DatumEntity> {
+public class DatumEntityRowMapper implements RowMapper<Datum> {
 
 	/** A default instance for null aggregates. */
-	public static final RowMapper<DatumEntity> INSTANCE = new DatumEntityRowMapper();
+	public static final RowMapper<Datum> INSTANCE = new DatumEntityRowMapper();
 
 	@SuppressWarnings("unchecked")
 	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
@@ -68,7 +69,7 @@ public class DatumEntityRowMapper implements RowMapper<DatumEntity> {
 	}
 
 	@Override
-	public DatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public Datum mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = UUID.fromString(rs.getString(1));
 		Instant ts = rs.getTimestamp(2).toInstant();
 		Instant recv = rs.getTimestamp(3).toInstant();

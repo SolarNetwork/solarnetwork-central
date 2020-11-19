@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
@@ -160,7 +159,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
-		assertThat("Result total count", results.getTotalResults(), nullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 
@@ -201,7 +200,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
-		assertThat("Result total count", results.getTotalResults(), nullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 
