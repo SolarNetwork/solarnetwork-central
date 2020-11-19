@@ -23,12 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.RecentCriteria;
-import net.solarnetwork.dao.SortCriteria;
 
 /**
  * Search criteria for {@link Datum}.
@@ -37,8 +31,6 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  * @since 2.8
  */
-public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		TimeToleranceCriteria, OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface DatumCriteria extends DatumStreamCriteria, TimeToleranceCriteria {
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumAuditCriteria.java - 14/11/2020 4:42:27 pm
+ * DatumStreamCriteria.java - 20/11/2020 10:44:40 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,13 +22,31 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.RecentCriteria;
+import net.solarnetwork.dao.SortCriteria;
+
 /**
- * Search criteria for audit datum.
+ * Search criteria for datum streams.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface AuditDatumCriteria extends DatumStreamCriteria, DatumRollupCriteria {
+public interface DatumStreamCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
+		NodeMetadataCriteria, LocationMetadataCriteria, UserCriteria, AggregationCriteria,
+		RecentCriteria, OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+
+	/**
+	 * Test if this filter has any location, node, or source criteria.
+	 * 
+	 * @return {@literal true} if a location, node, or source ID is non-null
+	 */
+	default boolean hasDatumMetadataCriteria() {
+		return (getLocationId() != null || getNodeId() != null || getSourceId() != null);
+	}
 
 }

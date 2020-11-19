@@ -27,6 +27,7 @@ package net.solarnetwork.central.datum.v2.dao;
  * 
  * @author matt
  * @version 1.0
+ * @since 2.8
  */
 public interface UserCriteria {
 
@@ -48,5 +49,14 @@ public interface UserCriteria {
 	 * @return array of user IDs (may be {@literal null})
 	 */
 	Long[] getUserIds();
+
+	/**
+	 * Test if this filter has any user criteria.
+	 * 
+	 * @return {@literal true} if the user ID is non-null
+	 */
+	default boolean hasUserCriteria() {
+		return getUserId() != null;
+	}
 
 }

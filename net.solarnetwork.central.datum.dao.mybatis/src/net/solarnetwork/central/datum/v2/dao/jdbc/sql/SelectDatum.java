@@ -37,7 +37,8 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 
 /**
- * Select for {@link DatumEntity} instances.
+ * Select for {@link DatumEntity} instances via a {@link DatumPK} ID or
+ * {@link DatumCriteria} filter.
  * 
  * @author matt
  * @version 1.0
@@ -210,4 +211,5 @@ public class SelectDatum
 		}
 
 	}
+
 }

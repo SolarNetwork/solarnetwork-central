@@ -52,4 +52,34 @@ public interface DatumRollupCriteria {
 	 */
 	DatumRollupType[] getDatumRollupTypes();
 
+	/**
+	 * Test if this filter has any datum rollup criteria.
+	 * 
+	 * @return {@literal true} if the datum rollup type is non-null and not
+	 *         {@code None}
+	 */
+	default boolean hasDatumRollupCriteria() {
+		return getDatumRollupType() != null && !hasDatumRollupType(DatumRollupType.None);
+	}
+
+	/**
+	 * Test if a particular rollup type is present.
+	 * 
+	 * @param type
+	 *        the type to search for
+	 * @return {@literal true} if {@code type} is found
+	 */
+	default boolean hasDatumRollupType(DatumRollupType type) {
+		DatumRollupType[] types = getDatumRollupTypes();
+		if ( types == null ) {
+			return false;
+		}
+		for ( DatumRollupType t : types ) {
+			if ( t == type ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

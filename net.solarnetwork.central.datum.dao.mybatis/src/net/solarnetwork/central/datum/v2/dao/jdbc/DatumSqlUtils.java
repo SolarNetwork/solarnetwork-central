@@ -37,9 +37,11 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SortDescriptor;
@@ -237,6 +239,33 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by datum stream metadata.
+	 * 
+	 * <p>
+	 * This map contains the following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>created -&gt; aud_ts</li>
+	 * <li>node -&gt; aud_node_id</li>
+	 * <li>source -&gt; aud_source_id</li>
+	 * <li>time -&gt; aud_ts</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> AUDIT_DATUM_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.put("created", "aud_ts");
+		map.put("node", "aud_node_id");
+		map.put("source", "aud_source_id");
+		map.put("time", "aud_ts");
+		AUDIT_DATUM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
+	}
+
+	/**
 	 * Generate SQL {@literal ORDER BY} criteria for a set of
 	 * {@link SortDescriptor}.
 	 * 
@@ -375,7 +404,7 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereDatumMetadata(DatumCriteria filter, StringBuilder buf) {
+	public static int whereDatumMetadata(DatumStreamCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocationId() != null ) {
 			buf.append("\tAND meta.loc_id = ANY(?)\n");
@@ -578,7 +607,7 @@ public final class DatumSqlUtils {
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int prepareDatumMetadataFilter(DatumCriteria filter, Connection con,
+	public static int prepareDatumMetadataFilter(DatumStreamCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getLocationId() != null ) {
@@ -596,6 +625,18 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Get the SQL column name representing the time component of a query.
+	 * 
+	 * @param agg
+	 *        the aggregate level being queried
+	 * @return if {@code aggregation} is provided and not {@literal None} then
+	 *         {@code ts_start}; otherwise {@code ts}
+	 */
+	public static String timeColumnName(Aggregation aggregation) {
+		return (aggregation == null || aggregation != Aggregation.None ? "ts" : "ts_start");
+	}
+
+	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
 	 * 
 	 * <p>
@@ -609,15 +650,39 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
+	 * @see #whereDateRange(DateRangeCriteria, Aggregation, StringBuilder)
 	 */
 	public static int whereDateRange(DateRangeCriteria filter, StringBuilder buf) {
+		return whereDateRange(filter, null, buf);
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param aggregation
+	 *        if provided and not {@code None} then treat the time criteria
+	 *        column name as {@code ts_start}; otherwise use {@code ts}
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int whereDateRange(DateRangeCriteria filter, Aggregation aggregation,
+			StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getStartDate() != null ) {
-			buf.append("\tAND datum.ts >= ?\n");
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" >= ?\n");
 			paramCount += 1;
 		}
 		if ( filter.getEndDate() != null ) {
-			buf.append("\tAND datum.ts < ?\n");
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" < ?\n");
 			paramCount += 1;
 		}
 		return paramCount;
