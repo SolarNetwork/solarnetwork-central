@@ -34,6 +34,8 @@ import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -52,7 +54,12 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	private final JdbcOperations jdbcTemplate;
 
 	/**
+	 * Constructor.
 	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @throws IllegalArgumentException
+	 *         if {@code jdbcTemplate} is {@literal null}
 	 */
 	public JdbcDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();
@@ -64,20 +71,23 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 
 	@Override
 	public Class<? extends DatumEntity> getObjectType() {
-		// TODO Auto-generated method stub
-		return null;
+		return DatumEntity.class;
 	}
 
 	@Override
 	public DatumPK save(DatumEntity entity) {
-		// TODO Auto-generated method stub
-		return null;
+		if ( entity.getTimestamp() == null ) {
+			throw new IllegalArgumentException("The timestamp property is required.");
+		}
+		jdbcTemplate.update(new InsertDatum(entity));
+		return entity.getId();
 	}
 
 	@Override
 	public DatumEntity get(DatumPK id) {
-		// TODO Auto-generated method stub
-		return null;
+		List<DatumEntity> result = jdbcTemplate.query(new SelectDatum(id),
+				DatumEntityRowMapper.INSTANCE);
+		return (!result.isEmpty() ? result.get(0) : null);
 	}
 
 	@Override

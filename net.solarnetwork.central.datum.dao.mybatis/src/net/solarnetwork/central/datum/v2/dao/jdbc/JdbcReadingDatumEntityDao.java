@@ -51,6 +51,8 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 	 * 
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
+	 * @throws IllegalArgumentException
+	 *         if {@code jdbcTemplate} is {@literal null}
 	 */
 	public JdbcReadingDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();

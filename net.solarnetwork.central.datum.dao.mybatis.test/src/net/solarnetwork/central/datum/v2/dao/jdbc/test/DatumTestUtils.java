@@ -54,6 +54,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -77,6 +79,7 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
@@ -137,7 +140,7 @@ public final class DatumTestUtils {
 	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month)\"");
 
 	/** Sort for typed datum by timestamp. */
-	public static Comparator<TypedDatumEntity> SORT_TYPED_DATUM_BY_TS = new SortTypedDatumByTimestamp();
+	public static final Comparator<TypedDatumEntity> SORT_TYPED_DATUM_BY_TS = new SortTypedDatumByTimestamp();
 
 	private static class SortTypedDatumByTimestamp implements Comparator<TypedDatumEntity> {
 
@@ -149,6 +152,34 @@ public final class DatumTestUtils {
 			}
 			return c;
 		}
+	}
+
+	/** UUID sorter that matches how Postgres orders UUIDS (byte by byte). */
+	public static final Comparator<UUID> UUID_STRING_ORDER = new UuidByteOrder();
+
+	private static class UuidByteOrder implements Comparator<UUID> {
+
+		@Override
+		public int compare(UUID o1, UUID o2) {
+			return o1.toString().compareTo(o2.toString());
+		}
+
+	}
+
+	/**
+	 * Extract a sorted set of stream IDs from filter results.
+	 * 
+	 * @param results
+	 *        the results to extract the stream IDs from
+	 * @param comparator
+	 *        the comparator to use; for example {@link #UUID_STRING_ORDER}
+	 * @return the sorted set
+	 */
+	public static SortedSet<UUID> sortedStreamIds(DatumStreamFilterResults results,
+			Comparator<UUID> comparator) {
+		return results.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
+			return new TreeSet<>(comparator);
+		}));
 	}
 
 	/**

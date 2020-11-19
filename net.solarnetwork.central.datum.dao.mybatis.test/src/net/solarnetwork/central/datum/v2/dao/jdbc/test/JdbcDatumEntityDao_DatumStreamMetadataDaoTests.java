@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcDatumEntityDaoTests.java - 19/11/2020 4:41:41 pm
+ * JdbcDatumEntityDao_DatumStreamMetadataDaoTests.java - 19/11/2020 4:41:41 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -45,6 +45,7 @@ import org.junit.Test;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
@@ -55,12 +56,13 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
- * Test cases for the {@link JdbcDatumEntityDao} class.
+ * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
+ * {@link DatumStreamMetadataDao}.
  * 
  * @author matt
  * @version 1.0
  */
-public class JdbcDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
+public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdbcTestSupport {
 
 	private JdbcDatumEntityDao dao;
 

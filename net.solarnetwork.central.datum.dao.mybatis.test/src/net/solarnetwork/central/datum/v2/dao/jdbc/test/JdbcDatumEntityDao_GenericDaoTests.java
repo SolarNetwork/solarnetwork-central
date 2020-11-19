@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisDatumEntityDaoTests.java - 26/10/2020 7:21:00 pm
+ * JdbcDatumEntityDao_GenericDaoTests.java - 19/11/2020 5:24:58 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -55,35 +55,36 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
-import net.solarnetwork.central.datum.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
+import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.mybatis.MyBatisDatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.GeneralDatumSamples;
 
 /**
- * Test cases for the {@link MyBatisDatumEntityDao} class.
+ * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
+ * {@link GenericDao}.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
+public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport {
 
-	protected MyBatisDatumEntityDao dao;
+	private JdbcDatumEntityDao dao;
 
 	protected DatumEntity lastDatum;
 
 	@Before
 	public void setup() {
-		dao = new MyBatisDatumEntityDao(jdbcTemplate);
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
 
 	@Test
@@ -327,4 +328,5 @@ public class MyBatisDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(6));
 	}
+
 }
