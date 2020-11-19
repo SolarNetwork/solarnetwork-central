@@ -39,6 +39,6 @@ import net.solarnetwork.dao.SortCriteria;
  */
 public interface DatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria, NodeMetadataCriteria,
 		LocationMetadataCriteria, UserCriteria, AggregationCriteria, RecentCriteria,
-		OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+		TimeToleranceCriteria, OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
 
 }

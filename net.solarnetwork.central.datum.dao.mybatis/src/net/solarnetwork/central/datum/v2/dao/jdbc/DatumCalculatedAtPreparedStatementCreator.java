@@ -1,5 +1,5 @@
 /* ==================================================================
- * ReadingDatumCriteriaPreparedStatementSetter.java - 17/11/2020 11:47:59 am
+ * DatumCalculatedAtPreparedStatementCreator.java - 19/11/2020 2:16:06 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -35,25 +35,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 
 /**
- * Generate dynamic SQL for a {@link ReadingDatumCriteria} difference query.
+ * Generate dynamic SQL for a {@link DatumCriteria} "calculate datum at a point
+ * in time" query.
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class ReadingDifferencePreparedStatementCreator
-		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
+public class DatumCalculatedAtPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
 
 	/**
 	 * The default time tolerance used for the
-	 * {@link DatumReadingType#NearestDifference} query.
+	 * {@link net.solarnetwork.central.datum.domain.DatumReadingType#CalculatedAt}
+	 * query.
 	 */
-	public static Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
+	public static Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);
 
 	private static final Map<String, String> SORT_KEY_MAPPING;
 	static {
@@ -66,7 +65,7 @@ public class ReadingDifferencePreparedStatementCreator
 		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
-	private final ReadingDatumCriteria filter;
+	private final DatumCriteria filter;
 
 	/**
 	 * Constructor.
@@ -76,54 +75,32 @@ public class ReadingDifferencePreparedStatementCreator
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public ReadingDifferencePreparedStatementCreator(ReadingDatumCriteria filter) {
+	public DatumCalculatedAtPreparedStatementCreator(DatumCriteria filter) {
 		super();
-		if ( filter == null || filter.getReadingType() == null ) {
-			throw new IllegalArgumentException("The filter argument and reading type must not be null.");
+		if ( filter == null ) {
+			throw new IllegalArgumentException("The filter argument must not be null.");
 		}
 		this.filter = filter;
 	}
 
 	private boolean useLocalDates() {
-		return (filter != null && filter.getLocalStartDate() != null
-				&& filter.getLocalStartDate() != null);
+		return (filter != null && filter.getLocalStartDate() != null);
 	}
 
 	private void appendCoreSql(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
 		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
 		buf.append(")\n");
-		buf.append("SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*\n");
+		buf.append("SELECT (solardatm.calc_datm_at(d, ?)).*\n");
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
-		buf.append("INNER JOIN solardatm.");
-		switch (filter.getReadingType()) {
-			case Difference:
-				buf.append("find_datm_diff_rows");
-				break;
-
-			case NearestDifference:
-				buf.append("find_datm_diff_near_rows");
-				break;
-
-			case DifferenceWithin:
-				buf.append("find_datm_diff_within_rows");
-				break;
-
-			default:
-				throw new UnsupportedOperationException(
-						"Reading type " + filter.getReadingType() + " not supported.");
-		}
-		buf.append("(s.stream_id");
+		buf.append("INNER JOIN solardatm.find_datm_around(s.stream_id");
 		if ( useLocalDates() ) {
-			buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
+			buf.append(", ? AT TIME ZONE s.time_zone");
 		} else {
-			buf.append(", ?, ?");
-		}
-		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
 			buf.append(", ?");
 		}
-		buf.append(") d ON TRUE\n");
+		buf.append(", ?) d ON TRUE\n");
 		buf.append("GROUP BY s.stream_id");
 	}
 
@@ -146,47 +123,21 @@ public class ReadingDifferencePreparedStatementCreator
 		int p = DatumSqlUtils.nodeMetadataFilterPrepare(filter, con, stmt, 0);
 		if ( useLocalDates() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
-			stmt.setObject(++p, filter.getLocalEndDate(), Types.TIMESTAMP);
 		} else {
 			stmt.setTimestamp(++p,
 					Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now()));
-			stmt.setTimestamp(++p,
-					Timestamp.from(filter.getEndDate() != null ? filter.getEndDate() : now()));
 		}
-		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
-			Period t = filter.getTimeTolerance();
-			if ( t == null ) {
-				t = DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE;
-			}
-			stmt.setObject(++p, t, Types.OTHER);
+		Period t = filter.getTimeTolerance();
+		if ( t == null ) {
+			t = DEFAULT_CALCULATED_AT_TIME_TOLERANCE;
 		}
+		stmt.setObject(++p, t, Types.OTHER);
 		return stmt;
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		return createStatement(con, getSql());
-	}
-
-	@Override
-	public PreparedStatementCreator countPreparedStatementCreator() {
-		return new CountPreparedStatementCreator();
-	}
-
-	private final class CountPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
-
-		@Override
-		public String getSql() {
-			StringBuilder buf = new StringBuilder();
-			appendCoreSql(buf);
-			return DatumSqlUtils.wrappedCountQuery(buf.toString());
-		}
-
-		@Override
-		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-			return createStatement(con, getSql());
-		}
-
 	}
 
 }
