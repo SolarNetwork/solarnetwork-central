@@ -23,11 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
 
 /**
  * Search criteria for datum reading results.
@@ -36,9 +31,7 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  * @since 2.8
  */
-public interface ReadingDatumCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
-		NodeMetadataCriteria, LocationMetadataCriteria, UserCriteria, AggregationCriteria,
-		TimeToleranceCriteria, OptimizedQueryCriteria, PaginationCriteria, SortCriteria {
+public interface ReadingDatumCriteria extends DatumStreamCriteria, TimeToleranceCriteria {
 
 	/**
 	 * Get the datum reading type.

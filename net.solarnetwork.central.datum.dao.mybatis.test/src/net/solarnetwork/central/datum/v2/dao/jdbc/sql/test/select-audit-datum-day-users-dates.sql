@@ -8,12 +8,14 @@ SELECT datum.ts_start AS aud_ts,
 	meta.node_id AS aud_node_id,
 	meta.source_id AS aud_source_id,
 	datum.datum_count AS aud_datum_count,
+	datum.datum_hourly_count AS aud_datum_hourly_count,
+	CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,
 	datum.prop_count AS aud_datum_prop_count,
 	datum.datum_q_count AS aud_datum_query_count,
-	'Hour' AS aud_agg_kind,
-	NULL::bigint AS aud_datum_hourly_count,
-	NULL::bigint AS aud_datum_daily_count,
+	'Day' AS aud_agg_kind,
 	NULL::bigint AS aud_datum_monthly_count
 FROM s
-INNER JOIN solardatm.aud_datm_hourly datum ON datum.stream_id = s.stream_id
+INNER JOIN solardatm.aud_datm_daily datum ON datum.stream_id = s.stream_id
+WHERE datum.ts_start >= ?
+	AND datum.ts_start < ?
 ORDER BY aud_ts, aud_node_id, aud_source_id

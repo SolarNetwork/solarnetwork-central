@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -43,6 +44,7 @@ import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -418,10 +420,91 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * A metadata select style, to optimize queries.
+	 * 
+	 * <p>
+	 * TODO
+	 * </p>
+	 * 
+	 * @author matt
+	 * @version 1.0
+	 */
+	public enum MetadataSelectStyle {
+		/**
+		 * Query for the minimum metadata.
+		 * 
+		 * <p>
+		 * This will output the following columns:
+		 * </p>
+		 * 
+		 * <ol>
+		 * <li>stream_id</li>
+		 * <li>obj_id</li>
+		 * <li>source_id</li>
+		 * </ol>
+		 */
+		Minimum,
+
+		/**
+		 * Query for the minimum metadata.
+		 * 
+		 * <p>
+		 * This will output the following columns:
+		 * </p>
+		 * 
+		 * <ol>
+		 * <li>stream_id</li>
+		 * <li>obj_id</li>
+		 * <li>source_id</li>
+		 * <li>time_zone</li>
+		 * </ol>
+		 */
+		WithZone,
+
+		/**
+		 * Query for the full metadata including time zone.
+		 * 
+		 * <p>
+		 * This will output the following columns:
+		 * </p>
+		 * 
+		 * <ol>
+		 * <li>stream_id</li>
+		 * <li>obj_id</li>
+		 * <li>source_id</li>
+		 * <li>names_i</li>
+		 * <li>names_a</li>
+		 * <li>names_s</li>
+		 * <li>jdata</li>
+		 * <li>kind</li>
+		 * <li>time_zone</li>
+		 * </ol>
+		 */
+		Full;
+	}
+
+	/**
+	 * Generate SQL query to find full node metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, MetadataSelectStyle,
+	 *      StringBuilder)
+	 */
+	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, StringBuilder buf) {
+		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
+	}
+
+	/**
 	 * Generate SQL query to find node metadata.
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param style
+	 *        the select style
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
@@ -429,16 +512,24 @@ public final class DatumSqlUtils {
 	 * @see #prepareNodeMetadataFilter(NodeMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, StringBuilder buf) {
-		buf.append("SELECT meta.stream_id, meta.node_id, meta.source_id, meta.names_i, meta.names_a\n");
-		buf.append(
-				"\t, meta.names_s, meta.jdata, 'n'::CHARACTER AS kind, COALESCE(l.time_zone, 'UTC') AS time_zone\n");
-		buf.append("FROM solardatm.da_datm_meta meta\n");
+	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, MetadataSelectStyle style,
+			StringBuilder buf) {
+		buf.append("SELECT meta.stream_id, meta.node_id, meta.source_id");
+		if ( style == MetadataSelectStyle.Full ) {
+			buf.append(", meta.names_i, meta.names_a, meta.names_s, meta.jdata, 'n'::CHARACTER AS kind");
+		}
+		if ( style != MetadataSelectStyle.Minimum ) {
+			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
+		}
+		buf.append("\nFROM solardatm.da_datm_meta meta\n");
 		if ( filter.getUserIds() != null ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
 		}
-		buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id\n");
-		buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id\n");
+		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
+		if ( style != MetadataSelectStyle.Minimum ) {
+			buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id\n");
+			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id\n");
+		}
 		int paramCount = 0;
 		if ( filter != null ) {
 			StringBuilder where = new StringBuilder();
@@ -452,10 +543,27 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Generate SQL query to find full location metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #locationMetadataFilterSql(LocationMetadataCriteria,
+	 *      MetadataSelectStyle, StringBuilder)
+	 */
+	public static int locationMetadataFilterSql(LocationMetadataCriteria filter, StringBuilder buf) {
+		return locationMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
+	}
+
+	/**
 	 * Generate SQL query to find location metadata.
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param style
+	 *        the select style
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
@@ -463,15 +571,23 @@ public final class DatumSqlUtils {
 	 * @see #prepareLocationMetadataFilter(LocationMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int locationMetadataFilterSql(LocationMetadataCriteria filter, StringBuilder buf) {
-		buf.append("SELECT meta.stream_id, meta.loc_id, meta.source_id, meta.names_i, meta.names_a\n");
-		buf.append(
-				"\t, meta.names_s, meta.jdata, 'l'::CHARACTER AS kind, COALESCE(l.time_zone, 'UTC') AS time_zone\n");
-		buf.append("FROM solardatm.da_loc_datm_meta meta\n");
+	public static int locationMetadataFilterSql(LocationMetadataCriteria filter,
+			MetadataSelectStyle style, StringBuilder buf) {
+		buf.append("SELECT meta.stream_id, meta.loc_id, meta.source_id");
+		if ( style == MetadataSelectStyle.Full ) {
+			buf.append(", meta.names_i, meta.names_a, meta.names_s, meta.jdata, 'l'::CHARACTER AS kind");
+		}
+		if ( style != MetadataSelectStyle.Minimum ) {
+			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
+		}
+		buf.append("\nFROM solardatm.da_loc_datm_meta meta\n");
 		if ( filter.getUserIds() != null ) {
 			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
 		}
-		buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id\n");
+		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
+		if ( style != MetadataSelectStyle.Minimum ) {
+			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id\n");
+		}
 		int paramCount = 0;
 		if ( filter != null ) {
 			StringBuilder where = new StringBuilder();
@@ -633,7 +749,7 @@ public final class DatumSqlUtils {
 	 *         {@code ts_start}; otherwise {@code ts}
 	 */
 	public static String timeColumnName(Aggregation aggregation) {
-		return (aggregation == null || aggregation != Aggregation.None ? "ts" : "ts_start");
+		return (aggregation == null || aggregation == Aggregation.None ? "ts" : "ts_start");
 	}
 
 	/**
@@ -689,6 +805,72 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * A standardized SQL clause for casting a local date to a stream's time
+	 * zone.
+	 * 
+	 * <p>
+	 * Can be passed as the {@code zoneClause} to
+	 * {@link #whereLocalDateRange(LocalDateRangeCriteria, Aggregation, String, StringBuilder)}.
+	 * </p>
+	 */
+	public static final String SQL_AT_STREAM_METADATA_TIME_ZONE = "AT TIME ZONE s.time_zone";
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * <p>
+	 * The {@code zoneClause} argument can be used to cast the local date
+	 * parameters into absolute dates. For example, assuming a stream metadata
+	 * table is available under the alias {@literal s}, a {@code zoneClause} of
+	 * {@literal AT TIME ZONE s.time_zone} would generate SQl like:
+	 * </p>
+	 * 
+	 * <pre>
+	 * 	AND datum.ts >= ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts < ? AT TIME ZONE s.time_zone
+	 * </pre>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param aggregation
+	 *        if provided and not {@code None} then treat the time criteria
+	 *        column name as {@code ts_start}; otherwise use {@code ts}
+	 * @param zoneClause
+	 *        if provided, then an extra clause to add after each local date
+	 *        parameter placeholder
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int whereLocalDateRange(LocalDateRangeCriteria filter, Aggregation aggregation,
+			String zoneClause, StringBuilder buf) {
+		int paramCount = 0;
+		if ( filter.getLocalStartDate() != null ) {
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" >= ?");
+			if ( zoneClause != null ) {
+				buf.append(" ").append(zoneClause);
+			}
+			buf.append("\n");
+			paramCount += 1;
+		}
+		if ( filter.getLocalEndDate() != null ) {
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" < ?");
+			if ( zoneClause != null ) {
+				buf.append(" ").append(zoneClause);
+			}
+			buf.append("\n");
+			paramCount += 1;
+		}
+		return paramCount;
+	}
+
+	/**
 	 * Prepare a SQL query date range filter.
 	 * 
 	 * @param filter
@@ -710,6 +892,32 @@ public final class DatumSqlUtils {
 		}
 		if ( filter.getEndDate() != null ) {
 			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getEndDate()));
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query local date range filter.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static int prepareLocalDateRangeFilter(LocalDateRangeCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter.getLocalStartDate() != null ) {
+			stmt.setObject(++parameterOffset, filter.getLocalStartDate(), Types.TIMESTAMP);
+		}
+		if ( filter.getLocalEndDate() != null ) {
+			stmt.setObject(++parameterOffset, filter.getLocalEndDate(), Types.TIMESTAMP);
 		}
 		return parameterOffset;
 	}

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -46,8 +47,8 @@ import net.solarnetwork.central.domain.Aggregation;
 public class SelectAuditDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
-	private final AuditDatumCriteria filter;
-	private final Aggregation aggregation;
+	protected final AuditDatumCriteria filter;
+	protected final Aggregation aggregation;
 
 	private static Aggregation aggregation(AuditDatumCriteria filter) {
 		// limit aggregation to specific supported ones
@@ -76,17 +77,31 @@ public class SelectAuditDatum
 	 *         if {@code filter} is {@literal null}
 	 */
 	public SelectAuditDatum(AuditDatumCriteria filter) {
+		this(filter, aggregation(filter));
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param aggregation
+	 *        the aggregation
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} is {@literal null}
+	 */
+	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument not be null.");
 		}
 		this.filter = filter;
-		this.aggregation = aggregation(filter);
+		this.aggregation = aggregation;
 	}
 
 	private void sqlSelectPk(StringBuilder buf) {
 		if ( !filter.hasDatumMetadataCriteria() || filter.hasDatumRollupType(DatumRollupType.Time) ) {
-			buf.append("aud.ts_start AS aud_ts,\n");
+			buf.append("datum.ts_start AS aud_ts,\n");
 		} else {
 			buf.append("NULL::timestamptz AS aud_ts,\n");
 		}
@@ -104,13 +119,13 @@ public class SelectAuditDatum
 
 	private void sqlSelectHour(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() ) {
-			buf.append("SUM(aud.datum_count) AS aud_datum_count,\n");
-			buf.append("SUM(aud.prop_count) AS aud_datum_prop_count,\n");
-			buf.append("SUM(aud.datum_q_count) AS aud_datum_query_count,\n");
+			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
+			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 		} else {
-			buf.append("aud.datum_count AS aud_datum_count,\n");
-			buf.append("aud.prop_count AS aud_datum_prop_count,\n");
-			buf.append("aud.datum_q_count AS aud_datum_query_count,\n");
+			buf.append("datum.datum_count AS aud_datum_count,\n");
+			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
 		buf.append("'Hour' AS aud_agg_kind,\n");
 		buf.append("NULL::bigint AS aud_datum_hourly_count,\n");
@@ -118,21 +133,27 @@ public class SelectAuditDatum
 		buf.append("NULL::bigint AS aud_datum_monthly_count");
 	}
 
-	private void sqlSelectDay(StringBuilder buf) {
+	/**
+	 * Generate SQL SELECT fields for day aggregation.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlSelectDay(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() ) {
-			buf.append("SUM(aud.datum_count) AS aud_datum_count,\n");
-			buf.append("SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,\n");
+			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
+			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append(
-					"SUM(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,\n");
-			buf.append("SUM(aud.prop_count) AS aud_datum_prop_count,\n");
-			buf.append("SUM(aud.datum_q_count) AS aud_datum_query_count,\n");
+					"SUM(CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,\n");
+			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 		} else {
-			buf.append("aud.datum_count AS aud_datum_count,\n");
-			buf.append("aud.datum_hourly_count AS aud_datum_hourly_count,\n");
+			buf.append("datum.datum_count AS aud_datum_count,\n");
+			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append(
-					"CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,\n");
-			buf.append("aud.prop_count AS aud_datum_prop_count,\n");
-			buf.append("aud.datum_q_count AS aud_datum_query_count,\n");
+					"CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,\n");
+			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
 		buf.append("'Day' AS aud_agg_kind,\n");
 		buf.append("NULL::bigint AS aud_datum_monthly_count\n");
@@ -140,30 +161,33 @@ public class SelectAuditDatum
 
 	private void sqlSelectMonth(StringBuilder buf) {
 		if ( filter.hasDatumRollupCriteria() ) {
-			buf.append("SUM(aud.datum_count) AS aud_datum_count,\n");
-			buf.append("SUM(aud.datum_hourly_count) AS aud_datum_hourly_count,\n");
-			buf.append("SUM(aud.datum_daily_count) AS aud_datum_daily_count,\n");
+			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
+			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
+			buf.append("SUM(datum.datum_daily_count) AS aud_datum_daily_count,\n");
 			buf.append(
-					"SUM(CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count,\n");
-			buf.append("SUM(aud.prop_count) AS aud_datum_prop_count,\n");
-			buf.append("SUM(aud.datum_q_count) AS aud_datum_query_count,\n");
+					"SUM(CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count,\n");
+			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 		} else {
-			buf.append("aud.datum_count AS aud_datum_count,\n");
-			buf.append("aud.datum_hourly_count AS aud_datum_hourly_count,\n");
-			buf.append("aud.datum_daily_count AS aud_datum_daily_count,\n");
+			buf.append("datum.datum_count AS aud_datum_count,\n");
+			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
+			buf.append("datum.datum_daily_count AS aud_datum_daily_count,\n");
 			buf.append(
-					"CASE aud.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count,\n");
-			buf.append("aud.prop_count AS aud_datum_prop_count,\n");
-			buf.append("aud.datum_q_count AS aud_datum_query_count,\n");
+					"CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count,\n");
+			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
 		buf.append("'Month' AS aud_agg_kind\n");
 	}
 
-	/*-
-	<include refid="fragment-findall-AuditDatumEntity-rollup-group"/>
-	<include refid="fragment-findall-AuditDatumEntity-order"/>
-	*/
-	private void sqlCore(StringBuilder buf) {
+	/**
+	 * Generate the full SQL statement, without any specific output ordering.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlCore(StringBuilder buf) {
+		sqlCte(buf);
 		buf.append("SELECT ");
 		sqlSelectPk(buf);
 		if ( aggregation == Aggregation.Hour ) {
@@ -173,26 +197,65 @@ public class SelectAuditDatum
 		} else {
 			sqlSelectDay(buf);
 		}
-		buf.append("\nFROM ");
-		if ( aggregation == Aggregation.Hour ) {
-			buf.append("solardatm.aud_datm_hourly aud\n");
-		} else if ( aggregation == Aggregation.Month ) {
-			buf.append("solardatm.aud_datm_monthly aud\n");
-		} else {
-			buf.append("solardatm.aud_datm_daily aud\n");
-		}
-		buf.append("INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = aud.stream_id\n");
-		if ( filter.hasUserCriteria() ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
-		}
+		sqlFrom(buf);
 		sqlWhere(buf);
 		sqlRollupGroup(buf);
 	}
 
-	private void sqlWhere(StringBuilder buf) {
+	/**
+	 * Generate the SQL common table expression.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlCte(StringBuilder buf) {
+		buf.append("WITH s AS (\n");
+		DatumSqlUtils.nodeMetadataFilterSql(filter,
+				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+						: DatumSqlUtils.MetadataSelectStyle.Minimum,
+				buf);
+		buf.append(")\n");
+	}
+
+	/**
+	 * Get the SQL table name to query for audit data.
+	 * 
+	 * @return the table name
+	 */
+	protected String auditTableName() {
+		if ( aggregation == Aggregation.Hour ) {
+			return "solardatm.aud_datm_hourly";
+		} else if ( aggregation == Aggregation.Month ) {
+			return "solardatm.aud_datm_monthly";
+		} else {
+			return "solardatm.aud_datm_daily";
+		}
+	}
+
+	/**
+	 * Generate the SQL {@literal FROM} clause.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlFrom(StringBuilder buf) {
+		buf.append("\nFROM s\n");
+		buf.append("INNER JOIN ").append(auditTableName())
+				.append(" datum ON datum.stream_id = s.stream_id\n");
+	}
+
+	/**
+	 * Generate the SQL {@literal WHERE} clause.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlWhere(StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
-		int idx = DatumSqlUtils.whereDatumMetadata(filter, where);
-		idx |= DatumSqlUtils.whereDateRange(filter, aggregation, where);
+		int idx = filter.hasLocalDateRange()
+				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
+						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
+				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE ").append(where.substring(4));
 		}
@@ -204,7 +267,7 @@ public class SelectAuditDatum
 			for ( DatumRollupType t : filter.getDatumRollupTypes() ) {
 				switch (t) {
 					case Time:
-						group.append(", aud.ts_start");
+						group.append(", datum.ts_start");
 						break;
 
 					case Node:
@@ -273,13 +336,18 @@ public class SelectAuditDatum
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
-		p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		if ( filter.hasLocalDateRange() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+		} else {
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		}
 		return p;
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
+		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;

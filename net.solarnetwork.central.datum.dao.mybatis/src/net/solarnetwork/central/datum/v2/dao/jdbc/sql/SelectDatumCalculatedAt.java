@@ -72,19 +72,18 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 		this.filter = filter;
 	}
 
-	private boolean useLocalDates() {
-		return (filter.getLocalStartDate() != null);
-	}
-
 	private void appendCoreSql(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		DatumSqlUtils.nodeMetadataFilterSql(filter,
+				filter.hasLocalStartDate() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+						: DatumSqlUtils.MetadataSelectStyle.Minimum,
+				buf);
 		buf.append(")\n");
 		buf.append("SELECT (solardatm.calc_datm_at(d, ?)).*\n");
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.find_datm_around(s.stream_id");
-		if ( useLocalDates() ) {
+		if ( filter.hasLocalStartDate() ) {
 			buf.append(", ? AT TIME ZONE s.time_zone");
 		} else {
 			buf.append(", ?");
@@ -110,7 +109,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
-		if ( useLocalDates() ) {
+		if ( filter.hasLocalStartDate() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
 		} else {
 			stmt.setTimestamp(++p,

@@ -1,7 +1,9 @@
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id
+	SELECT meta.stream_id, meta.node_id, meta.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
 	FROM solardatm.da_datm_meta meta
 	INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE un.user_id = ANY(?)
 )
 SELECT datum.ts_start AS aud_ts,
@@ -16,4 +18,6 @@ SELECT datum.ts_start AS aud_ts,
 	NULL::bigint AS aud_datum_monthly_count
 FROM s
 INNER JOIN solardatm.aud_datm_daily datum ON datum.stream_id = s.stream_id
+WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
+	AND datum.ts_start < ? AT TIME ZONE s.time_zone
 ORDER BY aud_ts, aud_node_id, aud_source_id
