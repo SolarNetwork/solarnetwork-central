@@ -69,8 +69,6 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/AuditNodeDatum.xml</value>
-				
-				<value>classpath:/net/solarnetwork/central/datum/v2/dao/mybatis/map/AuditDatumEntity.xml</value>
 			</list>
 		</property>
 	</bean>

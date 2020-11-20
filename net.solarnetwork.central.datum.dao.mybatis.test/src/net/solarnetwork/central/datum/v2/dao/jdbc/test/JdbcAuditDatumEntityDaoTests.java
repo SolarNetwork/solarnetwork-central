@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisAuditDatumEntityDaoTests.java - 15/11/2020 12:45:36 pm
+ * JdbcAuditDatumEntityDaoTests.java - 20/11/2020 8:19:11 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.mybatis.test;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.accumulativeAuditDatum;
@@ -46,12 +46,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
+import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils;
-import net.solarnetwork.central.datum.v2.dao.mybatis.MyBatisAuditDatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
@@ -60,19 +59,24 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
 
 /**
- * Test cases for the {@link MyBatisAuditDatumEntityDao} class.
+ * Test cases for the {@link JdbcAuditDatumEntityDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisAuditDatumEntityDaoTests extends AbstractMyBatisDaoTestSupport {
+public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 
-	protected MyBatisAuditDatumEntityDao dao;
+	private JdbcAuditDatumEntityDao dao;
 
 	@Before
 	public void setup() {
-		dao = new MyBatisAuditDatumEntityDao();
-		dao.setSqlSessionFactory(getSqlSessionFactory());
+		dao = new JdbcAuditDatumEntityDao(jdbcTemplate);
+	}
+
+	@Before
+	public void setupInTransaction() {
+		setupTestNode();
+		setupTestUser();
 	}
 
 	private void assertAuditDatum(String prefix, AuditDatumRollup result, AuditDatumRollup expected) {
@@ -694,4 +698,5 @@ public class MyBatisAuditDatumEntityDaoTests extends AbstractMyBatisDaoTestSuppo
 		assertAuditDatum("Daily acc most recent 3", itr.next(), accumulativeAuditDatumRollup(
 				TEST_NODE_ID, TEST_SOURCE_ID, days.get(days.size() - 1), 800L, 192L, 8, 2));
 	}
+
 }

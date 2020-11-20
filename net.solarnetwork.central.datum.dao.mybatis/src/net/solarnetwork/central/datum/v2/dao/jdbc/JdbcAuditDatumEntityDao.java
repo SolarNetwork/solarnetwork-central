@@ -22,12 +22,17 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.dao.mybatis.support.DaoUtils;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAccumulativeAuditDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -56,35 +61,36 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	private static Aggregation aggregationForAuditDatumCriteria(AuditDatumCriteria filter) {
-		// limit aggregation to specific supported ones
-		Aggregation aggregation = Aggregation.Day;
-		if ( filter != null && filter.getAggregation() != null ) {
-			switch (filter.getAggregation()) {
-				case Hour:
-				case Day:
-				case Month:
-					aggregation = filter.getAggregation();
-					break;
-
-				default:
-					// ignore all others
-			}
+	private FilterResults<AuditDatumRollup, DatumPK> findFiltered(AuditDatumCriteria filter,
+			PreparedStatementCreator creator) {
+		if ( filter == null ) {
+			throw new IllegalArgumentException("The filter must be provided.");
 		}
-		return aggregation;
+
+		Long totalResults = null;
+		if ( filter.getMax() != null && creator instanceof CountPreparedStatementCreatorProvider ) {
+			totalResults = DatumSqlUtils.executeCountQuery(jdbcTemplate,
+					((CountPreparedStatementCreatorProvider) creator).countPreparedStatementCreator());
+		}
+
+		List<AuditDatumRollup> data = jdbcTemplate.query(creator,
+				AuditDatumEntityRollupRowMapper.INSTANCE);
+		if ( filter.getMax() == null ) {
+			totalResults = (long) data.size();
+		}
+		return DaoUtils.filterResults(data, filter, totalResults, data.size());
+
 	}
 
 	@Override
 	public FilterResults<AuditDatumRollup, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter) {
-		// TODO Auto-generated method stub
-		return null;
+		return findFiltered(filter, new SelectAuditDatum(filter));
 	}
 
 	@Override
 	public FilterResults<AuditDatumRollup, DatumPK> findAccumulativeAuditDatumFiltered(
 			AuditDatumCriteria filter) {
-		// TODO Auto-generated method stub
-		return null;
+		return findFiltered(filter, new SelectAccumulativeAuditDatum(filter));
 	}
 
 }

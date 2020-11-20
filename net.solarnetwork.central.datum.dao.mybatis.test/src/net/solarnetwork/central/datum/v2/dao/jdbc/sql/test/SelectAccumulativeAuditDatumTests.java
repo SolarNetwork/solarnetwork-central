@@ -27,6 +27,7 @@ import static org.junit.Assert.assertThat;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAccumulativeAuditDatum;
 
@@ -53,6 +54,38 @@ public class SelectAccumulativeAuditDatumTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-audit-acc-datum-day-users.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_day_users_rollupTime() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setUserId(1L);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.Time });
+
+		// WHEN
+		String sql = new SelectAccumulativeAuditDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-audit-acc-datum-day-users-rollupTime.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_day_users_rollupAll() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setUserId(1L);
+		filter.setDatumRollupTypes(new DatumRollupType[] { DatumRollupType.All });
+
+		// WHEN
+		String sql = new SelectAccumulativeAuditDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-audit-acc-datum-day-users-rollupAll.sql", TestSqlResources.class));
 	}
 
 	@Test

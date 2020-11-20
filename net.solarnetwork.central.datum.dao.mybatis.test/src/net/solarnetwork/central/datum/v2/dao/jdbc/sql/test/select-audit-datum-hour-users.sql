@@ -5,12 +5,12 @@ WITH s AS (
 	WHERE un.user_id = ANY(?)
 )
 SELECT datum.ts_start AS aud_ts,
-	meta.node_id AS aud_node_id,
-	meta.source_id AS aud_source_id,
+	s.node_id AS aud_node_id,
+	s.source_id AS aud_source_id,
+	'Hour' AS aud_agg_kind,
 	datum.datum_count AS aud_datum_count,
 	datum.prop_count AS aud_datum_prop_count,
 	datum.datum_q_count AS aud_datum_query_count,
-	'Hour' AS aud_agg_kind,
 	NULL::bigint AS aud_datum_hourly_count,
 	NULL::bigint AS aud_datum_daily_count,
 	NULL::bigint AS aud_datum_monthly_count

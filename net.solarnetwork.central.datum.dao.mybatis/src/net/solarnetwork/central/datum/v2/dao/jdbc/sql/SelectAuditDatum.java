@@ -99,25 +99,32 @@ public class SelectAuditDatum
 		this.aggregation = aggregation;
 	}
 
-	private void sqlSelectPk(StringBuilder buf) {
-		if ( !filter.hasDatumMetadataCriteria() || filter.hasDatumRollupType(DatumRollupType.Time) ) {
+	/**
+	 * Generate SQL SELECT fields for primary key fields (time, node, source).
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	protected void sqlSelectPk(StringBuilder buf) {
+		if ( !filter.hasDatumRollupCriteria() || filter.hasDatumRollupType(DatumRollupType.Time) ) {
 			buf.append("datum.ts_start AS aud_ts,\n");
 		} else {
 			buf.append("NULL::timestamptz AS aud_ts,\n");
 		}
-		if ( !filter.hasDatumMetadataCriteria() || filter.hasDatumRollupType(DatumRollupType.Node) ) {
-			buf.append("meta.node_id AS aud_node_id,\n");
+		if ( !filter.hasDatumRollupCriteria() || filter.hasDatumRollupType(DatumRollupType.Node) ) {
+			buf.append("s.node_id AS aud_node_id,\n");
 		} else {
 			buf.append("NULL::bigint AS aud_node_id,\n");
 		}
-		if ( !filter.hasDatumMetadataCriteria() || filter.hasDatumRollupType(DatumRollupType.Source) ) {
-			buf.append("meta.source_id AS aud_source_id,\n");
+		if ( !filter.hasDatumRollupCriteria() || filter.hasDatumRollupType(DatumRollupType.Source) ) {
+			buf.append("s.source_id AS aud_source_id,\n");
 		} else {
 			buf.append("NULL::text AS aud_source_id,\n");
 		}
 	}
 
 	private void sqlSelectHour(StringBuilder buf) {
+		buf.append("'Hour' AS aud_agg_kind,\n");
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
@@ -127,10 +134,9 @@ public class SelectAuditDatum
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
-		buf.append("'Hour' AS aud_agg_kind,\n");
 		buf.append("NULL::bigint AS aud_datum_hourly_count,\n");
 		buf.append("NULL::bigint AS aud_datum_daily_count,\n");
-		buf.append("NULL::bigint AS aud_datum_monthly_count");
+		buf.append("NULL::bigint AS aud_datum_monthly_count\n");
 	}
 
 	/**
@@ -140,44 +146,44 @@ public class SelectAuditDatum
 	 *        the buffer to append the SQL to
 	 */
 	protected void sqlSelectDay(StringBuilder buf) {
+		buf.append("'Day' AS aud_agg_kind,\n");
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
+			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append(
 					"SUM(CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,\n");
-			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
-			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
+			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append(
 					"CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,\n");
-			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
-			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
-		buf.append("'Day' AS aud_agg_kind,\n");
 		buf.append("NULL::bigint AS aud_datum_monthly_count\n");
 	}
 
 	private void sqlSelectMonth(StringBuilder buf) {
+		buf.append("'Month' AS aud_agg_kind,\n");
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
+			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append("SUM(datum.datum_daily_count) AS aud_datum_daily_count,\n");
 			buf.append(
-					"SUM(CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count,\n");
-			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
-			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
+					"SUM(CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_monthly_count\n");
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
+			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append("datum.datum_daily_count AS aud_datum_daily_count,\n");
 			buf.append(
-					"CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count,\n");
-			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
-			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
+					"CASE datum.datum_monthly_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_monthly_count\n");
 		}
-		buf.append("'Month' AS aud_agg_kind\n");
 	}
 
 	/**
@@ -239,7 +245,7 @@ public class SelectAuditDatum
 	 *        the buffer to append the SQL to
 	 */
 	protected void sqlFrom(StringBuilder buf) {
-		buf.append("\nFROM s\n");
+		buf.append("FROM s\n");
 		buf.append("INNER JOIN ").append(auditTableName())
 				.append(" datum ON datum.stream_id = s.stream_id\n");
 	}
@@ -271,11 +277,11 @@ public class SelectAuditDatum
 						break;
 
 					case Node:
-						group.append(", meta.node_id");
+						group.append(", s.node_id");
 						break;
 
 					case Source:
-						group.append(", meta.source_id");
+						group.append(", s.source_id");
 						break;
 
 					default:
@@ -283,7 +289,7 @@ public class SelectAuditDatum
 				}
 			}
 			if ( group.length() > 0 ) {
-				buf.append("GROUP BY ").append(group.substring(2));
+				buf.append("GROUP BY ").append(group.substring(2)).append("\n");
 			}
 		}
 	}
