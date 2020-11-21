@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.io.Serializable;
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -34,6 +36,10 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 2.8
  */
+@JsonPropertyOrder({ "ts", "nodeId", "sourceId", "aggregation", "datumTotalCount", "datumCount",
+		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
+		"datumQueryCount" })
+@JsonIgnoreProperties({ "id", "streamId" })
 public class AuditDatumEntityRollup extends AuditDatumEntity
 		implements AuditDatumRollup, Cloneable, Serializable {
 

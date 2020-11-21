@@ -99,6 +99,32 @@ public interface AuditDatum extends Identity<DatumPK> {
 	Integer getDatumMonthlyCount();
 
 	/**
+	 * Get the sum total of all datum counts.
+	 * 
+	 * @return the sum total of the datum count properties
+	 */
+	default long getDatumTotalCount() {
+		long t = 0;
+		Long l = getDatumCount();
+		if ( l != null ) {
+			t += l.longValue();
+		}
+		l = getDatumHourlyCount();
+		if ( l != null ) {
+			t += l.longValue();
+		}
+		Integer i = getDatumDailyCount();
+		if ( i != null ) {
+			t += i.longValue();
+		}
+		i = getDatumMonthlyCount();
+		if ( i != null ) {
+			t += i.longValue();
+		}
+		return t;
+	}
+
+	/**
 	 * Get the count of datum properties.
 	 * 
 	 * @return the datum property count

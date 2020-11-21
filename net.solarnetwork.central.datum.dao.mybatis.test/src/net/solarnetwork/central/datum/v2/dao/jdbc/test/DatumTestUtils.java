@@ -926,7 +926,7 @@ public final class DatumTestUtils {
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
 				try (CallableStatement datumStmt = con
 						.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
-					datumStmt.registerOutParameter(1, Types.VARCHAR);
+					datumStmt.registerOutParameter(1, Types.OTHER);
 					final Timestamp now = Timestamp.from(Instant.now());
 					for ( GeneralNodeDatum d : datums ) {
 						final GeneralDatumSamples s = d.getSamples();
@@ -948,7 +948,9 @@ public final class DatumTestUtils {
 						datumStmt.setString(6, json);
 						datumStmt.execute();
 
-						UUID streamId = UUID.fromString(datumStmt.getString(1));
+						Object id = datumStmt.getObject(1);
+						UUID streamId = (id instanceof UUID ? (UUID) id
+								: id != null ? UUID.fromString(id.toString()) : null);
 						result.computeIfAbsent(nspk, k -> {
 							return createMetadata(streamId, timeZoneId, datums, k);
 						});
@@ -1808,6 +1810,22 @@ public final class DatumTestUtils {
 						+ "LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id "
 						+ "LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id ORDER BY node_id",
 				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
+	}
+
+	/**
+	 * Get all available node metadata records.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @return the results, never {@literal null}
+	 */
+	public static List<LocationDatumStreamMetadata> listLocationMetadata(JdbcOperations jdbcTemplate) {
+		return jdbcTemplate.query(
+				"SELECT stream_id,m.loc_id,source_id,names_i,names_a,names_s"
+						+ ",jdata,'l'::CHARACTER AS kind,COALESCE(l.time_zone, 'UTC') AS time_zone "
+						+ "FROM solardatm.da_loc_datm_meta m "
+						+ "LEFT OUTER JOIN solarnet.sn_loc l ON l.id = m.loc_id ORDER BY loc_id",
+				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
 	}
 
 	/**

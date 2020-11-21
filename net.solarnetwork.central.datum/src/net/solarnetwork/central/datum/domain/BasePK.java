@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import org.apache.commons.codec.digest.DigestUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Base class for primary key values.
@@ -60,6 +61,7 @@ public abstract class BasePK implements Serializable, Cloneable {
 	 * 
 	 * @return computed ID string
 	 */
+	@JsonIgnore
 	public final String getId() {
 		StringBuilder builder = new StringBuilder();
 		populateIdValue(builder);

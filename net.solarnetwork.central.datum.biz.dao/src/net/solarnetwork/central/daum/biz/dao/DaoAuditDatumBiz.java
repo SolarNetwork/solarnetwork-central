@@ -23,50 +23,121 @@
 package net.solarnetwork.central.daum.biz.dao;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * DAO based implementation of {@link AuditDatumBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoAuditDatumBiz implements AuditDatumBiz {
 
-	private final GeneralNodeDatumDao datumDao;
+	private final AuditDatumDao auditDatumDao;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param datumDao
-	 *        the datum DAO to use
+	 * @param auditDatumDao
+	 *        the DAO to use
 	 */
-	public DaoAuditDatumBiz(GeneralNodeDatumDao datumDao) {
+	public DaoAuditDatumBiz(AuditDatumDao auditDatumDao) {
 		super();
-		this.datumDao = datumDao;
+		this.auditDatumDao = auditDatumDao;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<AuditDatumRollup, DatumPK> findAuditDatumFiltered(AuditDatumCriteria filter) {
+		return auditDatumDao.findAuditDatumFiltered(filter);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<AuditDatumRollup, DatumPK> findAccumulativeAuditDatumFiltered(
+			AuditDatumCriteria filter) {
+		return auditDatumDao.findAccumulativeAuditDatumFiltered(filter);
+	}
+
+	private static AuditDatumCriteria convertFilter(AggregateGeneralNodeDatumFilter legacy,
+			List<net.solarnetwork.central.domain.SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		BasicDatumCriteria result = new BasicDatumCriteria();
+		result.setAggregation(legacy.getAggregation());
+		result.setDatumRollupTypes(legacy.getDatumRollupTypes());
+		result.setMostRecent(legacy.isMostRecent());
+		result.setWithoutTotalResultsCount(legacy.isWithoutTotalResultsCount());
+		result.setNodeIds(legacy.getNodeIds());
+		result.setSourceIds(legacy.getSourceIds());
+		result.setUserIds(legacy.getUserIds());
+		result.setStartDate(JodaDateUtils.fromJodaToInstant(legacy.getStartDate()));
+		result.setEndDate(JodaDateUtils.fromJodaToInstant(legacy.getEndDate()));
+		result.setLocalStartDate(JodaDateUtils.fromJoda(legacy.getLocalStartDate()));
+		result.setLocalEndDate(JodaDateUtils.fromJoda(legacy.getLocalEndDate()));
+
+		if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
+			List<SortDescriptor> sorts = sortDescriptors.stream().map(e -> {
+				return new SimpleSortDescriptor(e.getSortKey(), e.isDescending());
+			}).collect(Collectors.toList());
+			result.setSorts(sorts);
+		}
+
+		result.setOffset(offset);
+		result.setMax(max);
+
+		return result;
+	}
+
+	private static net.solarnetwork.central.domain.FilterResults<AuditDatumRecordCounts> convertResults(
+			FilterResults<AuditDatumRollup, DatumPK> results) {
+		List<AuditDatumRecordCounts> counts = StreamSupport.stream(results.spliterator(), false)
+				.map(e -> {
+					AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+							e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
+							e.getDatumMonthlyCount());
+					if ( e.getTimestamp() != null ) {
+						c.setCreated(new org.joda.time.DateTime(e.getTimestamp().toEpochMilli()));
+					}
+					return c;
+				}).collect(Collectors.toList());
+		return new BasicFilterResults<>(counts, results.getTotalResults(), results.getStartingOffset(),
+				results.getReturnedResultCount());
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<AuditDatumRecordCounts> findFilteredAuditRecordCounts(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public net.solarnetwork.central.domain.FilterResults<AuditDatumRecordCounts> findFilteredAuditRecordCounts(
+			AggregateGeneralNodeDatumFilter filter,
+			List<net.solarnetwork.central.domain.SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return datumDao.findAuditRecordCountsFiltered(filter, sortDescriptors, offset, max);
+		return convertResults(
+				findAuditDatumFiltered(convertFilter(filter, sortDescriptors, offset, max)));
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<AuditDatumRecordCounts> findFilteredAccumulativeAuditRecordCounts(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public net.solarnetwork.central.domain.FilterResults<AuditDatumRecordCounts> findFilteredAccumulativeAuditRecordCounts(
+			AggregateGeneralNodeDatumFilter filter,
+			List<net.solarnetwork.central.domain.SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return datumDao.findAccumulativeAuditRecordCountsFiltered(filter, sortDescriptors, offset, max);
+		return convertResults(
+				findAccumulativeAuditDatumFiltered(convertFilter(filter, sortDescriptors, offset, max)));
 	}
 
 }

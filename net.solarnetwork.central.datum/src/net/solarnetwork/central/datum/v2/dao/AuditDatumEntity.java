@@ -25,6 +25,9 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.Aggregation;
@@ -37,6 +40,10 @@ import net.solarnetwork.domain.BasicIdentity;
  * @version 1.0
  * @since 2.8
  */
+@JsonPropertyOrder({ "ts", "streamId", "aggregation", "datumTotalCount", "datumCount",
+		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
+		"datumQueryCount" })
+@JsonIgnoreProperties("id")
 public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		implements AuditDatum, Cloneable, Serializable {
 
@@ -236,6 +243,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		return (id != null ? id.getStreamId() : null);
 	}
 
+	@JsonProperty("ts")
 	@Override
 	public Instant getTimestamp() {
 		DatumPK id = getId();
@@ -267,6 +275,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		return datumMonthlyCount;
 	}
 
+	@JsonProperty("datumPropertyPostedCount")
 	@Override
 	public Long getDatumPropertyCount() {
 		return datumPropertyCount;

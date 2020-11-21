@@ -64,6 +64,18 @@
 		</bean>
 	</service>
 	
+	<service interface="net.solarnetwork.central.datum.v2.dao.AuditDatumDao">
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao">
+			<argument ref="jdbcOps"/>
+		</bean>
+	</service>
+	
+	<service interface="net.solarnetwork.central.datum.v2.dao.DatumEntityDao">
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
+			<argument ref="jdbcOps"/>
+		</bean>
+	</service>
+	
 	<!-- Supporting Services -->
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->

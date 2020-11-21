@@ -24,15 +24,21 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -47,12 +53,15 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectLocationStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectNodeStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -94,6 +103,56 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 		}
 		jdbcTemplate.update(new InsertDatum(entity));
 		return entity.getId();
+	}
+
+	@Override
+	public DatumPK store(GeneralNodeDatum datum) {
+		if ( datum == null || datum.getNodeId() == null || datum.getSourceId() == null ) {
+			return null;
+		}
+		GeneralDatumSamples s = datum.getSamples();
+		if ( s == null || s.isEmpty() ) {
+			return null;
+		}
+		StoreNodeDatum sql = new StoreNodeDatum(datum);
+		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
+
+			@Override
+			public DatumPK doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				cs.execute();
+				Object streamId = cs.getObject(1);
+				return new DatumPK(
+						(streamId instanceof UUID ? (UUID) streamId
+								: streamId != null ? UUID.fromString(streamId.toString()) : null),
+						sql.getTimestamp());
+			}
+		});
+	}
+
+	@Override
+	public DatumPK store(GeneralLocationDatum datum) {
+		if ( datum == null || datum.getLocationId() == null || datum.getSourceId() == null ) {
+			return null;
+		}
+		GeneralDatumSamples s = datum.getSamples();
+		if ( s == null || s.isEmpty() ) {
+			return null;
+		}
+		StoreLocationDatum sql = new StoreLocationDatum(datum);
+		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
+
+			@Override
+			public DatumPK doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				cs.execute();
+				Object streamId = cs.getObject(1);
+				return new DatumPK(
+						(streamId instanceof UUID ? (UUID) streamId
+								: streamId != null ? UUID.fromString(streamId.toString()) : null),
+						sql.getTimestamp());
+			}
+		});
 	}
 
 	@Override

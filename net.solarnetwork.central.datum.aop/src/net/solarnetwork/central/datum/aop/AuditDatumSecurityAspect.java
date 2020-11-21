@@ -29,6 +29,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security AOP support for {@link AuditDatumBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Aspect
 public class AuditDatumSecurityAspect extends AuthorizationSupport {
@@ -63,6 +64,10 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.findFiltered*AuditRecordCounts(..)) && args(filter,..)")
 	public void findRecordCounts(GeneralNodeDatumFilter filter) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.find*AuditDatumFiltered(..)) && args(filter,..)")
+	public void findAuditDatum(AuditDatumCriteria filter) {
 	}
 
 	private Long requireCurrentActorHasUserId() {
@@ -86,6 +91,14 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	}
 
+	private void requireUserId(Long userId, Long[] userIds) {
+		if ( userIds == null || userIds.length != 1 || !userId.equals(userIds[0]) ) {
+			log.warn("Access DENIED for user {} on audit filter without identical user ID: {}", userId,
+					Arrays.toString(userIds));
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+	}
+
 	/**
 	 * Check access to reading audit datum.
 	 * 
@@ -101,11 +114,25 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 	public void findForFilterCheck(GeneralNodeDatumFilter filter) {
 		Long userId = requireCurrentActorHasUserId();
 		Long[] userIds = filter.getUserIds();
-		if ( userIds == null || userIds.length != 1 || !userId.equals(userIds[0]) ) {
-			log.warn("Access DENIED for user {} on audit filter without identical user ID: {}", userId,
-					Arrays.toString(userIds));
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
-		}
+		requireUserId(userId, userIds);
+	}
+
+	/**
+	 * Check access to reading audit datum.
+	 * 
+	 * <p>
+	 * The current actor must have a user ID, and that same user ID must be
+	 * specified as the only user ID in the filter.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter verify
+	 */
+	@Before("findAuditDatum(filter)")
+	public void findAuditDatumForFilterCheck(AuditDatumCriteria filter) {
+		Long userId = requireCurrentActorHasUserId();
+		Long[] userIds = filter.getUserIds();
+		requireUserId(userId, userIds);
 	}
 
 }

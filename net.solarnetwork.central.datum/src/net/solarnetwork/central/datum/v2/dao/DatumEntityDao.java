@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.List;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.dao.FilterableDao;
@@ -52,5 +54,23 @@ public interface DatumEntityDao
 	default DatumStreamFilterResults findFiltered(DatumCriteria filter) {
 		return findFiltered(filter, null, null, null);
 	}
+
+	/**
+	 * Store a general node datum, saving as a datum entity.
+	 * 
+	 * @param datum
+	 *        the datum to store
+	 * @return the stored primary key
+	 */
+	DatumPK store(GeneralNodeDatum datum);
+
+	/**
+	 * Store a general location datum, saving as a datum entity.
+	 * 
+	 * @param datum
+	 *        the datum to store
+	 * @return the stored primary key
+	 */
+	DatumPK store(GeneralLocationDatum datum);
 
 }

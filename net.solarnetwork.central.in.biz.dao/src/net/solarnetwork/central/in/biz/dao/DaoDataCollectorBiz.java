@@ -49,6 +49,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
@@ -79,14 +80,14 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	private SolarLocationDao solarLocationDao = null;
 	private SolarNodeMetadataBiz solarNodeMetadataBiz;
-	private GeneralNodeDatumDao generalNodeDatumDao = null;
-	private GeneralLocationDatumDao generalLocationDatumDao = null;
+	private DatumEntityDao datumDao = null;
+	//private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 	private TransactionTemplate transactionTemplate;
@@ -139,7 +140,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						buffer.put(d.getId(), d);
 					} else {
 						try {
-							generalNodeDatumDao.store(d);
+							datumDao.store(d);
 						} catch ( TransientDataAccessException e ) {
 							throw new RepeatableTaskException(
 									"Transient error storing datum " + d.getId(), e);
@@ -179,7 +180,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						buffer.put(d.getId(), d);
 					} else {
 						try {
-							generalLocationDatumDao.store(d);
+							datumDao.store(d);
 						} catch ( TransientDataAccessException e ) {
 							throw new RepeatableTaskException(
 									"Transient error storing location datum " + d.getId(), e);
@@ -350,12 +351,25 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		this.filteredResultsLimit = filteredResultsLimit;
 	}
 
-	public GeneralNodeDatumDao getGeneralNodeDatumDao() {
-		return generalNodeDatumDao;
+	/**
+	 * Get the datum DAO.
+	 * 
+	 * @return the DAO to use
+	 * @since 3.3
+	 */
+	public DatumEntityDao getDatumDao() {
+		return datumDao;
 	}
 
-	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
-		this.generalNodeDatumDao = generalNodeDatumDao;
+	/**
+	 * Set the datum DAO.
+	 * 
+	 * @param datumDao
+	 *        the DAO to set
+	 * @since 3.3
+	 */
+	public void setDatumDao(DatumEntityDao datumDao) {
+		this.datumDao = datumDao;
 	}
 
 	public DatumMetadataBiz getDatumMetadataBiz() {
@@ -364,14 +378,6 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	public void setDatumMetadataBiz(DatumMetadataBiz datumMetadataBiz) {
 		this.datumMetadataBiz = datumMetadataBiz;
-	}
-
-	public GeneralLocationDatumDao getGeneralLocationDatumDao() {
-		return generalLocationDatumDao;
-	}
-
-	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
-		this.generalLocationDatumDao = generalLocationDatumDao;
 	}
 
 	/**

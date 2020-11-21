@@ -25,8 +25,10 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.UUID_STRING_ORDER;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.listNodeMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.sortedStreamIds;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -36,6 +38,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
@@ -44,6 +47,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -55,6 +59,8 @@ import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
@@ -63,10 +69,13 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.GeneralDatumSamples;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -87,7 +96,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 	}
 
 	@Test
-	public void storeNew() {
+	public void saveNew() {
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.now(), Instant.now(),
 				DatumProperties.propertiesOf(
 						new BigDecimal[] { new BigDecimal("1.23"), new BigDecimal("2.34") },
@@ -95,6 +104,107 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		DatumPK id = dao.save(datum);
 		assertNotNull(id);
 		lastDatum = datum;
+	}
+
+	@Test
+	public void store_newStream() throws IOException {
+		// GIVEN
+		GeneralNodeDatum datum = DatumTestUtils.loadJsonDatumResource("test-datum-01.txt", getClass())
+				.get(0);
+
+		// WHEN
+		DatumPK id = dao.store(datum);
+
+		// THEN
+		assertThat("ID returned", id, notNullValue());
+		assertThat("ID has stream ID", id.getStreamId(), notNullValue());
+		assertThat("ID has expected timestamp", id.getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(datum.getCreated())));
+
+		List<Datum> rows = DatumTestUtils.listDatum(jdbcTemplate);
+		assertThat("Datum stored in DB", rows, hasSize(1));
+		assertThat("Datum ID matches returned value", rows.get(0).getId(), equalTo(id));
+
+		List<NodeDatumStreamMetadata> metas = DatumTestUtils.listNodeMetadata(jdbcTemplate);
+		assertThat("Stream metadata created", metas, hasSize(1));
+		assertThat("Metadata for stream ID", metas.get(0).getStreamId(), equalTo(id.getStreamId()));
+		assertThat("Metadata for node ID", metas.get(0).getNodeId(), equalTo(1L));
+		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo("a"));
+		assertThat("Datum properties", rows.get(0).getProperties(),
+				equalTo(propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null, null)));
+	}
+
+	@Test
+	public void store_entireStream() throws IOException {
+		// GIVEN
+		List<GeneralNodeDatum> datums = DatumTestUtils.loadJsonDatumResource("test-datum-01.txt",
+				getClass());
+
+		// WHEN
+		List<DatumPK> ids = new ArrayList<>(datums.size());
+		for ( GeneralNodeDatum datum : datums ) {
+			DatumPK id = dao.store(datum);
+			assertThat("ID returned", id, notNullValue());
+			assertThat("ID has stream ID", id.getStreamId(), notNullValue());
+			assertThat("ID has expected timestamp", id.getTimestamp(),
+					equalTo(JodaDateUtils.fromJodaToInstant(datum.getCreated())));
+			if ( !ids.isEmpty() ) {
+				assertThat("Same stream ID returned for subsequent store", id.getStreamId(),
+						equalTo(ids.get(0).getStreamId()));
+			}
+			ids.add(id);
+		}
+
+		// THEN
+		List<Datum> rows = DatumTestUtils.listDatum(jdbcTemplate);
+		assertThat("Datum stored in DB", rows, hasSize(datums.size()));
+		int i = 0;
+		for ( Datum row : rows ) {
+			assertThat("Datum ID matches returned value", row.getId(), equalTo(ids.get(i)));
+			i++;
+		}
+		List<NodeDatumStreamMetadata> metas = DatumTestUtils.listNodeMetadata(jdbcTemplate);
+		assertThat("Stream metadata created", metas, hasSize(1));
+		assertThat("Metadata for stream ID", metas.get(0).getStreamId(),
+				equalTo(ids.get(0).getStreamId()));
+		assertThat("Metadata for node ID", metas.get(0).getNodeId(), equalTo(1L));
+		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo("a"));
+	}
+
+	@Test
+	public void store_newLocationStream() throws IOException {
+		// GIVEN
+		GeneralNodeDatum nodeDatum = DatumTestUtils
+				.loadJsonDatumResource("test-datum-01.txt", getClass()).get(0);
+		GeneralLocationDatum datum = new GeneralLocationDatum();
+		datum.setCreated(nodeDatum.getCreated());
+		datum.setLocationId(TEST_LOC_ID);
+		datum.setSourceId(nodeDatum.getSourceId());
+		GeneralLocationDatumSamples s = new GeneralLocationDatumSamples();
+		s.setI(nodeDatum.getSamples().getI());
+		s.setA(nodeDatum.getSamples().getA());
+		datum.setSamples(s);
+
+		// WHEN
+		DatumPK id = dao.store(datum);
+
+		// THEN
+		assertThat("ID returned", id, notNullValue());
+		assertThat("ID has stream ID", id.getStreamId(), notNullValue());
+		assertThat("ID has expected timestamp", id.getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(datum.getCreated())));
+
+		List<Datum> rows = DatumTestUtils.listDatum(jdbcTemplate);
+		assertThat("Datum stored in DB", rows, hasSize(1));
+		assertThat("Datum ID matches returned value", rows.get(0).getId(), equalTo(id));
+		assertThat("Datum properties", rows.get(0).getProperties(),
+				equalTo(propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null, null)));
+
+		List<LocationDatumStreamMetadata> metas = DatumTestUtils.listLocationMetadata(jdbcTemplate);
+		assertThat("Stream metadata created", metas, hasSize(1));
+		assertThat("Metadata for stream ID", metas.get(0).getStreamId(), equalTo(id.getStreamId()));
+		assertThat("Metadata for node ID", metas.get(0).getLocationId(), equalTo(datum.getLocationId()));
+		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo(datum.getSourceId()));
 	}
 
 	private void assertSame(DatumEntity expected, DatumEntity entity) {
@@ -107,7 +217,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 	@Test
 	public void getByPrimaryKey() {
-		storeNew();
+		saveNew();
 		DatumEntity datum = dao.get(lastDatum.getId());
 		assertSame(lastDatum, datum);
 	}
