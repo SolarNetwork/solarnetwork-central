@@ -36,6 +36,25 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 		implements NodeDatumStreamMetadata {
 
 	/**
+	 * Create a new metadata instance with no property names.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the new instance
+	 */
+	public static BasicNodeDatumStreamMetadata emptyMeta(UUID streamId, String timeZoneId, Long nodeId,
+			String sourceId) {
+		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, nodeId, sourceId, null, null,
+				null);
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * <p>

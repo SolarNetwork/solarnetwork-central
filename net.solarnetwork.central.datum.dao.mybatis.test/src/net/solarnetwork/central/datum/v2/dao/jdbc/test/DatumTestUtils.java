@@ -127,7 +127,13 @@ public final class DatumTestUtils {
 	}
 
 	/** Regex for a line starting with a {@literal #} comment character. */
-	public static final Pattern COMMENT = Pattern.compile("\\s*#");
+	public static final Pattern COMMENT = Pattern.compile("^\\s*#");
+
+	/**
+	 * Regex for a line starting with a {@literal --} SQL style comment
+	 * character.
+	 */
+	public static final Pattern SQL_COMMENT = Pattern.compile("^\\s*--");
 
 	/** Regex for a line containing {@literal "type":"Reset"}. */
 	public static final Pattern AUX = Pattern.compile("\"type\"\\s*:\\s*\"Reset\"");
@@ -222,12 +228,50 @@ public final class DatumTestUtils {
 	 *         if the resource cannot be loaded
 	 */
 	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz) {
+		return equalToTextResource(resource, clazz, null);
+	}
+
+	/**
+	 * Create a {@link Matcher} for a string that compares to the contents of a
+	 * text resource.
+	 * 
+	 * @param resource
+	 *        the name of the resource
+	 * @param clazz
+	 *        the class to load the resource from
+	 * @param skip
+	 *        an optional pattern that will be used to match against lines;
+	 *        matches will be left out of the string used to match
+	 * @return the matcher
+	 * @throws RuntimeException
+	 *         if the resource cannot be loaded
+	 */
+	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz, Pattern skip) {
 		try (InputStream in = clazz.getResourceAsStream(resource)) {
 			if ( in == null ) {
 				throw new RuntimeException(
 						"Resource " + resource + " not found from class " + clazz.getName() + ".");
 			}
-			String txt = FileCopyUtils.copyToString(new InputStreamReader(in, Charset.forName("UTF-8")));
+			String txt = null;
+			if ( skip == null ) {
+				txt = FileCopyUtils.copyToString(new InputStreamReader(in, Charset.forName("UTF-8")));
+			} else {
+				StringBuilder buf = new StringBuilder(1024);
+				try (BufferedReader r = new BufferedReader(
+						new InputStreamReader(in, Charset.forName("UTF-8")))) {
+					while ( true ) {
+						String line = r.readLine();
+						if ( line == null ) {
+							break;
+						}
+						if ( skip.matcher(line).find() ) {
+							continue;
+						}
+						buf.append(line).append("\n");
+					}
+				}
+				txt = buf.toString();
+			}
 			return Matchers.equalToIgnoringWhiteSpace(txt);
 		} catch ( IOException e ) {
 			throw new RuntimeException("Error reading text resource [" + resource + "]", e);

@@ -22,12 +22,24 @@
 
 package net.solarnetwork.central.users.alerts.test;
 
+import static java.util.Arrays.asList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata.emptyMeta;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
@@ -43,17 +55,18 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailMessage;
 import org.springframework.mail.SimpleMailMessage;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.mock.MockMailSender;
 import net.solarnetwork.central.mail.support.DefaultMailService;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.central.user.alerts.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.dao.UserAlertDao;
@@ -73,7 +86,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
@@ -93,7 +106,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	private UserNodeDao userNodeDao;
 	private UserAlertDao userAlertDao;
 	private UserAlertSituationDao userAlertSituationDao;
-	private GeneralNodeDatumDao generalNodeDatumDao;
+	private DatumEntityDao datumDao;
 
 	private User testUser;
 	private SolarNode testNode;
@@ -106,11 +119,11 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		public TestEmailNodeStaleDataAlertProcessor(SolarNodeDao solarNodeDao, UserDao userDao,
 				UserNodeDao userNodeDao, UserAlertDao userAlertDao,
-				UserAlertSituationDao userAlertSituationDao, GeneralNodeDatumDao generalNodeDatumDao,
+				UserAlertSituationDao userAlertSituationDao, DatumEntityDao datumDao,
 				net.solarnetwork.central.mail.MailService mailService,
 				org.springframework.context.MessageSource messageSource) {
-			super(solarNodeDao, userDao, userNodeDao, userAlertDao, userAlertSituationDao,
-					generalNodeDatumDao, mailService, messageSource);
+			super(solarNodeDao, userDao, userNodeDao, userAlertDao, userAlertSituationDao, datumDao,
+					mailService, messageSource);
 		}
 
 		@Override
@@ -134,7 +147,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Before
 	public void setup() {
-		generalNodeDatumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		solarNodeDao = EasyMock.createMock(SolarNodeDao.class);
 		userDao = EasyMock.createMock(UserDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
@@ -142,7 +155,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		userAlertSituationDao = EasyMock.createMock(UserAlertSituationDao.class);
 		MailSender.getSent().clear();
 		service = new TestEmailNodeStaleDataAlertProcessor(solarNodeDao, userDao, userNodeDao,
-				userAlertDao, userAlertSituationDao, generalNodeDatumDao, MailService, MessageSource);
+				userAlertDao, userAlertSituationDao, datumDao, MailService, MessageSource);
 		service.setBatchSize(1);
 		AlertIdCounter.set(TEST_USER_ALERT_ID);
 
@@ -164,12 +177,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@After
 	public void teardown() {
-		EasyMock.verify(generalNodeDatumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
+		EasyMock.verify(datumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
 				userAlertSituationDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(generalNodeDatumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
+		EasyMock.replay(datumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
 				userAlertSituationDao);
 	}
 
@@ -190,20 +203,34 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		return alert;
 	}
 
-	private GeneralNodeDatumFilterMatch newGeneralNodeDatumMatch(DateTime created, Long nodeId,
-			String sourceId) {
-		GeneralNodeDatumMatch d = new GeneralNodeDatumMatch();
-		d.setCreated(created);
-		d.setNodeId(nodeId);
-		d.setSourceId(sourceId);
+	private static DatumEntity newDatum(ZonedDateTime created, UUID streamId) {
+		DatumEntity d = new DatumEntity(streamId, created.toInstant(), Instant.now(), null);
 		return d;
+	}
+
+	private static DatumStreamFilterResults newTestResults(ZonedDateTime created, UUID streamId) {
+		return newTestResults(created, streamId, newDatum(created, streamId));
+	}
+
+	private static DatumStreamFilterResults newTestResults(ZonedDateTime created, UUID streamId,
+			Datum... nodeData) {
+		return newTestResults(created, new NodeDatumStreamMetadata[] {
+				emptyMeta(streamId, TEST_TZ, TEST_NODE_ID, TEST_SOURCE_ID) }, nodeData);
+	}
+
+	private static DatumStreamFilterResults newTestResults(ZonedDateTime created,
+			NodeDatumStreamMetadata[] metas, Datum... nodeData) {
+		BasicDatumStreamFilterResults nodeDataResults = new BasicDatumStreamFilterResults(
+				asList(metas).stream().collect(toMap(NodeDatumStreamMetadata::getStreamId, identity())),
+				asList(nodeData), (long) nodeData.length, 0, nodeData.length);
+		return nodeDataResults;
 	}
 
 	@Test
 	public void processNoAlerts() {
 		List<UserAlert> pendingAlerts = Collections.emptyList();
 		final DateTime batchTime = new DateTime();
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -221,34 +248,30 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setMostRecent(true);
 		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(
-				newGeneralNodeDatumMatch(new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then query for active situation
-		EasyMock.expect(
-				userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
 				.andReturn(null);
 
 		// get User for alert
-		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -261,8 +284,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains(
-				"since " + service.getTimestampFormat().print(nodeData.get(0).getId().getCreated())));
+		Assert.assertTrue("Mail has formatted datum date",
+				sentMail.getText().contains("since " + service.getTimestampFormat().print(
+						new DateTime(nodeDataResults.iterator().next().getTimestamp().toEpochMilli()))));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -283,30 +307,27 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setMostRecent(true);
 		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(
-				newGeneralNodeDatumMatch(new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then query for active situation
-		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
 				.andReturn(null);
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -334,13 +355,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setMostRecent(true);
 		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(
-
-				newGeneralNodeDatumMatch(new DateTime().minusSeconds(20), TEST_NODE_ID_2,
-						TEST_SOURCE_ID),
-				newGeneralNodeDatumMatch(new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 2L, 0, 2);
+		final UUID streamId_1 = UUID.randomUUID();
+		final UUID streamId_2 = UUID.randomUUID();
+		final NodeDatumStreamMetadata[] metas = new NodeDatumStreamMetadata[] {
+				emptyMeta(streamId_1, TEST_TZ, TEST_NODE_ID, TEST_SOURCE_ID),
+				emptyMeta(streamId_2, TEST_TZ, TEST_NODE_ID_2, TEST_SOURCE_ID) };
+		final DatumStreamFilterResults nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), metas,
+				newDatum(ZonedDateTime.now().minusSeconds(20), streamId_2),
+				newDatum(ZonedDateTime.now().minusSeconds(10), streamId_1));
 
 		// first query for pending alerts, starting at beginning
 		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
@@ -353,23 +376,21 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode),
 				new UserNode(testUser, testNode2));
-		EasyMock.expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
+		expect(userNodeDao.findUserNodesForUser(eq(testUser))).andReturn(userNodes);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for active situation
-		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
 				.andReturn(null);
 
 		// get User for alert
-		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation
-		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		Capture<UserAlertSituation> newSituation = new Capture<>();
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -382,8 +403,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains(
-				"since " + service.getTimestampFormat().print(nodeData.get(0).getId().getCreated())));
+		Assert.assertTrue("Mail has formatted datum date",
+				sentMail.getText().contains("since " + service.getTimestampFormat().print(
+						new DateTime(nodeDataResults.iterator().next().getTimestamp().toEpochMilli()))));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -391,12 +413,13 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Assert.assertTrue("Saved alert validTo not increased",
 				pendingAlert.getValidTo().equals(pendingAlertValidTo));
 		Assert.assertNotNull(newSituation.getValue().getInfo());
-		Assert.assertEquals(nodeData.get(0).getId().getNodeId(), newSituation.getValue().getInfo()
+		Assert.assertEquals(TEST_NODE_ID_2, newSituation.getValue().getInfo()
 				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID));
-		Assert.assertEquals(nodeData.get(0).getId().getSourceId(), newSituation.getValue().getInfo()
+		Assert.assertEquals(TEST_SOURCE_ID, newSituation.getValue().getInfo()
 				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID));
-		Assert.assertEquals(nodeData.get(0).getId().getCreated().getMillis(), newSituation.getValue()
-				.getInfo().get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
+		Assert.assertEquals(nodeDataResults.iterator().next().getTimestamp().toEpochMilli(),
+				newSituation.getValue().getInfo()
+						.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
 	}
 
 	@Test
@@ -421,25 +444,23 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setUserIds(new Long[] { TEST_USER_ID });
 		filter.setMostRecent(true);
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(newGeneralNodeDatumMatch(
-				new DateTime(2016, 4, 1, 8, 59, 50, nodeTZ), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
+				ZoneId.of(nodeTZ.getID()));
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 
 		// will next query on user ID to get available nodes
 		final User testUser = new User(TEST_USER_ID, "test@localhost");
 
 		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode));
-		EasyMock.expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
+		expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for active situation
 		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
@@ -479,36 +500,34 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setMostRecent(true);
 		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(newGeneralNodeDatumMatch(
-				new DateTime(2016, 4, 1, 8, 59, 50, nodeTZ), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
+				ZoneId.of(nodeTZ.getID()));
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 
 		// will next query on user ID to get available nodes
 		final User testUser = new User(TEST_USER_ID, "test@localhost");
 
 		final List<UserNode> userNodes = Arrays.asList(new UserNode(testUser, testNode));
-		EasyMock.expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
+		expect(userNodeDao.findUserNodesForUser(EasyMock.eq(testUser))).andReturn(userNodes);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for active situation
-		EasyMock.expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlert.getId()))
 				.andReturn(null);
 
 		// get User for alert
-		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 		//		// then save active situation
-		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		Capture<UserAlertSituation> newSituation = new Capture<>();
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -521,8 +540,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains(
-				"since " + service.getTimestampFormat().print(nodeData.get(0).getId().getCreated())));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
+				.getTimestampFormat().print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -530,12 +549,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Assert.assertTrue("Saved alert validTo not increased",
 				pendingAlert.getValidTo().equals(pendingAlertValidTo));
 		Assert.assertNotNull(newSituation.getValue().getInfo());
-		Assert.assertEquals(nodeData.get(0).getId().getNodeId(), newSituation.getValue().getInfo()
+		Assert.assertEquals(TEST_NODE_ID, newSituation.getValue().getInfo()
 				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID));
-		Assert.assertEquals(nodeData.get(0).getId().getSourceId(), newSituation.getValue().getInfo()
+		Assert.assertEquals(TEST_SOURCE_ID, newSituation.getValue().getInfo()
 				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID));
-		Assert.assertEquals(nodeData.get(0).getId().getCreated().getMillis(), newSituation.getValue()
-				.getInfo().get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
+		Assert.assertEquals(dataTimestamp.toInstant().toEpochMilli(), newSituation.getValue().getInfo()
+				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
 	}
 
 	@Test
@@ -543,7 +562,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		final DateTime batchTime = new DateTime();
 
 		// add 10 alerts, so we can test batching
-		List<UserAlert> pendingAlerts = new ArrayList<UserAlert>();
+		List<UserAlert> pendingAlerts = new ArrayList<>();
 		for ( int i = 0; i < 12; i++ ) {
 			pendingAlerts.add(newUserAlertInstance());
 		}
@@ -552,97 +571,87 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setNodeIds(new Long[] { TEST_NODE_ID });
 		filter.setMostRecent(true);
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays.asList(
-				newGeneralNodeDatumMatch(new DateTime().minusSeconds(10), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ)).minusSeconds(10);
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts.subList(0, 5));
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
-		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>(CaptureType.ALL);
+		Capture<UserAlertSituation> newSituation = new Capture<>(CaptureType.ALL);
 
 		// then query for active situation
 		for ( int i = 0; i < 5; i++ ) {
-			EasyMock.expect(
-					userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
 					.andReturn(null);
 
 			// get User for alert
-			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+			expect(userAlertSituationDao.store(capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
 		// 2nd batch query for pending alerts, starting at previous ID
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				pendingAlerts.get(4).getId(), batchTime, service.getBatchSize()))
-				.andReturn(pendingAlerts.subList(5, 10));
+						.andReturn(pendingAlerts.subList(5, 10));
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then query for active situation
 		for ( int i = 5; i < 10; i++ ) {
-			EasyMock.expect(
-					userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
 					.andReturn(null);
 
 			// get User for alert
-			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+			expect(userAlertSituationDao.store(capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
 		// 3rd batch query for pending alerts, starting at previous ID
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				pendingAlerts.get(9).getId(), batchTime, service.getBatchSize()))
-				.andReturn(pendingAlerts.subList(10, pendingAlerts.size()));
+						.andReturn(pendingAlerts.subList(10, pendingAlerts.size()));
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then query for active situation
 		for ( int i = 10; i < 12; i++ ) {
-			EasyMock.expect(
-					userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
+			expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(i).getId()))
 					.andReturn(null);
 
 			// get User, SolarNode for alert
-			EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			EasyMock.expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+			expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
 		// 4th batch query for pending alerts, starting at previous ID
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 				pendingAlerts.get(11).getId(), batchTime, service.getBatchSize()))
-				.andReturn(Collections.<UserAlert> emptyList());
+						.andReturn(Collections.<UserAlert> emptyList());
 
 		replayAll();
 
@@ -665,7 +674,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 							sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
 					Assert.assertTrue("Mail has formatted datum date",
 							sentMail.getText().contains("since " + service.getTimestampFormat()
-									.print(nodeData.get(0).getId().getCreated())));
+									.print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
 				}
 			}
 			MailSender.getSent().clear();
@@ -682,22 +691,19 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setMostRecent(true);
 		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
 
-		List<GeneralNodeDatumFilterMatch> nodeData = Arrays
-				.asList(newGeneralNodeDatumMatch(new DateTime(), TEST_NODE_ID, TEST_SOURCE_ID));
-		BasicFilterResults<GeneralNodeDatumFilterMatch> nodeDataResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				nodeData, 1L, 0, 1);
+		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ));
+		final UUID streamId = UUID.randomUUID();
+		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
-		EasyMock.expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 
 		// then query for most recent node datum
-		EasyMock.expect(generalNodeDatumDao.findFiltered(EasyMock.<DatumFilterCommand> anyObject(),
-				EasyMock.<List<SortDescriptor>> isNull(), EasyMock.<Integer> isNull(),
-				EasyMock.<Integer> isNull())).andReturn(nodeDataResults);
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
 
 		// then query for the node, to grab time zone
-		EasyMock.expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
 
 		// then query for active situation
 		final UserAlertSituation activeSituation = new UserAlertSituation();
@@ -705,19 +711,17 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		activeSituation.setCreated(new DateTime());
 		activeSituation.setAlert(pendingAlerts.get(0));
 		activeSituation.setStatus(UserAlertSituationStatus.Active);
-		EasyMock.expect(
-				userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
 				.andReturn(activeSituation);
 
 		// get User for alert
-		EasyMock.expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation -> resolved
-		EasyMock.expect(userAlertSituationDao.store(activeSituation)).andReturn(activeSituation.getId());
+		expect(userAlertSituationDao.store(activeSituation)).andReturn(activeSituation.getId());
 
 		// and finally save the alert valid date
-		userAlertDao.updateValidTo(EasyMock.eq(pendingAlerts.get(0).getId()),
-				EasyMock.<DateTime> anyObject());
+		userAlertDao.updateValidTo(eq(pendingAlerts.get(0).getId()), anyObject());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -730,8 +734,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains(
-				"on " + service.getTimestampFormat().print(nodeData.get(0).getId().getCreated())));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("on " + service
+				.getTimestampFormat().print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
 		Assert.assertEquals(UserAlertSituationStatus.Resolved, activeSituation.getStatus());
 		Assert.assertNotNull(activeSituation.getNotified());
 		Assert.assertTrue("Saved alert validTo increased",

@@ -48,6 +48,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -244,8 +245,9 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 							String jdata = JsonUtils.getJSONString(data, null);
 							cs.setString(5, jdata);
-							ts = ts.plus(frequency);
 							cs.execute();
+							log.debug("Inserted datum node {} source {} ts {}", nodeId, sourceId, ts);
+							ts = ts.plus(frequency);
 						}
 						return null;
 					}
@@ -436,6 +438,50 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(6));
+	}
+
+	@Test
+	public void find_mostRecent_nodes() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 4);
+		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
+
+		Map<UUID, NodeDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setMostRecent(true);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		final UUID[] expectedStreamIds = metas.keySet().toArray(new UUID[metas.size()]);
+		Arrays.sort(expectedStreamIds, UUID_STRING_ORDER);
+
+		List<UUID> streamIds = new ArrayList<>(sortedStreamIds(results, UUID_STRING_ORDER));
+		assertThat("Result stream IDs count", streamIds, contains(expectedStreamIds));
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		for ( int i = 0; i < 2; i++ ) {
+			Datum d = datumList.get(i);
+			DatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+			assertThat("Metadata is for node", meta, instanceOf(NodeDatumStreamMetadata.class));
+			Long nodeId = ((NodeDatumStreamMetadata) meta).getNodeId();
+			assertThat("Node ID", nodeId, equalTo(metas.get(streamIds.get(i)).getNodeId()));
+			assertThat("Stream ID ", d.getStreamId(), equalTo(streamIds.get(i)));
+			assertThat("Max timestamp", d.getTimestamp(),
+					equalTo(nodeId == 1L ? start.plusMinutes(3 * 30).toInstant()
+							: start.plusMinutes(3 * 30 + 15).toInstant()));
+		}
 	}
 
 }

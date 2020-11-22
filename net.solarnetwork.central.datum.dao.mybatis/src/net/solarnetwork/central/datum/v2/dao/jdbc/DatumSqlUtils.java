@@ -142,31 +142,6 @@ public final class DatumSqlUtils {
 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
-	 * by aggregate datum stream columns.
-	 * 
-	 * <p>
-	 * This map contains the entries from
-	 * {@link #NODE_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
-	 * </p>
-	 * 
-	 * <ol>
-	 * <li>created -&gt; ts_start</li>
-	 * <li>time -&gt; ts_start</li>
-	 * </ol>
-	 * 
-	 * @see #orderBySorts(Iterable, Map, StringBuilder)
-	 */
-	public static final Map<String, String> AGG_NODE_STREAM_SORT_KEY_MAPPING;
-	static {
-		Map<String, String> map = new LinkedHashMap<>(4);
-		map.putAll(NODE_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts_start");
-		map.put("time", "ts_start");
-		AGG_NODE_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
-	}
-
-	/**
-	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by location datum stream metadata.
 	 * 
 	 * <p>
@@ -213,31 +188,6 @@ public final class DatumSqlUtils {
 		map.put("created", "ts");
 		map.put("time", "ts");
 		LOCATION_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
-	}
-
-	/**
-	 * A standard mapping of sort keys to SQL column names suitable for ordering
-	 * by aggregate datum stream columns.
-	 * 
-	 * <p>
-	 * This map contains the entries from
-	 * {@link #LOCATION_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
-	 * </p>
-	 * 
-	 * <ol>
-	 * <li>created -&gt; ts_start</li>
-	 * <li>time -&gt; ts_start</li>
-	 * </ol>
-	 * 
-	 * @see #orderBySorts(Iterable, Map, StringBuilder)
-	 */
-	public static final Map<String, String> AGG_LOCATION_STREAM_SORT_KEY_MAPPING;
-	static {
-		Map<String, String> map = new LinkedHashMap<>(4);
-		map.putAll(LOCATION_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts_start");
-		map.put("time", "ts_start");
-		AGG_LOCATION_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
 	/**

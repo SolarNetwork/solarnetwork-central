@@ -48,6 +48,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectLocationStreamMetadata;
@@ -157,7 +158,7 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 
 	@Override
 	public DatumEntity get(DatumPK id) {
-		List<Datum> result = jdbcTemplate.query(new SelectDatum(id), DatumEntityRowMapper.INSTANCE);
+		List<Datum> result = jdbcTemplate.query(new GetDatum(id), DatumEntityRowMapper.INSTANCE);
 		return (!result.isEmpty() ? (DatumEntity) result.get(0) : null);
 	}
 

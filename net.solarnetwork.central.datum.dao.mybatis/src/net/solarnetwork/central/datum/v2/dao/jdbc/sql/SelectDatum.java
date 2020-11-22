@@ -22,23 +22,19 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import java.sql.Array;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
 
 /**
- * Select for {@link DatumEntity} instances via a {@link DatumPK} ID or
- * {@link DatumCriteria} filter.
+ * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  * 
  * @author matt
  * @version 1.0
@@ -48,7 +44,6 @@ public class SelectDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumCriteria filter;
-	private final DatumPK id;
 
 	/**
 	 * Constructor.
@@ -64,56 +59,63 @@ public class SelectDatum
 			throw new IllegalArgumentException("The filter argument not be null.");
 		}
 		this.filter = filter;
-		this.id = null;
 	}
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param id
-	 *        the primary key
-	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
-	 */
-	public SelectDatum(DatumPK id) {
-		super();
-		if ( id == null ) {
-			throw new IllegalArgumentException("The id argument not be null.");
+	private void sqlCte(StringBuilder buf) {
+		buf.append("WITH s AS (\n");
+		DatumSqlUtils.nodeMetadataFilterSql(filter,
+				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+						: DatumSqlUtils.MetadataSelectStyle.Minimum,
+				buf);
+		buf.append(")\n");
+	}
+
+	private void sqlSelect(StringBuilder buf) {
+		buf.append("SELECT ");
+		sqlColumnsPk(buf);
+	}
+
+	private void sqlColumnsPk(StringBuilder buf) {
+		buf.append("datum.stream_id,\n");
+		if ( filter.getAggregation() != null ) {
+			buf.append("datum.ts_start AS ts,\n");
+		} else {
+			buf.append("datum.ts,\n");
 		}
-		this.filter = null;
-		this.id = id;
+		buf.append("datum.received,\n");
+		buf.append("datum.data_i,\n");
+		buf.append("datum.data_a,\n");
+		buf.append("datum.data_s,\n");
+		buf.append("datum.data_t\n");
 	}
 
 	private void sqlFrom(StringBuilder buf) {
-		buf.append("FROM solardatm.da_datm datum\n");
-		if ( filter == null ) {
-			return;
-		}
-		if ( filter.getStreamId() == null ) {
-			if ( filter.getLocationId() != null ) {
-				buf.append(
-						"INNER JOIN solardatm.da_loc_datm_meta meta ON meta.stream_id = datum.stream_id\n");
-			} else if ( filter.getNodeId() != null ) {
-				buf.append(
-						"INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = datum.stream_id\n");
-			}
+		buf.append("FROM s\n");
+		if ( filter.isMostRecent() ) {
+			buf.append("INNER JOIN LATERAL (\n");
+			buf.append("		SELECT datum.*\n");
+			buf.append("		FROM solardatm.da_datm datum\n");
+			buf.append("		WHERE datum.stream_id = s.stream_id\n");
+			buf.append("		ORDER BY datum.ts DESC\n");
+			buf.append("		LIMIT 1\n");
+			buf.append("	) datum ON datum.stream_id = s.stream_id\n");
+		} else {
+			buf.append("INNER JOIN solardatm.da_datm datum ON datum.stream_id = s.stream_id\n");
 		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( id != null ) {
-			buf.append("WHERE datum.stream_id = ? AND datum.ts = ?");
+		if ( filter.isMostRecent() ) {
 			return;
 		}
+
 		StringBuilder where = new StringBuilder();
-		if ( filter.getStreamId() != null ) {
-			where.append("\tAND datum.stream_id = ANY(?)\n");
-		} else {
-			DatumSqlUtils.whereDatumMetadata(filter, where);
-		}
-		DatumSqlUtils.whereDateRange(filter, where);
-		if ( where.length() > 0 ) {
-			buf.append("WHERE").append(where.substring(4));
+		int idx = filter.hasLocalDateRange()
+				? DatumSqlUtils.whereLocalDateRange(filter, filter.getAggregation(),
+						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
+				: DatumSqlUtils.whereDateRange(filter, filter.getAggregation(), where);
+		if ( idx > 0 ) {
+			buf.append("WHERE ").append(where.substring(4));
 		}
 	}
 
@@ -121,20 +123,20 @@ public class SelectDatum
 		if ( filter == null ) {
 			return;
 		}
-		buf.append("ORDER BY ");
 
 		StringBuilder order = new StringBuilder();
-		int idx = 0;
-		if ( filter.getSorts() != null && !filter.getSorts().isEmpty() ) {
-			idx = DatumSqlUtils.orderBySorts(filter.getSorts(),
+		int idx = 2;
+		if ( filter.hasSorts() ) {
+			idx = orderBySorts(filter.getSorts(),
 					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
-					buf);
+					order);
+		} else {
+			order.append(", datum.stream_id, ts");
 		}
-		if ( idx < 1 ) {
-			order.append("datum.stream_id, datum.ts");
+		if ( order.length() > 0 ) {
+			buf.append("ORDER BY ").append(order.substring(idx));
 		}
-		buf.append(order.substring(idx));
 	}
 
 	private void sqlLimit(StringBuilder buf) {
@@ -147,8 +149,8 @@ public class SelectDatum
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		buf.append(
-				"SELECT datum.stream_id, datum.ts, datum.received, datum.data_i, datum.data_a, datum.data_s, datum.data_t\n");
+		sqlCte(buf);
+		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
 	}
@@ -163,21 +165,12 @@ public class SelectDatum
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		if ( id != null ) {
-			stmt.setObject(++p, id.getStreamId(), Types.OTHER);
-			stmt.setTimestamp(++p, Timestamp.from(id.getTimestamp()));
-			return p;
-		}
-		if ( filter.getStreamId() != null ) {
-			Array a = con.createArrayOf("uuid", filter.getStreamIds());
-			stmt.setArray(++p, a);
-			a.free();
+		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
+		if ( filter.hasLocalDateRange() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
-			p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
 		}
-
-		p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
-
 		return p;
 	}
 

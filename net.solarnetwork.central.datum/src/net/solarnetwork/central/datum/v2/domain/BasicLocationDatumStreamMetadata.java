@@ -36,6 +36,25 @@ public class BasicLocationDatumStreamMetadata extends BasicObjectDatumStreamMeta
 		implements LocationDatumStreamMetadata {
 
 	/**
+	 * Create a new metadata instance with no property names.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the new instance
+	 */
+	public static BasicLocationDatumStreamMetadata emptyMeta(UUID streamId, String timeZoneId,
+			Long locationId, String sourceId) {
+		return new BasicLocationDatumStreamMetadata(streamId, timeZoneId, locationId, sourceId, null,
+				null, null);
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * <p>
