@@ -35,12 +35,61 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
  * @since 3.8
  */
 public enum MetadataKind {
+
 	/** Node metadata. */
-	Node,
+	Node('n'),
 
 	/** Location metadata. */
-	Location,
+	Location('l'),
 
 	/** Dynamically determined metadata. */
-	Dynamic;
+	Dynamic('*');
+
+	private final char key;
+
+	private MetadataKind(char key) {
+		this.key = key;
+	}
+
+	/**
+	 * Get the key value.
+	 * 
+	 * @return the key
+	 */
+	public char getKey() {
+		return key;
+	}
+
+	/**
+	 * Get an enum instance for a key value.
+	 * 
+	 * @param key
+	 *        the key value
+	 * @return the enum
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is not supported
+	 */
+	public static MetadataKind forKey(String key) {
+		if ( key == null || key.isEmpty() ) {
+			throw new IllegalArgumentException("Key must not be null.");
+		}
+		if ( key.length() == 1 ) {
+			switch (key.charAt(0)) {
+				case 'n':
+					return Node;
+
+				case 'l':
+					return Location;
+
+				case '*':
+					return Dynamic;
+
+				default:
+					throw new IllegalArgumentException("Invalid MetadataKind value [" + key + "]");
+			}
+		}
+		// try name() value for convenience
+		return MetadataKind.valueOf(key);
+	}
+
 }

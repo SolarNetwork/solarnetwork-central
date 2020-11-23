@@ -86,7 +86,9 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	@Override
 	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = UUID.fromString(rs.getString(1));
+		Object sid = rs.getObject(1);
+		UUID streamId = (sid instanceof UUID ? (UUID) sid
+				: sid != null ? UUID.fromString(sid.toString()) : null);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		Aggregation agg = Aggregation.forKey(rs.getString(3));
 		Object objId = rs.getObject(4);
@@ -94,8 +96,7 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 		MetadataKind k = this.kind;
 		if ( this.kind == MetadataKind.Dynamic ) {
-			String kindStr = rs.getString(6);
-			k = ("l".equalsIgnoreCase(kindStr) ? MetadataKind.Location : MetadataKind.Node);
+			k = MetadataKind.forKey(rs.getString(6));
 		}
 
 		if ( k == MetadataKind.Location ) {

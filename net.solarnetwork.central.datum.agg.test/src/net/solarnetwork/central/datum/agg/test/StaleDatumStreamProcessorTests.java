@@ -23,36 +23,25 @@
 package net.solarnetwork.central.datum.agg.test;
 
 import static java.util.Collections.singleton;
-import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static net.solarnetwork.util.JsonUtils.getObjectFromJSON;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -61,44 +50,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.CallableStatementCallback;
-import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
-import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertAggregateDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.DatumProperties;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.StaticOptionalServiceCollection;
 
@@ -114,8 +79,6 @@ public class StaleDatumStreamProcessorTests {
 
 	private static final Long TEST_NODE_ID = 1L;
 	private static final String TEST_SOURCE_ID = "test.source";
-
-	private static final String TEST_TZ = "Pacific/Auckland";
 
 	private static final class TestProcessor extends StaleDatumStreamProcessor {
 
@@ -152,8 +115,6 @@ public class StaleDatumStreamProcessorTests {
 	private TestProcessor job;
 	private List<Object> otherMocks;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
 	@Before
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
@@ -184,37 +145,6 @@ public class StaleDatumStreamProcessorTests {
 		if ( !otherMocks.isEmpty() ) {
 			EasyMock.verify(otherMocks.toArray(new Object[otherMocks.size()]));
 		}
-	}
-
-	private Map<NodeSourcePK, NodeDatumStreamMetadata> populateTestData(final long start,
-			final int count, final long step, final Long nodeId, final String sourceId) {
-		List<GeneralNodeDatum> data = new ArrayList<>(count);
-		long ts = start;
-		for ( int i = 0; i < count; i++ ) {
-			GeneralNodeDatum d = new GeneralNodeDatum();
-			d.setCreated(new DateTime(ts));
-			d.setNodeId(nodeId);
-			d.setSourceId(sourceId);
-			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
-			s.putInstantaneousSampleValue("watts", 125);
-			s.putAccumulatingSampleValue("wattHours", 10);
-			d.setSamples(s);
-			data.add(d);
-			ts += step;
-		}
-		return DatumDbUtils.ingestDatumStream(log, jdbcTemplate, data, TEST_TZ);
-	}
-
-	private void verifyStaleHourlyRowsAllProcessed(int expectedHourAggregates) {
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setAggregation(Aggregation.Hour);
-		List<StaleAggregateDatum> staleRows = jdbcTemplate.query(new SelectStaleAggregateDatum(filter),
-				StaleAggregateDatumEntityRowMapper.INSTANCE);
-		assertThat("No stale rows", staleRows, hasSize(0));
-
-		List<AggregateDatum> hourRows = jdbcTemplate.query(new SelectDatum(filter),
-				AggregateDatumEntityRowMapper.HOUR_INSTANCE);
-		assertThat("Agg hour rows", hourRows, hasSize(expectedHourAggregates));
 	}
 
 	@Test
@@ -340,258 +270,79 @@ public class StaleDatumStreamProcessorTests {
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(parallelism));
 	}
 
-	private void insertAggDatum(AggregateDatumEntity datum) {
-		jdbcTemplate.update(new InsertAggregateDatum(datum));
-	}
-
-	private void insertStaleAggDatum(StaleAggregateDatumEntity datum) {
-		jdbcTemplate.update(
-				"INSERT INTO solardatm.agg_stale_datm (ts_start,stream_id,agg_kind,created) VALUES (?,?::uuid,?,?)",
-				Timestamp.from(datum.getTimestamp()), datum.getStreamId(), datum.getKind().getKey(),
-				new Timestamp(System.currentTimeMillis()));
-
-	}
-
 	@Test
-	public void processStaleDailyAggProducesDailyAggRow() throws Exception {
-		ZonedDateTime start = ZonedDateTime.of(2018, 7, 24, 15, 0, 0, 0, ZoneId.of(TEST_TZ));
-		DatumProperties props = DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal("10") },
-				new BigDecimal[] { new BigDecimal("150") }, null, null);
-		DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] {
-				new BigDecimal[] { new BigDecimal("10"), new BigDecimal("10"), new BigDecimal("10") } },
-				new BigDecimal[][] { new BigDecimal[] { new BigDecimal("0"), new BigDecimal("150"),
-						new BigDecimal("150") } });
-		UUID streamId = UUID.randomUUID();
-		for ( int i = 0; i < 2; i++ ) {
-			ZonedDateTime ts = start.plusHours(i);
-			insertAggDatum(
-					new AggregateDatumEntity(streamId, ts.toInstant(), Aggregation.Hour, props, stats));
-		}
-		insertStaleAggDatum(new StaleAggregateDatumEntity(streamId,
-				start.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, Instant.now()));
-
-		int count = jdbcTemplate.execute(new CallableStatementCreator() {
-
-			@Override
-			public CallableStatement createCallableStatement(Connection con) throws SQLException {
-				CallableStatement stmt = con
-						.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}");
-				return stmt;
-			}
-		}, new CallableStatementCallback<Integer>() {
-
-			private int processKind(String kind, CallableStatement cs) throws SQLException {
-				int processed = 0;
-				cs.setString(1, kind);
-				while ( cs.execute() ) {
-					try (ResultSet rs = cs.getResultSet()) {
-						if ( rs.next() ) {
-							processed++;
-						} else {
-							break;
-						}
-					}
-				}
-				return processed;
-			}
-
-			@Override
-			public Integer doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				int processed = processKind("d", cs);
-				log.debug("Processed " + processed + " stale daily datum");
-				return processed;
-			}
-		});
-		assertThat("Processed stale row count", count, equalTo(1));
-
-		List<AggregateDatum> rows = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
-		assertThat("Daily agg row count", rows.size(), equalTo(1));
-
-		assertThat("Daily agg ts_start", rows.get(0).getTimestamp(),
-				equalTo(start.truncatedTo(ChronoUnit.DAYS).toInstant()));
-		assertThat("Daily agg i", rows.get(0).getProperties().getInstantaneous(),
-				arrayContaining(new BigDecimal[] { new BigDecimal("10") }));
-		assertThat("Daily agg a", rows.get(0).getProperties().getAccumulating(),
-				arrayContaining(new BigDecimal[] { new BigDecimal("300") }));
-	}
-
-	private static void assertStaleAuditDatum(String prefix, StaleAuditDatum stale,
-			StaleAuditDatum expected) {
-		assertThat(prefix + " stale audit record kind", stale.getKind(), equalTo(expected.getKind()));
-		assertThat(prefix + "stale audit record stream ID", stale.getStreamId(),
-				equalTo(expected.getStreamId()));
-		assertThat(prefix + " stale audit record timestamp", stale.getTimestamp(),
-				equalTo(expected.getTimestamp()));
-	}
-
-	private static void assertStaleAggregateDatum(String prefix, StaleAggregateDatum stale,
-			StaleAggregateDatumEntity expected) {
-		assertThat(prefix + " stale aggregate record kind", stale.getKind(),
-				equalTo(expected.getKind()));
-		assertThat(prefix + "stale aggregate record stream ID", stale.getStreamId(),
-				equalTo(expected.getStreamId()));
-		assertThat(prefix + " stale aggregate record timestamp", stale.getTimestamp(),
-				equalTo(expected.getTimestamp()));
-	}
-
-	private List<StaleAuditDatum> staleAuditDatum() {
-		List<StaleAuditDatum> rows = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
-		log.debug("Stale audit datum table:\n{}",
-				rows.stream().map(Object::toString).collect(joining("\n")));
-		return rows;
-	}
-
-	@Test
-	public void processStaleDailyAggProducesStaleDailyAuditRows() throws Exception {
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-
-		ZonedDateTime dayStart = ts1.with(TemporalAdjusters.firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
-
-		// reset stale datum to 'h' as if we already processed 'h' rows
-		jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm");
-		insertStaleAggDatum(new StaleAggregateDatumEntity(streamId, dayStart.toInstant(),
-				Aggregation.Day, Instant.now()));
-
-		// change job to daily agg processing
-		job.setAggregateProcessType("d");
-		assertThat("Job completed", job.executeJob(), equalTo(true));
-
-		List<StaleAuditDatum> staleDailyAuditRows = staleAuditDatum();
-		assertThat("Stale daily audit row count", staleDailyAuditRows, hasSize(3));
-
-		assertStaleAuditDatum("Audit row raw", staleDailyAuditRows.get(0),
-				new StaleAuditDatumEntity(streamId, dayStart.toInstant(), Aggregation.None, null));
-		assertStaleAuditDatum("Audit row daily", staleDailyAuditRows.get(1),
-				new StaleAuditDatumEntity(streamId, dayStart.toInstant(), Aggregation.Day, null));
-		assertStaleAuditDatum("Audit row hourly", staleDailyAuditRows.get(2),
-				new StaleAuditDatumEntity(streamId, dayStart.toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void processStaleMonthlyAggProducesStaleDailyAuditRow() throws Exception {
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-
-		ZonedDateTime dayStart = ts1.with(TemporalAdjusters.firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
-
-		// reset stale datum to 'M' as if we already processed 'h' rows
-		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
-		insertStaleAggDatum(new StaleAggregateDatumEntity(streamId, dayStart.toInstant(),
-				Aggregation.Month, Instant.now()));
-
-		// change job to monthly agg processing
-		job.setAggregateProcessType(Aggregation.Month.getKey());
-		assertThat("Job completed", job.executeJob(), equalTo(true));
-
-		List<StaleAuditDatum> staleDailyAuditRows = staleAuditDatum();
-		assertThat("Stale daily audit row count", staleDailyAuditRows, hasSize(1));
-
-		assertStaleAuditDatum("Audit row montlhly", staleDailyAuditRows.get(0),
-				new StaleAuditDatumEntity(streamId, dayStart.toInstant(), Aggregation.Month, null));
-	}
-
-	@Test
-	public void insertDatumAddStaleRow() {
-		// GIVEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setAggregation(Aggregation.Hour);
-		List<StaleAggregateDatum> staleRows = jdbcTemplate.query(new SelectStaleAggregateDatum(filter),
-				StaleAggregateDatumEntityRowMapper.INSTANCE);
-		assertThat("No stale rows at start", staleRows.isEmpty(), equalTo(true));
-
-		// WHEN
-		ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.HOURS);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				start.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-
-		// THEN
-		staleRows = jdbcTemplate.query(new SelectStaleAggregateDatum(filter),
-				StaleAggregateDatumEntityRowMapper.INSTANCE);
-		assertThat("Stale row inserted", staleRows, hasSize(1));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				start.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void insertDatumAddStaleRowAfterPrevHour() {
-		// given
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-
-		// clear stale datum row
-		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
-
-		// when
-		ZonedDateTime ts2 = ts1.plusMinutes(10); // prev hour
-		populateTestData(ts2.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-
-		// then
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale rows inserted", staleRows, hasSize(2));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts2.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void insertDatumAddStaleRowBeforeNextHour() {
-		// given
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 15, 05, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-
-		// clear stale datum row
-		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
-
-		// when
-		ZonedDateTime ts2 = ts1.plusMinutes(-10); // prev hour
-		populateTestData(ts2.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-
-		// then
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale rows inserted", staleRows, hasSize(2));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts2.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void processDatumAppEvents() throws Exception {
+	public void emaitDatumAppEvent() throws Exception {
 		// GIVEN
 		DatumAppEventAcceptor acceptor = EasyMock.createMock(DatumAppEventAcceptor.class);
 		job.setDatumAppEventAcceptors(new StaticOptionalServiceCollection<>(singleton(acceptor)));
-		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
-		populateTestData(start.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale hour row created", staleRows.size(), equalTo(1));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
+
+		int[] cbResult = new int[] { -1 };
+		expect(jdbcTemplate.execute(assertWith(new Assertion<ConnectionCallback<Integer>>() {
+
+			@Override
+			public void check(ConnectionCallback<Integer> cb) throws Throwable {
+				Integer res = cb.doInConnection(con);
+				if ( res != null ) {
+					cbResult[0] = res.intValue();
+				}
+			}
+
+		}))).andAnswer(new IAnswer<Integer>() {
+
+			@Override
+			public Integer answer() throws Throwable {
+				return cbResult[0];
+			}
+		});
+
+		con.setAutoCommit(true);
+		expectLastCall().anyTimes();
+
+		// execute call & indicate a ResultSet is available
+		expect(con.prepareCall(StaleDatumStreamProcessor.DEFAULT_SQL)).andReturn(stmt);
+		stmt.setString(1, Aggregation.Hour.getKey());
+		expect(stmt.execute()).andReturn(true).andReturn(true);
+
+		// give one result row back first time, none second
+		ResultSet resultSet1 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet1);
+		expect(resultSet1.next()).andReturn(true);
+
+		// extract AppEvent data from ResultSet
+		final NodeDatumId rowId = new NodeDatumId(UUID.randomUUID(), TEST_NODE_ID, TEST_SOURCE_ID,
+				ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour);
+
+		expect(resultSet1.getObject(1)).andReturn(rowId.getStreamId());
+		expect(resultSet1.getTimestamp(2)).andReturn(Timestamp.from(rowId.getTimestamp()));
+		expect(resultSet1.getString(3)).andReturn(rowId.getAggregation().getKey());
+		expect(resultSet1.getObject(4)).andReturn(rowId.getObjectId());
+		expect(resultSet1.getString(5)).andReturn(rowId.getSourceId());
+		expect(resultSet1.getString(6)).andReturn(Character.toString(rowId.getKind().getKey()));
+		resultSet1.close();
+
+		ResultSet resultSet2 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet2);
+		expect(resultSet2.next()).andReturn(false);
+		resultSet2.close();
+
+		stmt.close();
 
 		Capture<DatumAppEvent> eventCaptor = new Capture<>();
 		acceptor.offerDatumEvent(capture(eventCaptor));
 
 		// WHEN
-		replay(acceptor);
+		replayAll(acceptor, con, stmt, resultSet1, resultSet2);
 		boolean result = job.executeJob();
 		job.getExecutorService().shutdown();
 		job.getExecutorService().awaitTermination(10, TimeUnit.SECONDS);
 
 		// THEN
 		assertThat("Completed", result, equalTo(true));
-		verifyStaleHourlyRowsAllProcessed(1);
 
+		ZonedDateTime date = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 		DatumAppEvent event = eventCaptor.getValue();
 		assertThat("DatumAppEvent published", event, notNullValue());
 		assertThat("DatumAppEvent node ID matches", event.getNodeId(), equalTo(TEST_NODE_ID));
@@ -600,15 +351,13 @@ public class StaleDatumStreamProcessorTests {
 		assertThat("DatumAppEvent prop agg key", event.getEventProperties(),
 				hasEntry("aggregationKey", Aggregation.Hour.getKey()));
 		assertThat("DatumAppEvent prop agg timestamp", event.getEventProperties(),
-				hasEntry("timestamp", start.toInstant().toEpochMilli()));
+				hasEntry("timestamp", date.toInstant().toEpochMilli()));
 
 		AggregateUpdatedEventInfo info = getObjectFromJSON(
 				getJSONString(event.getEventProperties(), null), AggregateUpdatedEventInfo.class);
 		assertThat("AggregateUpdatedEventInfo info available", info, notNullValue());
 		assertThat("Info aggregation", info.getAggregation(), equalTo(Aggregation.Hour));
-		assertThat("Info aggregation", info.getTimeStart(), equalTo(start.toInstant()));
-
-		verify(acceptor);
+		assertThat("Info aggregation", info.getTimeStart(), equalTo(date.toInstant()));
 	}
 
 }
