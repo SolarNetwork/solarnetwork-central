@@ -1,5 +1,5 @@
 /* ==================================================================
- * DbProcessStaleAuditDatumDaily.java - 9/11/2020 2:39:08 pm
+ * DbProcessStaleAuditDatumDailyTests.java - 9/11/2020 2:39:08 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -68,7 +68,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * @author matt
  * @version 1.0
  */
-public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
+public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport {
 
 	private BasicNodeDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a");

@@ -24,9 +24,12 @@ package net.solarnetwork.central.datum.agg.test;
 
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
+import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static net.solarnetwork.util.JsonUtils.getObjectFromJSON;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -48,29 +51,29 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.joda.time.DateTime;
-import org.junit.Assert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
@@ -96,6 +99,7 @@ import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.StaticOptionalServiceCollection;
 
 /**
@@ -104,19 +108,20 @@ import net.solarnetwork.util.StaticOptionalServiceCollection;
  * @author matt
  * @version 1.0
  */
-public class StaleDatumStreamProcessorTests extends AggTestSupport {
+public class StaleDatumStreamProcessorTests {
 
 	private static final String TEST_JOB_ID = "Test Stale Datum Stream Processor";
 
+	private static final Long TEST_NODE_ID = 1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private TestStaleGeneralNodeDatumProcessor job;
+	private static final String TEST_TZ = "Pacific/Auckland";
 
-	private static final class TestStaleGeneralNodeDatumProcessor extends StaleDatumStreamProcessor {
+	private static final class TestProcessor extends StaleDatumStreamProcessor {
 
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
-		private TestStaleGeneralNodeDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
+		private TestProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 			super(eventAdmin, jdbcOps);
 			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
 
@@ -143,22 +148,42 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 
 	}
 
-	@Override
+	private JdbcOperations jdbcTemplate;
+	private TestProcessor job;
+	private List<Object> otherMocks;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	@Before
 	public void setup() {
-		super.setup();
+		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
-		job = new TestStaleGeneralNodeDatumProcessor(null, jdbcTemplate);
+		job = new TestProcessor(null, jdbcTemplate);
 		job.setJobGroup("Test");
 		job.setJobId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 		job.setMaximumWaitMs(15 * 1000L);
 
-		cleanupDatabase();
+		otherMocks = new ArrayList<>();
+	}
 
-		setupTestLocation(TEST_LOC_ID, TEST_TZ);
-		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+	private void replayAll(Object... mocks) {
+		EasyMock.replay(jdbcTemplate);
+		if ( mocks != null ) {
+			EasyMock.replay(mocks);
+			for ( Object m : mocks ) {
+				otherMocks.add(m);
+			}
+		}
+	}
+
+	@After
+	public void teardown() {
+		EasyMock.verify(jdbcTemplate);
+		if ( !otherMocks.isEmpty() ) {
+			EasyMock.verify(otherMocks.toArray(new Object[otherMocks.size()]));
+		}
 	}
 
 	private Map<NodeSourcePK, NodeDatumStreamMetadata> populateTestData(final long start,
@@ -180,21 +205,6 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 		return DatumDbUtils.ingestDatumStream(log, jdbcTemplate, data, TEST_TZ);
 	}
 
-	private Map<NodeSourcePK, NodeDatumStreamMetadata> populateTestData() {
-		// populate 2 hours worth of 10min samples for 5 nodes
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = new LinkedHashMap<>(2);
-		Instant start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).toInstant();
-		for ( int i = 1; i <= 5; i++ ) {
-			metas.putAll(populateTestData(start.toEpochMilli(), 11, 10 * 60 * 1000L, (long) i,
-					TEST_SOURCE_ID));
-		}
-		return metas;
-	}
-
-	private void verifyStaleHourlyRowsAllProcessed() {
-		verifyStaleHourlyRowsAllProcessed(10);
-	}
-
 	private void verifyStaleHourlyRowsAllProcessed(int expectedHourAggregates) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Hour);
@@ -209,113 +219,125 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 
 	@Test
 	public void runSingleTask() throws Exception {
-		populateTestData();
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale hour rows (5 nodes * 2 stale hours)", staleRows, hasSize(10));
+		// GIVEN
+		Connection con = EasyMock.createMock(Connection.class);
+		CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
+
+		int[] cbResult = new int[] { -1 };
+		expect(jdbcTemplate.execute(assertWith(new Assertion<ConnectionCallback<Integer>>() {
+
+			@Override
+			public void check(ConnectionCallback<Integer> cb) throws Throwable {
+				Integer res = cb.doInConnection(con);
+				if ( res != null ) {
+					cbResult[0] = res.intValue();
+				}
+			}
+
+		}))).andAnswer(new IAnswer<Integer>() {
+
+			@Override
+			public Integer answer() throws Throwable {
+				return cbResult[0];
+			}
+		});
+
+		con.setAutoCommit(true);
+		expectLastCall().anyTimes();
+
+		// execute call & indicate a ResultSet is available
+		expect(con.prepareCall(StaleDatumStreamProcessor.DEFAULT_SQL)).andReturn(stmt);
+		stmt.setString(1, Aggregation.Hour.getKey());
+		expect(stmt.execute()).andReturn(true).andReturn(true);
+
+		// give one result row back first time, none second
+		ResultSet resultSet1 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet1);
+		expect(resultSet1.next()).andReturn(true);
+		resultSet1.close();
+
+		ResultSet resultSet2 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.getResultSet()).andReturn(resultSet2);
+		expect(resultSet2.next()).andReturn(false);
+		resultSet2.close();
+
+		stmt.close();
+
+		// WHEN
+		replayAll(con, stmt, resultSet1, resultSet2);
 		boolean result = job.executeJob();
+
+		// THEN
 		assertThat("Completed", result, equalTo(true));
-		verifyStaleHourlyRowsAllProcessed();
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(0));
 	}
 
 	@Test
 	public void runParallelTasks() throws Exception {
-		job.setParallelism(4);
-		populateTestData();
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale hour rows (5 nodes * 2 stale hours)", staleRows, hasSize(10));
-		boolean result = job.executeJob();
-		assertThat("Completed", result, equalTo(true));
-		verifyStaleHourlyRowsAllProcessed();
-	}
+		// GIVEN
+		final int parallelism = 3;
+		List<Object> mocks = new ArrayList<>();
+		job.setParallelism(parallelism);
+		job.setMaximumWaitMs(Long.MAX_VALUE);
 
-	private static final String SQL_LOCK_STALE_ROW = "SELECT * FROM solardatm.agg_stale_datm "
-			+ "WHERE agg_kind = ? AND stream_id = ?::uuid AND ts_start = ? FOR UPDATE";
+		for ( int i = 0; i < parallelism; i++ ) {
+			Connection con = EasyMock.createMock(Connection.class);
+			mocks.add(con);
+			con.setAutoCommit(true);
+			expectLastCall().anyTimes();
 
-	@Test
-	public void runParallelTasksWithLockedRow() throws Exception {
-		job.setParallelism(4);
-		populateTestData();
+			CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
+			mocks.add(stmt);
 
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale hour rows (5 nodes * 2 stale hours)", staleRows, hasSize(10));
+			int[] cbResult = new int[] { -1 };
+			expect(jdbcTemplate.execute(assertWith(new Assertion<ConnectionCallback<Integer>>() {
 
-		// pick a single stale row to lock in a different thread; this row should be skipped
-		final StaleAggregateDatum oneStaleRow = staleRows.iterator().next();
-
-		// latch for row lock thread to indicate it has locked the row and the main thread can continue
-		final CountDownLatch lockedLatch = new CountDownLatch(1);
-
-		// list to capture exception thrown by row lock thread
-		final List<Exception> threadExceptions = new ArrayList<Exception>(1);
-
-		// object monitor for main thread to signal to row lock thread to complete
-		final Object lockThreadSignal = new Object();
-
-		// lock a stale row
-		Thread lockThread = new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				txTemplate.execute(new TransactionCallback<Object>() {
-
-					@Override
-					public Object doInTransaction(TransactionStatus status) {
-						try {
-							Map<String, Object> row = jdbcTemplate.queryForMap(SQL_LOCK_STALE_ROW, 'h',
-									oneStaleRow.getStreamId(),
-									Timestamp.from(oneStaleRow.getTimestamp()));
-
-							log.debug("Locked stale row {}", row);
-
-							lockedLatch.countDown();
-
-							// wait
-							try {
-								synchronized ( lockThreadSignal ) {
-									lockThreadSignal.wait();
-								}
-							} catch ( InterruptedException e ) {
-								log.error("StaleRowLockingThread interrupted waiting", e);
-							}
-						} catch ( RuntimeException e ) {
-							threadExceptions.add(e);
-							throw e;
-						}
-						return null;
+				@Override
+				public void check(ConnectionCallback<Integer> cb) throws Throwable {
+					Integer res = cb.doInConnection(con);
+					if ( res != null ) {
+						cbResult[0] = res.intValue();
 					}
+				}
 
-				});
-			}
+			}))).andAnswer(new IAnswer<Integer>() {
 
-		}, "StaleRowLockingThread");
-		lockThread.setDaemon(true);
-		lockThread.start();
+				@Override
+				public Integer answer() throws Throwable {
+					return cbResult[0];
+				}
+			});
 
-		// wait for our latch
-		boolean locked = lockedLatch.await(5, TimeUnit.SECONDS);
-		if ( !threadExceptions.isEmpty() ) {
-			throw threadExceptions.get(0);
+			// execute call & indicate a ResultSet is available
+			expect(con.prepareCall(StaleDatumStreamProcessor.DEFAULT_SQL)).andReturn(stmt);
+			stmt.setString(1, Aggregation.Hour.getKey());
+			expectLastCall();
+			expect(stmt.execute()).andReturn(true).andReturn(true);
+
+			// give one result row back first time, none second
+			ResultSet resultSet1 = EasyMock.createMock(ResultSet.class);
+			mocks.add(resultSet1);
+			expect(stmt.getResultSet()).andReturn(resultSet1);
+			expect(resultSet1.next()).andReturn(true);
+			resultSet1.close();
+
+			// give one result row back first time, none second
+			ResultSet resultSet2 = EasyMock.createMock(ResultSet.class);
+			mocks.add(resultSet2);
+			expect(stmt.getResultSet()).andReturn(resultSet2);
+			expect(resultSet2.next()).andReturn(false);
+			resultSet2.close();
+
+			stmt.close();
 		}
-		Assert.assertTrue("Stale row locked", locked);
 
-		try {
-			boolean result = job.executeJob();
-			Assert.assertTrue("Tasks completed", result);
+		// WHEN
+		replayAll(mocks.toArray(new Object[mocks.size()]));
+		boolean result = job.executeJob();
 
-		} finally {
-			synchronized ( lockThreadSignal ) {
-				lockThreadSignal.notifyAll();
-			}
-		}
-
-		// wait for the lock thread to complete
-		lockThread.join(5000);
-
-		// only the previously locked stale row should be left
-		staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate, Aggregation.Hour);
-		assertThat("Only locked row remains", staleRows, hasSize(1));
-		assertThat("Locked stale row remains", staleRows.get(0), equalTo(oneStaleRow));
+		// THEN
+		assertThat("Completed", result, equalTo(true));
+		assertThat("Thread count", job.taskThreadCount.get(), equalTo(parallelism));
 	}
 
 	private void insertAggDatum(AggregateDatumEntity datum) {

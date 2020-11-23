@@ -1,5 +1,5 @@
 /* ==================================================================
- * DbProcessStaleAggregateDatum.java - 7/11/2020 7:00:42 am
+ * DbProcessStaleAggregateDatumTests.java - 7/11/2020 7:00:42 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -36,25 +36,34 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDa
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -78,7 +87,9 @@ import net.solarnetwork.central.domain.Aggregation;
  * @author matt
  * @version 1.0
  */
-public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
+public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport {
+
+	protected TransactionTemplate txTemplate;
 
 	private List<GeneralNodeDatum> loadJson(String resource, int from, int to) throws IOException {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass()).subList(from, to);
@@ -139,6 +150,11 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		return meta;
 	}
 
+	@Before
+	public void setup() {
+		txTemplate = new TransactionTemplate(txManager);
+	}
+
 	@Test
 	public void processStaleHour() throws IOException {
 		// GIVEN
@@ -161,6 +177,123 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 
 		// should have deleted stale Hour and inserted stale Day
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
+		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
+				new StaleAggregateDatumEntity(meta.getStreamId(),
+						hour.truncatedTo(ChronoUnit.DAYS).toInstant(), Aggregation.Day, null));
+
+		// should not have created stale SolarFlux Hour because not current hour
+		List<StaleFluxDatum> staleFluxRows = staleFluxDatum(Aggregation.Hour);
+		assertThat("No stale flux record created for time in past", staleFluxRows, hasSize(0));
+	}
+
+	private static final String SQL_LOCK_STALE_ROW = "SELECT * FROM solardatm.agg_stale_datm "
+			+ "WHERE agg_kind = ? AND stream_id = ?::uuid AND ts_start = ? FOR UPDATE";
+
+	@Test
+	public void processStaleHour_lockedRow() throws Exception {
+		TestTransaction.end();
+		try {
+			processStaleHour_lockedRow_impl();
+		} finally {
+			DatumTestUtils.cleanupDatabase(jdbcTemplate);
+		}
+	}
+
+	private void processStaleHour_lockedRow_impl() throws Exception {
+		// GIVEN
+		List<GeneralNodeDatum> datums = loadJson("test-datum-02.txt", 0, 6);
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+				"UTC");
+		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+
+		// pick a single stale row to lock in a different thread; this row should be skipped
+		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
+		final StaleAggregateDatum oneStaleRow = staleRows.iterator().next();
+
+		// latch for row lock thread to indicate it has locked the row and the main thread can continue
+		final CountDownLatch lockedLatch = new CountDownLatch(1);
+
+		// list to capture exception thrown by row lock thread
+		final List<Exception> threadExceptions = new ArrayList<Exception>(1);
+
+		// object monitor for main thread to signal to row lock thread to complete
+		final Object lockThreadSignal = new Object();
+
+		// lock a stale row
+		Thread lockThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				txTemplate.execute(new TransactionCallback<Object>() {
+
+					@Override
+					public Object doInTransaction(TransactionStatus status) {
+						try {
+							Map<String, Object> row = jdbcTemplate.queryForMap(SQL_LOCK_STALE_ROW, 'h',
+									oneStaleRow.getStreamId(),
+									Timestamp.from(oneStaleRow.getTimestamp()));
+
+							log.debug("Locked stale row {}", row);
+
+							lockedLatch.countDown();
+
+							// wait
+							try {
+								synchronized ( lockThreadSignal ) {
+									lockThreadSignal.wait();
+								}
+							} catch ( InterruptedException e ) {
+								log.error("StaleRowLockingThread interrupted waiting", e);
+							}
+						} catch ( RuntimeException e ) {
+							threadExceptions.add(e);
+							throw e;
+						}
+						return null;
+					}
+
+				});
+			}
+
+		}, "StaleRowLockingThread");
+		lockThread.setDaemon(true);
+		lockThread.start();
+
+		// wait for our latch
+		boolean locked = lockedLatch.await(5, TimeUnit.SECONDS);
+		if ( !threadExceptions.isEmpty() ) {
+			throw threadExceptions.get(0);
+		}
+		assertThat("Stale row locked", locked, equalTo(true));
+
+		// WHEN
+		try {
+			processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+		} finally {
+			synchronized ( lockThreadSignal ) {
+				lockThreadSignal.notifyAll();
+			}
+		}
+
+		// wait for the lock thread to complete
+		lockThread.join(5000);
+
+		// THEN
+
+		// should have stored rollup in Hour table
+		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
+		assertThat("Hour rollup result stored database", result, hasSize(1));
+		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
+				hour.toInstant(), Aggregation.Hour, null, null));
+
+		staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate, Aggregation.Hour);
+		assertThat("Only locked row remains", staleRows, hasSize(1));
+		assertThat("Locked stale row remains", staleRows.get(0), equalTo(oneStaleRow));
+
+		// should have deleted stale Hour and inserted stale Day
+		staleRows = listStaleAggregateDatum(jdbcTemplate, Aggregation.Day);
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),

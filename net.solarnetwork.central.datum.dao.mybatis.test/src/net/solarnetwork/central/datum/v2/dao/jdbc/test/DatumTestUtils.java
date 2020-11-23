@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -254,6 +255,38 @@ public final class DatumTestUtils {
 		DatumTestUtils.assertAggregateDatum(prefix, result, expected);
 		assertThat(prefix + " end timestamp", result.getEndTimestamp(),
 				equalTo(expected.getEndTimestamp()));
+	}
+
+	/**
+	 * Delete from common datum tables.
+	 * 
+	 * <p>
+	 * This is designed to help with tests that circumvent test transaction
+	 * auto-rollback.
+	 * </p>
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC operations to use
+	 */
+	public static void cleanupDatabase(JdbcOperations jdbcTemplate) {
+		if ( jdbcTemplate == null ) {
+			return;
+		}
+		jdbcTemplate.update("DELETE FROM solardatm.da_datm");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_flux");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_monthly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_acc_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_hourly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_monthly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm");
+		jdbcTemplate.update("DELETE FROM solaruser.user_node");
+		jdbcTemplate.update("DELETE FROM solaruser.user_user");
+		jdbcTemplate.update("DELETE FROM solarnet.sn_node");
+		jdbcTemplate.update("DELETE FROM solarnet.sn_loc");
 	}
 
 }

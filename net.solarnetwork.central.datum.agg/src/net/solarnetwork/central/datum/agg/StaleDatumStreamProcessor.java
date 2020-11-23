@@ -59,6 +59,9 @@ import net.solarnetwork.util.OptionalServiceCollection;
  */
 public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumProcessor {
 
+	/** The default {@code jdbcCall} value. */
+	public static final String DEFAULT_SQL = "{call solardatm.process_one_agg_stale_datm(?)}";
+
 	private OptionalServiceCollection<DatumAppEventAcceptor> datumAppEventAcceptors;
 
 	/**
@@ -71,7 +74,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumPr
 	 */
 	public StaleDatumStreamProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin, jdbcOps, "stale datum");
-		setJdbcCall("{call solardatm.process_one_agg_stale_datm(?)}");
+		setJdbcCall(DEFAULT_SQL);
 	}
 
 	@Override

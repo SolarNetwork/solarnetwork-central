@@ -19,6 +19,7 @@ Import-Package:
  net.solarnetwork.central.datum.v2.dao.jdbc.sql;version="[1.0,2.0)",
  net.solarnetwork.central.test;version="[2.2,3.0)",
  net.solarnetwork.common.mqtt.netty;version="1.0.0",
+ net.solarnetwork.test;version="[1.5,2.0)",
  net.solarnetwork.test.mqtt;version="1.0.0",
  net.solarnetwork.util;version="1.32.0",
  org.apache.commons.logging;version="[1.1,2.0)",
