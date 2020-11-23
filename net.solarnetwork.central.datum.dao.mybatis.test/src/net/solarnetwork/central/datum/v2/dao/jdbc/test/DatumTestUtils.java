@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.BufferedReader;
@@ -40,6 +40,8 @@ import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.util.NumberUtils;
 
 /**
@@ -197,6 +199,45 @@ public final class DatumTestUtils {
 						Matchers.arrayContaining(m));
 			}
 		}
+	}
+
+	/**
+	 * Assert one stale aggregate datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        the assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertStaleAggregateDatum(String prefix, StaleAggregateDatum result,
+			StaleAggregateDatum expected) {
+		assertThat(prefix + " stale aggregate record kind", result.getKind(),
+				equalTo(expected.getKind()));
+		assertThat(prefix + "stale aggregate record stream ID", result.getStreamId(),
+				equalTo(expected.getStreamId()));
+		assertThat(prefix + " stale aggregate record timestamp", result.getTimestamp(),
+				equalTo(expected.getTimestamp()));
+	}
+
+	/**
+	 * Assert one stale audit datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        the assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertStaleAuditDatum(String prefix, StaleAuditDatum result,
+			StaleAuditDatum expected) {
+		assertThat(prefix + " stale audit record kind", result.getKind(), equalTo(expected.getKind()));
+		assertThat(prefix + "stale audit record stream ID", result.getStreamId(),
+				equalTo(expected.getStreamId()));
+		assertThat(prefix + " stale audit record timestamp", result.getTimestamp(),
+				equalTo(expected.getTimestamp()));
 	}
 
 	/**

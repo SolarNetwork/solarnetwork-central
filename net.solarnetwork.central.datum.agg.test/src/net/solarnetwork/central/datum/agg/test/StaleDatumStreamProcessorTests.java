@@ -24,7 +24,6 @@ package net.solarnetwork.central.datum.agg.test;
 
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.util.JsonUtils.getJSONString;
 import static net.solarnetwork.util.JsonUtils.getObjectFromJSON;
 import static org.easymock.EasyMock.capture;
@@ -42,7 +41,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -70,7 +68,6 @@ import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -180,7 +177,7 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 			data.add(d);
 			ts += step;
 		}
-		return AggTestUtils.ingestDatumStream(log, jdbcTemplate, data, TEST_TZ);
+		return DatumDbUtils.ingestDatumStream(log, jdbcTemplate, data, TEST_TZ);
 	}
 
 	private Map<NodeSourcePK, NodeDatumStreamMetadata> populateTestData() {
@@ -386,7 +383,7 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 		});
 		assertThat("Processed stale row count", count, equalTo(1));
 
-		List<AggregateDatum> rows = AggTestUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
+		List<AggregateDatum> rows = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
 		assertThat("Daily agg row count", rows.size(), equalTo(1));
 
 		assertThat("Daily agg ts_start", rows.get(0).getTimestamp(),
@@ -548,109 +545,6 @@ public class StaleDatumStreamProcessorTests extends AggTestSupport {
 				ts2.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
 		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
 				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-	}
-
-	private static final String DELETE_DATUM_SQL = "{? = call solardatm.delete_datm(?::BIGINT[], ?, ?, ?)}";
-
-	private int deleteDatum(Long nodeId, String sourceId, java.time.LocalDateTime start,
-			java.time.LocalDateTime end) {
-		return deleteDatum(new Long[] { nodeId }, new String[] { sourceId }, start, end);
-	}
-
-	private int deleteDatum(Long[] nodeIds, String[] sourceIds, java.time.LocalDateTime start,
-			java.time.LocalDateTime end) {
-		return jdbcTemplate.execute(new ConnectionCallback<Long>() {
-
-			@Override
-			public Long doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement cs = con.prepareCall(DELETE_DATUM_SQL)) {
-					cs.registerOutParameter(1, Types.BIGINT);
-					cs.setArray(2, con.createArrayOf("BIGINT", nodeIds));
-					cs.setArray(3, con.createArrayOf("TEXT", sourceIds));
-					cs.setObject(4, start, Types.TIMESTAMP);
-					cs.setObject(5, end, Types.TIMESTAMP);
-					cs.execute();
-					return cs.getLong(1);
-				}
-			}
-
-		}).intValue();
-	}
-
-	@Test
-	public void deleteDatumAddStaleRow() {
-		// given
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 15, 05, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-		processStaleAggregateDatum(log, jdbcTemplate);
-
-		// when
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID, ts1.toLocalDateTime(),
-				ts1.plusMinutes(1).toLocalDateTime());
-
-		// then
-		assertThat("Deleted row count", updateCount, equalTo(1));
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate,
-				Aggregation.Hour);
-		assertThat("Stale row inserted", staleRows, hasSize(1));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void deleteDatumAddStaleRowAfterPrevHour() {
-		// given
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
-				TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-		processStaleAggregateDatum(log, jdbcTemplate);
-
-		// when
-
-		// delete 2nd datum, in 2nd hour
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID,
-				ts1.plusMinutes(10).toLocalDateTime(), ts1.plusMinutes(11).toLocalDateTime());
-
-		// then
-		assertThat("Deleted row count", updateCount, equalTo(1));
-
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale rows inserted", staleRows, hasSize(2));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, null));
-	}
-
-	@Test
-	public void deleteDatumAddStaleRowBeforeNextHour() {
-		// given
-		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
-				ts1.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
-				TEST_SOURCE_ID);
-		UUID streamId = metas.values().iterator().next().getStreamId();
-		processStaleAggregateDatum(log, jdbcTemplate);
-
-		// when
-
-		// delete 1st datum, in 1st hour
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID, ts1.toLocalDateTime(),
-				ts1.plusMinutes(1).toLocalDateTime());
-
-		// then
-		assertThat("Deleted row count", updateCount, equalTo(1));
-
-		List<StaleAggregateDatum> staleRows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
-		assertThat("Stale rows inserted", staleRows, hasSize(2));
-		assertStaleAggregateDatum("1", staleRows.get(0), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).toInstant(), Aggregation.Hour, null));
-		assertStaleAggregateDatum("2", staleRows.get(1), new StaleAggregateDatumEntity(streamId,
-				ts1.truncatedTo(ChronoUnit.HOURS).plusHours(1).toInstant(), Aggregation.Hour, null));
 	}
 
 	@Test
