@@ -76,7 +76,7 @@ public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliaryEn
 
 	@Override
 	public DatumAuxiliaryEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = UUID.fromString(rs.getString(1));
+		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant timestamp = rs.getTimestamp(2).toInstant();
 		DatumAuxiliaryType kind = DatumAuxiliaryType.valueOf(rs.getString(3));
 		Instant updated = rs.getTimestamp(4).toInstant();

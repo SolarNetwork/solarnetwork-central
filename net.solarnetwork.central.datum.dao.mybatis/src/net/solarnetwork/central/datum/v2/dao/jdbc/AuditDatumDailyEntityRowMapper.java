@@ -57,7 +57,7 @@ public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatumEntit
 
 	@Override
 	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = UUID.fromString(rs.getString(1));
+		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		boolean dayPresent = rs.getBoolean(7);
 		return AuditDatumEntity.dailyAuditDatum(streamId, ts, rs.getLong(5), rs.getLong(6),

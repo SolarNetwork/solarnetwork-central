@@ -3,4 +3,4 @@ SELECT datum.stream_id,
 	datum.agg_kind, 
 	datum.created
 FROM solardatm.agg_stale_datm datum
-ORDER BY datum.aud_kind, ts, datum.stream_id
+ORDER BY datum.agg_kind, ts, datum.stream_id

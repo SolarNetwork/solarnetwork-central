@@ -69,7 +69,7 @@ public class TypedDatumEntityRowMapper implements RowMapper<TypedDatumEntity> {
 
 	@Override
 	public TypedDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = UUID.fromString(rs.getString(1));
+		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		BigDecimal[] data_i = getArray(rs, 3);
 		BigDecimal[] data_a = getArray(rs, 4);

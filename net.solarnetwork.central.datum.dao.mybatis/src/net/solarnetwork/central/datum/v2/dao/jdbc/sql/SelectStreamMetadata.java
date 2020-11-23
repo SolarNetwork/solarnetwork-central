@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.util.Cachable;
 
 /**
  * Generate dynamic SQL for a "find metadata for streams" query.
@@ -40,9 +42,11 @@ import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
  * @version 1.0
  * @since 3.8
  */
-public class SelectStreamMetadata implements PreparedStatementCreator, SqlProvider {
+public class SelectStreamMetadata implements PreparedStatementCreator, SqlProvider, Cachable {
 
 	private final StreamMetadataCriteria filter;
+	private final Long cacheTti;
+	private final Long cacheTtl;
 
 	/**
 	 * Constructor.
@@ -53,11 +57,29 @@ public class SelectStreamMetadata implements PreparedStatementCreator, SqlProvid
 	 *         if {@code filter} is {@literal null}
 	 */
 	public SelectStreamMetadata(StreamMetadataCriteria filter) {
+		this(filter, null, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param cacheTtl
+	 *        a cache time-to-live value, or {@literal null} for none
+	 * @param cacheTti
+	 *        a cache time-to-idle value, or {@literal null} for none
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} is {@literal null}
+	 */
+	public SelectStreamMetadata(StreamMetadataCriteria filter, Long cacheTtl, Long cacheTti) {
 		super();
 		if ( filter == null || filter.getStreamIds() == null || filter.getStreamIds().length < 1 ) {
 			throw new IllegalArgumentException("The filter argument and stream IDs must not be null.");
 		}
 		this.filter = filter;
+		this.cacheTtl = cacheTtl;
+		this.cacheTti = cacheTti;
 	}
 
 	@Override
@@ -88,6 +110,25 @@ public class SelectStreamMetadata implements PreparedStatementCreator, SqlProvid
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		return createStatement(con, getSql());
+	}
+
+	@Override
+	public String getCacheKey() {
+		if ( cacheTtl == null && cacheTti == null ) {
+			// caching not supported
+			return null;
+		}
+		return DatumSqlUtils.streamMetadataCacheKey(filter, STREAM_METADATA_SORT_KEY_MAPPING);
+	}
+
+	@Override
+	public Long getTtl() {
+		return cacheTtl;
+	}
+
+	@Override
+	public Long getTti() {
+		return cacheTti;
 	}
 
 }

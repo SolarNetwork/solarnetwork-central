@@ -55,7 +55,7 @@ public class AuditDatumHourlyEntityRowMapper implements RowMapper<AuditDatumEnti
 
 	@Override
 	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = UUID.fromString(rs.getString(1));
+		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		return AuditDatumEntity.hourlyAuditDatum(streamId, ts, rs.getLong(5), rs.getLong(3),
 				rs.getLong(4));

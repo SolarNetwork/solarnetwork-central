@@ -27,11 +27,13 @@ import static java.util.stream.Collectors.toMap;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
+import javax.cache.Cache;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -75,6 +77,7 @@ import net.solarnetwork.domain.SortDescriptor;
 public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDao {
 
 	private final JdbcOperations jdbcTemplate;
+	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
 
 	/**
 	 * Constructor.
@@ -191,21 +194,39 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 			totalCount = (long) data.size();
 		}
 
-		Iterable<? extends ObjectDatumStreamMetadata> meta = null;
-		if ( filter.getLocationIds() != null ) {
-			meta = findLocationDatumStreamMetadata(filter);
+		Map<UUID, DatumStreamMetadata> metaMap = null;
+		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
+			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
+			if ( meta != null ) {
+				metaMap = Collections.singletonMap(meta.getStreamId(), meta);
+			} else {
+				metaMap = Collections.emptyMap();
+			}
 		} else {
-			meta = findNodeDatumStreamMetadata(filter);
+			Iterable<? extends ObjectDatumStreamMetadata> metas = null;
+			if ( filter.getLocationIds() != null ) {
+				metas = findLocationDatumStreamMetadata(filter);
+			} else {
+				metas = findNodeDatumStreamMetadata(filter);
+			}
+			metaMap = StreamSupport.stream(metas.spliterator(), false).collect(toMap(
+					DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
 		}
-		Map<UUID, DatumStreamMetadata> metaMap = StreamSupport.stream(meta.spliterator(), false).collect(
-				toMap(DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
-
 		return new BasicDatumStreamFilterResults(metaMap, data, totalCount,
 				(filter.getOffset() != null ? filter.getOffset().intValue() : 0), data.size());
 	}
 
 	@Override
 	public ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter) {
+		if ( filter.getStreamId() == null ) {
+			throw new IllegalArgumentException("A stream ID is required.");
+		}
+		if ( streamMetadataCache != null ) {
+			ObjectDatumStreamMetadata meta = streamMetadataCache.get(filter.getStreamId());
+			if ( meta != null ) {
+				return meta;
+			}
+		}
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(new SelectStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.INSTANCE);
 		return (results.isEmpty() ? null : results.get(0));
@@ -222,6 +243,25 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 			LocationMetadataCriteria filter) {
 		return jdbcTemplate.query(new SelectLocationStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
+	}
+
+	/**
+	 * Get the stream metadata cache.
+	 * 
+	 * @return the cache, or {@literal null}
+	 */
+	public Cache<UUID, ObjectDatumStreamMetadata> getStreamMetadataCache() {
+		return streamMetadataCache;
+	}
+
+	/**
+	 * Set the stream metadata cache.
+	 * 
+	 * @param streamMetadataCache
+	 *        the cache to set
+	 */
+	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> nodeMetadataCache) {
+		this.streamMetadataCache = nodeMetadataCache;
 	}
 
 }

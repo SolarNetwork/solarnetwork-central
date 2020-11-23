@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,9 +32,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -47,7 +54,9 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.ByteUtils;
 
 /**
  * SQL utilities for datum.
@@ -58,8 +67,35 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public final class DatumSqlUtils {
 
+	private static final Logger log = LoggerFactory.getLogger(DatumSqlUtils.class);
+
 	private DatumSqlUtils() {
 		// don't construct me
+	}
+
+	/**
+	 * A standard mapping of sort keys to SQL column names suitable for ordering
+	 * by stream metadata.
+	 * 
+	 * <p>
+	 * This map contains the following entries:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>kind -&gt; agg_kind</li>
+	 * <li>stream -&gt; stream_id</li>
+	 * <li>time -&gt; ts_start</li>
+	 * </ol>
+	 * 
+	 * @see #orderBySorts(Iterable, Map, StringBuilder)
+	 */
+	public static final Map<String, String> STALE_AGGREGATE_SORT_KEY_MAPPING;
+	static {
+		Map<String, String> map = new LinkedHashMap<>(4);
+		map.put("kind", "agg_kind");
+		map.put("stream", "stream_id");
+		map.put("time", "ts_start");
+		STALE_AGGREGATE_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
 	/**
@@ -803,6 +839,52 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination
+	 * where the limit and offset are generated as literal values.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \nLIMIT x OFFSET y}.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static void limitOffsetLiteral(PaginationCriteria filter, StringBuilder buf) {
+		if ( filter != null && filter.getMax() != null ) {
+			int max = filter.getMax();
+			if ( max > 0 ) {
+				buf.append("\nLIMIT ").append(max);
+			}
+			Integer offset = filter.getOffset();
+			if ( offset != null ) {
+				buf.append(" OFFSET ").append(offset);
+			}
+		}
+	}
+
+	/**
+	 * Generate SQL {@literal FOR UPDATE SKIP LOCKED} criteria to support
+	 * locking.
+	 * 
+	 * @param skipLocked
+	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static void forUpdate(boolean skipLocked, StringBuilder buf) {
+		buf.append("\nFOR UPDATE");
+		if ( skipLocked ) {
+			buf.append(" SKIP LOCKED");
+		}
+	}
+
+	/**
 	 * A standardized SQL clause for casting a local date to a stream's time
 	 * zone.
 	 * 
@@ -983,6 +1065,91 @@ public final class DatumSqlUtils {
 				return rs.next() ? rs.getLong(1) : null;
 			}
 		});
+	}
+
+	/**
+	 * Get a UUID column value.
+	 * 
+	 * <p>
+	 * This method can be more efficient than calling
+	 * {@link ResultSet#getString(int)} if the JDBC driver returns a UUID
+	 * instance natively. Otherwise this method will call {@code toString()} on
+	 * the column value and parse that as a UUID.
+	 * </p>
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @return the UUID, or {@literal null} if the column value is null
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @throws IllegalArgumentException
+	 *         if the column value is non-null but does not conform to the
+	 *         string representation as described in {@link UUID#toString()}
+	 */
+	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
+		Object sid = rs.getObject(column);
+		return (sid instanceof UUID ? (UUID) sid : sid != null ? UUID.fromString(sid.toString()) : null);
+	}
+
+	/**
+	 * Generate a cache key out of a stream filter.
+	 * 
+	 * <p>
+	 * If the filter defines a single stream ID, then the
+	 * {@link UUID#toString()} version of that is returned directly. Otherwise,
+	 * the stream IDs are hashed into a SHA-1 digest value, and the hex-encoded
+	 * result of that is returned.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param sortKeyMapping
+	 *        the sort mapping to use if sorts are included in the filter
+	 * @return the cache key, as a string, or {@literal null} if one cannot be
+	 *         generated
+	 */
+	public static String streamMetadataCacheKey(StreamMetadataCriteria filter,
+			Map<String, String> sortKeyMapping) {
+		UUID[] streamIds = filter.getStreamIds();
+		if ( streamIds == null || streamIds.length < 1 ) {
+			return null;
+		}
+
+		// specialized case for single stream ID: use ID directly as cache key
+		if ( streamIds.length == 1 ) {
+			return streamIds[0].toString();
+		}
+
+		// otherwise, compute SHA1 digest
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-1");
+			byte[] buf = new byte[8];
+			if ( streamIds.length > 1 ) {
+				// for >1 stream ID, sort them for a stable cache key
+				streamIds = new UUID[filter.getStreamIds().length];
+				System.arraycopy(filter.getStreamIds(), 0, streamIds, 0, streamIds.length);
+				Arrays.sort(streamIds);
+			}
+			for ( UUID uuid : streamIds ) {
+				ByteUtils.encodeUnsignedInt64(uuid.getMostSignificantBits(), buf, 0,
+						ByteOrdering.BigEndian);
+				digest.update(buf);
+				ByteUtils.encodeUnsignedInt64(uuid.getLeastSignificantBits(), buf, 0,
+						ByteOrdering.BigEndian);
+				digest.update(buf);
+			}
+			if ( filter.getSorts() != null && !filter.getSorts().isEmpty() ) {
+				StringBuilder order = new StringBuilder();
+				orderBySorts(filter.getSorts(), sortKeyMapping, order);
+				digest.update(order.toString().getBytes(Charset.forName("UTF-8")));
+			}
+			return ByteUtils.encodeHexString(digest.digest(), 0, digest.getDigestLength(), false, true);
+		} catch ( NoSuchAlgorithmException e ) {
+			log.warn("SHA-1 digest not available; cache key cannot be generated.");
+			return null;
+		}
 	}
 
 }

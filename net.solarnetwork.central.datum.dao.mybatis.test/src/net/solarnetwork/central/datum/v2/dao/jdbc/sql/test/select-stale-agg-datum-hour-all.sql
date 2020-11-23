@@ -4,4 +4,4 @@ SELECT datum.stream_id,
 	datum.created
 FROM solardatm.agg_stale_datm datum
 WHERE datum.agg_kind = ?
-ORDER BY datum.aud_kind, ts, datum.stream_id
+ORDER BY datum.agg_kind, ts, datum.stream_id

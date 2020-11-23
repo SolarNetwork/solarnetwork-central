@@ -5,11 +5,12 @@ WITH s AS (
 )
 SELECT datum.stream_id, 
 	datum.ts_start AS ts, 
-	datum.received, 
 	datum.data_i, 
 	datum.data_a, 
 	datum.data_s, 
-	datum.data_t
+	datum.data_t,
+	datum.stat_i,
+	datum.read_a 
 FROM s
 INNER JOIN LATERAL (
 		SELECT datum.*
