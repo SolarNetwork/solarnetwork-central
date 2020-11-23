@@ -41,6 +41,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
@@ -551,6 +552,33 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Prepare a SQL query to find streams.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static int prepareStreamFilter(StreamCriteria filter, Connection con, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
+		if ( filter != null ) {
+			if ( filter.getStreamIds() != null ) {
+				Array array = con.createArrayOf("uuid", filter.getStreamIds());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+		}
+		return parameterOffset;
+	}
+
+	/**
 	 * Prepare a SQL query to find stream metadata.
 	 * 
 	 * @param filter
@@ -568,13 +596,9 @@ public final class DatumSqlUtils {
 	public static int prepareStreamMetadataFilter(StreamMetadataCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
+			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
 				Array array = con.createArrayOf("text", filter.getSourceIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
-			}
-			if ( filter.getStreamIds() != null ) {
-				Array array = con.createArrayOf("uuid", filter.getStreamIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
@@ -755,6 +779,30 @@ public final class DatumSqlUtils {
 	}
 
 	/**
+	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \nLIMIT ? OFFSET ?}.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int limitOffset(PaginationCriteria filter, StringBuilder buf) {
+		if ( filter != null && filter.getMax() != null ) {
+			int max = filter.getMax();
+			if ( max > 0 ) {
+				buf.append("\nLIMIT ? OFFSET ?");
+				return 2;
+			}
+		}
+		return 0;
+	}
+
+	/**
 	 * A standardized SQL clause for casting a local date to a stream's time
 	 * zone.
 	 * 
@@ -886,6 +934,7 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
+	 * @see #limitOffset(PaginationCriteria, StringBuilder)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {

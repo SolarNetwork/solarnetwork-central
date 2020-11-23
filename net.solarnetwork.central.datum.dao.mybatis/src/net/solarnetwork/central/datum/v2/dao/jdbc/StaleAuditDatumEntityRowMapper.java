@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -48,10 +49,10 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 3.8
  */
-public class StaleAuditDatumEntityRowMapper implements RowMapper<StaleAuditDatumEntity> {
+public class StaleAuditDatumEntityRowMapper implements RowMapper<StaleAuditDatum> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<StaleAuditDatumEntity> INSTANCE = new StaleAuditDatumEntityRowMapper();
+	public static final RowMapper<StaleAuditDatum> INSTANCE = new StaleAuditDatumEntityRowMapper();
 
 	@Override
 	public StaleAuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {

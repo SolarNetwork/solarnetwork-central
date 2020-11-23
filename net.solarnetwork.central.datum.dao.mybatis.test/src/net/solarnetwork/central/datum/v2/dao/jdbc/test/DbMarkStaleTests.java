@@ -48,8 +48,8 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 
 /**
  * Test cases for the "mark stale" stored procedures.
@@ -90,7 +90,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -105,7 +105,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -123,7 +123,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(streamIds, start.minusYears(1).toInstant(), start.toInstant());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Nothing stale", stales, hasSize(0));
 	}
 
@@ -141,9 +141,9 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		callMarkStaleDateRange(streamIds, start.toInstant(), start.plusYears(1).toInstant());
 
 		// THEN
-		List<StaleAggregateDatumEntity> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> stales = DatumTestUtils.listStaleAggregateDatum(jdbcTemplate);
 		assertThat("All matching hours marked stale", stales, hasSize(2));
-		Set<Instant> staleDates = stales.stream().map(StaleAggregateDatumEntity::getTimestamp)
+		Set<Instant> staleDates = stales.stream().map(StaleAggregateDatum::getTimestamp)
 				.collect(Collectors.toSet());
 		assertThat("Stale hours from data", staleDates,
 				containsInAnyOrder(start.toInstant(), start.plusHours(1).toInstant()));

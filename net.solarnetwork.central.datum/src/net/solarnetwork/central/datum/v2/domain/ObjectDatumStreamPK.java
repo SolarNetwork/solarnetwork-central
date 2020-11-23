@@ -94,6 +94,11 @@ public class ObjectDatumStreamPK extends BasePK
 			super(nodeId, sourceId, timestamp);
 		}
 
+		@Override
+		public NodeDatumStreamPK clone() {
+			return (NodeDatumStreamPK) super.clone();
+		}
+
 		/**
 		 * Alias for {@link #getObjectId()}.
 		 * 
@@ -124,6 +129,11 @@ public class ObjectDatumStreamPK extends BasePK
 		 */
 		public LocationDatumStreamPK(Long locationId, String sourceId, Instant timestamp) {
 			super(locationId, sourceId, timestamp);
+		}
+
+		@Override
+		public LocationDatumStreamPK clone() {
+			return (LocationDatumStreamPK) super.clone();
 		}
 
 		/**

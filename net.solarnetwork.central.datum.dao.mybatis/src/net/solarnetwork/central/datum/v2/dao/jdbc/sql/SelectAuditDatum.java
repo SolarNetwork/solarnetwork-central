@@ -322,21 +322,12 @@ public class SelectAuditDatum
 		}
 	}
 
-	private void sqlLimit(StringBuilder buf) {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				buf.append("\nLIMIT ? OFFSET ?");
-			}
-		}
-	}
-
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		sqlLimit(buf);
+		DatumSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

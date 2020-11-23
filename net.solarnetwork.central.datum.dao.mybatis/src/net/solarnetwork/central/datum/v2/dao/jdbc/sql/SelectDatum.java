@@ -23,8 +23,10 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.timeColumnName;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -32,6 +34,7 @@ import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorPro
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
@@ -44,6 +47,7 @@ public class SelectDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumCriteria filter;
+	private final Aggregation aggregation;
 
 	/**
 	 * Constructor.
@@ -59,6 +63,24 @@ public class SelectDatum
 			throw new IllegalArgumentException("The filter argument not be null.");
 		}
 		this.filter = filter;
+		this.aggregation = aggregation(filter);
+	}
+
+	private static Aggregation aggregation(DatumCriteria filter) {
+		Aggregation agg = Aggregation.None;
+		if ( filter.getAggregation() != null ) {
+			switch (filter.getAggregation()) {
+				case Hour:
+				case Day:
+				case Month:
+					agg = filter.getAggregation();
+					break;
+
+				default:
+					// ignore
+			}
+		}
+		return agg;
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -89,18 +111,35 @@ public class SelectDatum
 		buf.append("datum.data_t\n");
 	}
 
+	protected String sqlTableName() {
+		switch (aggregation) {
+			case Hour:
+				return "solardatm.agg_datm_hourly";
+
+			case Day:
+				return "solardatm.agg_datm_daily";
+
+			case Month:
+				return "solardatm.agg_datm_monthly";
+
+			default:
+				return "solardatm.da_datm";
+		}
+	}
+
 	private void sqlFrom(StringBuilder buf) {
 		buf.append("FROM s\n");
 		if ( filter.isMostRecent() ) {
 			buf.append("INNER JOIN LATERAL (\n");
 			buf.append("		SELECT datum.*\n");
-			buf.append("		FROM solardatm.da_datm datum\n");
+			buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
 			buf.append("		WHERE datum.stream_id = s.stream_id\n");
-			buf.append("		ORDER BY datum.ts DESC\n");
+			buf.append("		ORDER BY datum.").append(timeColumnName(aggregation)).append(" DESC\n");
 			buf.append("		LIMIT 1\n");
 			buf.append("	) datum ON datum.stream_id = s.stream_id\n");
 		} else {
-			buf.append("INNER JOIN solardatm.da_datm datum ON datum.stream_id = s.stream_id\n");
+			buf.append("INNER JOIN ").append(sqlTableName())
+					.append(" datum ON datum.stream_id = s.stream_id\n");
 		}
 	}
 
@@ -139,15 +178,6 @@ public class SelectDatum
 		}
 	}
 
-	private void sqlLimit(StringBuilder buf) {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				buf.append("\nLIMIT ? OFFSET ?");
-			}
-		}
-	}
-
 	private void sqlCore(StringBuilder buf) {
 		sqlCte(buf);
 		sqlSelect(buf);
@@ -160,7 +190,7 @@ public class SelectDatum
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		sqlLimit(buf);
+		DatumSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 
@@ -176,7 +206,8 @@ public class SelectDatum
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
+		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;

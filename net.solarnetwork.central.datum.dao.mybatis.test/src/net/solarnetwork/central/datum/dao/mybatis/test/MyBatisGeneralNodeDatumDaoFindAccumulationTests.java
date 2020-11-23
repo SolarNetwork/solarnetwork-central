@@ -57,8 +57,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
@@ -208,10 +208,10 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 				DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate);
 
 				UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
-				List<AggregateDatumEntity> aggs = DatumTestUtils
+				List<AggregateDatum> aggs = DatumTestUtils
 						.listAggregateDatum(jdbcTemplate, Aggregation.Day).stream()
 						.filter(e -> streamId.equals(e.getStreamId())).collect(Collectors.toList());
-				List<Instant> days = aggs.stream().map(AggregateDatumEntity::getTimestamp)
+				List<Instant> days = aggs.stream().map(AggregateDatum::getTimestamp)
 						.collect(Collectors.toList());
 				assertThat("Aggregate days", days,
 						contains(

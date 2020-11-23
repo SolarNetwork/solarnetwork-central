@@ -1,5 +1,5 @@
 /* ==================================================================
- * ObjectDatumStreamMetadataRowMapper.java - 6/11/2020 3:38:49 pm
+ * ObjectDatumIdRowMapper.java - 22/11/2020 10:14:03 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,20 +22,19 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
- * Map object datum stream metadata rows into {@link ObjectDatumStreamMetadata}
- * instances.
+ * Map object datum ID rows into {@link ObjectDatumStreamMetadata} instances.
  * 
  * <p>
  * The expected column order in the SQL results is:
@@ -43,34 +42,31 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
  * 
  * <ol>
  * <li>stream_id</li>
+ * <li>ts</li>
+ * <li>agg_kind</li>
  * <li>obj_id</li>
  * <li>source_id</li>
- * <li>names_i</li>
- * <li>names_a</li>
- * <li>names_s</li>
- * <li>jdata</li>
- * <li>kind - only used if dynamic type is used</li>
- * <li>timezone</li>
+ * <li>kind</li>
  * </ol>
- *
+ * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatumStreamMetadata> {
+public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	/** A default mapper instance using {@link MetadataKind#Dynamic}. */
-	public static final RowMapper<ObjectDatumStreamMetadata> INSTANCE = new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumId> INSTANCE = new ObjectDatumIdRowMapper(
 			MetadataKind.Dynamic);
 
 	/** A default mapper instance using {@link MetadataKind#Node}. */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final RowMapper<NodeDatumStreamMetadata> NODE_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<NodeDatumId> NODE_INSTANCE = (RowMapper) new ObjectDatumIdRowMapper(
 			MetadataKind.Node);
 
 	/** A default mapper instance using {@link MetadataKind#Location}. */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final RowMapper<LocationDatumStreamMetadata> LOCATION_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<LocationDatumId> LOCATION_INSTANCE = (RowMapper) new ObjectDatumIdRowMapper(
 			MetadataKind.Location);
 
 	private final MetadataKind kind;
@@ -83,56 +79,32 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 	 *        then an extra {@literal kind} row must be provided by the query
 	 *        results
 	 */
-	public ObjectDatumStreamMetadataRowMapper(MetadataKind kind) {
+	public ObjectDatumIdRowMapper(MetadataKind kind) {
 		super();
 		this.kind = kind;
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = UUID.fromString(rs.getString(1));
-		long objId = rs.getLong(2);
-		String sourceId = rs.getString(3);
-
-		String[] namesI = null;
-		String[] namesA = null;
-		String[] namesS = null;
-
-		Array a = rs.getArray(4);
-		if ( a != null ) {
-			namesI = (String[]) a.getArray();
-			a.free();
-		}
-
-		a = rs.getArray(5);
-		if ( a != null ) {
-			namesA = (String[]) a.getArray();
-			a.free();
-		}
-
-		a = rs.getArray(6);
-		if ( a != null ) {
-			namesS = (String[]) a.getArray();
-			a.free();
-		}
-
-		// TODO String jmeta = rs.getString(7);
+		Instant ts = rs.getTimestamp(2).toInstant();
+		Aggregation agg = Aggregation.forKey(rs.getString(3));
+		Object objId = rs.getObject(4);
+		String sourceId = rs.getString(5);
 
 		MetadataKind k = this.kind;
 		if ( this.kind == MetadataKind.Dynamic ) {
-			String kindStr = rs.getString(8);
+			String kindStr = rs.getString(6);
 			k = ("l".equalsIgnoreCase(kindStr) ? MetadataKind.Location : MetadataKind.Node);
 		}
 
-		String timeZoneId = rs.getString(9);
-
 		if ( k == MetadataKind.Location ) {
-			return new BasicLocationDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI,
-					namesA, namesS);
+			return new LocationDatumId(streamId,
+					objId instanceof Number ? ((Number) objId).longValue() : null, sourceId, ts, agg);
 		}
 
-		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI, namesA,
-				namesS);
+		return new NodeDatumId(streamId, objId instanceof Number ? ((Number) objId).longValue() : null,
+				sourceId, ts, agg);
 	}
 
 }

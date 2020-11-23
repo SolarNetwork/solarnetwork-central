@@ -45,8 +45,8 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 
 /**
@@ -61,7 +61,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 		public void doWithStream(List<GeneralNodeDatum> datums,
 				Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-				List<AggregateDatumEntity> results);
+				List<AggregateDatum> results);
 	}
 
 	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
@@ -71,7 +71,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatumEntity> results = Collections.emptyList();
+		List<AggregateDatum> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			results = jdbcTemplate.query(
@@ -91,7 +91,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatumEntity> results = Collections.emptyList();
+		List<AggregateDatum> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
@@ -114,10 +114,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -143,10 +143,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -172,10 +172,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -201,10 +201,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -230,10 +230,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -259,10 +259,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -287,7 +287,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(0));
 			}
 		});
@@ -302,10 +302,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -329,10 +329,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -362,10 +362,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -392,10 +392,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -422,9 +422,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -451,9 +451,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -480,9 +480,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
@@ -510,9 +510,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -539,9 +539,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -568,9 +568,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -597,9 +597,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -626,9 +626,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -654,9 +654,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -682,9 +682,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -711,9 +711,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
-						AggregateDatumEntity result = results.get(0);
+						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -738,9 +738,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -764,9 +764,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
@@ -789,9 +789,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
 					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-					List<AggregateDatumEntity> results) {
+					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
-				AggregateDatumEntity result = results.get(0);
+				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
 				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));

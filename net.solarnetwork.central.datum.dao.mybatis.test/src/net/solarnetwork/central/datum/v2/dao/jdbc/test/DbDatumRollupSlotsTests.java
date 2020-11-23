@@ -65,7 +65,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 
 		public void doWithStream(List<GeneralNodeDatum> datums,
 				Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-				List<AggregateDatumEntity> results);
+				List<AggregateDatum> results);
 	}
 
 	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
@@ -75,7 +75,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatumEntity> results = Collections.emptyList();
+		List<AggregateDatum> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			results = jdbcTemplate.query(
@@ -99,7 +99,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
-		List<AggregateDatumEntity> results = Collections.emptyList();
+		List<AggregateDatum> results = Collections.emptyList();
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
@@ -143,7 +143,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
 
 						assertAgg("10min slot 1", results.get(0),
@@ -189,7 +189,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
 
 						assertAgg("10min slot 1", results.get(0),
@@ -235,7 +235,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
 
 						assertAgg("10min slot 1", results.get(0),
@@ -281,7 +281,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
 							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
-							List<AggregateDatumEntity> results) {
+							List<AggregateDatum> results) {
 						assertThat("Agg result returned for 10min slots in hour", results, hasSize(6));
 
 						assertAgg("10min slot 1", results.get(0),

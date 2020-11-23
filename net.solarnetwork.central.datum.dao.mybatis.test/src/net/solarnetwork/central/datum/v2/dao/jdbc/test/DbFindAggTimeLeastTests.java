@@ -70,15 +70,15 @@ import net.solarnetwork.central.domain.Aggregation;
  */
 public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 
-	private List<AggregateDatumEntity> findAggTimeLeast(UUID[] streamIds, Aggregation kind) {
-		return jdbcTemplate.execute(new ConnectionCallback<List<AggregateDatumEntity>>() {
+	private List<AggregateDatum> findAggTimeLeast(UUID[] streamIds, Aggregation kind) {
+		return jdbcTemplate.execute(new ConnectionCallback<List<AggregateDatum>>() {
 
 			@Override
-			public List<AggregateDatumEntity> doInConnection(Connection con)
+			public List<AggregateDatum> doInConnection(Connection con)
 					throws SQLException, DataAccessException {
 				log.debug("Finding time greatest for streams {}", Arrays.toString(streamIds));
-				List<AggregateDatumEntity> result = new ArrayList<>(streamIds.length);
-				RowMapper<AggregateDatumEntity> mapper = new AggregateDatumEntityRowMapper(kind);
+				List<AggregateDatum> result = new ArrayList<>(streamIds.length);
+				RowMapper<AggregateDatum> mapper = new AggregateDatumEntityRowMapper(kind);
 				try (CallableStatement stmt = con
 						.prepareCall("{call solardatm.find_agg_time_least(?::uuid[],?)}")) {
 					Array array = con.createArrayOf("uuid", streamIds);
@@ -89,7 +89,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						try (ResultSet rs = stmt.getResultSet()) {
 							int i = 0;
 							while ( rs.next() ) {
-								AggregateDatumEntity d = mapper.mapRow(rs, ++i);
+								AggregateDatum d = mapper.mapRow(rs, ++i);
 								result.add(d);
 							}
 						}
@@ -122,7 +122,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 
 		// WHEN
 		for ( Aggregation kind : aggs() ) {
-			List<AggregateDatumEntity> results = findAggTimeLeast(new UUID[] { streamId }, kind);
+			List<AggregateDatum> results = findAggTimeLeast(new UUID[] { streamId }, kind);
 
 			// THEN
 			assertThat(format("No %s result from no data", kind), results, hasSize(0));
@@ -139,7 +139,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 		UUID streamId = meta.getStreamId();
 
 		// WHEN
-		List<AggregateDatumEntity> results = findAggTimeLeast(new UUID[] { streamId }, Aggregation.Hour);
+		List<AggregateDatum> results = findAggTimeLeast(new UUID[] { streamId }, Aggregation.Hour);
 
 		// THEN
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -163,7 +163,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 		UUID streamId = meta.getStreamId();
 
 		// WHEN
-		List<AggregateDatumEntity> results = findAggTimeLeast(new UUID[] { streamId }, Aggregation.Day);
+		List<AggregateDatum> results = findAggTimeLeast(new UUID[] { streamId }, Aggregation.Day);
 
 		// THEN
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -187,8 +187,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 		UUID streamId = meta.getStreamId();
 
 		// WHEN
-		List<AggregateDatumEntity> results = findAggTimeLeast(new UUID[] { streamId },
-				Aggregation.Month);
+		List<AggregateDatum> results = findAggTimeLeast(new UUID[] { streamId }, Aggregation.Month);
 
 		// THEN
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -221,15 +220,15 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 		insertAggregateDatum(log, jdbcTemplate, datums_b);
 
 		// WHEN
-		List<AggregateDatumEntity> results = findAggTimeLeast(
+		List<AggregateDatum> results = findAggTimeLeast(
 				new UUID[] { meta_a.getStreamId(), meta_b.getStreamId() }, Aggregation.Hour);
 
 		// THEN
 		assertThat("Results for two streams", results, hasSize(2));
 
-		AggregateDatumEntity datum_a = null;
-		AggregateDatumEntity datum_b = null;
-		for ( AggregateDatumEntity d : results ) {
+		AggregateDatum datum_a = null;
+		AggregateDatum datum_b = null;
+		for ( AggregateDatum d : results ) {
 			if ( d.getStreamId().equals(meta_a.getStreamId()) ) {
 				datum_a = d;
 			} else if ( d.getStreamId().equals(meta_b.getStreamId()) ) {

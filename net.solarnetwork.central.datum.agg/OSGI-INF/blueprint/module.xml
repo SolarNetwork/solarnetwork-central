@@ -112,45 +112,6 @@
 		<property name="aggregateProcessType" value="m"/>
 	</bean>
 	
-	<bean id="staleGeneralLocationDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.hourly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorHourly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="h"/>
-	</bean>
-	
-	<bean id="staleGeneralLocationDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.daily.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorDaily"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="d"/>
-	</bean>
-	
-	<bean id="staleGeneralLocationDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.monthly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorMonthly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="m"/>
-	</bean>
-	
 	<bean id="staleAuditNodeDatumProcessorRaw" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>

@@ -14,7 +14,7 @@
  * @see solardatm.rollup_agg_datm_for_time_span()
  */
 CREATE OR REPLACE FUNCTION solardatm.process_one_agg_stale_datm(kind CHARACTER)
-	RETURNS SETOF solardatm.agg_stale_datm LANGUAGE plpgsql VOLATILE AS
+	RETURNS SETOF solardatm.obj_datm_id LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
 	agg_span 				INTERVAL;
@@ -33,6 +33,8 @@ DECLARE
 	ts_prevstart			TIMESTAMP WITH TIME ZONE;
 
 	num_rows				BIGINT;
+
+	result_row				solardatm.obj_datm_id;
 BEGIN
 	CASE kind
 		WHEN 'd' THEN
@@ -53,6 +55,7 @@ BEGIN
 		-- get stream metadata & time zone; will determine if node or location stream
 		SELECT * FROM solardatm.find_metadata_for_stream(stale.stream_id) INTO meta;
 		tz := COALESCE(meta.time_zone, 'UTC');
+		result_row := (stale.stream_id, stale.ts_start, stale.agg_kind, meta.obj_id, meta.source_id, meta.kind);
 
 		-- stash local start/end dates to work with calendar intervals
 		-- the ts_prevstart is used to deal with tz changes with streams
@@ -154,7 +157,7 @@ BEGIN
 
 		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;
 
-		RETURN NEXT stale;
+		RETURN NEXT result_row;
 	END IF;
 
 	CLOSE curs;

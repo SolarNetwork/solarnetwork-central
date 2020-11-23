@@ -52,6 +52,7 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
@@ -64,7 +65,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  */
 public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
-	private static void assertStaleAggregateDatum(String prefix, StaleAggregateDatumEntity stale,
+	private static void assertStaleAggregateDatum(String prefix, StaleAggregateDatum stale,
 			StaleAggregateDatumEntity expected) {
 		assertThat(prefix + " stale aggregate record kind", stale.getKind(),
 				equalTo(expected.getKind()));
@@ -126,7 +127,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record created for lone datm", staleRows, hasSize(1));
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
@@ -149,7 +150,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record created for lone datm", staleRows, hasSize(1));
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
@@ -172,7 +173,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record created for lone datm", staleRows, hasSize(1));
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
@@ -196,7 +197,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate rows for 2 datum hours
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Two stale aggregate records created for two datm in adjacent hours", staleRows,
 				hasSize(2));
 
@@ -224,7 +225,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate rows for 3 datum hours
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("3 stale aggregate records created for 8 datum in adjacent hours", staleRows,
 				hasSize(3));
 
@@ -254,7 +255,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-15.txt");
@@ -279,7 +280,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
@@ -301,7 +302,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-17.txt");
@@ -328,7 +329,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
 
 		// should have no "stale" aggregate rows yet
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		// now move reset
@@ -371,7 +372,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta2 = metas2.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		// now move reset
@@ -390,8 +391,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale aggregate records created for reset", staleRows, hasSize(2));
 
-		Map<UUID, StaleAggregateDatumEntity> streamToStale = staleRows.stream()
-				.collect(Collectors.toMap(StaleAggregateDatumEntity::getStreamId, Function.identity()));
+		Map<UUID, StaleAggregateDatum> streamToStale = staleRows.stream()
+				.collect(Collectors.toMap(StaleAggregateDatum::getStreamId, Function.identity()));
 
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		assertStaleAggregateDatum("Reset in hour node 1", streamToStale.get(meta.getStreamId()),

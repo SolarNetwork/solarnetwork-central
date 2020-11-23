@@ -75,13 +75,10 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumAccumulativeEntityRowMapper;
@@ -90,6 +87,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumHourlyEntityRowMappe
 import net.solarnetwork.central.datum.v2.dao.jdbc.AuditDatumMonthlyEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumAuxiliaryEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumIdRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumStreamMetadataRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleAuditDatumEntityRowMapper;
@@ -102,6 +100,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -1540,7 +1539,7 @@ public final class DatumTestUtils {
 				try (CallableStatement cs = con
 						.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
 					for ( Aggregation kind : sortedKinds ) {
-						int processed = processStaleAggregateKind(kind.getKey(), cs);
+						int processed = processStaleAggregateKind(log, kind.getKey(), cs);
 						log.debug("Processed {} stale {} datum", processed, kind.getKey());
 						debugStaleAggregateDatumTable(log, jdbcTemplate,
 								"Stale datum after process " + kind.getKey());
@@ -1566,13 +1565,16 @@ public final class DatumTestUtils {
 				EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month));
 	}
 
-	private static int processStaleAggregateKind(String kind, CallableStatement cs) throws SQLException {
+	private static int processStaleAggregateKind(Logger log, String kind, CallableStatement cs)
+			throws SQLException {
 		int processed = 0;
 		while ( true ) {
 			cs.setString(1, kind);
 			if ( cs.execute() ) {
 				try (ResultSet rs = cs.getResultSet()) {
 					if ( rs.next() ) {
+						ObjectDatumId id = ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, 1);
+						log.debug("Processed stale agg row: {}", id);
 						processed++;
 					} else {
 						break;
@@ -1760,7 +1762,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAggregateDatumEntity> listStaleAggregateDatum(JdbcOperations jdbcTemplate) {
+	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm ORDER BY agg_kind, ts_start, stream_id",
 				StaleAggregateDatumEntityRowMapper.INSTANCE);
@@ -1775,7 +1777,7 @@ public final class DatumTestUtils {
 	 *        the type of stale aggregate records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAggregateDatumEntity> listStaleAggregateDatum(JdbcOperations jdbcTemplate,
+	public static List<StaleAggregateDatum> listStaleAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, agg_kind, created FROM solardatm.agg_stale_datm WHERE agg_kind = ? ORDER BY ts_start, stream_id",
@@ -1789,7 +1791,7 @@ public final class DatumTestUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAuditDatumEntity> listStaleAuditDatum(JdbcOperations jdbcTemplate) {
+	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm ORDER BY aud_kind, ts_start, stream_id",
 				StaleAuditDatumEntityRowMapper.INSTANCE);
@@ -1804,7 +1806,7 @@ public final class DatumTestUtils {
 	 *        the type of stale audit records to get
 	 * @return the results, never {@literal null}
 	 */
-	public static List<StaleAuditDatumEntity> listStaleAuditDatum(JdbcOperations jdbcTemplate,
+	public static List<StaleAuditDatum> listStaleAuditDatum(JdbcOperations jdbcTemplate,
 			Aggregation type) {
 		return jdbcTemplate.query(
 				"SELECT stream_id, ts_start, aud_kind, created FROM solardatm.aud_stale_datm WHERE aud_kind = ? ORDER BY ts_start, stream_id",
@@ -1882,10 +1884,10 @@ public final class DatumTestUtils {
 	 *        {@code Month}
 	 * @return the results, never {@literal null}
 	 */
-	public static List<AggregateDatumEntity> listAggregateDatum(JdbcOperations jdbcTemplate,
+	public static List<AggregateDatum> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
 		String tableName;
-		RowMapper<AggregateDatumEntity> mapper;
+		RowMapper<AggregateDatum> mapper;
 		switch (kind) {
 			case Day:
 				tableName = "daily";

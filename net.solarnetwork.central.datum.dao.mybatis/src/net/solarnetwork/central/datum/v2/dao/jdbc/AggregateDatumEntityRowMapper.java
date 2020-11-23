@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.domain.Aggregation;
@@ -56,22 +57,21 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 3.8
  */
-public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatumEntity> {
+public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> {
 
 	/** A default instance for null aggregates. */
-	public static final RowMapper<AggregateDatumEntity> INSTANCE = new AggregateDatumEntityRowMapper(
-			null);
+	public static final RowMapper<AggregateDatum> INSTANCE = new AggregateDatumEntityRowMapper(null);
 
 	/** A default instance for hourly aggregates. */
-	public static final RowMapper<AggregateDatumEntity> HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatum> HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Hour);
 
 	/** A default instance for daily aggregates. */
-	public static final RowMapper<AggregateDatumEntity> DAY_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatum> DAY_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Day);
 
 	/** A default instance for monthly aggregates. */
-	public static final RowMapper<AggregateDatumEntity> MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
+	public static final RowMapper<AggregateDatum> MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Month);
 
 	private final Aggregation aggregation;

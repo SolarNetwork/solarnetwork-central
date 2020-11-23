@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -48,13 +49,13 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 3.8
  */
-public class StaleAggregateDatumEntityRowMapper implements RowMapper<StaleAggregateDatumEntity> {
+public class StaleAggregateDatumEntityRowMapper implements RowMapper<StaleAggregateDatum> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<StaleAggregateDatumEntity> INSTANCE = new StaleAggregateDatumEntityRowMapper();
+	public static final RowMapper<StaleAggregateDatum> INSTANCE = new StaleAggregateDatumEntityRowMapper();
 
 	@Override
-	public StaleAggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public StaleAggregateDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = UUID.fromString(rs.getString(1));
 		Instant ts = rs.getTimestamp(2).toInstant();
 		String aggKind = rs.getString(3);

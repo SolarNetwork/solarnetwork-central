@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Test cases for the {@link SelectDatum} class.
@@ -70,6 +71,23 @@ public class SelectDatumTests {
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource("select-datum-mostRecent-nodes.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_mostRecent_nodes() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setMostRecent(true);
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-datum-daily-mostRecent-nodes.sql",
 				TestSqlResources.class, SQL_COMMENT));
 	}
 

@@ -54,13 +54,13 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -78,7 +78,7 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		return datums;
 	}
 
-	private static void assertStaleAggregateDatum(String prefix, StaleAggregateDatumEntity stale,
+	private static void assertStaleAggregateDatum(String prefix, StaleAggregateDatum stale,
 			StaleAggregateDatumEntity expected) {
 		assertThat(prefix + " stale aggregate record kind", stale.getKind(),
 				equalTo(expected.getKind()));
@@ -98,8 +98,8 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getAggregation()));
 	}
 
-	private List<AggregateDatumEntity> aggDatum(Aggregation kind) {
-		List<AggregateDatumEntity> result = DatumTestUtils.listAggregateDatum(jdbcTemplate, kind);
+	private List<AggregateDatum> aggDatum(Aggregation kind) {
+		List<AggregateDatum> result = DatumTestUtils.listAggregateDatum(jdbcTemplate, kind);
 		log.debug("Got {} data:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
@@ -146,13 +146,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 
 		// should have stored rollup in Hour table
 		ZonedDateTime hour = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-		List<AggregateDatumEntity> result = aggDatum(Aggregation.Hour);
+		List<AggregateDatum> result = aggDatum(Aggregation.Hour);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Hour rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
 				hour.toInstant(), Aggregation.Hour, null, null));
 
 		// should have deleted stale Hour and inserted stale Day
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Day rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
@@ -201,13 +201,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		// THEN
 
 		// should have stored rollup in Day table
-		List<AggregateDatumEntity> result = aggDatum(Aggregation.Day);
+		List<AggregateDatum> result = aggDatum(Aggregation.Day);
 		assertThat("Day rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Day rollup", result.get(0), new AggregateDatumEntity(meta.getStreamId(),
 				day.toInstant(), Aggregation.Day, null, null));
 
 		// should have deleted stale Hour and inserted stale Day
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for next rollup level", staleRows, hasSize(1));
 		assertStaleAggregateDatum("Month rollup created", staleRows.get(0),
 				new StaleAggregateDatumEntity(meta.getStreamId(),
@@ -215,13 +215,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 						Aggregation.Month, null));
 
 		// should have inserted None, Hour, and Day stale audit records
-		List<StaleAuditDatumEntity> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
-		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatumEntity::getKind)
+		List<StaleAuditDatum> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatum::getKind)
 				.collect(Collectors.toSet());
 		assertThat("Raw, Hour, and Day stale audit rows created when process stale Hour agg",
 				staleAuditKinds,
 				containsInAnyOrder(Aggregation.None, Aggregation.Hour, Aggregation.Day));
-		for ( StaleAuditDatumEntity a : staleAuditRows ) {
+		for ( StaleAuditDatum a : staleAuditRows ) {
 			assertThat("Stale audit for processed stream", a.getStreamId(), equalTo(meta.getStreamId()));
 			assertThat("Stale audit timestamp is start of day", a.getTimestamp(),
 					equalTo(day.toInstant()));
@@ -273,23 +273,23 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		// THEN
 
 		// should have stored rollup in Month table
-		List<AggregateDatumEntity> result = aggDatum(Aggregation.Month);
+		List<AggregateDatum> result = aggDatum(Aggregation.Month);
 		assertThat("Month rollup result stored database", result, hasSize(1));
 		assertAggregateDatumId("Month rollup", result.get(0), new AggregateDatumEntity(
 				meta.getStreamId(), month.toInstant(), Aggregation.Month, null, null));
 
 		// should have deleted stale Month
-		List<StaleAggregateDatumEntity> staleRows = listStaleAggregateDatum(jdbcTemplate);
+		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("No stale aggregate record remains because no more rollup levels", staleRows,
 				hasSize(0));
 
 		// should have inserted Month stale audit records
-		List<StaleAuditDatumEntity> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
-		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatumEntity::getKind)
+		List<StaleAuditDatum> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatum::getKind)
 				.collect(Collectors.toSet());
 		assertThat("Raw, Hour, and Day stale audit rows created when process stale Hour agg",
 				staleAuditKinds, containsInAnyOrder(Aggregation.Month));
-		for ( StaleAuditDatumEntity a : staleAuditRows ) {
+		for ( StaleAuditDatum a : staleAuditRows ) {
 			assertThat("Stale audit for processed stream", a.getStreamId(), equalTo(meta.getStreamId()));
 			assertThat("Stale audit timestamp is start of day", a.getTimestamp(),
 					equalTo(month.toInstant()));

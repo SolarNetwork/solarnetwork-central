@@ -71,28 +71,21 @@ public abstract class AggTestSupport extends AbstractCentralTest {
 		if ( jdbcTemplate == null ) {
 			return;
 		}
-		jdbcTemplate.update("DELETE FROM solardatum.da_datum");
-		jdbcTemplate.update("DELETE FROM solardatum.da_datum_range");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_flux");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_datum_monthly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_acc_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_monthly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_datum_daily_stale");
+		jdbcTemplate.update("DELETE FROM solardatm.da_datm");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_flux");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_monthly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_acc_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_hourly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_daily");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_monthly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm");
 		jdbcTemplate.update("DELETE FROM solaruser.user_node WHERE node_id = ?", TEST_NODE_ID);
 		jdbcTemplate.update("DELETE FROM solaruser.user_user WHERE id = ?", TEST_USER_ID);
 		jdbcTemplate.update("DELETE FROM solarnet.sn_node WHERE node_id = ?", TEST_NODE_ID);
 		jdbcTemplate.update("DELETE FROM solarnet.sn_loc WHERE id = ?", TEST_LOC_ID);
-		jdbcTemplate.update("DELETE FROM solardatum.da_loc_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_loc_datum");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_hourly");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_daily");
-		jdbcTemplate.update("DELETE FROM solaragg.agg_loc_datum_monthly");
-		jdbcTemplate.update("DELETE FROM solaragg.aud_loc_datum_hourly");
 	}
 
 	protected void setupTestNode(Long nodeId, Long locationId) {

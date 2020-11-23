@@ -157,6 +157,18 @@ CREATE TABLE solardatm.agg_stale_datm (
 	CONSTRAINT agg_stale_datm_pkey PRIMARY KEY (agg_kind, ts_start, stream_id)
 );
 
+-- type to represent the primary key of object in a stream; could be either node or location
+-- `kind` is used to represent the object kind, i.e. `n` for node and `l` for location;
+-- `agg_kind` stores an optional aggregate sub-kind
+CREATE TYPE solardatm.obj_datm_id AS (
+	stream_id	UUID,
+	ts			TIMESTAMP WITH TIME ZONE,
+	agg_kind	CHARACTER,
+	obj_id		BIGINT,
+	source_id	TEXT,
+	kind		CHARACTER
+);
+
 /**
  * Holds records for stale aggregate SolarFlux publishing support. There is no time component to
  * this table because SolarFlux cares only about the "most recent" value. Thus a record in this
