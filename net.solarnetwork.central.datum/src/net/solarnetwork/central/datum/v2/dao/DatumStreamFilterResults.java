@@ -58,7 +58,7 @@ public interface DatumStreamFilterResults extends FilterResults<Datum, DatumPK> 
 	 * Get the metadata for a given stream ID.
 	 * 
 	 * <p>
-	 * This method must only support returning metadata for datum streams
+	 * This method must minimally support returning metadata for datum streams
 	 * contained within this result instance.
 	 * </p>
 	 * 
