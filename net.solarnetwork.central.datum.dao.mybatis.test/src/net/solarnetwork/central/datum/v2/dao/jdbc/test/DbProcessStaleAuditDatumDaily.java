@@ -23,8 +23,15 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertStaleAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAuditDatum;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -79,7 +86,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	}
 
 	private List<AuditDatumEntity> auditDatum(Aggregation kind) {
-		List<AuditDatumEntity> result = DatumTestUtils.listAuditDatum(jdbcTemplate, kind);
+		List<AuditDatumEntity> result = listAuditDatum(jdbcTemplate, kind);
 		log.debug("Got {} audit data:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
@@ -112,7 +119,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
 			hourlyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, hourlyAudits);
+		insertAuditDatum(log, jdbcTemplate, hourlyAudits);
 		return hourlyAudits;
 	}
 
@@ -128,7 +135,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
 			dailyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, dailyAudits);
+		insertAuditDatum(log, jdbcTemplate, dailyAudits);
 		return dailyAudits;
 	}
 
@@ -145,7 +152,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 					1, p, q);
 			monthlyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, monthlyAudits);
+		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
 		return monthlyAudits;
 	}
 
@@ -160,10 +167,10 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
 				Aggregation.None, Instant.now());
-		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+		insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
 
 		// WHEN
-		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.None));
+		processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.None));
 
 		// THEN
 
@@ -177,7 +184,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 		assertThat("Datum count", result.get(0).getDatumCount(), equalTo(expected.getDatumCount()));
 
 		// should have deleted stale Hour and inserted stale Day
-		List<StaleAuditDatum> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleRows = listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -189,17 +196,17 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	public void processStaleHourly() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-hour-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
 				Aggregation.Hour, Instant.now());
-		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+		insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
 
 		// WHEN
-		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+		processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
 
 		// THEN
 
@@ -214,7 +221,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getDatumHourlyCount()));
 
 		// should have deleted stale Hour and inserted stale Month
-		List<StaleAuditDatum> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleRows = listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -226,19 +233,19 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	public void processStaleDaily() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-day-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<AuditDatum> hourAuditData = insertTestAuditDatumHourly(day, meta.getStreamId());
 
 		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
 				Aggregation.Day, Instant.now());
-		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+		insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
 
 		// WHEN
-		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+		processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
 
 		// THEN
 
@@ -258,7 +265,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getDatumQueryCount()));
 
 		// should have deleted stale Day and inserted stale Month
-		List<StaleAuditDatum> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleRows = listStaleAuditDatum(jdbcTemplate);
 		assertThat("One stale aggregate record remains for Month rollup level", staleRows, hasSize(1));
 		assertStaleAuditDatum("Stale Month rollup created", staleRows.get(0), new StaleAuditDatumEntity(
 				meta.getStreamId(),
@@ -270,9 +277,9 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 	public void processStaleMonthly() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<AuditDatum> dayAuditDatum = insertTestAuditDatumDaily(day, meta.getStreamId());
@@ -281,10 +288,10 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 
 		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
 				Aggregation.Month, Instant.now());
-		DatumTestUtils.insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
+		insertStaleAuditDatum(log, jdbcTemplate, singleton(staleAudit));
 
 		// WHEN
-		DatumTestUtils.processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
+		processStaleAuditDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
 
 		// THEN
 
@@ -314,7 +321,7 @@ public class DbProcessStaleAuditDatumDaily extends BaseDatumJdbcTestSupport {
 				equalTo(expectedMonth.getDatumQueryCount()));
 
 		// should have deleted stale Month
-		List<StaleAuditDatum> staleRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleRows = listStaleAuditDatum(jdbcTemplate);
 		assertThat("No stale aggregate records remain", staleRows, hasSize(0));
 
 		// should have calculated accumulative audit data

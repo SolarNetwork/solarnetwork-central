@@ -23,10 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.SORT_TYPED_DATUM_BY_TS;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.elementsOf;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SORT_TYPED_DATUM_BY_TS;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -96,7 +98,7 @@ public class DbDatumDiffWithinRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	private UUID loadStreamWithAuxiliary(String resource) throws IOException {
-		List<?> data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass());
+		List<?> data = loadJsonDatumAndAuxiliaryResource(resource, getClass());
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
@@ -106,7 +108,7 @@ public class DbDatumDiffWithinRowsTests extends BaseDatumJdbcTestSupport {
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
-				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
+				insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
 			}
 		}
 		return streamId;

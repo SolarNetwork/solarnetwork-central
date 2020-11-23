@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;

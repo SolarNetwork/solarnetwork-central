@@ -23,8 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -95,10 +99,10 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	public void calcHourly() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-hour-datum-01.txt", getClass(), staticProvider(singleton(meta)));
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
 		log.debug("Got test data: {}", datums);
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
@@ -119,9 +123,9 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	public void calcDaily() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-day-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
@@ -137,7 +141,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
 			hourlyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, hourlyAudits);
+		insertAuditDatum(log, jdbcTemplate, hourlyAudits);
 
 		// WHEN
 		Map<String, Object> result = jdbcTemplate.queryForMap(
@@ -157,9 +161,9 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	public void calcMonthly() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
@@ -184,7 +188,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
 			dailyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, dailyAudits);
+		insertAuditDatum(log, jdbcTemplate, dailyAudits);
 
 		// WHEN
 		Map<String, Object> result = jdbcTemplate.queryForMap(
@@ -212,10 +216,10 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	public void calcRunningTotal() throws IOException {
 		// GIVEN
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-month-datum-01.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
@@ -237,7 +241,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 					1, p, q);
 			monthlyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, monthlyAudits);
+		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
 
 		// WHEN
 		ZonedDateTime currDay = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
@@ -264,10 +268,10 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		setupTestLocation(TEST_LOC_ID, TEST_TZ_ALT);
 		setupTestNode(1L, TEST_LOC_ID);
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(
-				"test-agg-month-datum-02.txt", getClass(), staticProvider(singleton(meta)));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-02.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ_ALT));
 
@@ -289,7 +293,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 					1, p, q);
 			monthlyAudits.add(audit);
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, monthlyAudits);
+		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
 
 		// WHEN
 		ZonedDateTime currDay = ZonedDateTime.now(start.getZone()).truncatedTo(ChronoUnit.DAYS);

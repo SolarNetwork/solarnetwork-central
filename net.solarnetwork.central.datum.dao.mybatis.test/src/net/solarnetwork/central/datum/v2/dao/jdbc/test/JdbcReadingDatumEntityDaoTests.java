@@ -24,13 +24,15 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.elementsOf;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.readingWith;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -82,8 +84,7 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper) {
 		List<?> data;
 		try {
-			data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass(), datumMapper,
-					auxMapper);
+			data = loadJsonDatumAndAuxiliaryResource(resource, getClass(), datumMapper, auxMapper);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
@@ -96,7 +97,7 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
-				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
+				insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
 			}
 		}
 		return meta;

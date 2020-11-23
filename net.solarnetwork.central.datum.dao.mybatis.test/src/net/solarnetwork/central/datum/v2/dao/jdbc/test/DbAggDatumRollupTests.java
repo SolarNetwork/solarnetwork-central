@@ -39,6 +39,7 @@ import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -71,10 +72,10 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 	private void loadStreamAndRollup(String resource, Aggregation kind, ZonedDateTime aggStart,
 			ZonedDateTime aggEnd, RollupCallback callback) throws IOException {
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(resource, getClass(),
+		List<AggregateDatum> datums = DatumDbUtils.loadJsonAggregateDatumResource(resource, getClass(),
 				staticProvider(singleton(meta)));
 		log.debug("Got test data: {}", datums);
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		List<AggregateDatum> results = jdbcTemplate.query(
 				"select * from solardatm.rollup_agg_datm_for_time_span(?::uuid,?,?,?)",

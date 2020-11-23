@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -186,7 +187,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
 				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
 				new String[] { "f" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -203,7 +204,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
 				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
 				new String[] { "f" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -234,7 +235,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicLocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(),
 				TEST_TZ, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
 				new String[] { "d", "e" }, new String[] { "f" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();

@@ -23,7 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.streamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.streamMetadata;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -60,7 +61,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		// GIVEN
 		BasicNodeDatumStreamMetadata m = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", 1L,
 				"a", new String[] { "b", "c", "d" }, new String[] { "e", "f" }, new String[] { "g" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
 
 		// WHEN
 		ObjectDatumStreamMetadata result = streamMetadata(jdbcTemplate, m.getStreamId());
@@ -90,7 +91,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		BasicLocationDatumStreamMetadata m = new BasicLocationDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", 1L, "a", new String[] { "b", "c", "d" }, new String[] { "e", "f" },
 				new String[] { "g" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(m));
 
 		// WHEN
 		ObjectDatumStreamMetadata result = streamMetadata(jdbcTemplate, m.getStreamId());
@@ -123,7 +124,7 @@ public class DbDatumStreamStoredProcedureTests extends BaseDatumJdbcTestSupport 
 		BasicLocationDatumStreamMetadata m2 = new BasicLocationDatumStreamMetadata(m.getStreamId(),
 				"UTC", 2L, "h", new String[] { "i", "j", "k" }, new String[] { "l", "m" },
 				new String[] { "n" });
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Arrays.asList(m, m2));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, Arrays.asList(m, m2));
 
 		// WHEN
 		ObjectDatumStreamMetadata result = streamMetadata(jdbcTemplate, m.getStreamId());

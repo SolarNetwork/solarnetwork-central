@@ -24,11 +24,18 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.listStaleAggregateDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleFluxDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -54,6 +61,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
@@ -99,14 +107,14 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 	}
 
 	private List<AggregateDatum> aggDatum(Aggregation kind) {
-		List<AggregateDatum> result = DatumTestUtils.listAggregateDatum(jdbcTemplate, kind);
+		List<AggregateDatum> result = listAggregateDatum(jdbcTemplate, kind);
 		log.debug("Got {} data:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
 	}
 
 	private List<StaleFluxDatum> staleFluxDatum(Aggregation kind) {
-		List<StaleFluxDatum> result = DatumTestUtils.listStaleFluxDatum(jdbcTemplate, kind);
+		List<StaleFluxDatum> result = listStaleFluxDatum(jdbcTemplate, kind);
 		log.debug("Got {} stale flux datum:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
@@ -124,10 +132,10 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 	private BasicNodeDatumStreamMetadata loadStream(String resource, Aggregation kind)
 			throws IOException {
 		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
-		List<AggregateDatum> datums = DatumTestUtils.loadJsonAggregateDatumResource(resource, getClass(),
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource(resource, getClass(),
 				staticProvider(singleton(meta)));
 		log.debug("Got test data: {}", datums);
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertAggregateDatum(log, jdbcTemplate, datums);
 		return meta;
 	}
 
@@ -140,7 +148,7 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
 
 		// THEN
 
@@ -169,13 +177,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		ZonedDateTime hour = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS);
 		DatumEntity d = new DatumEntity(UUID.randomUUID(), hour.toInstant(), Instant.now(),
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null));
-		DatumTestUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
-		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
+		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(d.getStreamId(),
 						hour.toInstant(), Aggregation.Hour, Instant.now())));
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Hour));
 
 		// THEN
 
@@ -191,12 +199,12 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		NodeDatumStreamMetadata meta = loadStream("test-agg-hour-datum-01.txt", Aggregation.Hour);
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(meta.getStreamId(),
 						day.toInstant(), Aggregation.Day, Instant.now())));
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
 
 		// THEN
 
@@ -215,7 +223,7 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 						Aggregation.Month, null));
 
 		// should have inserted None, Hour, and Day stale audit records
-		List<StaleAuditDatum> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleAuditRows = listStaleAuditDatum(jdbcTemplate);
 		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatum::getKind)
 				.collect(Collectors.toSet());
 		assertThat("Raw, Hour, and Day stale audit rows created when process stale Hour agg",
@@ -241,13 +249,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
 				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
 						null));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
-		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						day.toInstant(), Aggregation.Day, Instant.now())));
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
 
 		// THEN
 
@@ -263,12 +271,12 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		NodeDatumStreamMetadata meta = loadStream("test-agg-day-datum-01.txt", Aggregation.Day);
 		ZonedDateTime month = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(meta.getStreamId(),
 						month.toInstant(), Aggregation.Month, Instant.now())));
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
 
 		// THEN
 
@@ -284,7 +292,7 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 				hasSize(0));
 
 		// should have inserted Month stale audit records
-		List<StaleAuditDatum> staleAuditRows = DatumTestUtils.listStaleAuditDatum(jdbcTemplate);
+		List<StaleAuditDatum> staleAuditRows = listStaleAuditDatum(jdbcTemplate);
 		Set<Aggregation> staleAuditKinds = staleAuditRows.stream().map(StaleAuditDatum::getKind)
 				.collect(Collectors.toSet());
 		assertThat("Raw, Hour, and Day stale audit rows created when process stale Hour agg",
@@ -310,13 +318,13 @@ public class DbProcessStaleAggregateDatum extends BaseDatumJdbcTestSupport {
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
 				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
 						null));
-		DatumTestUtils.insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
-		DatumTestUtils.insertStaleAggregateDatum(log, jdbcTemplate,
+		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
+		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
 						month.toInstant(), Aggregation.Month, Instant.now())));
 
 		// WHEN
-		DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Month));
 
 		// THEN
 

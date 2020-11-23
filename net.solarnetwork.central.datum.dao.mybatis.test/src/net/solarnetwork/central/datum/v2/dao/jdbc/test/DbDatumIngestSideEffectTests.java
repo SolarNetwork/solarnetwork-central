@@ -23,11 +23,16 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.hourlyAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ingestDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.listStaleAggregateDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumAuxiliaryResource;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAuxiliaryResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.moveDatumAuxiliary;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -134,8 +139,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
 				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
 		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
 				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
@@ -157,8 +161,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertStaleAggregateDatum("First datum", staleRows.get(0), new StaleAggregateDatumEntity(
 				meta.getStreamId(), hour.toInstant(), Aggregation.Hour, null));
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
 		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
 				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
@@ -181,8 +184,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour.toInstant(), Aggregation.Hour,
 						null));
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum in same hour", auditHourly, hasSize(1));
 		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
 				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L));
@@ -209,8 +211,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(1).toInstant(),
 						Aggregation.Hour, null));
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum", auditHourly, hasSize(1));
 		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
 				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L));
@@ -240,8 +241,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				new StaleAggregateDatumEntity(meta.getStreamId(), hour1.plusHours(2).toInstant(),
 						Aggregation.Hour, null));
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("One hourly audit record created for all datum", auditHourly, hasSize(1));
 		assertAuditDatum("8 datum ingested", auditHourly.get(0), AuditDatumEntity
 				.hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 8L, 24L, 0L));
@@ -259,7 +259,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-15.txt");
-		DatumTestUtils.ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
+		ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale aggregate records created for reset", staleRows, hasSize(2));
@@ -284,7 +284,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
-		DatumTestUtils.ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
+		ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale aggregate record created for reset", staleRows, hasSize(1));
@@ -306,7 +306,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		assertThat("No stale aggregate records created yet", staleRows, hasSize(0));
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-17.txt");
-		DatumTestUtils.ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
+		ingestDatumAuxiliary(log, jdbcTemplate, auxDatums);
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
 		assertThat("Stale aggregate records created for reset", staleRows, hasSize(2));
@@ -326,7 +326,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
-		DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
+		insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
 
 		// should have no "stale" aggregate rows yet
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -341,7 +341,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(new GeneralNodeDatumAuxiliaryPK(
 				from.getNodeId(), from.getCreated().plusMinutes(1), from.getSourceId()), f, s);
 
-		boolean moved = DatumTestUtils.moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
+		boolean moved = moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
 		assertThat("Reset record moved", moved, equalTo(true));
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -360,7 +360,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
-		DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
+		insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
 
 		List<GeneralNodeDatum> datums2 = datums.stream().map(e -> {
 			GeneralNodeDatum clone = e.clone();
@@ -382,10 +382,10 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 						from.getSourceId()),
 				from.getSamplesFinal(), from.getSamplesStart());
 
-		boolean moved = DatumTestUtils.moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
+		boolean moved = moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
 		assertThat("Reset record moved", moved, equalTo(true));
 
-		List<DatumAuxiliaryEntity> auxList = DatumTestUtils.listDatumAuxiliary(jdbcTemplate);
+		List<DatumAuxiliaryEntity> auxList = listDatumAuxiliary(jdbcTemplate);
 		log.debug("Datum auxiliary data: {}", auxList);
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -411,8 +411,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted instantaneous prop", auditHourly.get(0),
 				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
@@ -426,8 +425,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted accumulating prop", auditHourly.get(0),
 				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
@@ -441,8 +439,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted status prop", auditHourly.get(0),
 				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L));
@@ -456,8 +453,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted instantaneous prop + 2 tags", auditHourly.get(0),
 				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L));
@@ -471,8 +467,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 				"UTC");
 		NodeDatumStreamMetadata meta = metas.values().iterator().next();
 
-		List<AuditDatumEntity> auditHourly = DatumTestUtils.listAuditDatum(jdbcTemplate,
-				Aggregation.Hour);
+		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted all props and tags", auditHourly.get(0),
 				hourlyAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 6L, 19L, 0L));

@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.decimalArray;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertOneDatumStreamWithAuxiliary;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.readingWith;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;

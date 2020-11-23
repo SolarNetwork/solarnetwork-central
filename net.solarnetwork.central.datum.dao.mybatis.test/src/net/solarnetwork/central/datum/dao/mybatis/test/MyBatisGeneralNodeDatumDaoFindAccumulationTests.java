@@ -57,7 +57,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
@@ -188,7 +188,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), nodeId, sourceId);
 		d2.getSamples().putAccumulatingSampleValue(WH_PROP, data[1]);
 
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = DatumTestUtils.ingestDatumStream(log,
+		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = DatumDbUtils.ingestDatumStream(log,
 				jdbcTemplate, Arrays.asList(d1, d2), "UTC");
 		result.add(d1.getId());
 		result.add(d2.getId());
@@ -199,16 +199,16 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 			GeneralNodeDatum d4 = getTestInstance(ts2.plusMinutes(1), nodeId, sourceId);
 			d4.getSamples().putAccumulatingSampleValue(WH_PROP, data[3]);
 
-			DatumTestUtils.ingestDatumStream(log, jdbcTemplate, Arrays.asList(d3, d4), "UTC");
+			DatumDbUtils.ingestDatumStream(log, jdbcTemplate, Arrays.asList(d3, d4), "UTC");
 			result.add(d3.getId());
 			result.add(d4.getId());
 
 			if ( processAggregateStaleData ) {
 				// query depends on aggregate data
-				DatumTestUtils.processStaleAggregateDatum(log, jdbcTemplate);
+				DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
 
 				UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
-				List<AggregateDatum> aggs = DatumTestUtils
+				List<AggregateDatum> aggs = DatumDbUtils
 						.listAggregateDatum(jdbcTemplate, Aggregation.Day).stream()
 						.filter(e -> streamId.equals(e.getStreamId())).collect(Collectors.toList());
 				List<Instant> days = aggs.stream().map(AggregateDatum::getTimestamp)

@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.elementsOf;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.insertDatumStream;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.loadJsonDatumResource;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -84,7 +86,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,
 			ZonedDateTime aggEnd, RollupCallback callback) throws IOException {
-		List<?> data = DatumTestUtils.loadJsonDatumAndAuxiliaryResource(resource, getClass());
+		List<?> data = loadJsonDatumAndAuxiliaryResource(resource, getClass());
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
@@ -95,7 +97,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
-				DatumTestUtils.insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
+				insertDatumAuxiliary(log, jdbcTemplate, streamId, auxDatums);
 			}
 			results = jdbcTemplate.query(
 					"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",

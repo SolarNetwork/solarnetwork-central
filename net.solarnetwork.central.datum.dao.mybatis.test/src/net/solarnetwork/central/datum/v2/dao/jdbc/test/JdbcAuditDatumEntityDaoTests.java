@@ -30,6 +30,8 @@ import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.monthlyAudi
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.accumulativeAuditDatumRollup;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.hourlyAuditDatumRollup;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.monthlyAuditDatumRollup;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -123,7 +125,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 				months.add(m);
 			}
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, audits);
+		insertAuditDatum(log, jdbcTemplate, audits);
 	}
 
 	private void setupTestAccumulativeAuditDatumRecords(ZonedDateTime start, UUID streamId, int count,
@@ -143,13 +145,13 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 			audits.add(accumulativeAuditDatum(streamId, d.toInstant(), 100L * i, 24L * i, i, iMonth));
 			days.add(d.toInstant());
 		}
-		DatumTestUtils.insertAuditDatum(log, jdbcTemplate, audits);
+		insertAuditDatum(log, jdbcTemplate, audits);
 	}
 
 	private void setupTestStream(Long nodeId, String sourceId, UUID streamId) {
 		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", nodeId,
 				sourceId, null, null, null);
-		DatumTestUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 	}
 
 	@Test
