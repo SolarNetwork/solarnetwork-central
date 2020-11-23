@@ -70,7 +70,7 @@
 		</argument>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -79,12 +79,12 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorHourly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="h"/>
+		<property name="jobId" value="StaleDatumStreamProcessorHourly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Hour.getKey()}"/>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleGeneralNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -93,12 +93,12 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorDaily"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="d"/>
+		<property name="jobId" value="StaleDatumStreamProcessorDaily"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Day.getKey()}"/>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleGeneralNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -107,9 +107,9 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorMonthly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="m"/>
+		<property name="jobId" value="StaleDatumStreamProcessorMonthly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Month.getKey()}"/>
 	</bean>
 	
 	<bean id="staleAuditNodeDatumProcessorRaw" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
@@ -122,7 +122,7 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.raw.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorRaw"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="r"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).None.getKey()}"/>
 	</bean>
 	
 	<bean id="staleAuditNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
@@ -135,7 +135,7 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="h"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Hour.getKey()}"/>
 	</bean>
 	
 	<bean id="staleAuditNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
@@ -148,7 +148,7 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="d"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Day.getKey()}"/>
 	</bean>
 	
 	<bean id="staleAuditNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
@@ -161,7 +161,7 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="m"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Month.getKey()}"/>
 	</bean>
 	
 	<bean id="auditDatumDailyMissingPopulator" class="net.solarnetwork.central.datum.agg.JdbcCallJob"

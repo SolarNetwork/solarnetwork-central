@@ -99,16 +99,22 @@ public class SelectDatum
 
 	private void sqlColumnsPk(StringBuilder buf) {
 		buf.append("datum.stream_id,\n");
-		if ( filter.getAggregation() != null ) {
+		if ( aggregation != Aggregation.None ) {
 			buf.append("datum.ts_start AS ts,\n");
 		} else {
 			buf.append("datum.ts,\n");
+			buf.append("datum.received,\n");
 		}
-		buf.append("datum.received,\n");
 		buf.append("datum.data_i,\n");
 		buf.append("datum.data_a,\n");
 		buf.append("datum.data_s,\n");
-		buf.append("datum.data_t\n");
+		buf.append("datum.data_t");
+		if ( aggregation != Aggregation.None ) {
+			buf.append(",\ndatum.stat_i,\n");
+			buf.append("datum.read_a\n");
+		} else {
+			buf.append("\n");
+		}
 	}
 
 	protected String sqlTableName() {
@@ -150,9 +156,9 @@ public class SelectDatum
 
 		StringBuilder where = new StringBuilder();
 		int idx = filter.hasLocalDateRange()
-				? DatumSqlUtils.whereLocalDateRange(filter, filter.getAggregation(),
+				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
 						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
-				: DatumSqlUtils.whereDateRange(filter, filter.getAggregation(), where);
+				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE ").append(where.substring(4));
 		}

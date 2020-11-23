@@ -4,6 +4,7 @@
 \i postgres-init-datm-agg-util.sql
 \i postgres-init-datm-audit-query.sql
 \i postgres-init-datm-audit.sql
+\i postgres-init-datm-delete.sql
 \i postgres-init-datm-in.sql
 \i postgres-init-datm-migration.sql
 \i postgres-init-datm-util.sql

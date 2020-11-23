@@ -97,7 +97,7 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 		if ( filter.hasSorts() ) {
 			idx = orderBySorts(filter.getSorts(), DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING, order);
 		} else {
-			order.append(", datum.aud_kind, ts, datum.stream_id");
+			order.append(", datum.agg_kind, ts, datum.stream_id");
 		}
 		if ( order.length() > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
