@@ -35,6 +35,8 @@ import java.util.UUID;
 public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 		implements ObjectDatumStreamMetadata {
 
+	private static final long serialVersionUID = -5497125744560574016L;
+
 	private final Long objectId;
 	private final String sourceId;
 

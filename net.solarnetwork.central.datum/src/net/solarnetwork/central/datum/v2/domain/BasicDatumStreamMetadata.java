@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serializable;
 import java.util.UUID;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
@@ -32,7 +33,9 @@ import net.solarnetwork.domain.GeneralDatumSamplesType;
  * @version 1.0
  * @since 2.8
  */
-public class BasicDatumStreamMetadata implements DatumStreamMetadata {
+public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializable {
+
+	private static final long serialVersionUID = -6339837836211488890L;
 
 	private final UUID streamId;
 	private final String timeZoneId;

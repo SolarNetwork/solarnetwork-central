@@ -35,6 +35,8 @@ import java.util.UUID;
 public class BasicLocationDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 		implements LocationDatumStreamMetadata {
 
+	private static final long serialVersionUID = -6299516042678467972L;
+
 	/**
 	 * Create a new metadata instance with no property names.
 	 * 
