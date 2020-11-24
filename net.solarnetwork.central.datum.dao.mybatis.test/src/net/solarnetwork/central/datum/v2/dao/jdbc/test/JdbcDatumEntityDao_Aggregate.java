@@ -1,7 +1,7 @@
 /* ==================================================================
- * StaleAuditDataProcessor.java - 3/07/2018 9:46:25 AM
+ * JdbcDatumEntityDao_Aggregate.java - 24/11/2020 2:59:31 pm
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2020 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,35 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import org.osgi.service.event.EventAdmin;
-import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 
 /**
- * Job to process "stale" audit datum reporting data.
+ * Test cases for the {@link JdbcDatumEntityDao} class implementation of
+ * aggregate queries.
  * 
  * @author matt
- * @version 1.2
- * @since 1.6
+ * @version 1.0
  */
-public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
+public class JdbcDatumEntityDao_Aggregate {
 
-	/** The default {@code jdbcCall} value. */
-	public static final String DEFAULT_SQL = "{? = call solardatm.process_one_aud_stale_datm(?)}";
-
-	/**
-	 * Construct with properties.
-	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
-	 * @param jdbcOps
-	 *        the JdbcOperations to use
-	 */
-	public StaleAuditDataProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin, jdbcOps, "stale audit data");
-		setJdbcCall(DEFAULT_SQL);
-		setTierProcessMax(null);
-	}
+	// TODO
 
 }

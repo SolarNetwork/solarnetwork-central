@@ -124,7 +124,6 @@ public class StaleDatumStreamProcessorTests {
 		job.setJobId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
-		job.setMaximumWaitMs(15 * 1000L);
 
 		otherMocks = new ArrayList<>();
 	}
