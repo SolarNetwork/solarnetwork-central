@@ -826,7 +826,7 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 */
 	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
-			List<GeneralNodeDatumAuxiliary> datums) {
+			Iterable<GeneralNodeDatumAuxiliary> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -1049,7 +1049,7 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 */
 	public static void insertAuditDatum(Logger log, JdbcOperations jdbcTemplate,
-			List<AuditDatum> datums) {
+			Iterable<AuditDatum> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -1204,7 +1204,7 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 */
 	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
-			List<GeneralNodeDatumAuxiliary> datums) {
+			Iterable<GeneralNodeDatumAuxiliary> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
