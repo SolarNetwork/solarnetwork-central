@@ -29,6 +29,9 @@
 		<beans:prop key="userNodeCache.heapMaxEntries">10000</beans:prop>
 		<beans:prop key="userNodeCache.diskMaxSizeMB">100</beans:prop>
 		<beans:prop key="datum.maxMinuteAggregationHours">840</beans:prop>
+		<beans:prop key="streamMetadataCache.ttl">300</beans:prop>
+		<beans:prop key="streamMetadataCache.heapMaxEntries">10000</beans:prop>
+		<beans:prop key="streamMetadataCache.diskMaxSizeMB">100</beans:prop>
 	</osgix:cm-properties>
 	
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -73,6 +76,7 @@
 	<service interface="net.solarnetwork.central.datum.v2.dao.DatumEntityDao">
 		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
 			<argument ref="jdbcOps"/>
+			<property name="streamMetadataCache" ref="streamMetadataCache"/>
 		</bean>
 	</service>
 	
@@ -83,6 +87,22 @@
 	
 	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
 		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
+	</bean>
+
+	<bean id="streamMetadataCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.util.UUID"/>
+		<argument value="net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata"/>
+		<property name="name" value="metadata-for-stream"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${streamMetadataCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${streamMetadataCache.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${streamMetadataCache.diskMaxSizeMB}"/>
 	</bean>
 
 	<bean id="userNodeCache" class="net.solarnetwork.central.support.JCacheFactoryBean">

@@ -22,38 +22,61 @@
 
 package net.solarnetwork.central.datum.agg.test;
 
+import static java.util.Collections.singletonMap;
+import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isNull;
+import static org.easymock.EasyMock.expectLastCall;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
+import java.sql.ResultSet;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.Identity;
+import net.solarnetwork.test.Assertion;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.StaticOptionalService;
 
@@ -63,24 +86,25 @@ import net.solarnetwork.util.StaticOptionalService;
  * @author matt
  * @version 1.1
  */
-public class StaleSolarFluxProcessorTests extends AggTestSupport {
+public class StaleSolarFluxProcessorTests {
 
 	private static final String TEST_JOB_ID = "Test Stale SolarFlux Datum Processor";
 
+	private static final Long TEST_NODE_ID = 1L;
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private static final String SQL_INSERT_STALE_AGG_FLUX = "INSERT INTO solaragg.agg_stale_flux(agg_kind, node_id, source_id) VALUES (?, ?, ?)";
-
-	private GeneralNodeDatumDao datumDao;
+	private JdbcOperations jdbcTemplate;
+	private DatumEntityDao datumDao;
 	private DatumProcessor processor;
 	private TestStaleSolarFluxDatumProcessor job;
+	private List<Object> otherMocks;
 
 	private static final class TestStaleSolarFluxDatumProcessor extends StaleSolarFluxProcessor {
 
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
 		private TestStaleSolarFluxDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-				GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> processor) {
+				DatumEntityDao datumDao, OptionalService<DatumProcessor> processor) {
 			super(eventAdmin, jdbcOps, datumDao, processor);
 			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
 
@@ -106,12 +130,10 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 
 	}
 
-	@Override
 	@Before
 	public void setup() {
-		super.setup();
-
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		processor = EasyMock.createMock(DatumProcessor.class);
 
 		job = new TestStaleSolarFluxDatumProcessor(null, jdbcTemplate, datumDao,
@@ -121,64 +143,126 @@ public class StaleSolarFluxProcessorTests extends AggTestSupport {
 		job.setMaximumIterations(10);
 		job.setMaximumWaitMs(15 * 1000L);
 
-		cleanupDatabase();
+		otherMocks = new ArrayList<>();
 	}
 
-	private void replayAll() {
-		EasyMock.replay(datumDao, processor);
+	private void replayAll(Object... mocks) {
+		EasyMock.replay(jdbcTemplate, datumDao, processor);
+		if ( mocks != null ) {
+			EasyMock.replay(mocks);
+			for ( Object m : mocks ) {
+				otherMocks.add(m);
+			}
+		}
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, processor);
-	}
-
-	private void insertStaleAggFlux(Aggregation aggKind, long nodeId, String sourceId) {
-		jdbcTemplate.execute(SQL_INSERT_STALE_AGG_FLUX, new PreparedStatementCallback<Object>() {
-
-			@Override
-			public Object doInPreparedStatement(PreparedStatement stmt)
-					throws SQLException, DataAccessException {
-				stmt.setString(1, aggKind.getKey());
-				stmt.setLong(2, nodeId);
-				stmt.setString(3, sourceId);
-				stmt.executeUpdate();
-				return null;
-			}
-		});
+		EasyMock.verify(jdbcTemplate, datumDao, processor);
+		if ( !otherMocks.isEmpty() ) {
+			EasyMock.verify(otherMocks.toArray(new Object[otherMocks.size()]));
+		}
 	}
 
 	@Test
-	public void processSingleHourRow_singleTask() throws Exception {
+	public void runSingleTask() throws Exception {
 		// GIVEN
-		insertStaleAggFlux(Aggregation.Hour, TEST_NODE_ID, TEST_SOURCE_ID);
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
 
-		ReportingGeneralNodeDatum mostRecentDatum = new ReportingGeneralNodeDatum();
-		List<ReportingGeneralNodeDatumMatch> datumResults = Arrays.asList(mostRecentDatum);
-		BasicFilterResults<ReportingGeneralNodeDatumMatch> filterResults = new BasicFilterResults<>(
-				datumResults);
-		Capture<AggregateGeneralNodeDatumFilter> filterCaptor = new Capture<>();
-		expect(datumDao.findAggregationFiltered(capture(filterCaptor), isNull(), isNull(), isNull()))
-				.andReturn(filterResults);
+		int[] cbResult = new int[] { -1 };
+		expect(jdbcTemplate.execute(assertWith(new Assertion<ConnectionCallback<Integer>>() {
+
+			@Override
+			public void check(ConnectionCallback<Integer> cb) throws Throwable {
+				Integer res = cb.doInConnection(con);
+				if ( res != null ) {
+					cbResult[0] = res.intValue();
+				}
+			}
+
+		}))).andAnswer(new IAnswer<Integer>() {
+
+			@Override
+			public Integer answer() throws Throwable {
+				return cbResult[0];
+			}
+		});
+
+		con.setAutoCommit(false);
+		expectLastCall().anyTimes();
+
+		// execute call & indicate a ResultSet is available (twice)
+		expect(con.prepareStatement(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql(),
+				ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)).andReturn(stmt);
+
+		// give one result row back first time, none second
+		ResultSet resultSet1 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.executeQuery()).andReturn(resultSet1);
+		expect(resultSet1.next()).andReturn(true);
+
+		DatumProperties props = DatumProperties.propertiesOf(decimalArray("1.1"),
+				NumberUtils.decimalArray("2.1"), null, null);
+		DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(
+				new BigDecimal[][] { decimalArray("60", "1.0", "1.2") },
+				new BigDecimal[][] { decimalArray("2.1", "0", "2.1") });
+		UUID streamId = UUID.randomUUID();
+		AggregateDatumEntity mostRecentDatum = new AggregateDatumEntity(streamId,
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, props, stats);
+		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "Pacific/Auckland",
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a" }, new String[] { "b" }, null);
+
+		expect(resultSet1.getObject(1)).andReturn(streamId);
+		expect(resultSet1.getString(2)).andReturn(Aggregation.Hour.getKey());
+
+		resultSet1.deleteRow();
+		expect(resultSet1.next()).andReturn(false);
+		resultSet1.close();
+		con.commit();
+
+		ResultSet resultSet2 = EasyMock.createMock(ResultSet.class);
+		expect(stmt.executeQuery()).andReturn(resultSet2);
+		expect(resultSet2.next()).andReturn(false);
+		resultSet2.close();
+		con.commit();
+
+		// GIVEN
+		List<Datum> datumResults = Collections.singletonList(mostRecentDatum);
+		DatumStreamFilterResults filterResults = new BasicDatumStreamFilterResults(
+				singletonMap(streamId, meta), datumResults);
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(filterResults);
 
 		expect(processor.isConfigured()).andReturn(true);
-		expect(processor.processDatum(mostRecentDatum, Aggregation.Hour)).andReturn(true);
+		Capture<Identity<GeneralNodeDatumPK>> pubDatumCaptor = new Capture<>();
+		expect(processor.processDatum(capture(pubDatumCaptor), eq(Aggregation.Hour))).andReturn(true);
+
+		stmt.close();
 
 		// WHEN
-		replayAll();
+		replayAll(con, stmt, resultSet1, resultSet2);
 		boolean executed = job.executeJob();
 
 		// THEN
 		assertThat("Job executed", executed, equalTo(true));
 		assertThat("Job executed in one thread", job.taskThreadCount.get(), equalTo(0));
 
-		AggregateGeneralNodeDatumFilter filter = filterCaptor.getValue();
+		DatumCriteria filter = filterCaptor.getValue();
 		assertThat("Filter for most recent datum", filter.isMostRecent(), equalTo(true));
 		assertThat("Filter aggregation matched stale row value", filter.getAggregation(),
 				equalTo(Aggregation.Hour));
-		assertThat("Filter node ID matched stale row value", filter.getNodeId(), equalTo(TEST_NODE_ID));
-		assertThat("Filter source ID matched stale row value", filter.getSourceId(),
-				equalTo(TEST_SOURCE_ID));
+		assertThat("Filter stream ID matched stale row value", filter.getStreamId(), equalTo(streamId));
+
+		assertThat("Published ReportingGeneralNodeDatum", pubDatumCaptor.getValue(),
+				Matchers.instanceOf(ReportingGeneralNodeDatum.class));
+		ReportingGeneralNodeDatum pubDatum = (ReportingGeneralNodeDatum) pubDatumCaptor.getValue();
+		assertThat("Published node ID from stream meta", pubDatum.getNodeId(),
+				equalTo(meta.getNodeId()));
+		assertThat("Published source ID from stream meta", pubDatum.getSourceId(),
+				equalTo(meta.getSourceId()));
+		assertThat("Published timestamp from datum with meta time zone", pubDatum.getCreated(),
+				equalTo(new DateTime(mostRecentDatum.getTimestamp().toEpochMilli(),
+						DateTimeZone.forID(meta.getTimeZoneId()))));
 	}
 
 }

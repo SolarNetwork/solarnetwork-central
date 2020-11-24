@@ -208,7 +208,6 @@ public class StaleDatumStreamProcessorTests {
 		final int parallelism = 3;
 		List<Object> mocks = new ArrayList<>();
 		job.setParallelism(parallelism);
-		job.setMaximumWaitMs(Long.MAX_VALUE);
 
 		for ( int i = 0; i < parallelism; i++ ) {
 			Connection con = EasyMock.createMock(Connection.class);

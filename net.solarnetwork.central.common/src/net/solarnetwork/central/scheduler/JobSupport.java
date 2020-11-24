@@ -291,7 +291,11 @@ public abstract class JobSupport extends EventHandlerSupport {
 							log.debug("Thread {} processed {} {} iterations",
 									Thread.currentThread().getName(), processedCount, taskName);
 						} catch ( Exception e ) {
-							log.error("Error processing {} iteration", taskName, e);
+							Throwable root = e;
+							while ( root.getCause() != null ) {
+								root = root.getCause();
+							}
+							log.error("Error processing {} iteration: {}", taskName, e.toString(), root);
 						} finally {
 							latch.countDown();
 						}

@@ -38,6 +38,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -189,7 +190,11 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 					((CountPreparedStatementCreatorProvider) creator).countPreparedStatementCreator());
 		}
 
-		List<Datum> data = jdbcTemplate.query(creator, DatumEntityRowMapper.INSTANCE);
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		List<Datum> data = jdbcTemplate.query(creator, filter.getAggregation() != null
+				? (RowMapper) AggregateDatumEntityRowMapper.mapperForAggregate(filter.getAggregation())
+				: DatumEntityRowMapper.INSTANCE);
+
 		if ( filter.getMax() == null ) {
 			totalCount = (long) data.size();
 		}
@@ -229,7 +234,11 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 		}
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(new SelectStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.INSTANCE);
-		return (results.isEmpty() ? null : results.get(0));
+		ObjectDatumStreamMetadata meta = (results.isEmpty() ? null : results.get(0));
+		if ( meta != null && streamMetadataCache != null ) {
+			streamMetadataCache.put(filter.getStreamId(), meta);
+		}
+		return meta;
 	}
 
 	@Override
@@ -260,8 +269,8 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	 * @param streamMetadataCache
 	 *        the cache to set
 	 */
-	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> nodeMetadataCache) {
-		this.streamMetadataCache = nodeMetadataCache;
+	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache) {
+		this.streamMetadataCache = streamMetadataCache;
 	}
 
 }

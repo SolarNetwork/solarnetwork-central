@@ -26,24 +26,29 @@ import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
-import static org.hamcrest.Matchers.arrayContaining;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadat;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
+import javax.cache.Cache;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -54,7 +59,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -67,39 +71,41 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 	private JdbcDatumEntityDao dao;
 
+	private Cache<UUID, ObjectDatumStreamMetadata> cache;
+
+	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
+
+		cache = EasyMock.createMock(Cache.class);
+	}
+
+	public void replayAll() {
+		EasyMock.replay(cache);
+	}
+
+	@After
+	public void teardown() {
+		EasyMock.verify(cache);
 	}
 
 	@Test
 	public void findNodeMetadata() {
 		// GIVEN
-		final List<UUID> streamIds = new ArrayList<>(3);
-		jdbcTemplate.batchUpdate(
-				"insert into solardatm.da_datm_meta (stream_id,node_id,source_id,names_i,names_a,names_s) "
-						+ "VALUES (?::uuid,?,?,?::text[],?::text[],?::text[])",
-				new BatchPreparedStatementSetter() {
+		final List<NodeDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicNodeDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
+					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" }));
 
-					@Override
-					public void setValues(PreparedStatement ps, int i) throws SQLException {
-						UUID streamId = UUID.randomUUID();
-						streamIds.add(streamId);
-						ps.setString(1, streamId.toString());
-						ps.setLong(2, i + 1);
-						ps.setString(3, format("s%d", i + 1));
-						ps.setString(4, "{a,b,c}");
-						ps.setString(5, "{d,e}");
-						ps.setString(6, "{f}");
-					}
-
-					@Override
-					public int getBatchSize() {
-						return 3;
-					}
-				});
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
+		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -110,51 +116,28 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
 
-		for ( int i = 0, idx = 1; i < 3; i++, idx++ ) {
-			final UUID streamId = streamIds.get(i);
-			NodeDatumStreamMetadata meta = metas.get(streamId);
-			assertThat("Stream ID " + idx, meta.getStreamId(), equalTo(streamId));
-			assertThat("Node ID " + idx, meta.getNodeId(), equalTo((long) idx));
-			assertThat("Source ID" + idx, meta.getSourceId(), equalTo(format("s%d", idx)));
-			assertThat("Instantaneous property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
-					arrayContaining("a", "b", "c"));
-			assertThat("Accumulating property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
-					arrayContaining("d", "e"));
-			assertThat("Status property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Status), arrayContaining("f"));
+		for ( NodeDatumStreamMetadata expected : data ) {
+			NodeDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadat("location meta", meta, expected);
 		}
 	}
 
 	@Test
 	public void findLocationMetadata() {
 		// GIVEN
-		final List<UUID> streamIds = new ArrayList<>(3);
-		jdbcTemplate.batchUpdate(
-				"insert into solardatm.da_loc_datm_meta (stream_id,loc_id,source_id,names_i,names_a,names_s) "
-						+ "VALUES (?::uuid,?,?,?::text[],?::text[],?::text[])",
-				new BatchPreparedStatementSetter() {
+		final List<LocationDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicLocationDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
+					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" }));
 
-					@Override
-					public void setValues(PreparedStatement ps, int i) throws SQLException {
-						UUID streamId = UUID.randomUUID();
-						streamIds.add(streamId);
-						ps.setString(1, streamId.toString());
-						ps.setLong(2, i + 1);
-						ps.setString(3, format("s%d", i + 1));
-						ps.setString(4, "{a,b,c}");
-						ps.setString(5, "{d,e}");
-						ps.setString(6, "{f}");
-					}
-
-					@Override
-					public int getBatchSize() {
-						return 3;
-					}
-				});
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
 		// WHEN
+		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
@@ -163,22 +146,11 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		assertThat("Results returned", results, notNullValue());
 		Map<UUID, LocationDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
-		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
+		assertThat("Stream IDs same", metas.keySet(), equalTo(streamIds));
 
-		for ( int i = 0, idx = 1; i < 3; i++, idx++ ) {
-			final UUID streamId = streamIds.get(i);
-			LocationDatumStreamMetadata meta = metas.get(streamId);
-			assertThat("Stream ID " + idx, meta.getStreamId(), equalTo(streamId));
-			assertThat("Location ID " + idx, meta.getLocationId(), equalTo((long) idx));
-			assertThat("Source ID" + idx, meta.getSourceId(), equalTo(format("s%d", idx)));
-			assertThat("Instantaneous property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
-					arrayContaining("a", "b", "c"));
-			assertThat("Accumulating property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
-					arrayContaining("d", "e"));
-			assertThat("Status property names " + idx,
-					meta.propertyNamesForType(GeneralDatumSamplesType.Status), arrayContaining("f"));
+		for ( LocationDatumStreamMetadata expected : data ) {
+			LocationDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadat("location meta", meta, expected);
 		}
 	}
 
@@ -190,6 +162,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
+		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(UUID.randomUUID());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
@@ -207,25 +180,58 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
+		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertThat("Metadata found", result, notNullValue());
-		assertThat("Node metadata returned", result, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Stream ID", result.getStreamId(), equalTo(meta.getStreamId()));
-		assertThat("Time zone ID", result.getTimeZoneId(), equalTo(meta.getTimeZoneId()));
-		assertThat("Object ID", result.getObjectId(), equalTo(meta.getNodeId()));
-		assertThat("Source ID", result.getSourceId(), equalTo(meta.getSourceId()));
-		assertThat("Instantaneous property names",
-				meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
-				arrayContaining("a", "b", "c"));
-		assertThat("Accumulating property names",
-				meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
-				arrayContaining("d", "e"));
-		assertThat("Status property names", meta.propertyNamesForType(GeneralDatumSamplesType.Status),
-				arrayContaining("f"));
+		assertDatumStreamMetadat("returned meta", result, meta);
+	}
+
+	@Test
+	public void metadataForStream_cacheMiss() {
+		// GIVEN
+		dao.setStreamMetadataCache(cache);
+		setupTestNode(); // for TZ
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		expect(cache.get(meta.getStreamId())).andReturn(null);
+		Capture<ObjectDatumStreamMetadata> metaCaptor = new Capture<>();
+		cache.put(eq(meta.getStreamId()), capture(metaCaptor));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		assertDatumStreamMetadat("returned meta", result, meta);
+		assertDatumStreamMetadat("cached meta", metaCaptor.getValue(), meta);
+	}
+
+	@Test
+	public void metadataForStream_cacheHit() {
+		// GIVEN
+		dao.setStreamMetadataCache(cache);
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+
+		expect(cache.get(meta.getStreamId())).andReturn(meta);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		assertThat("Cached metadata returned", result, sameInstance(meta));
 	}
 
 	@Test
@@ -238,24 +244,12 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
+		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertThat("Metadata found", result, notNullValue());
-		assertThat("Location metadata returned", result, instanceOf(LocationDatumStreamMetadata.class));
-		assertThat("Stream ID", result.getStreamId(), equalTo(meta.getStreamId()));
-		assertThat("Time zone ID", result.getTimeZoneId(), equalTo(meta.getTimeZoneId()));
-		assertThat("Object ID", result.getObjectId(), equalTo(meta.getLocationId()));
-		assertThat("Source ID", result.getSourceId(), equalTo(meta.getSourceId()));
-		assertThat("Instantaneous property names",
-				meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
-				arrayContaining("a", "b", "c"));
-		assertThat("Accumulating property names",
-				meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
-				arrayContaining("d", "e"));
-		assertThat("Status property names", meta.propertyNamesForType(GeneralDatumSamplesType.Status),
-				arrayContaining("f"));
+		assertDatumStreamMetadat("returned meta", result, meta);
 	}
 }

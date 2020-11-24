@@ -87,6 +87,30 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 		this.aggregation = aggregation;
 	}
 
+	/**
+	 * Get a mapper for an aggregation type.
+	 * 
+	 * @param kind
+	 *        the kind of aggregation
+	 * @return the mapper, never {@literal null}
+	 */
+	public static RowMapper<AggregateDatum> mapperForAggregate(Aggregation kind) {
+		RowMapper<AggregateDatum> mapper;
+		switch (kind) {
+			case Day:
+				mapper = DAY_INSTANCE;
+				break;
+
+			case Month:
+				mapper = MONTH_INSTANCE;
+				break;
+
+			default:
+				mapper = HOUR_INSTANCE;
+		}
+		return mapper;
+	}
+
 	@SuppressWarnings("unchecked")
 	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);

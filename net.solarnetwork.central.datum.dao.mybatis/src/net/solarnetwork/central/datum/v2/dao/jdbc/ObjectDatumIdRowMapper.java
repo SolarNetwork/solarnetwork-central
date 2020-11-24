@@ -97,13 +97,16 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 			k = MetadataKind.forKey(rs.getString(6));
 		}
 
+		Long objectId = objId instanceof Number ? ((Number) objId).longValue() : null;
+		ObjectDatumId result;
 		if ( k == MetadataKind.Location ) {
-			return new LocationDatumId(streamId,
-					objId instanceof Number ? ((Number) objId).longValue() : null, sourceId, ts, agg);
+			result = new LocationDatumId(streamId, objectId, sourceId, ts, agg);
+		} else if ( k == MetadataKind.Node ) {
+			result = new NodeDatumId(streamId, objectId, sourceId, ts, agg);
+		} else {
+			result = new ObjectDatumId(null, streamId, objectId, sourceId, ts, agg);
 		}
-
-		return new NodeDatumId(streamId, objId instanceof Number ? ((Number) objId).longValue() : null,
-				sourceId, ts, agg);
+		return result;
 	}
 
 }

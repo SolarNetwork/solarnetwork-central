@@ -31,14 +31,16 @@ import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.dao.AggregationFilterableDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.jdbc.StaleFluxDatumRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.util.OptionalService;
 
 /**
@@ -52,9 +54,8 @@ import net.solarnetwork.util.OptionalService;
  * </p>
  * 
  * <ol>
+ * <li><b>stream_id</b> - the stream ID (UUID)</li>
  * <li><b>agg_kind</b> - the datum aggregate type (String)</li>
- * <li><b>node_id</b> - the node ID (Long)</li>
- * <li><b>source_id</b> - the source ID (String)</li>
  * </ol>
  * 
  * <p>
@@ -69,10 +70,7 @@ import net.solarnetwork.util.OptionalService;
  */
 public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 
-	/** The default value for the {@code jdbcCall} property. */
-	public static final String DEFAULT_SQL_STALE_QUERY = "SELECT * FROM solaragg.agg_stale_flux LIMIT 1 FOR UPDATE SKIP LOCKED";
-
-	private final AggregationFilterableDao<ReportingGeneralNodeDatumMatch, AggregateGeneralNodeDatumFilter> datumDao;
+	private final DatumEntityDao datumDao;
 	private final OptionalService<DatumProcessor> publisher;
 
 	/**
@@ -89,14 +87,14 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 	 *        the processor to publish the stale solar flux data
 	 */
 	public StaleSolarFluxProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> publisher) {
+			DatumEntityDao datumDao, OptionalService<DatumProcessor> publisher) {
 		super(eventAdmin, jdbcOps, "stale SolarFlux data");
 		this.datumDao = datumDao;
 		this.publisher = publisher;
 		setJobGroup("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
-		setJdbcCall(DEFAULT_SQL_STALE_QUERY);
+		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());
 	}
 
 	@Override
@@ -111,51 +109,48 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
 				con.setAutoCommit(false);
 				int processedCount = 0;
-				DatumFilterCommand filter = new DatumFilterCommand();
+				BasicDatumCriteria filter = new BasicDatumCriteria();
 				filter.setMostRecent(true);
 				int resultCount = 0;
-				do {
-					try (PreparedStatement query = con.prepareStatement(getJdbcCall(),
-							ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-							ResultSet rs = query.executeQuery()) {
-						resultCount = 0;
-						while ( rs.next() ) {
-							resultCount++;
+				try (PreparedStatement query = con.prepareStatement(getJdbcCall(),
+						ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+					do {
+						try (ResultSet rs = query.executeQuery()) {
+							resultCount = 0;
+							while ( rs.next() ) {
+								resultCount++;
 
-							boolean handled = false;
-							try {
-								final Aggregation agg = Aggregation.forKey(rs.getString(1));
-								filter.setAggregate(agg);
-								final Long nodeId = rs.getLong(2);
-								filter.setNodeId(nodeId);
-								filter.setSourceId(rs.getString(3));
-								FilterResults<ReportingGeneralNodeDatumMatch> results = datumDao
-										.findAggregationFiltered(filter, null, null, null);
-								ReportingGeneralNodeDatumMatch datum = null;
-								for ( ReportingGeneralNodeDatumMatch match : results ) {
-									// we only care about first match (and expect only one)
-									datum = match;
+								boolean handled = false;
+								try {
+									final StaleFluxDatum stale = StaleFluxDatumRowMapper.INSTANCE
+											.mapRow(rs, resultCount);
+									filter.setAggregation(stale.getKind());
+									filter.setStreamId(stale.getStreamId());
+									DatumStreamFilterResults results = datumDao.findFiltered(filter);
+									Datum datum = results.iterator().next();
+									if ( datum != null ) {
+										GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
+												results.metadataForStream(datum.getStreamId()));
+										handled = aggProcessor.processDatum(gnd, stale.getKind());
+									}
+								} catch ( IllegalArgumentException e ) {
+									log.error("Unsupported stale type: {}", e.toString());
 									handled = true;
-									break;
+								} finally {
+									if ( handled ) {
+										rs.deleteRow();
+									}
 								}
-								if ( datum != null ) {
-									handled = aggProcessor.processDatum(datum, agg);
-								}
-							} catch ( IllegalArgumentException e ) {
-								log.error("Unsupported stale type: {}", e.toString());
-								handled = true;
-							} finally {
-								if ( handled ) {
-									rs.deleteRow();
-								}
-							}
 
-							remainingCount.decrementAndGet();
-							processedCount++;
+								remainingCount.decrementAndGet();
+								processedCount++;
+							}
+							con.commit();
+						} catch ( Throwable t ) {
+							con.rollback();
 						}
-						con.commit();
-					}
-				} while ( resultCount > 0 && remainingCount.get() > 0 );
+					} while ( resultCount > 0 && remainingCount.get() > 0 );
+				}
 				return processedCount;
 			}
 		});

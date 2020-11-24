@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.BufferedReader;
@@ -40,6 +42,10 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
@@ -130,6 +136,46 @@ public final class DatumTestUtils {
 			return Matchers.equalToIgnoringWhiteSpace(txt);
 		} catch ( IOException e ) {
 			throw new RuntimeException("Error reading text resource [" + resource + "]", e);
+		}
+	}
+
+	/**
+	 * Assert one datum stream metadata has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result metadata
+	 * @param expected
+	 *        the expected metadata
+	 */
+	public static void assertDatumStreamMetadat(String prefix, DatumStreamMetadata result,
+			DatumStreamMetadata expected) {
+		assertThat(prefix + " meta returned", result, notNullValue());
+		assertThat(prefix + " stream ID", result.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat(prefix + " property names", result.getPropertyNames(),
+				arrayContaining(expected.getPropertyNames()));
+		assertThat(prefix + " time zone ID", result.getTimeZoneId(), equalTo(expected.getTimeZoneId()));
+		if ( expected instanceof ObjectDatumStreamMetadata ) {
+			assertThat(prefix + " is object metadata", result,
+					instanceOf(ObjectDatumStreamMetadata.class));
+			ObjectDatumStreamMetadata oResult = (ObjectDatumStreamMetadata) result;
+			ObjectDatumStreamMetadata oExpected = (ObjectDatumStreamMetadata) expected;
+			assertThat(prefix + " object ID", oResult.getObjectId(), equalTo(oExpected.getObjectId()));
+			assertThat(prefix + " source ID", oResult.getSourceId(), equalTo(oExpected.getSourceId()));
+		}
+		if ( expected instanceof NodeDatumStreamMetadata ) {
+			assertThat(prefix + " is node metadata", result, instanceOf(NodeDatumStreamMetadata.class));
+			NodeDatumStreamMetadata oResult = (NodeDatumStreamMetadata) result;
+			NodeDatumStreamMetadata oExpected = (NodeDatumStreamMetadata) expected;
+			assertThat(prefix + " node ID", oResult.getNodeId(), equalTo(oExpected.getNodeId()));
+		} else if ( expected instanceof LocationDatumStreamMetadata ) {
+			assertThat(prefix + " is location metadata", result,
+					instanceOf(LocationDatumStreamMetadata.class));
+			LocationDatumStreamMetadata oResult = (LocationDatumStreamMetadata) result;
+			LocationDatumStreamMetadata oExpected = (LocationDatumStreamMetadata) expected;
+			assertThat(prefix + " location ID", oResult.getLocationId(),
+					equalTo(oExpected.getLocationId()));
 		}
 	}
 

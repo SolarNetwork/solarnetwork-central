@@ -307,8 +307,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleHour_currDayToFlux() throws IOException {
 		// GIVEN
-		ZonedDateTime hour = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.HOURS);
-		DatumEntity d = new DatumEntity(UUID.randomUUID(), hour.toInstant(), Instant.now(),
+		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		ZonedDateTime hour = now.truncatedTo(ChronoUnit.HOURS);
+		DatumEntity d = new DatumEntity(UUID.randomUUID(), now.toInstant(), Instant.now(),
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null));
 		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
 		insertStaleAggregateDatum(log, jdbcTemplate,
@@ -376,7 +377,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleDay_currDayToFlux() throws IOException {
 		// GIVEN
-		ZonedDateTime day = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		ZonedDateTime day = now.truncatedTo(ChronoUnit.DAYS);
 		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), day.toInstant(),
 				Aggregation.Hour,
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
@@ -444,8 +446,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleMonth_currDayToFlux() throws IOException {
 		// GIVEN
-		ZonedDateTime month = ZonedDateTime.now(ZoneOffset.UTC).with(TemporalAdjusters.firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		ZonedDateTime month = now.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), month.toInstant(),
 				Aggregation.Day,
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),

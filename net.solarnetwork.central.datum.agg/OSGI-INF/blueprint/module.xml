@@ -210,39 +210,6 @@
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralLocationDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorHourly.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
-	<service ref="staleGeneralLocationDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorDaily.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
-	<service ref="staleGeneralLocationDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorMonthly.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
 	<service ref="staleAuditNodeDatumProcessorRaw" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">

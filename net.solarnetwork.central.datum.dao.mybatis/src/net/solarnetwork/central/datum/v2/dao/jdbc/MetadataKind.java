@@ -65,13 +65,14 @@ public enum MetadataKind {
 	 * 
 	 * @param key
 	 *        the key value
-	 * @return the enum
+	 * @return the enum, or {@literal null} if {@code key} is {@literal null} or
+	 *         empty
 	 * @throws IllegalArgumentException
 	 *         if {@code key} is not supported
 	 */
 	public static MetadataKind forKey(String key) {
 		if ( key == null || key.isEmpty() ) {
-			throw new IllegalArgumentException("Key must not be null.");
+			return null;
 		}
 		if ( key.length() == 1 ) {
 			switch (key.charAt(0)) {
