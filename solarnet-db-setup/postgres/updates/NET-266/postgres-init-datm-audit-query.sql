@@ -189,3 +189,39 @@ $$
 	FROM acc
 	LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
 $$;
+
+
+/**
+ * Look for node sources that have no corresponding row in the `solaragg.aud_acc_datum_daily` table
+ * on a particular date. The purpose of this is to support populating the accumulating storage
+ * date for nodes even if they are offline and not posting data currently.
+ *
+ * @param ts the date to look for; defaults to the current date
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_audit_datm_daily_missing(ts DATE DEFAULT CURRENT_DATE)
+	RETURNS TABLE(
+		stream_id 	UUID,
+		ts_start 	TIMESTAMP WITH TIME ZONE,
+		time_zone 	CHARACTER VARYING(64)
+	) LANGUAGE SQL STABLE AS
+$$
+	WITH missing AS (
+		SELECT stream_id
+		FROM solardatm.da_datm_meta
+		EXCEPT
+		SELECT a.stream_id
+		FROM solardatm.aud_acc_datm_daily a
+		INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = a.stream_id
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id
+		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE
+			a.ts_start >= ts::timestamptz - interval '24 hours'
+			AND a.ts_start < ts::timestamptz + interval '24 hours'
+			AND a.ts_start = (((ts AT TIME ZONE COALESCE(l.time_zone, 'UTC'))::date)::timestamp) AT TIME ZONE COALESCE(l.time_zone, 'UTC')
+	)
+	SELECT m.stream_id, ts::timestamp AT TIME ZONE COALESCE(l.time_zone, 'UTC'), COALESCE(l.time_zone, 'UTC')
+	FROM missing m
+	INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = m.stream_id
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+$$;

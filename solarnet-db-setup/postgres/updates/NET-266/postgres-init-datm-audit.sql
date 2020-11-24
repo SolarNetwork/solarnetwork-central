@@ -140,3 +140,33 @@ BEGIN
 	RETURN result_cnt;
 END;
 $$;
+
+
+/**
+ * Call the `solaragg.find_audit_datum_daily_missing(date)` function and insert the results
+ * into the `solaragg.aud_datum_daily_stale` table with an `aud_kind = 'm'` so a record of the found
+ * node sources gets generated.
+ *
+ * The `aud_kind = m` value is used because the processor that handles that record also populates
+ * the `solaragg.aud_acc_datum_daily` table.
+ *
+ * @param ts the date to look for; defaults to the current date
+ * @return the number of rows inserted
+ */
+CREATE OR REPLACE FUNCTION solardatm.populate_audit_datm_daily_missing(ts DATE DEFAULT CURRENT_DATE)
+	RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	ins_count bigint := 0;
+BEGIN
+	INSERT INTO solardatm.aud_stale_datm (ts_start, stream_id, aud_kind)
+	SELECT date_trunc('month', ts_start AT TIME ZONE time_zone) AT TIME ZONE time_zone
+		, stream_id
+		, 'M' AS aud_kind
+	FROM solaragg.find_audit_datum_daily_missing(ts)
+	ON CONFLICT DO NOTHING;
+
+	GET DIAGNOSTICS ins_count = ROW_COUNT;
+	RETURN ins_count;
+END;
+$$;
