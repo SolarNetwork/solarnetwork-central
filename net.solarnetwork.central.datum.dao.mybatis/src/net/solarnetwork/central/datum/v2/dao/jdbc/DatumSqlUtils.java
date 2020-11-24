@@ -279,16 +279,18 @@ public final class DatumSqlUtils {
 		if ( sorts == null || sortKeyMapping == null || sortKeyMapping.isEmpty() ) {
 			return 0;
 		}
+		boolean appended = false;
 		for ( SortDescriptor sort : sorts ) {
 			String sqlName = sortKeyMapping.get(sort.getSortKey());
 			if ( sqlName != null ) {
+				appended = true;
 				buf.append(", ").append(sqlName);
 				if ( sort.isDescending() ) {
 					buf.append(" DESC");
 				}
 			}
 		}
-		return 2;
+		return (appended ? 2 : 0);
 	}
 
 	/**
