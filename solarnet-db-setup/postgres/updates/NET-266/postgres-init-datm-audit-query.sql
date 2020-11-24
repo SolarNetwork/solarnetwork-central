@@ -206,18 +206,18 @@ CREATE OR REPLACE FUNCTION solardatm.find_audit_datm_daily_missing(ts DATE DEFAU
 	) LANGUAGE SQL STABLE AS
 $$
 	WITH missing AS (
+		-- all streams
 		SELECT stream_id
 		FROM solardatm.da_datm_meta
+
+		-- except those with audit rows on given day
 		EXCEPT
 		SELECT a.stream_id
 		FROM solardatm.aud_acc_datm_daily a
 		INNER JOIN solardatm.da_datm_meta meta ON meta.stream_id = a.stream_id
 		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id
 		LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-		WHERE
-			a.ts_start >= ts::timestamptz - interval '24 hours'
-			AND a.ts_start < ts::timestamptz + interval '24 hours'
-			AND a.ts_start = (((ts AT TIME ZONE COALESCE(l.time_zone, 'UTC'))::date)::timestamp) AT TIME ZONE COALESCE(l.time_zone, 'UTC')
+		WHERE a.ts_start = ts::timestamp AT TIME ZONE COALESCE(l.time_zone, 'UTC')
 	)
 	SELECT m.stream_id, ts::timestamp AT TIME ZONE COALESCE(l.time_zone, 'UTC'), COALESCE(l.time_zone, 'UTC')
 	FROM missing m
