@@ -69,8 +69,33 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 		buf.append("	datum.created\n");
 	}
 
+	private void sqlCte(StringBuilder buf) {
+		if ( !filter.hasDatumMetadataCriteria() ) {
+			return;
+		}
+		buf.append("WITH s AS (\n");
+		if ( filter.getLocationId() != null ) {
+			DatumSqlUtils.locationMetadataFilterSql(filter,
+					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+							: DatumSqlUtils.MetadataSelectStyle.Minimum,
+					buf);
+
+		} else {
+			DatumSqlUtils.nodeMetadataFilterSql(filter,
+					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+							: DatumSqlUtils.MetadataSelectStyle.Minimum,
+					buf);
+		}
+		buf.append(")\n");
+	}
+
 	private void sqlFrom(StringBuilder buf) {
-		buf.append("FROM solardatm.agg_stale_datm datum\n");
+		if ( filter.hasDatumMetadataCriteria() ) {
+			buf.append("FROM s\n");
+			buf.append("INNER JOIN solardatm.agg_stale_datm datum ON datum.stream_id = s.stream_id\n");
+		} else {
+			buf.append("FROM solardatm.agg_stale_datm datum\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -80,8 +105,12 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 			where.append("\tAND datum.agg_kind = ?\n");
 			idx++;
 		}
-		idx |= DatumSqlUtils.whereStreamMetadata(filter, buf);
-		idx |= DatumSqlUtils.whereDateRange(filter, Aggregation.Hour, where);
+		if ( filter.hasLocalDateRange() ) {
+			idx += DatumSqlUtils.whereLocalDateRange(filter, Aggregation.Hour,
+					DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
+		} else {
+			idx += DatumSqlUtils.whereDateRange(filter, Aggregation.Hour, where);
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE ").append(where.substring(4));
 		}
@@ -95,7 +124,7 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 		StringBuilder order = new StringBuilder();
 		int idx = 2;
 		if ( filter.hasSorts() ) {
-			idx = orderBySorts(filter.getSorts(), DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING, order);
+			idx = orderBySorts(filter.getSorts(), DatumSqlUtils.STALE_AGGREGATE_SORT_KEY_MAPPING, order);
 		} else {
 			order.append(", datum.agg_kind, ts, datum.stream_id");
 		}
@@ -105,6 +134,7 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 	}
 
 	private void sqlCore(StringBuilder buf) {
+		sqlCte(buf);
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
@@ -124,7 +154,11 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 			stmt.setString(++p, filter.getAggregation().getKey());
 		}
 		p = DatumSqlUtils.prepareStreamFilter(filter, con, stmt, p);
-		p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		if ( filter.hasLocalDateRange() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+		} else {
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		}
 		return p;
 	}
 

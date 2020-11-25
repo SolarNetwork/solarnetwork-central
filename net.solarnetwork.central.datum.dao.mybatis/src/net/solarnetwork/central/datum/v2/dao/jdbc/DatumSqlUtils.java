@@ -35,6 +35,7 @@ import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -51,10 +53,13 @@ import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.ByteUtils;
 
@@ -1067,6 +1072,42 @@ public final class DatumSqlUtils {
 				return rs.next() ? rs.getLong(1) : null;
 			}
 		});
+	}
+
+	/**
+	 * Standardized utility to execute a filter based query.
+	 * 
+	 * @param <M>
+	 *        the filter result type
+	 * @param <K>
+	 *        the filter result key type
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param filter
+	 *        the pagination criteria
+	 * @param sql
+	 *        the SQL to execute
+	 * @param mapper
+	 *        the row mapper to use
+	 * @return the results, never {@literal null}
+	 */
+	public static <M extends Identity<K>, K> FilterResults<M, K> executeFilterQuery(
+			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
+			RowMapper<M> mapper) {
+		Long totalCount = null;
+		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider ) {
+			totalCount = DatumSqlUtils.executeCountQuery(jdbcTemplate,
+					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
+		}
+
+		List<M> results = jdbcTemplate.query(sql, mapper);
+
+		if ( filter.getMax() == null ) {
+			totalCount = (long) results.size();
+		}
+
+		int offset = (filter.getOffset() != null ? filter.getOffset() : 0);
+		return new BasicFilterResults<>(results, totalCount, offset, results.size());
 	}
 
 	/**

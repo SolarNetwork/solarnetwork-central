@@ -94,10 +94,10 @@ public class SelectDatum
 
 	private void sqlSelect(StringBuilder buf) {
 		buf.append("SELECT ");
-		sqlColumnsPk(buf);
+		sqlColumns(buf);
 	}
 
-	private void sqlColumnsPk(StringBuilder buf) {
+	private void sqlColumns(StringBuilder buf) {
 		buf.append("datum.stream_id,\n");
 		if ( aggregation != Aggregation.None ) {
 			buf.append("datum.ts_start AS ts,\n");

@@ -35,6 +35,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -108,6 +111,43 @@ public class SelectStaleAggregateDatumTests {
 				"select-stale-agg-datum-hour-all.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt);
+	}
+
+	@Test
+	public void sql_find_hour_nodesAndSources() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Hour);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+
+		// WHEN
+		String sql = new SelectStaleAggregateDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-stale-agg-datum-hour-nodesAndSources.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_hour_nodesAndSources_localDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Hour);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setLocalStartDate(LocalDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.DAYS));
+		filter.setLocalEndDate(filter.getLocalStartDate().plusDays(1));
+
+		// WHEN
+		String sql = new SelectStaleAggregateDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-stale-agg-datum-hour-nodesAndSources-localDates.sql",
+						TestSqlResources.class, SQL_COMMENT));
 	}
 
 }

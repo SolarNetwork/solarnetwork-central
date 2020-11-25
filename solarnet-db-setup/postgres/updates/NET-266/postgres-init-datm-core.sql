@@ -400,6 +400,70 @@ $$;
 
 
 /**
+ * Find days with datum data in a stream.
+ *
+ * This function can be used to find day time slots where aggregate data can be computed from.
+ * It returns only whole-day rows where datm data actually exists.
+ *
+ * @param sid 				the stream ID to find hours for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_days(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		stream_id 		UUID,
+		ts_start		TIMESTAMP WITH TIME ZONE
+	) LANGUAGE SQL STABLE ROWS 2000 AS
+$$
+	SELECT sid, date_trunc('day', d.ts AT TIME ZONE COALESCE(l.time_zone, 'UTC'))
+		AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS ts_start
+	FROM solardatm.da_datm d
+	LEFT OUTER JOIN solardatm.da_datm_meta m ON m.stream_id = d.stream_id
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	WHERE d.stream_id = sid
+		AND d.ts >= start_ts
+		AND d.ts < end_ts
+	GROUP BY date_trunc('day', d.ts AT TIME ZONE COALESCE(l.time_zone, 'UTC')), COALESCE(l.time_zone, 'UTC')
+$$;
+
+
+/**
+ * Find months with datum data in a stream.
+ *
+ * This function can be used to find hour time slots where aggregate data can be computed from.
+ * It returns only whole-month rows where datm data actually exists.
+ *
+ * @param sid 				the stream ID to find hours for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_datm_months(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE
+	) RETURNS TABLE (
+		stream_id 		UUID,
+		ts_start		TIMESTAMP WITH TIME ZONE
+	) LANGUAGE SQL STABLE ROWS 2000 AS
+$$
+	SELECT sid, date_trunc('month', d.ts AT TIME ZONE COALESCE(l.time_zone, 'UTC'))
+		AT TIME ZONE COALESCE(l.time_zone, 'UTC') AS ts_start
+	FROM solardatm.da_datm d
+	LEFT OUTER JOIN solardatm.da_datm_meta m ON m.stream_id = d.stream_id
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = m.node_id
+	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+	WHERE d.stream_id = sid
+		AND d.ts >= start_ts
+		AND d.ts < end_ts
+	GROUP BY date_trunc('month', d.ts AT TIME ZONE COALESCE(l.time_zone, 'UTC')), COALESCE(l.time_zone, 'UTC')
+$$;
+
+
+/**
  * Calculate the minimum number of absolute time spans required for a given set of streams.
  *
  * The time zones of each node are used to group them into rows where all streams have the

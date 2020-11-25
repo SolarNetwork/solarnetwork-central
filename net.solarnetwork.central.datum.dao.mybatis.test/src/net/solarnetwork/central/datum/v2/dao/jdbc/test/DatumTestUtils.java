@@ -262,7 +262,7 @@ public final class DatumTestUtils {
 			StaleAggregateDatum expected) {
 		assertThat(prefix + " stale aggregate record kind", result.getKind(),
 				equalTo(expected.getKind()));
-		assertThat(prefix + "stale aggregate record stream ID", result.getStreamId(),
+		assertThat(prefix + " stale aggregate record stream ID", result.getStreamId(),
 				equalTo(expected.getStreamId()));
 		assertThat(prefix + " stale aggregate record timestamp", result.getTimestamp(),
 				equalTo(expected.getTimestamp()));
