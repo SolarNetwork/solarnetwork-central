@@ -321,12 +321,6 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 				getJSONString(afData, null), getJSONString(adData, null));
 	}
 
-	protected void clearAggStaleRecords() {
-		jdbcTemplate.update("delete from solaragg.agg_stale_datum");
-		jdbcTemplate.update("delete from solaragg.agg_stale_loc_datum");
-		jdbcTemplate.update("delete from solaragg.aud_datum_daily_stale");
-	}
-
 	protected void insertResetDatumAuxiliaryRecord(DateTime date, Long nodeId, String sourceId,
 			Map<String, Number> finalSamples, Map<String, Number> startSamples) {
 		jdbcTemplate.update(
