@@ -30,12 +30,16 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +53,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -359,4 +364,84 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 			i++;
 		}
 	}
+
+	@Test
+	public void markStale_multiNodes_multiTimeZones() {
+		// GIVEN
+		final LocalDateTime start = LocalDateTime.of(2020, 6, 1, 0, 0);
+		final LocalDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_1));
+
+		setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
+		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
+		BasicNodeDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
+				TEST_TZ_ALT);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
+
+		LocalDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date.atZone(ZoneId.of(meta_1.getTimeZoneId())), meta_1.getStreamId(),
+					props));
+			data.add(newTestDatm(date.atZone(ZoneId.of(meta_2.getTimeZoneId())), meta_2.getStreamId(),
+					props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		// WHEN
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_ALT });
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setLocalStartDate(start);
+		criteria.setLocalEndDate(end);
+		int count = dao.markDatumAggregatesStale(criteria);
+
+		// THEN
+		assertThat("Rows inserted for data matching filter", count, equalTo(10));
+		List<StaleAggregateDatum> stales = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate,
+				Aggregation.Hour);
+
+		// sort by stream, ts
+		stales.sort(new Comparator<StaleAggregateDatum>() {
+
+			@Override
+			public int compare(StaleAggregateDatum o1, StaleAggregateDatum o2) {
+				int result = DatumDbUtils.UUID_STRING_ORDER.compare(o1.getStreamId(), o2.getStreamId());
+				if ( result == 0 ) {
+					result = o1.getTimestamp().compareTo(o2.getTimestamp());
+				}
+				return result;
+			}
+		});
+
+		SortedMap<UUID, NodeDatumStreamMetadata> metas = new TreeMap<>(DatumDbUtils.UUID_STRING_ORDER);
+		metas.put(meta_1.getStreamId(), meta_1);
+		metas.put(meta_2.getStreamId(), meta_2);
+
+		assertThat("Hourly agg rows exist", stales, hasSize(10));
+		int i = 0, h = 0;
+		for ( StaleAggregateDatum stale : stales ) {
+			// because order by ts, stream_id and meta_2 tz < meta_1 tz, always stream 2, stream 1
+			UUID streamId = (i < 5 ? metas.firstKey() : metas.lastKey());
+			assertStaleAggregateDatum("stream " + streamId + " stale hour " + h, stale,
+					new StaleAggregateDatumEntity(
+							streamId, start.plusHours(h)
+									.atZone(ZoneId.of(metas.get(streamId).getTimeZoneId())).toInstant(),
+							Aggregation.Hour, null));
+			i++;
+			if ( h == 4 ) {
+				h = 0;
+			} else {
+				h++;
+			}
+		}
+	}
+
 }

@@ -37,6 +37,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -77,6 +78,26 @@ public class InsertStaleAggregateDatumSelectTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("insert-stale-agg-datum-select-hours-nodesAndSources-dates.sql",
+						TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_hours_nodesAndSources_localDates() {
+		// GIVEN
+		LocalDateTime start = LocalDateTime.now(ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setLocalStartDate(start);
+		filter.setLocalEndDate(start.plusHours(24));
+
+		// WHEN
+		String sql = new InsertStaleAggregateDatumSelect(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("insert-stale-agg-datum-select-hours-nodesAndSources-localDates.sql",
 						TestSqlResources.class));
 	}
 
