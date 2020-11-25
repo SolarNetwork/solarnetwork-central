@@ -29,6 +29,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
@@ -42,7 +43,8 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 3.8
  */
-public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlProvider {
+public class SelectStaleAggregateDatum
+		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumStreamCriteria filter;
 
@@ -150,10 +152,10 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+		p = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, p);
 		if ( filter.getAggregation() != null ) {
 			stmt.setString(++p, filter.getAggregation().getKey());
 		}
-		p = DatumSqlUtils.prepareStreamFilter(filter, con, stmt, p);
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
@@ -169,6 +171,29 @@ public class SelectStaleAggregateDatum implements PreparedStatementCreator, SqlP
 		int p = prepareCore(con, stmt, 0);
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
 		return stmt;
+	}
+
+	@Override
+	public PreparedStatementCreator countPreparedStatementCreator() {
+		return new CountPreparedStatementCreator();
+	}
+
+	private final class CountPreparedStatementCreator implements PreparedStatementCreator, SqlProvider {
+
+		@Override
+		public String getSql() {
+			StringBuilder buf = new StringBuilder();
+			sqlCore(buf);
+			return DatumSqlUtils.wrappedCountQuery(buf.toString());
+		}
+
+		@Override
+		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+			PreparedStatement stmt = con.prepareStatement(getSql());
+			prepareCore(con, stmt, 0);
+			return stmt;
+		}
+
 	}
 
 }

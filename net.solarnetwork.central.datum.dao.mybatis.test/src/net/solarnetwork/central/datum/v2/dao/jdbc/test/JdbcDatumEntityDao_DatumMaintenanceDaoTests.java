@@ -28,6 +28,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ass
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -55,7 +56,9 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -93,6 +96,377 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 			String timeZoneId) {
 		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), timeZoneId, nodeId, sourceId,
 				new String[] { "x", "y" }, new String[] { "w" }, null);
+	}
+
+	@Test
+	public void findFilteredNoData() {
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).minusDays(1);
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(start.plusDays(1).toInstant());
+
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+	}
+
+	@Test
+	public void findFiltered_noMatchingDataByNode() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(123L);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+	}
+
+	@Test
+	public void findFiltered_noMatchingDataBySource() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId("a");
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+	}
+
+	@Test
+	public void findFiltered_noMatchingDataByDate() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start.minusDays(1).toInstant());
+		criteria.setEndDate(start.toInstant());
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
+		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+	}
+
+	@Test
+	public void findFiltered() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(5));
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
+					meta.getStreamId(), start.plusHours(i).toInstant(), Aggregation.Hour, null));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFiltered_subset() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(start.plusHours(2).toInstant());
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
+					meta.getStreamId(), start.plusHours(i).toInstant(), Aggregation.Hour, null));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFiltered_paginated_first() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		criteria.setMax(2);
+		criteria.setOffset(0);
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		int i = 0;
+		for ( StaleAggregateDatum stale : results ) {
+			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
+					meta.getStreamId(), start.plusHours(i).toInstant(), Aggregation.Hour, null));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFiltered_paginated_middle() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		criteria.setMax(2);
+		criteria.setOffset(2);
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+		int i = 2;
+		for ( StaleAggregateDatum stale : results ) {
+			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
+					meta.getStreamId(), start.plusHours(i).toInstant(), Aggregation.Hour, null));
+			i++;
+		}
+	}
+
+	@Test
+	public void findFiltered_paginated_end() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
+				.minusDays(1);
+		final ZonedDateTime end = start.plusHours(5);
+		final DatumProperties props = newTestProps();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		ZonedDateTime date = start;
+
+		List<Datum> data = new ArrayList<>();
+		while ( date.isBefore(end) ) {
+			data.add(newTestDatm(date, meta.getStreamId(), props));
+			date = date.plusMinutes(30);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, data);
+
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start.toInstant());
+		criteria.setEndDate(end.toInstant());
+		criteria.setMax(2);
+		criteria.setOffset(4);
+		dao.markDatumAggregatesStale(criteria);
+
+		// WHEN
+		criteria.setNodeId(TEST_NODE_ID);
+		criteria.setSourceId(TEST_SOURCE_ID);
+		FilterResults<StaleAggregateDatum, StreamKindPK> results = dao.findStaleAggregateDatum(criteria);
+
+		// THEN
+		assertThat("Results available", results, notNullValue());
+		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(4));
+		int i = 4;
+		for ( StaleAggregateDatum stale : results ) {
+			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
+					meta.getStreamId(), start.plusHours(i).toInstant(), Aggregation.Hour, null));
+			i++;
+		}
 	}
 
 	@Test
