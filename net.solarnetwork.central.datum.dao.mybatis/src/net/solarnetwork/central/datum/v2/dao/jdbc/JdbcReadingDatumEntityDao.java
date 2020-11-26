@@ -28,12 +28,12 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.dao.mybatis.support.DaoUtils;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -91,7 +91,7 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 		if ( filter.getMax() == null ) {
 			totalResults = (long) data.size();
 		}
-		return DaoUtils.filterResults(data, filter, totalResults, data.size());
+		return BasicFilterResults.filterResults(data, filter, totalResults, data.size());
 	}
 
 }

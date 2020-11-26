@@ -23,23 +23,30 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Test cases for the {@link DatumUtils} class.
@@ -100,14 +107,131 @@ public class DatumUtilsTests {
 		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
 		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
-				equalTo(new DateTime(datum.getTimestamp().toEpochMilli(),
-						DateTimeZone.forID(meta.getTimeZoneId()))));
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
 		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
-				equalTo(new DateTime(datum.getTimestamp().toEpochMilli(),
-						DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
 		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
 				nullValue());
 		assertGeneralDatumSamples(d.getSamples());
 	}
 
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_aggNodeSourceDateRange() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setAggregate(Aggregation.Hour);
+		f.setNodeIds(new Long[] { 1L, 2L });
+		f.setSourceIds(new String[] { "a", "b" });
+		f.setStartDate(new org.joda.time.DateTime().hourOfDay().roundFloorCopy());
+		f.setEndDate(new org.joda.time.DateTime());
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Agg copied", c.getAggregation(), equalTo(f.getAggregation()));
+		assertThat("Node IDs copied", c.getNodeIds(), arrayContaining(f.getNodeIds()));
+		assertThat("Source IDs copied", c.getSourceIds(), arrayContaining(f.getSourceIds()));
+		assertThat("Start date copied", c.getStartDate(),
+				equalTo(Instant.ofEpochMilli(f.getStartDate().getMillis())));
+		assertThat("End date copied", c.getEndDate(),
+				equalTo(Instant.ofEpochMilli(f.getEndDate().getMillis())));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_localDateRange() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setLocalStartDate(new org.joda.time.LocalDateTime(2020, 1, 2, 12, 34, 56, 789));
+		f.setLocalEndDate(f.getLocalStartDate().plusDays(1));
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Local start date copied", c.getLocalStartDate(),
+				equalTo(LocalDateTime.of(2020, 1, 2, 12, 34, 56, 789 * 1000000)));
+		assertThat("Local end date copied", c.getLocalEndDate(),
+				equalTo(LocalDateTime.of(2020, 1, 3, 12, 34, 56, 789 * 1000000)));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_paginationFromFilter() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setMax(1);
+		f.setOffset(2);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Max copied from filter", c.getMax(), equalTo(1));
+		assertThat("Offset copied from filter", c.getOffset(), equalTo(2));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_paginationFromArgs() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setMax(1);
+		f.setOffset(2);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f, null, 4, 3);
+
+		// THEN
+		assertThat("Max copied from args", c.getMax(), equalTo(3));
+		assertThat("Offset copied from args", c.getOffset(), equalTo(4));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_sortsFromFilter() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		List<net.solarnetwork.central.support.MutableSortDescriptor> msds = new ArrayList<>();
+		net.solarnetwork.central.support.MutableSortDescriptor msd = new net.solarnetwork.central.support.MutableSortDescriptor();
+		msd.setSortKey("a");
+		msd.setDescending(true);
+		msds.add(msd);
+		f.setSorts(msds);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Sorts copied from filter", c.getSorts(), hasSize(1));
+		SortDescriptor sort = c.getSorts().get(0);
+		assertThat("Sort key copied", sort.getSortKey(), equalTo(msd.getSortKey()));
+		assertThat("Sort order copied", sort.isDescending(), equalTo(msd.isDescending()));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_sortsFromArgs() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		List<net.solarnetwork.central.support.MutableSortDescriptor> msds = new ArrayList<>();
+		net.solarnetwork.central.support.MutableSortDescriptor msd = new net.solarnetwork.central.support.MutableSortDescriptor();
+		msd.setSortKey("a");
+		msd.setDescending(true);
+		msds.add(msd);
+		f.setSorts(msds);
+
+		List<net.solarnetwork.central.domain.SortDescriptor> msds2 = new ArrayList<>();
+		net.solarnetwork.central.support.MutableSortDescriptor msd2 = new net.solarnetwork.central.support.MutableSortDescriptor();
+		msd2.setSortKey("a");
+		msd2.setDescending(true);
+		msds2.add(msd);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f, msds2, null, null);
+
+		// THEN
+		assertThat("Sorts copied from filter", c.getSorts(), hasSize(1));
+		SortDescriptor sort = c.getSorts().get(0);
+		assertThat("Sort key copied", sort.getSortKey(), equalTo(msd2.getSortKey()));
+		assertThat("Sort order copied", sort.isDescending(), equalTo(msd2.isDescending()));
+	}
 }

@@ -22,21 +22,40 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import net.solarnetwork.central.datum.domain.DatumFilter;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRollupFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.UserFilter;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.AggregationFilter;
+import net.solarnetwork.central.domain.DateRangeFilter;
+import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.central.domain.LocalDateRangeFilter;
+import net.solarnetwork.central.domain.NodeFilter;
+import net.solarnetwork.central.domain.OptimizedQueryFilter;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * General datum utility methods.
@@ -47,11 +66,159 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  */
 public class DatumUtils {
 
-	/**
-	 * 
-	 */
 	private DatumUtils() {
-		// TODO Auto-generated constructor stub
+		// don't construct me
+	}
+
+	/**
+	 * Convert a filter to a datum criteria.
+	 * 
+	 * @param filter
+	 *        the filter to convert
+	 * @return the filter, or {@literal null} if {@code filter} is
+	 *         {@literal null}
+	 */
+	public static BasicDatumCriteria criteriaFromFilter(Filter filter) {
+		return criteriaFromFilter(filter, null, null, null);
+	}
+
+	/**
+	 * Convert a filter to a datum criteria, with sort and pagination support.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        the optional offset
+	 * @param max
+	 *        the optional max
+	 * @return the filter, or {@literal null} if {@code filter} is
+	 *         {@literal null}
+	 */
+	public static BasicDatumCriteria criteriaFromFilter(Filter filter,
+			List<net.solarnetwork.central.domain.SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		if ( filter == null ) {
+			return null;
+		}
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		List<? extends net.solarnetwork.central.domain.SortDescriptor> s = sortDescriptors;
+		Integer m = max;
+		Integer o = offset;
+
+		if ( filter instanceof DatumFilterCommand ) {
+			DatumFilterCommand f = (DatumFilterCommand) filter;
+			// most common
+			c.setNodeIds(f.getNodeIds());
+			c.setLocationIds(f.getLocationIds());
+			c.setSourceIds(f.getSourceIds());
+			c.setUserIds(f.getUserIds());
+			c.setAggregation(f.getAggregation());
+			c.setPartialAggregation(f.getPartialAggregation());
+			c.setStartDate(JodaDateUtils.fromJodaToInstant(f.getStartDate()));
+			c.setEndDate(JodaDateUtils.fromJodaToInstant(f.getEndDate()));
+			c.setLocalStartDate(JodaDateUtils.fromJoda(f.getLocalStartDate()));
+			c.setLocalEndDate(JodaDateUtils.fromJoda(f.getLocalEndDate()));
+			c.setDatumRollupTypes(f.getDatumRollupTypes());
+			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			if ( s == null || s.isEmpty() ) {
+				s = f.getSorts();
+			}
+			if ( m == null ) {
+				m = f.getMax();
+			}
+			if ( o == null ) {
+				o = f.getOffset();
+			}
+		} else {
+			if ( filter instanceof NodeFilter ) {
+				c.setNodeIds(((NodeFilter) filter).getNodeIds());
+			}
+			if ( filter instanceof GeneralLocationDatumMetadataFilter ) {
+				c.setLocationIds(((GeneralLocationDatumMetadataFilter) filter).getLocationIds());
+			}
+			if ( filter instanceof SourceFilter ) {
+				c.setSourceIds(((SourceFilter) filter).getSourceIds());
+			}
+			if ( filter instanceof UserFilter ) {
+				c.setUserIds(((UserFilter) filter).getUserIds());
+			}
+			if ( filter instanceof AggregationFilter ) {
+				AggregationFilter f = (AggregationFilter) filter;
+				c.setAggregation(f.getAggregation());
+				c.setPartialAggregation(f.getPartialAggregation());
+			}
+			if ( filter instanceof DateRangeFilter ) {
+				DateRangeFilter f = (DateRangeFilter) filter;
+				c.setStartDate(JodaDateUtils.fromJodaToInstant(f.getStartDate()));
+				c.setEndDate(JodaDateUtils.fromJodaToInstant(f.getEndDate()));
+			}
+			if ( filter instanceof LocalDateRangeFilter ) {
+				LocalDateRangeFilter f = (LocalDateRangeFilter) filter;
+				c.setLocalStartDate(JodaDateUtils.fromJoda(f.getLocalStartDate()));
+				c.setLocalEndDate(JodaDateUtils.fromJoda(f.getLocalEndDate()));
+			}
+			if ( filter instanceof DatumRollupFilter ) {
+				c.setDatumRollupTypes(((DatumRollupFilter) filter).getDatumRollupTypes());
+			}
+			if ( filter instanceof OptimizedQueryFilter ) {
+				c.setWithoutTotalResultsCount(
+						((OptimizedQueryFilter) filter).isWithoutTotalResultsCount());
+			}
+		}
+
+		if ( s != null && !s.isEmpty() ) {
+			List<SortDescriptor> sorts = new ArrayList<>(s.size());
+			for ( net.solarnetwork.central.domain.SortDescriptor sd : s ) {
+				sorts.add(new SimpleSortDescriptor(sd.getSortKey(), sd.isDescending()));
+			}
+			c.setSorts(sorts);
+		}
+		c.setMax(m);
+		c.setOffset(o);
+
+		return c;
+	}
+
+	/**
+	 * Convert a "type" property to an {@link Aggregation}.
+	 * 
+	 * @param criteria
+	 *        the criteria to extract the type from; if instance of
+	 *        {@link DatumFilter} then the "type" value will be converted to an
+	 *        aggregation
+	 * @return the aggregation, or {@literal null} if none
+	 */
+	public static Aggregation aggregationForType(Filter criteria) {
+		Aggregation result = null;
+		if ( criteria instanceof DatumFilter ) {
+			String type = ((DatumFilter) criteria).getType();
+			if ( "h".equalsIgnoreCase(type) ) {
+				result = Aggregation.Hour;
+			} else if ( "d".equalsIgnoreCase(type) ) {
+				result = Aggregation.Day;
+			} else if ( "m".equalsIgnoreCase(type) ) {
+				result = Aggregation.Month;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Populate the aggregation value of a {@link BasicDatumCriteria} from a
+	 * "type" property value.
+	 * 
+	 * @param criteria
+	 *        the criteria to extract the type from
+	 * @param filter
+	 *        the criteria to populate the {@link Aggregation} on
+	 */
+	public static void populateAggregationType(Filter criteria, BasicDatumCriteria filter) {
+		Aggregation agg = aggregationForType(criteria);
+		if ( agg != null ) {
+			filter.setAggregation(agg);
+		}
 	}
 
 	/**

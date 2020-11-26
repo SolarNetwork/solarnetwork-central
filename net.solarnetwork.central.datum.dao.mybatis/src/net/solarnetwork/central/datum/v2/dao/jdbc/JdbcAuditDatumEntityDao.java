@@ -26,13 +26,13 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
-import net.solarnetwork.central.dao.mybatis.support.DaoUtils;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAccumulativeAuditDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -78,7 +78,7 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 		if ( filter.getMax() == null ) {
 			totalResults = (long) data.size();
 		}
-		return DaoUtils.filterResults(data, filter, totalResults, data.size());
+		return BasicFilterResults.filterResults(data, filter, totalResults, data.size());
 
 	}
 

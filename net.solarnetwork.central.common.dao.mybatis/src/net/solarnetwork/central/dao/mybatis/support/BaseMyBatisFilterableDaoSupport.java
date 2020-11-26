@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
@@ -126,7 +127,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	@Override
 	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
 			Iterable<M> rows, Long totalCount, Integer offset, Integer returnedCount) {
-		return DaoUtils.filterResults(rows, filter, totalCount,
+		return BasicFilterResults.filterResults(rows, filter, totalCount,
 				(returnedCount != null ? returnedCount : 0));
 	}
 

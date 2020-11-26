@@ -22,50 +22,94 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * DAO based implementation of {@link DatumMaintenanceBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.6
  */
 public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumMaintenanceDao datumDao;
+	private final DatumStreamMetadataDao metaDao;
+
+	private static final Logger log = LoggerFactory.getLogger(DaoDatumMaintenanceBiz.class);
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param datumDao
 	 *        the datum DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
 	 */
-	public DaoDatumMaintenanceBiz(GeneralNodeDatumDao datumDao) {
+	public DaoDatumMaintenanceBiz(DatumMaintenanceDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
 		this.datumDao = datumDao;
+		this.metaDao = metaDao;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
-		datumDao.markDatumAggregatesStale(criteria);
-
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria);
+		DatumUtils.populateAggregationType(criteria, c);
+		int count = datumDao.markDatumAggregatesStale(c);
+		log.info("Marked {} aggregate datum stale for criteria {}", count, c);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return datumDao.findStaleAggregateDatum(criteria, sortDescriptors, offset, max);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+		DatumUtils.populateAggregationType(criteria, c);
+		net.solarnetwork.dao.FilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, net.solarnetwork.central.datum.v2.domain.StreamKindPK> r = datumDao
+				.findStaleAggregateDatum(c);
+		List<StaleAggregateDatum> data = new ArrayList<>(r.getReturnedResultCount());
+		if ( r.getReturnedResultCount() > 0 ) {
+			Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport
+					.stream(metaDao.findNodeDatumStreamMetadata(c).spliterator(), false).collect(
+							Collectors.toMap(NodeDatumStreamMetadata::getStreamId, Function.identity()));
+			for ( net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum d : r ) {
+				NodeDatumStreamMetadata meta = metas.get(d.getStreamId());
+				StaleAggregateDatum stale = new StaleAggregateDatum();
+				if ( meta != null ) {
+					stale.setCreated(JodaDateUtils.toJoda(d.getTimestamp(), meta.getTimeZoneId()));
+					stale.setNodeId(meta.getNodeId());
+					stale.setSourceId(meta.getSourceId());
+					stale.setKind(d.getKind().getKey());
+					data.add(stale);
+				}
+			}
+		}
+		return new BasicFilterResults<>(data, r.getTotalResults(), r.getStartingOffset(),
+				r.getReturnedResultCount());
 	}
 
 }

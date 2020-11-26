@@ -25,7 +25,9 @@
 	<reference id="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao"/>
 	<reference id="generalNodeDatumAuxiliaryDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao"/>
 	<reference id="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao"/>
-	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	
+	<reference id="datumMaintenanceDao" interface="net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao"/>
+	<reference id="streamMetadataDao" interface="net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao"/>
 	
 	<reference id="auditDatumDao" interface="net.solarnetwork.central.datum.v2.dao.AuditDatumDao"/>
 	
@@ -59,7 +61,8 @@
 	</bean>
 	
 	<bean id="daoDatumMaintenanceBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumMaintenanceBiz">
-		<argument ref="generalNodeDatumDao"/>
+		<argument ref="datumMaintenanceDao"/>
+		<argument ref="streamMetadataDao"/>
 	</bean>
 	
 	<bean id="daoDatumMetadataBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz">

@@ -73,7 +73,12 @@
 		</bean>
 	</service>
 	
-	<service interface="net.solarnetwork.central.datum.v2.dao.DatumEntityDao">
+	<service>
+		<interfaces>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumEntityDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao</value>
+		</interfaces>
 		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
 			<argument ref="jdbcOps"/>
 			<property name="streamMetadataCache" ref="streamMetadataCache"/>

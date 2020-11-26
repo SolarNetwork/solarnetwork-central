@@ -45,5 +45,5 @@ Import-Package:
  org.springframework.jdbc.support;version="[4.2,5.0)",
  org.springframework.transaction;version="[4.2,5.0)",
  org.springframework.transaction.annotation;version="[4.2,5.0)",
- org.springframework.validation;version="[4.2,5.0)",
- org.springframework.util;version="[4.2,5.0)"
+ org.springframework.util;version="[4.2,5.0)",
+ org.springframework.validation;version="[4.2,5.0)"
