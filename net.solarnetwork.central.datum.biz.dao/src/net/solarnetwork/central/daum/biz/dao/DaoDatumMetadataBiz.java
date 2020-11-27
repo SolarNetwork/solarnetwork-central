@@ -45,6 +45,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
@@ -81,29 +82,35 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		this.metaDao = metaDao;
 	}
 
+	private static GeneralDatumMetadata extractGeneralDatumMetadata(
+			Iterable<ObjectDatumStreamMetadata> metas) {
+		if ( metas != null ) {
+			// assume at most 1 result... use first available
+			for ( ObjectDatumStreamMetadata m : metas ) {
+				return JsonUtils.getObjectFromJSON(m.getMetaJson(), GeneralDatumMetadata.class);
+			}
+		}
+		return null;
+	}
+
 	private void mergeMetadata(ObjectSourcePK id, GeneralDatumMetadata meta) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		if ( id instanceof LocationSourcePK ) {
 			filter.setLocationId(id.getObjectId());
+			filter.setObjectKind(ObjectDatumKind.Location);
 		} else {
 			filter.setNodeId(id.getObjectId());
+			filter.setObjectKind(ObjectDatumKind.Node);
 		}
 		filter.setSourceId(id.getSourceId());
 		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(filter);
 
-		GeneralDatumMetadata existingMeta = null;
-		if ( metas != null ) {
-			// assume at most 1 result... use first available
-			for ( ObjectDatumStreamMetadata m : metas ) {
-				existingMeta = JsonUtils.getObjectFromJSON(m.getMetaJson(), GeneralDatumMetadata.class);
-				break;
-			}
-		}
+		final GeneralDatumMetadata existingMeta = extractGeneralDatumMetadata(metas);
 		GeneralDatumMetadata newMeta = meta;
 		if ( existingMeta == null ) {
 			newMeta = meta;
 		} else if ( existingMeta != null && !existingMeta.equals(meta) ) {
-			newMeta = existingMeta;
+			newMeta = new GeneralDatumMetadata(existingMeta);
 			newMeta.merge(meta, true);
 		}
 		if ( newMeta != null && !newMeta.equals(existingMeta) ) {
@@ -176,7 +183,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
-		mergeMetadata(new LocationSourcePK(locationId, sourceId), null);
+		metaDao.replaceJsonMeta(new LocationSourcePK(locationId, sourceId), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
