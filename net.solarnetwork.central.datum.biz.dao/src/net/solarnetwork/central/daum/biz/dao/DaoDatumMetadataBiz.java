@@ -30,14 +30,11 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
@@ -84,29 +81,45 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		this.metaDao = metaDao;
 	}
 
+	private void mergeMetadata(ObjectSourcePK id, GeneralDatumMetadata meta) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		if ( id instanceof LocationSourcePK ) {
+			filter.setLocationId(id.getObjectId());
+		} else {
+			filter.setNodeId(id.getObjectId());
+		}
+		filter.setSourceId(id.getSourceId());
+		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(filter);
+
+		GeneralDatumMetadata existingMeta = null;
+		if ( metas != null ) {
+			// assume at most 1 result... use first available
+			for ( ObjectDatumStreamMetadata m : metas ) {
+				existingMeta = JsonUtils.getObjectFromJSON(m.getMetaJson(), GeneralDatumMetadata.class);
+				break;
+			}
+		}
+		GeneralDatumMetadata newMeta = meta;
+		if ( existingMeta == null ) {
+			newMeta = meta;
+		} else if ( existingMeta != null && !existingMeta.equals(meta) ) {
+			newMeta = existingMeta;
+			newMeta.merge(meta, true);
+		}
+		if ( newMeta != null && !newMeta.equals(existingMeta) ) {
+			// have changes, so persist
+			String json = JsonUtils.getJSONString(newMeta, null);
+			metaDao.replaceJsonMeta(id, json);
+		}
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void addGeneralNodeDatumMetadata(Long nodeId, String sourceId, GeneralDatumMetadata meta) {
 		assert nodeId != null;
 		assert sourceId != null;
 		assert meta != null;
-		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
-		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
-		GeneralDatumMetadata newMeta = meta;
-		if ( gdm == null ) {
-			gdm = new GeneralNodeDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			newMeta = meta;
-		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
-			newMeta = new GeneralDatumMetadata(gdm.getMeta());
-			newMeta.merge(meta, true);
-		}
-		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
-			// have changes, so persist
-			gdm.setMeta(newMeta);
-			generalNodeDatumMetadataDao.store(gdm);
-		}
+		mergeMetadata(new NodeSourcePK(nodeId, sourceId), meta);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -115,27 +128,14 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert nodeId != null;
 		assert sourceId != null;
 		assert meta != null;
-		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
-		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
-		if ( gdm == null ) {
-			gdm = new GeneralNodeDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			gdm.setMeta(meta);
-		}
-		generalNodeDatumMetadataDao.store(gdm);
+		String json = JsonUtils.getJSONString(meta, null);
+		metaDao.replaceJsonMeta(new NodeSourcePK(nodeId, sourceId), json);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId) {
-		GeneralNodeDatumMetadata meta = generalNodeDatumMetadataDao
-				.get(new NodeSourcePK(nodeId, sourceId));
-		if ( meta != null ) {
-			generalNodeDatumMetadataDao.delete(meta);
-		}
+		metaDao.replaceJsonMeta(new NodeSourcePK(nodeId, sourceId), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -159,23 +159,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert locationId != null;
 		assert sourceId != null;
 		assert meta != null;
-		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
-		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
-		GeneralDatumMetadata newMeta = meta;
-		if ( gdm == null ) {
-			gdm = new GeneralLocationDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			newMeta = meta;
-		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
-			newMeta = new GeneralDatumMetadata(gdm.getMeta());
-			newMeta.merge(meta, true);
-		}
-		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
-			// have changes, so persist
-			gdm.setMeta(newMeta);
-			generalLocationDatumMetadataDao.store(gdm);
-		}
+		mergeMetadata(new LocationSourcePK(locationId, sourceId), meta);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -185,27 +169,14 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert locationId != null;
 		assert sourceId != null;
 		assert meta != null;
-		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
-		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
-		if ( gdm == null ) {
-			gdm = new GeneralLocationDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			gdm.setMeta(meta);
-		}
-		generalLocationDatumMetadataDao.store(gdm);
+		String json = JsonUtils.getJSONString(meta, null);
+		metaDao.replaceJsonMeta(new LocationSourcePK(locationId, sourceId), json);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
-		GeneralLocationDatumMetadata meta = generalLocationDatumMetadataDao
-				.get(new LocationSourcePK(locationId, sourceId));
-		if ( meta != null ) {
-			generalLocationDatumMetadataDao.delete(meta);
-		}
+		mergeMetadata(new LocationSourcePK(locationId, sourceId), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

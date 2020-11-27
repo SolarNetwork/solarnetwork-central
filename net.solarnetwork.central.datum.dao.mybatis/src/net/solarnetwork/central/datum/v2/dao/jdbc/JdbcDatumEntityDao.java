@@ -42,6 +42,10 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.ObjectSourcePK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -63,6 +67,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
@@ -265,6 +270,21 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 			LocationMetadataCriteria filter) {
 		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location),
 				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
+	}
+
+	@Override
+	public void replaceJsonMeta(ObjectSourcePK id, String json) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setSourceId(id.getSourceId());
+		if ( id instanceof LocationSourcePK ) {
+			filter.setObjectKind(ObjectDatumKind.Location);
+			filter.setLocationId(((LocationSourcePK) id).getLocationId());
+		} else {
+			filter.setObjectKind(ObjectDatumKind.Node);
+			filter.setNodeId(((NodeSourcePK) id).getNodeId());
+		}
+		jdbcTemplate.update(new UpdateObjectStreamMetadataJson(filter, json));
+
 	}
 
 	@Override

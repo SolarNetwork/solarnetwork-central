@@ -26,7 +26,8 @@ import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadat;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
+import static net.solarnetwork.util.JsonUtils.getStringMap;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -50,6 +51,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
@@ -91,6 +94,74 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void findObjectMetadata_nodes_withJson() {
+		// GIVEN
+		final List<NodeDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		final String json = "{\"foo\":\"bar\"}";
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicNodeDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
+					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" },
+					json));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
+
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadata("location meta", meta, expected);
+		}
+	}
+
+	@Test
+	public void findObjectMetadata_locations_withJson() {
+		// GIVEN
+		final List<LocationDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		final String json = "{\"foo\":\"bar\"}";
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicLocationDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
+					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" },
+					json));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		assertThat("Stream IDs same", metas.keySet(), equalTo(streamIds));
+
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadata("location meta", meta, expected);
+		}
+	}
+
+	@Test
 	public void findNodeMetadata() {
 		// GIVEN
 		final List<NodeDatumStreamMetadata> data = new ArrayList<>(3);
@@ -118,7 +189,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		for ( NodeDatumStreamMetadata expected : data ) {
 			NodeDatumStreamMetadata meta = metas.get(expected.getStreamId());
-			assertDatumStreamMetadat("location meta", meta, expected);
+			assertDatumStreamMetadata("location meta", meta, expected);
 		}
 	}
 
@@ -150,7 +221,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		for ( LocationDatumStreamMetadata expected : data ) {
 			LocationDatumStreamMetadata meta = metas.get(expected.getStreamId());
-			assertDatumStreamMetadat("location meta", meta, expected);
+			assertDatumStreamMetadata("location meta", meta, expected);
 		}
 	}
 
@@ -186,7 +257,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertDatumStreamMetadat("returned meta", result, meta);
+		assertDatumStreamMetadata("returned meta", result, meta);
 	}
 
 	@Test
@@ -205,7 +276,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertDatumStreamMetadat("returned meta", result, meta);
+		assertDatumStreamMetadata("returned meta", result, meta);
 	}
 
 	@Test
@@ -229,8 +300,8 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertDatumStreamMetadat("returned meta", result, meta);
-		assertDatumStreamMetadat("cached meta", metaCaptor.getValue(), meta);
+		assertDatumStreamMetadata("returned meta", result, meta);
+		assertDatumStreamMetadata("cached meta", metaCaptor.getValue(), meta);
 	}
 
 	@Test
@@ -269,6 +340,63 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
 
 		// THEN
-		assertDatumStreamMetadat("returned meta", result, meta);
+		assertDatumStreamMetadata("returned meta", result, meta);
 	}
+
+	@Test
+	public void replaceJson_node_notFound() {
+		// GIVEN
+
+		// WHEN
+		replayAll();
+		final String json = "{\"foo\":\"bar\"}";
+		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
+	}
+
+	private ObjectDatumStreamMetadata metaForStream(UUID streamId) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(streamId);
+		return dao.findStreamMetadata(filter);
+	}
+
+	@Test
+	public void replaceJson_node_create() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		UUID streamId = UUID.randomUUID();
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		final String json = "{\"foo\":\"bar\"}";
+		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
+
+		// THEN
+		ObjectDatumStreamMetadata result = metaForStream(streamId);
+		assertThat("JSON persisted", getStringMap(result.getMetaJson()), equalTo(getStringMap(json)));
+	}
+
+	@Test
+	public void replaceJson_location_create() {
+		// GIVEN
+		setupTestLocation(); // for TZ
+		UUID streamId = UUID.randomUUID();
+		BasicLocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, TEST_TZ,
+				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		final String json = "{\"foo\":\"bar\"}";
+		dao.replaceJsonMeta(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID), json);
+
+		// THEN
+		ObjectDatumStreamMetadata result = metaForStream(streamId);
+		assertThat("JSON persisted", getStringMap(result.getMetaJson()), equalTo(getStringMap(json)));
+	}
+
 }

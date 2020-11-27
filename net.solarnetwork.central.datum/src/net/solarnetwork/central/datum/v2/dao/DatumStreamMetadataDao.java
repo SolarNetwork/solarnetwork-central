@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
@@ -73,5 +74,15 @@ public interface DatumStreamMetadataDao {
 	 */
 	Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
 			LocationMetadataCriteria filter);
+
+	/**
+	 * Replace the JSON metadata associated with an object datum stream.
+	 * 
+	 * @param id
+	 *        the ID of the stream to update
+	 * @param json
+	 *        the new JSON, or {@litearl null} to remove
+	 */
+	void replaceJsonMeta(ObjectSourcePK id, String json);
 
 }

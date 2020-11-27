@@ -150,7 +150,7 @@ public final class DatumTestUtils {
 	 * @param expected
 	 *        the expected metadata
 	 */
-	public static void assertDatumStreamMetadat(String prefix, DatumStreamMetadata result,
+	public static void assertDatumStreamMetadata(String prefix, DatumStreamMetadata result,
 			DatumStreamMetadata expected) {
 		assertThat(prefix + " meta returned", result, notNullValue());
 		assertThat(prefix + " stream ID", result.getStreamId(), equalTo(expected.getStreamId()));
