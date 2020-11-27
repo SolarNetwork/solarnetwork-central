@@ -30,6 +30,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.util.JsonUtils;
@@ -56,10 +57,10 @@ import net.solarnetwork.util.JsonUtils;
  * @version 1.0
  * @since 3.8
  */
-public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliaryEntity> {
+public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliary> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<DatumAuxiliaryEntity> INSTANCE = new DatumAuxiliaryEntityRowMapper();
+	public static final RowMapper<DatumAuxiliary> INSTANCE = new DatumAuxiliaryEntityRowMapper();
 
 	private static GeneralDatumSamples accumulatingSamplesForJson(String json) {
 		GeneralDatumSamples s = new GeneralDatumSamples();
@@ -75,7 +76,7 @@ public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliaryEn
 	}
 
 	@Override
-	public DatumAuxiliaryEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public DatumAuxiliary mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant timestamp = rs.getTimestamp(2).toInstant();
 		DatumAuxiliaryType kind = DatumAuxiliaryType.valueOf(rs.getString(3));

@@ -42,6 +42,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -214,6 +215,29 @@ public final class DatumTestUtils {
 						Matchers.arrayContaining(expected.getProperties().getAccumulating()));
 			}
 		}
+	}
+
+	/**
+	 * Assert one datum auxiliary has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertDatumAuxiliary(String prefix, DatumAuxiliary result,
+			DatumAuxiliary expected) {
+		assertThat(prefix + " datum returned", result, notNullValue());
+		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
+		assertThat(prefix + " type", result.getType(), equalTo(expected.getType()));
+		assertThat(prefix + " samples final", result.getSamplesFinal(),
+				equalTo(expected.getSamplesFinal()));
+		assertThat(prefix + " samples start", result.getSamplesStart(),
+				equalTo(expected.getSamplesStart()));
+		assertThat(prefix + " metadata", result.getMetadata(), equalTo(expected.getMetadata()));
 	}
 
 	/**

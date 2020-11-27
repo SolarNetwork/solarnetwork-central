@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumStreamCriteria.java - 20/11/2020 10:44:40 am
+ * DatumAuxiliaryCriteria.java - 28/11/2020 8:44:10 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.dao.OptimizedQueryCriteria;
-import net.solarnetwork.dao.RecentCriteria;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 
 /**
- * Search criteria for datum streams.
+ * Search criteria for datum auxiliary streams.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumStreamCriteria
-		extends ObjectStreamCriteria, AggregationCriteria, RecentCriteria, OptimizedQueryCriteria {
+public interface DatumAuxiliaryCriteria extends ObjectStreamCriteria {
+
+	/**
+	 * Get an auxiliary type.
+	 * 
+	 * @return the type
+	 */
+	DatumAuxiliaryType getDatumAuxiliaryType();
 
 }

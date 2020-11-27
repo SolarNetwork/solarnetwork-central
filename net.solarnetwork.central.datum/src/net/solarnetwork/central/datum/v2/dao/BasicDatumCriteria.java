@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
-		implements DatumCriteria, AuditDatumCriteria, ReadingDatumCriteria {
+		implements DatumCriteria, AuditDatumCriteria, DatumAuxiliaryCriteria, ReadingDatumCriteria {
 
 	private UUID[] streamIds;
 	private Instant startDate;
@@ -57,6 +58,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private DatumReadingType readingType;
 	private Period timeTolerance;
 	private ObjectDatumKind objectKind;
+	private DatumAuxiliaryType datumAuxiliaryType;
 
 	@Override
 	public String toString() {
@@ -349,6 +351,21 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setObjectKind(ObjectDatumKind objectKind) {
 		this.objectKind = objectKind;
+	}
+
+	@Override
+	public DatumAuxiliaryType getDatumAuxiliaryType() {
+		return datumAuxiliaryType;
+	}
+
+	/**
+	 * Set the datum auxiliary type.
+	 * 
+	 * @param datumAuxiliaryType
+	 *        the type to set
+	 */
+	public void setDatumAuxiliaryType(DatumAuxiliaryType datumAuxiliaryType) {
+		this.datumAuxiliaryType = datumAuxiliaryType;
 	}
 
 }

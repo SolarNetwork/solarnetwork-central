@@ -54,8 +54,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -385,7 +385,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		boolean moved = moveDatumAuxiliary(log, jdbcTemplate, from.getId(), to);
 		assertThat("Reset record moved", moved, equalTo(true));
 
-		List<DatumAuxiliaryEntity> auxList = listDatumAuxiliary(jdbcTemplate);
+		List<DatumAuxiliary> auxList = listDatumAuxiliary(jdbcTemplate);
 		log.debug("Datum auxiliary data: {}", auxList);
 
 		staleRows = listStaleAggregateDatum(jdbcTemplate);

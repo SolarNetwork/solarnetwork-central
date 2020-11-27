@@ -22,17 +22,14 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAccumulativeAuditDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -62,24 +59,12 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 	}
 
 	private FilterResults<AuditDatumRollup, DatumPK> findFiltered(AuditDatumCriteria filter,
-			PreparedStatementCreator creator) {
+			PreparedStatementCreator sql) {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter must be provided.");
 		}
-
-		Long totalResults = null;
-		if ( filter.getMax() != null && creator instanceof CountPreparedStatementCreatorProvider ) {
-			totalResults = DatumSqlUtils.executeCountQuery(jdbcTemplate,
-					((CountPreparedStatementCreatorProvider) creator).countPreparedStatementCreator());
-		}
-
-		List<AuditDatumRollup> data = jdbcTemplate.query(creator,
+		return DatumSqlUtils.executeFilterQuery(jdbcTemplate, filter, sql,
 				AuditDatumEntityRollupRowMapper.INSTANCE);
-		if ( filter.getMax() == null ) {
-			totalResults = (long) data.size();
-		}
-		return BasicFilterResults.filterResults(data, filter, totalResults, data.size());
-
 	}
 
 	@Override
