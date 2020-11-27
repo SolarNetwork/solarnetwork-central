@@ -66,8 +66,7 @@
 	</bean>
 	
 	<bean id="daoDatumMetadataBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz">
-		<property name="generalLocationDatumMetadataDao" ref="generalLocationDatumMetadataDao"/>
-		<property name="generalNodeDatumMetadataDao" ref="generalNodeDatumMetadataDao"/>
+		<argument ref="streamMetadataDao"/>
 	</bean>
 	
 	<bean id="daoAuditDatumBiz" class="net.solarnetwork.central.daum.biz.dao.DaoAuditDatumBiz">
