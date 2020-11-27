@@ -18,6 +18,7 @@ Import-Package:
  net.solarnetwork.central.support;version="[2.3,3.0)",
  net.solarnetwork.dao;version="[1.1,2.0)",
  net.solarnetwork.domain;version="[1.7,2.0)",
+ net.solarnetwork.support;version="[1.13,2.0)",
  net.solarnetwork.util;version="[1.46,2.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
  org.joda.time;version="[2.4,3.0)",

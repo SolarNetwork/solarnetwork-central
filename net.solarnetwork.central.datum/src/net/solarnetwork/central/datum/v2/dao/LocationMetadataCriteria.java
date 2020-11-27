@@ -29,6 +29,6 @@ package net.solarnetwork.central.datum.v2.dao;
  * @version 1.0
  * @since 2.8
  */
-public interface LocationMetadataCriteria extends LocationCriteria, StreamMetadataCriteria {
+public interface LocationMetadataCriteria extends LocationCriteria, ObjectMetadataCriteria {
 
 }

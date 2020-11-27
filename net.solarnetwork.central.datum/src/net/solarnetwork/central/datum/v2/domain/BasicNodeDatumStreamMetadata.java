@@ -35,7 +35,7 @@ import java.util.UUID;
 public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 		implements NodeDatumStreamMetadata {
 
-	private static final long serialVersionUID = 9064956621548468296L;
+	private static final long serialVersionUID = 1629452830123186704L;
 
 	/**
 	 * Create a new metadata instance with no property names.
@@ -52,7 +52,7 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 */
 	public static BasicNodeDatumStreamMetadata emptyMeta(UUID streamId, String timeZoneId, Long nodeId,
 			String sourceId) {
-		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, nodeId, sourceId, null, null,
+		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, nodeId, sourceId, null, null, null,
 				null);
 	}
 
@@ -86,8 +86,8 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	public BasicNodeDatumStreamMetadata(UUID streamId, String timeZoneId, Long nodeId, String sourceId,
 			String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, timeZoneId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
-				statusProperties);
+		this(streamId, timeZoneId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
+				statusProperties, null);
 	}
 
 	/**
@@ -95,8 +95,7 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * 
 	 * <p>
 	 * All arguments except {@code streamId}, {@code nodeId}, and
-	 * {@code sourceId} are allowed to be {@literal null}. The other arguments
-	 * are {@code Object} to work around MyBatis mapping issues. If any array is
+	 * {@code sourceId} are allowed to be {@literal null}. If any array is
 	 * empty, it will be treated as if it were {@literal null}.
 	 * </p>
 	 * 
@@ -109,16 +108,22 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	 * @param sourceId
 	 *        the source ID
 	 * @param instantaneousProperties
-	 *        the instantaneous property names; must be a {@code String[]}
+	 *        the instantaneous property names
 	 * @param accumulatingProperties
-	 *        the accumulating property names; must be a {@code String[]}
+	 *        the accumulating property names
 	 * @param statusProperties
-	 *        the status property names; must be a {@code String[]}
+	 *        the status property names
+	 * @param metaJson
+	 *        the JSON metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code nodeId} or {@code sourceId} is
+	 *         {@literal null}
 	 */
 	public BasicNodeDatumStreamMetadata(UUID streamId, String timeZoneId, Long nodeId, String sourceId,
-			Object instantaneousProperties, Object accumulatingProperties, Object statusProperties) {
-		this(streamId, timeZoneId, nodeId, sourceId, (String[]) instantaneousProperties,
-				(String[]) accumulatingProperties, (String[]) statusProperties);
+			String[] instantaneousProperties, String[] accumulatingProperties, String[] statusProperties,
+			String metaJson) {
+		super(streamId, timeZoneId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
+				statusProperties, metaJson);
 	}
 
 	@Override

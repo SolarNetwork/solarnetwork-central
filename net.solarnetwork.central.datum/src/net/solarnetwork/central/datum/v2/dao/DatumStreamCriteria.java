@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
@@ -31,6 +32,13 @@ import net.solarnetwork.dao.SortCriteria;
 
 /**
  * Search criteria for datum streams.
+ * 
+ * <p>
+ * Since this API extends <b>both</b> {@link NodeMetadataCriteria} and
+ * {@code LocationMetadataCriteria}, the {@link ObjectMetadataCriteria} API is
+ * implemented here such that if a location ID is available the location IDs
+ * will be returned, otherwise any node IDs will be returned.
+ * </p>
  * 
  * @author matt
  * @version 1.0
@@ -65,6 +73,61 @@ public interface DatumStreamCriteria extends DateRangeCriteria, LocalDateRangeCr
 	 */
 	default boolean hasLocalStartDate() {
 		return getLocalStartDate() != null;
+	}
+
+	/**
+	 * Get the first available object ID.
+	 * 
+	 * <p>
+	 * This will return the location ID if {@link #effectiveObjectKind()}
+	 * returns {@code Location}, otherwise the node ID.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	default Long getObjectId() {
+		ObjectDatumKind kind = effectiveObjectKind();
+		return (kind == ObjectDatumKind.Location ? getLocationId() : getNodeId());
+	}
+
+	/**
+	 * Get the object IDs.
+	 * 
+	 * <p>
+	 * This will return the location IDs if {@link #effectiveObjectKind()}
+	 * returns {@code Location}, otherwise node IDs.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	default Long[] getObjectIds() {
+		ObjectDatumKind kind = effectiveObjectKind();
+		return (kind == ObjectDatumKind.Location ? getLocationIds() : getNodeIds());
+	}
+
+	/**
+	 * Get the effective object kind.
+	 * 
+	 * <p>
+	 * If an explicit {@code objectKind} is not defined, then if a location ID
+	 * is defined {@code Location} will be returned, otherwise {@code Node} will
+	 * be returned.
+	 * </p>
+	 * 
+	 * @return the effective object kind, never {@literal null}
+	 */
+	default ObjectDatumKind effectiveObjectKind() {
+		ObjectDatumKind kind = getObjectKind();
+		if ( kind == null ) {
+			if ( getLocationId() != null ) {
+				kind = ObjectDatumKind.Location;
+			} else {
+				kind = ObjectDatumKind.Node;
+			}
+		}
+		return kind;
 	}
 
 }

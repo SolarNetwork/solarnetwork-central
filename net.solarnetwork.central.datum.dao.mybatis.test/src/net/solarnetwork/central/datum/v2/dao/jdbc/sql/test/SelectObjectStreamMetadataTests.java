@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectLocationStreamMetadataTests.java - 19/11/2020 3:51:12 pm
+ * StreamMetadataPreparedStatementCreatorTests.java - 19/11/2020 3:51:12 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -42,28 +42,101 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectLocationStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 
 /**
- * Test cases for the {@link SelectLocationStreamMetadata}
- * class.
+ * Test cases for the {@link SelectObjectStreamMetadata} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class SelectLocationStreamMetadataTests {
+public class SelectObjectStreamMetadataTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Test
-	public void sql_streamMeta_locsAndSources() {
+	public void sql_streamMeta_nodesAndSources() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql,
+				equalToTextResource("node-stream-meta-nodesAndSources.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_nodesAndSourcesAndUsers() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setUserId(1L);
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-nodesAndSourcesAndUsers.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void prep_streamMeta_nodesAndSourcesAndUsers() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setUserId(1L);
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		Array userIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
+		stmt.setArray(3, userIdsArray);
+		userIdsArray.free();
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"node-stream-meta-nodesAndSourcesAndUsers.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+	}
+
+	@Test
+	public void sql_loc_streamMeta_nodesAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
 		filter.setSourceId("a");
 
 		// WHEN
-		String sql = new SelectLocationStreamMetadata(filter).getSql();
+		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
@@ -71,7 +144,7 @@ public class SelectLocationStreamMetadataTests {
 	}
 
 	@Test
-	public void sql_streamMeta_locsAndSourcesAndUsers() {
+	public void sql_loc_streamMeta_nodesAndSourcesAndUsers() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
@@ -79,7 +152,7 @@ public class SelectLocationStreamMetadataTests {
 		filter.setUserId(1L);
 
 		// WHEN
-		String sql = new SelectLocationStreamMetadata(filter).getSql();
+		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql, equalToTextResource("loc-stream-meta-locsAndSourcesAndUsers.sql",
@@ -87,7 +160,7 @@ public class SelectLocationStreamMetadataTests {
 	}
 
 	@Test
-	public void prep_streamMeta_locsAndSourcesAndUsers() throws SQLException {
+	public void prep_loc_streamMeta_nodesAndSourcesAndUsers() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
@@ -118,11 +191,13 @@ public class SelectLocationStreamMetadataTests {
 
 		// WHEN
 		replay(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new SelectLocationStreamMetadata(filter)
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location)
 				.createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"loc-stream-meta-locsAndSourcesAndUsers.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
 	}

@@ -49,6 +49,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.NumberUtils;
 
 /**
@@ -163,6 +164,8 @@ public final class DatumTestUtils {
 			ObjectDatumStreamMetadata oExpected = (ObjectDatumStreamMetadata) expected;
 			assertThat(prefix + " object ID", oResult.getObjectId(), equalTo(oExpected.getObjectId()));
 			assertThat(prefix + " source ID", oResult.getSourceId(), equalTo(oExpected.getSourceId()));
+			assertThat(prefix + " JSON", JsonUtils.getStringMap(oResult.getMetaJson()),
+					equalTo(JsonUtils.getStringMap(oExpected.getMetaJson())));
 		}
 		if ( expected instanceof NodeDatumStreamMetadata ) {
 			assertThat(prefix + " is node metadata", result, instanceOf(NodeDatumStreamMetadata.class));
@@ -319,6 +322,7 @@ public final class DatumTestUtils {
 			return;
 		}
 		jdbcTemplate.update("DELETE FROM solardatm.da_datm");
+		jdbcTemplate.update("DELETE FROM solardatm.da_datm_meta");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_datm");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_stale_flux");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_hourly");

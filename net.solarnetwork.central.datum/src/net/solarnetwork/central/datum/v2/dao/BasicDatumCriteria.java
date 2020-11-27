@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -55,6 +56,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private DatumRollupType[] datumRollupTypes;
 	private DatumReadingType readingType;
 	private Period timeTolerance;
+	private ObjectDatumKind objectKind;
 
 	@Override
 	public String toString() {
@@ -332,6 +334,21 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setTimeTolerance(Period timeTolerance) {
 		this.timeTolerance = timeTolerance;
+	}
+
+	@Override
+	public ObjectDatumKind getObjectKind() {
+		return objectKind;
+	}
+
+	/**
+	 * Set the object kind.
+	 * 
+	 * @param objectKind
+	 *        the object kind to set
+	 */
+	public void setObjectKind(ObjectDatumKind objectKind) {
+		this.objectKind = objectKind;
 	}
 
 }

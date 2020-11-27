@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * ObjectCriteria.java - 27/11/2020 2:24:24 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,13 +22,41 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+
 /**
- * Search criteria for node metadata.
+ * Search criteria for object related data.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria extends NodeCriteria, ObjectMetadataCriteria {
+public interface ObjectCriteria {
+
+	/**
+	 * Get the first object ID.
+	 * 
+	 * <p>
+	 * This returns the first available object ID from the
+	 * {@link #getObjectIds()} array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the object ID, or {@literal null} if not available
+	 */
+	Long getObjectId();
+
+	/**
+	 * Get an array of object IDs.
+	 * 
+	 * @return array of object IDs (may be {@literal null})
+	 */
+	Long[] getObjectIds();
+
+	/**
+	 * Get the kind of object.
+	 * 
+	 * @return the object kind
+	 */
+	ObjectDatumKind getObjectKind();
 
 }

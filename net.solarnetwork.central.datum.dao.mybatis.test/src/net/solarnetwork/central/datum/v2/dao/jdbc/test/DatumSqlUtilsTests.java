@@ -138,7 +138,7 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
-	public void nodeMetadataFilterPrepare_forNodes() throws SQLException {
+	public void objectMetadataFilterPrepare_forNodes() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
@@ -152,7 +152,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
-		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Node IDs parameter set", count, equalTo(1));
@@ -160,7 +160,7 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
-	public void nodeMetadataFilterPrepare_forSources() throws SQLException {
+	public void objectMetadataFilterPrepare_forSources() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setSourceId("a");
@@ -174,7 +174,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, sourceIdsArray);
-		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Source IDs parameter set", count, equalTo(1));
@@ -182,7 +182,7 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
-	public void nodeMetadataFilterPrepare_forStreams() throws SQLException {
+	public void objectMetadataFilterPrepare_forStreams() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(UUID.randomUUID());
@@ -196,7 +196,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, streamIdsArray);
-		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Stream IDs parameter set", count, equalTo(1));
@@ -204,7 +204,7 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
-	public void nodeMetadataFilterPrepare_forUsers() throws SQLException {
+	public void objectMetadataFilterPrepare_forUsers() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setUserId(1L);
@@ -218,7 +218,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, userIdsArray);
-		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("User IDs parameter set", count, equalTo(1));
@@ -226,7 +226,7 @@ public class DatumSqlUtilsTests {
 	}
 
 	@Test
-	public void nodeMetadataFilterPrepare_forNodesAndSources() throws SQLException {
+	public void objectMetadataFilterPrepare_forNodesAndSources() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
@@ -246,7 +246,7 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		int count = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 
 		// THEN
 		assertThat("Node IDs and source IDs parameters set", count, equalTo(2));

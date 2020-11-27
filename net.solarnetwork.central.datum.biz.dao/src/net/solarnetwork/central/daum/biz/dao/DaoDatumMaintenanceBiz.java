@@ -67,10 +67,18 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	 *        the datum DAO to use
 	 * @param metaDao
 	 *        the metadata DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
 	public DaoDatumMaintenanceBiz(DatumMaintenanceDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
+		if ( datumDao == null ) {
+			throw new IllegalArgumentException("The datumDao argument must not be null.");
+		}
 		this.datumDao = datumDao;
+		if ( metaDao == null ) {
+			throw new IllegalArgumentException("The metaDao argument must not be null.");
+		}
 		this.metaDao = metaDao;
 	}
 

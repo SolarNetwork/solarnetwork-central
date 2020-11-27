@@ -35,10 +35,11 @@ import java.util.UUID;
 public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 		implements ObjectDatumStreamMetadata {
 
-	private static final long serialVersionUID = -5497125744560574016L;
+	private static final long serialVersionUID = -752792793887156230L;
 
 	private final Long objectId;
 	private final String sourceId;
+	private final String metaJson;
 
 	/**
 	 * Constructor.
@@ -70,15 +71,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
 			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties) {
-		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
-		if ( objectId == null ) {
-			throw new IllegalArgumentException("The objectId argument must not be null.");
-		}
-		this.objectId = objectId;
-		if ( sourceId == null ) {
-			throw new IllegalArgumentException("The sourceId argument must not be null.");
-		}
-		this.sourceId = sourceId;
+		this(streamId, timeZoneId, objectId, sourceId, instantaneousProperties, accumulatingProperties,
+				statusProperties, null);
 	}
 
 	/**
@@ -86,8 +80,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 * 
 	 * <p>
 	 * All arguments except {@code streamId}, {@code objectId}, and
-	 * {@code sourceId} are allowed to be {@literal null}. The other arguments
-	 * are {@code Object} to work around MyBatis mapping issues. If any array is
+	 * {@code sourceId} are allowed to be {@literal null}. If any array is
 	 * empty, it will be treated as if it were {@literal null}.
 	 * </p>
 	 * 
@@ -100,17 +93,30 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 * @param sourceId
 	 *        the source ID
 	 * @param instantaneousProperties
-	 *        the instantaneous property names; must be a {@code String[]}
+	 *        the instantaneous property names
 	 * @param accumulatingProperties
-	 *        the accumulating property names; must be a {@code String[]}
+	 *        the accumulating property names
 	 * @param statusProperties
-	 *        the status property names; must be a {@code String[]}
+	 *        the status property names
+	 * @param metaJson
+	 *        the JSON metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
+	 *         {@literal null}
 	 */
 	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
-			String sourceId, Object instantaneousProperties, Object accumulatingProperties,
-			Object statusProperties) {
-		this(streamId, timeZoneId, objectId, sourceId, (String[]) instantaneousProperties,
-				(String[]) accumulatingProperties, (String[]) statusProperties);
+			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
+			String[] statusProperties, String metaJson) {
+		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
+		if ( objectId == null ) {
+			throw new IllegalArgumentException("The objectId argument must not be null.");
+		}
+		this.objectId = objectId;
+		if ( sourceId == null ) {
+			throw new IllegalArgumentException("The sourceId argument must not be null.");
+		}
+		this.sourceId = sourceId;
+		this.metaJson = metaJson;
 	}
 
 	@Override
@@ -148,6 +154,11 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	@Override
 	public String getSourceId() {
 		return sourceId;
+	}
+
+	@Override
+	public String getMetaJson() {
+		return metaJson;
 	}
 
 }

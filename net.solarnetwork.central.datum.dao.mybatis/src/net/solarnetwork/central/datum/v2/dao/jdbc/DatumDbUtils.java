@@ -672,8 +672,8 @@ public final class DatumDbUtils {
 		} else {
 			buf.append("node_id");
 		}
-		buf.append(",source_id,names_i,names_a,names_s) ");
-		buf.append("VALUES (?::uuid,?,?,?::text[],?::text[],?::text[])");
+		buf.append(",source_id,names_i,names_a,names_s,jdata) ");
+		buf.append("VALUES (?::uuid,?,?,?::text[],?::text[],?::text[],?::jsonb)");
 		return buf.toString();
 	}
 
@@ -717,7 +717,7 @@ public final class DatumDbUtils {
 				PreparedStatement locMetaStmt = con.prepareStatement(insertMetaStmt("loc_datm"))) {
 			for ( ObjectDatumStreamMetadata meta : metas ) {
 				if ( log != null ) {
-					log.debug("Inserting NodeDatumStreamMetadata {}", meta);
+					log.debug("Inserting ObjectDatumStreamMetadata {}", meta);
 				}
 				@SuppressWarnings("resource")
 				PreparedStatement metaStmt = (meta instanceof LocationDatumStreamMetadata ? locMetaStmt
@@ -749,6 +749,9 @@ public final class DatumDbUtils {
 					Array aArray = con.createArrayOf("TEXT", sNames);
 					metaStmt.setArray(6, aArray);
 				}
+
+				String json = meta.getMetaJson();
+				metaStmt.setString(7, json);
 
 				metaStmt.execute();
 			}

@@ -152,7 +152,7 @@ public class SelectStaleAggregateDatum
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		p = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, p);
 		if ( filter.getAggregation() != null ) {
 			stmt.setString(++p, filter.getAggregation().getKey());
 		}

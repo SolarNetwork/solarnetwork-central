@@ -45,4 +45,11 @@ public interface ObjectDatumStreamMetadata extends DatumStreamMetadata {
 	 */
 	String getSourceId();
 
+	/**
+	 * Get the optional custom JSON metadata.
+	 * 
+	 * @return the JSON metadata
+	 */
+	String getMetaJson();
+
 }

@@ -116,7 +116,7 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 			a.free();
 		}
 
-		// TODO String jmeta = rs.getString(7);
+		String jmeta = rs.getString(7);
 
 		MetadataKind k = this.kind;
 		if ( this.kind == MetadataKind.Dynamic ) {
@@ -128,11 +128,11 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 
 		if ( k == MetadataKind.Location ) {
 			return new BasicLocationDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI,
-					namesA, namesS);
+					namesA, namesS, jmeta);
 		}
 
 		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI, namesA,
-				namesS);
+				namesS, jmeta);
 	}
 
 }

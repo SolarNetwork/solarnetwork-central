@@ -190,6 +190,25 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void metadataForStream_node_withJson() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+				new String[] { "f" }, "{\"foo\":\"bar\"}");
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		ObjectDatumStreamMetadata result = dao.findStreamMetadata(filter);
+
+		// THEN
+		assertDatumStreamMetadat("returned meta", result, meta);
+	}
+
+	@Test
 	public void metadataForStream_cacheMiss() {
 		// GIVEN
 		dao.setStreamMetadataCache(cache);

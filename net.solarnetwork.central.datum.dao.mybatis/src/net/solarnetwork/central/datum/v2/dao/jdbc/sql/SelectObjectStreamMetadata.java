@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,8 +29,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 
 /**
  * Generate dynamic SQL for a "find node metadata" query.
@@ -40,10 +40,27 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
  * @version 1.0
  * @since 3.8
  */
-public class SelectNodeStreamMetadata
-		implements PreparedStatementCreator, SqlProvider {
+public class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
 
-	private final NodeMetadataCriteria filter;
+	private final ObjectMetadataCriteria filter;
+	private final ObjectDatumKind kind;
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * The {@code filter.getObjectKind()} value will be used if available,
+	 * otherwise the {@code Node} kind will be used.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} is {@literal null}
+	 */
+	public SelectObjectStreamMetadata(ObjectMetadataCriteria filter) {
+		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node);
+	}
 
 	/**
 	 * Constructor.
@@ -53,20 +70,32 @@ public class SelectNodeStreamMetadata
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectNodeStreamMetadata(NodeMetadataCriteria filter) {
+	public SelectObjectStreamMetadata(ObjectMetadataCriteria filter, ObjectDatumKind kind) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");
 		}
+		if ( kind == null ) {
+			throw new IllegalArgumentException("The kind argument must not be null.");
+		}
 		this.filter = filter;
+		this.kind = kind;
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		if ( kind == ObjectDatumKind.Location ) {
+			DatumSqlUtils.locationMetadataFilterSql(filter, buf);
+		} else {
+			DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+		}
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(), NODE_STREAM_METADATA_SORT_KEY_MAPPING, order);
+		int idx = orderBySorts(filter.getSorts(),
+				kind == ObjectDatumKind.Location
+						? DatumSqlUtils.LOCATION_STREAM_METADATA_SORT_KEY_MAPPING
+						: DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING,
+				order);
 		if ( idx > 0 ) {
 			buf.append("\nORDER BY ");
 			buf.append(order.substring(idx));
@@ -77,7 +106,7 @@ public class SelectNodeStreamMetadata
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 		return stmt;
 	}
 

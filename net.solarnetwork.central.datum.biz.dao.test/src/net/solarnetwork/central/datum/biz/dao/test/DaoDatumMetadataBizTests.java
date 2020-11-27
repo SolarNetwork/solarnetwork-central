@@ -22,30 +22,42 @@
 
 package net.solarnetwork.central.datum.biz.dao.test;
 
+import static java.util.Collections.singleton;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
-import net.solarnetwork.central.datum.domain.LocationSourcePK;
-import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
-import net.solarnetwork.domain.GeneralDatumMetadata;
+import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link DaoDatumMetadataBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumMetadataBizTests {
 
@@ -54,26 +66,21 @@ public class DaoDatumMetadataBizTests {
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID_2 = "test.source.2";
 
-	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao;
-	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao;
-
+	private DatumStreamMetadataDao metaDao;
 	private DaoDatumMetadataBiz biz;
 
 	private void replayAll() {
-		replay(generalLocationDatumMetadataDao, generalNodeDatumMetadataDao);
+		replay(metaDao);
 	}
 
 	private void verifyAll() {
-		verify(generalLocationDatumMetadataDao, generalNodeDatumMetadataDao);
+		verify(metaDao);
 	}
 
 	@Before
 	public void setup() {
-		biz = new DaoDatumMetadataBiz();
-		generalLocationDatumMetadataDao = EasyMock.createMock(GeneralLocationDatumMetadataDao.class);
-		generalNodeDatumMetadataDao = EasyMock.createMock(GeneralNodeDatumMetadataDao.class);
-		biz.setGeneralLocationDatumMetadataDao(generalLocationDatumMetadataDao);
-		biz.setGeneralNodeDatumMetadataDao(generalNodeDatumMetadataDao);
+		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
+		biz = new DaoDatumMetadataBiz(metaDao);
 	}
 
 	@Test
@@ -126,15 +133,27 @@ public class DaoDatumMetadataBizTests {
 
 	@Test
 	public void findGeneralNodeDatumMetadata() {
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
+		// GIVEN
+		Capture<NodeMetadataCriteria> criteriaCaptor = new Capture<>();
+		BasicNodeDatumStreamMetadata meta = BasicNodeDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", 1L, TEST_SOURCE_ID);
+		expect(metaDao.findNodeDatumStreamMetadata(capture(criteriaCaptor))).andReturn(singleton(meta));
 
-		EasyMock.expect(generalNodeDatumMetadataDao.findFiltered(criteria, null, null, null)).andReturn(
-				null);
-
+		// WHEN
 		replayAll();
-		biz.findGeneralNodeDatumMetadata(criteria, null, null, null);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralNodeDatumMetadataFilterMatch> r = biz.findGeneralNodeDatumMetadata(filter,
+				null, null, null);
+
+		// THEN
 		verifyAll();
+		assertThat("Source ID passed to DAO", criteriaCaptor.getValue().getSourceId(),
+				equalTo(filter.getSourceId()));
+		assertThat("Result converted", r.getReturnedResultCount(), equalTo(1));
+		GeneralNodeDatumMetadataFilterMatch match = r.iterator().next();
+		assertThat("Result source ID", match.getId(),
+				equalTo(new NodeSourcePK(meta.getNodeId(), meta.getSourceId())));
 	}
 
 	@Test
@@ -156,8 +175,8 @@ public class DaoDatumMetadataBizTests {
 
 		Capture<GeneralNodeDatumMetadata> meta2Cap = new Capture<GeneralNodeDatumMetadata>();
 
-		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andAnswer(
-				new IAnswer<GeneralNodeDatumMetadata>() {
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk))
+				.andAnswer(new IAnswer<GeneralNodeDatumMetadata>() {
 
 					@Override
 					public GeneralNodeDatumMetadata answer() throws Throwable {
@@ -202,8 +221,8 @@ public class DaoDatumMetadataBizTests {
 
 		Capture<GeneralNodeDatumMetadata> meta2Cap = new Capture<GeneralNodeDatumMetadata>();
 
-		EasyMock.expect(generalNodeDatumMetadataDao.get(pk)).andAnswer(
-				new IAnswer<GeneralNodeDatumMetadata>() {
+		EasyMock.expect(generalNodeDatumMetadataDao.get(pk))
+				.andAnswer(new IAnswer<GeneralNodeDatumMetadata>() {
 
 					@Override
 					public GeneralNodeDatumMetadata answer() throws Throwable {
@@ -227,8 +246,8 @@ public class DaoDatumMetadataBizTests {
 		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
 		assertEquals("Replaced info property value", "Wh",
 				stored.getMeta().getInfoString("watts", "unit"));
-		assertEquals("New info property value", "SI", stored.getMeta()
-				.getInfoString("watts", "unitType"));
+		assertEquals("New info property value", "SI",
+				stored.getMeta().getInfoString("watts", "unitType"));
 	}
 
 	@Test
@@ -307,15 +326,28 @@ public class DaoDatumMetadataBizTests {
 
 	@Test
 	public void findGeneralLocationDatumMetadata() {
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setSourceId(TEST_SOURCE_ID);
+		// GIVEN
+		Capture<LocationMetadataCriteria> criteriaCaptor = new Capture<>();
+		BasicLocationDatumStreamMetadata meta = BasicLocationDatumStreamMetadata
+				.emptyMeta(UUID.randomUUID(), "UTC", 1L, TEST_SOURCE_ID);
+		expect(metaDao.findLocationDatumStreamMetadata(capture(criteriaCaptor)))
+				.andReturn(singleton(meta));
 
-		EasyMock.expect(generalLocationDatumMetadataDao.findFiltered(criteria, null, null, null))
-				.andReturn(null);
-
+		// WHEN
 		replayAll();
-		biz.findGeneralLocationDatumMetadata(criteria, null, null, null);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setSourceId(TEST_SOURCE_ID);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch> r = biz
+				.findGeneralLocationDatumMetadata(filter, null, null, null);
+
+		// THEN
 		verifyAll();
+		assertThat("Source ID passed to DAO", criteriaCaptor.getValue().getSourceId(),
+				equalTo(filter.getSourceId()));
+		assertThat("Result converted", r.getReturnedResultCount(), equalTo(1));
+		GeneralLocationDatumMetadataFilterMatch match = r.iterator().next();
+		assertThat("Result source ID", match.getId(),
+				equalTo(new LocationSourcePK(meta.getLocationId(), meta.getSourceId())));
 	}
 
 	@Test
@@ -337,8 +369,8 @@ public class DaoDatumMetadataBizTests {
 
 		Capture<GeneralLocationDatumMetadata> meta2Cap = new Capture<GeneralLocationDatumMetadata>();
 
-		EasyMock.expect(generalLocationDatumMetadataDao.get(pk)).andAnswer(
-				new IAnswer<GeneralLocationDatumMetadata>() {
+		EasyMock.expect(generalLocationDatumMetadataDao.get(pk))
+				.andAnswer(new IAnswer<GeneralLocationDatumMetadata>() {
 
 					@Override
 					public GeneralLocationDatumMetadata answer() throws Throwable {
@@ -383,8 +415,8 @@ public class DaoDatumMetadataBizTests {
 
 		Capture<GeneralLocationDatumMetadata> meta2Cap = new Capture<GeneralLocationDatumMetadata>();
 
-		EasyMock.expect(generalLocationDatumMetadataDao.get(pk)).andAnswer(
-				new IAnswer<GeneralLocationDatumMetadata>() {
+		EasyMock.expect(generalLocationDatumMetadataDao.get(pk))
+				.andAnswer(new IAnswer<GeneralLocationDatumMetadata>() {
 
 					@Override
 					public GeneralLocationDatumMetadata answer() throws Throwable {
@@ -408,8 +440,8 @@ public class DaoDatumMetadataBizTests {
 		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
 		assertEquals("Replaced info property value", "Wh",
 				stored.getMeta().getInfoString("watts", "unit"));
-		assertEquals("New info property value", "SI", stored.getMeta()
-				.getInfoString("watts", "unitType"));
+		assertEquals("New info property value", "SI",
+				stored.getMeta().getInfoString("watts", "unitType"));
 	}
 
 	@Test

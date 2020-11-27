@@ -52,13 +52,13 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumSelect;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectLocationStreamMetadata;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectNodeStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
@@ -68,6 +68,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
@@ -242,15 +243,27 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	}
 
 	@Override
+	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectMetadataCriteria filter) {
+		ObjectDatumKind kind = filter.getObjectKind();
+		if ( kind == null && filter instanceof DatumStreamCriteria ) {
+			kind = ((DatumStreamCriteria) filter).effectiveObjectKind();
+		} else {
+			kind = ObjectDatumKind.Node;
+		}
+		PreparedStatementCreator sql = new SelectObjectStreamMetadata(filter, kind);
+		return jdbcTemplate.query(sql, ObjectDatumStreamMetadataRowMapper.INSTANCE);
+	}
+
+	@Override
 	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
-		return jdbcTemplate.query(new SelectNodeStreamMetadata(filter),
+		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node),
 				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
 	}
 
 	@Override
 	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
 			LocationMetadataCriteria filter) {
-		return jdbcTemplate.query(new SelectLocationStreamMetadata(filter),
+		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location),
 				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
 	}
 

@@ -108,7 +108,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = DatumSqlUtils.prepareNodeMetadataFilter(filter, con, stmt, 0);
+		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 		if ( filter.hasLocalStartDate() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
 		} else {

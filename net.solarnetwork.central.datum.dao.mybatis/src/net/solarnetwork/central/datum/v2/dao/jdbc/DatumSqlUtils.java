@@ -50,6 +50,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.domain.Aggregation;
@@ -345,9 +346,9 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereNodeMetadata(NodeMetadataCriteria filter, StringBuilder buf) {
+	public static int whereNodeMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
-		if ( filter.getNodeIds() != null ) {
+		if ( filter.getObjectIds() != null ) {
 			buf.append("\tAND meta.node_id = ANY(?)\n");
 			paramCount += 1;
 		}
@@ -370,9 +371,9 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
-	public static int whereLocationMetadata(LocationMetadataCriteria filter, StringBuilder buf) {
+	public static int whereLocationMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
-		if ( filter.getLocationIds() != null ) {
+		if ( filter.getObjectIds() != null ) {
 			buf.append("\tAND meta.loc_id = ANY(?)\n");
 			paramCount += 1;
 		}
@@ -488,7 +489,7 @@ public final class DatumSqlUtils {
 	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, MetadataSelectStyle,
 	 *      StringBuilder)
 	 */
-	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, StringBuilder buf) {
+	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 	}
 
@@ -503,10 +504,10 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
-	 * @see #prepareNodeMetadataFilter(NodeMetadataCriteria, Connection,
+	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int nodeMetadataFilterSql(NodeMetadataCriteria filter, MetadataSelectStyle style,
+	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
 		buf.append("SELECT meta.stream_id, meta.node_id, meta.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
@@ -547,7 +548,7 @@ public final class DatumSqlUtils {
 	 * @see #locationMetadataFilterSql(LocationMetadataCriteria,
 	 *      MetadataSelectStyle, StringBuilder)
 	 */
-	public static int locationMetadataFilterSql(LocationMetadataCriteria filter, StringBuilder buf) {
+	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return locationMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
 	}
 
@@ -562,11 +563,11 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
-	 * @see #prepareLocationMetadataFilter(LocationMetadataCriteria, Connection,
+	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int locationMetadataFilterSql(LocationMetadataCriteria filter,
-			MetadataSelectStyle style, StringBuilder buf) {
+	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+			StringBuilder buf) {
 		buf.append("SELECT meta.stream_id, meta.loc_id, meta.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", meta.names_i, meta.names_a, meta.names_s, meta.jdata, 'l'::CHARACTER AS kind");
@@ -669,45 +670,15 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, StringBuilder)
+	 * @see #locationMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int prepareNodeMetadataFilter(NodeMetadataCriteria filter, Connection con,
+	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
-			if ( filter.getNodeIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getNodeIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
-			}
-			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
-		}
-		return parameterOffset;
-	}
-
-	/**
-	 * Prepare a SQL query to find location metadata.
-	 * 
-	 * @param filter
-	 *        the search criteria
-	 * @param con
-	 *        the JDBC connection
-	 * @param stmt
-	 *        the JDBC statement
-	 * @param parameterOffset
-	 *        the zero-based starting JDBC statement parameter offset
-	 * @return the new JDBC statement parameter offset
-	 * @throws SQLException
-	 *         if any SQL error occurs
-	 * @see #locationMetadataFilterSql(NodeMetadataCriteria, StringBuilder)
-	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
-	 */
-	public static int prepareLocationMetadataFilter(LocationMetadataCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		if ( filter != null ) {
-			if ( filter.getLocationIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getLocationIds());
+			if ( filter.getObjectIds() != null ) {
+				Array array = con.createArrayOf("bigint", filter.getObjectIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}

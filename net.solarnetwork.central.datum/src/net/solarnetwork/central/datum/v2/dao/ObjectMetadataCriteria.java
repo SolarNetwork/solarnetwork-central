@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * ObjectMetadataCriteria.java - 27/11/2020 2:23:23 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -23,12 +23,13 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 /**
- * Search criteria for node metadata.
+ * Search criteria for object metadata.
+ *
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria extends NodeCriteria, ObjectMetadataCriteria {
+public interface ObjectMetadataCriteria extends ObjectCriteria, StreamMetadataCriteria {
 
 }

@@ -32,6 +32,8 @@ import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
@@ -42,6 +44,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.DateRangeFilter;
@@ -308,6 +311,27 @@ public class DatumUtils {
 	}
 
 	/**
+	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of a
+	 * {@link LocationDatumStreamMetadata}.
+	 * 
+	 * @param meta
+	 *        the metadata to convert
+	 * @return the general metadata, or {@literal null} if {@code meta} is
+	 *         {@literal null}
+	 */
+	public static GeneralNodeDatumMetadataMatch toGeneralNodeDatumMetadataMatch(
+			ObjectDatumStreamMetadata meta) {
+		if ( meta == null ) {
+			return null;
+		}
+		GeneralNodeDatumMetadataMatch m = new GeneralNodeDatumMetadataMatch();
+		m.setNodeId(meta.getObjectId());
+		m.setSourceId(meta.getSourceId());
+		m.setMetaJson(meta.getMetaJson());
+		return m;
+	}
+
+	/**
 	 * Create a new {@link ReportingGeneralLocationDatum} out of a
 	 * {@link Datum}.
 	 * 
@@ -343,6 +367,27 @@ public class DatumUtils {
 		}
 
 		return gnd;
+	}
+
+	/**
+	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of a
+	 * {@link LocationDatumStreamMetadata}.
+	 * 
+	 * @param meta
+	 *        the metadata to convert
+	 * @return the general metadata, or {@literal null} if {@code meta} is
+	 *         {@literal null}
+	 */
+	public static GeneralLocationDatumMetadataMatch toGeneralLocationDatumMetadataMatch(
+			ObjectDatumStreamMetadata meta) {
+		if ( meta == null ) {
+			return null;
+		}
+		GeneralLocationDatumMetadataMatch m = new GeneralLocationDatumMetadataMatch();
+		m.setLocationId(meta.getObjectId());
+		m.setSourceId(meta.getSourceId());
+		m.setMetaJson(meta.getMetaJson());
+		return m;
 	}
 
 }

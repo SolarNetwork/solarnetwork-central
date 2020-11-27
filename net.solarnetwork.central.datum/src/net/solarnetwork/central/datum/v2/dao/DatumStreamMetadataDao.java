@@ -45,6 +45,16 @@ public interface DatumStreamMetadataDao {
 	ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter);
 
 	/**
+	 * Find all available object datum stream metadata for a given search
+	 * filter.
+	 * 
+	 * @param filter
+	 *        the search filter
+	 * @return the matching results, never {@literal null}
+	 */
+	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectMetadataCriteria filter);
+
+	/**
 	 * Find all available node datum stream metadata for a given search filter.
 	 * 
 	 * @param filter
