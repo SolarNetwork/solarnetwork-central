@@ -318,7 +318,10 @@ public final class DatumSqlUtils {
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getSourceIds() != null ) {
-			buf.append("\tAND meta.source_id = ANY(?)\n");
+			buf.append("\tAND meta.source_id ~ ANY(ARRAY(\n");
+			buf.append("		SELECT r.r\n");
+			buf.append("		FROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n");
+			buf.append("		))\n");
 			paramCount += 1;
 		}
 		if ( filter.getStreamIds() != null ) {

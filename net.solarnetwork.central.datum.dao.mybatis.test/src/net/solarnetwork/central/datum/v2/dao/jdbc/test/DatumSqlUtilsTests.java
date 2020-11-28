@@ -86,8 +86,10 @@ public class DatumSqlUtilsTests {
 		int count = DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
 
 		// THEN
-		assertThat("Node IDs parameter added", count, equalTo(1));
-		assertThat(buf.toString().contains("WHERE meta.source_id = ANY(?)"), equalTo(true));
+		assertThat("Source IDs parameter added", count, equalTo(1));
+		assertThat(buf.toString().contains("WHERE meta.source_id ~ ANY(ARRAY(\n\t\tSELECT r.r\n"
+				+ "\t\tFROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n\t\t))"),
+				equalTo(true));
 	}
 
 	@Test
@@ -133,7 +135,9 @@ public class DatumSqlUtilsTests {
 
 		// THEN
 		assertThat("Node IDs and source IDs parameters added", count, equalTo(2));
-		assertThat(buf.toString().contains("WHERE meta.node_id = ANY(?)\n\tAND meta.source_id = ANY(?)"),
+		assertThat(buf.toString().contains("WHERE meta.node_id = ANY(?)"), equalTo(true));
+		assertThat(buf.toString().contains("AND meta.source_id ~ ANY(ARRAY(\n\t\tSELECT r.r\n"
+				+ "\t\tFROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n\t\t))"),
 				equalTo(true));
 	}
 
