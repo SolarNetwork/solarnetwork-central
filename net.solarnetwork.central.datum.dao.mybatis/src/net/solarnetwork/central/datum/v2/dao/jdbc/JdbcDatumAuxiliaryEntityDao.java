@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import java.sql.CallableStatement;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -31,6 +35,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatumAuxiliary;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.MoveDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
@@ -100,7 +105,16 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	@Override
 	public boolean move(DatumAuxiliaryPK from, DatumAuxiliaryEntity to) {
 		// TODO Auto-generated method stub
-		return false;
+		return jdbcTemplate.execute(new MoveDatumAuxiliary(from, to),
+				new CallableStatementCallback<Boolean>() {
+
+					@Override
+					public Boolean doInCallableStatement(CallableStatement cs)
+							throws SQLException, DataAccessException {
+						cs.execute();
+						return cs.getBoolean(1);
+					}
+				});
 	}
 
 	@Override
