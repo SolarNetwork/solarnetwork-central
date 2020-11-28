@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.sql.CallableStatement;
@@ -38,7 +39,6 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.MoveDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
@@ -83,7 +83,7 @@ public class DbMoveDatumAuxiliaryTests extends BaseDatumJdbcTestSupport {
 	public void move_id() {
 		// GIVEN
 		DatumAuxiliaryEntity aux = testAux();
-		jdbcTemplate.update(new InsertDatumAuxiliary(aux));
+		DatumDbUtils.insertDatumAuxiliary(log, jdbcTemplate, singleton(aux));
 
 		// WHEN
 		DatumAuxiliaryEntity newAux = new DatumAuxiliaryEntity(UUID.randomUUID(), Instant.now(),

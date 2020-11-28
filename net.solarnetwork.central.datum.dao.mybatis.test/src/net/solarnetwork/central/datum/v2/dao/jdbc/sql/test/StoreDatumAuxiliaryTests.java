@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertDatumAuxiliaryTests.java - 28/11/2020 9:14:35 am
+ * StoreDatumAuxiliaryTests.java - 28/11/2020 9:14:35 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -31,8 +31,8 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -46,18 +46,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatumAuxiliary;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatumAuxiliary;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.util.JsonUtils;
 
 /**
- * Test cases for the {@link InsertDatumAuxiliary} class.
+ * Test cases for the {@link StoreDatumAuxiliary} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class InsertDatumAuxiliaryTests {
+public class StoreDatumAuxiliaryTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -75,30 +75,30 @@ public class InsertDatumAuxiliaryTests {
 	}
 
 	@Test
-	public void sql_insert() {
+	public void sql_store() {
 		// GIVEN
 		DatumAuxiliaryEntity d = testAux();
 
 		// WHEN
-		String sql = new InsertDatumAuxiliary(d).getSql();
+		String sql = new StoreDatumAuxiliary(d).getSql();
 
 		// THEN
 		assertThat("SQL matches", sql,
-				equalToTextResource("insert-datum-aux.sql", TestSqlResources.class));
+				equalToTextResource("store-datum-aux.sql", TestSqlResources.class));
 	}
 
 	@Test
-	public void prep_insert() throws SQLException {
+	public void prep_store() throws SQLException {
 		// GIVEN
 		DatumAuxiliaryEntity d = testAux();
 
 		Connection con = EasyMock.createMock(Connection.class);
-		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+		CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
 
 		// stream_id, ts, atype, notes, jdata_af, jdata_as, jmeta
 
 		Capture<String> sqlCaptor = new Capture<>();
-		expect(con.prepareStatement(capture(sqlCaptor))).andReturn(stmt);
+		expect(con.prepareCall(capture(sqlCaptor))).andReturn(stmt);
 
 		stmt.setObject(1, d.getStreamId(), Types.OTHER);
 
@@ -107,18 +107,18 @@ public class InsertDatumAuxiliaryTests {
 
 		stmt.setString(3, DatumAuxiliaryType.Reset.name());
 		stmt.setString(4, d.getNotes());
-		stmt.setString(5, JsonUtils.getJSONString(d.getSamplesFinal().getAccumulating(), null));
-		stmt.setString(6, JsonUtils.getJSONString(d.getSamplesStart().getAccumulating(), null));
+		stmt.setString(5, JsonUtils.getJSONString(d.getSamplesFinal(), null));
+		stmt.setString(6, JsonUtils.getJSONString(d.getSamplesStart(), null));
 		stmt.setString(7, JsonUtils.getJSONString(d.getMetadata(), null));
 
 		// WHEN
 		replay(con, stmt);
-		PreparedStatement result = new InsertDatumAuxiliary(d).createPreparedStatement(con);
+		CallableStatement result = new StoreDatumAuxiliary(d).createCallableStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("SQL matches", sqlCaptor.getValue(),
-				equalToTextResource("insert-datum-aux.sql", TestSqlResources.class));
+				equalToTextResource("store-datum-aux.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		assertThat("Timestamp prarameter", tsCaptor.getValue(),
 				equalTo(Timestamp.from(d.getTimestamp())));

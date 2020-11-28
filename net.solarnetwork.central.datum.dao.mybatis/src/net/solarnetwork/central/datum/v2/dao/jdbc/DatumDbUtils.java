@@ -56,6 +56,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -68,6 +69,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
@@ -91,6 +93,7 @@ import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvid
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
+import net.solarnetwork.util.JodaDateUtils;
 import net.solarnetwork.util.JsonUtils;
 
 /**
@@ -830,6 +833,26 @@ public final class DatumDbUtils {
 	 */
 	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
 			Iterable<GeneralNodeDatumAuxiliary> datums) {
+		List<DatumAuxiliary> converted = StreamSupport.stream(datums.spliterator(), false).map(d -> {
+			return new DatumAuxiliaryEntity(streamId, JodaDateUtils.fromJodaToInstant(d.getCreated()),
+					d.getType(), JodaDateUtils.fromJodaToInstant(d.getCreated()), d.getSamplesFinal(),
+					d.getSamplesStart(), d.getNotes(), d.getMeta());
+		}).collect(Collectors.toList());
+		insertDatumAuxiliary(log, jdbcTemplate, converted);
+	}
+
+	/**
+	 * Insert auxiliary datum records for a given stream.
+	 * 
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param datums
+	 *        the datum to insert
+	 */
+	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<DatumAuxiliary> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -837,17 +860,17 @@ public final class DatumDbUtils {
 				try (PreparedStatement datumStmt = con.prepareStatement(
 						"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
 								+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
-					datumStmt.setString(1, streamId.toString());
-					for ( GeneralNodeDatumAuxiliary d : datums ) {
+					for ( DatumAuxiliary d : datums ) {
+						String sf = getJSONString(d.getSamplesFinal().getA(), null);
+						String ss = getJSONString(d.getSamplesStart().getA(), null);
 						if ( log != null ) {
-							log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
-									d.getSampleDataFinal(), d.getSampleDataStart());
+							log.debug("Inserting DatumAuxiliary {}; {} -> {}", d.getId(), sf, ss);
 						}
-						datumStmt.setTimestamp(2,
-								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
+						datumStmt.setString(1, d.getStreamId().toString());
+						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
 						datumStmt.setString(3, d.getType().name());
-						datumStmt.setString(4, getJSONString(d.getSamplesFinal().getA(), null));
-						datumStmt.setString(5, getJSONString(d.getSamplesStart().getA(), null));
+						datumStmt.setString(4, sf);
+						datumStmt.setString(5, ss);
 						datumStmt.execute();
 					}
 				}

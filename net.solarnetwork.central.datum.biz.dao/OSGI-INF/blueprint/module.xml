@@ -23,9 +23,9 @@
 	<!-- Service References -->
 
 	<reference id="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao"/>
-	<reference id="generalNodeDatumAuxiliaryDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao"/>
 	<reference id="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao"/>
 	
+	<reference id="datumAuxiliaryDao" interface="net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao"/>
 	<reference id="datumMaintenanceDao" interface="net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao"/>
 	<reference id="streamMetadataDao" interface="net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao"/>
 	
@@ -57,7 +57,8 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<bean id="daoDatumAuxiliaryBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumAuxiliaryBiz">
-		<argument ref="generalNodeDatumAuxiliaryDao"/>
+		<argument ref="datumAuxiliaryDao"/>
+		<argument ref="streamMetadataDao"/>
 	</bean>
 	
 	<bean id="daoDatumMaintenanceBiz" class="net.solarnetwork.central.daum.biz.dao.DaoDatumMaintenanceBiz">

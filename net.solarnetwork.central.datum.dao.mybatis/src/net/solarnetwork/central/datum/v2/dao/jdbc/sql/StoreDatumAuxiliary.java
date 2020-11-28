@@ -1,5 +1,5 @@
 /* ==================================================================
- * MoveDatumAuxiliary.java - 28/11/2020 5:50:00 pm
+ * StoreDatumAuxiliary.java - 29/11/2020 7:46:10 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -30,60 +30,48 @@ import java.sql.Types;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
-import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.util.JsonUtils;
 
 /**
- * Move and update a {@code da_datm_aux} record (change primary key and update
- * values) by calling the {@code solardatm.move_datum_aux} database procedure.
+ * Insert or update a {@code da_datm_aux} record by calling the
+ * {@code solardatm.store_datum_aux} database procedure.
  * 
  * @author matt
  * @version 1.0 since 3.8
  */
-public class MoveDatumAuxiliary implements CallableStatementCreator, SqlProvider {
+public class StoreDatumAuxiliary implements CallableStatementCreator, SqlProvider {
 
-	private final DatumAuxiliaryPK from;
-	private final DatumAuxiliary to;
+	private final DatumAuxiliary datum;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param from
-	 *        the primary key of the existing datum to move
 	 * @param to
-	 *        the destintation data to update
+	 *        the datum to store
 	 */
-	public MoveDatumAuxiliary(DatumAuxiliaryPK from, DatumAuxiliary to) {
+	public StoreDatumAuxiliary(DatumAuxiliary datum) {
 		super();
-		if ( from == null ) {
-			throw new IllegalArgumentException("The from argument not be null.");
+		if ( datum == null ) {
+			throw new IllegalArgumentException("The datum argument not be null.");
 		}
-		this.from = from;
-		if ( to == null ) {
-			throw new IllegalArgumentException("The to argument not be null.");
-		}
-		this.to = to;
+		this.datum = datum;
 	}
 
 	@Override
 	public String getSql() {
-		return "{? = call solardatm.move_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}";
+		return "{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}";
 	}
 
 	@Override
 	public CallableStatement createCallableStatement(Connection con) throws SQLException {
 		CallableStatement stmt = con.prepareCall(getSql());
-		stmt.registerOutParameter(1, Types.BOOLEAN);
-		stmt.setObject(2, from.getStreamId(), Types.OTHER);
-		stmt.setTimestamp(3, Timestamp.from(from.getTimestamp()));
-		stmt.setString(4, from.getKind().name());
-		stmt.setObject(5, to.getStreamId(), Types.OTHER);
-		stmt.setTimestamp(6, Timestamp.from(to.getTimestamp()));
-		stmt.setString(7, to.getType().name());
-		stmt.setString(8, to.getNotes());
-		stmt.setString(9, JsonUtils.getJSONString(to.getSamplesFinal(), null));
-		stmt.setString(10, JsonUtils.getJSONString(to.getSamplesStart(), null));
-		stmt.setString(11, JsonUtils.getJSONString(to.getMetadata(), null));
+		stmt.setObject(1, datum.getStreamId(), Types.OTHER);
+		stmt.setTimestamp(2, Timestamp.from(datum.getTimestamp()));
+		stmt.setString(3, datum.getType().name());
+		stmt.setString(4, datum.getNotes());
+		stmt.setString(5, JsonUtils.getJSONString(datum.getSamplesFinal(), null));
+		stmt.setString(6, JsonUtils.getJSONString(datum.getSamplesStart(), null));
+		stmt.setString(7, JsonUtils.getJSONString(datum.getMetadata(), null));
 		return stmt;
 	}
 

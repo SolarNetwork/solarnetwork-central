@@ -50,7 +50,6 @@
 	<service ref="generalLocationDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumDao" ranking="5"/>
 	<service ref="generalLocationDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao" ranking="5"/>
 	<service ref="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao" ranking="5"/>
-	<service ref="generalNodeDatumAuxiliaryDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao" ranking="5"/>
 	<service ref="generalNodeDatumMetadataDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao" ranking="5"/>
 
 	<service ref="sqlSessionFactory" interface="org.apache.ibatis.session.SqlSessionFactory">
@@ -85,6 +84,11 @@
 		</bean>
 	</service>
 	
+	<service interface="net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao">
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao">
+			<argument ref="jdbcOps"/>
+		</bean>
+	</service>	
 	<!-- Supporting Services -->
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->

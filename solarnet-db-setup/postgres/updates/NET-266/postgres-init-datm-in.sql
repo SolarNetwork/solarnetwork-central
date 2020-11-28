@@ -292,9 +292,8 @@ $$;
 /**
  * Add or replace datum auxiliary record data.
  *
+ * @param sid 			the stream ID
  * @param ddate 		the datum timestamp
- * @param node 			the node ID
- * @param src 			the source ID
  * @param aux_type		the auxiliary type; must cast to solardatm.da_datm_aux_type, e.g. 'Reset'
  * @param aux_notes 	optional text notes
  * @param jdata_final 	the ending JSON datum object; only 'a' values are supported
@@ -302,87 +301,68 @@ $$;
  * @param jmeta			optional JSON metadata
  */
 CREATE OR REPLACE FUNCTION solardatm.store_datum_aux(
+		sid				UUID,
 		ddate 			TIMESTAMP WITH TIME ZONE,
-		node 			BIGINT,
-		src 			CHARACTER VARYING(64),
-		aux_type 		text,
-		aux_notes 		text,
-		jdata_final 	text,
-		jdata_start 	text,
-		jmeta 			text
+		aux_type 		solardatm.da_datm_aux_type,
+		aux_notes 		TEXT,
+		jdata_final 	JSONB,
+		jdata_start 	JSONB,
+		jmeta 			JSONB
 	) RETURNS void LANGUAGE plpgsql VOLATILE AS
 $$
-DECLARE
-	sid 	UUID;
 BEGIN
-	INSERT INTO solardatm.da_datm_aux(stream_id, ts, atype, updated, notes, jdata_af, jdata_as, jmeta)
-	SELECT m.stream_id, ddate, aux_type::solardatm.da_datm_aux_type, CURRENT_TIMESTAMP, aux_notes,
-		(jdata_final::jsonb)->'a', (jdata_start::jsonb)->'a', jmeta::jsonb
-	FROM solardatm.da_datm_meta m
-	WHERE m.node_id = node AND m.source_id = src
+	INSERT INTO solardatm.da_datm_aux (stream_id, ts, atype, notes, jdata_af, jdata_as, jmeta)
+	VALUES (sid, ddate, aux_type, aux_notes, jdata_final->'a', jdata_start->'a', jmeta)
 	ON CONFLICT (stream_id, ts, atype) DO UPDATE
-		SET notes = EXCLUDED.notes,
+		SET updated = CURRENT_TIMESTAMP,
+			notes = EXCLUDED.notes,
 			jdata_af = EXCLUDED.jdata_af,
 			jdata_as = EXCLUDED.jdata_as,
-			jmeta = EXCLUDED.jmeta,
-			updated = EXCLUDED.updated
-	RETURNING stream_id
-	INTO sid;
+			jmeta = EXCLUDED.jmeta;
 
 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 	SELECT stream_id, ts_start, 'h' AS agg_kind
 	FROM solardatm.calc_stale_datm(sid, ddate)
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
-END;
+END
 $$;
 
 
 /**
  * Update and move datum auxiliary record data.
  *
- * @param ddate_from 	the datum timestamp of the "old" record
- * @param node_from 	the node ID of the "old" record
- * @param src_from 		the source ID of the "old" record
- * @param aux_type_from	the auxiliary type of the "old" record; must cast to solardatm.da_datm_aux_type
- * @param ddate 		the datum timestamp
- * @param node 			the node ID
- * @param src 			the source ID
- * @param aux_type		the auxiliary type; must cast to solardatm.da_datm_aux_type, e.g. 'Reset'
- * @param aux_notes 	optional text notes
- * @param jdata_final 	the ending JSON datum object; only 'a' values are supported
- * @param jdata_start 	the starting JSON datum object; only 'a' values are supported
- * @param jmeta			optional JSON metadata
+ * @param sid_from 			the stream ID of the "old" record
+ * @param ts_from 			the datum timestamp of the "old" record
+ * @param aux_type_from		the auxiliary type of the "old" record; must cast to solardatm.da_datm_aux_type
+ * @param sid_to 			the stream ID
+ * @param ts_to 			the datum timestamp
+ * @param atype_to			the auxiliary type; must cast to solardatm.da_datm_aux_type, e.g. 'Reset'
+ * @param notes_to 			optional text notes
+ * @param jdata_final_to 	the ending JSON datum object; only 'a' values are supported
+ * @param jdata_start_to	the starting JSON datum object; only 'a' values are supported
+ * @param jmeta_to			optional JSON metadata
  */
 CREATE OR REPLACE FUNCTION solardatm.move_datum_aux(
-		ddate_from		TIMESTAMP WITH TIME ZONE,
-		node_from		BIGINT,
-		src_from		CHARACTER VARYING(64),
-		aux_type_from	text,
+		sid_from		UUID,
+		ts_from			TIMESTAMP WITH TIME ZONE,
+		aux_type_from	solardatm.da_datm_aux_type,
 
-		ddate 			TIMESTAMP WITH TIME ZONE,
-		node 			BIGINT,
-		src 			CHARACTER VARYING(64),
-		aux_type 		text,
-
-		aux_notes 		text,
-		jdata_final 	text,
-		jdata_start 	text,
-		jmeta 			text
+		sid_to			UUID,
+		ts_to			TIMESTAMP WITH TIME ZONE,
+		atype_to 		solardatm.da_datm_aux_type,
+		notes_to 		TEXT,
+		jdata_final_to 	JSONB,
+		jdata_start_to 	JSONB,
+		jmeta_to 		JSONB
 	) RETURNS BOOLEAN LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
-	sid 		UUID;
 	del_count 	INTEGER := 0;
 BEGIN
 	DELETE FROM solardatm.da_datm_aux
-	USING solardatm.da_datm_meta
-	WHERE da_datm_aux.stream_id = da_datm_meta.stream_id
-		AND da_datm_aux.ts = ddate_from
-		AND da_datm_meta.node_id = node_from
-		AND da_datm_meta.source_id = src_from
-		AND da_datm_aux.atype = aux_type_from::solardatm.da_datm_aux_type
-	RETURNING da_datm_aux.stream_id
-	INTO sid;
+	WHERE stream_id = sid_from
+		AND ts = ts_from
+		AND atype = aux_type_from;
 
 	GET DIAGNOSTICS del_count = ROW_COUNT;
 
@@ -390,13 +370,26 @@ BEGIN
 		-- insert stale record for deleted row
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
-		FROM solardatm.calc_stale_datm(sid, ddate_from)
+		FROM solardatm.calc_stale_datm(sid_from, ts_from)
 		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 
 		-- insert new row
-		PERFORM solardatm.store_datum_aux(ddate, node, src, aux_type, aux_notes, jdata_final, jdata_start, jmeta);
+		INSERT INTO solardatm.da_datm_aux (stream_id, ts, atype, notes, jdata_af, jdata_as, jmeta)
+		VALUES (sid_to, ts_to, atype_to, notes_to, jdata_final_to->'a', jdata_start_to->'a', jmeta_to)
+		ON CONFLICT (stream_id, ts, atype) DO UPDATE
+			SET updated = CURRENT_TIMESTAMP,
+				notes = EXCLUDED.notes,
+				jdata_af = EXCLUDED.jdata_af,
+				jdata_as = EXCLUDED.jdata_as,
+				jmeta = EXCLUDED.jmeta;
+
+		-- insert stale record for new row
+		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
+		SELECT stream_id, ts_start, 'h' AS agg_kind
+		FROM solardatm.calc_stale_datm(sid_to, ts_to)
+		ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 	END IF;
 
 	RETURN (del_count > 0);
-END;
+END
 $$;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,13 +34,18 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
@@ -311,8 +317,8 @@ public class DatumUtils {
 	}
 
 	/**
-	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of a
-	 * {@link LocationDatumStreamMetadata}.
+	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
+	 * {@link ObjectDatumStreamMetadata}.
 	 * 
 	 * @param meta
 	 *        the metadata to convert
@@ -329,6 +335,69 @@ public class DatumUtils {
 		m.setSourceId(meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 		return m;
+	}
+
+	/**
+	 * Create a new {@link GeneralNodeDatumAuxiliary} out of a
+	 * {@link DatumAuxiliary}.
+	 * 
+	 * @param datum
+	 *        the datum to convert
+	 * @param meta
+	 *        the metadata
+	 * @retur nthe general datum auziliary, or {@literal null} if either
+	 *        {@code datum} or {@code meta} is {@literal null}
+	 */
+	public static GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(DatumAuxiliary datum,
+			ObjectDatumStreamMetadata meta) {
+		if ( datum == null || meta == null ) {
+			return null;
+		}
+		GeneralNodeDatumAuxiliary aux = new GeneralNodeDatumAuxiliary();
+		populate(datum, meta, aux);
+		return aux;
+	}
+
+	private static void populate(DatumAuxiliary datum, ObjectDatumStreamMetadata meta,
+			GeneralNodeDatumAuxiliary aux) {
+		aux.setNodeId(meta.getObjectId());
+		aux.setSourceId(meta.getSourceId());
+		aux.setCreated(JodaDateUtils.toJoda(datum.getTimestamp(), meta.getTimeZoneId()));
+		aux.setType(datum.getType());
+		if ( datum.getSamplesFinal() != null ) {
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			s.setAccumulating(datum.getSamplesFinal().getAccumulating());
+			aux.setSamplesFinal(s);
+		}
+		if ( datum.getSamplesStart() != null ) {
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			s.setAccumulating(datum.getSamplesStart().getAccumulating());
+			aux.setSamplesStart(s);
+		}
+		aux.setMeta(datum.getMetadata());
+		if ( datum instanceof DatumAuxiliaryEntity ) {
+			aux.setUpdated(JodaDateUtils.toJoda(((DatumAuxiliaryEntity) datum).getUpdated(),
+					meta.getTimeZoneId()));
+		}
+	}
+
+	/**
+	 * Create a new {@link GeneralNodeDatumAuxiliaryFilterMatch} out of a
+	 * {@link DatumAuxiliary}.
+	 * 
+	 * @param datum
+	 *        the datum
+	 * @param meta
+	 *        the metadata
+	 * @return the match
+	 */
+	public static GeneralNodeDatumAuxiliaryFilterMatch toGeneralNodeDatumAuxiliaryFilterMatch(
+			DatumAuxiliary datum, ObjectDatumStreamMetadata meta) {
+		GeneralNodeDatumAuxiliaryMatch aux = new GeneralNodeDatumAuxiliaryMatch();
+		populate(datum, meta, aux);
+		aux.setLocalDateTime(JodaDateUtils
+				.toJoda(datum.getTimestamp().atZone(ZoneId.of(meta.getTimeZoneId())).toLocalDateTime()));
+		return aux;
 	}
 
 	/**
@@ -370,8 +439,8 @@ public class DatumUtils {
 	}
 
 	/**
-	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of a
-	 * {@link LocationDatumStreamMetadata}.
+	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
+	 * {@link ObjectDatumStreamMetadata}.
 	 * 
 	 * @param meta
 	 *        the metadata to convert

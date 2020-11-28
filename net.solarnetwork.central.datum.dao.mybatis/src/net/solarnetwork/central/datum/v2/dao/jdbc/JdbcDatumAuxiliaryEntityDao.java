@@ -34,9 +34,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatumAuxiliary;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.MoveDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAuxiliary;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.dao.FilterResults;
@@ -80,7 +80,15 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 		if ( entity.getTimestamp() == null ) {
 			throw new IllegalArgumentException("The timestamp property is required.");
 		}
-		jdbcTemplate.update(new InsertDatumAuxiliary(entity));
+		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), new CallableStatementCallback<Void>() {
+
+			@Override
+			public Void doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				cs.execute();
+				return null;
+			}
+		});
 		return entity.getId();
 	}
 
