@@ -22,18 +22,17 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -63,6 +62,25 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
+	private RowMapper<ReadingDatum> mapper(Aggregation agg) {
+		if ( agg == null ) {
+			agg = Aggregation.None;
+		}
+		switch (agg) {
+			case Hour:
+				return ReadingDatumEntityRowMapper.HOUR_INSTANCE;
+
+			case Day:
+				return ReadingDatumEntityRowMapper.DAY_INSTANCE;
+
+			case Month:
+				return ReadingDatumEntityRowMapper.MONTH_INSTANCE;
+
+			default:
+				return ReadingDatumEntityRowMapper.INSTANCE;
+		}
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(ReadingDatumCriteria filter) {
@@ -78,20 +96,13 @@ public class JdbcReadingDatumEntityDao implements ReadingDatumDao {
 				break;
 
 			// TODO
+			//case CalculatedAt:
+			//case CalculatedAtDifference:
+
 		}
 
-		Long totalResults = null;
-		if ( filter.getMax() != null && creator instanceof CountPreparedStatementCreatorProvider ) {
-			totalResults = DatumSqlUtils.executeCountQuery(jdbcTemplate,
-					((CountPreparedStatementCreatorProvider) creator).countPreparedStatementCreator());
-		}
-
-		List<ReadingDatum> data = jdbcTemplate.query(creator,
-				new ReadingDatumEntityRowMapper(filter.getAggregation()));
-		if ( filter.getMax() == null ) {
-			totalResults = (long) data.size();
-		}
-		return BasicFilterResults.filterResults(data, filter, totalResults, data.size());
+		return DatumSqlUtils.executeFilterQuery(jdbcTemplate, filter, creator,
+				mapper(filter.getAggregation()));
 	}
 
 }
