@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.aop;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -30,11 +32,13 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -45,25 +49,25 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security AOP support for {@link DatumAuxiliaryBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.5
  */
 @Aspect
 public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
-	final private GeneralNodeDatumDao nodeDatumDao;
+	final private DatumStreamMetadataDao metaDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
-	 * @param nodeDatumDao
-	 *        the datum DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
 	 */
-	public DatumAuxiliarySecurityAspect(UserNodeDao userNodeDao, GeneralNodeDatumDao nodeDatumDao) {
+	public DatumAuxiliarySecurityAspect(UserNodeDao userNodeDao, DatumStreamMetadataDao metaDao) {
 		super(userNodeDao);
-		this.nodeDatumDao = nodeDatumDao;
+		this.metaDao = metaDao;
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
@@ -156,7 +160,11 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 			// and let call to userNodeAccessCheck later on filter out restricted values
 			if ( filter instanceof DatumFilterCommand ) {
 				DatumFilterCommand f = (DatumFilterCommand) filter;
-				Set<String> availableSources = nodeDatumDao.getAvailableSources(f);
+				BasicDatumCriteria c = new BasicDatumCriteria();
+				c.setNodeIds(f.getNodeIds());
+				Iterable<NodeDatumStreamMetadata> metas = metaDao.findNodeDatumStreamMetadata(c);
+				Set<String> availableSources = StreamSupport.stream(metas.spliterator(), false)
+						.map(NodeDatumStreamMetadata::getSourceId).collect(Collectors.toSet());
 				if ( availableSources != null && !availableSources.isEmpty() ) {
 					f.setSourceIds(availableSources.toArray(new String[availableSources.size()]));
 				}
