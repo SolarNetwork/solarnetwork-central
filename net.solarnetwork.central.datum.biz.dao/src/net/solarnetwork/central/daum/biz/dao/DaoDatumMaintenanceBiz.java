@@ -55,10 +55,10 @@ import net.solarnetwork.util.JodaDateUtils;
  */
 public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 
+	private static final Logger log = LoggerFactory.getLogger(DaoDatumMaintenanceBiz.class);
+
 	private final DatumMaintenanceDao datumDao;
 	private final DatumStreamMetadataDao metaDao;
-
-	private static final Logger log = LoggerFactory.getLogger(DaoDatumMaintenanceBiz.class);
 
 	/**
 	 * Constructor.
