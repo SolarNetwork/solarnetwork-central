@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.domain.DatumReadingType;
-
 /**
  * Search criteria for datum reading results.
  * 
@@ -31,13 +29,7 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
  * @version 1.0
  * @since 2.8
  */
-public interface ReadingDatumCriteria extends DatumStreamCriteria, TimeToleranceCriteria {
-
-	/**
-	 * Get the datum reading type.
-	 * 
-	 * @return the type
-	 */
-	DatumReadingType getReadingType();
+public interface ReadingDatumCriteria
+		extends DatumStreamCriteria, TimeToleranceCriteria, ReadingTypeCriteria {
 
 }

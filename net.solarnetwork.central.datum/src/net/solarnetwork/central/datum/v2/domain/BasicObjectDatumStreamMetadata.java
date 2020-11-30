@@ -35,8 +35,9 @@ import java.util.UUID;
 public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 		implements ObjectDatumStreamMetadata {
 
-	private static final long serialVersionUID = -752792793887156230L;
+	private static final long serialVersionUID = -4093896601567626604L;
 
+	private final ObjectDatumKind kind;
 	private final Long objectId;
 	private final String sourceId;
 	private final String metaJson;
@@ -54,8 +55,10 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the stream ID
 	 * @param timeZoneId
 	 *        the time zone ID
+	 * @param kind
+	 *        the object kind
 	 * @param objectId
-	 *        the node ID
+	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
 	 * @param instantaneousProperties
@@ -68,11 +71,11 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
 	 *         {@literal null}
 	 */
-	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties) {
-		this(streamId, timeZoneId, objectId, sourceId, instantaneousProperties, accumulatingProperties,
-				statusProperties, null);
+	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, ObjectDatumKind kind,
+			Long objectId, String sourceId, String[] instantaneousProperties,
+			String[] accumulatingProperties, String[] statusProperties) {
+		this(streamId, timeZoneId, kind, objectId, sourceId, instantaneousProperties,
+				accumulatingProperties, statusProperties, null);
 	}
 
 	/**
@@ -88,8 +91,10 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the stream ID
 	 * @param timeZoneId
 	 *        the time zone ID
+	 * @param kind
+	 *        the object kind
 	 * @param objectId
-	 *        the node ID
+	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
 	 * @param instantaneousProperties
@@ -104,10 +109,14 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
 	 *         {@literal null}
 	 */
-	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, Long objectId,
-			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
-			String[] statusProperties, String metaJson) {
+	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, ObjectDatumKind kind,
+			Long objectId, String sourceId, String[] instantaneousProperties,
+			String[] accumulatingProperties, String[] statusProperties, String metaJson) {
 		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
+		if ( kind == null ) {
+			throw new IllegalArgumentException("The kind argument must not be null.");
+		}
+		this.kind = kind;
 		if ( objectId == null ) {
 			throw new IllegalArgumentException("The objectId argument must not be null.");
 		}
@@ -122,24 +131,17 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("BasicNodeDatumStreamMetadata{");
-		if ( getStreamId() != null ) {
-			builder.append("streamId=");
-			builder.append(getStreamId());
-			builder.append(", ");
-		}
-		if ( objectId != null ) {
-			builder.append("objectId=");
-			builder.append(objectId);
-			builder.append(", ");
-		}
-		if ( sourceId != null ) {
-			builder.append("sourceId=");
-			builder.append(sourceId);
-			builder.append(", ");
-		}
+		builder.append("BasicObjectDatumStreamMetadata{");
+		builder.append("streamId=");
+		builder.append(getStreamId());
+		builder.append(", kind=");
+		builder.append(kind);
+		builder.append(", objectId=");
+		builder.append(objectId);
+		builder.append(", sourceId=");
+		builder.append(sourceId);
 		if ( getPropertyNames() != null ) {
-			builder.append("propertyNames=");
+			builder.append(", propertyNames=");
 			builder.append(Arrays.toString(getPropertyNames()));
 		}
 		builder.append("}");
@@ -159,6 +161,11 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	@Override
 	public String getMetaJson() {
 		return metaJson;
+	}
+
+	@Override
+	public ObjectDatumKind getKind() {
+		return kind;
 	}
 
 }

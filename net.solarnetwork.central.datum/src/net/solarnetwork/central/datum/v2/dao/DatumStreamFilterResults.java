@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -67,6 +67,6 @@ public interface DatumStreamFilterResults extends FilterResults<Datum, DatumPK> 
 	 * @return the metadata, or {@literal null} if not available in these
 	 *         results
 	 */
-	DatumStreamMetadata metadataForStream(UUID streamId);
+	ObjectDatumStreamMetadata metadataForStream(UUID streamId);
 
 }

@@ -334,9 +334,18 @@ public class DaoQueryBiz implements QueryBiz {
 			throw new IllegalArgumentException("The DatumReadingType [" + readingType
 					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
 		}
-		filter = enforceGeneralAggregateLevel(filter);
-		return generalNodeDatumDao.findAggregationFilteredReadings(filter, readingType, tolerance,
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, offset, max);
+		c.setObjectKind(ObjectDatumKind.Node);
+		c.setReadingType(readingType);
+		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
+		// TODO return generalNodeDatumDao.findAggregationFilteredReadings(filter, readingType, tolerance,
+		// sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

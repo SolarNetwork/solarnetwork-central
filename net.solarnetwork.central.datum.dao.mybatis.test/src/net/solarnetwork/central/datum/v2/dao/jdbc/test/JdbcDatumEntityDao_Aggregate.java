@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
@@ -50,6 +51,7 @@ import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 
@@ -112,6 +114,43 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		int i = 1;
 		for ( Datum d : results ) {
 			assertThat("Aggregate datum returned " + i, d, instanceOf(AggregateDatum.class));
+			assertThat("Stream ID " + i, d.getStreamId(), equalTo(streamId));
+			assertThat("Ordered by timestamp " + i, d.getTimestamp(), equalTo(ts));
+			ts = ts.plusSeconds(TimeUnit.HOURS.toSeconds(3));
+			i++;
+		}
+	}
+
+	@Test
+	public void find_reading_hour_streamId_orderDefault() throws IOException {
+		// GIVEN
+		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+
+		// WHEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Hour);
+		filter.setStreamId(streamId);
+		filter.setStartDate(start.plusHours(1).toInstant());
+		filter.setEndDate(start.plusHours(12).toInstant());
+		filter.setReadingType(DatumReadingType.Difference);
+		DatumStreamFilterResults results = dao.findFiltered(filter);
+
+		// THEN
+		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
+		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
+				equalTo(meta.getNodeId()));
+		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
+
+		Instant ts = start.plusHours(3).toInstant();
+		int i = 1;
+		for ( Datum d : results ) {
+			assertThat("Reading datum returned " + i, d, instanceOf(ReadingDatum.class));
 			assertThat("Stream ID " + i, d.getStreamId(), equalTo(streamId));
 			assertThat("Ordered by timestamp " + i, d.getTimestamp(), equalTo(ts));
 			ts = ts.plusSeconds(TimeUnit.HOURS.toSeconds(3));

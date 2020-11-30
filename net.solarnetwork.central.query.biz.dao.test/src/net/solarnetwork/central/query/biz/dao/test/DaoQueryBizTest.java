@@ -29,6 +29,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import static net.solarnetwork.util.JodaDateUtils.toJoda;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
@@ -44,10 +45,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,10 +59,13 @@ import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -67,6 +73,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -74,10 +81,12 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
@@ -355,6 +364,13 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		return propertiesOf(decimalArray("1.1", "1.2"), decimalArray("2.1"), null, null);
 	}
 
+	private DatumPropertiesStatistics testStats() {
+		return statisticsOf(
+				new BigDecimal[][] { decimalArray("60", "1.0", "2.0"),
+						decimalArray("61", "2.0", "3.0") },
+				new BigDecimal[][] { decimalArray("10", "0", "10") });
+	}
+
 	@Test
 	public void findFilteredGeneralNodeDatum() {
 		// GIVEN
@@ -412,6 +428,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void findFilteredAggregateGeneralNodeDatum() {
 		// GIVEN
@@ -419,7 +436,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
 				null);
 		DatumProperties props = testProps();
-		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		DatumPropertiesStatistics stats = testStats();
+		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
+				Aggregation.Day, props, stats);
 		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
@@ -466,7 +485,11 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		assertThat("Converted datum props", match.getSampleData(), allOf(
 		// @formatter:off
 				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i1_min", stats.getInstantaneous()[0][1]),
+				hasEntry("i1_max", stats.getInstantaneous()[0][2]),
 				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("i2_min", stats.getInstantaneous()[1][1]),
+				hasEntry("i2_max", stats.getInstantaneous()[1][2]),
 				hasEntry("a1", props.getAccumulating()[0])
 				// @formatter:on
 		));
@@ -528,6 +551,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void findAggregateGeneralLocationDatum() {
 		// GIVEN
@@ -535,7 +559,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
 				null);
 		DatumProperties props = testProps();
-		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		DatumPropertiesStatistics stats = testStats();
+		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
+				Aggregation.Day, props, stats);
 		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
@@ -582,8 +608,98 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		assertThat("Converted datum props", match.getSampleData(), allOf(
 		// @formatter:off
 				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i1_min", stats.getInstantaneous()[0][1]),
+				hasEntry("i1_max", stats.getInstantaneous()[0][2]),
 				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("i2_min", stats.getInstantaneous()[1][1]),
+				hasEntry("i2_max", stats.getInstantaneous()[1][2]),
 				hasEntry("a1", props.getAccumulating()[0])
+				// @formatter:on
+		));
+	}
+
+	@Test
+	public void findFilteredAggregateReading_invalidReadingType() {
+		replayAll();
+		// only the Difference type is supported
+		for ( DatumReadingType type : EnumSet.complementOf(EnumSet.of(DatumReadingType.Difference)) ) {
+			try {
+				biz.findFilteredAggregateReading(new DatumFilterCommand(),
+						DatumReadingType.DifferenceWithin, null, null, null, null);
+				Assert.fail("Should have thrown IllegalArgumentException for DatumReadingType " + type);
+			} catch ( IllegalArgumentException e ) {
+				// expected
+			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void findFilteredAggregateReading() {
+		// GIVEN
+		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
+				null);
+		DatumProperties props = testProps();
+		DatumPropertiesStatistics stats = testStats();
+		ReadingDatumEntity d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(), Aggregation.Day,
+				Instant.now(), props, stats);
+		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(new DateTime().hourOfDay().roundFloorCopy());
+		filter.setEndDate(filter.getStartDate().plusHours(1));
+		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
+		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredAggregateReading(filter,
+				DatumReadingType.Difference, Period.months(1), sortDescriptors, 1, 2);
+
+		// THEN
+		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
+				equalTo(DatumReadingType.Difference));
+		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
+		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
+				equalTo(filter.getAggregation()));
+		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
+				arrayContaining(filter.getNodeIds()));
+		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
+				equalTo(fromJodaToInstant(filter.getStartDate())));
+		assertThat("Query end date", filterCaptor.getValue().getEndDate(),
+				equalTo(fromJodaToInstant(filter.getEndDate())));
+		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
+				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch match = results.iterator().next();
+		assertThat("Match node from meta", match.getId(), equalTo(new GeneralNodeDatumPK(TEST_NODE_ID,
+				toJoda(d.getTimestamp(), meta.getTimeZoneId()), TEST_SOURCE_ID)));
+		assertThat("Match local date from meta", match.getLocalDate(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalDate())));
+		assertThat("Match local time from meta", match.getLocalTime(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalTime())));
+		assertThat("Converted datum props", match.getSampleData(), allOf(
+		// @formatter:off
+				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i1_min", stats.getInstantaneous()[0][1]),
+				hasEntry("i1_max", stats.getInstantaneous()[0][2]),
+				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("i2_min", stats.getInstantaneous()[1][1]),
+				hasEntry("i2_max", stats.getInstantaneous()[1][2]),
+				hasEntry("a1", stats.getAccumulating()[0][0]),
+				hasEntry("a1_start", stats.getAccumulating()[0][1]),
+				hasEntry("a1_end", stats.getAccumulating()[0][2])
 				// @formatter:on
 		));
 	}

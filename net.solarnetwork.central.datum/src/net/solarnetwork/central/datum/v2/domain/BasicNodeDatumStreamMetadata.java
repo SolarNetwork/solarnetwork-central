@@ -122,8 +122,8 @@ public class BasicNodeDatumStreamMetadata extends BasicObjectDatumStreamMetadata
 	public BasicNodeDatumStreamMetadata(UUID streamId, String timeZoneId, Long nodeId, String sourceId,
 			String[] instantaneousProperties, String[] accumulatingProperties, String[] statusProperties,
 			String metaJson) {
-		super(streamId, timeZoneId, nodeId, sourceId, instantaneousProperties, accumulatingProperties,
-				statusProperties, metaJson);
+		super(streamId, timeZoneId, ObjectDatumKind.Node, nodeId, sourceId, instantaneousProperties,
+				accumulatingProperties, statusProperties, metaJson);
 	}
 
 	@Override

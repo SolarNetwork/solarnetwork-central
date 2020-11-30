@@ -89,43 +89,6 @@ public class ReadingDatumEntity extends AggregateDatumEntity
 		this.endTimestamp = endTimestamp;
 	}
 
-	/**
-	 * Constructor.
-	 * 
-	 * <p>
-	 * Note this constructor has {@code Object} arguments to work around MyBatis
-	 * mapping issues.
-	 * </p>
-	 * 
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the timestamp
-	 * @param aggregation
-	 *        the aggregation
-	 * @param endTimestamp
-	 *        the end timestamp
-	 * @param instantaneous
-	 *        the instantaneous values; must be {@code BigDecimal[]}
-	 * @param accumulating
-	 *        the accumulating values; must be {@code BigDecimal[]}
-	 * @param status
-	 *        the status values; must be {@code String[]}
-	 * @param tags
-	 *        the tag values; must be {@code String[]}
-	 * @param instantaneousStats
-	 *        the instantaneous statistic values; must be {@code BigDecimal[][]}
-	 * @param accumulatingStats
-	 *        the accumulating statistic values; must be {@code BigDecimal[][]}
-	 */
-	public ReadingDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
-			Instant endTimestamp, Object instantaneous, Object accumulating, Object status, Object tags,
-			Object instantaneousStats, Object accumulatingStats) {
-		super(streamId, timestamp, aggregation, instantaneous, accumulating, status, tags,
-				instantaneousStats, accumulatingStats);
-		this.endTimestamp = endTimestamp;
-	}
-
 	@Override
 	public ReadingDatumEntity clone() {
 		return (ReadingDatumEntity) super.clone();

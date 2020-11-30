@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
@@ -74,7 +75,24 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	public static final RowMapper<AggregateDatum> MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
 			Aggregation.Month);
 
+	/** A default reading instance for null aggregates. */
+	public static final RowMapper<AggregateDatum> READING_INSTANCE = new AggregateDatumEntityRowMapper(
+			null, true);
+
+	/** A default reading instance for hourly aggregates. */
+	public static final RowMapper<AggregateDatum> READING_HOUR_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Hour, true);
+
+	/** A default reading instance for daily aggregates. */
+	public static final RowMapper<AggregateDatum> READING_DAY_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Day, true);
+
+	/** A default reading instance for monthly aggregates. */
+	public static final RowMapper<AggregateDatum> READING_MONTH_INSTANCE = new AggregateDatumEntityRowMapper(
+			Aggregation.Month, true);
+
 	private final Aggregation aggregation;
+	private final boolean readingMode;
 
 	/**
 	 * Constructor.
@@ -83,8 +101,21 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	 *        the aggregation kind to assign
 	 */
 	public AggregateDatumEntityRowMapper(Aggregation aggregation) {
+		this(aggregation, false);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param aggregation
+	 *        the aggregation kind to assign
+	 * @param readingMode
+	 *        {@literal true} to create {@link ReadingDatumEntity} instances
+	 */
+	public AggregateDatumEntityRowMapper(Aggregation aggregation, boolean readingMode) {
 		super();
 		this.aggregation = aggregation;
+		this.readingMode = readingMode;
 	}
 
 	/**
@@ -92,21 +123,23 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	 * 
 	 * @param kind
 	 *        the kind of aggregation
+	 * @param readingMode
+	 *        {@literal true} to create {@link ReadingDatumEntity} instances
 	 * @return the mapper, never {@literal null}
 	 */
-	public static RowMapper<AggregateDatum> mapperForAggregate(Aggregation kind) {
+	public static RowMapper<AggregateDatum> mapperForAggregate(Aggregation kind, boolean readingMode) {
 		RowMapper<AggregateDatum> mapper;
 		switch (kind) {
 			case Day:
-				mapper = DAY_INSTANCE;
+				mapper = readingMode ? READING_DAY_INSTANCE : DAY_INSTANCE;
 				break;
 
 			case Month:
-				mapper = MONTH_INSTANCE;
+				mapper = readingMode ? READING_MONTH_INSTANCE : MONTH_INSTANCE;
 				break;
 
 			default:
-				mapper = HOUR_INSTANCE;
+				mapper = readingMode ? READING_HOUR_INSTANCE : HOUR_INSTANCE;
 		}
 		return mapper;
 	}
@@ -131,9 +164,12 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 		BigDecimal[][] stat_i = getArray(rs, 7);
 		BigDecimal[][] stat_a = getArray(rs, 8);
 
-		return new AggregateDatumEntity(streamId, ts, aggregation,
-				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t),
-				DatumPropertiesStatistics.statisticsOf(stat_i, stat_a));
+		DatumProperties props = DatumProperties.propertiesOf(data_i, data_a, data_s, data_t);
+		DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(stat_i, stat_a);
+		if ( readingMode ) {
+			return new ReadingDatumEntity(streamId, ts, aggregation, null, props, stats);
+		}
+		return new AggregateDatumEntity(streamId, ts, aggregation, props, stats);
 	}
 
 }

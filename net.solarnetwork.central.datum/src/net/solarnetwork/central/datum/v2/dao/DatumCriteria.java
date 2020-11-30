@@ -31,6 +31,6 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
  * @version 1.0
  * @since 2.8
  */
-public interface DatumCriteria extends DatumStreamCriteria, TimeToleranceCriteria {
+public interface DatumCriteria extends DatumStreamCriteria, TimeToleranceCriteria, ReadingTypeCriteria {
 
 }

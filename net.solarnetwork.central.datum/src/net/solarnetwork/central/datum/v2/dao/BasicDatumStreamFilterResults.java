@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.BasicFilterResults;
 
 /**
@@ -41,7 +41,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, DatumPK>
 		implements DatumStreamFilterResults {
 
-	private final Map<UUID, DatumStreamMetadata> streamMetadata;
+	private final Map<UUID, ObjectDatumStreamMetadata> streamMetadata;
 
 	/**
 	 * Constructor.
@@ -57,7 +57,7 @@ public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, Dat
 	 * @param returnedResultCount
 	 *        the count of objects in {@code results}
 	 */
-	public BasicDatumStreamFilterResults(Map<UUID, DatumStreamMetadata> streamMetadata,
+	public BasicDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
 			Iterable<Datum> results, Long totalResults, int startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 		this.streamMetadata = streamMetadata;
@@ -75,7 +75,7 @@ public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, Dat
 	 * @param results
 	 *        the results iterable
 	 */
-	public BasicDatumStreamFilterResults(Map<UUID, DatumStreamMetadata> streamMetadata,
+	public BasicDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
 			Iterable<Datum> results) {
 		super(results);
 		this.streamMetadata = streamMetadata;
@@ -87,7 +87,7 @@ public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, Dat
 	}
 
 	@Override
-	public DatumStreamMetadata metadataForStream(UUID streamId) {
+	public ObjectDatumStreamMetadata metadataForStream(UUID streamId) {
 		return (streamMetadata != null ? streamMetadata.get(streamId) : null);
 	}
 

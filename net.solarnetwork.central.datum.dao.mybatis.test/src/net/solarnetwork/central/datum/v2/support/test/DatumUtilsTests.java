@@ -23,12 +23,15 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -38,10 +41,13 @@ import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
@@ -67,12 +73,98 @@ public class DatumUtilsTests {
 				decimalArray("2.1", "2.2", "2.3"), new String[] { "a", "b" }, new String[] { "t" });
 	}
 
+	private DatumPropertiesStatistics newStats() {
+		return DatumPropertiesStatistics.statisticsOf(
+		// @formatter:off
+				new BigDecimal[][] { 
+						decimalArray("60", "1.0", "2.0"), 
+						decimalArray("61", "2.0", "3.0"),
+						decimalArray("62", "3.0", "4.0"), 
+						decimalArray("63", "4.0", "5.0") },
+				new BigDecimal[][] { 
+						decimalArray("10", "0", "10"), 
+						decimalArray("20", "10", "30"),
+						decimalArray("30", "30", "60") }
+				// @formatter:on
+		);
+	}
+
 	private void assertGeneralDatumSamples(GeneralDatumSamples s) {
 		assertThat("Instantaneous keys copied", s.getInstantaneous().keySet(),
 				containsInAnyOrder("a", "b", "c", "d"));
 
 		assertThat("Accumulating keys copied", s.getAccumulating().keySet(),
 				containsInAnyOrder("e", "f", "g"));
+
+		assertThat("Status keys copied", s.getStatus().keySet(), containsInAnyOrder("h", "i"));
+
+		assertThat("Tags copied", s.getTags(), containsInAnyOrder("t"));
+	}
+
+	private void assertAggregateGeneralDatumSamples(GeneralDatumSamples s) {
+		assertThat("Instantaneous keys copied with stats", s.getInstantaneous().keySet(),
+				containsInAnyOrder("a", "a_min", "a_max", "b", "b_min", "b_max", "c", "c_min", "c_max",
+						"d", "d_min", "d_max"));
+
+		// @formatter:off
+		assertThat("Instantaneous prop 'a' with stats", s.getI(), allOf(
+				hasEntry("a", new BigDecimal("1.1")), 
+				hasEntry("a_min", new BigDecimal("1.0")),
+				hasEntry("a_max", new BigDecimal("2.0"))));
+		assertThat("Instantaneous prop 'd' with stats", s.getI(), allOf(
+				hasEntry("d", new BigDecimal("1.4")), 
+				hasEntry("d_min", new BigDecimal("4.0")),
+				hasEntry("d_max", new BigDecimal("5.0"))));
+		// @formatter:on
+
+		assertThat("Accumulating keys copied", s.getAccumulating().keySet(),
+				containsInAnyOrder("e", "f", "g"));
+
+		// @formatter:off
+		assertThat("Accumluating values from props", s.getA(), allOf(
+				hasEntry("e", new BigDecimal("2.1")),
+				hasEntry("f", new BigDecimal("2.2")),
+				hasEntry("g", new BigDecimal("2.3"))));
+		// @formatter:on
+
+		assertThat("Status keys copied", s.getStatus().keySet(), containsInAnyOrder("h", "i"));
+
+		assertThat("Tags copied", s.getTags(), containsInAnyOrder("t"));
+	}
+
+	private void assertReadingGeneralDatumSamples(GeneralDatumSamples s) {
+		assertThat("Instantaneous keys copied with stats along with accumualting stat keys",
+				s.getInstantaneous().keySet(),
+				containsInAnyOrder("a", "a_min", "a_max", "b", "b_min", "b_max", "c", "c_min", "c_max",
+						"d", "d_min", "d_max", "e_start", "e_end", "f_start", "f_end", "g_start",
+						"g_end"));
+
+		// @formatter:off
+		assertThat("Instantaneous prop 'a' with stats", s.getI(), allOf(
+				hasEntry("a", new BigDecimal("1.1")), 
+				hasEntry("a_min", new BigDecimal("1.0")),
+				hasEntry("a_max", new BigDecimal("2.0"))));
+		assertThat("Instantaneous prop 'd' with stats", s.getI(), allOf(
+				hasEntry("d", new BigDecimal("1.4")), 
+				hasEntry("d_min", new BigDecimal("4.0")),
+				hasEntry("d_max", new BigDecimal("5.0"))));
+		assertThat("Accumluating prop 'e' stats", s.getI(), allOf(
+				hasEntry("e_start", new BigDecimal("0")),
+				hasEntry("e_end", new BigDecimal("10"))));
+		assertThat("Accumluating prop 'g' stats", s.getI(), allOf(
+				hasEntry("g_start", new BigDecimal("30")),
+				hasEntry("g_end", new BigDecimal("60"))));
+		// @formatter:on
+
+		assertThat("Accumulating keys copied", s.getAccumulating().keySet(),
+				containsInAnyOrder("e", "f", "g"));
+
+		// @formatter:off
+		assertThat("Accumluating values from stats", s.getA(), allOf(
+				hasEntry("e", new BigDecimal("10")),
+				hasEntry("f", new BigDecimal("20")),
+				hasEntry("g", new BigDecimal("30"))));
+		// @formatter:on
 
 		assertThat("Status keys copied", s.getStatus().keySet(), containsInAnyOrder("h", "i"));
 
@@ -115,6 +207,58 @@ public class DatumUtilsTests {
 		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
 				nullValue());
 		assertGeneralDatumSamples(d.getSamples());
+	}
+
+	@Test
+	public void toGeneralNodeDatum_aggregate() {
+		// GIVEN
+		DatumProperties props = newProps();
+		DatumPropertiesStatistics stats = newStats();
+		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, props, stats);
+		NodeDatumStreamMetadata meta = newNodeMeta();
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
+
+		// THEN
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
+		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
+				nullValue());
+		assertAggregateGeneralDatumSamples(d.getSamples());
+	}
+
+	@Test
+	public void toGeneralNodeDatum_reading() {
+		// GIVEN
+		DatumProperties props = newProps();
+		DatumPropertiesStatistics stats = newStats();
+		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, null, props, stats);
+		NodeDatumStreamMetadata meta = newNodeMeta();
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
+
+		// THEN
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
+		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
+				nullValue());
+		assertReadingGeneralDatumSamples(d.getSamples());
 	}
 
 	@Test

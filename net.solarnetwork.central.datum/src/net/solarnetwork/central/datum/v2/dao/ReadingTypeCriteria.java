@@ -1,5 +1,5 @@
 /* ==================================================================
- * ObjectDatumStreamMetadata.java - 5/11/2020 4:01:03 pm
+ * ReadingTypeCriteria.java - 1/12/2020 11:16:21 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,43 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.domain;
+package net.solarnetwork.central.datum.v2.dao;
+
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 
 /**
- * Object-specific (node or location) datum stream metadata.
+ * Search criteria for reading type.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface ObjectDatumStreamMetadata extends DatumStreamMetadata {
+public interface ReadingTypeCriteria {
 
 	/**
-	 * Get the object ID.
+	 * Get the datum reading type.
 	 * 
-	 * @return the object ID
+	 * @return the type
 	 */
-	Long getObjectId();
-
-	/**
-	 * Get the source ID.
-	 * 
-	 * @return the source ID
-	 */
-	String getSourceId();
-
-	/**
-	 * Get the optional custom JSON metadata.
-	 * 
-	 * @return the JSON metadata
-	 */
-	String getMetaJson();
-
-	/**
-	 * Get the object datum kind.
-	 * 
-	 * @return the kind
-	 */
-	ObjectDatumKind getKind();
+	DatumReadingType getReadingType();
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.executeFilterQuery;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
@@ -199,12 +200,13 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final RowMapper<Datum> mapper = filter.getAggregation() != null
-				? (RowMapper) AggregateDatumEntityRowMapper.mapperForAggregate(filter.getAggregation())
+				? (RowMapper) mapperForAggregate(filter.getAggregation(),
+						filter.getReadingType() != null)
 				: DatumEntityRowMapper.INSTANCE;
 
 		FilterResults<Datum, DatumPK> results = executeFilterQuery(jdbcTemplate, filter, sql, mapper);
 
-		Map<UUID, DatumStreamMetadata> metaMap = null;
+		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {

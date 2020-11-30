@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -44,13 +45,17 @@ import net.solarnetwork.central.datum.domain.SourceFilter;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.DateRangeFilter;
@@ -281,6 +286,83 @@ public class DatumUtils {
 	}
 
 	/**
+	 * Populate a {@link GeneralDatumSamples} instance with instantaneous
+	 * property statistics.
+	 * 
+	 * <p>
+	 * This will populate {@code _min} and {@code _max} instantaneous properties
+	 * for all available instantaneous property statistic values.
+	 * </p>
+	 * 
+	 * @param s
+	 *        the samples instance to populate
+	 * @param stats
+	 *        the statistics
+	 * @param meta
+	 *        the metadata
+	 */
+	public static void populateGeneralDatumSamplesInstantaneousStatistics(GeneralDatumSamples s,
+			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
+		final int len = stats.getInstantaneousLength();
+		if ( len < 1 ) {
+			return;
+		}
+		BigDecimal[][] iStats = stats.getInstantaneous();
+		String[] propNames = meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous);
+		if ( propNames == null || propNames.length > len ) {
+			return;
+		}
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal[] propStats = iStats[i]; // count, min, max
+			if ( propStats == null || propStats.length < 3 ) {
+				continue;
+			}
+			s.putSampleValue(GeneralDatumSamplesType.Instantaneous, propNames[i] + "_min", propStats[1]);
+			s.putSampleValue(GeneralDatumSamplesType.Instantaneous, propNames[i] + "_max", propStats[2]);
+		}
+	}
+
+	/**
+	 * Populate a {@link GeneralDatumSamples} instance with accumulating
+	 * property statistics.
+	 * 
+	 * <p>
+	 * This will populate {@code _start} and {@code _end} instantaneous
+	 * properties for all available accumulating property statistic values, and
+	 * an accumulating property value for the difference statistic value.
+	 * </p>
+	 * 
+	 * @param s
+	 *        the samples instance to populate
+	 * @param stats
+	 *        the statistics
+	 * @param meta
+	 *        the metadata
+	 */
+	public static void populateGeneralDatumSamplesAccumulatingStatistics(GeneralDatumSamples s,
+			DatumPropertiesStatistics stats, ObjectDatumStreamMetadata meta) {
+		final int len = stats.getAccumulatingLength();
+		if ( len < 1 ) {
+			return;
+		}
+		BigDecimal[][] aStats = stats.getAccumulating();
+		String[] propNames = meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating);
+		if ( propNames == null || propNames.length > len ) {
+			return;
+		}
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal[] propStats = aStats[i]; // diff, start, end
+			if ( propStats == null || propStats.length < 3 ) {
+				continue;
+			}
+			s.putSampleValue(GeneralDatumSamplesType.Accumulating, propNames[i], propStats[0]);
+			s.putSampleValue(GeneralDatumSamplesType.Instantaneous, propNames[i] + "_start",
+					propStats[1]);
+			s.putSampleValue(GeneralDatumSamplesType.Instantaneous, propNames[i] + "_end", propStats[2]);
+		}
+	}
+
+	/**
 	 * Create a new {@link ReportingGeneralNodeDatum} out of a {@link Datum}.
 	 * 
 	 * @param datum
@@ -291,25 +373,38 @@ public class DatumUtils {
 	 *         {@literal null} or {@code meta} is not an instance of
 	 *         {@link NodeDatumStreamMetadata}
 	 */
-	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum, DatumStreamMetadata meta) {
-		if ( datum == null || !(meta instanceof NodeDatumStreamMetadata) ) {
+	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum,
+			ObjectDatumStreamMetadata meta) {
+		if ( datum == null || meta.getKind() != ObjectDatumKind.Node ) {
 			return null;
 		}
-		NodeDatumStreamMetadata objMeta = (NodeDatumStreamMetadata) meta;
-		DateTimeZone zone = objMeta.getTimeZoneId() != null ? DateTimeZone.forID(objMeta.getTimeZoneId())
+		DateTimeZone zone = meta.getTimeZoneId() != null ? DateTimeZone.forID(meta.getTimeZoneId())
 				: DateTimeZone.UTC;
 
 		// use ReportingGeneralNodeDatum to support localDateTime property
 		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum();
 		gnd.setCreated(new DateTime(datum.getTimestamp().toEpochMilli(), zone));
 		gnd.setLocalDateTime(gnd.getCreated().toLocalDateTime());
-		gnd.setNodeId(objMeta.getObjectId());
-		gnd.setSourceId(objMeta.getSourceId());
+		gnd.setNodeId(meta.getObjectId());
+		gnd.setSourceId(meta.getSourceId());
 
+		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+		// populate normal data
+		if ( datum instanceof AggregateDatum ) {
+			DatumPropertiesStatistics stats = ((AggregateDatum) datum).getStatistics();
+			populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
+		}
 		DatumProperties props = datum.getProperties();
 		if ( props != null ) {
-			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
 			populateGeneralDatumSamples(s, props, meta);
+		}
+		if ( datum instanceof ReadingDatum ) {
+			// populate reading (accumulating) data from stats
+			s.getA().clear();
+			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
+			populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
+		}
+		if ( !s.isEmpty() ) {
 			gnd.setSamples(s);
 		}
 
@@ -413,25 +508,37 @@ public class DatumUtils {
 	 *         {@link LocationDatumStreamMetadata}
 	 */
 	public static ReportingGeneralLocationDatum toGeneralLocationDatum(Datum datum,
-			DatumStreamMetadata meta) {
-		if ( datum == null || !(meta instanceof LocationDatumStreamMetadata) ) {
+			ObjectDatumStreamMetadata meta) {
+		if ( datum == null || meta.getKind() != ObjectDatumKind.Location ) {
 			return null;
 		}
-		LocationDatumStreamMetadata objMeta = (LocationDatumStreamMetadata) meta;
-		DateTimeZone zone = objMeta.getTimeZoneId() != null ? DateTimeZone.forID(objMeta.getTimeZoneId())
+		DateTimeZone zone = meta.getTimeZoneId() != null ? DateTimeZone.forID(meta.getTimeZoneId())
 				: DateTimeZone.UTC;
 
 		// use ReportingGeneralLocationDatum to support localDateTime property
 		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum();
 		gnd.setCreated(new DateTime(datum.getTimestamp().toEpochMilli(), zone));
 		gnd.setLocalDateTime(gnd.getCreated().toLocalDateTime());
-		gnd.setLocationId(objMeta.getObjectId());
-		gnd.setSourceId(objMeta.getSourceId());
+		gnd.setLocationId(meta.getObjectId());
+		gnd.setSourceId(meta.getSourceId());
 
+		GeneralLocationDatumSamples s = new GeneralLocationDatumSamples();
+		// populate normal data
+		if ( datum instanceof AggregateDatum ) {
+			DatumPropertiesStatistics stats = ((AggregateDatum) datum).getStatistics();
+			populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
+		}
 		DatumProperties props = datum.getProperties();
 		if ( props != null ) {
-			GeneralLocationDatumSamples s = new GeneralLocationDatumSamples();
 			populateGeneralDatumSamples(s, props, meta);
+		}
+		if ( datum instanceof ReadingDatum ) {
+			// populate reading (accumulating) data from stats
+			s.getA().clear();
+			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
+			populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
+		}
+		if ( !s.isEmpty() ) {
 			gnd.setSamples(s);
 		}
 

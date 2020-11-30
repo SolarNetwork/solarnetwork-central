@@ -122,8 +122,8 @@ public class BasicLocationDatumStreamMetadata extends BasicObjectDatumStreamMeta
 	public BasicLocationDatumStreamMetadata(UUID streamId, String timeZoneId, Long locationId,
 			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
 			String[] statusProperties, String metaJson) {
-		super(streamId, timeZoneId, locationId, sourceId, instantaneousProperties,
-				accumulatingProperties, statusProperties, metaJson);
+		super(streamId, timeZoneId, ObjectDatumKind.Location, locationId, sourceId,
+				instantaneousProperties, accumulatingProperties, statusProperties, metaJson);
 	}
 
 	@Override
