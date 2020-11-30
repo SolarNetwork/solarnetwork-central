@@ -1,5 +1,5 @@
 /* ==================================================================
- * StreamMetadataCriteria.java - 19/11/2020 4:05:59 pm
+ * SecurityTokenCriteria.java - 30/11/2020 10:40:13 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,16 +22,41 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * Search criteria for stream metadata related data.
+ * Search criteria for security token related data.
  * 
  * @author matt
  * @version 1.0
- * @since 3.8
+ * @since 2.8
  */
-public interface StreamMetadataCriteria
-		extends StreamCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SortCriteria {
+public interface SecurityTokenCriteria {
+
+	/**
+	 * Get the first token ID.
+	 * 
+	 * <p>
+	 * This returns the first available token ID from the {@link #getTokenIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first token ID, or {@literal null} if not available
+	 */
+	String getTokenId();
+
+	/**
+	 * Get an array of token IDs.
+	 * 
+	 * @return array of token IDs (may be {@literal null})
+	 */
+	String[] getTokenIds();
+
+	/**
+	 * Test if this filter has any token criteria.
+	 * 
+	 * @return {@literal true} if the token ID is non-null
+	 */
+	default boolean hasTokenCriteria() {
+		return getTokenId() != null;
+	}
 
 }

@@ -53,7 +53,7 @@ public interface DatumStreamMetadataDao {
 	 *        the search filter
 	 * @return the matching results, never {@literal null}
 	 */
-	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectMetadataCriteria filter);
+	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
 
 	/**
 	 * Find all available node datum stream metadata for a given search filter.
@@ -62,7 +62,7 @@ public interface DatumStreamMetadataDao {
 	 *        the search filter
 	 * @return the matching results, never {@literal null}
 	 */
-	Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter);
+	Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(ObjectStreamCriteria filter);
 
 	/**
 	 * Find all available location datum stream metadata for a given search
@@ -72,8 +72,7 @@ public interface DatumStreamMetadataDao {
 	 *        the search filter
 	 * @return the matching results, never {@literal null}
 	 */
-	Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
-			LocationMetadataCriteria filter);
+	Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(ObjectStreamCriteria filter);
 
 	/**
 	 * Replace the JSON metadata associated with an object datum stream.

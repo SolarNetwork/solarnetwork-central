@@ -318,19 +318,28 @@ public final class DatumSqlUtils {
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getSourceIds() != null ) {
-			buf.append("\tAND meta.source_id ~ ANY(ARRAY(\n");
-			buf.append("		SELECT r.r\n");
-			buf.append("		FROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n");
-			buf.append("		))\n");
+			buf.append(
+					"\tAND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))\n");
 			paramCount += 1;
 		}
 		if ( filter.getStreamIds() != null ) {
-			buf.append("\tAND meta.stream_id = ANY(?)\n");
+			buf.append("\tAND s.stream_id = ANY(?)\n");
 			paramCount += 1;
 		}
 		if ( filter.getUserIds() != null ) {
 			buf.append("\tAND un.user_id = ANY(?)\n");
 			paramCount += 1;
+		}
+		if ( filter.getTokenIds() != null ) {
+			buf.append("\tAND ut.auth_token = ANY(?)\n");
+			buf.append("	AND (COALESCE(jsonb_array_length(ut.jpolicy->'sourceIds'), 0) < 1\n");
+			buf.append(
+					"		OR s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(jsonb_array_elements_text(ut.jpolicy->'sourceIds'))))\n");
+			buf.append("	)\n");
+			buf.append("	AND (COALESCE(jsonb_array_length(ut.jpolicy->'nodeIds'), 0) < 1\n");
+			buf.append(
+					"		OR s.node_id = ANY(ARRAY(SELECT solarcommon.jsonb_array_to_bigint_array(ut.jpolicy->'nodeIds')))\n");
+			buf.append("	)\n");
 		}
 		return paramCount;
 	}
@@ -353,7 +362,7 @@ public final class DatumSqlUtils {
 	public static int whereNodeMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND meta.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ANY(?)\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -378,7 +387,7 @@ public final class DatumSqlUtils {
 	public static int whereLocationMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND meta.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ANY(?)\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -408,10 +417,10 @@ public final class DatumSqlUtils {
 	public static int whereDatumMetadata(DatumStreamCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocationId() != null ) {
-			buf.append("\tAND meta.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ANY(?)\n");
 			paramCount += 1;
 		} else if ( filter.getNodeId() != null ) {
-			buf.append("\tAND meta.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ANY(?)\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -420,13 +429,6 @@ public final class DatumSqlUtils {
 
 	/**
 	 * A metadata select style, to optimize queries.
-	 * 
-	 * <p>
-	 * TODO
-	 * </p>
-	 * 
-	 * @author matt
-	 * @version 1.0
 	 */
 	public enum MetadataSelectStyle {
 		/**
@@ -512,32 +514,137 @@ public final class DatumSqlUtils {
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+
 			StringBuilder buf) {
-		buf.append("SELECT meta.stream_id, meta.node_id, meta.source_id");
+		return nodeMetadataFilterSql(filter, style, null, null, null, buf);
+	}
+
+	/**
+	 * Generate SQL query to find node metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param streamFilter
+	 *        the filter whose date or local date range to use
+	 * @param tableName
+	 *        the datum table name to use
+	 * @param aggregation
+	 *        the aggregation level of the datum table name to determine the SQL
+	 *        column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
+			StringBuilder buf) {
+		buf.append("SELECT s.stream_id, s.node_id, s.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
-			buf.append(", meta.names_i, meta.names_a, meta.names_s, meta.jdata, 'n'::CHARACTER AS kind");
+			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'n'::CHARACTER AS kind");
 		}
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
-		buf.append("\nFROM solardatm.da_datm_meta meta\n");
-		if ( filter.getUserIds() != null ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
+		buf.append("\nFROM solardatm.da_datm_meta s\n");
+		if ( filter != null && (filter.getUserIds() != null || filter.getTokenIds() != null) ) {
+			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
+		}
+		if ( filter != null && filter.getTokenIds() != null ) {
+			buf.append("INNER JOIN solaruser.user_auth_token ut ON ut.user_id = un.user_id\n");
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
 		if ( style != MetadataSelectStyle.Minimum ) {
-			buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id\n");
+			buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id\n");
 			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id\n");
 		}
 		int paramCount = 0;
-		if ( filter != null ) {
+		if ( filter != null || streamFilter != null ) {
 			StringBuilder where = new StringBuilder();
-			paramCount += whereNodeMetadata(filter, where);
+			if ( streamFilter != null ) {
+				// NOTE join added directly to buf
+				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
+						buf);
+			}
+			if ( filter != null ) {
+				paramCount += whereNodeMetadata(filter, where);
+			}
 			if ( where.length() > 0 ) {
 				buf.append("WHERE ");
 				buf.append(where.substring(5));
 			}
 		}
+		return paramCount;
+	}
+
+	/**
+	 * Generate SQL {@code INNER JOIN} clause for stream metadata to a datum
+	 * table on the most extreme datum available (earliest or latest).
+	 * 
+	 * @param tableName
+	 *        the datum table name
+	 * @param timeColumnName
+	 *        the datum table time column name, e.g. {@literal ts} or
+	 *        {@literal ts_start}
+	 * @param latest
+	 *        {@literal true} for the highest time value and a join table name
+	 *        of {@literal late}, {@literal false} for the smallest time value
+	 *        and a join table name of {@literal early}
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	public static void joinStreamMetadataExtremeDatumSql(String tableName, String timeColumnName,
+			boolean latest, StringBuilder buf) {
+		buf.append("INNER JOIN LATERAL (\n");
+		buf.append("		SELECT datum.*\n");
+		buf.append("		FROM ").append(tableName).append(" datum\n");
+		buf.append("		WHERE datum.stream_id = s.stream_id\n");
+		buf.append("		ORDER BY datum.").append(timeColumnName);
+		if ( latest ) {
+			buf.append(" DESC");
+		}
+		buf.append("\n");
+		buf.append("		LIMIT 1\n");
+		buf.append("	) ").append(latest ? "late" : "early").append(" ON ")
+				.append(latest ? "late" : "early").append(".stream_id = s.stream_id\n");
+	}
+
+	/**
+	 * Generate a SQL {@literal INNER JOIN} clause to limit metadata to a date
+	 * range.
+	 * 
+	 * @param filter
+	 *        the filter whose date or local date range to use
+	 * @param tableName
+	 *        the datum table name to use
+	 * @param aggregation
+	 *        the aggregation level of the datum table name to determine the SQL
+	 *        column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int joinStreamMetadataDateRangeSql(ObjectStreamCriteria filter, String tableName,
+			Aggregation aggregation, StringBuilder buf) {
+		StringBuilder where = new StringBuilder();
+		int paramCount = filter.hasLocalDateRange()
+				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
+						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
+				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
+		if ( paramCount < 1 ) {
+			return 0;
+		}
+		buf.append("INNER JOIN LATERAL (");
+		buf.append("	SELECT stream_id");
+		buf.append("	FROM ").append(tableName).append(" datum");
+		buf.append("	WHERE datum.stream_id = s.stream_id");
+		buf.append(where);
+		buf.append("	LIMIT 1");
+		buf.append(") d ON d.stream_id = s.stream_id\n");
 		return paramCount;
 	}
 
@@ -572,25 +679,62 @@ public final class DatumSqlUtils {
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
-		buf.append("SELECT meta.stream_id, meta.loc_id, meta.source_id");
+		return locationMetadataFilterSql(filter, style, null, null, null, buf);
+	}
+
+	/**
+	 * Generate SQL query to find location metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param streamFilter
+	 *        optional stream filter to use date ranges from
+	 * @param streamFilter
+	 *        the filter whose date or local date range to use
+	 * @param tableName
+	 *        the datum table name to use
+	 * @param aggregation
+	 *        the aggregation level of the datum table name to determine the SQL
+	 *        column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
+			StringBuilder buf) {
+		buf.append("SELECT s.stream_id, s.loc_id, s.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
-			buf.append(", meta.names_i, meta.names_a, meta.names_s, meta.jdata, 'l'::CHARACTER AS kind");
+			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'l'::CHARACTER AS kind");
 		}
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
-		buf.append("\nFROM solardatm.da_loc_datm_meta meta\n");
-		if ( filter.getUserIds() != null ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id\n");
+		buf.append("\nFROM solardatm.da_loc_datm_meta s\n");
+		if ( filter != null && filter.getUserIds() != null ) {
+			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
 		if ( style != MetadataSelectStyle.Minimum ) {
-			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = meta.loc_id\n");
+			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = s.loc_id\n");
 		}
 		int paramCount = 0;
-		if ( filter != null ) {
+
+		if ( filter != null || streamFilter != null ) {
 			StringBuilder where = new StringBuilder();
-			paramCount += whereLocationMetadata(filter, where);
+			if ( streamFilter != null ) {
+				// NOTE join added directly to buf
+				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
+						buf);
+			}
+			if ( filter != null ) {
+				paramCount += whereLocationMetadata(filter, where);
+			}
 			if ( where.length() > 0 ) {
 				buf.append("WHERE ");
 				buf.append(where.substring(5));
@@ -652,6 +796,11 @@ public final class DatumSqlUtils {
 			}
 			if ( filter.getUserIds() != null ) {
 				Array array = con.createArrayOf("bigint", filter.getUserIds());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			if ( filter.getTokenIds() != null ) {
+				Array array = con.createArrayOf("text", filter.getTokenIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}

@@ -41,9 +41,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
@@ -88,7 +86,7 @@ public class DaoDatumMetadataBizTests {
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.emptyList());
 
@@ -114,7 +112,7 @@ public class DaoDatumMetadataBizTests {
 		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.emptyList());
 
@@ -136,7 +134,7 @@ public class DaoDatumMetadataBizTests {
 	@Test
 	public void findGeneralNodeDatumMetadata() {
 		// GIVEN
-		Capture<NodeMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicNodeDatumStreamMetadata meta = BasicNodeDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
 				"UTC", 1L, TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(criteriaCaptor))).andReturn(singleton(meta));
@@ -169,7 +167,7 @@ public class DaoDatumMetadataBizTests {
 		meta2.putInfoValue("oof", "rab");
 		meta2.addTag("mab");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicNodeDatumStreamMetadata streamMeta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
@@ -207,7 +205,7 @@ public class DaoDatumMetadataBizTests {
 		meta2.putInfoValue("watts", "unitType", "SI");
 		meta2.addTag("mab");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicNodeDatumStreamMetadata streamMeta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(),
 				"UTC", TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
@@ -252,7 +250,7 @@ public class DaoDatumMetadataBizTests {
 		meta.putInfoValue("foo", "bar");
 		meta.addTag("bam");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.emptyList());
 
@@ -278,7 +276,7 @@ public class DaoDatumMetadataBizTests {
 		meta.putInfoValue("watts", "unit", "W");
 		meta.addTag("bam");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.emptyList());
 
@@ -300,7 +298,7 @@ public class DaoDatumMetadataBizTests {
 	@Test
 	public void findGeneralLocationDatumMetadata() {
 		// GIVEN
-		Capture<LocationMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicLocationDatumStreamMetadata meta = BasicLocationDatumStreamMetadata
 				.emptyMeta(UUID.randomUUID(), "UTC", 1L, TEST_SOURCE_ID);
 		expect(metaDao.findLocationDatumStreamMetadata(capture(criteriaCaptor)))
@@ -334,7 +332,7 @@ public class DaoDatumMetadataBizTests {
 		meta2.putInfoValue("oof", "rab");
 		meta2.addTag("mab");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicLocationDatumStreamMetadata streamMeta = new BasicLocationDatumStreamMetadata(
 				UUID.randomUUID(), "UTC", TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
@@ -372,7 +370,7 @@ public class DaoDatumMetadataBizTests {
 		meta2.putInfoValue("watts", "unitType", "SI");
 		meta2.addTag("mab");
 
-		Capture<ObjectMetadataCriteria> criteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
 		BasicLocationDatumStreamMetadata streamMeta = new BasicLocationDatumStreamMetadata(
 				UUID.randomUUID(), "UTC", TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));

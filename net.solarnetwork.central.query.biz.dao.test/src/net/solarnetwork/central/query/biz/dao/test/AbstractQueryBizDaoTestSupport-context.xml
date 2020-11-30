@@ -13,8 +13,6 @@
 		http://www.springframework.org/schema/util
 		http://www.springframework.org/schema/util/spring-util-4.2.xsd">
 
-	<bean id="daoQueryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz"/>
-
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
 		<property name="configurationProperties">

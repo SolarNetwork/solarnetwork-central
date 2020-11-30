@@ -1,12 +1,9 @@
 INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id
-	FROM solardatm.da_datm_meta meta
-	WHERE meta.node_id = ANY(?)
-		AND meta.source_id ~ ANY(ARRAY(
-			SELECT r.r
-			FROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)
-			))
+	SELECT s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta s
+	WHERE s.node_id = ANY(?)
+		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 SELECT datum.stream_id, datum.ts_start, 'M' AS agg_kind
 FROM s

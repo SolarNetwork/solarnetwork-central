@@ -1,7 +1,7 @@
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id
-	FROM solardatm.da_datm_meta meta
-	WHERE meta.node_id = ANY(?)
+	SELECT s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta s
+	WHERE s.node_id = ANY(?)
 )
 SELECT datum.stream_id, 
 	datum.ts, 

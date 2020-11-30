@@ -26,6 +26,7 @@ import java.util.List;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -72,5 +73,14 @@ public interface DatumEntityDao
 	 * @return the stored primary key
 	 */
 	DatumPK store(GeneralLocationDatum datum);
+
+	/**
+	 * Find date intervals for the available data for a set of datum streams.
+	 * 
+	 * @param filter
+	 *        the search filter
+	 * @return the matching date intervals
+	 */
+	Iterable<DatumDateInterval> findAvailableInterval(DatumStreamCriteria filter);
 
 }

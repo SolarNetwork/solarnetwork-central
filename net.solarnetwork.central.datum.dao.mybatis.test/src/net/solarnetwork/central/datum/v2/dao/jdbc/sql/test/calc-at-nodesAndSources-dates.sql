@@ -1,11 +1,8 @@
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id
-	FROM solardatm.da_datm_meta meta 
-	WHERE meta.node_id = ANY(?)
-		AND meta.source_id ~ ANY(ARRAY(
-			SELECT r.r
-			FROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)
-			))
+	SELECT s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta s 
+	WHERE s.node_id = ANY(?)
+		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 SELECT (solardatm.calc_datm_at(d, ?)).*
 	, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id

@@ -47,7 +47,7 @@ import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -108,7 +108,7 @@ public class DaoDatumMaintenanceBizTests {
 		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "America/New_York", 1L,
 				"a", null, null, null);
 
-		Capture<NodeMetadataCriteria> metaFilterCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFilterCaptor)))
 				.andReturn(singleton(meta));
 
@@ -156,7 +156,7 @@ public class DaoDatumMaintenanceBizTests {
 		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "America/New_York", 1L,
 				"a", null, null, null);
 
-		Capture<NodeMetadataCriteria> metaFilterCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFilterCaptor)))
 				.andReturn(singleton(meta));
 

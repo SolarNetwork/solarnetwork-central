@@ -33,12 +33,13 @@ import net.solarnetwork.domain.SimplePagination;
  * @version 1.0
  */
 public class BasicCoreCriteria extends SimplePagination
-		implements LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria {
+		implements LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
 	private Long[] userIds;
+	private String[] tokenIds;
 
 	/**
 	 * Set a single location ID.
@@ -197,6 +198,45 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	public void setUserIds(Long[] userIds) {
 		this.userIds = userIds;
+	}
+
+	/**
+	 * Set a single token ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single token ID at a
+	 * time. The token ID is still stored on the {@code tokenIds} array, as the
+	 * first value. Calling this method replaces any existing {@code tokenIds}
+	 * value with a new array containing just the ID passed into this method.
+	 * </p>
+	 * 
+	 * @param tokenId
+	 *        the token ID
+	 */
+	@JsonSetter
+	public void setTokenId(String tokenId) {
+		setTokenIds(tokenId == null ? null : new String[] { tokenId });
+	}
+
+	@Override
+	@JsonIgnore
+	public String getTokenId() {
+		return (this.tokenIds == null || this.tokenIds.length < 1 ? null : this.tokenIds[0]);
+	}
+
+	@Override
+	public String[] getTokenIds() {
+		return tokenIds;
+	}
+
+	/**
+	 * Set the token IDs.
+	 * 
+	 * @param tokenIds
+	 *        the tokenIds to set
+	 */
+	public void setTokenIds(String[] tokenIds) {
+		this.tokenIds = tokenIds;
 	}
 
 }

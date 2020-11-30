@@ -29,9 +29,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Generate dynamic SQL for a "find node metadata" query.
@@ -42,7 +44,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
  */
 public class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
 
-	private final ObjectMetadataCriteria filter;
+	private final ObjectStreamCriteria filter;
 	private final ObjectDatumKind kind;
 
 	/**
@@ -58,7 +60,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectObjectStreamMetadata(ObjectMetadataCriteria filter) {
+	public SelectObjectStreamMetadata(ObjectStreamCriteria filter) {
 		this(filter, filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node);
 	}
 
@@ -70,7 +72,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectObjectStreamMetadata(ObjectMetadataCriteria filter, ObjectDatumKind kind) {
+	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");
@@ -86,9 +88,11 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		if ( kind == ObjectDatumKind.Location ) {
-			DatumSqlUtils.locationMetadataFilterSql(filter, buf);
+			DatumSqlUtils.locationMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
+					"solardatm.da_datm", Aggregation.None, buf);
 		} else {
-			DatumSqlUtils.nodeMetadataFilterSql(filter, buf);
+			DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
+					"solardatm.da_datm", Aggregation.None, buf);
 		}
 		StringBuilder order = new StringBuilder();
 		int idx = orderBySorts(filter.getSorts(),
@@ -106,7 +110,13 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int p = 0;
+		if ( filter.hasLocalDateRange() ) {
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
+		} else {
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		}
+		DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, p);
 		return stmt;
 	}
 

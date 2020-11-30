@@ -24,16 +24,22 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
+import static net.solarnetwork.util.JodaDateUtils.toJoda;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.joda.time.LocalDateTime;
 import org.joda.time.Period;
 import org.joda.time.ReadableInstant;
-import org.joda.time.ReadableInterval;
 import org.joda.time.ReadablePartial;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +47,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarLocationDao;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -55,6 +59,15 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
+import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
@@ -68,18 +81,20 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public class DaoQueryBiz implements QueryBiz {
 
-	private GeneralNodeDatumDao generalNodeDatumDao;
-	private GeneralLocationDatumDao generalLocationDatumDao;
+	private final DatumEntityDao datumDao;
+	private final DatumStreamMetadataDao metaDao;
 	private SolarLocationDao solarLocationDao;
 	private UserNodeDao userNodeDao;
 	private int filteredResultsLimit = 1000;
@@ -92,65 +107,86 @@ public class DaoQueryBiz implements QueryBiz {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
-	 * Default constructor.
+	 * Constructor.
+	 * 
+	 * @param datumDao
+	 *        the datum DAO
+	 * @param metaDao
+	 *        the metadata DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DaoQueryBiz() {
+	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
+		if ( datumDao == null ) {
+			throw new IllegalArgumentException("The datumDao argument must not be null.");
+		}
+		this.datumDao = datumDao;
+		if ( metaDao == null ) {
+			throw new IllegalArgumentException("The metaDao argument must not be null.");
+		}
+		this.metaDao = metaDao;
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
-		ReadableInterval interval = generalNodeDatumDao.getReportableInterval(nodeId, sourceId);
-		if ( interval == null ) {
-			return null;
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(nodeId);
+		filter.setSourceId(sourceId);
+		filter.setObjectKind(ObjectDatumKind.Node);
+		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(filter);
+		for ( DatumDateInterval interval : results ) {
+			return new ReportableInterval(
+					new Interval(toJoda(interval.getStart().atZone(interval.getZone())),
+							toJoda(interval.getEnd().atZone(interval.getZone()))),
+					TimeZone.getTimeZone(interval.getZone()));
 		}
-		DateTimeZone tz = null;
-		if ( interval.getChronology() != null ) {
-			tz = interval.getChronology().getZone();
-		}
-		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
+		return null;
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
-		return generalNodeDatumDao.getAvailableSources(filter);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setObjectKind(ObjectDatumKind.Node);
+		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
+		return stream(results.spliterator(), false).map(NodeDatumStreamMetadata::getSourceId)
+				.collect(toCollection(LinkedHashSet::new));
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
-		return generalNodeDatumDao.findAvailableSources(filter);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setObjectKind(ObjectDatumKind.Node);
+		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
+		return stream(results.spliterator(), false)
+				.map(e -> new NodeSourcePK(e.getNodeId(), e.getSourceId()))
+				.collect(toCollection(LinkedHashSet::new));
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<NodeSourcePK> findAvailableSources(SecurityActor actor, DatumFilter filter) {
-		Set<NodeSourcePK> sources = null;
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		if ( c == null ) {
+			c = new BasicDatumCriteria();
+		}
+		c.setObjectKind(ObjectDatumKind.Node);
 		if ( actor instanceof SecurityNode ) {
 			Long nodeId = ((SecurityNode) actor).getNodeId();
-			DatumFilterCommand f = new DatumFilterCommand();
-			f.setNodeId(nodeId);
-			if ( filter != null ) {
-				f.setStartDate(filter.getStartDate());
-				f.setEndDate(filter.getEndDate());
-			}
-			Set<String> sourceIds = generalNodeDatumDao.getAvailableSources(f);
-			if ( sourceIds != null && !sourceIds.isEmpty() ) {
-				sources = new LinkedHashSet<NodeSourcePK>(sourceIds.size());
-				for ( String sourceId : sourceIds ) {
-					sources.add(new NodeSourcePK(nodeId, sourceId));
-				}
-			}
+			c.setNodeId(nodeId);
 		} else if ( actor instanceof SecurityToken ) {
 			String tokenId = ((SecurityToken) actor).getToken();
-			sources = userNodeDao.findSourceIdsForToken(tokenId, filter);
-		}
-		if ( sources == null ) {
+			c.setTokenId(tokenId);
+		} else {
 			return Collections.emptySet();
 		}
-		return sources;
+		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
+		return stream(results.spliterator(), false)
+				.map(e -> new NodeSourcePK(e.getNodeId(), e.getSourceId()))
+				.collect(toCollection(LinkedHashSet::new));
 	}
 
 	@Override
@@ -174,8 +210,14 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return generalNodeDatumDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
-				limitFilterMaximum(max));
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
+				limitFilterOffset(offset), limitFilterMaximum(max));
+		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
 	@Override
@@ -183,8 +225,14 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return generalNodeDatumDao.findAggregationFiltered(enforceGeneralAggregateLevel(filter),
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
+		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
 	private Aggregation enforceAggregation(final AggregationFilter filter) {
@@ -391,21 +439,31 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getLocationAvailableSources(Long locationId, DateTime start, DateTime end) {
-		return generalLocationDatumDao.getAvailableSources(locationId, start, end);
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.setLocationId(locationId);
+		c.setStartDate(JodaDateUtils.fromJodaToInstant(start));
+		c.setEndDate(JodaDateUtils.fromJodaToInstant(end));
+		c.setObjectKind(ObjectDatumKind.Location);
+		Iterable<LocationDatumStreamMetadata> results = metaDao.findLocationDatumStreamMetadata(c);
+		return stream(results.spliterator(), false).map(LocationDatumStreamMetadata::getSourceId)
+				.collect(toCollection(LinkedHashSet::new));
 	}
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReportableInterval getLocationReportableInterval(Long locationId, String sourceId) {
-		ReadableInterval interval = generalLocationDatumDao.getReportableInterval(locationId, sourceId);
-		if ( interval == null ) {
-			return null;
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocationId(locationId);
+		filter.setSourceId(sourceId);
+		filter.setObjectKind(ObjectDatumKind.Location);
+		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(filter);
+		for ( DatumDateInterval interval : results ) {
+			return new ReportableInterval(
+					new Interval(toJoda(interval.getStart().atZone(interval.getZone())),
+							toJoda(interval.getEnd().atZone(interval.getZone()))),
+					TimeZone.getTimeZone(interval.getZone()));
 		}
-		DateTimeZone tz = null;
-		if ( interval.getChronology() != null ) {
-			tz = interval.getChronology().getZone();
-		}
-		return new ReportableInterval(interval, (tz == null ? null : tz.toTimeZone()));
+		return null;
 	}
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
@@ -429,15 +487,6 @@ public class DaoQueryBiz implements QueryBiz {
 
 	public void setFilteredResultsLimit(int filteredResultsLimit) {
 		this.filteredResultsLimit = filteredResultsLimit;
-	}
-
-	public GeneralNodeDatumDao getGeneralNodeDatumDao() {
-		return generalNodeDatumDao;
-	}
-
-	@Autowired
-	public void setGeneralNodeDatumDao(GeneralNodeDatumDao generalNodeDatumDao) {
-		this.generalNodeDatumDao = generalNodeDatumDao;
 	}
 
 	/**
@@ -491,15 +540,6 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
 		this.solarLocationDao = solarLocationDao;
-	}
-
-	public GeneralLocationDatumDao getGeneralLocationDatumDao() {
-		return generalLocationDatumDao;
-	}
-
-	@Autowired
-	public void setGeneralLocationDatumDao(GeneralLocationDatumDao generalLocationDatumDao) {
-		this.generalLocationDatumDao = generalLocationDatumDao;
 	}
 
 	/**

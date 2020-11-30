@@ -72,7 +72,7 @@ public class DatumSqlUtilsTests {
 
 		// THEN
 		assertThat("Node IDs parameter added", count, equalTo(1));
-		assertThat(buf.toString().contains("WHERE meta.node_id = ANY(?)"), equalTo(true));
+		assertThat(buf.toString().contains("WHERE s.node_id = ANY(?)"), equalTo(true));
 	}
 
 	@Test
@@ -87,8 +87,8 @@ public class DatumSqlUtilsTests {
 
 		// THEN
 		assertThat("Source IDs parameter added", count, equalTo(1));
-		assertThat(buf.toString().contains("WHERE meta.source_id ~ ANY(ARRAY(\n\t\tSELECT r.r\n"
-				+ "\t\tFROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n\t\t))"),
+		assertThat(buf.toString().contains(
+				"WHERE s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))"),
 				equalTo(true));
 	}
 
@@ -104,7 +104,7 @@ public class DatumSqlUtilsTests {
 
 		// THEN
 		assertThat("Node IDs parameter added", count, equalTo(1));
-		assertThat(buf.toString().contains("WHERE meta.stream_id = ANY(?)"), equalTo(true));
+		assertThat(buf.toString().contains("WHERE s.stream_id = ANY(?)"), equalTo(true));
 	}
 
 	@Test
@@ -135,9 +135,9 @@ public class DatumSqlUtilsTests {
 
 		// THEN
 		assertThat("Node IDs and source IDs parameters added", count, equalTo(2));
-		assertThat(buf.toString().contains("WHERE meta.node_id = ANY(?)"), equalTo(true));
-		assertThat(buf.toString().contains("AND meta.source_id ~ ANY(ARRAY(\n\t\tSELECT r.r\n"
-				+ "\t\tFROM unnest(?) s(p), solarcommon.ant_pattern_to_regexp(s.p) r(r)\n\t\t))"),
+		assertThat(buf.toString().contains("WHERE s.node_id = ANY(?)"), equalTo(true));
+		assertThat(buf.toString().contains(
+				"AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))"),
 				equalTo(true));
 	}
 

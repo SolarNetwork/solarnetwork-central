@@ -1,7 +1,7 @@
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id
-	FROM solardatm.da_datm_meta meta
-	INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
+	SELECT s.stream_id, s.node_id, s.source_id
+	FROM solardatm.da_datm_meta s
+	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
 	WHERE un.user_id = ANY(?)
 )
 SELECT datum.ts_start AS aud_ts,

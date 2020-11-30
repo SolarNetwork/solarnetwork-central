@@ -51,6 +51,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -156,7 +157,7 @@ public class DaoDatumAuxiliaryBizTests {
 		GeneralNodeDatumAuxiliary genAux = testGenAux();
 
 		// look up meta based on node+source
-		Capture<NodeMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaCriteriaCaptor)))
 				.andReturn(singleton(meta));
@@ -183,7 +184,7 @@ public class DaoDatumAuxiliaryBizTests {
 				TEST_SOURCE_ID);
 
 		// look up meta based on node+source
-		Capture<NodeMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaCriteriaCaptor)))
 				.andReturn(singleton(meta));
@@ -208,7 +209,7 @@ public class DaoDatumAuxiliaryBizTests {
 				TEST_SOURCE_ID);
 
 		// look up meta based on node+source
-		Capture<NodeMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaCriteriaCaptor)))
 				.andReturn(singleton(meta));
@@ -242,7 +243,7 @@ public class DaoDatumAuxiliaryBizTests {
 				genAux.getSamplesFinal(), genAux.getSamplesStart());
 
 		// look up meta based on node+source
-		Capture<NodeMetadataCriteria> metaCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaCriteriaCaptor)))
 				.andReturn(singleton(meta));
@@ -270,14 +271,14 @@ public class DaoDatumAuxiliaryBizTests {
 				genAux.getSamplesFinal(), genAux.getSamplesStart());
 
 		// look up meta based on node+source (for from)
-		Capture<NodeMetadataCriteria> metaFromCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaFromCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata metaFrom = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID,
 				TEST_SOURCE_ID);
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFromCriteriaCaptor)))
 				.andReturn(singleton(metaFrom));
 
 		// look up meta based on node+source (for to)
-		Capture<NodeMetadataCriteria> metaToCriteriaCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaToCriteriaCaptor = new Capture<>();
 		NodeDatumStreamMetadata metaTo = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, "b");
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaToCriteriaCaptor)))
 				.andReturn(singleton(metaTo));
@@ -309,7 +310,7 @@ public class DaoDatumAuxiliaryBizTests {
 
 		NodeDatumStreamMetadata meta = emptyMeta(streamId, "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
 
-		Capture<NodeMetadataCriteria> metaFilterCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
 		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFilterCaptor)))
 				.andReturn(singleton(meta));
 

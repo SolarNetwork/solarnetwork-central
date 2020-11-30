@@ -42,8 +42,9 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  * @since 2.8
  */
-public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeCriteria, UserCriteria,
-		NodeMetadataCriteria, LocationMetadataCriteria, PaginationCriteria, SortCriteria {
+public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
+		AggregationCriteria, UserCriteria, SecurityTokenCriteria, NodeMetadataCriteria,
+		LocationMetadataCriteria, PaginationCriteria, SortCriteria {
 
 	/**
 	 * Test if this filter has any location, node, or source criteria.

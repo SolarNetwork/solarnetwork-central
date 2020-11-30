@@ -91,6 +91,8 @@ import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.util.JodaDateUtils;
@@ -1777,7 +1779,33 @@ public final class DatumDbUtils {
 		return jdbcTemplate.query(
 				String.format("SELECT * FROM solardatm.%s ORDER BY stream_id, ts_start", tableName),
 				mapper);
+	}
 
+	/**
+	 * Insert a security token.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC accessor
+	 * @param tokenId
+	 *        the token ID
+	 * @param tokenSecret
+	 *        the token secret
+	 * @param userId
+	 *        the owner user ID
+	 * @param status
+	 *        the status
+	 * @param type
+	 *        the type
+	 * @param policy
+	 *        the policy
+	 */
+	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
+			String tokenSecret, Long userId, UserAuthTokenStatus status, UserAuthTokenType type,
+			String policy) {
+		jdbcTemplate.update(
+				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
+						+ " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::jsonb)",
+				tokenId, tokenSecret, userId, status.name(), type.name(), policy);
 	}
 
 }

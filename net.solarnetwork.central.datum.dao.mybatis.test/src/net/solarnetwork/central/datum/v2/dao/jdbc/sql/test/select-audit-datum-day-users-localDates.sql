@@ -1,8 +1,8 @@
 WITH s AS (
-	SELECT meta.stream_id, meta.node_id, meta.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
-	FROM solardatm.da_datm_meta meta
-	INNER JOIN solaruser.user_node un ON un.node_id = meta.node_id
-	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = meta.node_id
+	SELECT s.stream_id, s.node_id, s.source_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+	FROM solardatm.da_datm_meta s
+	INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
+	LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
 	LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
 	WHERE un.user_id = ANY(?)
 )

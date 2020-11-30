@@ -42,7 +42,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
@@ -201,8 +201,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	}
 
 	private <T extends ObjectSourcePK> Set<T> findMetadataForMetadataFilter(
-			ObjectMetadataCriteria criteria, String metadataFilter,
-			BiFunction<Long, String, T> factory) {
+			ObjectStreamCriteria criteria, String metadataFilter, BiFunction<Long, String, T> factory) {
 		// parse metadata filter into SearchFilter
 		SearchFilter filter = SearchFilter.forLDAPSearchFilterString(metadataFilter);
 		if ( filter == null ) {

@@ -36,6 +36,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -68,6 +72,73 @@ public class SelectObjectStreamMetadataTests {
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("node-stream-meta-nodesAndSources.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(Instant.now());
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql,
+				equalToTextResource("node-stream-meta-nodes-dates.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void prep_streamMeta_nodesAndSources_absoluteDates() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(Instant.now());
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		stmt.setTimestamp(1, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(2, Timestamp.from(filter.getEndDate()));
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(3, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(),
+				equalToTextResource("node-stream-meta-nodes-dates.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void sql_streamMeta_nodesAndSources_localDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setLocalEndDate(LocalDateTime.now());
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql,
+				equalToTextResource("node-stream-meta-nodes-localDates.sql", TestSqlResources.class));
 	}
 
 	@Test
@@ -126,6 +197,64 @@ public class SelectObjectStreamMetadataTests {
 				"node-stream-meta-nodesAndSourcesAndUsers.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
+	}
+
+	@Test
+	public void sql_streamMeta_nodesAndSourcesAndTokens() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setTokenId("foobar");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-nodesAndSourcesAndTokens.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void prep_streamMeta_nodesAndSourcesAndTokens() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setTokenId("foobar");
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		Array tokenIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getTokenIds()))).andReturn(tokenIdsArray);
+		stmt.setArray(3, tokenIdsArray);
+		tokenIdsArray.free();
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray, tokenIdsArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"node-stream-meta-nodesAndSourcesAndTokens.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray, tokenIdsArray);
 	}
 
 	@Test

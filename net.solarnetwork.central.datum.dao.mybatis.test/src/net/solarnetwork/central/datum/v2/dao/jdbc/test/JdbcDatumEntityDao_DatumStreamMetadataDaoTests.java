@@ -23,20 +23,32 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.lang.String.format;
+import static java.time.Instant.now;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.JsonUtils.getStringMap;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +63,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
@@ -62,6 +77,12 @@ import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -128,6 +149,123 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void findObjectMetadata_nodes_absoluteDates_dateOutOfBounds() throws IOException {
+		// GIVEN
+		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
+		insertDatumStream(log, jdbcTemplate, datums, TEST_TZ);
+		ZonedDateTime start = JodaDateUtils.fromJoda(datums.get(0).getCreated());
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setStartDate(start.toInstant().minusSeconds(1));
+		filter.setEndDate(start.toInstant());
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Result returned", metas, hasSize(0));
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_token_withPolicy() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
+				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestLocation(TEST_LOC_ID, "UTC");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "test");
+
+		String tokenId = "01234567890123456789";
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID)))
+				.withSourceIds(new HashSet<>(asList("/test/source/102", "/test/source/104"))).build();
+		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				UserAuthTokenStatus.Active, UserAuthTokenType.ReadNodeData,
+				JsonUtils.getJSONString(policy, null));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setTokenId(tokenId);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Results", metas, hasSize(1));
+		assertThat("Result stream", metas.get(0).getStreamId(), equalTo(streamId));
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_token_withPolicy_noMatchPolicySource() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
+				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestLocation(TEST_LOC_ID, "UTC");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "test");
+
+		String tokenId = "01234567890123456789";
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID)))
+				.withSourceIds(new HashSet<>(asList("/test/source/NO"))).build();
+		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				UserAuthTokenStatus.Active, UserAuthTokenType.ReadNodeData,
+				JsonUtils.getJSONString(policy, null));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setTokenId(tokenId);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Results", metas, hasSize(0));
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_token_withPolicy_noMatchPolicyNode() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
+				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestLocation(TEST_LOC_ID, "UTC");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "test");
+
+		String tokenId = "01234567890123456789";
+		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID - 1L)))
+				.withSourceIds(new HashSet<>(asList("/test/source/102", "/test/source/104"))).build();
+		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				UserAuthTokenStatus.Active, UserAuthTokenType.ReadNodeData,
+				JsonUtils.getJSONString(policy, null));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setTokenId(tokenId);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Results", metas, hasSize(0));
+	}
+
+	@Test
 	public void findObjectMetadata_locations_withJson() {
 		// GIVEN
 		final List<LocationDatumStreamMetadata> data = new ArrayList<>(3);
@@ -159,6 +297,57 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
 			assertDatumStreamMetadata("location meta", meta, expected);
 		}
+	}
+
+	@Test
+	public void findObjectMetadata_locations_absoluteDates() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, "UTC", 1L, "a",
+				new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		DatumEntity datum = new DatumEntity(streamId, now(), now(),
+				propertiesOf(decimalArray("1.1", "1.2"), decimalArray("2.1"), null, null));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocationId(1L);
+		filter.setStartDate(datum.getCreated());
+		filter.setEndDate(datum.getCreated().plusSeconds(1));
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		List<ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toList());
+		assertThat("Results returned", metas, hasSize(1));
+		assertThat("Result stream", metas.get(0).getStreamId(), equalTo(streamId));
+	}
+
+	@Test
+	public void findObjectMetadata_locations_absoluteDates_dateOutOfBounds() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, "UTC", 1L, "a",
+				new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		DatumEntity datum = new DatumEntity(streamId, now(), now(),
+				propertiesOf(decimalArray("1.1", "1.2"), decimalArray("2.1"), null, null));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocationId(1L);
+		filter.setStartDate(datum.getCreated().minusSeconds(1));
+		filter.setEndDate(datum.getCreated());
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		List<ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toList());
+		assertThat("Results returned", metas, hasSize(0));
 	}
 
 	@Test

@@ -78,9 +78,6 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	@Before
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
-
-		//setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
-		//setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
 	}
 
 	private static DatumProperties newTestProps() {

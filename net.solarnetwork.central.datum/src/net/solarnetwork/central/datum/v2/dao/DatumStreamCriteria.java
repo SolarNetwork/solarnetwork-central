@@ -33,6 +33,6 @@ import net.solarnetwork.dao.RecentCriteria;
  * @since 2.8
  */
 public interface DatumStreamCriteria
-		extends ObjectStreamCriteria, AggregationCriteria, RecentCriteria, OptimizedQueryCriteria {
+		extends ObjectStreamCriteria, RecentCriteria, OptimizedQueryCriteria {
 
 }

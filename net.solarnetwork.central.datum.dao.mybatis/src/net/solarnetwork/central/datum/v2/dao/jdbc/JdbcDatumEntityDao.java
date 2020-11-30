@@ -54,14 +54,13 @@ import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumSelect;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRange;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
@@ -69,6 +68,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
@@ -228,6 +228,12 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	}
 
 	@Override
+	public Iterable<DatumDateInterval> findAvailableInterval(DatumStreamCriteria filter) {
+		return jdbcTemplate.query(new SelectDatumAvailableTimeRange(filter),
+				DatumDateIntervalRowMapper.INSTANCE);
+	}
+
+	@Override
 	public ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter) {
 		if ( filter.getStreamId() == null ) {
 			throw new IllegalArgumentException("A stream ID is required.");
@@ -248,10 +254,10 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	}
 
 	@Override
-	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectMetadataCriteria filter) {
+	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
 		ObjectDatumKind kind = filter.getObjectKind();
-		if ( kind == null && filter instanceof DatumStreamCriteria ) {
-			kind = ((DatumStreamCriteria) filter).effectiveObjectKind();
+		if ( kind == null ) {
+			kind = filter.effectiveObjectKind();
 		} else {
 			kind = ObjectDatumKind.Node;
 		}
@@ -260,14 +266,14 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	}
 
 	@Override
-	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(NodeMetadataCriteria filter) {
+	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(ObjectStreamCriteria filter) {
 		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node),
 				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
 	}
 
 	@Override
 	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
-			LocationMetadataCriteria filter) {
+			ObjectStreamCriteria filter) {
 		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location),
 				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
 	}

@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
@@ -225,8 +225,9 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * {@inheritDoc}
 	 * 
 	 * @since 1.3
+	 * @deprecated since 1.4
 	 */
-	@Override
+	@Deprecated
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<NodeSourcePK> findSourceIdsForToken(String tokenId, DatumFilter filter) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
