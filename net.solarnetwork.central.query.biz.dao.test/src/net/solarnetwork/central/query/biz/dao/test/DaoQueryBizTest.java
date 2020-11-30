@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -59,9 +60,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -376,6 +380,8 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				sortDescriptors, 1, 2);
 
 		// THEN
+		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
 		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
 				arrayContaining(filter.getNodeIds()));
 		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
@@ -432,6 +438,8 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, 1, 2);
 
 		// THEN
+		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
 		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
 				equalTo(filter.getAggregation()));
 		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
@@ -463,4 +471,121 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				// @formatter:on
 		));
 	}
+
+	@Test
+	public void findGeneralLocationDatum() {
+		// GIVEN
+		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
+				null);
+		DatumProperties props = testProps();
+		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setLocationId(TEST_LOC_ID);
+		filter.setStartDate(new DateTime().hourOfDay().roundFloorCopy());
+		filter.setEndDate(filter.getStartDate().plusHours(1));
+		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
+		FilterResults<GeneralLocationDatumFilterMatch> results = biz.findGeneralLocationDatum(filter,
+				sortDescriptors, 1, 2);
+
+		// THEN
+		assertThat("Query kind is location", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Location));
+		assertThat("Query location IDs", filterCaptor.getValue().getLocationIds(),
+				arrayContaining(filter.getLocationIds()));
+		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
+				equalTo(fromJodaToInstant(filter.getStartDate())));
+		assertThat("Query end date", filterCaptor.getValue().getEndDate(),
+				equalTo(fromJodaToInstant(filter.getEndDate())));
+		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
+				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
+
+		GeneralLocationDatumFilterMatch match = results.iterator().next();
+		assertThat("Match loc from meta", match.getId(), equalTo(new GeneralLocationDatumPK(TEST_LOC_ID,
+				toJoda(d.getTimestamp(), meta.getTimeZoneId()), TEST_SOURCE_ID)));
+		assertThat("Match actually implements reporting", match,
+				instanceOf(ReportingGeneralLocationDatumMatch.class));
+		assertThat("Converted datum props", ((ReportingGeneralLocationDatumMatch) match).getSampleData(),
+				allOf(
+				// @formatter:off
+				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("a1", props.getAccumulating()[0])
+				// @formatter:on
+				));
+	}
+
+	@Test
+	public void findAggregateGeneralLocationDatum() {
+		// GIVEN
+		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
+				null);
+		DatumProperties props = testProps();
+		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setLocationId(TEST_LOC_ID);
+		filter.setStartDate(new DateTime().hourOfDay().roundFloorCopy());
+		filter.setEndDate(filter.getStartDate().plusHours(1));
+		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
+		FilterResults<ReportingGeneralLocationDatumMatch> results = biz
+				.findAggregateGeneralLocationDatum(filter, sortDescriptors, 1, 2);
+
+		// THEN
+		assertThat("Query kind is location", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Location));
+		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
+				equalTo(filter.getAggregation()));
+		assertThat("Query location IDs", filterCaptor.getValue().getLocationIds(),
+				arrayContaining(filter.getLocationIds()));
+		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
+				equalTo(fromJodaToInstant(filter.getStartDate())));
+		assertThat("Query end date", filterCaptor.getValue().getEndDate(),
+				equalTo(fromJodaToInstant(filter.getEndDate())));
+		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
+				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralLocationDatumMatch match = results.iterator().next();
+		assertThat("Match loc from meta", match.getId(), equalTo(new GeneralLocationDatumPK(TEST_LOC_ID,
+				toJoda(d.getTimestamp(), meta.getTimeZoneId()), TEST_SOURCE_ID)));
+		assertThat("Match local date from meta", match.getLocalDate(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalDate())));
+		assertThat("Match local time from meta", match.getLocalTime(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalTime())));
+		assertThat("Converted datum props", match.getSampleData(), allOf(
+		// @formatter:off
+				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("a1", props.getAccumulating()[0])
+				// @formatter:on
+		));
+	}
+
 }

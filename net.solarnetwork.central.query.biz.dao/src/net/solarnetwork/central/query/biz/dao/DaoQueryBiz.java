@@ -27,6 +27,7 @@ package net.solarnetwork.central.query.biz.dao;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralLocationDatum;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
 import static net.solarnetwork.util.JodaDateUtils.toJoda;
 import java.util.Collections;
@@ -212,6 +213,7 @@ public class DaoQueryBiz implements QueryBiz {
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
+		c.setObjectKind(ObjectDatumKind.Node);
 		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
 		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
@@ -227,6 +229,7 @@ public class DaoQueryBiz implements QueryBiz {
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
+		c.setObjectKind(ObjectDatumKind.Node);
 		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
@@ -411,8 +414,15 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
 			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
-		return generalLocationDatumDao.findFiltered(filter, sortDescriptors, limitFilterOffset(offset),
-				limitFilterMaximum(max));
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
+				limitFilterOffset(offset), limitFilterMaximum(max));
+		c.setObjectKind(ObjectDatumKind.Location);
+		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		List<GeneralLocationDatumFilterMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
 	@Override
@@ -420,8 +430,15 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return generalLocationDatumDao.findAggregationFiltered(enforceGeneralAggregateLevel(filter),
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
+		c.setObjectKind(ObjectDatumKind.Location);
+		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		List<ReportingGeneralLocationDatumMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
 	private AggregateGeneralLocationDatumFilter enforceGeneralAggregateLevel(

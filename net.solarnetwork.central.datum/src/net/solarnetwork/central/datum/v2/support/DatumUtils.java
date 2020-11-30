@@ -423,7 +423,7 @@ public class DatumUtils {
 
 		// use ReportingGeneralLocationDatum to support localDateTime property
 		ReportingGeneralLocationDatum gnd = new ReportingGeneralLocationDatum();
-		gnd.setCreated(new DateTime(datum.getTimestamp(), zone));
+		gnd.setCreated(new DateTime(datum.getTimestamp().toEpochMilli(), zone));
 		gnd.setLocalDateTime(gnd.getCreated().toLocalDateTime());
 		gnd.setLocationId(objMeta.getObjectId());
 		gnd.setSourceId(objMeta.getSourceId());
