@@ -147,6 +147,33 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void findObjectMetadata_nodes_absoluteDates() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		DatumEntity datum = new DatumEntity(streamId, now(), now(),
+				propertiesOf(decimalArray("1.1", "1.2"), decimalArray("2.1"), null, null));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setStartDate(datum.getCreated());
+		filter.setEndDate(datum.getCreated().plusSeconds(1));
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		List<ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toList());
+		assertThat("Results returned", metas, hasSize(1));
+		assertThat("Result stream", metas.get(0).getStreamId(), equalTo(streamId));
+	}
+
+	@Test
 	public void findObjectMetadata_nodes_absoluteDates_dateOutOfBounds() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());

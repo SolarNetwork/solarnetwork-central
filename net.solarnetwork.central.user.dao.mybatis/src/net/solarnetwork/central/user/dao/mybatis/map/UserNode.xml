@@ -152,23 +152,4 @@
 			node_id
 	</select>
 
-	<resultMap id="NodeSourcePKResult" type="net.solarnetwork.central.datum.domain.NodeSourcePK">
-		<id property="nodeId" column="node_id"/>
-		<id property="sourceId" column="source_id"/>
-	</resultMap>
-	
-	<select id="find-source-ids-for-token-id" resultMap="NodeSourcePKResult" parameterType="map">
-		SELECT DISTINCT
-			node_id,
-			source_id
-		FROM
-			solaruser.user_auth_token_sources
-		WHERE 
-			auth_token = #{id}
-			<if test="startDate != null">AND ts &gt;= ${startDate}</if>
-			<if test="endDate != null">AND ts &lt; ${startDate}</if>
-		ORDER BY
-			node_id, source_id
-	</select>
-	
 </mapper>
