@@ -182,11 +182,6 @@
 		<property name="transactionManager" ref="txManager"/>
 	</bean>
 	
-	<bean id="generalNodeDatumAuxiliaryDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumAuxiliaryDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
 	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
 		<property name="messageSource" ref="messageSource"/>
@@ -245,7 +240,6 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_Reading.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_StaleAggregate.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_YearAggregate.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumAuxiliary.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/AuditNodeDatum.xml</value>

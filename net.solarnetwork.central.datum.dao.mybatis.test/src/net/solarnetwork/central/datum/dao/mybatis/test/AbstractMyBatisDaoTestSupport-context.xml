@@ -65,7 +65,6 @@
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_Reading.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_StaleAggregate.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum_YearAggregate.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumAuxiliary.xml</value>
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/AuditNodeDatum.xml</value>
