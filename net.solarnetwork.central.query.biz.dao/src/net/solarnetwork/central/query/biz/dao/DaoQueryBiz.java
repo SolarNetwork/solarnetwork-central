@@ -355,8 +355,6 @@ public class DaoQueryBiz implements QueryBiz {
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
-		// TODO return generalNodeDatumDao.findAggregationFilteredReadings(filter, readingType, tolerance,
-		// sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -364,63 +362,16 @@ public class DaoQueryBiz implements QueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(JodaDateUtils.fromJoda(tolerance));
-		net.solarnetwork.dao.FilterResults<ReadingDatum, DatumPK> daoResults = readingDao
+		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);
-		if ( filter.getLocalStartDate() != null ) {
-			switch (readingType) {
-				case NearestDifference:
-					return generalNodeDatumDao.findAccumulation(filter, filter.getLocalStartDate(),
-							filter.getLocalEndDate(), tolerance);
-
-				case Difference:
-					return generalNodeDatumDao.findAccumulation(filter, filter.getLocalStartDate(),
-							filter.getLocalEndDate(), null);
-
-				case DifferenceWithin:
-					return generalNodeDatumDao.findAccumulationWithin(filter, filter.getLocalStartDate(),
-							filter.getLocalEndDate(), null);
-
-				case CalculatedAtDifference:
-					return generalNodeDatumDao.calculateBetween(filter, filter.getLocalStartDate(),
-							filter.getLocalEndDate(), tolerance);
-
-				case CalculatedAt:
-					return generalNodeDatumDao.calculateAt(filter, filter.getLocalStartDate(),
-							tolerance);
-
-				default:
-					throw new IllegalArgumentException(
-							"The DatumReadingType [" + readingType + "] is not supported");
-			}
-		}
-
-		// absolute dates
-		switch (readingType) {
-			case NearestDifference:
-				return generalNodeDatumDao.findAccumulation(filter, filter.getStartDate(),
-						filter.getEndDate(), tolerance);
-
-			case Difference:
-				return generalNodeDatumDao.findAccumulation(filter, filter.getStartDate(),
-						filter.getEndDate(), null);
-
-			case DifferenceWithin:
-				return generalNodeDatumDao.findAccumulationWithin(filter, filter.getStartDate(),
-						filter.getEndDate(), null);
-
-			case CalculatedAtDifference:
-				return generalNodeDatumDao.calculateBetween(filter, filter.getStartDate(),
-						filter.getEndDate(), tolerance);
-
-			case CalculatedAt:
-				return generalNodeDatumDao.calculateAt(filter, filter.getStartDate(), tolerance);
-
-			default:
-				throw new IllegalArgumentException(
-						"The DatumReadingType [" + readingType + "] is not supported");
-		}
+		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.collect(toList());
+		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
+				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
 	@Override

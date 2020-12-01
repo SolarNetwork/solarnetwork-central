@@ -81,6 +81,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -91,6 +92,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -682,6 +684,72 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
 		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReportingGeneralNodeDatumMatch match = results.iterator().next();
+		assertThat("Match node from meta", match.getId(), equalTo(new GeneralNodeDatumPK(TEST_NODE_ID,
+				toJoda(d.getTimestamp(), meta.getTimeZoneId()), TEST_SOURCE_ID)));
+		assertThat("Match local date from meta", match.getLocalDate(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalDate())));
+		assertThat("Match local time from meta", match.getLocalTime(),
+				equalTo(toJoda(d.getTimestamp().atOffset(ZoneOffset.UTC).toLocalTime())));
+		assertThat("Converted datum props", match.getSampleData(), allOf(
+		// @formatter:off
+				hasEntry("i1", props.getInstantaneous()[0]),
+				hasEntry("i1_min", stats.getInstantaneous()[0][1]),
+				hasEntry("i1_max", stats.getInstantaneous()[0][2]),
+				hasEntry("i2", props.getInstantaneous()[1]),
+				hasEntry("i2_min", stats.getInstantaneous()[1][1]),
+				hasEntry("i2_max", stats.getInstantaneous()[1][2]),
+				hasEntry("a1", stats.getAccumulating()[0][0]),
+				hasEntry("a1_start", stats.getAccumulating()[0][1]),
+				hasEntry("a1_end", stats.getAccumulating()[0][2])
+				// @formatter:on
+		));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void findFilteredReading() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
+		DatumProperties props = testProps();
+		DatumPropertiesStatistics stats = testStats();
+		ReadingDatumEntity d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(), Aggregation.Day,
+				Instant.now(), props, stats);
+		BasicObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<ReadingDatumCriteria> filterCaptor = new Capture<>();
+		expect(readingDao.findDatumReadingFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setAggregate(Aggregation.Day);
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setStartDate(new DateTime().hourOfDay().roundFloorCopy());
+		filter.setEndDate(filter.getStartDate().plusHours(1));
+		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredReading(filter,
+				DatumReadingType.DifferenceWithin, Period.months(1));
+
+		// THEN
+		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
+				equalTo(DatumReadingType.DifferenceWithin));
+		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
+		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
+				equalTo(filter.getAggregation()));
+		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
+				arrayContaining(filter.getNodeIds()));
+		assertThat("Query start date", filterCaptor.getValue().getStartDate(),
+				equalTo(fromJodaToInstant(filter.getStartDate())));
+		assertThat("Query end date", filterCaptor.getValue().getEndDate(),
+				equalTo(fromJodaToInstant(filter.getEndDate())));
 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
