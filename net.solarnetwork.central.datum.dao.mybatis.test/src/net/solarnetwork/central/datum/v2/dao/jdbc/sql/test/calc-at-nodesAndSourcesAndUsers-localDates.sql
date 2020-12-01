@@ -8,7 +8,7 @@ WITH s AS (
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 		AND un.user_id = ANY(?)
 )
-SELECT (solardatm.calc_datm_at(d, ?)).*
+SELECT (solardatm.calc_datm_at(d, ? AT TIME ZONE s.time_zone)).*
 	, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id
 FROM s
 INNER JOIN solardatm.find_datm_around(s.stream_id, ? AT TIME ZONE s.time_zone, ?) d ON TRUE

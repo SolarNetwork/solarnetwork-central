@@ -356,4 +356,31 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 				start.plusHours(1).minusMinutes(1), decimalArray("25", "105", "130")));
 	}
 
+	@Test
+	public void calcAt_nodeAndSource() {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-01.txt").values().iterator().next()
+				.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.CalculatedAt);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.plusMinutes(8).toInstant());
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReadingDatum d = results.iterator().next();
+		assertReading("CalcualtedAt reading has props without stats", d,
+				new ReadingDatumEntity(streamId, filter.getStartDate(), null, null,
+						propertiesOf(decimalArray("1.28", "2.9"), decimalArray("104"), null, null),
+						null));
+	}
+
 }

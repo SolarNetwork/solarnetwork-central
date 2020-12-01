@@ -35,6 +35,7 @@ import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 
 /**
@@ -54,7 +55,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	 */
 	public static Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);
 
-	private final DatumCriteria filter;
+	private final ReadingDatumCriteria filter;
 
 	/**
 	 * Constructor.
@@ -64,7 +65,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectDatumCalculatedAt(DatumCriteria filter) {
+	public SelectDatumCalculatedAt(ReadingDatumCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");
@@ -79,7 +80,11 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);
 		buf.append(")\n");
-		buf.append("SELECT (solardatm.calc_datm_at(d, ?)).*\n");
+		buf.append("SELECT (solardatm.calc_datm_at(d, ?");
+		if ( filter.hasLocalStartDate() ) {
+			buf.append(" AT TIME ZONE s.time_zone");
+		}
+		buf.append(")).*\n");
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.find_datm_around(s.stream_id");
@@ -111,9 +116,11 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
 		if ( filter.hasLocalStartDate() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
+			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
 		} else {
-			stmt.setTimestamp(++p,
-					Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now()));
+			Timestamp t = Timestamp.from(filter.getStartDate() != null ? filter.getStartDate() : now());
+			stmt.setTimestamp(++p, t);
+			stmt.setTimestamp(++p, t);
 		}
 		Period t = filter.getTimeTolerance();
 		if ( t == null ) {

@@ -29,7 +29,6 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.sql.Array;
@@ -183,24 +182,17 @@ public class SelectDatumCalculatedAtTests {
 		stmt.setArray(3, userIdsArray);
 		userIdsArray.free();
 
-		Capture<Timestamp> startCaptor = new Capture<>();
-		stmt.setTimestamp(eq(4), capture(startCaptor));
-
-		Capture<Object> toleranceCaptor = new Capture<>();
-		stmt.setObject(eq(5), capture(toleranceCaptor), eq(Types.OTHER));
+		stmt.setTimestamp(4, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(5, Timestamp.from(filter.getStartDate()));
+		stmt.setObject(6, filter.getTimeTolerance(), Types.OTHER);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new SelectDatumCalculatedAt(filter)
-				.createPreparedStatement(con);
+		PreparedStatement result = new SelectDatumCalculatedAt(filter).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		assertThat("Start timestamp", startCaptor.getValue(),
-				equalTo(Timestamp.from(filter.getStartDate())));
-		assertThat("Tolerance prarameter", toleranceCaptor.getValue(),
-				equalTo(filter.getTimeTolerance()));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 	}
 
@@ -237,21 +229,17 @@ public class SelectDatumCalculatedAtTests {
 		stmt.setArray(3, userIdsArray);
 		userIdsArray.free();
 
-		stmt.setObject(eq(4), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
-
-		Capture<Object> toleranceCaptor = new Capture<>();
-		stmt.setObject(eq(5), capture(toleranceCaptor), eq(Types.OTHER));
+		stmt.setObject(4, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(5, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(6, filter.getTimeTolerance(), Types.OTHER);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
-		PreparedStatement result = new SelectDatumCalculatedAt(filter)
-				.createPreparedStatement(con);
+		PreparedStatement result = new SelectDatumCalculatedAt(filter).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		assertThat("Tolerance prarameter", toleranceCaptor.getValue(),
-				equalTo(filter.getTimeTolerance()));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray, userIdsArray);
 	}
 

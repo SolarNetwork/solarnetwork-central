@@ -97,6 +97,10 @@ public class SelectReadingDifference
 				buf.append("find_datm_diff_within_rows");
 				break;
 
+			case CalculatedAtDifference:
+				buf.append("find_datm_diff_at_rows");
+				break;
+
 			default:
 				throw new UnsupportedOperationException(
 						"Reading type " + filter.getReadingType() + " not supported.");
@@ -107,7 +111,8 @@ public class SelectReadingDifference
 		} else {
 			buf.append(", ?, ?");
 		}
-		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
+		if ( filter.getReadingType() == DatumReadingType.NearestDifference
+				|| filter.getReadingType() == DatumReadingType.CalculatedAtDifference ) {
 			buf.append(", ?");
 		}
 		buf.append(") d ON TRUE\n");
@@ -140,7 +145,8 @@ public class SelectReadingDifference
 			stmt.setTimestamp(++p,
 					Timestamp.from(filter.getEndDate() != null ? filter.getEndDate() : now()));
 		}
-		if ( filter.getReadingType() == DatumReadingType.NearestDifference ) {
+		if ( filter.getReadingType() == DatumReadingType.NearestDifference
+				|| filter.getReadingType() == DatumReadingType.CalculatedAtDifference ) {
 			Period t = filter.getTimeTolerance();
 			if ( t == null ) {
 				t = DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE;

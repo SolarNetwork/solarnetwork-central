@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.cache.Cache;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
@@ -43,6 +44,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
@@ -60,12 +62,14 @@ import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumSelect;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRange;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumCalculatedAt;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
@@ -84,6 +88,7 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
@@ -324,21 +329,40 @@ public class JdbcDatumEntityDao
 			throw new IllegalArgumentException("The filter reading type must be provided.");
 		}
 		PreparedStatementCreator sql = null;
-		switch (filter.getReadingType()) {
+		DatumReadingType readingType = filter.getReadingType();
+		switch (readingType) {
 			case Difference:
 			case DifferenceWithin:
 			case NearestDifference:
+			case CalculatedAtDifference:
 				sql = new SelectReadingDifference(filter);
 				break;
 
-			// TODO
-			//case CalculatedAt:
-			//case CalculatedAtDifference:
+			case CalculatedAt:
+				sql = new SelectDatumCalculatedAt(filter);
+				break;
+
+			default:
+				throw new UnsupportedOperationException(
+						"Reading type " + readingType + " is not supported.");
 
 		}
 
-		FilterResults<ReadingDatum, DatumPK> results = DatumSqlUtils.executeFilterQuery(jdbcTemplate,
-				filter, sql, readingMapper(filter.getAggregation()));
+		FilterResults<ReadingDatum, DatumPK> results;
+		if ( readingType == DatumReadingType.CalculatedAt ) {
+			// this returns Datum, not ReadingDatum... so adapt
+			FilterResults<Datum, DatumPK> datumResults = DatumSqlUtils.executeFilterQuery(jdbcTemplate,
+					filter, sql, DatumEntityRowMapper.INSTANCE);
+			List<ReadingDatum> readingDatum = stream(datumResults.spliterator(), false)
+					.map(e -> new ReadingDatumEntity(e.getStreamId(), e.getTimestamp(), null, null,
+							e.getProperties(), null))
+					.collect(Collectors.toList());
+			results = new BasicFilterResults<>(readingDatum, datumResults.getTotalResults(),
+					datumResults.getStartingOffset(), datumResults.getReturnedResultCount());
+		} else {
+			results = DatumSqlUtils.executeFilterQuery(jdbcTemplate, filter, sql,
+					readingMapper(filter.getAggregation()));
+		}
 
 		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {

@@ -263,6 +263,33 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void toGeneralNodeDatum_readingWithoutStats() {
+		// GIVEN
+		DatumProperties props = newProps();
+		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, null, props, null);
+		ObjectDatumStreamMetadata meta = newNodeMeta();
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
+
+		// THEN
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
+		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
+		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
+				nullValue());
+
+		// without stats, we treat like a Datum, not ReadingDatum; used with CalculatedAt query
+		assertGeneralDatumSamples(d.getSamples());
+	}
+
+	@Test
 	public void criteriaFromFilter_datumFilterCommand_aggNodeSourceDateRange() {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();

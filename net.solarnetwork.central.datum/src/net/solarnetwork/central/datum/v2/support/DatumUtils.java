@@ -424,20 +424,25 @@ public class DatumUtils {
 		gnd.setSourceId(meta.getSourceId());
 
 		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
-		// populate normal data
+		// populate instantaneous statistics data if available
 		if ( datum instanceof AggregateDatum ) {
 			DatumPropertiesStatistics stats = ((AggregateDatum) datum).getStatistics();
-			populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
+			if ( stats != null ) {
+				populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
+			}
 		}
+		// populate normal data
 		DatumProperties props = datum.getProperties();
 		if ( props != null ) {
 			populateGeneralDatumSamples(s, props, meta);
 		}
 		if ( datum instanceof ReadingDatum ) {
-			// populate reading (accumulating) data from stats
-			s.getA().clear();
+			// populate reading (accumulating) data from stats when available
 			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
-			populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
+			if ( stats != null ) {
+				s.getA().clear();
+				populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
+			}
 		}
 		if ( !s.isEmpty() ) {
 			gnd.setSamples(s);
