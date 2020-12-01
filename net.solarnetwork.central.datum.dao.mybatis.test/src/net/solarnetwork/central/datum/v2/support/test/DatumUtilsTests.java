@@ -34,6 +34,8 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,7 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * Test cases for the {@link DatumUtils} class.
@@ -134,6 +137,10 @@ public class DatumUtilsTests {
 	}
 
 	private void assertReadingGeneralDatumSamples(GeneralDatumSamples s) {
+		assertReadingGeneralDatumSamples(s, null);
+	}
+
+	private void assertReadingGeneralDatumSamples(GeneralDatumSamples s, ZonedDateTime endDate) {
 		assertThat("Instantaneous keys copied with stats along with accumualting stat keys",
 				s.getInstantaneous().keySet(),
 				containsInAnyOrder("a", "a_min", "a_max", "b", "b_min", "b_max", "c", "c_min", "c_max",
@@ -167,7 +174,18 @@ public class DatumUtilsTests {
 				hasEntry("g", new BigDecimal("30"))));
 		// @formatter:on
 
-		assertThat("Status keys copied", s.getStatus().keySet(), containsInAnyOrder("h", "i"));
+		if ( endDate != null ) {
+			assertThat("Status keys copied", s.getStatus().keySet(),
+					containsInAnyOrder("h", "i", "timeZone", "endDate", "localEndDate"));
+			assertThat("Time zone", s.getStatusSampleString("timeZone"),
+					equalTo(endDate.getZone().getId()));
+			assertThat("End date as formatted string", s.getStatusSampleString("endDate"),
+					equalTo(DateUtils.ISO_DATE_TIME_ALT_UTC.format(endDate)));
+			assertThat("Local end date as formatted string", s.getStatusSampleString("localEndDate"),
+					equalTo(DateUtils.ISO_DATE_TIME_ALT_UTC.format(endDate.toLocalDateTime())));
+		} else {
+			assertThat("Status keys copied", s.getStatus().keySet(), containsInAnyOrder("h", "i"));
+		}
 
 		assertThat("Tags copied", s.getTags(), containsInAnyOrder("t"));
 	}
@@ -260,6 +278,35 @@ public class DatumUtilsTests {
 		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
 				nullValue());
 		assertReadingGeneralDatumSamples(d.getSamples());
+	}
+
+	@Test
+	public void toGeneralNodeDatum_readingWithEndTimestamp() {
+		// GIVEN
+		DatumProperties props = newProps();
+		DatumPropertiesStatistics stats = newStats();
+		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.HOURS).plusMillis(123L), Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).plusSeconds(3600).plusMillis(234L), props,
+				stats);
+		ObjectDatumStreamMetadata meta = newNodeMeta();
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
+
+		// THEN
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
+		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
+		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
+				nullValue());
+		assertReadingGeneralDatumSamples(d.getSamples(),
+				datum.getEndTimestamp().atZone(ZoneId.of(meta.getTimeZoneId())));
 	}
 
 	@Test

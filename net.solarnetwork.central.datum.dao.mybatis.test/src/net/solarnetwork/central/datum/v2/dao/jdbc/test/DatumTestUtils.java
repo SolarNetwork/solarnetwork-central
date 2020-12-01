@@ -255,7 +255,7 @@ public final class DatumTestUtils {
 				for ( BigDecimal[] a : expected.getStatistics().getAccumulating() ) {
 					m.add(Matchers.arrayContaining(a));
 				}
-				assertThat(prefix + " instantaneous stats", result.getStatistics().getAccumulating(),
+				assertThat(prefix + " accumulating stats", result.getStatistics().getAccumulating(),
 						Matchers.arrayContaining(m));
 			}
 		}

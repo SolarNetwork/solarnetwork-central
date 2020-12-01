@@ -68,6 +68,7 @@ import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.JodaDateUtils;
 
 /**
@@ -418,6 +419,7 @@ public class DatumUtils {
 
 		// use ReportingGeneralNodeDatum to support localDateTime property
 		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum();
+
 		gnd.setCreated(new DateTime(datum.getTimestamp().toEpochMilli(), zone));
 		gnd.setLocalDateTime(gnd.getCreated().toLocalDateTime());
 		gnd.setNodeId(meta.getObjectId());
@@ -437,11 +439,21 @@ public class DatumUtils {
 			populateGeneralDatumSamples(s, props, meta);
 		}
 		if ( datum instanceof ReadingDatum ) {
+			ReadingDatum read = (ReadingDatum) datum;
+
 			// populate reading (accumulating) data from stats when available
-			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
+			DatumPropertiesStatistics stats = read.getStatistics();
 			if ( stats != null ) {
 				s.getA().clear();
 				populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
+				if ( read.getEndTimestamp() != null ) {
+					s.putStatusSampleValue("timeZone", meta.getTimeZoneId());
+					s.putStatusSampleValue("endDate",
+							DateUtils.ISO_DATE_TIME_ALT_UTC.format(read.getEndTimestamp()));
+					s.putStatusSampleValue("localEndDate",
+							DateUtils.ISO_DATE_TIME_ALT_UTC.format(read.getEndTimestamp()
+									.atZone(ZoneId.of(meta.getTimeZoneId())).toLocalDateTime()));
+				}
 			}
 		}
 		if ( !s.isEmpty() ) {

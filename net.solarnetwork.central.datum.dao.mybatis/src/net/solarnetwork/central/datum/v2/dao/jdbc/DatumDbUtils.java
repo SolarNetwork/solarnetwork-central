@@ -196,6 +196,28 @@ public final class DatumDbUtils {
 		for ( int i = 0; i < stats.length; i++ ) {
 			acc[i] = stats[i][0];
 		}
+		return readingWith(streamId, agg, start, end, acc, stats);
+	}
+
+	/**
+	 * Create a {@link ReadingDatum} out of statistic data.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param agg
+	 *        the aggregate
+	 * @param start
+	 *        the start date
+	 * @param end
+	 *        the end date
+	 * @param acc
+	 *        the accumulating data to use
+	 * @param stats
+	 *        the aggregate statistics
+	 * @return the datum
+	 */
+	public static ReadingDatum readingWith(UUID streamId, Aggregation agg, ZonedDateTime start,
+			ZonedDateTime end, BigDecimal[] acc, BigDecimal[][] stats) {
 		return new ReadingDatumEntity(streamId, start.toInstant(), agg, end.toInstant(),
 				propertiesOf(null, acc, null, null), statisticsOf(null, stats));
 	}

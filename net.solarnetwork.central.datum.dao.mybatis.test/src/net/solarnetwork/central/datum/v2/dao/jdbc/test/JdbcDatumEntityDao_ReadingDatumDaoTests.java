@@ -331,6 +331,34 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 	}
 
 	@Test
+	public void diffAt_nodeAndSource() {
+		// GIVEN
+		UUID streamId = loadStreamWithAuxiliary("test-datum-02.txt").values().iterator().next()
+				.getStreamId();
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.CalculatedAtDifference);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setTimeTolerance(Period.ofDays(7));
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+
+		ReadingDatum d = results.iterator().next();
+		assertReading("Difference at calculated", d,
+				readingWith(streamId, null, start, start.plusHours(1), decimalArray("30"),
+						new BigDecimal[][] { decimalArray("30.0", "100.5", "130.5") }));
+	}
+
+	@Test
 	public void diffWithin_nodeAndSource() {
 		// GIVEN
 		UUID streamId = loadStreamWithAuxiliary("test-datum-02.txt").values().iterator().next()
