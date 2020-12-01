@@ -59,6 +59,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Identity;
@@ -1227,8 +1228,10 @@ public final class DatumSqlUtils {
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
 			RowMapper<M> mapper) {
 		Long totalCount = null;
-		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider ) {
-			totalCount = DatumSqlUtils.executeCountQuery(jdbcTemplate,
+		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider
+				&& !(filter instanceof OptimizedQueryCriteria
+						&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
+			totalCount = executeCountQuery(jdbcTemplate,
 					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
 		}
 
