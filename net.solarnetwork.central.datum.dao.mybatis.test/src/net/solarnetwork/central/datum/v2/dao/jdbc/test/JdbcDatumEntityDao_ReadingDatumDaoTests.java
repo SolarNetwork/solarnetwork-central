@@ -58,23 +58,26 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcReadingDatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.dao.FilterResults;
 
 /**
- * Test cases for the {@link JdbcReadingDatumEntityDao} class.
+ * Test cases for the {@link ReadingDatumDao} implementation within the
+ * {@link JdbcDatumEntityDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
+public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSupport {
 
-	private JdbcReadingDatumEntityDao dao;
+	private JdbcDatumEntityDao dao;
 
 	private Map<NodeSourcePK, NodeDatumStreamMetadata> loadStreamWithAuxiliary(String resource) {
 		return loadStreamWithAuxiliary(resource, null, null);
@@ -103,8 +106,9 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		return meta;
 	}
 
-	private FilterResults<ReadingDatum, DatumPK> execute(ReadingDatumCriteria filter) {
-		FilterResults<ReadingDatum, DatumPK> results = dao.findDatumReadingFiltered(filter);
+	private ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> execute(ReadingDatumCriteria filter) {
+		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> results = dao
+				.findDatumReadingFiltered(filter);
 		if ( results.getReturnedResultCount() > 0 ) {
 			log.debug("Got {} ReadingDatum results:\n{}", results.getReturnedResultCount(),
 					stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
@@ -120,7 +124,7 @@ public class JdbcReadingDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 
 	@Before
 	public void setup() {
-		dao = new JdbcReadingDatumEntityDao(jdbcTemplate);
+		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
 
 	@Test

@@ -44,6 +44,8 @@ import net.solarnetwork.central.domain.Aggregation;
  */
 public class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
 
+	private static final String SQL_AT_LOCATION_TIME_ZONE = "AT TIME ZONE COALESCE(l.time_zone, 'UTC')";
+
 	private final ObjectStreamCriteria filter;
 	private final ObjectDatumKind kind;
 
@@ -89,10 +91,10 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		StringBuilder buf = new StringBuilder();
 		if ( kind == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, buf);
+					"solardatm.da_datm", Aggregation.None, SQL_AT_LOCATION_TIME_ZONE, buf);
 		} else {
 			DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, buf);
+					"solardatm.da_datm", Aggregation.None, SQL_AT_LOCATION_TIME_ZONE, buf);
 		}
 		StringBuilder order = new StringBuilder();
 		int idx = orderBySorts(filter.getSorts(),

@@ -74,17 +74,20 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
@@ -113,6 +116,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	private final String TEST_SOURCE_ID2 = "test.source.2";
 	private DatumEntityDao datumDao;
 	private DatumStreamMetadataDao metaDao;
+	private ReadingDatumDao readingDao;
 	private UserNodeDao userNodeDao;
 
 	private DaoQueryBiz biz;
@@ -121,19 +125,20 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
+		readingDao = EasyMock.createMock(ReadingDatumDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		biz = new DaoQueryBiz(datumDao, metaDao);
+		biz = new DaoQueryBiz(datumDao, metaDao, readingDao);
 		biz.setUserNodeDao(userNodeDao);
 		setupTestNode();
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, metaDao, userNodeDao);
+		EasyMock.replay(datumDao, metaDao, readingDao, userNodeDao);
 	}
 
 	@After
 	public void tearndown() {
-		EasyMock.verify(datumDao, metaDao, userNodeDao);
+		EasyMock.verify(datumDao, metaDao, readingDao, userNodeDao);
 	}
 
 	private static void assertConverted(String prefix, ReportableInterval result,
@@ -379,7 +384,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				null);
 		DatumProperties props = testProps();
 		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
-		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
@@ -439,7 +444,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		DatumPropertiesStatistics stats = testStats();
 		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
 				Aggregation.Day, props, stats);
-		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
@@ -503,7 +508,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 				null);
 		DatumProperties props = testProps();
 		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
-		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
@@ -562,7 +567,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		DatumPropertiesStatistics stats = testStats();
 		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
 				Aggregation.Day, props, stats);
-		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
@@ -644,7 +649,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		DatumPropertiesStatistics stats = testStats();
 		ReadingDatumEntity d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(), Aggregation.Day,
 				Instant.now(), props, stats);
-		BasicDatumStreamFilterResults daoResults = new BasicDatumStreamFilterResults(
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
 		Capture<DatumCriteria> filterCaptor = new Capture<>();

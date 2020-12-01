@@ -26,10 +26,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Basic implementation of {@link DatumStreamFilterResults}.
@@ -38,8 +37,8 @@ import net.solarnetwork.dao.BasicFilterResults;
  * @version 1.0
  * @since 2.8
  */
-public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, DatumPK>
-		implements DatumStreamFilterResults {
+public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K>
+		extends BasicFilterResults<M, K> implements ObjectDatumStreamFilterResults<M, K> {
 
 	private final Map<UUID, ObjectDatumStreamMetadata> streamMetadata;
 
@@ -57,8 +56,8 @@ public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, Dat
 	 * @param returnedResultCount
 	 *        the count of objects in {@code results}
 	 */
-	public BasicDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
-			Iterable<Datum> results, Long totalResults, int startingOffset, int returnedResultCount) {
+	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
+			Iterable<M> results, Long totalResults, int startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 		this.streamMetadata = streamMetadata;
 	}
@@ -75,8 +74,8 @@ public class BasicDatumStreamFilterResults extends BasicFilterResults<Datum, Dat
 	 * @param results
 	 *        the results iterable
 	 */
-	public BasicDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
-			Iterable<Datum> results) {
+	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
+			Iterable<M> results) {
 		super(results);
 		this.streamMetadata = streamMetadata;
 	}

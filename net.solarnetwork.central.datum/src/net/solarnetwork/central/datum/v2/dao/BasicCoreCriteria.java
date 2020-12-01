@@ -41,6 +41,11 @@ public class BasicCoreCriteria extends SimplePagination
 	private Long[] userIds;
 	private String[] tokenIds;
 
+	@Override
+	public BasicCoreCriteria clone() {
+		return (BasicCoreCriteria) super.clone();
+	}
+
 	/**
 	 * Set a single location ID.
 	 * 

@@ -48,11 +48,11 @@ public interface DatumEntityDao
 	 * {@inheritDoc}
 	 */
 	@Override
-	DatumStreamFilterResults findFiltered(DatumCriteria filter, List<SortDescriptor> sorts,
-			Integer offset, Integer max);
+	ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max);
 
 	@Override
-	default DatumStreamFilterResults findFiltered(DatumCriteria filter) {
+	default ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter) {
 		return findFiltered(filter, null, null, null);
 	}
 

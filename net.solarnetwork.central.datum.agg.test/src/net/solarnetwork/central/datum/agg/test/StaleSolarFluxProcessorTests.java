@@ -62,13 +62,14 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
@@ -228,7 +229,7 @@ public class StaleSolarFluxProcessorTests {
 
 		// GIVEN
 		List<Datum> datumResults = Collections.singletonList(mostRecentDatum);
-		DatumStreamFilterResults filterResults = new BasicDatumStreamFilterResults(
+		ObjectDatumStreamFilterResults<Datum, DatumPK> filterResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(streamId, meta), datumResults);
 		Capture<DatumCriteria> filterCaptor = new Capture<>();
 		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(filterResults);

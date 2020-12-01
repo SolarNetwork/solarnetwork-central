@@ -24,7 +24,6 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.dao.FilterResults;
 
 /**
  * API for datum reading information.
@@ -42,6 +41,7 @@ public interface ReadingDatumDao {
 	 *        the search criteria
 	 * @return the matching records
 	 */
-	FilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(ReadingDatumCriteria filter);
+	ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(
+			ReadingDatumCriteria filter);
 
 }

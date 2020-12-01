@@ -41,21 +41,25 @@ import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
@@ -63,6 +67,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumS
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRange;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
@@ -76,8 +81,11 @@ import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
@@ -89,7 +97,8 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.0
  * @since 3.8
  */
-public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDao, DatumMaintenanceDao {
+public class JdbcDatumEntityDao
+		implements DatumEntityDao, DatumStreamMetadataDao, DatumMaintenanceDao, ReadingDatumDao {
 
 	private final JdbcOperations jdbcTemplate;
 	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
@@ -191,8 +200,8 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 	}
 
 	@Override
-	public DatumStreamFilterResults findFiltered(DatumCriteria filter, List<SortDescriptor> sorts,
-			Integer offset, Integer max) {
+	public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
@@ -216,15 +225,16 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 			}
 		} else {
 			Iterable<? extends ObjectDatumStreamMetadata> metas = null;
+			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
 			if ( filter.getLocationIds() != null ) {
-				metas = findLocationDatumStreamMetadata(filter);
+				metas = findLocationDatumStreamMetadata(metaCriteria);
 			} else {
-				metas = findNodeDatumStreamMetadata(filter);
+				metas = findNodeDatumStreamMetadata(metaCriteria);
 			}
 			metaMap = StreamSupport.stream(metas.spliterator(), false).collect(toMap(
 					DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
 		}
-		return new BasicDatumStreamFilterResults(metaMap, results.getResults(),
+		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
 				results.getReturnedResultCount());
 	}
@@ -307,6 +317,74 @@ public class JdbcDatumEntityDao implements DatumEntityDao, DatumStreamMetadataDa
 		final PreparedStatementCreator sql = new SelectStaleAggregateDatum(filter);
 		return executeFilterQuery(jdbcTemplate, filter, sql,
 				StaleAggregateDatumEntityRowMapper.INSTANCE);
+	}
+
+	private RowMapper<ReadingDatum> readingMapper(Aggregation agg) {
+		if ( agg == null ) {
+			agg = Aggregation.None;
+		}
+		switch (agg) {
+			case Hour:
+				return ReadingDatumEntityRowMapper.HOUR_INSTANCE;
+
+			case Day:
+				return ReadingDatumEntityRowMapper.DAY_INSTANCE;
+
+			case Month:
+				return ReadingDatumEntityRowMapper.MONTH_INSTANCE;
+
+			default:
+				return ReadingDatumEntityRowMapper.INSTANCE;
+		}
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(
+			ReadingDatumCriteria filter) {
+		if ( filter == null || filter.getReadingType() == null ) {
+			throw new IllegalArgumentException("The filter reading type must be provided.");
+		}
+		PreparedStatementCreator sql = null;
+		switch (filter.getReadingType()) {
+			case Difference:
+			case DifferenceWithin:
+			case NearestDifference:
+				sql = new SelectReadingDifference(filter);
+				break;
+
+			// TODO
+			//case CalculatedAt:
+			//case CalculatedAtDifference:
+
+		}
+
+		FilterResults<ReadingDatum, DatumPK> results = DatumSqlUtils.executeFilterQuery(jdbcTemplate,
+				filter, sql, readingMapper(filter.getAggregation()));
+
+		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
+		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
+			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
+			if ( meta != null ) {
+				metaMap = Collections.singletonMap(meta.getStreamId(), meta);
+			} else {
+				metaMap = Collections.emptyMap();
+			}
+		} else {
+			Iterable<? extends ObjectDatumStreamMetadata> metas = null;
+			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
+			if ( filter.getLocationIds() != null ) {
+				metas = findLocationDatumStreamMetadata(metaCriteria);
+			} else {
+				metas = findNodeDatumStreamMetadata(metaCriteria);
+			}
+			metaMap = StreamSupport.stream(metas.spliterator(), false).collect(toMap(
+					DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
+		}
+		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
+				results.getTotalResults(), results.getStartingOffset(),
+				results.getReturnedResultCount());
+
 	}
 
 	/**

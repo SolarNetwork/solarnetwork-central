@@ -516,7 +516,8 @@ public final class DatumSqlUtils {
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 
 			StringBuilder buf) {
-		return nodeMetadataFilterSql(filter, style, null, null, null, buf);
+		return nodeMetadataFilterSql(filter, style, null, null, null, SQL_AT_STREAM_METADATA_TIME_ZONE,
+				buf);
 	}
 
 	/**
@@ -532,7 +533,9 @@ public final class DatumSqlUtils {
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
-	 *        column name
+	 * @param zoneClause
+	 *        the time zone clause to use for local date ranges (e.g.
+	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE} column name
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
@@ -542,7 +545,7 @@ public final class DatumSqlUtils {
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			StringBuilder buf) {
+			String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id, s.node_id, s.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'n'::CHARACTER AS kind");
@@ -568,7 +571,7 @@ public final class DatumSqlUtils {
 			if ( streamFilter != null ) {
 				// NOTE join added directly to buf
 				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
-						buf);
+						zoneClause, buf);
 			}
 			if ( filter != null ) {
 				paramCount += whereNodeMetadata(filter, where);
@@ -624,16 +627,18 @@ public final class DatumSqlUtils {
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
 	 *        column name
+	 * @param zoneClause
+	 *        the time zone clause to use for local date ranges (e.g.
+	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE}
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 */
 	public static int joinStreamMetadataDateRangeSql(ObjectStreamCriteria filter, String tableName,
-			Aggregation aggregation, StringBuilder buf) {
+			Aggregation aggregation, String zoneClause, StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
 		int paramCount = filter.hasLocalDateRange()
-				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
-						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
+				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( paramCount < 1 ) {
 			return 0;
@@ -679,7 +684,8 @@ public final class DatumSqlUtils {
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
-		return locationMetadataFilterSql(filter, style, null, null, null, buf);
+		return locationMetadataFilterSql(filter, style, null, null, null,
+				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
 
 	/**
@@ -697,7 +703,9 @@ public final class DatumSqlUtils {
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
-	 *        column name
+	 * @param zoneClause
+	 *        the time zone clause to use for local date ranges (e.g.
+	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE} column name
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
@@ -707,7 +715,7 @@ public final class DatumSqlUtils {
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			StringBuilder buf) {
+			String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id, s.loc_id, s.source_id");
 		if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'l'::CHARACTER AS kind");
@@ -730,7 +738,7 @@ public final class DatumSqlUtils {
 			if ( streamFilter != null ) {
 				// NOTE join added directly to buf
 				paramCount += joinStreamMetadataDateRangeSql(streamFilter, datumTableName, aggregation,
-						buf);
+						zoneClause, buf);
 			}
 			if ( filter != null ) {
 				paramCount += whereLocationMetadata(filter, where);

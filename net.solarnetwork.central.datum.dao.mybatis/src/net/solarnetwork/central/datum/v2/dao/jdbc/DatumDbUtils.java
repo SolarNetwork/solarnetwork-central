@@ -70,7 +70,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -169,7 +169,7 @@ public final class DatumDbUtils {
 	 *        the comparator to use; for example {@link #UUID_STRING_ORDER}
 	 * @return the sorted set
 	 */
-	public static SortedSet<UUID> sortedStreamIds(DatumStreamFilterResults results,
+	public static SortedSet<UUID> sortedStreamIds(ObjectDatumStreamFilterResults<?, ?> results,
 			Comparator<UUID> comparator) {
 		return results.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
 			return new TreeSet<>(comparator);

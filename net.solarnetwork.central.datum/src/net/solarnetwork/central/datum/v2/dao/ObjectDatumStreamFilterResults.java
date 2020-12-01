@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumStreamFilterResults.java - 23/10/2020 8:04:24 am
+ * ObjectDatumStreamFilterResults.java - 1/12/2020 12:00:54 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -24,26 +24,25 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.Collection;
 import java.util.UUID;
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Identity;
 
 /**
- * A collection of {@link Datum} results.
+ * A collection of filtered results with associated stream metadata.
  * 
  * <p>
- * This result API is used when querying for {@link Datum}. The results can
- * include {@link Datum} from different streams; the
- * {@link #metadataForStream(UUID)} method provides a way to access the metadata
- * for the streams included in the results.
+ * This result API is used when querying for datum streams. The results can
+ * include datum from different streams; the {@link #metadataForStream(UUID)}
+ * method provides a way to access the metadata for the streams included in the
+ * results.
  * </p>
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface DatumStreamFilterResults extends FilterResults<Datum, DatumPK> {
+public interface ObjectDatumStreamFilterResults<M extends Identity<K>, K> extends FilterResults<M, K> {
 
 	/**
 	 * Get a collection of all the available stream IDs this result instance has

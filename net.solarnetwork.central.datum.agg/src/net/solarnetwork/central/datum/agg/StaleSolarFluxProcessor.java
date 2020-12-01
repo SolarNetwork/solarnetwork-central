@@ -35,10 +35,11 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.StaleFluxDatumRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.util.OptionalService;
@@ -126,7 +127,8 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 											.mapRow(rs, resultCount);
 									filter.setAggregation(stale.getKind());
 									filter.setStreamId(stale.getStreamId());
-									DatumStreamFilterResults results = datumDao.findFiltered(filter);
+									ObjectDatumStreamFilterResults<Datum, DatumPK> results = datumDao
+											.findFiltered(filter);
 									Datum datum = results.iterator().next();
 									if ( datum != null ) {
 										GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,

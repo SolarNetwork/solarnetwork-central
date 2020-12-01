@@ -77,6 +77,7 @@
 			<value>net.solarnetwork.central.datum.v2.dao.DatumEntityDao</value>
 			<value>net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao</value>
 			<value>net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.ReadingDatumDao</value>
 		</interfaces>
 		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
 			<argument ref="jdbcOps"/>

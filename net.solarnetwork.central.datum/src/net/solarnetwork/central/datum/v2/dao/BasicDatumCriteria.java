@@ -61,6 +61,11 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private DatumAuxiliaryType datumAuxiliaryType;
 
 	@Override
+	public BasicDatumCriteria clone() {
+		return (BasicDatumCriteria) super.clone();
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("BasicDatumCriteria{");

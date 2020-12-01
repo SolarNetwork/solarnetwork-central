@@ -44,11 +44,12 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -62,7 +63,7 @@ import net.solarnetwork.domain.SimpleSortDescriptor;
  * @author matt
  * @version 1.0
  */
-public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
+public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport {
 
 	private JdbcDatumEntityDao dao;
 
@@ -101,7 +102,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -138,7 +139,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
 		filter.setReadingType(DatumReadingType.Difference);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -175,7 +176,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
 		filter.setSorts(singletonList(new SimpleSortDescriptor("time", true)));
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -212,7 +213,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -252,7 +253,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(3);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -292,7 +293,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(6);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -332,7 +333,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(8);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -359,7 +360,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setAggregation(Aggregation.Hour);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -391,7 +392,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusDays(1).toInstant());
 		filter.setEndDate(start.plusDays(19).toInstant());
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -426,7 +427,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setAggregation(Aggregation.Day);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -458,7 +459,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusMonths(1).toInstant());
 		filter.setEndDate(start.plusMonths(4).toInstant());
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
@@ -493,7 +494,7 @@ public class JdbcDatumEntityDao_Aggregate extends BaseDatumJdbcTestSupport {
 		filter.setAggregation(Aggregation.Month);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);

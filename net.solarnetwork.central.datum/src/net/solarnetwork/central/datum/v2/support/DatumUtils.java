@@ -45,6 +45,7 @@ import net.solarnetwork.central.datum.domain.SourceFilter;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
@@ -193,6 +194,42 @@ public class DatumUtils {
 		c.setOffset(o);
 
 		return c;
+	}
+
+	/**
+	 * Get a copy of a {@link ObjectStreamCriteria} with any date values
+	 * removed.
+	 * 
+	 * @param criteria
+	 *        the criteria
+	 * @return the new criteria
+	 */
+	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
+		ObjectStreamCriteria result = null;
+		if ( criteria instanceof BasicDatumCriteria ) {
+			BasicDatumCriteria clone = ((BasicDatumCriteria) criteria).clone();
+			clone.setStartDate(null);
+			clone.setEndDate(null);
+			clone.setLocalStartDate(null);
+			clone.setLocalEndDate(null);
+			result = clone;
+		} else {
+			BasicDatumCriteria c = new BasicDatumCriteria();
+			c.setAggregation(criteria.getAggregation());
+			c.setLocationIds(criteria.getLocationIds());
+			c.setMax(criteria.getMax());
+			c.setNodeIds(criteria.getNodeIds());
+			c.setObjectKind(criteria.getObjectKind());
+			c.setOffset(criteria.getOffset());
+			c.setPartialAggregation(criteria.getPartialAggregation());
+			c.setSorts(criteria.getSorts());
+			c.setSourceIds(criteria.getSourceIds());
+			c.setStreamIds(criteria.getStreamIds());
+			c.setTokenIds(criteria.getTokenIds());
+			c.setUserIds(criteria.getUserIds());
+			result = c;
+		}
+		return result;
 	}
 
 	/**

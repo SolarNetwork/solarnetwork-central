@@ -62,12 +62,16 @@ import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
@@ -96,6 +100,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	private final DatumEntityDao datumDao;
 	private final DatumStreamMetadataDao metaDao;
+	private final ReadingDatumDao readingDao;
 	private SolarLocationDao solarLocationDao;
 	private UserNodeDao userNodeDao;
 	private int filteredResultsLimit = 1000;
@@ -114,10 +119,13 @@ public class DaoQueryBiz implements QueryBiz {
 	 *        the datum DAO
 	 * @param metaDao
 	 *        the metadata DAO
+	 * @param readingDao
+	 *        the reading DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao) {
+	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
+			ReadingDatumDao readingDao) {
 		super();
 		if ( datumDao == null ) {
 			throw new IllegalArgumentException("The datumDao argument must not be null.");
@@ -127,6 +135,10 @@ public class DaoQueryBiz implements QueryBiz {
 			throw new IllegalArgumentException("The metaDao argument must not be null.");
 		}
 		this.metaDao = metaDao;
+		if ( readingDao == null ) {
+			throw new IllegalArgumentException("The readingDao argument must not be null.");
+		}
+		this.readingDao = readingDao;
 	}
 
 	@Override
@@ -214,7 +226,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
-		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
 				.collect(toList());
@@ -230,7 +242,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
-		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
 				.collect(toList());
@@ -338,7 +350,7 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
-		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
 				.collect(toList());
@@ -352,6 +364,11 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setReadingType(readingType);
+		c.setTimeTolerance(JodaDateUtils.fromJoda(tolerance));
+		net.solarnetwork.dao.FilterResults<ReadingDatum, DatumPK> daoResults = readingDao
+				.findDatumReadingFiltered(c);
 		if ( filter.getLocalStartDate() != null ) {
 			switch (readingType) {
 				case NearestDifference:
@@ -426,7 +443,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
-		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<GeneralLocationDatumFilterMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
 				.collect(toList());
@@ -442,7 +459,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
-		DatumStreamFilterResults daoResults = datumDao.findFiltered(c);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralLocationDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
 				.collect(toList());

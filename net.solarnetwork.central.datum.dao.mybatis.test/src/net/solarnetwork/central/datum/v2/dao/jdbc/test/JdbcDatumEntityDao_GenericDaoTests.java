@@ -67,7 +67,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -267,7 +267,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -308,7 +308,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		final UUID streamId = metas.keySet().iterator().next();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(streamId);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -347,7 +347,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		filter.setNodeId(1L);
 		filter.setMax(2);
 		filter.setOffset(0);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -375,7 +375,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		filter.setNodeId(1L);
 		filter.setMax(2);
 		filter.setOffset(2);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -403,7 +403,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		filter.setNodeId(1L);
 		filter.setMax(2);
 		filter.setOffset(4);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -431,7 +431,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		filter.setNodeId(1L);
 		filter.setMax(2);
 		filter.setOffset(6);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -455,7 +455,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
-		DatumStreamFilterResults results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
