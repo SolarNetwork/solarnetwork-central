@@ -49,8 +49,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMaintenanceBiz;
 import net.solarnetwork.central.domain.Aggregation;
@@ -105,12 +106,11 @@ public class DaoDatumMaintenanceBizTests {
 				daoStale);
 		expect(datumDao.findStaleAggregateDatum(capture(filterCaptor))).andReturn(daoResults);
 
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "America/New_York", 1L,
-				"a", null, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "America/New_York",
+				ObjectDatumKind.Node, 1L, "a", null, null, null);
 
 		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
-		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFilterCaptor)))
-				.andReturn(singleton(meta));
+		expect(metaDao.findDatumStreamMetadata(capture(metaFilterCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -123,7 +123,7 @@ public class DaoDatumMaintenanceBizTests {
 		// THEN
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 		StaleAggregateDatum s = results.iterator().next();
-		assertThat("Node ID returned from meta", s.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Node ID returned from meta", s.getNodeId(), equalTo(meta.getObjectId()));
 		assertThat("Source ID returned from meta", s.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp returned from datum", s.getCreated(),
 				equalTo(JodaDateUtils.toJoda(daoDatum.getTimestamp(), zone)));
@@ -153,12 +153,11 @@ public class DaoDatumMaintenanceBizTests {
 				daoStale);
 		expect(datumDao.findStaleAggregateDatum(capture(filterCaptor))).andReturn(daoResults);
 
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "America/New_York", 1L,
-				"a", null, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "America/New_York",
+				ObjectDatumKind.Node, 1L, "a", null, null, null);
 
 		Capture<ObjectStreamCriteria> metaFilterCaptor = new Capture<>();
-		expect(metaDao.findNodeDatumStreamMetadata(capture(metaFilterCaptor)))
-				.andReturn(singleton(meta));
+		expect(metaDao.findDatumStreamMetadata(capture(metaFilterCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -172,7 +171,7 @@ public class DaoDatumMaintenanceBizTests {
 		// THEN
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 		StaleAggregateDatum s = results.iterator().next();
-		assertThat("Node ID returned from meta", s.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Node ID returned from meta", s.getNodeId(), equalTo(meta.getObjectId()));
 		assertThat("Source ID returned from meta", s.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp returned from datum", s.getCreated(),
 				equalTo(JodaDateUtils.toJoda(daoDatum.getTimestamp(), zone)));

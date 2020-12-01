@@ -43,7 +43,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.domain.GeneralDatumSamples;
@@ -67,7 +67,7 @@ public class JdbcDatumAuxiliaryEntityDao_FilterableDaoTests extends BaseDatumJdb
 	@Test
 	public void find_nodesAndSourcesAndType_absoluteDates() throws IOException {
 		// GIVEN
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStreamWithAuxiliary(log,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStreamWithAuxiliary(log,
 				jdbcTemplate, "test-datum-17.txt", getClass(), "UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 

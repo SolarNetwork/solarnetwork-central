@@ -56,8 +56,9 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -70,13 +71,14 @@ import net.solarnetwork.central.domain.Aggregation;
  */
 public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport {
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+	private ObjectDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a");
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
-				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC", ObjectDatumKind.Node, nodeId,
+				sourceId, new String[] { "x", "y", "z" }, new String[] { "w", "ww" },
+				new String[] { "st" });
 	}
 
 	private List<GeneralNodeDatum> loadJson(String resource) throws IOException {
@@ -160,9 +162,9 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 	public void processStaleRaw() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJson("test-datum-01.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		StaleAuditDatumEntity staleAudit = new StaleAuditDatumEntity(meta.getStreamId(), day.toInstant(),
@@ -195,7 +197,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 	@Test
 	public void processStaleHourly() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -232,7 +234,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 	@Test
 	public void processStaleDaily() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -276,7 +278,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 	@Test
 	public void processStaleMonthly() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);

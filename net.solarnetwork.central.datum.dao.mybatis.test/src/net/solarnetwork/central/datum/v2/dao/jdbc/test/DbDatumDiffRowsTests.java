@@ -55,7 +55,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.TypedDatumEntityRowMapper;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@code solardatm.find_datm_diff_rows} database stored
@@ -101,7 +101,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
 		if ( !meta.isEmpty() ) {
@@ -130,7 +130,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	public void calcDiffDatum_typical() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-02.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 

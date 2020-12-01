@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -39,7 +39,9 @@ import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -96,20 +98,21 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+		c.setObjectKind(ObjectDatumKind.Node);
 		DatumUtils.populateAggregationType(criteria, c);
 		net.solarnetwork.dao.FilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, net.solarnetwork.central.datum.v2.domain.StreamKindPK> r = datumDao
 				.findStaleAggregateDatum(c);
 		List<StaleAggregateDatum> data = new ArrayList<>(r.getReturnedResultCount());
 		if ( r.getReturnedResultCount() > 0 ) {
-			Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport
-					.stream(metaDao.findNodeDatumStreamMetadata(c).spliterator(), false).collect(
-							Collectors.toMap(NodeDatumStreamMetadata::getStreamId, Function.identity()));
+			Map<UUID, ObjectDatumStreamMetadata> metas = stream(
+					metaDao.findDatumStreamMetadata(c).spliterator(), false)
+							.collect(toMap(DatumStreamMetadata::getStreamId, identity()));
 			for ( net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum d : r ) {
-				NodeDatumStreamMetadata meta = metas.get(d.getStreamId());
+				ObjectDatumStreamMetadata meta = metas.get(d.getStreamId());
 				StaleAggregateDatum stale = new StaleAggregateDatum();
 				if ( meta != null ) {
 					stale.setCreated(JodaDateUtils.toJoda(d.getTimestamp(), meta.getTimeZoneId()));
-					stale.setNodeId(meta.getNodeId());
+					stale.setNodeId(meta.getObjectId());
 					stale.setSourceId(meta.getSourceId());
 					stale.setKind(d.getKind().getKey());
 					data.add(stale);

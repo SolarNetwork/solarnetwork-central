@@ -38,7 +38,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -162,9 +163,10 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 				DatumFilterCommand f = (DatumFilterCommand) filter;
 				BasicDatumCriteria c = new BasicDatumCriteria();
 				c.setNodeIds(f.getNodeIds());
-				Iterable<NodeDatumStreamMetadata> metas = metaDao.findNodeDatumStreamMetadata(c);
+				c.setObjectKind(ObjectDatumKind.Node);
+				Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(c);
 				Set<String> availableSources = StreamSupport.stream(metas.spliterator(), false)
-						.map(NodeDatumStreamMetadata::getSourceId).collect(Collectors.toSet());
+						.map(ObjectDatumStreamMetadata::getSourceId).collect(Collectors.toSet());
 				if ( availableSources != null && !availableSources.isEmpty() ) {
 					f.setSourceIds(availableSources.toArray(new String[availableSources.size()]));
 				}

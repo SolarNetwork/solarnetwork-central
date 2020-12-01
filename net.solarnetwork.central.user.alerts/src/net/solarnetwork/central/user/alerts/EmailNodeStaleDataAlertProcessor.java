@@ -46,10 +46,11 @@ import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
 import net.solarnetwork.central.domain.SolarNode;
@@ -395,17 +396,18 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			BasicDatumCriteria filter = new BasicDatumCriteria();
 			filter.setUserIds(userIds.toArray(new Long[userIds.size()]));
 			filter.setMostRecent(true);
-			DatumStreamFilterResults latestNodeData = datumDao.findFiltered(filter);
+			ObjectDatumStreamFilterResults<Datum, DatumPK> latestNodeData = datumDao
+					.findFiltered(filter);
 			for ( Datum match : latestNodeData.getResults() ) {
 				// first add to node list
-				final DatumStreamMetadata meta = latestNodeData.metadataForStream(match.getStreamId());
-				if ( !(meta instanceof NodeDatumStreamMetadata) ) {
+				final ObjectDatumStreamMetadata meta = latestNodeData
+						.metadataForStream(match.getStreamId());
+				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
 					log.warn("Node stream metadata not available for datum match {}", match);
 					continue;
 				}
-				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(
-						((NodeDatumStreamMetadata) meta).getNodeId(),
-						((NodeDatumStreamMetadata) meta).getSourceId(), match.getTimestamp());
+				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
+						meta.getSourceId(), match.getTimestamp());
 				List<NodeDatumStreamPK> datumMatches = nodeDataCache.get(pk.getNodeId());
 				if ( datumMatches == null ) {
 					datumMatches = new ArrayList<>();
@@ -437,16 +439,17 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			BasicDatumCriteria filter = new BasicDatumCriteria();
 			filter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
 			filter.setMostRecent(true);
-			DatumStreamFilterResults latestNodeData = datumDao.findFiltered(filter);
+			ObjectDatumStreamFilterResults<Datum, DatumPK> latestNodeData = datumDao
+					.findFiltered(filter);
 			for ( Datum match : latestNodeData.getResults() ) {
-				final DatumStreamMetadata meta = latestNodeData.metadataForStream(match.getStreamId());
-				if ( !(meta instanceof NodeDatumStreamMetadata) ) {
+				final ObjectDatumStreamMetadata meta = latestNodeData
+						.metadataForStream(match.getStreamId());
+				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
 					log.warn("Node stream metadata not available for datum match {}", match);
 					continue;
 				}
-				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(
-						((NodeDatumStreamMetadata) meta).getNodeId(),
-						((NodeDatumStreamMetadata) meta).getSourceId(), match.getTimestamp());
+				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
+						meta.getSourceId(), match.getTimestamp());
 				List<NodeDatumStreamPK> datumMatches = nodeDataCache.get(pk.getNodeId());
 				if ( datumMatches == null ) {
 					datumMatches = new ArrayList<>();

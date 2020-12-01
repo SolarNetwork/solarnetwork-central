@@ -43,6 +43,27 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	private final String metaJson;
 
 	/**
+	 * Create a new metadata instance with no property names.
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @param kind
+	 *        the object kind
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the new instance
+	 */
+	public static BasicObjectDatumStreamMetadata emptyMeta(UUID streamId, String timeZoneId,
+			ObjectDatumKind kind, Long objectId, String sourceId) {
+		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId, kind, objectId, sourceId, null,
+				null, null, null);
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * <p>

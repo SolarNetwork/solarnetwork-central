@@ -64,7 +64,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.dao.FilterResults;
 
@@ -79,11 +79,11 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 
 	private JdbcDatumEntityDao dao;
 
-	private Map<NodeSourcePK, NodeDatumStreamMetadata> loadStreamWithAuxiliary(String resource) {
+	private Map<NodeSourcePK, ObjectDatumStreamMetadata> loadStreamWithAuxiliary(String resource) {
 		return loadStreamWithAuxiliary(resource, null, null);
 	}
 
-	private Map<NodeSourcePK, NodeDatumStreamMetadata> loadStreamWithAuxiliary(String resource,
+	private Map<NodeSourcePK, ObjectDatumStreamMetadata> loadStreamWithAuxiliary(String resource,
 			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper) {
 		List<?> data;
 		try {
@@ -94,7 +94,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		log.debug("Got test data:\n{}", data.stream().map(Object::toString).collect(joining("\n")));
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
 		if ( !meta.isEmpty() ) {
@@ -210,7 +210,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 	@Test
 	public void diff_nodesAndSources_orderByNodeSourceTime() {
 		// GIVEN
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = new LinkedHashMap<>(4);
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>(4);
 		for ( int i = 0; i < 5; i++ ) {
 			final Long nodeId = (long) (i + 1);
 			final String sourceId = Character.toString((char) ('a' + i));
@@ -256,7 +256,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		// GIVEN
 		List<ZoneId> zones = Arrays.asList(ZoneId.of("Pacific/Auckland"), ZoneId.of("Asia/Kolkata"),
 				ZoneId.of("Europe/Paris"), ZoneId.of("UTC"), ZoneId.of("America/Montreal"));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = new LinkedHashMap<>(4);
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>(4);
 		for ( int i = 0; i < 5; i++ ) {
 			final long id = i + 1;
 			final Long nodeId = id;

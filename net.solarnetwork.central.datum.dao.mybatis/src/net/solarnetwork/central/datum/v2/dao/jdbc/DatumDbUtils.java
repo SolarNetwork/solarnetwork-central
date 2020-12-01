@@ -75,14 +75,13 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -452,7 +451,7 @@ public final class DatumDbUtils {
 	}
 
 	/**
-	 * Create a {@link NodeDatumStreamMetadata} out of a collection of
+	 * Create a {@link ObjectDatumStreamMetadata} out of a collection of
 	 * {@link GeneralNodeDatum} instances.
 	 * 
 	 * @param datums
@@ -461,13 +460,13 @@ public final class DatumDbUtils {
 	 *        the specific node+source to create the metadata for
 	 * @return the metadata
 	 */
-	public static NodeDatumStreamMetadata createMetadata(Iterable<GeneralNodeDatum> datums,
+	public static ObjectDatumStreamMetadata createMetadata(Iterable<GeneralNodeDatum> datums,
 			String timeZoneId, NodeSourcePK nspk) {
 		return createMetadata(UUID.randomUUID(), timeZoneId, datums, nspk);
 	}
 
 	/**
-	 * Create a {@link NodeDatumStreamMetadata} out of a collection of
+	 * Create a {@link ObjectDatumStreamMetadata} out of a collection of
 	 * {@link GeneralNodeDatum} instances.
 	 * 
 	 * @param streamId
@@ -480,7 +479,7 @@ public final class DatumDbUtils {
 	 *        the specific node+source to create the metadata for
 	 * @return the metadata
 	 */
-	public static NodeDatumStreamMetadata createMetadata(UUID streamId, String timeZoneId,
+	public static ObjectDatumStreamMetadata createMetadata(UUID streamId, String timeZoneId,
 			Iterable<GeneralNodeDatum> datums, NodeSourcePK nspk) {
 		Set<String> iNames = new LinkedHashSet<>(4);
 		Set<String> aNames = new LinkedHashSet<>(4);
@@ -501,8 +500,9 @@ public final class DatumDbUtils {
 				sNames.addAll(s.getStatus().keySet());
 			}
 		}
-		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, nspk.getNodeId(),
-				nspk.getSourceId(), iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
+		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId, ObjectDatumKind.Node,
+				nspk.getNodeId(), nspk.getSourceId(),
+				iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
 				aNames.isEmpty() ? null : aNames.toArray(new String[aNames.size()]),
 				sNames.isEmpty() ? null : sNames.toArray(new String[sNames.size()]));
 	}
@@ -518,9 +518,9 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 * @return the resulting stream metadata
 	 */
-	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStream(Logger log,
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
-		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
+		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -539,7 +539,7 @@ public final class DatumDbUtils {
 						}
 
 						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
-						NodeDatumStreamMetadata meta = result.computeIfAbsent(nspk, k -> {
+						ObjectDatumStreamMetadata meta = result.computeIfAbsent(nspk, k -> {
 							return createMetadata(datums, timeZoneId, k);
 						});
 						datumStmt.setString(1, meta.getStreamId().toString());
@@ -621,14 +621,14 @@ public final class DatumDbUtils {
 	 * @throws IOException
 	 *         if any error occurs parsing the resource
 	 */
-	public static Map<NodeSourcePK, NodeDatumStreamMetadata> insertDatumStreamWithAuxiliary(Logger log,
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStreamWithAuxiliary(Logger log,
 			JdbcOperations jdbcTemplate, String resource, Class<?> clazz, String timeZoneId)
 			throws IOException {
 		List<?> data = loadJsonDatumAndAuxiliaryResource(resource, clazz);
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				timeZoneId);
 		UUID streamId = null;
 		if ( !meta.isEmpty() ) {
@@ -725,7 +725,7 @@ public final class DatumDbUtils {
 					log.debug("Inserting ObjectDatumStreamMetadata {}", meta);
 				}
 				@SuppressWarnings("resource")
-				PreparedStatement metaStmt = (meta instanceof LocationDatumStreamMetadata ? locMetaStmt
+				PreparedStatement metaStmt = (meta.getKind() == ObjectDatumKind.Location ? locMetaStmt
 						: nodeMetaStmt);
 				metaStmt.setString(1, meta.getStreamId().toString());
 				metaStmt.setObject(2, meta.getObjectId());
@@ -776,9 +776,9 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 * @return the resulting stream metadata
 	 */
-	public static Map<NodeSourcePK, NodeDatumStreamMetadata> ingestDatumStream(Logger log,
+	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
-		final Map<NodeSourcePK, NodeDatumStreamMetadata> result = new LinkedHashMap<>();
+		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
@@ -1684,7 +1684,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<NodeDatumStreamMetadata> listNodeMetadata(JdbcOperations jdbcTemplate) {
+	public static List<ObjectDatumStreamMetadata> listNodeMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id,m.node_id,source_id,names_i,names_a,names_s"
 						+ ",jdata,'n'::CHARACTER AS kind,COALESCE(l.time_zone, 'UTC') AS time_zone "
@@ -1701,7 +1701,7 @@ public final class DatumDbUtils {
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
 	 */
-	public static List<LocationDatumStreamMetadata> listLocationMetadata(JdbcOperations jdbcTemplate) {
+	public static List<ObjectDatumStreamMetadata> listLocationMetadata(JdbcOperations jdbcTemplate) {
 		return jdbcTemplate.query(
 				"SELECT stream_id,m.loc_id,source_id,names_i,names_a,names_s"
 						+ ",jdata,'l'::CHARACTER AS kind,COALESCE(l.time_zone, 'UTC') AS time_zone "

@@ -35,7 +35,6 @@ import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -73,8 +72,8 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.GeneralDatumSamples;
@@ -128,10 +127,10 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		assertThat("Datum stored in DB", rows, hasSize(1));
 		assertThat("Datum ID matches returned value", rows.get(0).getId(), equalTo(id));
 
-		List<NodeDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate);
+		List<ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate);
 		assertThat("Stream metadata created", metas, hasSize(1));
 		assertThat("Metadata for stream ID", metas.get(0).getStreamId(), equalTo(id.getStreamId()));
-		assertThat("Metadata for node ID", metas.get(0).getNodeId(), equalTo(1L));
+		assertThat("Metadata for node ID", metas.get(0).getObjectId(), equalTo(1L));
 		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo("a"));
 		assertThat("Datum properties", rows.get(0).getProperties(),
 				equalTo(propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null, null)));
@@ -165,11 +164,11 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 			assertThat("Datum ID matches returned value", row.getId(), equalTo(ids.get(i)));
 			i++;
 		}
-		List<NodeDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate);
+		List<ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate);
 		assertThat("Stream metadata created", metas, hasSize(1));
 		assertThat("Metadata for stream ID", metas.get(0).getStreamId(),
 				equalTo(ids.get(0).getStreamId()));
-		assertThat("Metadata for node ID", metas.get(0).getNodeId(), equalTo(1L));
+		assertThat("Metadata for node ID", metas.get(0).getObjectId(), equalTo(1L));
 		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo("a"));
 	}
 
@@ -201,10 +200,10 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		assertThat("Datum properties", rows.get(0).getProperties(),
 				equalTo(propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null, null)));
 
-		List<LocationDatumStreamMetadata> metas = listLocationMetadata(jdbcTemplate);
+		List<ObjectDatumStreamMetadata> metas = listLocationMetadata(jdbcTemplate);
 		assertThat("Stream metadata created", metas, hasSize(1));
 		assertThat("Metadata for stream ID", metas.get(0).getStreamId(), equalTo(id.getStreamId()));
-		assertThat("Metadata for node ID", metas.get(0).getLocationId(), equalTo(datum.getLocationId()));
+		assertThat("Metadata for node ID", metas.get(0).getObjectId(), equalTo(datum.getLocationId()));
 		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo(datum.getSourceId()));
 	}
 
@@ -301,7 +300,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		insertDatum(1L, "s1", "foo", start, freq, 4);
 		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
 
-		Map<UUID, NodeDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
+		Map<UUID, ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 
 		// WHEN
@@ -321,10 +320,9 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(4));
 
-		DatumStreamMetadata meta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", meta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) meta).getNodeId(),
-				equalTo(metas.get(streamId).getNodeId()));
+		ObjectDatumStreamMetadata meta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", meta.getObjectId(), equalTo(metas.get(streamId).getObjectId()));
 		Instant ts = start.toInstant();
 		for ( int i = 0; i < 4; i++ ) {
 			Datum d = datumList.get(i);
@@ -448,7 +446,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		insertDatum(1L, "s1", "foo", start, freq, 4);
 		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
 
-		Map<UUID, NodeDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
+		Map<UUID, ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 
 		// WHEN
@@ -473,10 +471,10 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 		for ( int i = 0; i < 2; i++ ) {
 			Datum d = datumList.get(i);
-			DatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
-			assertThat("Metadata is for node", meta, instanceOf(NodeDatumStreamMetadata.class));
-			Long nodeId = ((NodeDatumStreamMetadata) meta).getNodeId();
-			assertThat("Node ID", nodeId, equalTo(metas.get(streamIds.get(i)).getNodeId()));
+			ObjectDatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+			assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
+			Long nodeId = meta.getObjectId();
+			assertThat("Node ID", nodeId, equalTo(metas.get(streamIds.get(i)).getObjectId()));
 			assertThat("Stream ID ", d.getStreamId(), equalTo(streamIds.get(i)));
 			assertThat("Max timestamp", d.getTimestamp(),
 					equalTo(nodeId == 1L ? start.plusMinutes(3 * 30).toInstant()

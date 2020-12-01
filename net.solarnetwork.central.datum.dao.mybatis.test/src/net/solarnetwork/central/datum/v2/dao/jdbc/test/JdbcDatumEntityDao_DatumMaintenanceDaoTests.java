@@ -51,10 +51,11 @@ import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.domain.Aggregation;
@@ -89,10 +90,10 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		return new DatumEntity(streamId, timestamp.toInstant(), Instant.now(), props);
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
 			String timeZoneId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), timeZoneId, nodeId, sourceId,
-				new String[] { "x", "y" }, new String[] { "w" }, null);
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), timeZoneId, ObjectDatumKind.Node,
+				nodeId, sourceId, new String[] { "x", "y" }, new String[] { "w" }, null);
 	}
 
 	@Test
@@ -124,7 +125,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -163,7 +164,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -202,7 +203,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -243,7 +244,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -288,7 +289,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -335,7 +336,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -382,7 +383,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -429,7 +430,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -496,7 +497,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -533,7 +534,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -570,7 +571,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -607,7 +608,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -650,7 +651,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		ZonedDateTime date = start;
@@ -693,12 +694,11 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_1));
 
 		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
-				TEST_TZ);
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
 
 		ZonedDateTime date = start;
@@ -745,12 +745,12 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_1));
 
 		setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
 		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
-		BasicNodeDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
 				TEST_TZ_ALT);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
 
@@ -792,7 +792,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 			}
 		});
 
-		SortedMap<UUID, NodeDatumStreamMetadata> metas = new TreeMap<>(DatumDbUtils.UUID_STRING_ORDER);
+		SortedMap<UUID, ObjectDatumStreamMetadata> metas = new TreeMap<>(DatumDbUtils.UUID_STRING_ORDER);
 		metas.put(meta_1.getStreamId(), meta_1);
 		metas.put(meta_2.getStreamId(), meta_2);
 

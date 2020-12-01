@@ -52,8 +52,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -407,8 +405,8 @@ public class DatumUtils {
 	 * @param meta
 	 *        the datum metadata
 	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@code meta} is not an instance of
-	 *         {@link NodeDatumStreamMetadata}
+	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 *         not {@code Node}
 	 */
 	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum,
 			ObjectDatumStreamMetadata meta) {
@@ -541,8 +539,8 @@ public class DatumUtils {
 	 * @param meta
 	 *        the datum metadata
 	 * @return the general datum, or {@literal null} if {@code datum} is
-	 *         {@literal null} or {@code meta} is not an instance of
-	 *         {@link LocationDatumStreamMetadata}
+	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
+	 *         not {@code Location}
 	 */
 	public static ReportingGeneralLocationDatum toGeneralLocationDatum(Datum datum,
 			ObjectDatumStreamMetadata meta) {

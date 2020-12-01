@@ -27,7 +27,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
-import static net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
@@ -83,16 +83,14 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -194,12 +192,13 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void getAvailableSources_node() {
 		// GIVEN
-		NodeDatumStreamMetadata meta1 = emptyMeta(randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
-		NodeDatumStreamMetadata meta2 = emptyMeta(randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID2);
+		ObjectDatumStreamMetadata meta1 = emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node,
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		ObjectDatumStreamMetadata meta2 = emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node,
+				TEST_NODE_ID, TEST_SOURCE_ID2);
 
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
-		expect(metaDao.findNodeDatumStreamMetadata(capture(filterCaptor)))
-				.andReturn(asList(meta1, meta2));
+		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(asList(meta1, meta2));
 
 		// WHEN
 		replayAll();
@@ -216,10 +215,11 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void getAvailableSources_nodeAndDateRange() {
 		// GIVEN
-		NodeDatumStreamMetadata meta = emptyMeta(randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
+		ObjectDatumStreamMetadata meta = emptyMeta(randomUUID(), "UTC", ObjectDatumKind.Node,
+				TEST_NODE_ID, TEST_SOURCE_ID);
 
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
-		expect(metaDao.findNodeDatumStreamMetadata(capture(filterCaptor))).andReturn(singleton(meta));
+		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -282,14 +282,13 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void getAvailableSources_loc() {
 		// GIVEN
-		LocationDatumStreamMetadata meta1 = BasicLocationDatumStreamMetadata.emptyMeta(randomUUID(),
-				"UTC", TEST_LOC_ID, TEST_SOURCE_ID);
-		LocationDatumStreamMetadata meta2 = BasicLocationDatumStreamMetadata.emptyMeta(randomUUID(),
-				"UTC", TEST_LOC_ID, TEST_SOURCE_ID2);
+		ObjectDatumStreamMetadata meta1 = BasicObjectDatumStreamMetadata.emptyMeta(randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_LOC_ID, TEST_SOURCE_ID);
+		ObjectDatumStreamMetadata meta2 = BasicObjectDatumStreamMetadata.emptyMeta(randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_LOC_ID, TEST_SOURCE_ID2);
 
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
-		expect(metaDao.findLocationDatumStreamMetadata(capture(filterCaptor)))
-				.andReturn(asList(meta1, meta2));
+		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(asList(meta1, meta2));
 
 		// WHEN
 		replayAll();
@@ -304,14 +303,13 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void getAvailableSources_locAndDateRange() {
 		// GIVEN
-		LocationDatumStreamMetadata meta1 = BasicLocationDatumStreamMetadata.emptyMeta(randomUUID(),
-				"UTC", TEST_LOC_ID, TEST_SOURCE_ID);
-		LocationDatumStreamMetadata meta2 = BasicLocationDatumStreamMetadata.emptyMeta(randomUUID(),
-				"UTC", TEST_LOC_ID, TEST_SOURCE_ID2);
+		ObjectDatumStreamMetadata meta1 = BasicObjectDatumStreamMetadata.emptyMeta(randomUUID(), "UTC",
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID);
+		ObjectDatumStreamMetadata meta2 = BasicObjectDatumStreamMetadata.emptyMeta(randomUUID(), "UTC",
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID2);
 
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
-		expect(metaDao.findLocationDatumStreamMetadata(capture(filterCaptor)))
-				.andReturn(asList(meta1, meta2));
+		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(asList(meta1, meta2));
 
 		// WHEN
 		replayAll();
@@ -351,8 +349,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		// GIVEN
 		User user = createNewUser(TEST_USER_EMAIL);
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
-		NodeDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findNodeDatumStreamMetadata(capture(filterCaptor))).andReturn(singleton(meta));
+		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
+				TEST_NODE_ID, TEST_SOURCE_ID);
+		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -379,9 +378,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findFilteredGeneralNodeDatum() {
 		// GIVEN
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
-				null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
 		DatumProperties props = testProps();
 		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
 		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
@@ -437,9 +436,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findFilteredAggregateGeneralNodeDatum() {
 		// GIVEN
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
-				null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
 		DatumProperties props = testProps();
 		DatumPropertiesStatistics stats = testStats();
 		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
@@ -503,9 +502,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findGeneralLocationDatum() {
 		// GIVEN
-		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
-				null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
 		DatumProperties props = testProps();
 		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
 		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
@@ -560,9 +559,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findAggregateGeneralLocationDatum() {
 		// GIVEN
-		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
-				null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
 		DatumProperties props = testProps();
 		DatumPropertiesStatistics stats = testStats();
 		AggregateDatumEntity d = new AggregateDatumEntity(meta.getStreamId(), Instant.now(),
@@ -642,9 +641,9 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findFilteredAggregateReading() {
 		// GIVEN
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" }, new String[] { "a1" }, null,
-				null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
 		DatumProperties props = testProps();
 		DatumPropertiesStatistics stats = testStats();
 		ReadingDatumEntity d = new ReadingDatumEntity(meta.getStreamId(), Instant.now(), Aggregation.Day,

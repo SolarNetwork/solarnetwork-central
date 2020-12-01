@@ -57,10 +57,12 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
@@ -539,8 +541,8 @@ public class DatumJsonUtilsTests {
 	@Test
 	public void parseAggregateDatum_mappedNodeSourceId() throws IOException {
 		UUID streamId = UUID.randomUUID();
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", 1L, "a",
-				new String[] { "x", "y" }, new String[] { "w" }, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "x", "y" }, new String[] { "w" }, null);
 		List<AggregateDatum> list = loadAggregateDatum("test-agg-datum-01.txt", getClass(),
 				new JsonFactory(), staticProvider(singleton(meta)));
 		assertThat("Parsed agg datum", list, hasSize(1));

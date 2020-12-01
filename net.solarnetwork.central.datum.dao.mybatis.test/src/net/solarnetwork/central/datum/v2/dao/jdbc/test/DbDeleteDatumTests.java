@@ -50,7 +50,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -87,7 +87,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		return deleteDatum(new Long[] { nodeId }, new String[] { sourceId }, start, end);
 	}
 
-	private Map<NodeSourcePK, NodeDatumStreamMetadata> populateTestData(final long start,
+	private Map<NodeSourcePK, ObjectDatumStreamMetadata> populateTestData(final long start,
 			final int count, final long step, final Long nodeId, final String sourceId) {
 		List<GeneralNodeDatum> data = new ArrayList<>(count);
 		long ts = start;
@@ -115,7 +115,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 	public void deleteDatumAddStaleRow() {
 		// given
 		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 15, 05, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
 				ts1.toInstant().toEpochMilli(), 1, 0, TEST_NODE_ID, TEST_SOURCE_ID);
 		UUID streamId = metas.values().iterator().next().getStreamId();
 		processStaleAggregateDatum(log, jdbcTemplate);
@@ -137,7 +137,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 	public void deleteDatumAddStaleRowAfterPrevHour() {
 		// given
 		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
 				ts1.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
 				TEST_SOURCE_ID);
 		UUID streamId = metas.values().iterator().next().getStreamId();
@@ -164,7 +164,7 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 	public void deleteDatumAddStaleRowBeforeNextHour() {
 		// given
 		ZonedDateTime ts1 = ZonedDateTime.of(2018, 6, 22, 14, 55, 0, 0, ZoneId.of(TEST_TZ));
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = populateTestData(
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
 				ts1.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(10), TEST_NODE_ID,
 				TEST_SOURCE_ID);
 		UUID streamId = metas.values().iterator().next().getStreamId();

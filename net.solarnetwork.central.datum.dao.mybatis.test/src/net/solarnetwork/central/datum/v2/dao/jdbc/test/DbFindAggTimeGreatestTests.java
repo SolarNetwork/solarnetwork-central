@@ -58,7 +58,9 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -102,13 +104,13 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 		});
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+	private ObjectDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a");
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
-				new String[] { "x", "y" }, new String[] { "w" }, null);
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC", ObjectDatumKind.Node, nodeId,
+				sourceId, new String[] { "x", "y" }, new String[] { "w" }, null);
 	}
 
 	private static final Set<Aggregation> aggs() {
@@ -132,7 +134,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void findAggTimeGreatest_hour_oneStream() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -156,7 +158,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void findAggTimeGreatest_day_oneStream() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -180,7 +182,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void findAggTimeGreatest_month_oneStream() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -204,8 +206,8 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void findAggTimeGreatest_hour_twoStreams() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta_a = testStreamMetadata(1L, "a");
-		BasicNodeDatumStreamMetadata meta_b = testStreamMetadata(1L, "b");
+		ObjectDatumStreamMetadata meta_a = testStreamMetadata(1L, "a");
+		ObjectDatumStreamMetadata meta_b = testStreamMetadata(1L, "b");
 		ObjectDatumStreamMetadataProvider metaProvider = staticProvider(asList(meta_a, meta_b));
 
 		List<AggregateDatum> datums_a = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",

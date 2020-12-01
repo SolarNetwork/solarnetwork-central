@@ -49,7 +49,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
  * Tests for the database rollup stored procedures.
@@ -62,7 +62,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	private static interface RollupCallback {
 
 		public void doWithStream(List<GeneralNodeDatum> datums,
-				Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+				Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 				List<AggregateDatum> results);
 	}
 
@@ -70,7 +70,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 			RollupCallback callback) throws IOException {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
 		log.debug("Got test data: {}", datums);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
 		List<AggregateDatum> results = Collections.emptyList();
@@ -90,7 +90,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		log.debug("Got test data: {}", data);
 		List<GeneralNodeDatum> datums = elementsOf(data, GeneralNodeDatum.class);
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = null;
 		List<AggregateDatum> results = Collections.emptyList();
@@ -115,7 +115,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -144,7 +144,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -173,7 +173,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -202,7 +202,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -231,7 +231,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -260,7 +260,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -288,7 +288,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(0));
 			}
@@ -303,7 +303,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -330,7 +330,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
@@ -363,7 +363,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 
@@ -393,7 +393,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 
@@ -423,7 +423,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -452,7 +452,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -481,7 +481,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -511,7 +511,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -540,7 +540,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -569,7 +569,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -598,7 +598,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -627,7 +627,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -655,7 +655,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -683,7 +683,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -712,7 +712,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<GeneralNodeDatum> datums,
-							Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+							Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 							List<AggregateDatum> results) {
 						assertThat("Agg result returned", results, hasSize(1));
 						AggregateDatum result = results.get(0);
@@ -739,7 +739,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 				AggregateDatum result = results.get(0);
@@ -765,7 +765,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 				AggregateDatum result = results.get(0);
@@ -790,7 +790,7 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, NodeDatumStreamMetadata> meta, UUID streamId,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 				AggregateDatum result = results.get(0);

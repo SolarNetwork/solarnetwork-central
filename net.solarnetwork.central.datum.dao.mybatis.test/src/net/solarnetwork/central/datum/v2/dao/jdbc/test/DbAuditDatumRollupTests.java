@@ -51,8 +51,9 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the database audit rollup stored procedures.
@@ -64,21 +65,22 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 	private static final String TEST_TZ_ALT = "America/Los_Angeles";
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+	private ObjectDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a", TEST_TZ);
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
 			String timeZoneId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), timeZoneId, nodeId, sourceId,
-				new String[] { "x", "y", "z" }, new String[] { "w", "ww" }, new String[] { "st" });
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), timeZoneId, ObjectDatumKind.Node,
+				nodeId, sourceId, new String[] { "x", "y", "z" }, new String[] { "w", "ww" },
+				new String[] { "st" });
 	}
 
 	@Test
 	public void calcRaw() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				TEST_TZ);
 		UUID streamId = meta.values().iterator().next().getStreamId();
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -98,7 +100,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void calcHourly() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		log.debug("Got test data: {}", datums);
@@ -122,7 +124,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void calcDaily() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -160,7 +162,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void calcMonthly() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -215,7 +217,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void calcRunningTotal() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
@@ -267,7 +269,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, TEST_TZ_ALT);
 		setupTestNode(1L, TEST_LOC_ID);
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-02.txt",
 				getClass(), staticProvider(singleton(meta)));

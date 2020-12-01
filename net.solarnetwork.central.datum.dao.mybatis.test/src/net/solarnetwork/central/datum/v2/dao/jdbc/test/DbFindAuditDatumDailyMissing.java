@@ -56,7 +56,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -149,7 +149,7 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 	public void findMissing() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
@@ -172,7 +172,7 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 	public void findMissing_none() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
@@ -204,7 +204,7 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 								d.setNodeId(2L);
 							}
 						}, null), GeneralNodeDatum.class);
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
 				concat(datums.stream(), datums2.stream()).collect(toList()), "UTC");
 		UUID streamId_1 = metas.get(new NodeSourcePK(1L, "a")).getStreamId();
 		UUID streamId_2 = metas.get(new NodeSourcePK(2L, "a")).getStreamId();

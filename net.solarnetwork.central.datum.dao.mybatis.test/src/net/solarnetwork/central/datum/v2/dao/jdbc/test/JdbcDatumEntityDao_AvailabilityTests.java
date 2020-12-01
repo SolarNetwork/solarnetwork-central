@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -48,14 +48,13 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for {@link JdbcDatumEntityDao} availability methods.
@@ -98,12 +97,13 @@ public class JdbcDatumEntityDao_AvailabilityTests extends BaseDatumJdbcTestSuppo
 	public void availableRange_nodes() throws IOException {
 		// GIVEN
 		DatumProperties props = testProps();
-		Map<UUID, NodeDatumStreamMetadata> metas = new LinkedHashMap<>();
+		Map<UUID, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>();
 		Map<UUID, List<Datum>> datas = new LinkedHashMap<>();
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
-			NodeDatumStreamMetadata meta = emptyMeta(streamId, "UTC", (long) i, "a");
+			ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					"a");
 			metas.put(streamId, meta);
 			List<Datum> data = new ArrayList<>();
 			for ( int j = 1; j <= 5; j++ ) {
@@ -140,12 +140,13 @@ public class JdbcDatumEntityDao_AvailabilityTests extends BaseDatumJdbcTestSuppo
 	public void availableRange_nodesAndSources() throws IOException {
 		// GIVEN
 		DatumProperties props = testProps();
-		Map<UUID, NodeDatumStreamMetadata> metas = new LinkedHashMap<>();
+		Map<UUID, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>();
 		Map<UUID, List<Datum>> datas = new LinkedHashMap<>();
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
-			NodeDatumStreamMetadata meta = emptyMeta(streamId, "UTC", (long) i, "s" + i);
+			ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					"s" + i);
 			metas.put(streamId, meta);
 			List<Datum> data = new ArrayList<>();
 			for ( int j = 1; j <= 5; j++ ) {
@@ -182,12 +183,13 @@ public class JdbcDatumEntityDao_AvailabilityTests extends BaseDatumJdbcTestSuppo
 	public void availableRange_nodesAndSourcePattern() throws IOException {
 		// GIVEN
 		DatumProperties props = testProps();
-		Map<UUID, NodeDatumStreamMetadata> metas = new LinkedHashMap<>();
+		Map<UUID, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>();
 		Map<UUID, List<Datum>> datas = new LinkedHashMap<>();
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
-			NodeDatumStreamMetadata meta = emptyMeta(streamId, "UTC", (long) i, "s" + i);
+			ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					"s" + i);
 			metas.put(streamId, meta);
 			List<Datum> data = new ArrayList<>();
 			for ( int j = 1; j <= 5; j++ ) {
@@ -226,7 +228,7 @@ public class JdbcDatumEntityDao_AvailabilityTests extends BaseDatumJdbcTestSuppo
 		DatumProperties props = testProps();
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		UUID streamId = UUID.randomUUID();
-		NodeDatumStreamMetadata meta = emptyMeta(streamId, "UTC", 1L, "a");
+		ObjectDatumStreamMetadata meta = emptyMeta(streamId, "UTC", ObjectDatumKind.Node, 1L, "a");
 		Datum datum = testDatum(streamId, date, props);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(datum));
@@ -251,13 +253,13 @@ public class JdbcDatumEntityDao_AvailabilityTests extends BaseDatumJdbcTestSuppo
 	public void availableRange_locations() throws IOException {
 		// GIVEN
 		DatumProperties props = testProps();
-		Map<UUID, LocationDatumStreamMetadata> metas = new LinkedHashMap<>();
+		Map<UUID, ObjectDatumStreamMetadata> metas = new LinkedHashMap<>();
 		Map<UUID, List<Datum>> datas = new LinkedHashMap<>();
 		ZonedDateTime date = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
-			LocationDatumStreamMetadata meta = BasicLocationDatumStreamMetadata.emptyMeta(streamId,
-					"UTC", (long) i, "a");
+			ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, "UTC",
+					ObjectDatumKind.Location, (long) i, "a");
 			metas.put(streamId, meta);
 			List<Datum> data = new ArrayList<>();
 			for ( int j = 1; j <= 5; j++ ) {

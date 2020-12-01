@@ -54,7 +54,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the "least recent" datum database stored procedures.
@@ -108,7 +108,7 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 	public void findTimeLeast_oneStream() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
 		UUID streamId = metas.values().iterator().next().getStreamId();
 
@@ -132,11 +132,11 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		datums_b.stream().forEach(d -> {
 			d.setSourceId("b");
 		});
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
 				concat(datums_a.stream(), datums_b.stream()).collect(toList()), "UTC");
 		UUID streamId_a = null;
 		UUID streamId_b = null;
-		for ( NodeDatumStreamMetadata meta : metas.values() ) {
+		for ( ObjectDatumStreamMetadata meta : metas.values() ) {
 			if ( meta.getSourceId().equals("a") ) {
 				streamId_a = meta.getStreamId();
 			} else if ( meta.getSourceId().equals("b") ) {
@@ -179,10 +179,10 @@ public class DbFindTimeLeastTests extends BaseDatumJdbcTestSupport {
 		datums_b.stream().forEach(d -> {
 			d.setSourceId("b");
 		});
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate,
 				concat(datums_a.stream(), datums_b.stream()).collect(toList()), "UTC");
 		UUID streamId_a = null;
-		for ( NodeDatumStreamMetadata meta : metas.values() ) {
+		for ( ObjectDatumStreamMetadata meta : metas.values() ) {
 			if ( meta.getSourceId().equals("a") ) {
 				streamId_a = meta.getStreamId();
 			}

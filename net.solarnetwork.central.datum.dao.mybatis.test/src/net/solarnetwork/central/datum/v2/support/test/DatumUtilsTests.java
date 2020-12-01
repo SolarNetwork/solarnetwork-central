@@ -45,10 +45,11 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamples;
@@ -62,10 +63,10 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class DatumUtilsTests {
 
-	private NodeDatumStreamMetadata newNodeMeta() {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "Pacific/Auckland", 1L, "a",
-				new String[] { "a", "b", "c", "d" }, new String[] { "e", "f", "g" },
-				new String[] { "h", "i" });
+	private ObjectDatumStreamMetadata newNodeMeta() {
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "Pacific/Auckland",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "a", "b", "c", "d" },
+				new String[] { "e", "f", "g" }, new String[] { "h", "i" });
 	}
 
 	private DatumProperties newProps() {
@@ -190,13 +191,13 @@ public class DatumUtilsTests {
 		DatumProperties props = newProps();
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
 				Instant.now().truncatedTo(ChronoUnit.SECONDS), Instant.now(), props);
-		NodeDatumStreamMetadata meta = newNodeMeta();
+		ObjectDatumStreamMetadata meta = newNodeMeta();
 
 		// WHEN
 		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
 
 		// THEN
-		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
 		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
 				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
@@ -216,13 +217,13 @@ public class DatumUtilsTests {
 		DatumPropertiesStatistics stats = newStats();
 		AggregateDatumEntity datum = new AggregateDatumEntity(UUID.randomUUID(),
 				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, props, stats);
-		NodeDatumStreamMetadata meta = newNodeMeta();
+		ObjectDatumStreamMetadata meta = newNodeMeta();
 
 		// WHEN
 		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
 
 		// THEN
-		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
 		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
 				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
@@ -242,13 +243,13 @@ public class DatumUtilsTests {
 		DatumPropertiesStatistics stats = newStats();
 		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
 				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, null, props, stats);
-		NodeDatumStreamMetadata meta = newNodeMeta();
+		ObjectDatumStreamMetadata meta = newNodeMeta();
 
 		// WHEN
 		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
 
 		// THEN
-		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getNodeId()));
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
 		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
 		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
 				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),

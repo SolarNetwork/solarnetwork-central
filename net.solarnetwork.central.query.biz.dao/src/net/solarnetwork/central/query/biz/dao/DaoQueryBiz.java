@@ -68,9 +68,8 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
@@ -163,8 +162,8 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
-		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
-		return stream(results.spliterator(), false).map(NodeDatumStreamMetadata::getSourceId)
+		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
+		return stream(results.spliterator(), false).map(ObjectDatumStreamMetadata::getSourceId)
 				.collect(toCollection(LinkedHashSet::new));
 	}
 
@@ -173,9 +172,9 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
-		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
+		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
 		return stream(results.spliterator(), false)
-				.map(e -> new NodeSourcePK(e.getNodeId(), e.getSourceId()))
+				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
 	}
 
@@ -196,9 +195,9 @@ public class DaoQueryBiz implements QueryBiz {
 		} else {
 			return Collections.emptySet();
 		}
-		Iterable<NodeDatumStreamMetadata> results = metaDao.findNodeDatumStreamMetadata(c);
+		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
 		return stream(results.spliterator(), false)
-				.map(e -> new NodeSourcePK(e.getNodeId(), e.getSourceId()))
+				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
 	}
 
@@ -487,8 +486,8 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setStartDate(JodaDateUtils.fromJodaToInstant(start));
 		c.setEndDate(JodaDateUtils.fromJodaToInstant(end));
 		c.setObjectKind(ObjectDatumKind.Location);
-		Iterable<LocationDatumStreamMetadata> results = metaDao.findLocationDatumStreamMetadata(c);
-		return stream(results.spliterator(), false).map(LocationDatumStreamMetadata::getSourceId)
+		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
+		return stream(results.spliterator(), false).map(ObjectDatumStreamMetadata::getSourceId)
 				.collect(toCollection(LinkedHashSet::new));
 	}
 

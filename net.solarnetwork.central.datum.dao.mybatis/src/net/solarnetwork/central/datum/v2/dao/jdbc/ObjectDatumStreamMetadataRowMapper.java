@@ -27,10 +27,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -64,13 +62,11 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 			MetadataKind.Dynamic);
 
 	/** A default mapper instance using {@link MetadataKind#Node}. */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final RowMapper<NodeDatumStreamMetadata> NODE_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumStreamMetadata> NODE_INSTANCE = new ObjectDatumStreamMetadataRowMapper(
 			MetadataKind.Node);
 
 	/** A default mapper instance using {@link MetadataKind#Location}. */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static final RowMapper<LocationDatumStreamMetadata> LOCATION_INSTANCE = (RowMapper) new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumStreamMetadata> LOCATION_INSTANCE = new ObjectDatumStreamMetadataRowMapper(
 			MetadataKind.Location);
 
 	private final MetadataKind kind;
@@ -91,7 +87,7 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 	@Override
 	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
-		long objId = rs.getLong(2);
+		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 
 		String[] namesI = null;
@@ -126,13 +122,9 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 
 		String timeZoneId = rs.getString(9);
 
-		if ( k == MetadataKind.Location ) {
-			return new BasicLocationDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI,
-					namesA, namesS, jmeta);
-		}
-
-		return new BasicNodeDatumStreamMetadata(streamId, timeZoneId, objId, sourceId, namesI, namesA,
-				namesS, jmeta);
+		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId,
+				k == MetadataKind.Location ? ObjectDatumKind.Location : ObjectDatumKind.Node, objId,
+				sourceId, namesI, namesA, namesS, jmeta);
 	}
 
 }

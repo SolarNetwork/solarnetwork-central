@@ -55,8 +55,10 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
 
@@ -149,8 +151,8 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 	}
 
 	private void setupTestStream(Long nodeId, String sourceId, UUID streamId) {
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", nodeId,
-				sourceId, null, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, nodeId, sourceId, null, null, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 	}
 

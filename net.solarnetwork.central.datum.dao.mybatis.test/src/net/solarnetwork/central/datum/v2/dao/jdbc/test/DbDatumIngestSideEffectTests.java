@@ -56,7 +56,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -127,9 +127,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void firstDatum_onHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-01.txt", 0, 1);
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -149,9 +149,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void firstDatum_midHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-02.txt", 1, 2);
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -171,9 +171,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void twoDatum_midHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-02.txt", 1, 3);
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate row for datum hour
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -194,9 +194,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void twoDatum_crossHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-02.txt", 0, 2);
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate rows for 2 datum hours
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -221,9 +221,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void manyDatum_crossHours() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-02.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have inserted "stale" aggregate rows for 3 datum hours
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -250,9 +250,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void reset_atHourStart() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-15.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -275,9 +275,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void reset_withinHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-16.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -297,9 +297,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void reset_atHourEnd() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-17.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -321,9 +321,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void reset_moveWithinHour() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-16.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
 		insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
@@ -355,9 +355,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	@Test
 	public void reset_moveNodeId() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-16.txt");
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<GeneralNodeDatumAuxiliary> auxDatums = loadAuxJson("test-datum-16.txt");
 		insertDatumAuxiliary(log, jdbcTemplate, meta.getStreamId(), auxDatums);
@@ -367,9 +367,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 			clone.setNodeId(2L);
 			return clone;
 		}).collect(Collectors.toList());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas2 = insertDatumStream(log, jdbcTemplate, datums2,
-				"UTC");
-		NodeDatumStreamMetadata meta2 = metas2.values().iterator().next();
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas2 = insertDatumStream(log, jdbcTemplate,
+				datums2, "UTC");
+		ObjectDatumStreamMetadata meta2 = metas2.values().iterator().next();
 
 		// should have no "stale" aggregate rows yet
 		List<StaleAggregateDatum> staleRows = listStaleAggregateDatum(jdbcTemplate);
@@ -378,7 +378,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		// now move reset
 		GeneralNodeDatumAuxiliary from = auxDatums.get(0);
 		GeneralNodeDatumAuxiliary to = new GeneralNodeDatumAuxiliary(
-				new GeneralNodeDatumAuxiliaryPK(meta2.getNodeId(), from.getCreated(),
+				new GeneralNodeDatumAuxiliaryPK(meta2.getObjectId(), from.getCreated(),
 						from.getSourceId()),
 				from.getSamplesFinal(), from.getSamplesStart());
 
@@ -407,9 +407,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void audit_oneInstantaneous() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-09.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
@@ -421,9 +421,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void audit_oneAccumulating() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-10.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
@@ -435,9 +435,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void audit_oneStatus() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-11.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
@@ -449,9 +449,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void audit_oneInstantaneousWithTags() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-13.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
@@ -463,9 +463,9 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 	public void audit_inconsistentProperties() throws IOException {
 		List<GeneralNodeDatum> datums = loadJson("test-datum-14.txt");
 		Instant now = Instant.now();
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		NodeDatumStreamMetadata meta = metas.values().iterator().next();
+		ObjectDatumStreamMetadata meta = metas.values().iterator().next();
 
 		List<AuditDatumEntity> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));

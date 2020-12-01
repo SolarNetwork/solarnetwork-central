@@ -25,7 +25,7 @@ package net.solarnetwork.central.users.alerts.test;
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -56,12 +56,14 @@ import org.springframework.mail.MailMessage;
 import org.springframework.mail.SimpleMailMessage;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.mail.MailService;
@@ -208,20 +210,23 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		return d;
 	}
 
-	private static DatumStreamFilterResults newTestResults(ZonedDateTime created, UUID streamId) {
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			UUID streamId) {
 		return newTestResults(created, streamId, newDatum(created, streamId));
 	}
 
-	private static DatumStreamFilterResults newTestResults(ZonedDateTime created, UUID streamId,
-			Datum... nodeData) {
-		return newTestResults(created, new NodeDatumStreamMetadata[] {
-				emptyMeta(streamId, TEST_TZ, TEST_NODE_ID, TEST_SOURCE_ID) }, nodeData);
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			UUID streamId, Datum... nodeData) {
+		return newTestResults(created, new ObjectDatumStreamMetadata[] {
+				emptyMeta(streamId, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID) },
+				nodeData);
 	}
 
-	private static DatumStreamFilterResults newTestResults(ZonedDateTime created,
-			NodeDatumStreamMetadata[] metas, Datum... nodeData) {
-		BasicDatumStreamFilterResults nodeDataResults = new BasicDatumStreamFilterResults(
-				asList(metas).stream().collect(toMap(NodeDatumStreamMetadata::getStreamId, identity())),
+	private static ObjectDatumStreamFilterResults<Datum, DatumPK> newTestResults(ZonedDateTime created,
+			ObjectDatumStreamMetadata[] metas, Datum... nodeData) {
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = new BasicObjectDatumStreamFilterResults<>(
+				asList(metas).stream()
+						.collect(toMap(ObjectDatumStreamMetadata::getStreamId, identity())),
 				asList(nodeData), (long) nodeData.length, 0, nodeData.length);
 		return nodeDataResults;
 	}
@@ -249,7 +254,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
 
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
 				ZonedDateTime.now().minusSeconds(10), streamId);
 
 		// first query for pending alerts, starting at beginning
@@ -308,7 +313,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
 
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
 				ZonedDateTime.now().minusSeconds(10), streamId);
 
 		// first query for pending alerts, starting at beginning
@@ -357,10 +362,10 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		final UUID streamId_1 = UUID.randomUUID();
 		final UUID streamId_2 = UUID.randomUUID();
-		final NodeDatumStreamMetadata[] metas = new NodeDatumStreamMetadata[] {
-				emptyMeta(streamId_1, TEST_TZ, TEST_NODE_ID, TEST_SOURCE_ID),
-				emptyMeta(streamId_2, TEST_TZ, TEST_NODE_ID_2, TEST_SOURCE_ID) };
-		final DatumStreamFilterResults nodeDataResults = newTestResults(
+		final ObjectDatumStreamMetadata[] metas = new ObjectDatumStreamMetadata[] {
+				emptyMeta(streamId_1, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID),
+				emptyMeta(streamId_2, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID_2, TEST_SOURCE_ID) };
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
 				ZonedDateTime.now().minusSeconds(10), metas,
 				newDatum(ZonedDateTime.now().minusSeconds(20), streamId_2),
 				newDatum(ZonedDateTime.now().minusSeconds(10), streamId_1));
@@ -447,7 +452,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
 				ZoneId.of(nodeTZ.getID()));
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
@@ -503,7 +509,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
 				ZoneId.of(nodeTZ.getID()));
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
@@ -573,7 +580,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ)).minusSeconds(10);
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
@@ -693,7 +701,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ));
 		final UUID streamId = UUID.randomUUID();
-		final DatumStreamFilterResults nodeDataResults = newTestResults(dataTimestamp, streamId);
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				dataTimestamp, streamId);
 
 		// first query for pending alerts, starting at beginning
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,

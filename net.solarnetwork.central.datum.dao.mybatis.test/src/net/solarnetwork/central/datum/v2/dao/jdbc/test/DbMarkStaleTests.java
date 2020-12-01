@@ -49,7 +49,7 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 
 /**
@@ -115,9 +115,9 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		UUID[] streamIds = meta.values().stream().map(NodeDatumStreamMetadata::getStreamId)
+		UUID[] streamIds = meta.values().stream().map(ObjectDatumStreamMetadata::getStreamId)
 				.toArray(UUID[]::new);
 
 		// WHEN
@@ -133,9 +133,9 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
-		Map<NodeSourcePK, NodeDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		UUID[] streamIds = meta.values().stream().map(NodeDatumStreamMetadata::getStreamId)
+		UUID[] streamIds = meta.values().stream().map(ObjectDatumStreamMetadata::getStreamId)
 				.toArray(UUID[]::new);
 
 		// WHEN

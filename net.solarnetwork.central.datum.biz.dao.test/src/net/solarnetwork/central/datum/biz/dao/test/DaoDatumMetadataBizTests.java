@@ -42,9 +42,9 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralDatumMetadata;
@@ -135,9 +135,9 @@ public class DaoDatumMetadataBizTests {
 	public void findGeneralNodeDatumMetadata() {
 		// GIVEN
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicNodeDatumStreamMetadata meta = BasicNodeDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", 1L, TEST_SOURCE_ID);
-		expect(metaDao.findNodeDatumStreamMetadata(capture(criteriaCaptor))).andReturn(singleton(meta));
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, TEST_SOURCE_ID);
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -150,10 +150,12 @@ public class DaoDatumMetadataBizTests {
 		verifyAll();
 		assertThat("Source ID passed to DAO", criteriaCaptor.getValue().getSourceId(),
 				equalTo(filter.getSourceId()));
+		assertThat("Node type passed to DAO", criteriaCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
 		assertThat("Result converted", r.getReturnedResultCount(), equalTo(1));
 		GeneralNodeDatumMetadataFilterMatch match = r.iterator().next();
 		assertThat("Result source ID", match.getId(),
-				equalTo(new NodeSourcePK(meta.getNodeId(), meta.getSourceId())));
+				equalTo(new NodeSourcePK(meta.getObjectId(), meta.getSourceId())));
 	}
 
 	@Test
@@ -168,8 +170,8 @@ public class DaoDatumMetadataBizTests {
 		meta2.addTag("mab");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicNodeDatumStreamMetadata streamMeta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(),
-				"UTC", TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
+		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.singleton(streamMeta));
@@ -206,8 +208,8 @@ public class DaoDatumMetadataBizTests {
 		meta2.addTag("mab");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicNodeDatumStreamMetadata streamMeta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(),
-				"UTC", TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
+		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.singleton(streamMeta));
@@ -299,10 +301,9 @@ public class DaoDatumMetadataBizTests {
 	public void findGeneralLocationDatumMetadata() {
 		// GIVEN
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicLocationDatumStreamMetadata meta = BasicLocationDatumStreamMetadata
-				.emptyMeta(UUID.randomUUID(), "UTC", 1L, TEST_SOURCE_ID);
-		expect(metaDao.findLocationDatumStreamMetadata(capture(criteriaCaptor)))
-				.andReturn(singleton(meta));
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Location, 1L, TEST_SOURCE_ID);
+		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor))).andReturn(singleton(meta));
 
 		// WHEN
 		replayAll();
@@ -315,10 +316,12 @@ public class DaoDatumMetadataBizTests {
 		verifyAll();
 		assertThat("Source ID passed to DAO", criteriaCaptor.getValue().getSourceId(),
 				equalTo(filter.getSourceId()));
+		assertThat("Location type passed to DAO", criteriaCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Location));
 		assertThat("Result converted", r.getReturnedResultCount(), equalTo(1));
 		GeneralLocationDatumMetadataFilterMatch match = r.iterator().next();
 		assertThat("Result source ID", match.getId(),
-				equalTo(new LocationSourcePK(meta.getLocationId(), meta.getSourceId())));
+				equalTo(new LocationSourcePK(meta.getObjectId(), meta.getSourceId())));
 	}
 
 	@Test
@@ -333,8 +336,8 @@ public class DaoDatumMetadataBizTests {
 		meta2.addTag("mab");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicLocationDatumStreamMetadata streamMeta = new BasicLocationDatumStreamMetadata(
-				UUID.randomUUID(), "UTC", TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
+		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Location, TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.singleton(streamMeta));
@@ -371,8 +374,8 @@ public class DaoDatumMetadataBizTests {
 		meta2.addTag("mab");
 
 		Capture<ObjectStreamCriteria> criteriaCaptor = new Capture<>();
-		BasicLocationDatumStreamMetadata streamMeta = new BasicLocationDatumStreamMetadata(
-				UUID.randomUUID(), "UTC", TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
+		ObjectDatumStreamMetadata streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Location, TEST_LOCATION_ID, TEST_SOURCE_ID, null, null, null,
 				JsonUtils.getJSONString(meta, null));
 		expect(metaDao.findDatumStreamMetadata(capture(criteriaCaptor)))
 				.andReturn(Collections.singleton(streamMeta));

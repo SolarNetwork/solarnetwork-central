@@ -46,18 +46,6 @@
 				<value>net.solarnetwork.central.datum.domain.NodeSourcePK</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
 				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumPK</value>
-			
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatum</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatum</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch</value>
-				
-				<value>net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -90,10 +78,6 @@
 
 				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
 
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
 			</list>
 		</property>
 	</bean>
@@ -114,44 +98,6 @@
 	
 	<bean id="userNodeDao" class="net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao">
 		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-	</bean>
-	
-	<!--  Datum DAO -->
-
-	<util:map id="skyConditionMap" value-type="net.solarnetwork.central.datum.domain.SkyCondition">
-		<beans:entry key="^(clear|sunny|fine)" value="Clear"/>
-		<beans:entry key="^(?:mostly\s+)?cloudy" value="Overcast"/>
-		<beans:entry key="^fair" value="Clear"/>
-		<beans:entry key="^(?:heavy\s+)?(?:rain|shower)" value="Showers"/>
-		<beans:entry key="drizzle" value="ShowersScattered"/>
-		<beans:entry key="^(?:few|light)\s+(rain|drizzle|shower)" value="ShowersScattered"/>
-		<beans:entry key="^partly\s+cloudy" value="FewClouds"/>
-		<beans:entry key="fog" value="Fog"/>
-		<beans:entry key="snow" value="Snow"/>
-	</util:map>
-
-	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
-		<property name="basenames" value="net.solarnetwork.central.datum.dao.mybatis.messages"/>
-	</bean>
-	
-	<bean id="generalLocationDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="generalLocationDatumMetadataDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralLocationDatumMetadataDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="generalNodeDatumDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
-	</bean>
-	
-	<bean id="generalNodeDatumMetadataDao" class="net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumMetadataDao">
-		<property name="sqlSessionFactory" ref="sqlSessionFactory"/>
-		<property name="messageSource" ref="messageSource"/>
 	</bean>
 	
 </beans>

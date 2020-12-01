@@ -71,11 +71,9 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.central.datum.v2.domain.BasicLocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -117,15 +115,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@Test
 	public void findObjectMetadata_nodes_withJson() {
 		// GIVEN
-		final List<NodeDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
 		final Set<UUID> streamIds = new LinkedHashSet<>(3);
 		final String json = "{\"foo\":\"bar\"}";
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicNodeDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
-					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" },
-					json));
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }, json));
 
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
@@ -172,8 +170,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_nodes_token_withPolicy() {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
-				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, "/test/source/102", new String[] { "a", "b" },
+				new String[] { "c" }, null, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		setupTestUser(TEST_USER_ID, TEST_USERNAME);
@@ -205,8 +204,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_nodes_token_withPolicy_noMatchPolicySource() {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
-				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, "/test/source/102", new String[] { "a", "b" },
+				new String[] { "c" }, null, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		setupTestUser(TEST_USER_ID, TEST_USERNAME);
@@ -237,8 +237,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_nodes_token_withPolicy_noMatchPolicyNode() {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "UTC", TEST_NODE_ID,
-				"/test/source/102", new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, "/test/source/102", new String[] { "a", "b" },
+				new String[] { "c" }, null, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		setupTestUser(TEST_USER_ID, TEST_USERNAME);
@@ -268,15 +269,15 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@Test
 	public void findObjectMetadata_locations_withJson() {
 		// GIVEN
-		final List<LocationDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
 		final Set<UUID> streamIds = new LinkedHashSet<>(3);
 		final String json = "{\"foo\":\"bar\"}";
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicLocationDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
-					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" },
-					json));
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Location,
+					(long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" }, json));
 
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
@@ -303,8 +304,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_locations_absoluteDates() {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
-		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, "UTC", 1L, "a",
-				new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Location, 1L, "a", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		DatumEntity datum = new DatumEntity(streamId, now(), now(),
@@ -329,8 +331,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_locations_absoluteDates_dateOutOfBounds() {
 		// GIVEN
 		UUID streamId = UUID.randomUUID();
-		LocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, "UTC", 1L, "a",
-				new String[] { "a", "b" }, new String[] { "c" }, null, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+				ObjectDatumKind.Location, 1L, "a", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		DatumEntity datum = new DatumEntity(streamId, now(), now(),
@@ -353,13 +356,14 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@Test
 	public void findNodeMetadata() {
 		// GIVEN
-		final List<NodeDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
 		final Set<UUID> streamIds = new LinkedHashSet<>(3);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicNodeDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
-					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" }));
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }));
 
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
@@ -369,15 +373,16 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		Iterable<NodeDatumStreamMetadata> results = dao.findNodeDatumStreamMetadata(filter);
+		filter.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
 
 		assertThat("Results returned", results, notNullValue());
-		Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
 
-		for ( NodeDatumStreamMetadata expected : data ) {
-			NodeDatumStreamMetadata meta = metas.get(expected.getStreamId());
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
 			assertDatumStreamMetadata("location meta", meta, expected);
 		}
 	}
@@ -385,13 +390,14 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@Test
 	public void findLocationMetadata() {
 		// GIVEN
-		final List<LocationDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
 		final Set<UUID> streamIds = new LinkedHashSet<>(3);
 		for ( int i = 1; i <= 3; i++ ) {
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicLocationDatumStreamMetadata(streamId, "UTC", (long) i, format("s%d", i),
-					new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" }));
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Location,
+					(long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" }));
 
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
@@ -401,24 +407,25 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
 		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		Iterable<LocationDatumStreamMetadata> results = dao.findLocationDatumStreamMetadata(filter);
+		filter.setObjectKind(ObjectDatumKind.Location);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
 
 		assertThat("Results returned", results, notNullValue());
-		Map<UUID, LocationDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 		assertThat("Stream IDs same", metas.keySet(), equalTo(streamIds));
 
-		for ( LocationDatumStreamMetadata expected : data ) {
-			LocationDatumStreamMetadata meta = metas.get(expected.getStreamId());
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
 			assertDatumStreamMetadata("location meta", meta, expected);
 		}
 	}
 
 	@Test
 	public void metadataForStream_notFound() {
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
@@ -434,9 +441,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void metadataForStream_node() {
 		// GIVEN
 		setupTestNode(); // for TZ
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
@@ -453,9 +460,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void metadataForStream_node_withJson() {
 		// GIVEN
 		setupTestNode(); // for TZ
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" }, "{\"foo\":\"bar\"}");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" }, "{\"foo\":\"bar\"}");
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
@@ -473,9 +480,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 		dao.setStreamMetadataCache(cache);
 		setupTestNode(); // for TZ
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		expect(cache.get(meta.getStreamId())).andReturn(null);
@@ -497,9 +504,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void metadataForStream_cacheHit() {
 		// GIVEN
 		dao.setStreamMetadataCache(cache);
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 
 		expect(cache.get(meta.getStreamId())).andReturn(meta);
 
@@ -517,8 +524,8 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void metadataForStream_location() {
 		// GIVEN
 		setupTestLocation(); // for TZ
-		BasicLocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(UUID.randomUUID(),
-				TEST_TZ, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
 				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
@@ -553,9 +560,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 		setupTestNode(); // for TZ
 		UUID streamId = UUID.randomUUID();
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, TEST_TZ,
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
@@ -573,9 +580,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// GIVEN
 		setupTestLocation(); // for TZ
 		UUID streamId = UUID.randomUUID();
-		BasicLocationDatumStreamMetadata meta = new BasicLocationDatumStreamMetadata(streamId, TEST_TZ,
-				TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-				new String[] { "f" });
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, TEST_TZ,
+				ObjectDatumKind.Location, TEST_LOC_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN

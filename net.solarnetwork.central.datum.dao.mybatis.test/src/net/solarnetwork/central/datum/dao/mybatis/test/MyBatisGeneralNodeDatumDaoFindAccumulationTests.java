@@ -59,7 +59,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
@@ -188,7 +188,7 @@ public class MyBatisGeneralNodeDatumDaoFindAccumulationTests
 		GeneralNodeDatum d2 = getTestInstance(ts.plusMinutes(1), nodeId, sourceId);
 		d2.getSamples().putAccumulatingSampleValue(WH_PROP, data[1]);
 
-		Map<NodeSourcePK, NodeDatumStreamMetadata> metas = DatumDbUtils.ingestDatumStream(log,
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = DatumDbUtils.ingestDatumStream(log,
 				jdbcTemplate, Arrays.asList(d1, d2), "UTC");
 		result.add(d1.getId());
 		result.add(d2.getId());

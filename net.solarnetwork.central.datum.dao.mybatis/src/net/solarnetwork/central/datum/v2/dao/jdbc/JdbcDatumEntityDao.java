@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.executeFilterQuery;
 import java.sql.CallableStatement;
@@ -34,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
@@ -77,8 +77,6 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -224,15 +222,10 @@ public class JdbcDatumEntityDao
 				metaMap = Collections.emptyMap();
 			}
 		} else {
-			Iterable<? extends ObjectDatumStreamMetadata> metas = null;
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
-			if ( filter.getLocationIds() != null ) {
-				metas = findLocationDatumStreamMetadata(metaCriteria);
-			} else {
-				metas = findNodeDatumStreamMetadata(metaCriteria);
-			}
-			metaMap = StreamSupport.stream(metas.spliterator(), false).collect(toMap(
-					DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
+			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
+			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
+					identity(), (u, v) -> u, LinkedHashMap::new));
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
@@ -267,27 +260,12 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
-		ObjectDatumKind kind = filter.getObjectKind();
-		if ( kind == null ) {
-			kind = filter.effectiveObjectKind();
-		} else {
-			kind = ObjectDatumKind.Node;
-		}
+		ObjectDatumKind kind = filter.effectiveObjectKind();
+		RowMapper<ObjectDatumStreamMetadata> mapper = (kind == ObjectDatumKind.Location
+				? ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE
+				: ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
 		PreparedStatementCreator sql = new SelectObjectStreamMetadata(filter, kind);
-		return jdbcTemplate.query(sql, ObjectDatumStreamMetadataRowMapper.INSTANCE);
-	}
-
-	@Override
-	public Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(ObjectStreamCriteria filter) {
-		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node),
-				ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
-	}
-
-	@Override
-	public Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(
-			ObjectStreamCriteria filter) {
-		return jdbcTemplate.query(new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location),
-				ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE);
+		return jdbcTemplate.query(sql, mapper);
 	}
 
 	@Override
@@ -371,15 +349,10 @@ public class JdbcDatumEntityDao
 				metaMap = Collections.emptyMap();
 			}
 		} else {
-			Iterable<? extends ObjectDatumStreamMetadata> metas = null;
 			ObjectStreamCriteria metaCriteria = DatumUtils.criteriaWithoutDates(filter);
-			if ( filter.getLocationIds() != null ) {
-				metas = findLocationDatumStreamMetadata(metaCriteria);
-			} else {
-				metas = findNodeDatumStreamMetadata(metaCriteria);
-			}
-			metaMap = StreamSupport.stream(metas.spliterator(), false).collect(toMap(
-					DatumStreamMetadata::getStreamId, identity(), (u, v) -> u, LinkedHashMap::new));
+			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
+			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
+					identity(), (u, v) -> u, LinkedHashMap::new));
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),

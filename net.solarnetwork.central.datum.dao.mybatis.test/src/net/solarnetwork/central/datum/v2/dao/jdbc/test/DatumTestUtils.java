@@ -44,8 +44,6 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -163,23 +161,11 @@ public final class DatumTestUtils {
 					instanceOf(ObjectDatumStreamMetadata.class));
 			ObjectDatumStreamMetadata oResult = (ObjectDatumStreamMetadata) result;
 			ObjectDatumStreamMetadata oExpected = (ObjectDatumStreamMetadata) expected;
+			assertThat(prefix + " object kind", oResult.getKind(), equalTo(oExpected.getKind()));
 			assertThat(prefix + " object ID", oResult.getObjectId(), equalTo(oExpected.getObjectId()));
 			assertThat(prefix + " source ID", oResult.getSourceId(), equalTo(oExpected.getSourceId()));
 			assertThat(prefix + " JSON", JsonUtils.getStringMap(oResult.getMetaJson()),
 					equalTo(JsonUtils.getStringMap(oExpected.getMetaJson())));
-		}
-		if ( expected instanceof NodeDatumStreamMetadata ) {
-			assertThat(prefix + " is node metadata", result, instanceOf(NodeDatumStreamMetadata.class));
-			NodeDatumStreamMetadata oResult = (NodeDatumStreamMetadata) result;
-			NodeDatumStreamMetadata oExpected = (NodeDatumStreamMetadata) expected;
-			assertThat(prefix + " node ID", oResult.getNodeId(), equalTo(oExpected.getNodeId()));
-		} else if ( expected instanceof LocationDatumStreamMetadata ) {
-			assertThat(prefix + " is location metadata", result,
-					instanceOf(LocationDatumStreamMetadata.class));
-			LocationDatumStreamMetadata oResult = (LocationDatumStreamMetadata) result;
-			LocationDatumStreamMetadata oExpected = (LocationDatumStreamMetadata) expected;
-			assertThat(prefix + " location ID", oResult.getLocationId(),
-					equalTo(oExpected.getLocationId()));
 		}
 	}
 

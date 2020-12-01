@@ -67,12 +67,13 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.domain.Identity;
@@ -210,8 +211,9 @@ public class StaleSolarFluxProcessorTests {
 		UUID streamId = UUID.randomUUID();
 		AggregateDatumEntity mostRecentDatum = new AggregateDatumEntity(streamId,
 				Instant.now().truncatedTo(ChronoUnit.HOURS), Aggregation.Hour, props, stats);
-		NodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(streamId, "Pacific/Auckland",
-				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a" }, new String[] { "b" }, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "Pacific/Auckland",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a" },
+				new String[] { "b" }, null);
 
 		expect(resultSet1.getObject(1)).andReturn(streamId);
 		expect(resultSet1.getString(2)).andReturn(Aggregation.Hour.getKey());
@@ -258,7 +260,7 @@ public class StaleSolarFluxProcessorTests {
 				Matchers.instanceOf(ReportingGeneralNodeDatum.class));
 		ReportingGeneralNodeDatum pubDatum = (ReportingGeneralNodeDatum) pubDatumCaptor.getValue();
 		assertThat("Published node ID from stream meta", pubDatum.getNodeId(),
-				equalTo(meta.getNodeId()));
+				equalTo(meta.getObjectId()));
 		assertThat("Published source ID from stream meta", pubDatum.getSourceId(),
 				equalTo(meta.getSourceId()));
 		assertThat("Published timestamp from datum with meta time zone", pubDatum.getCreated(),

@@ -47,11 +47,11 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
@@ -74,14 +74,15 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata() {
+	private ObjectDatumStreamMetadata testStreamMetadata() {
 		return testStreamMetadata(1L, "a", "UTC");
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
 			String timeZoneId) {
-		BasicNodeDatumStreamMetadata meta = new BasicNodeDatumStreamMetadata(UUID.randomUUID(),
-				timeZoneId, nodeId, sourceId, new String[] { "x", "y" }, new String[] { "w" }, null);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				timeZoneId, ObjectDatumKind.Node, nodeId, sourceId, new String[] { "x", "y" },
+				new String[] { "w" }, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		return meta;
 	}
@@ -89,7 +90,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_streamId_orderDefault() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -105,10 +106,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
 
 		Instant ts = start.plusHours(3).toInstant();
@@ -125,7 +125,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_reading_hour_streamId_orderDefault() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -142,10 +142,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
 
 		Instant ts = start.plusHours(3).toInstant();
@@ -162,7 +161,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_streamId_orderTimeDesc() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -179,10 +178,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
 
 		Instant ts = start.plusHours(9).toInstant();
@@ -199,7 +197,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_paginated_withTotalResultCount_first() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -216,10 +214,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
 		assertThat("Offset for first page", results.getStartingOffset(), equalTo(0));
 		assertThat("Results count for first page", results.getReturnedResultCount(), equalTo(3));
@@ -238,7 +235,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_paginated_withTotalResultCount_middle() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -256,10 +253,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
 		assertThat("Offset for middle page", results.getStartingOffset(), equalTo(3));
 		assertThat("Results count for middle page", results.getReturnedResultCount(), equalTo(3));
@@ -278,7 +274,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_paginated_withTotalResultCount_end() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -296,10 +292,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
 		assertThat("Offset for last page", results.getStartingOffset(), equalTo(6));
 		assertThat("Results count for last page", results.getReturnedResultCount(), equalTo(2));
@@ -318,7 +313,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_paginated_withTotalResultCount_over() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -336,10 +331,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
 		assertThat("Offset for last page", results.getStartingOffset(), equalTo(8));
 		assertThat("Results count for last page", results.getReturnedResultCount(), equalTo(0));
@@ -348,7 +342,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_hour_streamId_mostRecent() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-hour-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -363,10 +357,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
 
 		Instant ts = start.plusHours(21).toInstant();
@@ -379,7 +372,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_day_streamId_orderDefault() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -395,10 +388,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
 
 		ZonedDateTime ts = start.plusDays(4);
@@ -415,7 +407,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_day_streamId_mostRecent() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-day-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -430,10 +422,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
 
 		Instant ts = start.plusDays(29).toInstant();
@@ -446,7 +437,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_month_streamId_orderDefault() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -462,10 +453,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
 
 		ZonedDateTime ts = start.plusMonths(1);
@@ -482,7 +472,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_month_streamId_mostRecent() throws IOException {
 		// GIVEN
-		BasicNodeDatumStreamMetadata meta = testStreamMetadata();
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
 				getClass(), staticProvider(singleton(meta)));
 		insertAggregateDatum(log, jdbcTemplate, datums);
@@ -497,10 +487,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		DatumStreamMetadata resultMeta = results.metadataForStream(streamId);
-		assertThat("Metadata is for node", resultMeta, instanceOf(NodeDatumStreamMetadata.class));
-		assertThat("Node ID", ((NodeDatumStreamMetadata) resultMeta).getNodeId(),
-				equalTo(meta.getNodeId()));
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
 
 		Instant ts = start.plusMonths(6).toInstant();

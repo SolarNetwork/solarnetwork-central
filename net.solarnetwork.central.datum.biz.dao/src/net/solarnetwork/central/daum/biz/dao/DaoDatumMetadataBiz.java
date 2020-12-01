@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,8 +45,6 @@ import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
@@ -152,10 +152,10 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
 				max);
-		Iterable<NodeDatumStreamMetadata> data = metaDao.findNodeDatumStreamMetadata(criteria);
-		List<GeneralNodeDatumMetadataFilterMatch> matches = StreamSupport
-				.stream(data.spliterator(), false).map(DatumUtils::toGeneralNodeDatumMetadataMatch)
-				.collect(Collectors.toList());
+		criteria.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
+		List<GeneralNodeDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
+				.map(DatumUtils::toGeneralNodeDatumMetadataMatch).collect(toList());
 		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
 	}
 
@@ -193,10 +193,10 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 			Integer offset, Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
 				max);
-		Iterable<LocationDatumStreamMetadata> data = metaDao.findLocationDatumStreamMetadata(criteria);
-		List<GeneralLocationDatumMetadataFilterMatch> matches = StreamSupport
-				.stream(data.spliterator(), false).map(DatumUtils::toGeneralLocationDatumMetadataMatch)
-				.collect(Collectors.toList());
+		criteria.setObjectKind(ObjectDatumKind.Location);
+		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
+		List<GeneralLocationDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
+				.map(DatumUtils::toGeneralLocationDatumMetadataMatch).collect(toList());
 		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
 	}
 

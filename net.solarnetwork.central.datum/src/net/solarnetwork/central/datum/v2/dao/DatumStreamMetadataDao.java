@@ -23,8 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
-import net.solarnetwork.central.datum.v2.domain.LocationDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -49,30 +48,17 @@ public interface DatumStreamMetadataDao {
 	 * Find all available object datum stream metadata for a given search
 	 * filter.
 	 * 
+	 * <p>
+	 * The {@link ObjectStreamCriteria#getObjectKind()} determines the type of
+	 * metadata returned. If not specified, {@link ObjectDatumKind#Node} will be
+	 * assumed.
+	 * </p>
+	 * 
 	 * @param filter
 	 *        the search filter
 	 * @return the matching results, never {@literal null}
 	 */
 	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
-
-	/**
-	 * Find all available node datum stream metadata for a given search filter.
-	 * 
-	 * @param filter
-	 *        the search filter
-	 * @return the matching results, never {@literal null}
-	 */
-	Iterable<NodeDatumStreamMetadata> findNodeDatumStreamMetadata(ObjectStreamCriteria filter);
-
-	/**
-	 * Find all available location datum stream metadata for a given search
-	 * filter.
-	 * 
-	 * @param filter
-	 *        the search filter
-	 * @return the matching results, never {@literal null}
-	 */
-	Iterable<LocationDatumStreamMetadata> findLocationDatumStreamMetadata(ObjectStreamCriteria filter);
 
 	/**
 	 * Replace the JSON metadata associated with an object datum stream.

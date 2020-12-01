@@ -47,8 +47,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ZonedStreamsTimeRangeRowMapper;
-import net.solarnetwork.central.datum.v2.domain.BasicNodeDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ZonedStreamsTimeRange;
 
 /**
@@ -99,9 +100,9 @@ public class DbTimeRangeTests extends BaseDatumJdbcTestSupport {
 		});
 	}
 
-	private BasicNodeDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
-		return new BasicNodeDatumStreamMetadata(UUID.randomUUID(), "UTC", nodeId, sourceId,
-				new String[] { "x", "y" }, new String[] { "w" }, null);
+	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId) {
+		return new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC", ObjectDatumKind.Node, nodeId,
+				sourceId, new String[] { "x", "y" }, new String[] { "w" }, null);
 	}
 
 	@Test
@@ -144,10 +145,10 @@ public class DbTimeRangeTests extends BaseDatumJdbcTestSupport {
 		setupTestLocation(TEST_LOC_ID, TEST_TZ);
 		setupTestNode(1L, TEST_LOC_ID);
 		setupTestNode(2L, TEST_LOC_ID);
-		NodeDatumStreamMetadata meta1 = testStreamMetadata(1L, "a");
-		NodeDatumStreamMetadata meta2 = testStreamMetadata(1L, "b");
-		NodeDatumStreamMetadata meta3 = testStreamMetadata(2L, "a");
-		List<NodeDatumStreamMetadata> metas = asList(meta1, meta2, meta3);
+		ObjectDatumStreamMetadata meta1 = testStreamMetadata(1L, "a");
+		ObjectDatumStreamMetadata meta2 = testStreamMetadata(1L, "b");
+		ObjectDatumStreamMetadata meta3 = testStreamMetadata(2L, "a");
+		List<ObjectDatumStreamMetadata> metas = asList(meta1, meta2, meta3);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
 
 		// WHEN
@@ -159,7 +160,7 @@ public class DbTimeRangeTests extends BaseDatumJdbcTestSupport {
 		// THEN
 		assertThat("All rows mapped to one time zone", results, hasSize(1));
 		assertZonedStreamsTimeRange("All one zone", results.get(0), TEST_TZ, start, end,
-				metas.stream().map(NodeDatumStreamMetadata::getStreamId).toArray(UUID[]::new));
+				metas.stream().map(ObjectDatumStreamMetadata::getStreamId).toArray(UUID[]::new));
 	}
 
 	@Test
@@ -170,10 +171,10 @@ public class DbTimeRangeTests extends BaseDatumJdbcTestSupport {
 		setupTestLocation(2L, altTzId);
 		setupTestNode(1L, 1L);
 		setupTestNode(2L, 2L);
-		NodeDatumStreamMetadata meta1 = testStreamMetadata(1L, "a");
-		NodeDatumStreamMetadata meta2 = testStreamMetadata(1L, "b");
-		NodeDatumStreamMetadata meta3 = testStreamMetadata(2L, "a");
-		List<NodeDatumStreamMetadata> metas = asList(meta1, meta2, meta3);
+		ObjectDatumStreamMetadata meta1 = testStreamMetadata(1L, "a");
+		ObjectDatumStreamMetadata meta2 = testStreamMetadata(1L, "b");
+		ObjectDatumStreamMetadata meta3 = testStreamMetadata(2L, "a");
+		List<ObjectDatumStreamMetadata> metas = asList(meta1, meta2, meta3);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, metas);
 
 		// WHEN

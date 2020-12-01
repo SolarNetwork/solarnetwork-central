@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatumAuxiliaryFilterMatch;
 import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
@@ -45,7 +46,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.central.datum.v2.domain.NodeDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
@@ -93,8 +94,8 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 		filter.setNodeId(id.getNodeId());
 		filter.setSourceId(id.getSourceId());
 		filter.setObjectKind(ObjectDatumKind.Node);
-		Iterable<NodeDatumStreamMetadata> metas = metaDao.findNodeDatumStreamMetadata(filter);
-		for ( NodeDatumStreamMetadata meta : metas ) {
+		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(filter);
+		for ( ObjectDatumStreamMetadata meta : metas ) {
 			return meta;
 		}
 		throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
@@ -166,9 +167,9 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 			Integer offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
-		Map<UUID, NodeDatumStreamMetadata> metas = StreamSupport
-				.stream(metaDao.findNodeDatumStreamMetadata(c).spliterator(), false)
-				.collect(Collectors.toMap(NodeDatumStreamMetadata::getStreamId, Function.identity()));
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport
+				.stream(metaDao.findDatumStreamMetadata(c).spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 		net.solarnetwork.dao.FilterResults<DatumAuxiliary, DatumAuxiliaryPK> r = datumAuxiliaryDao
 				.findFiltered(c);
 		List<GeneralNodeDatumAuxiliaryFilterMatch> data = stream(r.spliterator(), false)
