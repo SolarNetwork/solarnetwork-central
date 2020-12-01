@@ -1,3 +1,10 @@
+/**
+ * Find stream datum records for calculating the difference between two dates.
+ *
+ * @param sid 				the stream id
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_rows(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
@@ -109,6 +116,15 @@ $$
 $$;
 
 
+/**
+ * Find stream datum records for calculating the difference between two dates within a time
+ * tolerance.
+ *
+ * @param sid 				the stream id
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param tolerance 		the maximum time to look forward/backward for adjacent data
+ */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_near_rows(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
@@ -223,6 +239,13 @@ $$
 $$;
 
 
+/**
+ * Find stream datum records for calculating the difference within two dates.
+ *
+ * @param sid 				the stream id
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (inclusive)
+ */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_within_rows(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
@@ -308,6 +331,14 @@ $$
 $$;
 
 
+/**
+ * Find stream datum records for calculating the difference between two exact dates.
+ *
+ * @param sid 				the stream id
+ * @param start_ts			the minimum date (exact)
+ * @param end_ts 			the maximum date (exact)
+ * @param tolerance 		the maximum time to look forward/backward for adjacent data
+ */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_diff_at_rows(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
