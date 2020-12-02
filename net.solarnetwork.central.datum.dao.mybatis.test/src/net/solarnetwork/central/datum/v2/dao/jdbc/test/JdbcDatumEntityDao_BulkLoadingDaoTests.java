@@ -22,33 +22,35 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.hourlyAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertStaleAggregateDatum;
-import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.transaction.TestTransaction;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -58,6 +60,7 @@ import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.dao.SimpleBulkLoadingOptions;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -80,18 +83,18 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 		dao.setBulkLoadTransactionManager(txManager);
 	}
 
-	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start) {
+	private List<GeneralNodeDatum> createSampleData(int count, ZonedDateTime start) {
 		return createSampleData(count, start, TEST_NODE_ID, TEST_SOURCE_ID);
 	}
 
-	protected List<GeneralNodeDatum> createSampleData(int count, DateTime start, Long nodeId,
+	private List<GeneralNodeDatum> createSampleData(int count, ZonedDateTime start, Long nodeId,
 			String sourceId) {
 		List<GeneralNodeDatum> data = new ArrayList<>(4);
 		long wh = (long) (Math.random() * 1000000000.0);
 		for ( int i = 0; i < count; i++ ) {
 			GeneralNodeDatum d = new GeneralNodeDatum();
 			d.setNodeId(nodeId);
-			d.setCreated(start.plusMinutes(i));
+			d.setCreated(JodaDateUtils.toJoda(start.plusMinutes(i)));
 			d.setSourceId(sourceId);
 
 			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
@@ -105,18 +108,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 		return data;
 	}
 
-	@Test
-	public void bulkImport() {
-		// GIVEN
-		SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
-				LoadingTransactionMode.SingleTransaction, null);
-
-		// load 1 hour of data
-		final int datumCount = 59;
-		DateTime start = new DateTime().hourOfDay().roundCeilingCopy().minusHours(1);
-		List<GeneralNodeDatum> data = createSampleData(datumCount, start);
-
-		// WHEN
+	private void bulkLoad(List<GeneralNodeDatum> data, BulkLoadingDao.LoadingOptions options) {
 		try (LoadingContext<GeneralNodeDatum> ctx = dao.createBulkLoadingContext(options,
 				new LoadingExceptionHandler<GeneralNodeDatum>() {
 
@@ -131,9 +123,25 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			}
 			ctx.commit();
 		}
+	}
 
-		// THEN
+	@Test
+	public void bulkImport() {
 		try {
+			// GIVEN
+			TestTransaction.end();
+
+			// load 1 hour of data
+			final int datumCount = 59;
+			ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).minusHours(1);
+			List<GeneralNodeDatum> data = createSampleData(datumCount, start);
+
+			// WHEN
+			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+					LoadingTransactionMode.SingleTransaction, null);
+			bulkLoad(data, options);
+
+			// THEN
 			List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
 			log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
 			assertThat("Datum rows imported", loaded, hasSize(data.size()));
@@ -142,53 +150,94 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					Aggregation.Hour);
 			assertThat("One stale hour recorded", staleHours, hasSize(1));
 			assertStaleAggregateDatum("Stale hour", staleHours.get(0), new StaleAggregateDatumEntity(
-					loaded.get(0).getStreamId(), fromJodaToInstant(start), Aggregation.Hour, null));
+					loaded.get(0).getStreamId(), start.toInstant(), Aggregation.Hour, null));
 
 			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
+			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 			assertThat("One audit hour", audits, hasSize(1));
 			assertAuditDatum("Audit hour", audits.get(0), hourlyAuditDatum(loaded.get(0).getStreamId(),
-					fromJodaToInstant(start), (long) datumCount, (long) datumCount * 2, 0L));
+					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L));
 		} finally {
 			// manually clean up transactionally circumvented data import data
-			TestTransaction.end();
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
 		}
 	}
 
 	@Test
-	public void bulkImportMultipleSources() {
-		// GIVEN
-		SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
-				LoadingTransactionMode.SingleTransaction, null);
-
-		final int datumCount = 59;
-		DateTime start1 = new DateTime().hourOfDay().roundCeilingCopy().minusMonths(1).minusHours(1);
-		List<GeneralNodeDatum> data1 = createSampleData(datumCount, start1, TEST_NODE_ID,
-				TEST_SOURCE_ID);
-		DateTime start2 = start1.minusDays(1);
-		List<GeneralNodeDatum> data2 = createSampleData(datumCount, start2, TEST_2ND_NODE,
-				TEST_2ND_SOURCE);
-		List<GeneralNodeDatum> data = new ArrayList<>(data1);
-		data.addAll(data2);
-
-		// WHEN
-		try (LoadingContext<GeneralNodeDatum> ctx = dao.createBulkLoadingContext(options,
-				new LoadingExceptionHandler<GeneralNodeDatum>() {
-
-					@Override
-					public void handleLoadingException(Throwable t,
-							LoadingContext<GeneralNodeDatum> context) {
-						throw new RuntimeException(t);
-					}
-				})) {
-			for ( GeneralNodeDatum d : data ) {
-				ctx.load(d);
-			}
-			ctx.commit();
-		}
-
-		// THEN
+	public void bulkImport_updateExistingStream() {
 		try {
+			// GIVEN
+			TestTransaction.end();
+
+			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+
+			// add existing stream/audit data
+			UUID streamId = UUID.randomUUID();
+			ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId,
+					ZoneId.systemDefault().toString(), ObjectDatumKind.Node, TEST_NODE_ID,
+					TEST_SOURCE_ID);
+			DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+			AuditDatum hourAudit = AuditDatumEntity.hourlyAuditDatum(streamId, thisHour.toInstant(),
+					1000L, 10000L, 123456789L);
+			DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(hourAudit));
+
+			// load 1 hour of data
+			ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).minusHours(1);
+			final int datumCount = 59;
+			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+					LoadingTransactionMode.SingleTransaction, null);
+			List<GeneralNodeDatum> data = createSampleData(datumCount, start);
+
+			// WHEN
+			bulkLoad(data, options);
+
+			// THEN
+			List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+			log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+			assertThat("Datum rows imported", loaded, hasSize(data.size()));
+
+			List<StaleAggregateDatum> staleHours = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate,
+					Aggregation.Hour);
+			assertThat("One stale hour recorded", staleHours, hasSize(1));
+			assertStaleAggregateDatum("Stale hour", staleHours.get(0), new StaleAggregateDatumEntity(
+					loaded.get(0).getStreamId(), start.toInstant(), Aggregation.Hour, null));
+
+			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
+			assertThat("One audit hour", audits, hasSize(1));
+			assertAuditDatum("Existing audit hour updated", audits.get(0),
+					hourlyAuditDatum(loaded.get(0).getStreamId(), thisHour.toInstant(),
+							datumCount + hourAudit.getDatumCount(),
+							(long) datumCount * 2 + hourAudit.getDatumPropertyCount(),
+							hourAudit.getDatumQueryCount()));
+		} finally {
+			// manually clean up transactionally circumvented data import data
+			DatumTestUtils.cleanupDatabase(jdbcTemplate);
+		}
+	}
+
+	@Test
+	public void bulkImport_multipleStreams() {
+		// GIVEN
+		try {
+			TestTransaction.end();
+
+			final int datumCount = 59;
+			ZonedDateTime start1 = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).minusMonths(1)
+					.minusHours(1);
+			List<GeneralNodeDatum> data1 = createSampleData(datumCount, start1, TEST_NODE_ID,
+					TEST_SOURCE_ID);
+			ZonedDateTime start2 = start1.minusDays(1);
+			List<GeneralNodeDatum> data2 = createSampleData(datumCount, start2, TEST_2ND_NODE,
+					TEST_2ND_SOURCE);
+			List<GeneralNodeDatum> data = new ArrayList<>(data1);
+			data.addAll(data2);
+
+			// WHEN
+			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+					LoadingTransactionMode.SingleTransaction, null);
+			bulkLoad(data, options);
+
+			// THEN
 			List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
 			log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
 			assertThat("Datum rows imported", loaded, hasSize(data.size()));
@@ -204,19 +253,19 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
 			assertThat("One audit hour per stream", audits, hasSize(2));
 
-			Instant thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).toInstant();
+			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 			for ( int i = 0; i < 2; i++ ) {
 				UUID streamId = staleHours.get(i).getStreamId();
 				Long nodeId = streamToNodeIds.get(streamId);
-				DateTime date;
+				ZonedDateTime date;
 				if ( nodeId.equals(TEST_NODE_ID) ) {
 					date = start1;
 				} else {
 					date = start2;
 				}
 				assertStaleAggregateDatum("Stale hour " + i, staleHours.get(i),
-						new StaleAggregateDatumEntity(streamId, fromJodaToInstant(date),
-								Aggregation.Hour, null));
+						new StaleAggregateDatumEntity(streamId, date.toInstant(), Aggregation.Hour,
+								null));
 
 				streamId = audits.get(i).getStreamId();
 				nodeId = streamToNodeIds.get(streamId);
@@ -225,12 +274,11 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 				} else {
 					date = start2;
 				}
-				assertAuditDatum("Audit hour " + i, audits.get(i), hourlyAuditDatum(streamId, thisHour,
-						(long) datumCount, (long) datumCount * 2, 0L));
+				assertAuditDatum("Audit hour " + i, audits.get(i), hourlyAuditDatum(streamId,
+						thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L));
 			}
 		} finally {
 			// manually clean up transactionally circumvented data import data
-			TestTransaction.end();
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
 		}
 	}
