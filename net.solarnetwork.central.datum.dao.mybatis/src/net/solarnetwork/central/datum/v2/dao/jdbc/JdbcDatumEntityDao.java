@@ -22,15 +22,18 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static java.lang.String.format;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.executeCountQuery;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.executeFilterQuery;
 import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -49,6 +52,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,9 +60,11 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -98,6 +104,7 @@ import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.datum.v2.domain.StreamRange;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterResults;
@@ -419,6 +426,160 @@ public class JdbcDatumEntityDao
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
 				results.getReturnedResultCount());
+
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public ExportResult bulkExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
+			ExportOptions options) {
+		if ( options == null ) {
+			throw new IllegalArgumentException("ExportOptions is required");
+		}
+
+		// filter
+		DatumCriteria filter = options.getParameter(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA);
+		if ( filter == null ) {
+			throw new IllegalArgumentException(
+					format("DatumCriteria is required on export options parameter '%s'",
+							DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA));
+		}
+
+		Aggregation agg = filter.getAggregation();
+		if ( agg != null ) {
+			if ( agg.getLevel() > 0 && agg.compareLevel(Aggregation.FiveMinute) < 0 ) {
+				throw new IllegalArgumentException(
+						"Must be FiveMinute aggregation or more. For finer granularity results, request without any aggregation.");
+			} else if ( agg == Aggregation.RunningTotal && filter.getSourceId() == null ) {
+				// source ID is required for RunningTotal currently
+				throw new IllegalArgumentException(
+						"A sourceId is required for RunningTotal aggregation.");
+			}
+		} else {
+			agg = Aggregation.None;
+		}
+
+		/*- TODO
+		// combining
+		CombiningConfig combining = getCombiningFilterProperties(filter);
+		if ( combining != null ) {
+			sqlProps.put(PARAM_COMBINING, combining);
+		}
+		
+		// get query name to execute
+		String query = getQueryForFilter(filter);
+		*/
+
+		SelectDatum sql = new SelectDatum(filter);
+		RowMapper<? extends Datum> mapper = (filter.getAggregation() != null
+				? mapperForAggregate(filter.getAggregation(), filter.getReadingType() != null)
+				: DatumEntityRowMapper.INSTANCE);
+
+		// attempt count first, if NOT mostRecent query and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
+		Long totalCount = null;
+		if ( !filter.isMostRecent() && !filter.isWithoutTotalResultsCount()
+				&& (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
+				&& agg != Aggregation.RunningTotal ) {
+			totalCount = executeCountQuery(jdbcTemplate, sql.countPreparedStatementCreator());
+		}
+
+		callback.didBegin(totalCount);
+		return jdbcTemplate.query(sql, new ExportResultSetExtractor(mapper, callback));
+	}
+
+	private class ExportResultSetExtractor implements ResultSetExtractor<ExportResult> {
+
+		private final RowMapper<? extends Datum> mapper;
+		private final ExportCallback<GeneralNodeDatumFilterMatch> callback;
+		private long count;
+
+		private ExportResultSetExtractor(RowMapper<? extends Datum> mapper,
+				ExportCallback<GeneralNodeDatumFilterMatch> callback) {
+			super();
+			this.mapper = mapper;
+			this.callback = callback;
+			this.count = 0;
+		}
+
+		@Override
+		public ExportResult extractData(ResultSet rs) throws SQLException, DataAccessException {
+			final StreamIdStreamMetadataCriteria metaCriteria = new StreamIdStreamMetadataCriteria();
+			while ( rs.next() ) {
+				Datum d = mapper.mapRow(rs, (int) ++count);
+				metaCriteria.setStreamId(d.getStreamId());
+				ObjectDatumStreamMetadata meta = findStreamMetadata(metaCriteria);
+				ReportingGeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(d, meta);
+				callback.handle(gnd);
+			}
+			return new BasicBulkExportResult(count);
+		}
+
+	}
+
+	/**
+	 * A {@link StreamMetadataCriteria} for internal use where the stream ID is
+	 * mutable.
+	 */
+	private static class StreamIdStreamMetadataCriteria implements StreamMetadataCriteria {
+
+		private final UUID[] streamIds = new UUID[1];
+
+		/**
+		 * Set the stream ID.
+		 * 
+		 * @param streamId
+		 *        the stream ID to set
+		 */
+		public void setStreamId(UUID streamId) {
+			streamIds[0] = streamId;
+		}
+
+		@Override
+		public UUID getStreamId() {
+			return streamIds[0];
+		}
+
+		@Override
+		public UUID[] getStreamIds() {
+			return streamIds;
+		}
+
+		@Override
+		public String getSourceId() {
+			return null;
+		}
+
+		@Override
+		public String[] getSourceIds() {
+			return null;
+		}
+
+		@Override
+		public Long getUserId() {
+			return null;
+		}
+
+		@Override
+		public Long[] getUserIds() {
+			return null;
+		}
+
+		@Override
+		public String getTokenId() {
+			return null;
+		}
+
+		@Override
+		public String[] getTokenIds() {
+			return null;
+		}
+
+		@Override
+		public List<SortDescriptor> getSorts() {
+			return null;
+		}
 
 	}
 

@@ -58,7 +58,7 @@ import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.dao.SimpleBulkLoadingOptions;
+import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.JodaDateUtils;
 
@@ -137,7 +137,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			List<GeneralNodeDatum> data = createSampleData(datumCount, start);
 
 			// WHEN
-			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+			BasicBulkLoadingOptions options = new BasicBulkLoadingOptions("Test load", null,
 					LoadingTransactionMode.SingleTransaction, null);
 			bulkLoad(data, options);
 
@@ -184,7 +184,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			// load 1 hour of data
 			ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).minusHours(1);
 			final int datumCount = 59;
-			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+			BasicBulkLoadingOptions options = new BasicBulkLoadingOptions("Test load", null,
 					LoadingTransactionMode.SingleTransaction, null);
 			List<GeneralNodeDatum> data = createSampleData(datumCount, start);
 
@@ -233,7 +233,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			data.addAll(data2);
 
 			// WHEN
-			SimpleBulkLoadingOptions options = new SimpleBulkLoadingOptions("Test load", null,
+			BasicBulkLoadingOptions options = new BasicBulkLoadingOptions("Test load", null,
 					LoadingTransactionMode.SingleTransaction, null);
 			bulkLoad(data, options);
 

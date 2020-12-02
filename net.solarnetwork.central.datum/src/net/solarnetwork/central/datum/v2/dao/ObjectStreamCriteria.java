@@ -56,24 +56,6 @@ public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeC
 	}
 
 	/**
-	 * Test if the filter as a local date range specified.
-	 * 
-	 * @return {@literal true} if both a local start and end date are non-null
-	 */
-	default boolean hasLocalDateRange() {
-		return (getLocalStartDate() != null && getLocalEndDate() != null);
-	}
-
-	/**
-	 * Test if the filter as a local start date specified.
-	 * 
-	 * @return {@literal true} if the local start date is non-null
-	 */
-	default boolean hasLocalStartDate() {
-		return getLocalStartDate() != null;
-	}
-
-	/**
 	 * Get the first available object ID.
 	 * 
 	 * <p>

@@ -25,9 +25,11 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.util.List;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -40,8 +42,15 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.0
  * @since 2.8
  */
-public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
-		FilterableDao<Datum, DatumPK, DatumCriteria>, BulkLoadingDao<GeneralNodeDatum> {
+public interface DatumEntityDao
+		extends GenericDao<DatumEntity, DatumPK>, FilterableDao<Datum, DatumPK, DatumCriteria>,
+		BulkLoadingDao<GeneralNodeDatum>, BulkExportingDao<GeneralNodeDatumFilterMatch> {
+
+	/**
+	 * The {@link BulkLoadingDao} export options parameter for a
+	 * {@link DatumCriteria} instance.
+	 */
+	String EXPORT_PARAMETER_DATUM_CRITERIA = "filter";
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
