@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -41,6 +41,7 @@ import org.hamcrest.Matchers;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.NumberUtils;
 
@@ -224,6 +226,40 @@ public final class DatumTestUtils {
 		assertThat(prefix + " samples start", result.getSamplesStart(),
 				equalTo(expected.getSamplesStart()));
 		assertThat(prefix + " metadata", result.getMetadata(), equalTo(expected.getMetadata()));
+	}
+
+	/**
+	 * Assert one audit datum has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static void assertAuditDatum(String prefix, AuditDatum audit, AuditDatum expected) {
+		assertThat(prefix + " " + expected.getAggregation() + " audit record stream ID",
+				audit.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit record timestamp",
+				audit.getTimestamp(), equalTo(expected.getTimestamp()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit record aggregate",
+				audit.getAggregation(), equalTo(expected.getAggregation()));
+		assertThat(prefix + " " + expected.getAggregation() + " audit datum count",
+				audit.getDatumCount(), equalTo(expected.getDatumCount()));
+		if ( expected.getAggregation() != Aggregation.RunningTotal ) {
+			assertThat(prefix + " " + expected.getAggregation() + " audit prop count",
+					audit.getDatumPropertyCount(), equalTo(expected.getDatumPropertyCount()));
+			assertThat(prefix + " " + expected.getAggregation() + " audit datum query count",
+					audit.getDatumQueryCount(), equalTo(expected.getDatumQueryCount()));
+		}
+		if ( expected.getAggregation() == Aggregation.Day
+				|| expected.getAggregation() == Aggregation.Month ) {
+			assertThat(prefix + " " + expected.getAggregation() + " audit datum hour count",
+					audit.getDatumHourlyCount(), equalTo(expected.getDatumHourlyCount()));
+			assertThat(prefix + " " + expected.getAggregation() + " audit monthly hour count",
+					audit.getDatumMonthlyCount(), equalTo(expected.getDatumMonthlyCount()));
+		}
 	}
 
 	/**

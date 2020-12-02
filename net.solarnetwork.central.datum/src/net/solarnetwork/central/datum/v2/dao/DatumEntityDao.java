@@ -28,6 +28,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SortDescriptor;
@@ -39,8 +40,8 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.0
  * @since 2.8
  */
-public interface DatumEntityDao
-		extends GenericDao<DatumEntity, DatumPK>, FilterableDao<Datum, DatumPK, DatumCriteria> {
+public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
+		FilterableDao<Datum, DatumPK, DatumCriteria>, BulkLoadingDao<GeneralNodeDatum> {
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.

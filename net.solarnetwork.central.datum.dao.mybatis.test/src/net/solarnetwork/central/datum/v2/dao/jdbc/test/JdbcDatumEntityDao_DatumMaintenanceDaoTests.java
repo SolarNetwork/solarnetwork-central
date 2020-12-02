@@ -353,6 +353,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
 		criteria.setOffset(0);
+		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
 		// WHEN
@@ -400,6 +401,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
 		criteria.setOffset(2);
+		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
 		// WHEN
@@ -447,6 +449,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
 		criteria.setOffset(4);
+		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
 		// WHEN

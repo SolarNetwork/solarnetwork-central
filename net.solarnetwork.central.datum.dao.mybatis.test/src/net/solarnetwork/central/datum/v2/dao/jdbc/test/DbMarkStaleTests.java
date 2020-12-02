@@ -29,15 +29,14 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
-import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,19 +59,15 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
  */
 public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 
-	public void callMarkStaleDateRange(UUID[] streamIds, Instant from, Instant to) {
+	public void callMarkStaleDateRange(UUID streamId, Instant from, Instant to) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
 				try (CallableStatement stmt = con
 						.prepareCall("{call solardatm.mark_stale_datm_hours(?,?,?)}")) {
-					log.debug("Marking streams {} stale from {} to {}", Arrays.toString(streamIds), from,
-							to);
-					Array array = con.createArrayOf("uuid", streamIds);
-					stmt.setArray(1, array);
-					array.free();
-
+					log.debug("Marking stream {} stale from {} to {}", streamId, from, to);
+					stmt.setObject(1, streamId, Types.OTHER);
 					stmt.setTimestamp(2, Timestamp.from(from));
 					stmt.setTimestamp(3, Timestamp.from(to));
 					stmt.execute();
@@ -88,7 +83,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
 		// WHEN
-		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
+		callMarkStaleDateRange(UUID.randomUUID(), start.toInstant(), Instant.now());
 
 		// THEN
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
@@ -103,7 +98,7 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		insertDatumStream(log, jdbcTemplate, datums, "UTC");
 
 		// WHEN
-		callMarkStaleDateRange(new UUID[] { UUID.randomUUID() }, start.toInstant(), Instant.now());
+		callMarkStaleDateRange(UUID.randomUUID(), start.toInstant(), Instant.now());
 
 		// THEN
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
@@ -117,11 +112,10 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		UUID[] streamIds = meta.values().stream().map(ObjectDatumStreamMetadata::getStreamId)
-				.toArray(UUID[]::new);
+		UUID streamId = meta.values().iterator().next().getStreamId();
 
 		// WHEN
-		callMarkStaleDateRange(streamIds, start.minusYears(1).toInstant(), start.toInstant());
+		callMarkStaleDateRange(streamId, start.minusYears(1).toInstant(), start.toInstant());
 
 		// THEN
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);
@@ -135,11 +129,10 @@ public class DbMarkStaleTests extends BaseDatumJdbcTestSupport {
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-01.txt", getClass());
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
-		UUID[] streamIds = meta.values().stream().map(ObjectDatumStreamMetadata::getStreamId)
-				.toArray(UUID[]::new);
+		UUID streamId = meta.values().iterator().next().getStreamId();
 
 		// WHEN
-		callMarkStaleDateRange(streamIds, start.toInstant(), start.plusYears(1).toInstant());
+		callMarkStaleDateRange(streamId, start.toInstant(), start.plusYears(1).toInstant());
 
 		// THEN
 		List<StaleAggregateDatum> stales = listStaleAggregateDatum(jdbcTemplate);

@@ -181,6 +181,30 @@ BEGIN
 END;
 $$;
 
+
+/**
+ * Update the `solardatm.aud_datm_hourly` table by adding count values.
+ *
+ * @param sid 		the stream ID
+ * @param ts_recv 	the datum receive date; this will be truncated to the hour
+ * @param dcount	the datum count to add
+ * @param pcount	the datum property count to add
+ */
+CREATE OR REPLACE FUNCTION solardatm.add_aud_datm_in(
+	sid					UUID,
+	ts_recv 			TIMESTAMP WITH TIME ZONE,
+	dcount				INTEGER,
+	pcount				INTEGER
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solardatm.aud_datm_hourly (stream_id, ts_start, datum_count, prop_count)
+	VALUES (sid, date_trunc('hour', ts_recv), dcount, pcount)
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET datum_count = aud_datm_hourly.datum_count + EXCLUDED.datum_count,
+		prop_count = aud_datm_hourly.prop_count + EXCLUDED.prop_count
+$$;
+
+
 /**
  * Add or update a datum record. The data is stored in the `solardatm.da_datm` table.
  *
@@ -189,10 +213,9 @@ $$;
  * @param src 	the source ID
  * @param rdate the date the datum was received by SolarNetwork
  * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
- * @param track if `TRUE` then also insert results of `solardatum.calculate_stale_datum()`
- *                     into the `solaragg.agg_stale_datum` table and call
- *                     `solardatum.update_datum_range_dates()` to keep the
- *                     `solardatum.da_datum_range` table up-to-date
+ * @param track if `TRUE` then also insert results of `solardatm.calc_stale_datm()` into the
+ *              `solardatm.agg_stale_datm` table and call `solardatm.add_aud_datm_in()` to keep the
+ *              audit data updated
  */
 CREATE OR REPLACE FUNCTION solardatm.store_datum(
 	ddate 			TIMESTAMP WITH TIME ZONE,
@@ -240,13 +263,11 @@ BEGIN
 					p_i, p_a, p_s)
 	INTO p_i, p_a, p_s, is_insert;
 
-	INSERT INTO solardatm.aud_datm_hourly (stream_id, ts_start, datum_count, prop_count)
-	VALUES (sid, ts_recv_hour, 1, jdata_prop_count)
-	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET datum_count = aud_datm_hourly.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datm_hourly.prop_count + EXCLUDED.prop_count;
-
 	IF track THEN
+		-- add to audit datum in count
+		PERFORM solardatm.add_aud_datm_in(sid, ts_recv, 1, jdata_prop_count);
+
+		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 		SELECT stream_id, ts_start, 'h' AS agg_kind
 		FROM solardatm.calc_stale_datm(sid, ddate)
@@ -258,33 +279,32 @@ BEGIN
 	END IF;
 
 	RETURN sid;
-END;
+END
 $$;
 
 
 /**
- * Find hours with datum data over a time range in streams and mark them as "stale" for aggregate
+ * Find hours with datum data over a time range in a stream and mark them as "stale" for aggregate
  * processing.
  *
  * This function will insert into the `solardatm.agg_stale_datm` table records for all hours
  * of available data matching the given search criteria.
  *
- * @param sid 				the stream IDs to find hours for
+ * @param sid 				the stream ID to find hours for
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
  *
  * @see solardatm.find_datm_hours()
  */
 CREATE OR REPLACE FUNCTION solardatm.mark_stale_datm_hours(
-		sid 			UUID[],
+		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
 	) RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
 	INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
 	SELECT d.stream_id, d.ts_start, 'h'
-	FROM unnest(sid) AS ids(stream_id)
-	INNER JOIN solardatm.find_datm_hours(ids.stream_id, start_ts, end_ts) d ON d.stream_id = ids.stream_id
+	FROM solardatm.find_datm_hours(sid, start_ts, end_ts) d
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING
 $$;
 

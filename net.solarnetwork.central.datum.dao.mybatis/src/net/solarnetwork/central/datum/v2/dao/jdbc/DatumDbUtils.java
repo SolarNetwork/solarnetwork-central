@@ -66,9 +66,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
@@ -78,6 +76,7 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
@@ -1250,32 +1249,33 @@ public final class DatumDbUtils {
 	 *        a logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
+	 * @param streamId
+	 *        the stream ID
 	 * @param datums
 	 *        the datum to insert
+	 * 
 	 */
-	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
+	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
 			Iterable<GeneralNodeDatumAuxiliary> datums) {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement datumStmt = con
-						.prepareCall("{call solardatm.store_datum_aux(?,?,?,?,?,?,?,?)}")) {
+				try (CallableStatement stmt = con.prepareCall(
+						"{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
 					for ( GeneralNodeDatumAuxiliary d : datums ) {
 						if ( log != null ) {
 							log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
 									d.getSampleDataFinal(), d.getSampleDataStart());
 						}
-						datumStmt.setTimestamp(1,
-								Timestamp.from(Instant.ofEpochMilli(d.getCreated().getMillis())));
-						datumStmt.setObject(2, d.getNodeId());
-						datumStmt.setString(3, d.getSourceId());
-						datumStmt.setString(4, d.getType().name());
-						datumStmt.setNull(5, Types.VARCHAR);
-						datumStmt.setString(6, d.getSampleJsonFinal());
-						datumStmt.setString(7, d.getSampleJsonStart());
-						datumStmt.setNull(8, Types.VARCHAR);
-						datumStmt.execute();
+						stmt.setObject(1, streamId, Types.OTHER);
+						stmt.setTimestamp(2, new Timestamp(d.getCreated().getMillis()));
+						stmt.setString(3, d.getType().name());
+						stmt.setNull(4, Types.VARCHAR);
+						stmt.setString(5, d.getSampleJsonFinal());
+						stmt.setString(6, d.getSampleJsonStart());
+						stmt.setNull(7, Types.VARCHAR);
+						stmt.execute();
 					}
 				}
 				return null;
@@ -1296,35 +1296,29 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 */
 	public static boolean moveDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
-			GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
+			DatumAuxiliaryPK from, DatumAuxiliary to) {
 		return jdbcTemplate.execute(new ConnectionCallback<Boolean>() {
 
 			@Override
 			public Boolean doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement datumStmt = con
-						.prepareCall("{? = call solardatm.move_datum_aux(?,?,?,?,?,?,?,?,?,?,?,?)}")) {
+				try (CallableStatement stmt = con.prepareCall(
+						"{? = call solardatm.move_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
 					if ( log != null ) {
 						log.debug("Moving GeneralNodeDatumAuxiliary {} -> {}", from, to.getId());
 					}
-					datumStmt.registerOutParameter(1, Types.BOOLEAN);
-					datumStmt.setTimestamp(2,
-							Timestamp.from(Instant.ofEpochMilli(from.getCreated().getMillis())));
-					datumStmt.setObject(3, from.getNodeId());
-					datumStmt.setString(4, from.getSourceId());
-					datumStmt.setString(5, from.getType().name());
-
-					datumStmt.setTimestamp(6,
-							Timestamp.from(Instant.ofEpochMilli(to.getCreated().getMillis())));
-					datumStmt.setObject(7, to.getNodeId());
-					datumStmt.setString(8, to.getSourceId());
-					datumStmt.setString(9, to.getType().name());
-
-					datumStmt.setNull(10, Types.VARCHAR);
-					datumStmt.setString(11, to.getSampleJsonFinal());
-					datumStmt.setString(12, to.getSampleJsonStart());
-					datumStmt.setNull(13, Types.VARCHAR);
-					datumStmt.execute();
-					return datumStmt.getBoolean(1);
+					stmt.registerOutParameter(1, Types.BOOLEAN);
+					stmt.setObject(2, from.getStreamId(), Types.OTHER);
+					stmt.setTimestamp(3, Timestamp.from(from.getTimestamp()));
+					stmt.setString(4, from.getKind().name());
+					stmt.setObject(5, to.getStreamId(), Types.OTHER);
+					stmt.setTimestamp(6, Timestamp.from(to.getTimestamp()));
+					stmt.setString(7, to.getType().name());
+					stmt.setString(8, to.getNotes());
+					stmt.setString(9, JsonUtils.getJSONString(to.getSamplesFinal(), null));
+					stmt.setString(10, JsonUtils.getJSONString(to.getSamplesStart(), null));
+					stmt.setString(11, JsonUtils.getJSONString(to.getMetadata(), null));
+					stmt.execute();
+					return stmt.getBoolean(1);
 				}
 			}
 		});
@@ -1775,9 +1769,9 @@ public final class DatumDbUtils {
 	 *        {@code Month}
 	 * @return the results, never {@literal null}
 	 */
-	public static List<AuditDatumEntity> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
+	public static List<AuditDatum> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;
-		RowMapper<AuditDatumEntity> mapper;
+		RowMapper<AuditDatum> mapper;
 		switch (kind) {
 			case Day:
 				tableName = "aud_datm_daily";

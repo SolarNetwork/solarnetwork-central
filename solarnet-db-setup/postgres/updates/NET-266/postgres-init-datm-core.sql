@@ -191,23 +191,36 @@ CREATE TABLE solardatm.agg_stale_flux (
 	================================================================================================
 */
 
--- audit hourly data
+/**
+ * Audit hourly data table.
+ *
+ * This data represents audit data of ingested datum. Because datum can be ingested for any
+ * date and multiple times, this information does not convey how many datum are present
+ * for the given hour.
+ *
+ * TODO: rename this table to aud_datum_in to avoid confusion
+ */
 CREATE TABLE solardatm.aud_datm_hourly (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
-	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum INGESTED
 	CONSTRAINT aud_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
--- audit daily data
+/**
+ * Audit daily summary data table.
+ *
+ * This data represents a calculated summary of counts of datum-related rows in other tables.
+ * It must be maintained as the source data tables are updated.
+ */
 CREATE TABLE solardatm.aud_datm_daily (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
     prop_count 				BIGINT NOT NULL DEFAULT 0,
     datum_q_count 			BIGINT NOT NULL DEFAULT 0,
-	datum_count 			INTEGER NOT NULL DEFAULT 0,
+	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum ROWS
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
 	datum_daily_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
 	processed_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -27,21 +27,30 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.executeFilterQuery;
+import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
+import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -86,10 +95,13 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
+import net.solarnetwork.central.datum.v2.domain.StreamRange;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -103,8 +115,28 @@ import net.solarnetwork.domain.SortDescriptor;
 public class JdbcDatumEntityDao
 		implements DatumEntityDao, DatumStreamMetadataDao, DatumMaintenanceDao, ReadingDatumDao {
 
+	/**
+	 * The default value for the {@code bulkLoadJdbcCall} property.
+	 */
+	public static final String DEFAULT_BULK_LOADING_JDBC_CALL = "{? = call solardatm.store_datum(?, ?, ?, ?, ?, FALSE)}";
+
+	/**
+	 * The default value for the {@code bulkLoadMarkStaleJdbcCall} property.
+	 */
+	public static final String DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL = "{call solardatm.mark_stale_datm_hours(?, ?, ?)}";
+
+	/**
+	 * The default value for the {@code bulkLoadAuditJdbcCall} property.
+	 */
+	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.add_aud_datm_in(?, ?, ?, ?)}";
+
 	private final JdbcOperations jdbcTemplate;
 	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
+	private PlatformTransactionManager bulkLoadTransactionManager;
+	private DataSource bulkLoadDataSource;
+	private String bulkLoadJdbcCall = DEFAULT_BULK_LOADING_JDBC_CALL;
+	private String bulkLoadMarkStaleJdbcCall = DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL;
+	private String bulkLoadAuditJdbcCall = DEFAULT_BULK_LOADING_AUDIT_CALL;
 
 	/**
 	 * Constructor.
@@ -152,13 +184,19 @@ public class JdbcDatumEntityDao
 			public DatumPK doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
 				cs.execute();
-				Object streamId = cs.getObject(1);
+				UUID streamId = uuidFromCall(cs, 1);
 				return new DatumPK(
 						(streamId instanceof UUID ? (UUID) streamId
 								: streamId != null ? UUID.fromString(streamId.toString()) : null),
 						sql.getTimestamp());
 			}
 		});
+	}
+
+	private static UUID uuidFromCall(CallableStatement call, int parameterIndex) throws SQLException {
+		Object streamId = call.getObject(1);
+		return (streamId instanceof UUID ? (UUID) streamId
+				: streamId != null ? UUID.fromString(streamId.toString()) : null);
 	}
 
 	@Override
@@ -384,6 +422,141 @@ public class JdbcDatumEntityDao
 
 	}
 
+	@Override
+	public LoadingContext<GeneralNodeDatum> createBulkLoadingContext(LoadingOptions options,
+			LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
+		return new BulkLoadingContext(options, exceptionHandler);
+	}
+
+	private class BulkLoadingContext extends JdbcBulkLoadingContextSupport<GeneralNodeDatum> {
+
+		private final Timestamp start;
+
+		private final Map<UUID, BulkLoadStats> streamStats = new HashMap<>(32);
+
+		public BulkLoadingContext(LoadingOptions options,
+				LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
+			super(bulkLoadTransactionManager, bulkLoadDataSource, bulkLoadJdbcCall, options,
+					exceptionHandler);
+			start = new Timestamp(System.currentTimeMillis());
+		}
+
+		@Override
+		protected PreparedStatement createJdbcStatement(Connection con) throws SQLException {
+			CallableStatement call = (CallableStatement) super.createJdbcStatement(con);
+			call.registerOutParameter(1, Types.OTHER);
+			return call;
+		}
+
+		@Override
+		protected boolean doLoad(GeneralNodeDatum d, PreparedStatement stmt, long index)
+				throws SQLException {
+			stmt.setTimestamp(2, new Timestamp(d.getCreated().getMillis()));
+			stmt.setLong(3, d.getNodeId());
+			stmt.setString(4, d.getSourceId());
+			stmt.setTimestamp(5,
+					d.getPosted() != null ? new Timestamp(d.getPosted().getMillis()) : start);
+			stmt.setString(6, d.getSampleJson());
+			stmt.executeUpdate();
+			UUID streamId = uuidFromCall((CallableStatement) stmt, 1);
+
+			// keep track of import min/max date ranges, so they can be updated at end
+			BulkLoadStats stats = streamStats.compute(streamId, (k, v) -> {
+				return (v != null ? v : new BulkLoadStats(k));
+			});
+			stats.updateStatsForDatum(d);
+
+			return true;
+		}
+
+		@Override
+		public void commit() {
+			commitDateRanges();
+			super.commit();
+		}
+
+		private void commitDateRanges() {
+			try (CallableStatement auditStmt = getConnection().prepareCall(bulkLoadAuditJdbcCall);
+					CallableStatement staleStmt = getConnection()
+							.prepareCall(bulkLoadMarkStaleJdbcCall)) {
+				for ( BulkLoadStats stat : streamStats.values() ) {
+					auditStmt.setObject(1, stat.getStreamId(), Types.OTHER);
+					auditStmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+					auditStmt.setInt(3, stat.dcount);
+					auditStmt.setInt(4, stat.pcount);
+					auditStmt.execute();
+
+					staleStmt.setObject(1, stat.getStreamId(), Types.OTHER);
+					staleStmt.setTimestamp(2, Timestamp.from(stat.getStartDate()));
+					staleStmt.setTimestamp(3, Timestamp.from(stat.getEndDate()));
+					staleStmt.execute();
+				}
+			} catch ( SQLException e ) {
+				BulkLoadingDao.LoadingExceptionHandler<GeneralNodeDatum> handler = getExceptionHandler();
+				String msg = "Error updating audit/stale datum records.";
+				if ( handler != null ) {
+					handler.handleLoadingException(new RuntimeException(msg, e), this);
+				} else {
+					log.error(msg, e);
+				}
+			}
+			streamStats.clear();
+		}
+
+	}
+
+	/**
+	 * Internal class used to track statistics during bulk import.
+	 */
+	private static class BulkLoadStats extends StreamRange {
+
+		private int dcount;
+		private int pcount;
+
+		private BulkLoadStats(UUID streamId) {
+			super(streamId);
+		}
+
+		/**
+		 * Add statistics for a given datum.
+		 * 
+		 * @param d
+		 *        the datum to calculate the datum/property counts from
+		 */
+		public void updateStatsForDatum(GeneralNodeDatum d) {
+			if ( d == null ) {
+				return;
+			}
+
+			if ( getStartDate() == null || d.getCreated().getMillis() < getStartDate().toEpochMilli() ) {
+				setStartDate(fromJodaToInstant(d.getCreated()));
+			}
+			if ( getEndDate() == null || d.getCreated().getMillis() > getEndDate().toEpochMilli() ) {
+				setEndDate(fromJodaToInstant(d.getCreated()));
+			}
+
+			dcount += 1;
+			GeneralDatumSamples s = d.getSamples();
+			if ( s == null ) {
+				return;
+			}
+			addPropCounts(s.getInstantaneous());
+			addPropCounts(s.getAccumulating());
+			addPropCounts(s.getStatus());
+			Set<String> tags = s.getTags();
+			if ( tags != null ) {
+				pcount += tags.size();
+			}
+		}
+
+		private void addPropCounts(Map<?, ?> m) {
+			if ( m != null ) {
+				pcount += m.size();
+			}
+		}
+
+	}
+
 	/**
 	 * Get the stream metadata cache.
 	 * 
@@ -401,6 +574,103 @@ public class JdbcDatumEntityDao
 	 */
 	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache) {
 		this.streamMetadataCache = streamMetadataCache;
+	}
+
+	/**
+	 * Get the bulk load transaction manager.
+	 * 
+	 * @return the manager
+	 */
+	public PlatformTransactionManager getBulkLoadTransactionManager() {
+		return bulkLoadTransactionManager;
+	}
+
+	/**
+	 * Set the bulk load transaction manager.
+	 * 
+	 * @param bulkLoadTransactionManager
+	 *        the manager to set
+	 */
+	public void setBulkLoadTransactionManager(PlatformTransactionManager bulkLoadTransactionManager) {
+		this.bulkLoadTransactionManager = bulkLoadTransactionManager;
+	}
+
+	/**
+	 * Get the bulk load data source.
+	 * 
+	 * @return the data source
+	 */
+	public DataSource getBulkLoadDataSource() {
+		return bulkLoadDataSource;
+	}
+
+	/**
+	 * Set the bulk load data source.
+	 * 
+	 * @param bulkLoadDataSource
+	 *        the data source to set
+	 */
+	public void setBulkLoadDataSource(DataSource bulkLoadDataSource) {
+		this.bulkLoadDataSource = bulkLoadDataSource;
+	}
+
+	/**
+	 * Get the bulk load JDBC call.
+	 * 
+	 * @return the bulk load JDBC call; defaults to
+	 *         {@link #DEFAULT_BULK_LOADING_JDBC_CALL}
+	 */
+	public String getBulkLoadJdbcCall() {
+		return bulkLoadJdbcCall;
+	}
+
+	/**
+	 * Set the bulk load JDBC call.
+	 * 
+	 * @param bulkLoadJdbcCall
+	 *        the call to set
+	 */
+	public void setBulkLoadJdbcCall(String bulkLoadJdbcCall) {
+		this.bulkLoadJdbcCall = bulkLoadJdbcCall;
+	}
+
+	/**
+	 * Get the bulk load "mark stale" JDBC call.
+	 * 
+	 * @return the call; defaults to
+	 *         {@link #DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL}
+	 */
+	public String getBulkLoadMarkStaleJdbcCall() {
+		return bulkLoadMarkStaleJdbcCall;
+	}
+
+	/**
+	 * Set the bulk load "mark stale" JDBC call.
+	 * 
+	 * @param bulkLoadMarkStaleJdbcCall
+	 *        the call to set
+	 */
+	public void setBulkLoadMarkStaleJdbcCall(String bulkLoadMarkStaleJdbcCall) {
+		this.bulkLoadMarkStaleJdbcCall = bulkLoadMarkStaleJdbcCall;
+	}
+
+	/**
+	 * Get the bulk load "update audit counts" JDBC call.
+	 * 
+	 * @return the call; defaults to {@link #DEFAULT_BULK_LOADING_AUDIT_CALL}
+	 */
+	public String getBulkLoadAuditJdbcCall() {
+		return bulkLoadAuditJdbcCall;
+	}
+
+	/**
+	 * Set the bulk load "update audit counts" JDBC call.
+	 * 
+	 * @param bulkLoadAuditJdbcCall
+	 *        the call to set
+	 */
+	public void setBulkLoadAuditJdbcCall(String bulkLoadAuditJdbcCall) {
+		this.bulkLoadAuditJdbcCall = bulkLoadAuditJdbcCall;
 	}
 
 }

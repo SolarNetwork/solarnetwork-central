@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 
 /**
  * Map daily datum audit rows into {@link AuditDatumEntity} instances.
@@ -50,13 +51,13 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
  * @version 1.0
  * @since 3.8
  */
-public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatumEntity> {
+public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatum> {
 
 	/** A default mapper instance. */
-	public static final RowMapper<AuditDatumEntity> INSTANCE = new AuditDatumDailyEntityRowMapper();
+	public static final RowMapper<AuditDatum> INSTANCE = new AuditDatumDailyEntityRowMapper();
 
 	@Override
-	public AuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		boolean dayPresent = rs.getBoolean(7);

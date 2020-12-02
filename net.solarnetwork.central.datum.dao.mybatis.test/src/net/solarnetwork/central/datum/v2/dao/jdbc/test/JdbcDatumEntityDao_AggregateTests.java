@@ -211,6 +211,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
+		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
@@ -250,6 +251,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(3);
+		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
@@ -289,6 +291,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(6);
+		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
@@ -328,6 +331,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setOffset(8);
+		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN

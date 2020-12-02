@@ -87,8 +87,8 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		return datums;
 	}
 
-	private List<AuditDatumEntity> auditDatum(Aggregation kind) {
-		List<AuditDatumEntity> result = listAuditDatum(jdbcTemplate, kind);
+	private List<AuditDatum> auditDatum(Aggregation kind) {
+		List<AuditDatum> result = listAuditDatum(jdbcTemplate, kind);
 		log.debug("Got {} audit data:\n{}", kind,
 				result.stream().map(Object::toString).collect(Collectors.joining("\n")));
 		return result;
@@ -177,7 +177,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		// THEN
 
 		// should have stored rollup in datum_count column of aud_datm_daily table
-		List<AuditDatumEntity> result = auditDatum(Aggregation.Day);
+		List<AuditDatum> result = auditDatum(Aggregation.Day);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
@@ -213,7 +213,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		// THEN
 
 		// should have stored rollup in datum_hourly_count column of aud_datm_daily table
-		List<AuditDatumEntity> result = auditDatum(Aggregation.Day);
+		List<AuditDatum> result = auditDatum(Aggregation.Day);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
@@ -252,7 +252,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		// THEN
 
 		// should have stored rollup in datum_daily_pres, prop_count, datum_q_count column of aud_datm_daily table
-		List<AuditDatumEntity> result = auditDatum(Aggregation.Day);
+		List<AuditDatum> result = auditDatum(Aggregation.Day);
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
@@ -299,7 +299,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 
 		// should have stored rollup in datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
 		// prop_count, datum_q_count column of aud_datm_monthly table
-		List<AuditDatumEntity> result = auditDatum(Aggregation.Month);
+		List<AuditDatum> result = auditDatum(Aggregation.Month);
 		assertThat("Hour rollup result stored database (with existing Month data)", result, hasSize(9));
 
 		AuditDatumEntity expectedMonth = AuditDatumEntity.monthlyAuditDatum(meta.getStreamId(),
@@ -327,7 +327,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertThat("No stale aggregate records remain", staleRows, hasSize(0));
 
 		// should have calculated accumulative audit data
-		List<AuditDatumEntity> resultAcc = auditDatum(Aggregation.RunningTotal);
+		List<AuditDatum> resultAcc = auditDatum(Aggregation.RunningTotal);
 
 		ZonedDateTime today = ZonedDateTime.now(day.getZone()).truncatedTo(ChronoUnit.DAYS);
 		AuditDatumEntity expectedAcc = AuditDatumEntity.accumulativeAuditDatum(meta.getStreamId(),
