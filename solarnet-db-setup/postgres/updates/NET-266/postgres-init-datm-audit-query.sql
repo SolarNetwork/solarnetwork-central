@@ -64,7 +64,7 @@ $$;
  * Calculate daily audit datum values for a stream.
  *
  * For speed it relies on the pre-computed audit values in the `agg_datm_daily` and
- * `aud_datm_hourly` tables.
+ * `aud_datm_io` tables.
  *
  * @param sid 				the stream ID to find audit datum for
  * @param start_ts			the minimum date (inclusive)
@@ -94,7 +94,7 @@ $$
 		bool_or(d.datum_daily_pres) AS datum_daily_pres,
 		sum(aud.prop_count) AS prop_count,
 		sum(aud.datum_q_count) AS datum_q_count
-	FROM solardatm.aud_datm_hourly aud
+	FROM solardatm.aud_datm_io aud
 	CROSS JOIN datum d
 	WHERE aud.stream_id = sid
 		AND aud.ts_start >= start_ts

@@ -192,21 +192,19 @@ CREATE TABLE solardatm.agg_stale_flux (
 */
 
 /**
- * Audit hourly data table.
+ * Audit ingest data table.
  *
  * This data represents audit data of ingested datum. Because datum can be ingested for any
  * date and multiple times, this information does not convey how many datum are present
  * for the given hour.
- *
- * TODO: rename this table to aud_datum_in to avoid confusion
  */
-CREATE TABLE solardatm.aud_datm_hourly (
+CREATE TABLE solardatm.aud_datm_io (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum INGESTED
-	CONSTRAINT aud_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
+	CONSTRAINT aud_datm_io_pkey PRIMARY KEY (stream_id, ts_start)
 );
 
 /**

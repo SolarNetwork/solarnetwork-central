@@ -375,7 +375,7 @@ public final class DatumTestUtils {
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_daily");
 		jdbcTemplate.update("DELETE FROM solardatm.agg_datm_monthly");
 		jdbcTemplate.update("DELETE FROM solardatm.aud_acc_datm_daily");
-		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_hourly");
+		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_io");
 		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_daily");
 		jdbcTemplate.update("DELETE FROM solardatm.aud_datm_monthly");
 		jdbcTemplate.update("DELETE FROM solardatm.aud_stale_datm");

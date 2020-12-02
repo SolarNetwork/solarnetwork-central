@@ -230,7 +230,7 @@ public class SelectAuditDatum
 	 */
 	protected String auditTableName() {
 		if ( aggregation == Aggregation.Hour ) {
-			return "solardatm.aud_datm_hourly";
+			return "solardatm.aud_datm_io";
 		} else if ( aggregation == Aggregation.Month ) {
 			return "solardatm.aud_datm_monthly";
 		} else {

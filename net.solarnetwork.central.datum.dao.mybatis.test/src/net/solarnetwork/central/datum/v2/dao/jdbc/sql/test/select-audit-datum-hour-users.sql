@@ -15,5 +15,5 @@ SELECT datum.ts_start AS aud_ts,
 	NULL::bigint AS aud_datum_daily_count,
 	NULL::bigint AS aud_datum_monthly_count
 FROM s
-INNER JOIN solardatm.aud_datm_hourly datum ON datum.stream_id = s.stream_id
+INNER JOIN solardatm.aud_datm_io datum ON datum.stream_id = s.stream_id
 ORDER BY aud_ts, aud_node_id, aud_source_id

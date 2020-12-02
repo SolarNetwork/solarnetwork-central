@@ -1184,7 +1184,7 @@ public final class DatumDbUtils {
 		buf.append("insert into solardatm.");
 		switch (kind) {
 			case Hour:
-				buf.append("aud_datm_hourly");
+				buf.append("aud_datm_io");
 				break;
 
 			case Day:
@@ -1789,7 +1789,7 @@ public final class DatumDbUtils {
 				break;
 
 			default:
-				tableName = "aud_datm_hourly";
+				tableName = "aud_datm_io";
 				mapper = AuditDatumHourlyEntityRowMapper.INSTANCE;
 		}
 		return jdbcTemplate.query(

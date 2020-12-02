@@ -128,7 +128,7 @@ public class JdbcDatumEntityDao
 	/**
 	 * The default value for the {@code bulkLoadAuditJdbcCall} property.
 	 */
-	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.add_aud_datm_in(?, ?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.add_aud_datm_io(?, ?, ?, ?)}";
 
 	private final JdbcOperations jdbcTemplate;
 	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;

@@ -183,25 +183,25 @@ $$;
 
 
 /**
- * Update the `solardatm.aud_datm_hourly` table by adding count values.
+ * Update the `solardatm.aud_datm_io` table by adding count values.
  *
  * @param sid 		the stream ID
  * @param ts_recv 	the datum receive date; this will be truncated to the hour
  * @param dcount	the datum count to add
  * @param pcount	the datum property count to add
  */
-CREATE OR REPLACE FUNCTION solardatm.add_aud_datm_in(
+CREATE OR REPLACE FUNCTION solardatm.add_aud_datm_io(
 	sid					UUID,
 	ts_recv 			TIMESTAMP WITH TIME ZONE,
 	dcount				INTEGER,
 	pcount				INTEGER
 	) RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
-	INSERT INTO solardatm.aud_datm_hourly (stream_id, ts_start, datum_count, prop_count)
+	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, datum_count, prop_count)
 	VALUES (sid, date_trunc('hour', ts_recv), dcount, pcount)
 	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET datum_count = aud_datm_hourly.datum_count + EXCLUDED.datum_count,
-		prop_count = aud_datm_hourly.prop_count + EXCLUDED.prop_count
+	SET datum_count = aud_datm_io.datum_count + EXCLUDED.datum_count,
+		prop_count = aud_datm_io.prop_count + EXCLUDED.prop_count
 $$;
 
 
@@ -214,7 +214,7 @@ $$;
  * @param rdate the date the datum was received by SolarNetwork
  * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
  * @param track if `TRUE` then also insert results of `solardatm.calc_stale_datm()` into the
- *              `solardatm.agg_stale_datm` table and call `solardatm.add_aud_datm_in()` to keep the
+ *              `solardatm.agg_stale_datm` table and call `solardatm.add_aud_datm_io()` to keep the
  *              audit data updated
  */
 CREATE OR REPLACE FUNCTION solardatm.store_datum(
@@ -265,7 +265,7 @@ BEGIN
 
 	IF track THEN
 		-- add to audit datum in count
-		PERFORM solardatm.add_aud_datm_in(sid, ts_recv, 1, jdata_prop_count);
+		PERFORM solardatm.add_aud_datm_io(sid, ts_recv, 1, jdata_prop_count);
 
 		-- add stale aggregate hour(s)
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
