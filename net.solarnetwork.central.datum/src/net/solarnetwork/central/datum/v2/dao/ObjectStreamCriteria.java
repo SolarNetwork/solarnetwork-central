@@ -56,6 +56,17 @@ public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeC
 	}
 
 	/**
+	 * Test if the filter as either a date or local date range specified (or
+	 * both).
+	 * 
+	 * @return {@literal true} if either {@link #hasDateRange()} or
+	 *         {@link #hasLocalDateRange()} return {@literal true}
+	 */
+	default boolean hasDateOrLocalDateRange() {
+		return (hasDateRange() || hasLocalDateRange());
+	}
+
+	/**
 	 * Get the first available object ID.
 	 * 
 	 * <p>

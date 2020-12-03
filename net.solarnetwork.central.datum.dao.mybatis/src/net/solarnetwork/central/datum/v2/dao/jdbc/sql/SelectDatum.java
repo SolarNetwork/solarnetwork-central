@@ -76,6 +76,14 @@ public class SelectDatum
 			throw new IllegalArgumentException(
 					format("The mostRecent flag cannot be used with aggregation %s.", aggregation));
 		}
+		if ( isMinuteAggregation() && !filter.hasDateOrLocalDateRange() ) {
+			throw new IllegalArgumentException(
+					format("A date range must be specified for aggregation %s.", aggregation));
+		}
+	}
+
+	private boolean isMinuteAggregation() {
+		return (aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0);
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -158,8 +166,7 @@ public class SelectDatum
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() || (aggregation != Aggregation.None
-				&& aggregation.compareLevel(Aggregation.Hour) < 0) ) {
+		if ( filter.isMostRecent() || isMinuteAggregation() ) {
 			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
 			return;
 		}
@@ -239,6 +246,24 @@ public class SelectDatum
 		@Override
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
+			if ( isMinuteAggregation() ) {
+				// We use a specialized count query here because the actual query does a lot 
+				// of computation to produce minute-level aggregation. The 
+				// solardatm.count_datm_time_span_slots() function is designed to run faster.
+				sqlCte(buf);
+				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
+				buf.append("FROM s\n");
+				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(s.stream_id");
+				if ( filter.hasLocalDateRange() ) {
+					buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
+				} else {
+					buf.append(", ?, ?");
+				}
+				buf.append(", ?) datum(dcount) ON TRUE\n");
+				return buf.toString();
+			}
+
+			// non-minute aggregation; use normal wrapped count query
 			sqlCore(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}

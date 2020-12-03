@@ -48,6 +48,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -186,6 +187,26 @@ public class SelectDatumTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource(
 				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_15min_nodesAndSources_absoluteDates_count() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-nodesAndSources-dates-count.sql",
+						TestSqlResources.class, SQL_COMMENT));
 	}
 
 	@Test
