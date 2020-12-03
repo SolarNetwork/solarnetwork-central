@@ -160,10 +160,10 @@ DECLARE
 	ins_count bigint := 0;
 BEGIN
 	INSERT INTO solardatm.aud_stale_datm (ts_start, stream_id, aud_kind)
-	SELECT date_trunc('month', ts_start AT TIME ZONE time_zone) AT TIME ZONE time_zone
-		, stream_id
+	SELECT date_trunc('month', m.ts_start AT TIME ZONE m.time_zone) AT TIME ZONE m.time_zone
+		, m.stream_id
 		, 'M' AS aud_kind
-	FROM solaragg.find_audit_datum_daily_missing(ts)
+	FROM solaragg.find_audit_datum_daily_missing(ts) m
 	ON CONFLICT DO NOTHING;
 
 	GET DIAGNOSTICS ins_count = ROW_COUNT;
