@@ -73,9 +73,26 @@ public class SelectDatumPartialAggregate
 	 *         if {@code filter} is {@literal null} or invalid
 	 */
 	public SelectDatumPartialAggregate(DatumCriteria filter) {
+		this(filter, filter.getPartialAggregation());
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param partial
+	 *        the partial aggregation to use
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} is {@literal null} or invalid
+	 */
+	public SelectDatumPartialAggregate(DatumCriteria filter, Aggregation partial) {
 		super();
 		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
+			throw new IllegalArgumentException("The filter argument must not be null.");
+		}
+		if ( partial == null ) {
+			throw new IllegalArgumentException("The partial aggregation argument must not be null.");
 		}
 		this.filter = filter;
 		this.aggregation = (filter.getAggregation() != null ? filter.getAggregation()
@@ -97,8 +114,11 @@ public class SelectDatumPartialAggregate
 			throw new IllegalArgumentException(
 					"A date range must be specified for partial aggregation.");
 		}
-		this.partialInterval = new PartialAggregationInterval(aggregation,
-				filter.getPartialAggregation(), start, end);
+		if ( aggregation == Aggregation.Year && partial.compareLevel(Aggregation.Day) < 0 ) {
+			throw new IllegalArgumentException(format(
+					"%s partial aggregation is too small to use with Year aggregation.", partial));
+		}
+		this.partialInterval = new PartialAggregationInterval(aggregation, partial, start, end);
 		if ( partialInterval.getIntervals().isEmpty() ) {
 			throw new IllegalArgumentException("Invalid date range for partial aggregation.");
 		}

@@ -248,15 +248,22 @@ public class JdbcDatumEntityDao
 		throw new UnsupportedOperationException();
 	}
 
+	private static PreparedStatementCreator filterSql(DatumCriteria filter) {
+		if ( filter.getPartialAggregation() != null || filter.getAggregation() == Aggregation.Year ) {
+			return new SelectDatumPartialAggregate(filter,
+					filter.getPartialAggregation() != null ? filter.getPartialAggregation()
+							: Aggregation.Month);
+		}
+		return new SelectDatum(filter);
+	}
+
 	@Override
 	public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
-		final PreparedStatementCreator sql = (filter.getPartialAggregation() != null
-				? new SelectDatumPartialAggregate(filter)
-				: new SelectDatum(filter));
+		final PreparedStatementCreator sql = filterSql(filter);
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final RowMapper<Datum> mapper = filter.getAggregation() != null
