@@ -38,8 +38,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import org.junit.Assert;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
@@ -452,5 +454,58 @@ public class DatumUtilsTests {
 		SortDescriptor sort = c.getSorts().get(0);
 		assertThat("Sort key copied", sort.getSortKey(), equalTo(msd2.getSortKey()));
 		assertThat("Sort order copied", sort.isDescending(), equalTo(msd2.isDescending()));
+	}
+
+	@Test
+	public void truncateDate_local_hour() {
+		// WHEN
+		LocalDateTime result = DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6),
+				Aggregation.Hour);
+
+		// THEN
+		assertThat("Truncated to hour", result, equalTo(LocalDateTime.of(2020, 2, 3, 4, 0, 0)));
+	}
+
+	@Test
+	public void truncateDate_local_day() {
+		// WHEN
+		LocalDateTime result = DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6),
+				Aggregation.Day);
+
+		// THEN
+		assertThat("Truncated to hour", result, equalTo(LocalDateTime.of(2020, 2, 3, 0, 0, 0)));
+	}
+
+	@Test
+	public void truncateDate_local_month() {
+		// WHEN
+		LocalDateTime result = DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6),
+				Aggregation.Month);
+
+		// THEN
+		assertThat("Truncated to hour", result, equalTo(LocalDateTime.of(2020, 2, 1, 0, 0, 0)));
+	}
+
+	@Test
+	public void truncateDate_local_year() {
+		// WHEN
+		LocalDateTime result = DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6),
+				Aggregation.Year);
+
+		// THEN
+		assertThat("Truncated to hour", result, equalTo(LocalDateTime.of(2020, 1, 1, 0, 0, 0)));
+	}
+
+	@Test
+	public void truncateDate_local_other() {
+		for ( Aggregation agg : EnumSet.complementOf(
+				EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month, Aggregation.Year)) ) {
+			try {
+				DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6), agg);
+				Assert.fail("Should have thrown IllegalArgumentException for aggregation " + agg);
+			} catch ( IllegalArgumentException e ) {
+				// good
+			}
+		}
 	}
 }

@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static java.lang.String.format;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -616,6 +620,36 @@ public class DatumUtils {
 		m.setSourceId(meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
 		return m;
+	}
+
+	/**
+	 * Truncate a local date based on an {@link Aggregation}.
+	 * 
+	 * @param date
+	 *        the date to truncate
+	 * @param agg
+	 *        the aggregation to truncate to
+	 * @return the new date
+	 * @throws IllegalArgumentException
+	 *         if {@code agg} is not supported
+	 */
+	public static LocalDateTime truncateDate(LocalDateTime date, Aggregation agg) {
+		switch (agg) {
+			case Hour:
+				return date.truncatedTo(ChronoUnit.HOURS);
+
+			case Day:
+				return date.truncatedTo(ChronoUnit.DAYS);
+
+			case Month:
+				return date.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+
+			case Year:
+				return date.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+
+			default:
+				throw new IllegalArgumentException(format("The aggregation %s is not supported.", agg));
+		}
 	}
 
 }
