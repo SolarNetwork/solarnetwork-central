@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static java.lang.String.format;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.timeColumnName;
 import java.sql.Connection;
@@ -55,7 +56,7 @@ public class SelectDatum
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} is {@literal null} or invalid
 	 */
 	public SelectDatum(DatumCriteria filter) {
 		super();
@@ -63,24 +64,18 @@ public class SelectDatum
 			throw new IllegalArgumentException("The filter argument not be null.");
 		}
 		this.filter = filter;
-		this.aggregation = aggregation(filter);
-	}
-
-	private static Aggregation aggregation(DatumCriteria filter) {
-		Aggregation agg = Aggregation.None;
-		if ( filter.getAggregation() != null ) {
-			switch (filter.getAggregation()) {
-				case Hour:
-				case Day:
-				case Month:
-					agg = filter.getAggregation();
-					break;
-
-				default:
-					// ignore
-			}
+		this.aggregation = (filter.getAggregation() != null ? filter.getAggregation()
+				: Aggregation.None);
+		if ( aggregation == Aggregation.Minute ) {
+			throw new IllegalArgumentException(
+					"The Minute aggregation is not supported; please query the data directly by omitting the aggregation criteria or using None.");
 		}
-		return agg;
+		if ( filter.isMostRecent()
+				&& !(aggregation == Aggregation.None || aggregation == Aggregation.Hour
+						|| aggregation == Aggregation.Day || aggregation == Aggregation.Month) ) {
+			throw new IllegalArgumentException(
+					format("The mostRecent flag cannot be used with aggregation %s.", aggregation));
+		}
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -111,7 +106,12 @@ public class SelectDatum
 		buf.append("datum.data_t");
 		if ( aggregation != Aggregation.None ) {
 			buf.append(",\ndatum.stat_i,\n");
-			buf.append("datum.read_a\n");
+			if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+				// reading data not available for minute aggregation
+				buf.append("NULL::BIGINT[][] AS read_a\n");
+			} else {
+				buf.append("datum.read_a\n");
+			}
 		} else {
 			buf.append("\n");
 		}
@@ -119,6 +119,14 @@ public class SelectDatum
 
 	protected String sqlTableName() {
 		switch (aggregation) {
+			case FiveMinute:
+			case TenMinute:
+			case FifteenMinute:
+			case ThirtyMinute:
+				return filter.hasLocalDateRange()
+						? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
+						: "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?)";
+
 			case Hour:
 				return "solardatm.agg_datm_hourly";
 
@@ -150,7 +158,9 @@ public class SelectDatum
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() ) {
+		if ( filter.isMostRecent() || (aggregation != Aggregation.None
+				&& aggregation.compareLevel(Aggregation.Hour) < 0) ) {
+			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
 			return;
 		}
 
@@ -165,10 +175,6 @@ public class SelectDatum
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		if ( filter == null ) {
-			return;
-		}
-
 		StringBuilder order = new StringBuilder();
 		int idx = 2;
 		if ( filter.hasSorts() ) {
@@ -206,6 +212,10 @@ public class SelectDatum
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		}
+		if ( aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+			// add "secs" parameter
+			stmt.setObject(++p, aggregation.getLevel());
 		}
 		return p;
 	}

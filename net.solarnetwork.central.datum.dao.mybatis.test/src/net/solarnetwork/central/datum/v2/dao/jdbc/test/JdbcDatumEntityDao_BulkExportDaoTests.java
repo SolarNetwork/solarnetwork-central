@@ -197,6 +197,7 @@ public class JdbcDatumEntityDao_BulkExportDaoTests extends BaseDatumJdbcTestSupp
 						equalTo(toJoda(start.plusMinutes(count * 15))));
 				assertThat("Datum node ID", d.getId().getNodeId(), equalTo(TEST_NODE_ID));
 				assertThat("Datum source ID", d.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+				log.debug("Exported datum: {}", d);
 				count++;
 				return ExportCallbackAction.CONTINUE;
 			}

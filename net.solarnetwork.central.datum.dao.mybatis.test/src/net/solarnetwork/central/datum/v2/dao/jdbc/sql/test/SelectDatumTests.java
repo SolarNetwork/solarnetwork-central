@@ -24,7 +24,27 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SQL_COMMENT;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static org.easymock.EasyMock.aryEq;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +61,32 @@ import net.solarnetwork.central.domain.Aggregation;
 public class SelectDatumTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	@Test(expected = IllegalArgumentException.class)
+	public void sql_find_minute() {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Minute);
+		new SelectDatum(filter).getSql();
+	}
+
+	@Test
+	public void sql_find_mostRecent_agg() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setUserId(1L);
+		filter.setMostRecent(true);
+		for ( Aggregation agg : EnumSet.complementOf(
+				EnumSet.of(Aggregation.None, Aggregation.Hour, Aggregation.Day, Aggregation.Month)) ) {
+			// WHEN
+			filter.setAggregation(agg);
+			try {
+				new SelectDatum(filter).getSql();
+				Assert.fail("MostRecent should not be allowed with aggregation " + agg);
+			} catch ( IllegalArgumentException e ) {
+				// ok
+			}
+		}
+	}
 
 	@Test
 	public void sql_find_mostRecent_users() {
@@ -89,6 +135,101 @@ public class SelectDatumTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource("select-datum-daily-mostRecent-nodes.sql",
 				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_daily_mostRecent_nodes() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setMostRecent(true);
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-datum-daily-mostRecent-nodes.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void sql_find_15min_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_15min_nodesAndSources_absoluteDates() throws SQLException {
+		// GIVEN
+		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
+		stmt.setObject(5, filter.getAggregation().getLevel());
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray);
 	}
 
 }
