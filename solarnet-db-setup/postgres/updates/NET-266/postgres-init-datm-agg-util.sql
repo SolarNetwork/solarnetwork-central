@@ -2,8 +2,6 @@
  * Aggregate datum rollup state transition function, to rollup aggregate datum into a higher-level
  * aggregate datum.
  *
- * Note that the `read_a` calculation is not supported and will be generated as `NULL`.
- *
  * @param start_ts the timestamp to assign to the output aggregate
  *
  * @see solardatm.rollup_agg_datm_ffunc()
@@ -56,18 +54,31 @@ BEGIN
 		SELECT
 			  p.idx
 			, p.val
+			, 0::SMALLINT AS rtype
+			, s.stat[1] AS rstart
+			, s.stat[2] AS rend
+			, s.stat[3] AS rdiff
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
+		INNER JOIN solardatm.unnest_2d(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 		UNION ALL
 		SELECT
 			  p.idx
 			, p.val
+			, 1::SMALLINT AS rtype
+			, s.stat[1] AS rstart
+			, s.stat[2] AS rend
+			, s.stat[3] AS rdiff
 		FROM unnest(el.data_a) WITH ORDINALITY AS p(val,idx)
+		INNER JOIN solardatm.unnest_2d(el.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 	)
 	-- calculate accumulating statistics
 	, da AS (
 		SELECT
 			idx
 			, sum(val) AS val
+			, solarcommon.first(rstart ORDER BY rtype) AS rstart
+			, solarcommon.first(rend ORDER BY rtype DESC) AS rend
+			, sum(rdiff) AS rdiff
 		FROM wa
 		WHERE val IS NOT NULL
 		GROUP BY idx
@@ -76,6 +87,9 @@ BEGIN
 	, da_ary AS (
 		SELECT
 			  array_agg(val ORDER BY idx) AS data_a
+			, array_agg(
+				ARRAY[rstart, rend, rdiff] ORDER BY idx
+			) AS read_a
 		FROM da
 	)
 	-- NOTE data_s property not supported, as mode() calculation not implemented
@@ -99,7 +113,7 @@ BEGIN
 		, NULL::TEXT[] AS data_s
 		, dt_ary.data_t
 		, di_ary.stat_i
-		, NULL::NUMERIC[][] AS read_a
+		, da_ary.read_a
 	FROM di_ary, da_ary, dt_ary
 	INTO agg_state;
 
@@ -168,6 +182,9 @@ $$;
  * Aggregate datum rollup aggregate, to rollup aggregate datum into a higher-level aggregate datum.
  *
  * The `TIMESTAMP` argument is used as the output `ts_start` column value.
+ *
+ * Note that the aggregate should be used with an `ORDER BY ts_start` clause for the reading
+ * data to be calculated correctly.
  *
  * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
  *       but can be used for other specialised queries like HOD and DOW aggregates so they don't

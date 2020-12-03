@@ -18,7 +18,7 @@ $$
 			(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS dow
 			, solardatm.rollup_agg_datm(
 				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts
+				, start_ts  ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_daily d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -64,7 +64,7 @@ $$
 			    + CAST((EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS dow
 			, solardatm.rollup_agg_datm(
 				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts
+				, start_ts  ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_daily d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -108,7 +108,7 @@ $$
 			(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS hod
 			, solardatm.rollup_agg_datm(
 				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts
+				, start_ts  ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_hourly d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -153,7 +153,7 @@ $$
 				+ CAST(EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS hod
 			, solardatm.rollup_agg_datm(
 				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts
+				, start_ts  ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_hourly d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE

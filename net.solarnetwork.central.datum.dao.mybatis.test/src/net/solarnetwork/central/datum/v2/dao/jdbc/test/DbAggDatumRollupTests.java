@@ -23,14 +23,15 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
-import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.equalTo;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -57,7 +59,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 	private static interface RollupCallback {
 
 		public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-				UUID streamId, List<AggregateDatum> results);
+				UUID streamId, List<AggregateDatum> results, List<AggregateDatum> fnResults);
 	}
 
 	private BasicObjectDatumStreamMetadata testStreamMetadata() {
@@ -83,10 +85,31 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 				"select * from solardatm.rollup_agg_datm_for_time_span(?::uuid,?,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()), kind.getKey());
-		callback.doWithStream(datums, meta, streamId, results);
+		List<AggregateDatum> fnResults = executeAggregateRollup(streamId, kind, aggStart, aggEnd);
+		callback.doWithStream(datums, meta, streamId, results, fnResults);
 	}
 
-	@SuppressWarnings("unchecked")
+	private List<AggregateDatum> executeAggregateRollup(UUID streamId, Aggregation kind,
+			ZonedDateTime aggStart, ZonedDateTime aggEnd) {
+		final String table = (kind == Aggregation.Month ? "monthly"
+				: kind == Aggregation.Day ? "daily" : "hourly");
+		// @formatter:off
+		List<AggregateDatum> results = jdbcTemplate.query(
+				"SELECT (solardatm.rollup_agg_datm(\n"
+				+ "		(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm\n"
+				+ "		, ?  ORDER BY datum.ts_start)).*\n"
+				+ "FROM solardatm.agg_datm_" +table +" datum\n"
+				+ "WHERE datum.stream_id = ?::uuid AND datum.ts_start >= ? AND datum.ts_start < ?\n"
+				+ "HAVING count(*) > 0",
+				AggregateDatumEntityRowMapper.INSTANCE, 
+				Timestamp.from(aggStart.toInstant()), 
+				streamId.toString(),
+				Timestamp.from(aggStart.toInstant()), 
+				Timestamp.from(aggEnd.toInstant()));
+		// @formatter:on
+		return results;
+	}
+
 	@Test
 	public void regularHour() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -95,28 +118,30 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-							UUID streamId, List<AggregateDatum> results) {
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
 						assertThat("Agg result returned", results, hasSize(1));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
 
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
-						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-								arrayOfDecimals("1.55", "5.6"));
-						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
-								arrayOfDecimals("3600"));
-						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-								arrayContaining(arrayOfDecimals(new String[] { "48", "1.1", "3.8" }),
-										arrayOfDecimals(new String[] { "48", "2.0", "7.8" })));
-						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-								arrayContaining(arrayOfDecimals(new String[] { "100", "928", "828" })));
+						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
+								Aggregation.Hour,
+								propertiesOf(decimalArray("1.55", "5.6"), decimalArray("3600"), null,
+										null),
+								statisticsOf(
+										new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
+												decimalArray("48", "2.0", "7.8") },
+										new BigDecimal[][] { decimalArray("100", "928", "828") }));
+
+						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
+
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void oneRow() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -125,23 +150,25 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-							UUID streamId, List<AggregateDatum> results) {
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
 						assertThat("Agg result returned", results, hasSize(1));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
 
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
-						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-								arrayOfDecimals("1.2", "2.1"));
-						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
-								arrayOfDecimals("100"));
-						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-								arrayContaining(arrayOfDecimals(new String[] { "6", "1.1", "3.1" }),
-										arrayOfDecimals(new String[] { "6", "2.0", "7.1" })));
-						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-								arrayContaining(arrayOfDecimals(new String[] { "100", "201", "101" })));
+						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
+								Aggregation.Hour,
+								propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null,
+										null),
+								statisticsOf(
+										new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
+												decimalArray("6", "2.0", "7.1") },
+										new BigDecimal[][] { decimalArray("100", "201", "101") }));
+
+						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
 	}
@@ -154,13 +181,14 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-							UUID streamId, List<AggregateDatum> results) {
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
 						assertThat("Agg result returned", results, hasSize(0));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
 					}
 				});
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void noAccumulatingData() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -169,28 +197,26 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-							UUID streamId, List<AggregateDatum> results) {
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
 						assertThat("Agg result returned", results, hasSize(1));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
 
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
-						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-								arrayOfDecimals("1.55", "5.6"));
-						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
-								nullValue());
-						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-								arrayContaining(arrayOfDecimals(new String[] { "48", "1.1", "3.8" }),
-										arrayOfDecimals(new String[] { "48", "2.0", "7.8" })));
-						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-								nullValue());
+						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
+								Aggregation.Hour,
+								propertiesOf(decimalArray("1.55", "5.6"), null, null, null),
+								statisticsOf(new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
+										decimalArray("48", "2.0", "7.8") }, null));
+
+						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void inconsistentData() throws IOException {
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -199,25 +225,27 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 					@Override
 					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
-							UUID streamId, List<AggregateDatum> results) {
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
 						assertThat("Agg result returned", results, hasSize(1));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
 
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
-						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-						assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
-								arrayOfDecimals("1.5", "5.266666667", "60.1"));
-						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
-								arrayOfDecimals("2700", "2400"));
-						assertThat("Stats instantaneous", result.getStatistics().getInstantaneous(),
-								arrayContaining(arrayOfDecimals(new String[] { "42", "1.1", "3.7" }),
-										arrayOfDecimals(new String[] { "36", "2.0", "7.7" }),
-										arrayOfDecimals(new String[] { "18", "40.0", "100.1" })));
-						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-								arrayContaining(arrayOfDecimals(new String[] { "100", "928", "621" }),
-										arrayOfDecimals(new String[] { "1000", "3402", "2402" })));
+						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
+								Aggregation.Hour,
+								propertiesOf(decimalArray("1.5", "5.266666667", "60.1"),
+										decimalArray("2700", "2400"), null, null),
+								statisticsOf(
+										new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
+												decimalArray("36", "2.0", "7.7"),
+												decimalArray("18", "40.0", "100.1") },
+										new BigDecimal[][] { decimalArray("100", "928", "621"),
+												decimalArray("1000", "3402", "2402") }));
+
+						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
 	}

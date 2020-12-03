@@ -89,42 +89,6 @@ public class AggregateDatumEntity extends DatumEntity
 		this.statistics = statistics;
 	}
 
-	/**
-	 * Constructor.
-	 * 
-	 * <p>
-	 * Note this constructor has {@code Object} arguments to work around MyBatis
-	 * mapping issues.
-	 * </p>
-	 * 
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the timestamp
-	 * @param aggregation
-	 *        the aggregation
-	 * @param instantaneous
-	 *        the instantaneous values; must be {@code BigDecimal[]}
-	 * @param accumulating
-	 *        the accumulating values; must be {@code BigDecimal[]}
-	 * @param status
-	 *        the status values; must be {@code String[]}
-	 * @param tags
-	 *        the tag values; must be {@code String[]}
-	 * @param instantaneousStats
-	 *        the instantaneous statistic values; must be {@code BigDecimal[][]}
-	 * @param accumulatingStats
-	 *        the accumulating statistic values; must be {@code BigDecimal[][]}
-	 */
-	public AggregateDatumEntity(UUID streamId, Instant timestamp, Aggregation aggregation,
-			Object instantaneous, Object accumulating, Object status, Object tags,
-			Object instantaneousStats, Object accumulatingStats) {
-		super(streamId, timestamp, null, instantaneous, accumulating, status, tags);
-		this.aggregation = aggregation;
-		this.statistics = DatumPropertiesStatistics.statisticsOf((BigDecimal[][]) instantaneousStats,
-				(BigDecimal[][]) accumulatingStats);
-	}
-
 	@Override
 	public AggregateDatumEntity clone() {
 		return (AggregateDatumEntity) super.clone();
