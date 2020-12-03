@@ -117,16 +117,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		kind 		CHARACTER
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][],
-		read_a		NUMERIC[][]
-	) LANGUAGE plpgsql STABLE ROWS 2000 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 2000 AS
 $$
 BEGIN
 	RETURN QUERY EXECUTE format(
@@ -151,7 +142,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS TABLE(
+	) RETURNS TABLE (
 		stream_id 	UUID,
 		ts 			TIMESTAMP WITH TIME ZONE,
 		data_i		NUMERIC[],
@@ -247,7 +238,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_aux_for_time_span(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		aux_type 	solardatm.da_datm_aux_type DEFAULT 'Reset'::solardatm.da_datm_aux_type
-	) RETURNS TABLE(
+	) RETURNS TABLE (
 		stream_id 	UUID,
 		ts 			TIMESTAMP WITH TIME ZONE,
 		data_a		NUMERIC[],
@@ -303,15 +294,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span_with_aux(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		tolerance 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts 			TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		rtype		SMALLINT
-	) LANGUAGE SQL STABLE ROWS 2000 AS
+	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 2000 AS
 $$
 	-- find raw data for given time range
 	WITH d AS (
@@ -391,16 +374,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 		end_ts 			TIMESTAMP WITH TIME ZONE,
 		tolerance_clock INTERVAL DEFAULT interval '1 hour',
 		tolerance_read 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],					-- array of instantaneous property average values
-		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of status property values
-		data_t		TEXT[],						-- array of all tags seen over period
-		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
-		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
-	) LANGUAGE SQL STABLE ROWS 500 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
 $$
 	-- grab raw data + reset records, constrained by stream/date range
 	WITH d AS (
@@ -596,15 +570,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span_slots(
 		end_ts 			TIMESTAMP WITH TIME ZONE,
 		secs			INTEGER DEFAULT 600,
 		tolerance_clock INTERVAL DEFAULT interval '1 hour'
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],					-- array of instantaneous property average values
-		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of status property values
-		data_t		TEXT[],						-- array of all tags seen over period
-		stat_i		NUMERIC[][]					-- array of instantaneous property [count,min,max] statistic tuples
-	) LANGUAGE SQL STABLE ROWS 500 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
 $$
 	-- grab raw data + reset records, constrained by stream/date range
 	WITH d AS (
@@ -734,6 +700,7 @@ $$
 		, ds_ary.data_s
 		, dt_ary.data_t
 		, di_ary.stat_i
+		, NULL::NUMERIC[][] AS read_a
 	FROM slots
 	LEFT OUTER JOIN di_ary ON di_ary.ts_start = slots.ts_start
 	LEFT OUTER JOIN da_ary ON da_ary.ts_start = slots.ts_start
@@ -756,16 +723,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
 		kind 		CHARACTER
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][],
-		read_a		NUMERIC[][]
-	) LANGUAGE plpgsql STABLE ROWS 2000 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 2000 AS
 $$
 BEGIN
 	RETURN QUERY EXECUTE format(
@@ -792,16 +750,7 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_for_time_span(
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE,
 		kind 			CHARACTER
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],					-- array of instantaneous property average values
-		data_a		NUMERIC[],					-- array of accumulating property clock difference values
-		data_s		TEXT[],						-- array of status property values
-		data_t		TEXT[],						-- array of all tags seen over period
-		stat_i		NUMERIC[][],				-- array of instantaneous property [count,min,max] statistic tuples
-		read_a		NUMERIC[][]					-- array of accumulating property reading [start,finish,diff] tuples
-	) LANGUAGE SQL STABLE ROWS 500 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
 $$
 	WITH d AS (
 		SELECT * FROM solardatm.find_agg_datm_for_time_span(

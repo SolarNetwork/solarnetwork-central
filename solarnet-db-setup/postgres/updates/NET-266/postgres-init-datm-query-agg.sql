@@ -11,15 +11,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_dow(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][]
-	) LANGUAGE SQL STABLE ROWS 7 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 7 AS
 $$
 	WITH d AS (
 		SELECT
@@ -43,6 +35,7 @@ $$
 		, (r).data_s
 		, (r).data_t
 		, (r).stat_i
+		, NULL::NUMERIC[][] AS read_a
 	FROM d
 $$;
 
@@ -63,15 +56,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_dow_seasonal(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][]
-	) LANGUAGE SQL STABLE ROWS 28 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 28 AS
 $$
 	WITH d AS (
 		SELECT
@@ -98,6 +83,7 @@ $$
 		, (r).data_s
 		, (r).data_t
 		, (r).stat_i
+		, NULL::NUMERIC[][] AS read_a
 	FROM d
 $$;
 
@@ -115,15 +101,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_hod(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][]
-	) LANGUAGE SQL STABLE ROWS 24 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 24 AS
 $$
 	WITH d AS (
 		SELECT
@@ -147,6 +125,7 @@ $$
 		, (r).data_s
 		, (r).data_t
 		, (r).stat_i
+		, NULL::NUMERIC[][] AS read_a
 	FROM d
 $$;
 
@@ -166,15 +145,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_hod_seasonal(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE (
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][]
-	) LANGUAGE SQL STABLE ROWS 96 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 96 AS
 $$
 	WITH d AS (
 		SELECT
@@ -201,6 +172,7 @@ $$
 		, (r).data_s
 		, (r).data_t
 		, (r).stat_i
+		, NULL::NUMERIC[][] AS read_a
 	FROM d
 $$;
 
@@ -221,16 +193,7 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_running_total(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS TABLE(
-		stream_id 	UUID,
-		ts_start	TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[],
-		stat_i		NUMERIC[][],
-		read_a 		NUMERIC[][]
-	) LANGUAGE SQL STABLE ROWS 250 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 250 AS
 $$
 	WITH meta AS (
 		SELECT * FROM solardatm.find_metadata_for_stream(sid)
