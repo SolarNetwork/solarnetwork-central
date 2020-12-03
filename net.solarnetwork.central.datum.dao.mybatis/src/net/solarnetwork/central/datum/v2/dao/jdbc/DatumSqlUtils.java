@@ -578,8 +578,8 @@ public final class DatumSqlUtils {
 				paramCount += whereNodeMetadata(filter, where);
 			}
 			if ( where.length() > 0 ) {
-				buf.append("WHERE ");
-				buf.append(where.substring(5));
+				buf.append("WHERE");
+				buf.append(where.substring(4));
 			}
 		}
 		return paramCount;
@@ -745,8 +745,8 @@ public final class DatumSqlUtils {
 				paramCount += whereLocationMetadata(filter, where);
 			}
 			if ( where.length() > 0 ) {
-				buf.append("WHERE ");
-				buf.append(where.substring(5));
+				buf.append("WHERE");
+				buf.append(where.substring(4));
 			}
 		}
 		return paramCount;

@@ -102,11 +102,11 @@ public class UpdateObjectStreamMetadataJson implements PreparedStatementCreator,
 		StringBuilder buf = new StringBuilder();
 		buf.append("UPDATE solardatm.").append(sqlTableName()).append("\n");
 		buf.append("SET jdata = ?::jsonb\n");
-		buf.append("WHERE ");
+		buf.append("WHERE");
 		if ( kind == ObjectDatumKind.Location ) {
-			buf.append("loc_id = ?\n");
+			buf.append(" loc_id = ?\n");
 		} else {
-			buf.append("node_id = ?\n");
+			buf.append(" node_id = ?\n");
 		}
 		buf.append("	AND source_id = ?\n");
 		return buf.toString();

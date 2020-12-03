@@ -54,11 +54,68 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private boolean withoutTotalResultsCount = true;
 	private Aggregation aggregation;
 	private Aggregation partialAggregation;
-	private DatumRollupType[] datumRollupTypes;
 	private DatumReadingType readingType;
 	private Period timeTolerance;
 	private ObjectDatumKind objectKind;
+
 	private DatumAuxiliaryType datumAuxiliaryType;
+
+	private DatumRollupType[] datumRollupTypes;
+
+	/**
+	 * Default constructor.
+	 */
+	public BasicDatumCriteria() {
+		super();
+	}
+
+	/**
+	 * Copy the properties of another criteria into this instance.
+	 * 
+	 * <p>
+	 * This method will test for conformance to all the various criteria
+	 * interfaces implemented by this class, and copy those properties as well.
+	 * </p>
+	 * 
+	 * @param criteria
+	 *        the criteria to copy
+	 */
+	public void copyFrom(DatumCriteria criteria) {
+		super.copyFrom(criteria);
+		setStreamIds(criteria.getStreamIds());
+		setStartDate(criteria.getStartDate());
+		setEndDate(criteria.getEndDate());
+		setLocalStartDate(criteria.getLocalStartDate());
+		setLocalEndDate(criteria.getLocalEndDate());
+		setMostRecent(criteria.isMostRecent());
+		setWithoutTotalResultsCount(criteria.isWithoutTotalResultsCount());
+		setAggregation(criteria.getAggregation());
+		setPartialAggregation(criteria.getPartialAggregation());
+		setReadingType(criteria.getReadingType());
+		setTimeTolerance(criteria.getTimeTolerance());
+		setObjectKind(criteria.getObjectKind());
+		if ( criteria instanceof DatumAuxiliaryCriteria ) {
+			setDatumAuxiliaryType(((DatumAuxiliaryCriteria) criteria).getDatumAuxiliaryType());
+		}
+		if ( criteria instanceof DatumRollupCriteria ) {
+			setDatumRollupTypes(((DatumRollupCriteria) criteria).getDatumRollupTypes());
+		}
+	}
+
+	/**
+	 * Create a copy of a criteria.
+	 * 
+	 * @param c
+	 *        the criteria to copy
+	 * @param overrides
+	 *        the overrides
+	 * @return the copy
+	 */
+	public static BasicDatumCriteria copy(DatumCriteria criteria) {
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.copyFrom(criteria);
+		return c;
+	}
 
 	@Override
 	public BasicDatumCriteria clone() {

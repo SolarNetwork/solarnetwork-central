@@ -126,7 +126,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 		}
 		idx |= DatumSqlUtils.whereStreamMetadata(filter, buf);
 		if ( idx > 0 ) {
-			buf.append("WHERE ").append(where.substring(4));
+			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 

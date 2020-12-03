@@ -83,7 +83,7 @@ public class SelectStaleAuditDatum implements PreparedStatementCreator, SqlProvi
 		idx |= DatumSqlUtils.whereStreamMetadata(filter, buf);
 		idx |= DatumSqlUtils.whereDateRange(filter, Aggregation.Hour, where);
 		if ( idx > 0 ) {
-			buf.append("WHERE ").append(where.substring(4));
+			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 

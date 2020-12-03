@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SimplePagination;
 
 /**
@@ -32,8 +33,8 @@ import net.solarnetwork.domain.SimplePagination;
  * @author matt
  * @version 1.0
  */
-public class BasicCoreCriteria extends SimplePagination
-		implements LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria {
+public class BasicCoreCriteria extends SimplePagination implements PaginationCriteria, LocationCriteria,
+		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
@@ -44,6 +45,45 @@ public class BasicCoreCriteria extends SimplePagination
 	@Override
 	public BasicCoreCriteria clone() {
 		return (BasicCoreCriteria) super.clone();
+	}
+
+	/**
+	 * Copy the properties of another criteria into this instance.
+	 * 
+	 * <p>
+	 * This method will test for conformance to all the various criteria
+	 * interfaces implemented by this class, and copy those properties as well.
+	 * </p>
+	 * 
+	 * @param criteria
+	 *        the criteria to copy
+	 */
+	public void copyFrom(PaginationCriteria criteria) {
+		setMax(criteria.getMax());
+		setOffset(criteria.getOffset());
+		setSorts(criteria.getSorts());
+		if ( criteria instanceof BasicCoreCriteria ) {
+			BasicCoreCriteria bcc = (BasicCoreCriteria) criteria;
+			setLocationIds(((LocationCriteria) criteria).getLocationIds());
+			setLocationIds(bcc.getLocationIds());
+			setNodeIds(bcc.getNodeIds());
+			setSourceIds(bcc.getSourceIds());
+			setUserIds(bcc.getUserIds());
+			setTokenIds(bcc.getTokenIds());
+		} else {
+			if ( criteria instanceof NodeCriteria ) {
+				setNodeIds(((NodeCriteria) criteria).getNodeIds());
+			}
+			if ( criteria instanceof SourceCriteria ) {
+				setSourceIds(((SourceCriteria) criteria).getSourceIds());
+			}
+			if ( criteria instanceof UserCriteria ) {
+				setUserIds(((UserCriteria) criteria).getUserIds());
+			}
+			if ( criteria instanceof SecurityTokenCriteria ) {
+				setTokenIds(((SecurityTokenCriteria) criteria).getTokenIds());
+			}
+		}
 	}
 
 	/**

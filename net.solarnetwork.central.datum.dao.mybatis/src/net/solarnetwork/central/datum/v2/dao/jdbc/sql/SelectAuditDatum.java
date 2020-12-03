@@ -263,7 +263,7 @@ public class SelectAuditDatum
 						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( idx > 0 ) {
-			buf.append("WHERE ").append(where.substring(4));
+			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 

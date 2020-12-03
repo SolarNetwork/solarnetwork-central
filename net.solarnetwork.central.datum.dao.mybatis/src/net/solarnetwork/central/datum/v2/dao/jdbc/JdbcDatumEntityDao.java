@@ -85,6 +85,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumS
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRange;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumCalculatedAt;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
@@ -253,7 +254,9 @@ public class JdbcDatumEntityDao
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
-		final PreparedStatementCreator sql = new SelectDatum(filter);
+		final PreparedStatementCreator sql = (filter.getPartialAggregation() != null
+				? new SelectDatumPartialAggregate(filter)
+				: new SelectDatum(filter));
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final RowMapper<Datum> mapper = filter.getAggregation() != null

@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectDatum.java - 19/11/2020 8:23:34 pm
+ * SelectDatumPartialAggregate.java - 3/12/2020 4:23:00 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -24,31 +24,41 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.timeColumnName;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
- * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
+ * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter
+ * using partial aggregation ranges.
  * 
  * @author matt
  * @version 1.0
  * @since 3.8
  */
-public class SelectDatum
+public class SelectDatumPartialAggregate
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
+	private final PartialAggregationInterval partialInterval;
+	private final List<DatumCriteria> intervalFilters;
 
 	/**
 	 * Constructor.
@@ -58,7 +68,7 @@ public class SelectDatum
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null} or invalid
 	 */
-	public SelectDatum(DatumCriteria filter) {
+	public SelectDatumPartialAggregate(DatumCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument not be null.");
@@ -66,24 +76,35 @@ public class SelectDatum
 		this.filter = filter;
 		this.aggregation = (filter.getAggregation() != null ? filter.getAggregation()
 				: Aggregation.None);
-		if ( aggregation == Aggregation.Minute ) {
+		if ( !(aggregation == Aggregation.Hour || aggregation == Aggregation.Day
+				|| aggregation == Aggregation.Month || aggregation == Aggregation.Year) ) {
 			throw new IllegalArgumentException(
-					"The Minute aggregation is not supported; please query the data directly by omitting the aggregation criteria or using None.");
+					format("Partial aggregation cannot be used with aggregation %s.", aggregation));
 		}
-		if ( filter.isMostRecent()
-				&& !(aggregation == Aggregation.None || aggregation == Aggregation.Hour
-						|| aggregation == Aggregation.Day || aggregation == Aggregation.Month) ) {
+		LocalDateTime start = filter.getLocalStartDate();
+		if ( start == null && filter.getStartDate() != null ) {
+			start = filter.getStartDate().atOffset(ZoneOffset.UTC).toLocalDateTime();
+		}
+		LocalDateTime end = filter.getLocalEndDate();
+		if ( end == null && filter.getEndDate() != null ) {
+			end = filter.getEndDate().atOffset(ZoneOffset.UTC).toLocalDateTime();
+		}
+		if ( start == null || end == null ) {
 			throw new IllegalArgumentException(
-					format("The mostRecent flag cannot be used with aggregation %s.", aggregation));
+					"A date range must be specified for partial aggregation.");
 		}
-		if ( isMinuteAggregation() && !filter.hasDateOrLocalDateRange() ) {
-			throw new IllegalArgumentException(
-					format("A date range must be specified for aggregation %s.", aggregation));
+		this.partialInterval = new PartialAggregationInterval(aggregation,
+				filter.getPartialAggregation(), start, end);
+		if ( partialInterval.getIntervals().isEmpty() ) {
+			throw new IllegalArgumentException("Invalid date range for partial aggregation.");
 		}
-	}
-
-	private boolean isMinuteAggregation() {
-		return (aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0);
+		this.intervalFilters = partialInterval.getIntervals().stream().map(e -> {
+			BasicDatumCriteria f = BasicDatumCriteria.copy(filter);
+			f.setAggregation(e.getAggregation());
+			f.setLocalStartDate(e.getStart());
+			f.setLocalEndDate(e.getEnd());
+			return f;
+		}).collect(Collectors.toList());
 	}
 
 	private void sqlCte(StringBuilder buf) {
@@ -95,46 +116,35 @@ public class SelectDatum
 		buf.append(")\n");
 	}
 
-	private void sqlSelect(StringBuilder buf) {
+	private void sqlSelect(DatumCriteria filter, StringBuilder buf) {
 		buf.append("SELECT ");
-		sqlColumns(buf);
-	}
-
-	private void sqlColumns(StringBuilder buf) {
-		buf.append("datum.stream_id,\n");
-		if ( aggregation != Aggregation.None ) {
-			buf.append("datum.ts_start AS ts,\n");
+		if ( filter.getAggregation() == aggregation ) {
+			// main agg: direct results
+			buf.append("datum.stream_id,\n");
+			buf.append("datum.ts_start,\n");
+			buf.append("datum.data_i,\n");
+			buf.append("datum.data_a,\n");
+			buf.append("datum.data_s,\n");
+			buf.append("datum.data_t,\n");
+			buf.append("datum.stat_i,\n");
+			buf.append("datum.read_a\n");
 		} else {
-			buf.append("datum.ts,\n");
-			buf.append("datum.received,\n");
-		}
-		buf.append("datum.data_i,\n");
-		buf.append("datum.data_a,\n");
-		buf.append("datum.data_s,\n");
-		buf.append("datum.data_t");
-		if ( aggregation != Aggregation.None ) {
-			buf.append(",\ndatum.stat_i,\n");
-			if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
-				// reading data not available for minute aggregation
-				buf.append("NULL::BIGINT[][] AS read_a\n");
-			} else {
-				buf.append("datum.read_a\n");
-			}
-		} else {
-			buf.append("\n");
+			// partial agg: dynamic rollup to main agg
+			buf.append("(solardatm.rollup_agg_datm(\n");
+			buf.append("\t\t(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s");
+			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm\n");
+			buf.append("\t\t, ? AT TIME ZONE s.time_zone  ORDER BY datum.ts_start)).*\n");
 		}
 	}
 
-	protected String sqlTableName() {
-		switch (aggregation) {
-			case FiveMinute:
-			case TenMinute:
-			case FifteenMinute:
-			case ThirtyMinute:
-				return filter.hasLocalDateRange()
-						? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
-						: "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?)";
+	private void sqlFrom(DatumCriteria filter, StringBuilder buf) {
+		buf.append("FROM s\n");
+		buf.append("INNER JOIN ").append(sqlTableName(filter))
+				.append(" datum ON datum.stream_id = s.stream_id\n");
+	}
 
+	protected String sqlTableName(DatumCriteria filter) {
+		switch (filter.getAggregation()) {
 			case Hour:
 				return "solardatm.agg_datm_hourly";
 
@@ -149,35 +159,14 @@ public class SelectDatum
 		}
 	}
 
-	private void sqlFrom(StringBuilder buf) {
-		buf.append("FROM s\n");
-		if ( filter.isMostRecent() ) {
-			buf.append("INNER JOIN LATERAL (\n");
-			buf.append("		SELECT datum.*\n");
-			buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
-			buf.append("		WHERE datum.stream_id = s.stream_id\n");
-			buf.append("		ORDER BY datum.").append(timeColumnName(aggregation)).append(" DESC\n");
-			buf.append("		LIMIT 1\n");
-			buf.append("	) datum ON datum.stream_id = s.stream_id\n");
-		} else {
-			buf.append("INNER JOIN ").append(sqlTableName())
-					.append(" datum ON datum.stream_id = s.stream_id\n");
-		}
-	}
-
-	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() || isMinuteAggregation() ) {
-			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
-			return;
-		}
-
+	private void sqlWhere(DatumCriteria filter, StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
-		int idx = filter.hasLocalDateRange()
-				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
-						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
-				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
-		if ( idx > 0 ) {
-			buf.append("WHERE").append(where.substring(4));
+		DatumSqlUtils.whereLocalDateRange(filter, filter.getAggregation(),
+				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
+		buf.append("WHERE").append(where.substring(4));
+		if ( filter.getAggregation() != aggregation ) {
+			// partial aggregation can produce NULL output; omit those
+			buf.append("HAVING COUNT(*) > 0\n");
 		}
 	}
 
@@ -190,7 +179,7 @@ public class SelectDatum
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
 		} else {
-			order.append(", datum.stream_id, ts");
+			order.append(", datum.stream_id, ts_start");
 		}
 		if ( order.length() > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
@@ -199,9 +188,23 @@ public class SelectDatum
 
 	private void sqlCore(StringBuilder buf) {
 		sqlCte(buf);
-		sqlSelect(buf);
-		sqlFrom(buf);
-		sqlWhere(buf);
+
+		// write main queries in CTE
+		buf.append(", datum AS (\n");
+
+		boolean multi = false;
+		for ( DatumCriteria intervalFilter : intervalFilters ) {
+			if ( multi ) {
+				buf.append("UNION ALL\n");
+			}
+			sqlSelect(intervalFilter, buf);
+			sqlFrom(intervalFilter, buf);
+			sqlWhere(intervalFilter, buf);
+			multi = true;
+		}
+
+		buf.append(")\n");
+		buf.append("SELECT * FROM datum\n");
 	}
 
 	@Override
@@ -215,14 +218,14 @@ public class SelectDatum
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
-		if ( filter.hasLocalDateRange() ) {
-			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
-		} else {
-			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
-		}
-		if ( aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0 ) {
-			// add "secs" parameter
-			stmt.setObject(++p, aggregation.getLevel());
+		for ( DatumCriteria intervalFilter : intervalFilters ) {
+			if ( intervalFilter.getAggregation() != aggregation ) {
+				// set partial aggregation effective date, which is start of main aggregation period
+				LocalDateTime aggDate = DatumUtils.truncateDate(intervalFilter.getLocalStartDate(),
+						aggregation);
+				stmt.setObject(++p, aggDate, Types.TIMESTAMP);
+			}
+			p = DatumSqlUtils.prepareLocalDateRangeFilter(intervalFilter, con, stmt, p);
 		}
 		return p;
 	}
@@ -246,24 +249,6 @@ public class SelectDatum
 		@Override
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
-			if ( isMinuteAggregation() ) {
-				// We use a specialized count query here because the actual query does a lot 
-				// of computation to produce minute-level aggregation. The 
-				// solardatm.count_datm_time_span_slots() function is designed to run faster.
-				sqlCte(buf);
-				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
-				buf.append("FROM s\n");
-				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(s.stream_id");
-				if ( filter.hasLocalDateRange() ) {
-					buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");
-				} else {
-					buf.append(", ?, ?");
-				}
-				buf.append(", ?) datum(dcount) ON TRUE\n");
-				return buf.toString();
-			}
-
-			// non-minute aggregation; use normal wrapped count query
 			sqlCore(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}

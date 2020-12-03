@@ -114,7 +114,7 @@ public class SelectStaleAggregateDatum
 			idx += DatumSqlUtils.whereDateRange(filter, Aggregation.Hour, where);
 		}
 		if ( idx > 0 ) {
-			buf.append("WHERE ").append(where.substring(4));
+			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 
