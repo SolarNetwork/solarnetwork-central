@@ -16,9 +16,9 @@ $$
 	WITH d AS (
 		SELECT
 			(DATE '2001-01-01' + CAST((EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS dow
-			, solardatm.rollup_agg_datm(
-				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts  ORDER BY d.ts_start
+			, solardatm.rollup_agg_data(
+				(d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_data
+				ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_daily d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -28,7 +28,7 @@ $$
 		GROUP BY EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC'))
 	)
 	SELECT
-		  (r).stream_id
+		  sid AS stream_id
 		, dow AS ts_start
 		, (r).data_i
 		, (r).data_a
@@ -62,9 +62,9 @@ $$
 		SELECT
 			(solarnet.get_season_monday_start(CAST(d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC') AS date))
 			    + CAST((EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) - 1) || ' day' AS INTERVAL)) AT TIME ZONE 'UTC' AS dow
-			, solardatm.rollup_agg_datm(
-				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts  ORDER BY d.ts_start
+			, solardatm.rollup_agg_data(
+				(d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_data
+				ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_daily d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -76,7 +76,7 @@ $$
 			EXTRACT(isodow FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC'))
 	)
 	SELECT
-		  (r).stream_id
+		  sid AS stream_id
 		, dow AS ts_start
 		, (r).data_i
 		, (r).data_a
@@ -106,9 +106,9 @@ $$
 	WITH d AS (
 		SELECT
 			(CAST('2001-01-01 ' || to_char(EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')), '00') || ':00' AS TIMESTAMP)) AT TIME ZONE 'UTC' AS hod
-			, solardatm.rollup_agg_datm(
-				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts  ORDER BY d.ts_start
+			, solardatm.rollup_agg_data(
+				(d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_data
+				ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_hourly d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -118,7 +118,7 @@ $$
 		GROUP BY EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC'))
 	)
 	SELECT
-		  (r).stream_id
+		  sid AS stream_id
 		, hod AS ts_start
 		, (r).data_i
 		, (r).data_a
@@ -151,9 +151,9 @@ $$
 		SELECT
 			(solarnet.get_season_monday_start(CAST(d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC') AS date))
 				+ CAST(EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC')) || ' hour' AS INTERVAL)) AT TIME ZONE 'UTC' AS hod
-			, solardatm.rollup_agg_datm(
-				(d.stream_id, d.ts_start, d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_datm
-				, start_ts  ORDER BY d.ts_start
+			, solardatm.rollup_agg_data(
+				(d.data_i, d.data_a, d.data_s, d.data_t, d.stat_i, d.read_a)::solardatm.agg_data
+				ORDER BY d.ts_start
 			) AS r
 		FROM solardatm.agg_datm_hourly d
 		LEFT OUTER JOIN solardatm.find_metadata_for_stream(sid) m ON TRUE
@@ -165,7 +165,7 @@ $$
 			EXTRACT(hour FROM d.ts_start AT TIME ZONE COALESCE(m.time_zone, 'UTC'))
 	)
 	SELECT
-		  (r).stream_id
+		  sid AS stream_id
 		, hod AS ts_start
 		, (r).data_i
 		, (r).data_a

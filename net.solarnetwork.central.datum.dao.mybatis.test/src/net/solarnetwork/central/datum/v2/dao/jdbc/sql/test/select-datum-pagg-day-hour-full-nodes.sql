@@ -7,13 +7,16 @@ WITH s AS (
 )
 , datum AS (
 	-- leading partial agg
-	SELECT (solardatm.rollup_agg_datm(
-			(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm
-			, ? AT TIME ZONE s.time_zone  ORDER BY datum.ts_start)).*
+	SELECT datum.stream_id,
+		date_trunc('day', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
+		(solardatm.rollup_agg_data(
+			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
+			ORDER BY datum.ts_start)).*
 	FROM s
 	INNER JOIN solardatm.agg_datm_hourly datum ON datum.stream_id = s.stream_id
 	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+	GROUP BY datum.stream_id, date_trunc('day', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 	HAVING COUNT(*) > 0
 	
 	-- middle main agg
@@ -33,13 +36,16 @@ WITH s AS (
 	
 	-- trailing partial agg	
 	UNION ALL
-	SELECT (solardatm.rollup_agg_datm(
-		(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm
-		, ? AT TIME ZONE s.time_zone ORDER BY datum.ts_start)).*
+	SELECT datum.stream_id,
+		date_trunc('day', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
+		(solardatm.rollup_agg_data(
+			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
+			ORDER BY datum.ts_start)).*
 	FROM s
 	INNER JOIN solardatm.agg_datm_hourly datum ON datum.stream_id = s.stream_id
 	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+	GROUP BY datum.stream_id, date_trunc('day', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 	HAVING COUNT(*) > 0
 )
 SELECT * FROM datum

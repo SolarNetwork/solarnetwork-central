@@ -4,10 +4,10 @@
  *
  * @param start_ts the timestamp to assign to the output aggregate
  *
- * @see solardatm.rollup_agg_datm_ffunc()
+ * @see solardatm.rollup_agg_data_ffunc()
  */
-CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_sfunc(agg_state solardatm.agg_datm, el solardatm.agg_datm, start_ts TIMESTAMP WITH TIME ZONE)
-RETURNS solardatm.agg_datm LANGUAGE plpgsql IMMUTABLE AS
+CREATE OR REPLACE FUNCTION solardatm.rollup_agg_data_sfunc(agg_state solardatm.agg_data, el solardatm.agg_data)
+RETURNS solardatm.agg_data LANGUAGE plpgsql IMMUTABLE AS
 $$
 BEGIN
 	WITH wi AS (
@@ -106,9 +106,7 @@ BEGIN
 		WHERE val IS NOT NULL
 	)
 	SELECT
-		  COALESCE(agg_state.stream_id, el.stream_id)
-		, COALESCE(start_ts, agg_state.ts_start)
-		, di_ary.data_i
+		  di_ary.data_i
 		, da_ary.data_a
 		, NULL::TEXT[] AS data_s
 		, dt_ary.data_t
@@ -126,10 +124,10 @@ $$;
  * Aggregate datum rollup final transition function, to rollup aggregate datum into a higher-level
  * aggregate datum.
  *
- * @see solardatm.rollup_agg_datm_sfunc()
+ * @see solardatm.rollup_agg_data_sfunc()
  */
-CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_ffunc(agg_state solardatm.agg_datm)
-RETURNS solardatm.agg_datm LANGUAGE plpgsql STRICT IMMUTABLE AS
+CREATE OR REPLACE FUNCTION solardatm.rollup_agg_data_ffunc(agg_state solardatm.agg_data)
+RETURNS solardatm.agg_data LANGUAGE plpgsql STRICT IMMUTABLE AS
 $$
 BEGIN
 	WITH di AS (
@@ -162,9 +160,7 @@ BEGIN
 		FROM da
 	)
 	SELECT
-		  agg_state.stream_id
-		, agg_state.ts_start
-		, di_ary.data_i
+		  di_ary.data_i
 		, da_ary.data_a
 		, agg_state.data_s
 		, agg_state.data_t
@@ -186,12 +182,12 @@ $$;
  * Note that the aggregate should be used with an `ORDER BY ts_start` clause for the reading
  * data to be calculated correctly.
  *
- * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
+ * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_data_for_time_span()
  *       but can be used for other specialised queries like HOD and DOW aggregates so they don't
  *       have to duplicate all the aggregation logic involved
  */
-CREATE AGGREGATE solardatm.rollup_agg_datm(solardatm.agg_datm, TIMESTAMP WITH TIME ZONE) (
-    stype 		= solardatm.agg_datm,
-    sfunc 		= solardatm.rollup_agg_datm_sfunc,
-    finalfunc 	= solardatm.rollup_agg_datm_ffunc
+CREATE AGGREGATE solardatm.rollup_agg_data(solardatm.agg_data) (
+    stype 		= solardatm.agg_data,
+    sfunc 		= solardatm.rollup_agg_data_sfunc,
+    finalfunc 	= solardatm.rollup_agg_data_ffunc
 );

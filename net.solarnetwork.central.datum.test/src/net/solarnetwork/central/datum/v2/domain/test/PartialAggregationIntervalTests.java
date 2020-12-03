@@ -41,6 +41,52 @@ import net.solarnetwork.central.domain.Aggregation;
 public class PartialAggregationIntervalTests {
 
 	@Test
+	public void localRange_Year_Month_exactFull() {
+		// GIVEN
+		LocalDateTime start = LocalDateTime.of(2020, 1, 1, 0, 0);
+		LocalDateTime end = LocalDateTime.of(2023, 1, 1, 0, 0);
+
+		// WHEN
+		List<LocalDateInterval> ranges = new PartialAggregationInterval(Aggregation.Year,
+				Aggregation.Month, start, end).getIntervals();
+
+		// THEN
+		assertThat("Full range returned", ranges, hasSize(1));
+		assertThat("Start date", ranges.get(0).getStart(), equalTo(start));
+		assertThat("End date", ranges.get(0).getEnd(), equalTo(end));
+		assertThat("Agg", ranges.get(0).getAggregation(), equalTo(Aggregation.Year));
+	}
+
+	@Test
+	public void localRange_Year_Month_triple() {
+		// GIVEN
+		LocalDateTime start = LocalDateTime.of(2020, 3, 1, 0, 0);
+		LocalDateTime end = LocalDateTime.of(2023, 3, 1, 0, 0);
+
+		// WHEN
+		List<LocalDateInterval> ranges = new PartialAggregationInterval(Aggregation.Year,
+				Aggregation.Month, start, end).getIntervals();
+
+		// THEN
+		assertThat("Partial, full, partial ranges returned", ranges, hasSize(3));
+		assertThat("Start start date", ranges.get(0).getStart(), equalTo(start));
+		assertThat("Start end date", ranges.get(0).getEnd(),
+				equalTo(LocalDateTime.of(2021, 1, 1, 0, 0)));
+		assertThat("Start agg", ranges.get(0).getAggregation(), equalTo(Aggregation.Month));
+
+		assertThat("Middle start date", ranges.get(1).getStart(),
+				equalTo(LocalDateTime.of(2021, 1, 1, 0, 0)));
+		assertThat("Middle end date", ranges.get(1).getEnd(),
+				equalTo(LocalDateTime.of(2023, 1, 1, 0, 0)));
+		assertThat("Middle agg", ranges.get(1).getAggregation(), equalTo(Aggregation.Year));
+
+		assertThat("End start date", ranges.get(2).getStart(),
+				equalTo(LocalDateTime.of(2023, 1, 1, 0, 0)));
+		assertThat("End end date", ranges.get(2).getEnd(), equalTo(end));
+		assertThat("End agg", ranges.get(2).getAggregation(), equalTo(Aggregation.Month));
+	}
+
+	@Test
 	public void localRange_Month_Day_exactFull() {
 		// GIVEN
 		LocalDateTime start = LocalDateTime.of(2020, 1, 1, 0, 0);

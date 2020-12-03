@@ -745,7 +745,7 @@ $$;
  * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
  * @see solardatm.find_agg_datm_for_time_span()
  */
-CREATE OR REPLACE FUNCTION solardatm.rollup_agg_datm_for_time_span(
+CREATE OR REPLACE FUNCTION solardatm.rollup_agg_data_for_time_span(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE,

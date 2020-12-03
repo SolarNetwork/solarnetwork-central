@@ -61,6 +61,73 @@ public class SelectDatumPartialAggregateTests {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Test
+	public void sql_find_nodes_Year_Month_full() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+
+		// WHEN
+		String sql = new SelectDatumPartialAggregate(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-datum-pagg-year-month-full-nodes.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_nodes_Year_Month_full() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		// set metadata parameters
+		Array nodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// partial leading date parameters
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalStartDate().with(ChronoField.MONTH_OF_YEAR, 1).plusYears(1),
+				Types.TIMESTAMP);
+
+		// main date parameters
+		stmt.setObject(4, LocalDateTime.of(2021, 1, 1, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(5, LocalDateTime.of(2023, 1, 1, 0, 0), Types.TIMESTAMP);
+
+		// partial trailing date parameters
+		stmt.setObject(6, filter.getLocalEndDate().with(ChronoField.MONTH_OF_YEAR, 1), Types.TIMESTAMP);
+		stmt.setObject(7, filter.getLocalEndDate(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatumPartialAggregate(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-datum-pagg-year-month-full-nodes.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
 	public void sql_find_nodes_Month_Day_full() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -103,19 +170,17 @@ public class SelectDatumPartialAggregateTests {
 		nodeIdsArray.free();
 
 		// partial leading date parameters
-		stmt.setObject(2, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(3, filter.getLocalStartDate(), Types.TIMESTAMP);
-		stmt.setObject(4, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1).plusMonths(1),
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1).plusMonths(1),
 				Types.TIMESTAMP);
 
 		// main date parameters
-		stmt.setObject(5, LocalDateTime.of(2020, 7, 1, 0, 0), Types.TIMESTAMP);
-		stmt.setObject(6, LocalDateTime.of(2020, 8, 1, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(4, LocalDateTime.of(2020, 7, 1, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(5, LocalDateTime.of(2020, 8, 1, 0, 0), Types.TIMESTAMP);
 
 		// partial trailing date parameters
-		stmt.setObject(7, filter.getLocalEndDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(8, filter.getLocalEndDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(9, filter.getLocalEndDate(), Types.TIMESTAMP);
+		stmt.setObject(6, filter.getLocalEndDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
+		stmt.setObject(7, filter.getLocalEndDate(), Types.TIMESTAMP);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
@@ -177,8 +242,7 @@ public class SelectDatumPartialAggregateTests {
 
 		// partial trailing date parameters
 		stmt.setObject(4, filter.getLocalEndDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(5, filter.getLocalEndDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(6, filter.getLocalEndDate(), Types.TIMESTAMP);
+		stmt.setObject(5, filter.getLocalEndDate(), Types.TIMESTAMP);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
@@ -236,14 +300,13 @@ public class SelectDatumPartialAggregateTests {
 		nodeIdsArray.free();
 
 		// partial leading date parameters
-		stmt.setObject(2, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1), Types.TIMESTAMP);
-		stmt.setObject(3, filter.getLocalStartDate(), Types.TIMESTAMP);
-		stmt.setObject(4, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1).plusMonths(1),
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalStartDate().with(ChronoField.DAY_OF_MONTH, 1).plusMonths(1),
 				Types.TIMESTAMP);
 
 		// main date parameters
-		stmt.setObject(5, LocalDateTime.of(2020, 7, 1, 0, 0), Types.TIMESTAMP);
-		stmt.setObject(6, filter.getLocalEndDate(), Types.TIMESTAMP);
+		stmt.setObject(4, LocalDateTime.of(2020, 7, 1, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(5, filter.getLocalEndDate(), Types.TIMESTAMP);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
@@ -359,19 +422,17 @@ public class SelectDatumPartialAggregateTests {
 		nodeIdsArray.free();
 
 		// partial leading date parameters
-		stmt.setObject(2, filter.getLocalStartDate().with(ChronoField.HOUR_OF_DAY, 0), Types.TIMESTAMP);
-		stmt.setObject(3, filter.getLocalStartDate(), Types.TIMESTAMP);
-		stmt.setObject(4, filter.getLocalStartDate().with(ChronoField.HOUR_OF_DAY, 0).plusDays(1),
+		stmt.setObject(2, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(3, filter.getLocalStartDate().with(ChronoField.HOUR_OF_DAY, 0).plusDays(1),
 				Types.TIMESTAMP);
 
 		// main date parameters
-		stmt.setObject(5, LocalDateTime.of(2020, 6, 16, 0, 0), Types.TIMESTAMP);
-		stmt.setObject(6, LocalDateTime.of(2020, 8, 15, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(4, LocalDateTime.of(2020, 6, 16, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(5, LocalDateTime.of(2020, 8, 15, 0, 0), Types.TIMESTAMP);
 
 		// partial trailing date parameters
-		stmt.setObject(7, filter.getLocalEndDate().with(ChronoField.HOUR_OF_DAY, 0), Types.TIMESTAMP);
-		stmt.setObject(8, filter.getLocalEndDate().with(ChronoField.HOUR_OF_DAY, 0), Types.TIMESTAMP);
-		stmt.setObject(9, filter.getLocalEndDate(), Types.TIMESTAMP);
+		stmt.setObject(6, filter.getLocalEndDate().with(ChronoField.HOUR_OF_DAY, 0), Types.TIMESTAMP);
+		stmt.setObject(7, filter.getLocalEndDate(), Types.TIMESTAMP);
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);

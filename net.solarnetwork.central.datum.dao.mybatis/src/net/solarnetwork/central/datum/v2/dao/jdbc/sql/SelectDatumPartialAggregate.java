@@ -28,7 +28,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -41,12 +40,17 @@ import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
-import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter
  * using partial aggregation ranges.
+ * 
+ * <p>
+ * Special handling is provided when the main aggregation is {@code Year}. Since
+ * there is no yearly aggregation table to query from, the monthly aggregation
+ * table will be queried and aggregated to year values.
+ * </p>
  * 
  * @author matt
  * @version 1.0
@@ -116,11 +120,27 @@ public class SelectDatumPartialAggregate
 		buf.append(")\n");
 	}
 
+	private static String sqlAgg(Aggregation agg) {
+		switch (agg) {
+			case Year:
+				return "year";
+
+			case Month:
+				return "month";
+
+			case Day:
+				return "day";
+
+			default:
+				return "hour";
+		}
+	}
+
 	private void sqlSelect(DatumCriteria filter, StringBuilder buf) {
 		buf.append("SELECT ");
-		if ( filter.getAggregation() == aggregation ) {
+		buf.append("datum.stream_id,\n");
+		if ( filter.getAggregation() == aggregation && aggregation != Aggregation.Year ) {
 			// main agg: direct results
-			buf.append("datum.stream_id,\n");
 			buf.append("datum.ts_start,\n");
 			buf.append("datum.data_i,\n");
 			buf.append("datum.data_a,\n");
@@ -130,10 +150,12 @@ public class SelectDatumPartialAggregate
 			buf.append("datum.read_a\n");
 		} else {
 			// partial agg: dynamic rollup to main agg
-			buf.append("(solardatm.rollup_agg_datm(\n");
-			buf.append("\t\t(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s");
-			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm\n");
-			buf.append("\t\t, ? AT TIME ZONE s.time_zone  ORDER BY datum.ts_start)).*\n");
+			buf.append("date_trunc('").append(sqlAgg(aggregation)).append(
+					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,\n");
+			buf.append("(solardatm.rollup_agg_data(\n");
+			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
+			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
+			buf.append("\tORDER BY datum.ts_start)).*\n");
 		}
 	}
 
@@ -152,6 +174,7 @@ public class SelectDatumPartialAggregate
 				return "solardatm.agg_datm_daily";
 
 			case Month:
+			case Year:
 				return "solardatm.agg_datm_monthly";
 
 			default:
@@ -164,7 +187,10 @@ public class SelectDatumPartialAggregate
 		DatumSqlUtils.whereLocalDateRange(filter, filter.getAggregation(),
 				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
 		buf.append("WHERE").append(where.substring(4));
-		if ( filter.getAggregation() != aggregation ) {
+		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
+			buf.append("GROUP BY datum.stream_id, ");
+			buf.append("date_trunc('").append(sqlAgg(aggregation))
+					.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 			// partial aggregation can produce NULL output; omit those
 			buf.append("HAVING COUNT(*) > 0\n");
 		}
@@ -219,12 +245,6 @@ public class SelectDatumPartialAggregate
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
 		for ( DatumCriteria intervalFilter : intervalFilters ) {
-			if ( intervalFilter.getAggregation() != aggregation ) {
-				// set partial aggregation effective date, which is start of main aggregation period
-				LocalDateTime aggDate = DatumUtils.truncateDate(intervalFilter.getLocalStartDate(),
-						aggregation);
-				stmt.setObject(++p, aggDate, Types.TIMESTAMP);
-			}
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(intervalFilter, con, stmt, p);
 		}
 		return p;

@@ -11,7 +11,7 @@
  *
  * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
  * @see solardatm.rollup_datm_for_time_span()
- * @see solardatm.rollup_agg_datm_for_time_span()
+ * @see solardatm.rollup_agg_data_for_time_span()
  */
 CREATE OR REPLACE FUNCTION solardatm.process_one_agg_stale_datm(kind CHARACTER)
 	RETURNS SETOF solardatm.obj_datm_id LANGUAGE plpgsql VOLATILE AS
@@ -82,7 +82,7 @@ BEGIN
 			EXECUTE format(
 					'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
 					'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-					'FROM solardatm.rollup_agg_datm_for_time_span($1, $2, $3, $4) '
+					'FROM solardatm.rollup_agg_data_for_time_span($1, $2, $3, $4) '
 					'ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
 					'    data_i = EXCLUDED.data_i,'
 					'    data_a = EXCLUDED.data_a,'

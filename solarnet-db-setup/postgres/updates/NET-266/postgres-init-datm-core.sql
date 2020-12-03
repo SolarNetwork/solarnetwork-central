@@ -78,6 +78,16 @@ CREATE TABLE solardatm.da_datm_aux (
 */
 
 -- type to use in aggregate functions regardless of physical table
+CREATE TYPE solardatm.agg_data AS (
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][]
+);
+
+-- type to use in aggregate functions regardless of physical table
 CREATE TYPE solardatm.agg_datm AS (
 	stream_id	UUID,
 	ts_start	TIMESTAMP WITH TIME ZONE,

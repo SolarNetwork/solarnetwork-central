@@ -82,7 +82,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 		UUID streamId = meta.getStreamId();
 		List<AggregateDatum> results = jdbcTemplate.query(
-				"select * from solardatm.rollup_agg_datm_for_time_span(?::uuid,?,?,?)",
+				"select * from solardatm.rollup_agg_data_for_time_span(?::uuid,?,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()), kind.getKey());
 		List<AggregateDatum> fnResults = executeAggregateRollup(streamId, kind, aggStart, aggEnd);
@@ -95,11 +95,14 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 				: kind == Aggregation.Day ? "daily" : "hourly");
 		// @formatter:off
 		List<AggregateDatum> results = jdbcTemplate.query(
-				"SELECT (solardatm.rollup_agg_datm(\n"
-				+ "		(datum.stream_id, datum.ts_start, datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_datm\n"
-				+ "		, ?  ORDER BY datum.ts_start)).*\n"
+				"SELECT datum.stream_id,\n"
+				+ "		?::timestamptz,\n"
+				+ "		(solardatm.rollup_agg_data(\n"
+				+ "			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n"
+				+ "		ORDER BY datum.ts_start)).*\n"
 				+ "FROM solardatm.agg_datm_" +table +" datum\n"
 				+ "WHERE datum.stream_id = ?::uuid AND datum.ts_start >= ? AND datum.ts_start < ?\n"
+				+ "GROUP BY datum.stream_id\n"
 				+ "HAVING count(*) > 0",
 				AggregateDatumEntityRowMapper.INSTANCE, 
 				Timestamp.from(aggStart.toInstant()), 

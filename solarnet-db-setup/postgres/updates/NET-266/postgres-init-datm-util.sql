@@ -27,7 +27,7 @@ $$;
  * Datum interpolation aggregate final transition function, to interpolate a datum from existing
  * datum around a specific point in time.
  *
- * @see solardatm.rollup_agg_datm_sfunc()
+ * @see solardatm.rollup_agg_data_sfunc()
  */
 CREATE OR REPLACE FUNCTION solardatm.calc_datm_at_ffunc(agg_state solardatm.agg_datm_at)
 RETURNS solardatm.da_datm LANGUAGE plpgsql STRICT IMMUTABLE AS
@@ -132,7 +132,7 @@ $$;
  *
  * The `TIMESTAMP` argument is used as the output `ts_start` column value.
  *
- * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_datm_for_time_span()
+ * NOTE: using this aggregate is slower than calling solardatm.rollup_agg_data_for_time_span()
  *       but can be used for other specialised queries like HOD and DOW aggregates so they don't
  *       have to duplicate all the aggregation logic involved
  */
