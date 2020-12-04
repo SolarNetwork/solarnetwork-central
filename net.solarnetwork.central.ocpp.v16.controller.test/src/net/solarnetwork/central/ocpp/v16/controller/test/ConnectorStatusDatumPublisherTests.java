@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -39,9 +40,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
@@ -69,7 +71,7 @@ public class ConnectorStatusDatumPublisherTests {
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
 	private CentralChargeSessionDao chargeSessionDao;
-	private GeneralNodeDatumDao datumDao;
+	private DatumEntityDao datumDao;
 	private DatumProcessor fluxPublisher;
 	private ConnectorStatusDatumPublisher publisher;
 
@@ -78,7 +80,7 @@ public class ConnectorStatusDatumPublisherTests {
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		chargeSessionDao = EasyMock.createMock(CentralChargeSessionDao.class);
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		fluxPublisher = EasyMock.createMock(DatumProcessor.class);
 		publisher = new ConnectorStatusDatumPublisher(chargePointSettingsDao, chargePointConnectorDao,
 				chargeSessionDao, datumDao, new StaticOptionalService<>(fluxPublisher));
@@ -129,8 +131,9 @@ public class ConnectorStatusDatumPublisherTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		String sourceId = "/foo/" + cp.getInfo().getId() + "/1/status";
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
-				new DateTime(info.getTimestamp().toEpochMilli()), sourceId));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor)))
+				.andReturn(new DatumPK(streamId, info.getTimestamp()));
 
 		expect(fluxPublisher.isConfigured()).andReturn(true);
 		Capture<Identity<GeneralNodeDatumPK>> fluxDatumCaptor = new Capture<>();
@@ -196,8 +199,9 @@ public class ConnectorStatusDatumPublisherTests {
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
 		String sourceId = "/foo/" + cp.getInfo().getId() + "/1/status";
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
-				new DateTime(info.getTimestamp().toEpochMilli()), sourceId));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor)))
+				.andReturn(new DatumPK(streamId, info.getTimestamp()));
 
 		expect(fluxPublisher.isConfigured()).andReturn(true);
 		Capture<Identity<GeneralNodeDatumPK>> fluxDatumCaptor = new Capture<>();
@@ -281,10 +285,12 @@ public class ConnectorStatusDatumPublisherTests {
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		String sourceId1 = "/foo/" + cp.getInfo().getId() + "/1/status";
 		String sourceId2 = "/foo/" + cp.getInfo().getId() + "/2/status";
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
-				new DateTime(info1.getTimestamp().toEpochMilli()), sourceId1));
-		expect(datumDao.store(capture(datumCaptor))).andReturn(new GeneralNodeDatumPK(cp.getNodeId(),
-				new DateTime(info2.getTimestamp().toEpochMilli()), sourceId2));
+		UUID streamId1 = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor)))
+				.andReturn(new DatumPK(streamId1, info1.getTimestamp()));
+		UUID streamId2 = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor)))
+				.andReturn(new DatumPK(streamId2, info2.getTimestamp()));
 
 		expect(fluxPublisher.isConfigured()).andReturn(true).times(2);
 		Capture<Identity<GeneralNodeDatumPK>> fluxDatumCaptor = new Capture<>(CaptureType.ALL);
