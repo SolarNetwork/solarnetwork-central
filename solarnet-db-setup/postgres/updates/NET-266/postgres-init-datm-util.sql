@@ -161,7 +161,7 @@ BEGIN
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
 		FROM unnest(agg_state.data_i) WITH ORDINALITY AS p(val, idx)
-		INNER JOIN solardatm.unnest_2d(agg_state.stat_i) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
+		INNER JOIN solarcommon.reduce_dim(agg_state.stat_i) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 		UNION ALL
 		SELECT
 			  p.idx
@@ -199,7 +199,7 @@ BEGIN
 			, s.stat[3] AS val_end
 			, 0 AS rtype
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
-		INNER JOIN solardatm.unnest_2d(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
+		INNER JOIN solarcommon.reduce_dim(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 		UNION ALL
 		SELECT
 			  p.idx
@@ -298,7 +298,7 @@ BEGIN
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
 		FROM unnest(agg_state.data_i) WITH ORDINALITY AS p(val, idx)
-		INNER JOIN solardatm.unnest_2d(agg_state.stat_i) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
+		INNER JOIN solarcommon.reduce_dim(agg_state.stat_i) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 	)
 	, di_ary AS (
 		SELECT

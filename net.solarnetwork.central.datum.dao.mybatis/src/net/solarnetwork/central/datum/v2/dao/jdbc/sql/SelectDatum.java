@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
+import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
@@ -49,6 +51,7 @@ public class SelectDatum
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
+	private final CombiningConfig combine;
 
 	/**
 	 * Constructor.
@@ -80,6 +83,7 @@ public class SelectDatum
 			throw new IllegalArgumentException(
 					format("A date range must be specified for aggregation %s.", aggregation));
 		}
+		this.combine = CombiningConfig.configFromCriteria(filter);
 	}
 
 	private boolean isMinuteAggregation() {
@@ -93,6 +97,21 @@ public class SelectDatum
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
 				buf);
 		buf.append(")\n");
+		if ( combine != null ) {
+			for ( CombiningIdsConfig<?> conf : combine.getIdsConfigs() ) {
+				buf.append(", ").append(conf.getName()).append("_mappings AS (\n");
+				buf.append("	SELECT id, vid, ROW_NUMBER() OVER (ORDER BY 1) AS rank FROM (\n");
+				buf.append("		SELECT unnest(ids) AS id, v.vid, s.n FROM (\n");
+				buf.append("			SELECT ids, n\n");
+				//                                                 conf.idSets 2d array
+				buf.append("			FROM solarcommon.reduce_dim(?) WITH ORDINALITY AS m(ids,n)\n");
+				buf.append("		) s\n");
+				//                          conf.virtualIds 1d array
+				buf.append("	JOIN unnest(?) WITH ORDINALITY AS v(vid,n) ON v.n = s.n\n");
+				buf.append("	) os\n");
+				buf.append(")\n");
+			}
+		}
 	}
 
 	private void sqlSelect(StringBuilder buf) {

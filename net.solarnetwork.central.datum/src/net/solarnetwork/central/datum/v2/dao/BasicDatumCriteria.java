@@ -26,9 +26,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
@@ -62,6 +65,10 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	private DatumRollupType[] datumRollupTypes;
 
+	private CombiningType combiningType;
+	private Map<Long, Set<Long>> objectIdMappings;
+	private Map<String, Set<String>> sourceIdMappings;
+
 	/**
 	 * Default constructor.
 	 */
@@ -94,6 +101,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setReadingType(criteria.getReadingType());
 		setTimeTolerance(criteria.getTimeTolerance());
 		setObjectKind(criteria.getObjectKind());
+		setCombiningType(criteria.getCombiningType());
+		setObjectIdMappings(criteria.getObjectIdMappings());
+		setSourceIdMappings(criteria.getSourceIdMappings());
 		if ( criteria instanceof DatumAuxiliaryCriteria ) {
 			setDatumAuxiliaryType(((DatumAuxiliaryCriteria) criteria).getDatumAuxiliaryType());
 		}
@@ -428,6 +438,73 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setDatumAuxiliaryType(DatumAuxiliaryType datumAuxiliaryType) {
 		this.datumAuxiliaryType = datumAuxiliaryType;
+	}
+
+	@Override
+	public CombiningType getCombiningType() {
+		return combiningType;
+	}
+
+	/**
+	 * Set the combining type.
+	 * 
+	 * @param combiningType
+	 *        the type to set
+	 */
+	public void setCombiningType(CombiningType combiningType) {
+		this.combiningType = combiningType;
+	}
+
+	@Override
+	public Map<Long, Set<Long>> getObjectIdMappings() {
+		return objectIdMappings;
+	}
+
+	/**
+	 * Set the object ID mappings.
+	 * 
+	 * @param objectIdMappings
+	 *        the objectIdMappings to set
+	 */
+	public void setObjectIdMappings(Map<Long, Set<Long>> objectIdMappings) {
+		this.objectIdMappings = objectIdMappings;
+	}
+
+	/**
+	 * Set the object ID mappings as an encoded string array.
+	 * 
+	 * @param mappings
+	 *        the mapping values
+	 * @see ObjectMappingCriteria#mappingsFrom(String[])
+	 */
+	public void setObjectIdMaps(String[] mappings) {
+		setObjectIdMappings(ObjectMappingCriteria.mappingsFrom(mappings));
+	}
+
+	@Override
+	public Map<String, Set<String>> getSourceIdMappings() {
+		return sourceIdMappings;
+	}
+
+	/**
+	 * Set the source ID mappings.
+	 * 
+	 * @param sourceIdMappings
+	 *        the sourceIdMappings to set
+	 */
+	public void setSourceIdMappings(Map<String, Set<String>> sourceIdMappings) {
+		this.sourceIdMappings = sourceIdMappings;
+	}
+
+	/**
+	 * Set the source ID mappings as an encoded string array.
+	 * 
+	 * @param mappings
+	 *        the mapping values
+	 * @see SourceMappingCriteria#mappingsFrom(String[])
+	 */
+	public void setSourceIdMaps(String[] mappings) {
+		setSourceIdMappings(SourceMappingCriteria.mappingsFrom(mappings));
 	}
 
 }

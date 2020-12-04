@@ -518,17 +518,3 @@ $$
 		AND (COALESCE(cardinality(sources), 0) < 1 OR meta.source_id = ANY(sources))
 	GROUP BY nlt.time_zone
 $$;
-
-
-/**
- * Unnest a 2D array into a 1D array.
- */
-CREATE OR REPLACE FUNCTION solardatm.unnest_2d(anyarray, OUT a anyarray)
-	RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE STRICT ROWS 20 AS
-$$
-BEGIN
-   FOREACH a SLICE 1 IN ARRAY $1 LOOP
-	  RETURN NEXT;
-   END LOOP;
-END
-$$;

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
@@ -65,7 +66,9 @@ import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.NodeFilter;
+import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.OptimizedQueryFilter;
+import net.solarnetwork.central.domain.SourceMappingFilter;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
@@ -140,6 +143,9 @@ public class DatumUtils {
 			c.setLocalEndDate(JodaDateUtils.fromJoda(f.getLocalEndDate()));
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setCombiningType(f.getCombiningType());
+			c.setObjectIdMappings(f.getNodeIdMappings());
+			c.setSourceIdMappings(f.getSourceIdMappings());
 			if ( s == null || s.isEmpty() ) {
 				s = f.getSorts();
 			}
@@ -183,6 +189,15 @@ public class DatumUtils {
 			if ( filter instanceof OptimizedQueryFilter ) {
 				c.setWithoutTotalResultsCount(
 						((OptimizedQueryFilter) filter).isWithoutTotalResultsCount());
+			}
+			if ( filter instanceof CombiningFilter ) {
+				c.setCombiningType(((CombiningFilter) filter).getCombiningType());
+			}
+			if ( filter instanceof NodeMappingFilter ) {
+				c.setObjectIdMappings(((NodeMappingFilter) filter).getNodeIdMappings());
+			}
+			if ( filter instanceof SourceMappingFilter ) {
+				c.setSourceIdMappings(((SourceMappingFilter) filter).getSourceIdMappings());
 			}
 		}
 
@@ -230,6 +245,9 @@ public class DatumUtils {
 			c.setStreamIds(criteria.getStreamIds());
 			c.setTokenIds(criteria.getTokenIds());
 			c.setUserIds(criteria.getUserIds());
+			c.setCombiningType(criteria.getCombiningType());
+			c.setObjectIdMappings(criteria.getObjectIdMappings());
+			c.setSourceIdMappings(criteria.getSourceIdMappings());
 			result = c;
 		}
 		return result;

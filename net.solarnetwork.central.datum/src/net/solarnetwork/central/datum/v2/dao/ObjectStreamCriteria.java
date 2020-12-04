@@ -42,9 +42,10 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  * @since 2.8
  */
-public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeCriteria,
-		AggregationCriteria, UserCriteria, SecurityTokenCriteria, NodeMetadataCriteria,
-		LocationMetadataCriteria, PaginationCriteria, SortCriteria {
+public interface ObjectStreamCriteria
+		extends DateRangeCriteria, LocalDateRangeCriteria, AggregationCriteria, UserCriteria,
+		SecurityTokenCriteria, NodeMetadataCriteria, LocationMetadataCriteria, ObjectMappingCriteria,
+		SourceMappingCriteria, CombiningCriteria, PaginationCriteria, SortCriteria {
 
 	/**
 	 * Test if this filter has any location, node, or source criteria.
@@ -56,7 +57,7 @@ public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeC
 	}
 
 	/**
-	 * Test if the filter as either a date or local date range specified (or
+	 * Test if the filter has either a date or local date range specified (or
 	 * both).
 	 * 
 	 * @return {@literal true} if either {@link #hasDateRange()} or
@@ -64,6 +65,18 @@ public interface ObjectStreamCriteria extends DateRangeCriteria, LocalDateRangeC
 	 */
 	default boolean hasDateOrLocalDateRange() {
 		return (hasDateRange() || hasLocalDateRange());
+	}
+
+	/**
+	 * Test if the filter has either an object ID or source ID mapping specified
+	 * (or both).
+	 * 
+	 * @return {@literal true} if either {@link #getObjectIdMappings()} or
+	 *         {@link #getSourceIdMappings()} is not empty
+	 */
+	default boolean hasIdMappings() {
+		return ((getObjectIdMappings() != null && !getObjectIdMappings().isEmpty())
+				|| (getSourceIdMappings() != null && !getSourceIdMappings().isEmpty()));
 	}
 
 	/**

@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -49,6 +50,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -251,6 +253,29 @@ public class SelectDatumTests {
 				"select-datum-15min-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+	}
+
+	@Test
+	public void sql_find_daily_vids_nodeAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
 	}
 
 }
