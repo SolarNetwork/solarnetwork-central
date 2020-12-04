@@ -40,7 +40,6 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -65,8 +64,8 @@ import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 
 /**
- * Implementation of {@link DataCollectorBiz} using {@link GeneralNodeDatumDao}
- * and {@link GeneralLocationDatumDao} APIs to persist the data.
+ * Implementation of {@link DataCollectorBiz} using {@link DatumEntityDao} and
+ * {@link GeneralLocationDatumDao} APIs to persist the data.
  * 
  * <p>
  * This service expects all calls into {@link #postGeneralNodeDatum(Iterable)}
@@ -87,7 +86,6 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private SolarLocationDao solarLocationDao = null;
 	private SolarNodeMetadataBiz solarNodeMetadataBiz;
 	private DatumEntityDao datumDao = null;
-	//private GeneralLocationDatumDao generalLocationDatumDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 	private TransactionTemplate transactionTemplate;
