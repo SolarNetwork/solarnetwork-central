@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -45,6 +46,35 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	@Override
 	public BasicCoreCriteria clone() {
 		return (BasicCoreCriteria) super.clone();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(locationIds);
+		result = prime * result + Arrays.hashCode(nodeIds);
+		result = prime * result + Arrays.hashCode(sourceIds);
+		result = prime * result + Arrays.hashCode(tokenIds);
+		result = prime * result + Arrays.hashCode(userIds);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
+		if ( !(obj instanceof BasicCoreCriteria) ) {
+			return false;
+		}
+		BasicCoreCriteria other = (BasicCoreCriteria) obj;
+		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
+				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
+				&& Arrays.equals(userIds, other.userIds);
 	}
 
 	/**

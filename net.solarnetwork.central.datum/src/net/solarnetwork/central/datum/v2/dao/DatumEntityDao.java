@@ -91,6 +91,6 @@ public interface DatumEntityDao
 	 *        the search filter
 	 * @return the matching date intervals
 	 */
-	Iterable<DatumDateInterval> findAvailableInterval(DatumStreamCriteria filter);
+	Iterable<DatumDateInterval> findAvailableInterval(ObjectStreamCriteria filter);
 
 }

@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.AggregationCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.Aggregation;
  */
 public class SelectDatumAvailableTimeRange implements PreparedStatementCreator, SqlProvider {
 
-	private final DatumStreamCriteria filter;
+	private final ObjectStreamCriteria filter;
 	private final Aggregation aggregation;
 	private final ObjectDatumKind kind;
 
@@ -55,7 +55,7 @@ public class SelectDatumAvailableTimeRange implements PreparedStatementCreator, 
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectDatumAvailableTimeRange(DatumStreamCriteria filter) {
+	public SelectDatumAvailableTimeRange(ObjectStreamCriteria filter) {
 		super();
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must not be null.");

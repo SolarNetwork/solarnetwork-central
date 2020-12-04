@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -37,6 +38,8 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.dao.RecentCriteria;
 
 /**
  * Basic implementation of {@link DatumCriteria}.
@@ -76,6 +79,47 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		super();
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(datumRollupTypes);
+		result = prime * result + Arrays.hashCode(streamIds);
+		result = prime * result + Objects.hash(aggregation, combiningType, datumAuxiliaryType, endDate,
+				localEndDate, localStartDate, mostRecent, objectIdMappings, objectKind,
+				partialAggregation, readingType, sourceIdMappings, startDate, timeTolerance,
+				withoutTotalResultsCount);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
+		if ( !(obj instanceof BasicDatumCriteria) ) {
+			return false;
+		}
+		BasicDatumCriteria other = (BasicDatumCriteria) obj;
+		return aggregation == other.aggregation && combiningType == other.combiningType
+				&& datumAuxiliaryType == other.datumAuxiliaryType
+				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
+				&& Objects.equals(endDate, other.endDate)
+				&& Objects.equals(localEndDate, other.localEndDate)
+				&& Objects.equals(localStartDate, other.localStartDate) && mostRecent == other.mostRecent
+				&& Objects.equals(objectIdMappings, other.objectIdMappings)
+				&& objectKind == other.objectKind && partialAggregation == other.partialAggregation
+				&& readingType == other.readingType
+				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
+				&& Objects.equals(startDate, other.startDate)
+				&& Arrays.equals(streamIds, other.streamIds)
+				&& Objects.equals(timeTolerance, other.timeTolerance)
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
+	}
+
 	/**
 	 * Copy the properties of another criteria into this instance.
 	 * 
@@ -87,23 +131,32 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param criteria
 	 *        the criteria to copy
 	 */
-	public void copyFrom(DatumCriteria criteria) {
+	public void copyFrom(ObjectStreamCriteria criteria) {
 		super.copyFrom(criteria);
 		setStreamIds(criteria.getStreamIds());
 		setStartDate(criteria.getStartDate());
 		setEndDate(criteria.getEndDate());
 		setLocalStartDate(criteria.getLocalStartDate());
 		setLocalEndDate(criteria.getLocalEndDate());
-		setMostRecent(criteria.isMostRecent());
-		setWithoutTotalResultsCount(criteria.isWithoutTotalResultsCount());
 		setAggregation(criteria.getAggregation());
 		setPartialAggregation(criteria.getPartialAggregation());
-		setReadingType(criteria.getReadingType());
-		setTimeTolerance(criteria.getTimeTolerance());
 		setObjectKind(criteria.getObjectKind());
 		setCombiningType(criteria.getCombiningType());
 		setObjectIdMappings(criteria.getObjectIdMappings());
 		setSourceIdMappings(criteria.getSourceIdMappings());
+		if ( criteria instanceof RecentCriteria ) {
+			setMostRecent(((RecentCriteria) criteria).isMostRecent());
+		}
+		if ( criteria instanceof OptimizedQueryCriteria ) {
+			setWithoutTotalResultsCount(
+					((OptimizedQueryCriteria) criteria).isWithoutTotalResultsCount());
+		}
+		if ( criteria instanceof ReadingTypeCriteria ) {
+			setReadingType(((ReadingTypeCriteria) criteria).getReadingType());
+		}
+		if ( criteria instanceof TimeToleranceCriteria ) {
+			setTimeTolerance(((TimeToleranceCriteria) criteria).getTimeTolerance());
+		}
 		if ( criteria instanceof DatumAuxiliaryCriteria ) {
 			setDatumAuxiliaryType(((DatumAuxiliaryCriteria) criteria).getDatumAuxiliaryType());
 		}
@@ -121,7 +174,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 *        the overrides
 	 * @return the copy
 	 */
-	public static BasicDatumCriteria copy(DatumCriteria criteria) {
+	public static BasicDatumCriteria copy(ObjectStreamCriteria criteria) {
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.copyFrom(criteria);
 		return c;

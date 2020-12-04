@@ -58,6 +58,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -293,9 +294,21 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public Iterable<DatumDateInterval> findAvailableInterval(DatumStreamCriteria filter) {
+	public Iterable<DatumDateInterval> findAvailableInterval(ObjectStreamCriteria filter) {
 		return jdbcTemplate.query(new SelectDatumAvailableTimeRange(filter),
 				DatumDateIntervalRowMapper.INSTANCE);
+	}
+
+	@Override
+	public DatumRecordCounts countDatumRecords(ObjectStreamCriteria filter) {
+		// TODO Auto-generated method stub
+		throw new RuntimeException("TODO");
+	}
+
+	@Override
+	public long deleteFiltered(ObjectStreamCriteria filter) {
+		// TODO Auto-generated method stub
+		throw new RuntimeException("TODO");
 	}
 
 	@Override

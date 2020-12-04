@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.dao.FilterResults;
@@ -66,5 +67,43 @@ public interface DatumMaintenanceDao {
 	 * @return the matching records
 	 */
 	FilterResults<StaleAggregateDatum, StreamKindPK> findStaleAggregateDatum(DatumStreamCriteria filter);
+
+	/**
+	 * Get a count of datum records that match a search criteria.
+	 * 
+	 * <p>
+	 * At a minimum, the following criteria are supported:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>node IDs</li>
+	 * <li>source IDs</li>
+	 * <li>date range (start/end dates)</li>
+	 * </ul>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the count of matching records
+	 */
+	DatumRecordCounts countDatumRecords(ObjectStreamCriteria filter);
+
+	/**
+	 * Delete datum matching a search criteria.
+	 * 
+	 * <p>
+	 * At a minimum, the following criteria are supported:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>node IDs</li>
+	 * <li>source IDs</li>
+	 * <li>date range (start/end dates)</li>
+	 * </ul>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @return the number of datum deleted
+	 */
+	long deleteFiltered(ObjectStreamCriteria filter);
 
 }
