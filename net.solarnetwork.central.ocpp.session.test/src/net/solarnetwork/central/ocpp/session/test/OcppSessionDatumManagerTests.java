@@ -61,9 +61,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -95,14 +96,14 @@ import net.solarnetwork.util.StaticOptionalService;
  * Test cases for the {@link OcppSessionDatumManager} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.12
  */
 public class OcppSessionDatumManagerTests {
 
 	private AuthorizationService authService;
 	private ChargePointDao chargePointDao;
 	private ChargeSessionDao chargeSessionDao;
-	private GeneralNodeDatumDao datumDao;
+	private DatumEntityDao datumDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private DatumProcessor fluxPublisher;
 	private TaskScheduler taskScheduler;
@@ -114,7 +115,7 @@ public class OcppSessionDatumManagerTests {
 		authService = createMock(AuthorizationService.class);
 		chargePointDao = createMock(ChargePointDao.class);
 		chargeSessionDao = createMock(ChargeSessionDao.class);
-		datumDao = createMock(GeneralNodeDatumDao.class);
+		datumDao = createMock(DatumEntityDao.class);
 		chargePointSettingsDao = createMock(ChargePointSettingsDao.class);
 		fluxPublisher = createMock(DatumProcessor.class);
 		taskScheduler = createMock(TaskScheduler.class);
@@ -229,8 +230,8 @@ public class OcppSessionDatumManagerTests {
 
 		// generate datum from initial reading
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		expect(datumDao.store(capture(datumCaptor)))
-				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -428,8 +429,8 @@ public class OcppSessionDatumManagerTests {
 
 		// generate datum from initial reading
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		expect(datumDao.store(capture(datumCaptor)))
-				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -547,8 +548,8 @@ public class OcppSessionDatumManagerTests {
 		chargeSessionDao.addReadings(capture(readingsCaptor));
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
-		expect(datumDao.store(capture(datumCaptor)))
-				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null)).times(3);
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null)).times(3);
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>(CaptureType.ALL);
@@ -691,8 +692,8 @@ public class OcppSessionDatumManagerTests {
 		chargeSessionDao.addReadings(capture(readingsCaptor));
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		expect(datumDao.store(capture(datumCaptor)))
-				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
 
 		// publish to SolarFlux
 		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();
@@ -774,8 +775,8 @@ public class OcppSessionDatumManagerTests {
 		chargeSessionDao.addReadings(capture(readingsCaptor));
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		expect(datumDao.store(capture(datumCaptor)))
-				.andReturn(new GeneralNodeDatumPK(cp.getNodeId(), null, null));
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null));
 
 		// publish to SolarFlux
 		//Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>();

@@ -49,8 +49,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -159,7 +159,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private final AuthorizationService authService;
 	private final ChargePointDao chargePointDao;
 	private final ChargeSessionDao chargeSessionDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumEntityDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
@@ -190,7 +190,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppSessionDatumManager(AuthorizationService authService, ChargePointDao chargePointDao,
-			ChargeSessionDao chargeSessionDao, GeneralNodeDatumDao datumDao,
+			ChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
 			ChargePointSettingsDao chargePointSettingsDao,
 			OptionalService<DatumProcessor> fluxPublisher) {
 		super();

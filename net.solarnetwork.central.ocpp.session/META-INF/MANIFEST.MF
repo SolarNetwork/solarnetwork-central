@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: OCPP Charge Session Datum Manager
 Bundle-SymbolicName: net.solarnetwork.central.ocpp.session
-Bundle-Version: 1.1.1
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.ocpp.session
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -11,11 +11,13 @@ Import-Package:
  net.solarnetwork.central.datum.biz;version="[1.8,2.0)",
  net.solarnetwork.central.datum.dao;version="[3.0,4.0)",
  net.solarnetwork.central.datum.domain;version="[2.0,3.0)",
+ net.solarnetwork.central.datum.v2.dao;version="[1.0,2.0)",
+ net.solarnetwork.central.datum.v2.domain;version="[1.0,2.0)",
  net.solarnetwork.central.domain;version="[2.0,3.0)",
  net.solarnetwork.central.ocpp.dao;version="[1.1,2.0)",
  net.solarnetwork.central.ocpp.domain;version="[1.0,2.0)",
- net.solarnetwork.dao;version="[1.0,2.0)",
- net.solarnetwork.domain;version="[1.19,2.0)",
+ net.solarnetwork.dao;version="[1.1,2.0)",
+ net.solarnetwork.domain;version="[1.25,2.0)",
  net.solarnetwork.domain.datum;version="[1.0,2.0)",
  net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
  net.solarnetwork.ocpp.domain;version="[1.0,2.0)",
@@ -23,7 +25,7 @@ Import-Package:
  net.solarnetwork.ocpp.service.cs;version="[1.0,2.0)",
  net.solarnetwork.settings;version="[1.2,2.0)",
  net.solarnetwork.support;version="[1.11,2.0)",
- net.solarnetwork.util;version="[1.41,2.0)",
+ net.solarnetwork.util;version="[1.46,2.0)",
  org.aopalliance.aop;version="[1.0,2.0)",
  org.joda.time;version="[2.4,3.0)",
  org.joda.time.base;version="[2.4,3.0)",
