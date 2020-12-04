@@ -91,10 +91,10 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		StringBuilder buf = new StringBuilder();
 		if ( kind == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, SQL_AT_LOCATION_TIME_ZONE, buf);
+					"solardatm.da_datm", Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		} else {
 			DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, SQL_AT_LOCATION_TIME_ZONE, buf);
+					"solardatm.da_datm", Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		}
 		StringBuilder order = new StringBuilder();
 		int idx = orderBySorts(filter.getSorts(),

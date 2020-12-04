@@ -357,7 +357,7 @@ public class JdbcDatumEntityDao
 				StaleAggregateDatumEntityRowMapper.INSTANCE);
 	}
 
-	private RowMapper<ReadingDatum> readingMapper(Aggregation agg) {
+	private static RowMapper<ReadingDatum> readingMapper(Aggregation agg) {
 		if ( agg == null ) {
 			agg = Aggregation.None;
 		}

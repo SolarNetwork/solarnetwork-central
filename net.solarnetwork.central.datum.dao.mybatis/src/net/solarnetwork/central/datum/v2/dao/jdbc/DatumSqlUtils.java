@@ -34,6 +34,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,8 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
+import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
@@ -54,6 +57,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.DateRangeCriteria;
@@ -515,10 +519,84 @@ public final class DatumSqlUtils {
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
-
 			StringBuilder buf) {
-		return nodeMetadataFilterSql(filter, style, null, null, null, SQL_AT_STREAM_METADATA_TIME_ZONE,
-				buf);
+		return nodeMetadataFilterSql(filter, style, null, null, null, null,
+				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
+	}
+
+	/**
+	 * Generate SQL query to find node metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param combiningConfig
+	 *        an optional combining configuration to remap source/node IDs
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+			CombiningConfig combiningConfig, StringBuilder buf) {
+		return nodeMetadataFilterSql(filter, style, null, null, null, combiningConfig,
+				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
+	}
+
+	/**
+	 * Generate a SQL clause for metadata object ID selection.
+	 * 
+	 * @param combiningConfig
+	 *        the optional combining configuration
+	 * @param kind
+	 *        the object kind
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int metadataObjectSourceIdsSql(CombiningConfig combiningConfig, ObjectDatumKind kind,
+			StringBuilder buf) {
+		final String objName = (kind == ObjectDatumKind.Location ? "loc" : "node");
+		int paramCount = 0;
+		if ( combiningConfig == null || !combiningConfig.isWithObjectIds() ) {
+			buf.append(", s.").append(objName).append("_id");
+		} else {
+			CombiningIdsConfig<Long> objIdConfig = combiningConfig
+					.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG);
+			buf.append("\n, CASE\n");
+			for ( Iterator<Long> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
+					.hasNext(); ) {
+				buf.append("	WHEN array_position(?, s.").append(objName)
+						.append("_id) IS NOT NULL THEN ?\n");
+				paramCount += 2;
+				iterator.next();
+			}
+			buf.append("	ELSE s.").append(objName).append("_id\n");
+			buf.append("	END AS ").append(objName).append("_id\n");
+
+			buf.append(", COALESCE(array_position(?, s.").append(objName).append("_id), 0) AS ")
+					.append(objName).append("_rank");
+		}
+		if ( combiningConfig == null || !combiningConfig.isWithSourceIds() ) {
+			buf.append(", s.source_id");
+		} else {
+			CombiningIdsConfig<String> objIdConfig = combiningConfig
+					.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG);
+			buf.append("\n, CASE\n");
+			for ( Iterator<String> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
+					.hasNext(); ) {
+				buf.append("	WHEN array_position(?, s.source_id) IS NOT NULL THEN ?\n");
+				paramCount += 2;
+				iterator.next();
+			}
+			buf.append("	ELSE s.source_id\n");
+			buf.append("	END AS source_id\n");
+			buf.append(", COALESCE(array_position(?, s.source_id), 0) AS source_rank");
+		}
+		return paramCount;
 	}
 
 	/**
@@ -534,6 +612,8 @@ public final class DatumSqlUtils {
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
+	 * @param combiningConfig
+	 *        an optional combining configuration to remap source/node IDs
 	 * @param zoneClause
 	 *        the time zone clause to use for local date ranges (e.g.
 	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE} column name
@@ -546,8 +626,9 @@ public final class DatumSqlUtils {
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			String zoneClause, StringBuilder buf) {
-		buf.append("SELECT s.stream_id, s.node_id, s.source_id");
+			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
+		buf.append("SELECT s.stream_id");
+		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
 		if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'n'::CHARACTER AS kind");
 		}
@@ -566,7 +647,6 @@ public final class DatumSqlUtils {
 			buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id\n");
 			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id\n");
 		}
-		int paramCount = 0;
 		if ( filter != null || streamFilter != null ) {
 			StringBuilder where = new StringBuilder();
 			if ( streamFilter != null ) {
@@ -685,7 +765,7 @@ public final class DatumSqlUtils {
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
-		return locationMetadataFilterSql(filter, style, null, null, null,
+		return locationMetadataFilterSql(filter, style, null, null, null, null,
 				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
 
@@ -704,6 +784,8 @@ public final class DatumSqlUtils {
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
+	 * @param combiningConfig
+	 *        an optional combining configuration to remap source/node IDs
 	 * @param zoneClause
 	 *        the time zone clause to use for local date ranges (e.g.
 	 *        {@link #SQL_AT_STREAM_METADATA_TIME_ZONE} column name
@@ -716,8 +798,9 @@ public final class DatumSqlUtils {
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
-			String zoneClause, StringBuilder buf) {
-		buf.append("SELECT s.stream_id, s.loc_id, s.source_id");
+			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
+		buf.append("SELECT s.stream_id");
+		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Location, buf);
 		if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'l'::CHARACTER AS kind");
 		}
@@ -732,7 +815,6 @@ public final class DatumSqlUtils {
 		if ( style != MetadataSelectStyle.Minimum ) {
 			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = s.loc_id\n");
 		}
-		int paramCount = 0;
 
 		if ( filter != null || streamFilter != null ) {
 			StringBuilder where = new StringBuilder();

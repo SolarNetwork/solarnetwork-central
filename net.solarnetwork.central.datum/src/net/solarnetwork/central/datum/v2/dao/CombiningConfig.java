@@ -89,13 +89,13 @@ public class CombiningConfig {
 		if ( objMappings != null && !objMappings.isEmpty() ) {
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			CombiningIdsConfig<Object> config = (CombiningIdsConfig) new CombiningIdsConfig<>(
-					OBJECT_IDS_CONFIG, objMappings, Long.class);
+					OBJECT_IDS_CONFIG, objMappings);
 			configs.add(config);
 		}
 		if ( sourceMappings != null && !sourceMappings.isEmpty() ) {
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			CombiningIdsConfig<Object> config = (CombiningIdsConfig) new CombiningIdsConfig<>(
-					SOURCE_IDS_CONFIG, sourceMappings, String.class);
+					SOURCE_IDS_CONFIG, sourceMappings);
 			configs.add(config);
 		}
 

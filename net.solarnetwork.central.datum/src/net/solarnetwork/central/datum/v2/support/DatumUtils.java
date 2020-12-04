@@ -24,6 +24,9 @@ package net.solarnetwork.central.datum.v2.support;
 
 import static java.lang.String.format;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
@@ -668,6 +672,87 @@ public class DatumUtils {
 			default:
 				throw new IllegalArgumentException(format("The aggregation %s is not supported.", agg));
 		}
+	}
+
+	/** A UUID namespace for URLs. */
+	public static final UUID UUID_NAMESPACE_URL = UUID
+			.fromString("6ba7b811-9dad-11d1-80b4-00c04fd430c8");
+
+	/**
+	 * Generate a virtual stream ID.
+	 * 
+	 * @param objectId
+	 *        the object ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the UUID, or {@literal null} if any argument is {@literal null}
+	 */
+	public static UUID virtualStreamId(Long objectId, String sourceId) {
+		if ( objectId == null || sourceId == null ) {
+			return null;
+		}
+		if ( !sourceId.isEmpty() && sourceId.charAt(0) == '/' ) {
+			sourceId = sourceId.substring(1);
+		}
+		return v5UUID(UUID_NAMESPACE_URL, format("objid://obj/%d/%s", objectId, sourceId));
+	}
+
+	/**
+	 * Generate a v5 UUID.
+	 * 
+	 * <p>
+	 * Adapted from https://stackoverflow.com/a/40230410
+	 * </p>
+	 * 
+	 * @param namespace
+	 *        a UUID namespace, e.g. {@link #UUID_NAMESPACE_URL}
+	 * @param name
+	 *        the name value
+	 * @return the UUID
+	 */
+	public static UUID v5UUID(UUID namespace, String name) {
+		return v5UUID(namespace, name.getBytes(Charset.forName("UTF-8")));
+	}
+
+	private static UUID v5UUID(UUID namespace, byte[] name) {
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-1");
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new RuntimeException("SHA-1 not supported.");
+		}
+		md.update(toBytes(namespace));
+		md.update(name);
+		byte[] sha1Bytes = md.digest();
+		sha1Bytes[6] &= 0x0f; /* clear version */
+		sha1Bytes[6] |= 0x50; /* set to version 5 */
+		sha1Bytes[8] &= 0x3f; /* clear variant */
+		sha1Bytes[8] |= 0x80; /* set to IETF variant */
+		return fromBytes(sha1Bytes);
+	}
+
+	private static UUID fromBytes(byte[] data) {
+		// Based on the private UUID(bytes[]) constructor
+		long msb = 0;
+		long lsb = 0;
+		assert data.length >= 16;
+		for ( int i = 0; i < 8; i++ )
+			msb = (msb << 8) | (data[i] & 0xff);
+		for ( int i = 8; i < 16; i++ )
+			lsb = (lsb << 8) | (data[i] & 0xff);
+		return new UUID(msb, lsb);
+	}
+
+	private static byte[] toBytes(UUID uuid) {
+		// inverted logic of fromBytes()
+		byte[] out = new byte[16];
+		long msb = uuid.getMostSignificantBits();
+		long lsb = uuid.getLeastSignificantBits();
+		for ( int i = 0; i < 8; i++ )
+			out[i] = (byte) ((msb >> ((7 - i) * 8)) & 0xff);
+		for ( int i = 8; i < 16; i++ )
+			out[i] = (byte) ((lsb >> ((15 - i) * 8)) & 0xff);
+		return out;
 	}
 
 }

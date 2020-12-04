@@ -508,4 +508,25 @@ public class DatumUtilsTests {
 			}
 		}
 	}
+
+	@Test
+	public void virtualStreamId_1() {
+		// WHEN
+		UUID id = DatumUtils.virtualStreamId(-1L, "V");
+
+		// THEN
+		assertThat("Virtual ID created", id,
+				equalTo(UUID.fromString("edeee74b-6334-5692-b280-869bab52d02e")));
+	}
+
+	@Test
+	public void virtualStreamId_2() {
+		// WHEN
+		UUID id = DatumUtils.virtualStreamId(123456789L, "A");
+
+		// THEN
+		assertThat("Virtual ID created", id,
+				equalTo(UUID.fromString("175f1f02-53c5-5984-b5ba-003a90b4ccd0")));
+	}
+
 }

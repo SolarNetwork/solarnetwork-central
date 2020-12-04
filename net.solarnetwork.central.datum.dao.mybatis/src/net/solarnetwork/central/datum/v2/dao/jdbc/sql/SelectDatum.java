@@ -33,7 +33,6 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
-import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
@@ -91,26 +90,19 @@ public class SelectDatum
 	}
 
 	private void sqlCte(StringBuilder buf) {
-		buf.append("WITH s AS (\n");
+		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
 		DatumSqlUtils.nodeMetadataFilterSql(filter,
 				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 						: DatumSqlUtils.MetadataSelectStyle.Minimum,
-				buf);
+				combine, buf);
 		buf.append(")\n");
 		if ( combine != null ) {
-			for ( CombiningIdsConfig<?> conf : combine.getIdsConfigs() ) {
-				buf.append(", ").append(conf.getName()).append("_mappings AS (\n");
-				buf.append("	SELECT id, vid, ROW_NUMBER() OVER (ORDER BY 1) AS rank FROM (\n");
-				buf.append("		SELECT unnest(ids) AS id, v.vid, s.n FROM (\n");
-				buf.append("			SELECT ids, n\n");
-				//                                                 conf.idSets 2d array
-				buf.append("			FROM solarcommon.reduce_dim(?) WITH ORDINALITY AS m(ids,n)\n");
-				buf.append("		) s\n");
-				//                          conf.virtualIds 1d array
-				buf.append("	JOIN unnest(?) WITH ORDINALITY AS v(vid,n) ON v.n = s.n\n");
-				buf.append("	) os\n");
-				buf.append(")\n");
-			}
+			buf.append(", s AS (\n");
+			buf.append("	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' ");
+			buf.append("|| node_id || '/' || TRIM(LEADING '/' FROM source_id)) AS vstream_id\n");
+			buf.append("	, *\n");
+			buf.append("	FROM rs\n");
+			buf.append(")\n");
 		}
 	}
 
@@ -120,27 +112,36 @@ public class SelectDatum
 	}
 
 	private void sqlColumns(StringBuilder buf) {
-		buf.append("datum.stream_id,\n");
-		if ( aggregation != Aggregation.None ) {
-			buf.append("datum.ts_start AS ts,\n");
-		} else {
-			buf.append("datum.ts,\n");
-			buf.append("datum.received,\n");
-		}
-		buf.append("datum.data_i,\n");
-		buf.append("datum.data_a,\n");
-		buf.append("datum.data_s,\n");
-		buf.append("datum.data_t");
-		if ( aggregation != Aggregation.None ) {
-			buf.append(",\ndatum.stat_i,\n");
-			if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
-				// reading data not available for minute aggregation
-				buf.append("NULL::BIGINT[][] AS read_a\n");
+		if ( combine == null ) {
+			buf.append("datum.stream_id,\n");
+			if ( aggregation != Aggregation.None ) {
+				buf.append("datum.ts_start AS ts,\n");
 			} else {
-				buf.append("datum.read_a\n");
+				buf.append("datum.ts,\n");
+				buf.append("datum.received,\n");
+			}
+			buf.append("datum.data_i,\n");
+			buf.append("datum.data_a,\n");
+			buf.append("datum.data_s,\n");
+			buf.append("datum.data_t");
+			if ( aggregation != Aggregation.None ) {
+				buf.append(",\ndatum.stat_i,\n");
+				if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+					// reading data not available for minute aggregation
+					buf.append("NULL::BIGINT[][] AS read_a\n");
+				} else {
+					buf.append("datum.read_a\n");
+				}
+			} else {
+				buf.append("\n");
 			}
 		} else {
-			buf.append("\n");
+			buf.append("s.vstream_id AS stream_id,\n");
+			buf.append("datum.ts_start AS ts,\n");
+			buf.append("(solardatm.rollup_agg_data(\n");
+			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
+			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
+			buf.append("\tORDER BY datum.ts_start)).*\n");
 		}
 	}
 
@@ -200,6 +201,13 @@ public class SelectDatum
 		}
 	}
 
+	private void sqlGroup(StringBuilder buf) {
+		if ( combine == null ) {
+			return;
+		}
+		buf.append("GROUP BY s.vstream_id, ts\n");
+	}
+
 	private void sqlOrderBy(StringBuilder buf) {
 		StringBuilder order = new StringBuilder();
 		int idx = 2;
@@ -208,6 +216,8 @@ public class SelectDatum
 					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
+		} else if ( combine != null ) {
+			order.append(", s.vstream_id, ts");
 		} else {
 			order.append(", datum.stream_id, ts");
 		}
@@ -221,6 +231,7 @@ public class SelectDatum
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
+		sqlGroup(buf);
 	}
 
 	@Override

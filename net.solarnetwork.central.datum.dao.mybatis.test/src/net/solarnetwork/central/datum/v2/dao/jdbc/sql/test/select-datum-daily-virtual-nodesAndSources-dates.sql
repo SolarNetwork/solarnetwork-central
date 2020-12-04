@@ -1,37 +1,32 @@
-WITH s AS (
-	SELECT s.stream_id, s.node_id, s.source_id
+WITH rs AS (
+	SELECT s.stream_id
+		, CASE
+			WHEN array_position(?, s.node_id) IS NOT NULL THEN ?
+			ELSE s.node_id
+			END AS node_id
+		, COALESCE(array_position(?, s.node_id), 0) AS node_rank
+		, CASE
+			WHEN array_position(?, s.source_id) IS NOT NULL THEN ?
+			ELSE s.source_id
+			END AS source_id
+		, COALESCE(array_position(?, s.source_id), 0) AS source_rank
 	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
-, obj_mappings AS (
-	SELECT id, vid, ROW_NUMBER() OVER (ORDER BY 1) AS rank FROM (
-		SELECT unnest(ids) AS id, v.vid, s.n FROM (
-			SELECT ids, n
-			FROM solarcommon.reduce_dim(?) WITH ORDINALITY AS m(ids,n)
-		) s
-	JOIN unnest(?) WITH ORDINALITY AS v(vid,n) ON v.n = s.n
-	) os
+, s AS (
+	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' || node_id || '/' || TRIM(LEADING '/' FROM source_id)) AS vstream_id
+	, *
+	FROM rs
 )
-, source_mappings AS (
-	SELECT id, vid, ROW_NUMBER() OVER (ORDER BY 1) AS rank FROM (
-		SELECT unnest(ids) AS id, v.vid, s.n FROM (
-			SELECT ids, n
-			FROM solarcommon.reduce_dim(?) WITH ORDINALITY AS m(ids,n)
-		) s
-	JOIN unnest(?) WITH ORDINALITY AS v(vid,n) ON v.n = s.n
-	) os
-)
-SELECT datum.stream_id, 
-	datum.ts_start AS ts, 
-	datum.data_i, 
-	datum.data_a, 
-	datum.data_s, 
-	datum.data_t,
-	datum.stat_i,
-	datum.read_a 
+SELECT s.vstream_id AS stream_id,
+	datum.ts_start AS ts,
+	(solardatm.rollup_agg_data(
+		(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
+		ORDER BY datum.ts_start)).*
 FROM s
 INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 WHERE datum.ts_start >= ?
 	AND datum.ts_start < ?
-ORDER BY datum.stream_id, ts
+GROUP BY s.vstream_id, ts
+ORDER BY s.vstream_id, ts

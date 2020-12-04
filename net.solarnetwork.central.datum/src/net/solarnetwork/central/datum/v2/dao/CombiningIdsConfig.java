@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import java.lang.reflect.Array;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,56 +36,20 @@ import java.util.Set;
 public class CombiningIdsConfig<T> {
 
 	private final String name;
-	private final T[][] idSets;
-	private final T[] virtualIds;
-
-	public CombiningIdsConfig(String name, Map<T, Set<T>> mapping, Class<T> clazz) {
-		super();
-		this.name = name;
-		this.idSets = combiningNormalizedArray(mapping, clazz);
-
-		@SuppressWarnings("unchecked")
-		final T[] vids = (T[]) Array.newInstance(clazz, mapping.size());
-		mapping.keySet().toArray(vids);
-		this.virtualIds = vids;
-	}
+	private final Map<T, Set<T>> idSets;
 
 	/**
-	 * Create a two-dimensional array with equal column counts in all rows from
-	 * a mapping.
+	 * Constructor.
 	 * 
-	 * @param mapping
+	 * @param name
+	 *        the name
+	 * @param idSets
 	 *        the mapping
-	 * @param clazz
-	 *        the element class
-	 * @return the new array
 	 */
-	private T[][] combiningNormalizedArray(Map<T, Set<T>> mapping, Class<T> clazz) {
-		final int rows = mapping.size();
-
-		// all rows must have same column count, so figure out max
-		int cols = 0;
-		for ( Set<T> set : mapping.values() ) {
-			if ( set.size() > cols ) {
-				cols = set.size();
-			}
-		}
-
-		@SuppressWarnings("unchecked")
-		final T[][] result = (T[][]) Array.newInstance(clazz, rows, cols);
-
-		int j = 0;
-		for ( Map.Entry<T, Set<T>> me : mapping.entrySet() ) {
-			T[] row = result[j];
-			int i = 0;
-			for ( T v : me.getValue() ) {
-				row[i] = v;
-				i++;
-			}
-			result[j++] = row;
-		}
-
-		return result;
+	public CombiningIdsConfig(String name, Map<T, Set<T>> idSets) {
+		super();
+		this.name = name;
+		this.idSets = idSets;
 	}
 
 	/**
@@ -103,17 +66,8 @@ public class CombiningIdsConfig<T> {
 	 * 
 	 * @return the ID sets
 	 */
-	public T[][] getIdSets() {
+	public Map<T, Set<T>> getIdSets() {
 		return idSets;
-	}
-
-	/**
-	 * Get the virtual ID list.
-	 * 
-	 * @return the virtual IDs
-	 */
-	public T[] getVirtualIds() {
-		return virtualIds;
 	}
 
 }
