@@ -711,32 +711,6 @@ $$;
 
 
 /**
- * Find aggregate datm records for a time range.
- *
- * @param sid 				the stream ID to find datm for
- * @param start_ts			the minimum date (inclusive)
- * @param end_ts 			the maximum date (exclusive)
- * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
- */
-CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_for_time_span(
-		sid 		UUID,
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE,
-		kind 		CHARACTER
-	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 2000 AS
-$$
-BEGIN
-	RETURN QUERY EXECUTE format(
-		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-		'FROM solardatm.%I '
-		'WHERE stream_id = $1 AND ts_start >= $2 AND ts_start < $3'
-		, 'agg_datm_' || CASE kind WHEN 'd' THEN 'daily' WHEN 'M' THEN 'monthly' ELSE 'hourly' END)
-	USING sid, start_ts, end_ts;
-END;
-$$;
-
-
-/**
  * Compute a higher-level rollup datm record of lower=level aggregate datum records over a time range.
  *
  * @param sid 				the stream ID to find datm for
