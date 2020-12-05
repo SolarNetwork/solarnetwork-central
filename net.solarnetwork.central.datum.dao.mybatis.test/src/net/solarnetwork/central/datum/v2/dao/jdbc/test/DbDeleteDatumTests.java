@@ -63,28 +63,24 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
  */
 public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 
-	private int deleteDatum(Long[] nodeIds, String[] sourceIds, LocalDateTime start, LocalDateTime end) {
+	private int deleteDatum(UUID streamId, LocalDateTime start, LocalDateTime end, String timeZoneId) {
 		return jdbcTemplate.execute(new ConnectionCallback<Long>() {
 
 			@Override
 			public Long doInConnection(Connection con) throws SQLException, DataAccessException {
 				try (CallableStatement cs = con
-						.prepareCall("{? = call solardatm.delete_datm(?::BIGINT[], ?, ?, ?)}")) {
+						.prepareCall("{? = call solardatm.delete_datm(?, ?, ?, ?)}")) {
 					cs.registerOutParameter(1, Types.BIGINT);
-					cs.setArray(2, con.createArrayOf("BIGINT", nodeIds));
-					cs.setArray(3, con.createArrayOf("TEXT", sourceIds));
-					cs.setObject(4, start, Types.TIMESTAMP);
-					cs.setObject(5, end, Types.TIMESTAMP);
+					cs.setObject(2, streamId, Types.OTHER);
+					cs.setObject(3, start, Types.TIMESTAMP);
+					cs.setObject(4, end, Types.TIMESTAMP);
+					cs.setString(5, timeZoneId);
 					cs.execute();
 					return cs.getLong(1);
 				}
 			}
 
 		}).intValue();
-	}
-
-	private int deleteDatum(Long nodeId, String sourceId, LocalDateTime start, LocalDateTime end) {
-		return deleteDatum(new Long[] { nodeId }, new String[] { sourceId }, start, end);
 	}
 
 	private Map<NodeSourcePK, ObjectDatumStreamMetadata> populateTestData(final long start,
@@ -121,8 +117,8 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		processStaleAggregateDatum(log, jdbcTemplate);
 
 		// when
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID, ts1.toLocalDateTime(),
-				ts1.plusMinutes(1).toLocalDateTime());
+		int updateCount = deleteDatum(streamId, ts1.toLocalDateTime(),
+				ts1.plusMinutes(1).toLocalDateTime(), TEST_TZ);
 
 		// then
 		assertThat("Deleted row count", updateCount, equalTo(1));
@@ -146,8 +142,8 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		// when
 
 		// delete 2nd datum, in 2nd hour
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID,
-				ts1.plusMinutes(10).toLocalDateTime(), ts1.plusMinutes(11).toLocalDateTime());
+		int updateCount = deleteDatum(streamId, ts1.plusMinutes(10).toLocalDateTime(),
+				ts1.plusMinutes(11).toLocalDateTime(), TEST_TZ);
 
 		// then
 		assertThat("Deleted row count", updateCount, equalTo(1));
@@ -173,8 +169,8 @@ public class DbDeleteDatumTests extends BaseDatumJdbcTestSupport {
 		// when
 
 		// delete 1st datum, in 1st hour
-		int updateCount = deleteDatum(TEST_NODE_ID, TEST_SOURCE_ID, ts1.toLocalDateTime(),
-				ts1.plusMinutes(1).toLocalDateTime());
+		int updateCount = deleteDatum(streamId, ts1.toLocalDateTime(),
+				ts1.plusMinutes(1).toLocalDateTime(), TEST_TZ);
 
 		// then
 		assertThat("Deleted row count", updateCount, equalTo(1));

@@ -79,6 +79,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumSelect;
@@ -310,8 +311,16 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public long deleteFiltered(ObjectStreamCriteria filter) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("TODO");
+		return jdbcTemplate.query(new DeleteDatum(filter), new ResultSetExtractor<Long>() {
+
+			@Override
+			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
+				if ( rs.next() ) {
+					return rs.getLong(1);
+				}
+				return 0L;
+			}
+		});
 	}
 
 	@Override

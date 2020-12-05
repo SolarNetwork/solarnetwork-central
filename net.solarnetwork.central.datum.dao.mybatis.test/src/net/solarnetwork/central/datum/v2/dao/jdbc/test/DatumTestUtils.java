@@ -44,6 +44,7 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -350,6 +351,28 @@ public final class DatumTestUtils {
 		DatumTestUtils.assertAggregateDatum(prefix, result, expected);
 		assertThat(prefix + " end timestamp", result.getEndTimestamp(),
 				equalTo(expected.getEndTimestamp()));
+	}
+
+	/**
+	 * Assert one record counts has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static final void assertDatumRecordCounts(String prefix, DatumRecordCounts result,
+			DatumRecordCounts expected) {
+		assertThat(prefix + " datum returned", result, notNullValue());
+		assertThat(prefix + " datum count", result.getDatumCount(), equalTo(expected.getDatumCount()));
+		assertThat(prefix + " datum hourly count", result.getDatumHourlyCount(),
+				equalTo(expected.getDatumHourlyCount()));
+		assertThat(prefix + " datum daily count", result.getDatumDailyCount(),
+				equalTo(expected.getDatumDailyCount()));
+		assertThat(prefix + " datum monthly count", result.getDatumMonthlyCount(),
+				equalTo(expected.getDatumMonthlyCount()));
 	}
 
 	/**

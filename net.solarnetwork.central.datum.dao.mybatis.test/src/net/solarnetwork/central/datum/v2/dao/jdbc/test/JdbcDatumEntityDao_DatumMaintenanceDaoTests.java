@@ -23,7 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.datumRecordCounts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumRecordCounts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertStaleAggregateDatum;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
@@ -38,28 +43,37 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -97,7 +111,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFilteredNoData() {
+	public void findStaleNoData() {
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).minusDays(1);
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
@@ -116,7 +130,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_noMatchingDataByNode() {
+	public void findStale_noMatchingDataByNode() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -155,7 +169,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_noMatchingDataBySource() {
+	public void findStale_noMatchingDataBySource() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -194,7 +208,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_noMatchingDataByDate() {
+	public void findStale_noMatchingDataByDate() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -235,7 +249,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered() {
+	public void findStale() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -280,7 +294,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_subset() {
+	public void findStale_subset() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -327,7 +341,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_paginated_first() {
+	public void findStale_paginated_first() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -375,7 +389,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_paginated_middle() {
+	public void findStale_paginated_middle() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -423,7 +437,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 	}
 
 	@Test
-	public void findFiltered_paginated_end() {
+	public void findStale_paginated_end() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.now(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS)
 				.minusDays(1);
@@ -816,6 +830,306 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 				h++;
 			}
 		}
+	}
+
+	private Map<NodeSourcePK, ObjectDatumStreamMetadata> populateTestData(final long start,
+			final int count, final long step, final Long nodeId, final String sourceId) {
+		List<GeneralNodeDatum> data = new ArrayList<>(count);
+		long ts = start;
+		for ( int i = 0; i < count; i++ ) {
+			GeneralNodeDatum d = new GeneralNodeDatum();
+			d.setCreated(new DateTime(ts));
+			d.setNodeId(nodeId);
+			d.setSourceId(sourceId);
+			GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+			s.putInstantaneousSampleValue("watts", 125);
+			s.putAccumulatingSampleValue("wattHours", 10);
+			d.setSamples(s);
+			data.add(d);
+			ts += step;
+		}
+		return DatumDbUtils.ingestDatumStream(log, jdbcTemplate, data, TEST_TZ);
+	}
+
+	private Map<NodeSourcePK, ObjectDatumStreamMetadata> createNodeAndSourceData(ZonedDateTime start) {
+		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
+				start.toInstant().toEpochMilli(), 10, 60000, TEST_NODE_ID, TEST_SOURCE_ID);
+		metas.putAll(populateTestData(start.toInstant().toEpochMilli(), 10, 60000, TEST_NODE_ID_ALT,
+				TEST_SOURCE_ID));
+		return metas;
+	}
+
+	@Test
+	public void findDatumRecordCounts_typical() {
+		// GIVEN
+		setupTestNode();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.toLocalDateTime());
+		filter.setLocalEndDate(start.plusMonths(1).toLocalDateTime());
+		DatumRecordCounts counts = dao.countDatumRecords(filter);
+
+		// THEN
+		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 6L, 3L, 3, 1));
+	}
+
+	@Test
+	public void findDatumRecordCounts_partialHours() {
+		// GIVEN
+		setupTestNode();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.toLocalDateTime().plusMinutes(30));
+		filter.setLocalEndDate(start.plusDays(2).plusMinutes(30).toLocalDateTime());
+		DatumRecordCounts counts = dao.countDatumRecords(filter);
+
+		// THEN
+		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 4L, 1L, 1, 0));
+	}
+
+	@Test
+	public void findDatumRecordCounts_partialHours_multiTimeZones() {
+		// GIVEN
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_1));
+
+		setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
+		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
+				TEST_TZ_ALT);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
+
+		final LocalDateTime start = LocalDateTime.of(2018, 11, 1, 0, 0, 0, 0);
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i).atZone(ZoneId.of(meta_1.getTimeZoneId()));
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i).atZone(ZoneId.of(meta_2.getTimeZoneId()));
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID_ALT, TEST_SOURCE_ID);
+		}
+
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_ALT });
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.plusMinutes(30));
+		filter.setLocalEndDate(start.plusDays(2).plusMinutes(30));
+		DatumRecordCounts counts = dao.countDatumRecords(filter);
+
+		// THEN
+		assertDatumRecordCounts("Counts", counts, datumRecordCounts(null, 8L, 2L, 2, 0));
+	}
+
+	@Test
+	public void deleteFiltered_typical() {
+		// GIVEN
+		setupTestNode();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.toLocalDateTime().plusMinutes(30));
+		filter.setLocalEndDate(start.plusDays(2).plusMinutes(30).toLocalDateTime());
+		long result = dao.deleteFiltered(filter);
+
+		// THEN
+		assertThat("Raw delete count all but first/last", result, equalTo(4L));
+
+		ZonedDateTime ts = start;
+		ZonedDateTime ts3 = start.plusDays(2).plusMinutes(30);
+
+		List<Datum> rawData = DatumDbUtils.listDatum(jdbcTemplate);
+		assertThat("Remaining raw count", rawData, hasSize(2));
+		assertThat("Raw 1 date", rawData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Raw 2 date", rawData.get(1).getTimestamp(), equalTo(ts3.toInstant()));
+
+		List<AggregateDatum> hourData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Hour);
+		assertThat("Remaining hour count", hourData, hasSize(2));
+		assertThat("Hour 1 date", hourData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Hour 2 date", hourData.get(1).getTimestamp(),
+				equalTo(ts3.truncatedTo(ChronoUnit.HOURS).toInstant()));
+
+		List<AggregateDatum> dayData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
+		assertThat("Remaining day count", dayData, hasSize(2));
+		assertThat("Day 1 date", dayData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+		assertThat("Day 2 date", dayData.get(1).getTimestamp(),
+				equalTo(ts3.truncatedTo(ChronoUnit.DAYS).toInstant()));
+
+		List<AggregateDatum> monData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month);
+		assertThat("Remaining month count", monData, hasSize(1));
+		assertThat("Month 1 date", monData.get(0).getTimestamp(), equalTo(ts.toInstant()));
+	}
+
+	@Test
+	public void deleteFiltered_typical_noEffectOtherStream() {
+		// GIVEN
+		setupTestNode();
+		setupTestNode(TEST_NODE_ID_ALT);
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		final Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = createNodeAndSourceData(start);
+		Map<UUID, Long> streamToNodeIds = metas.entrySet().stream()
+				.collect(toMap(e -> e.getValue().getStreamId(), e -> e.getKey().getNodeId()));
+		final int totalRows = 20;
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID_ALT);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.toLocalDateTime());
+		filter.setLocalEndDate(start.plusMinutes(5).toLocalDateTime());
+		int result = (int) dao.deleteFiltered(filter);
+
+		// THEN
+		assertThat("Delete count", result, equalTo(5));
+
+		List<Datum> rawData = DatumDbUtils.listDatum(jdbcTemplate);
+		assertThat("Remaining row count", rawData, hasSize(totalRows - result));
+
+		List<Datum> node1Data = rawData.stream()
+				.filter(m -> streamToNodeIds.get(m.getStreamId()).equals(TEST_NODE_ID))
+				.collect(toList());
+		assertThat("Remaining node 1 count", node1Data, hasSize(totalRows / 2));
+
+		List<Datum> node2Data = rawData.stream()
+				.filter(m -> streamToNodeIds.get(m.getStreamId()).equals(TEST_NODE_ID_ALT))
+				.collect(toList());
+		assertThat("Remaining node 2 count", node2Data, hasSize(totalRows / 2 - result));
+	}
+
+	@Test
+	public void deleteFiltered_multiTimeZones() {
+		// GIVEN
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_1));
+
+		setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
+		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID,
+				TEST_TZ_ALT);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta_2));
+
+		final LocalDateTime start = LocalDateTime.of(2018, 11, 1, 0, 0, 0, 0);
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i).atZone(ZoneId.of(meta_1.getTimeZoneId()));
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+		}
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i).atZone(ZoneId.of(meta_2.getTimeZoneId()));
+			populateTestData(dayStart.toInstant().toEpochMilli(), 2, TimeUnit.MINUTES.toMillis(30),
+					TEST_NODE_ID_ALT, TEST_SOURCE_ID);
+		}
+
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_ALT });
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setLocalStartDate(start.plusMinutes(30));
+		filter.setLocalEndDate(start.plusDays(2).plusMinutes(30));
+		long result = dao.deleteFiltered(filter);
+
+		// THEN
+		assertThat("Raw delete count all but first/last x2 streams", result, equalTo(8L));
+
+		LocalDateTime ts = start;
+		LocalDateTime ts3 = start.plusDays(2).plusMinutes(30);
+		assertDeletedDatum("1", meta_1, ts, ts3);
+		assertDeletedDatum("2", meta_2, ts, ts3);
+	}
+
+	private void assertDeletedDatum(String prefix, ObjectDatumStreamMetadata meta, LocalDateTime ts,
+			LocalDateTime ts3) {
+		List<Datum> rawData = DatumDbUtils.listDatum(jdbcTemplate);
+
+		List<Datum> rawData_1 = rawData.stream().filter(e -> e.getStreamId().equals(meta.getStreamId()))
+				.collect(toList());
+		assertThat(prefix + " remaining raw count", rawData_1, hasSize(2));
+		assertThat(prefix + " raw 1 date", rawData_1.get(0).getTimestamp(),
+				equalTo(ts.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+		assertThat(prefix + " raw 2 date", rawData_1.get(1).getTimestamp(),
+				equalTo(ts3.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+
+		List<AggregateDatum> hourData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Hour);
+		List<AggregateDatum> hourData_1 = hourData.stream()
+				.filter(e -> e.getStreamId().equals(meta.getStreamId())).collect(toList());
+		assertThat(prefix + " remaining hour count", hourData_1, hasSize(2));
+		assertThat(prefix + " hour 1 date", hourData_1.get(0).getTimestamp(),
+				equalTo(ts.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+		assertThat(prefix + " hour 2 date", hourData_1.get(1).getTimestamp(), equalTo(
+				ts3.truncatedTo(ChronoUnit.HOURS).atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+
+		List<AggregateDatum> dayData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day);
+		List<AggregateDatum> dayData_1 = dayData.stream()
+				.filter(e -> e.getStreamId().equals(meta.getStreamId())).collect(toList());
+		assertThat(prefix + " remaining day count", dayData_1, hasSize(2));
+		assertThat(prefix + " day 1 date", dayData_1.get(0).getTimestamp(),
+				equalTo(ts.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+		assertThat(prefix + " day 2 date", dayData_1.get(1).getTimestamp(), equalTo(
+				ts3.truncatedTo(ChronoUnit.DAYS).atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
+
+		List<AggregateDatum> monData = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month);
+		List<AggregateDatum> monData_1 = monData.stream()
+				.filter(e -> e.getStreamId().equals(meta.getStreamId())).collect(toList());
+		assertThat(prefix + " remaining month count", monData_1, hasSize(1));
+		assertThat(prefix + " month 1 date", monData_1.get(0).getTimestamp(),
+				equalTo(ts.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
 	}
 
 }
