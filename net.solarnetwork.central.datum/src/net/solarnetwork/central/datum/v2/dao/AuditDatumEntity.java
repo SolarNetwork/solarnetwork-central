@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.BasicIdentity;
 
@@ -56,6 +57,27 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	private final Integer datumMonthlyCount;
 	private final Long datumPropertyCount;
 	private final Long datumQueryCount;
+
+	/**
+	 * Create a datum record counts instance.
+	 * 
+	 * @param timestamp
+	 *        the time
+	 * @param datumCount
+	 *        the datum count
+	 * @param datumHourlyCount
+	 *        the hourly datum count
+	 * @param datumDailyCount
+	 *        the daily datum count
+	 * @param datumMonthlyCount
+	 *        the monthly datum count
+	 * @return the datum record counts
+	 */
+	public static DatumRecordCounts datumRecordCounts(Instant timestamp, Long datumCount,
+			Long datumHourlyCount, Integer datumDailyCount, Integer datumMonthlyCount) {
+		return new AuditDatumEntity(null, timestamp, null, datumCount, datumHourlyCount, datumDailyCount,
+				datumMonthlyCount, null, null);
+	}
 
 	/**
 	 * Create a hourly audit datum.
@@ -193,12 +215,19 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("AuditDatumEntity{");
-		if ( getId() != null ) {
+		if ( getStreamId() != null ) {
+			builder.append("AuditDatumEntity{");
 			builder.append("streamId=");
-			builder.append(getId().getStreamId());
-			builder.append(", ts=");
-			builder.append(getId().getTimestamp());
+			builder.append(getStreamId());
+		} else {
+			builder.append("DatumRecordCounts{");
+		}
+		if ( getTimestamp() != null ) {
+			if ( getStreamId() != null ) {
+				builder.append(", ");
+			}
+			builder.append("ts=");
+			builder.append(getTimestamp());
 		}
 		if ( aggregation != null ) {
 			builder.append(", kind=");

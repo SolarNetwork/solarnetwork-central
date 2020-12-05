@@ -34,7 +34,7 @@ import net.solarnetwork.domain.Identity;
  * @version 1.0
  * @since 2.8
  */
-public interface AuditDatum extends Identity<DatumPK> {
+public interface AuditDatum extends Identity<DatumPK>, DatumRecordCounts {
 
 	/**
 	 * Get the unique ID of the stream this audit datum is a part of.
@@ -61,6 +61,7 @@ public interface AuditDatum extends Identity<DatumPK> {
 	 * 
 	 * @return the timestamp for this datum
 	 */
+	@Override
 	Instant getTimestamp();
 
 	/**
@@ -69,60 +70,6 @@ public interface AuditDatum extends Identity<DatumPK> {
 	 * @return the aggregation
 	 */
 	Aggregation getAggregation();
-
-	/**
-	 * Get the count of datum count.
-	 * 
-	 * @return the datum count
-	 */
-	Long getDatumCount();
-
-	/**
-	 * Get the count of hourly aggregate datum.
-	 * 
-	 * @return the hourly aggregate datum count
-	 */
-	Long getDatumHourlyCount();
-
-	/**
-	 * Get the count of daily aggregate datum.
-	 * 
-	 * @return the daily aggregate datum count
-	 */
-	Integer getDatumDailyCount();
-
-	/**
-	 * Get the count of monthly aggregate datum.
-	 * 
-	 * @return the monthly aggregate datum count
-	 */
-	Integer getDatumMonthlyCount();
-
-	/**
-	 * Get the sum total of all datum counts.
-	 * 
-	 * @return the sum total of the datum count properties
-	 */
-	default long getDatumTotalCount() {
-		long t = 0;
-		Long l = getDatumCount();
-		if ( l != null ) {
-			t += l.longValue();
-		}
-		l = getDatumHourlyCount();
-		if ( l != null ) {
-			t += l.longValue();
-		}
-		Integer i = getDatumDailyCount();
-		if ( i != null ) {
-			t += i.longValue();
-		}
-		i = getDatumMonthlyCount();
-		if ( i != null ) {
-			t += i.longValue();
-		}
-		return t;
-	}
 
 	/**
 	 * Get the count of datum properties.

@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
@@ -753,6 +755,27 @@ public class DatumUtils {
 		for ( int i = 8; i < 16; i++ )
 			out[i] = (byte) ((lsb >> ((15 - i) * 8)) & 0xff);
 		return out;
+	}
+
+	/**
+	 * Convert a {@link DatumRecordCounts} to a legacy
+	 * {@link net.solarnetwork.central.datum.domain.DatumRecordCounts} instance.
+	 * 
+	 * @param counts
+	 *        the counts to convert
+	 * @return the legacy instace, or {@literal null} if {@code counts} is
+	 *         {@literal null}
+	 */
+	public static net.solarnetwork.central.datum.domain.DatumRecordCounts toRecordCounts(
+			DatumRecordCounts counts) {
+		if ( counts == null ) {
+			return null;
+		}
+		net.solarnetwork.central.datum.domain.DatumRecordCounts c = new net.solarnetwork.central.datum.domain.DatumRecordCounts(
+				counts.getDatumCount(), counts.getDatumHourlyCount(), counts.getDatumDailyCount(),
+				counts.getDatumMonthlyCount());
+		c.setDate(JodaDateUtils.toJoda(counts.getTimestamp(), ZoneOffset.UTC));
+		return c;
 	}
 
 }

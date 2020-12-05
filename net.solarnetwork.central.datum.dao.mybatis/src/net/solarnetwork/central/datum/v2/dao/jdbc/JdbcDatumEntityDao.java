@@ -58,7 +58,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -87,6 +86,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRange;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumCalculatedAt;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumRecordCounts;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
@@ -94,9 +94,11 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
+import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
@@ -301,8 +303,9 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public DatumRecordCounts countDatumRecords(ObjectStreamCriteria filter) {
-		// TODO Auto-generated method stub
-		throw new RuntimeException("TODO");
+		List<AuditDatum> result = jdbcTemplate.query(new SelectDatumRecordCounts(filter),
+				AuditDatumAccumulativeEntityRowMapper.INSTANCE);
+		return (result.isEmpty() ? null : result.get(0));
 	}
 
 	@Override

@@ -52,10 +52,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -177,15 +177,16 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
+	public net.solarnetwork.central.datum.domain.DatumRecordCounts countDatumRecords(
+			GeneralNodeDatumFilter filter) {
 		filter = prepareFilter(filter);
 		if ( filter.getNodeId() == null ) {
-			DatumRecordCounts counts = new DatumRecordCounts();
+			net.solarnetwork.central.datum.domain.DatumRecordCounts counts = new net.solarnetwork.central.datum.domain.DatumRecordCounts();
 			counts.setDate(new DateTime());
 			return counts;
 		}
 		BasicDatumCriteria c = criteriaFromFilter(filter);
-		return datumDao.countDatumRecords(c);
+		return DatumUtils.toRecordCounts(datumDao.countDatumRecords(c));
 	}
 
 	@Override
