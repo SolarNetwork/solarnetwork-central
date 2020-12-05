@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -131,7 +132,7 @@ public class SelectDatumRecordCounts implements PreparedStatementCreator, SqlPro
 		StringBuilder where = new StringBuilder();
 		int idx = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, agg,
-						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
+						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, null, RoundingMode.FLOOR, where)
 				: DatumSqlUtils.whereDateRange(filter, agg, where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));

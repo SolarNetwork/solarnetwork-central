@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static java.lang.String.format;
+import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -1152,9 +1154,59 @@ public final class DatumSqlUtils {
 	 */
 	public static int whereLocalDateRange(LocalDateRangeCriteria filter, Aggregation aggregation,
 			String zoneClause, StringBuilder buf) {
+		return whereLocalDateRange(filter, aggregation, zoneClause, null, null, buf);
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
+	 * 
+	 * <p>
+	 * The generated SQL will include {@literal date_trunc()} calls on the start
+	 * and/or end date parameters, according to the {@code startRoundingMode}
+	 * and {@code endRoundingMode} parameters.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * <p>
+	 * The {@code zoneClause} argument can be used to cast the local date
+	 * parameters into absolute dates. For example, assuming a stream metadata
+	 * table is available under the alias {@literal s}, a {@code zoneClause} of
+	 * {@literal AT TIME ZONE s.time_zone} would generate SQl like:
+	 * </p>
+	 * 
+	 * <pre>
+	 * 	AND datum.ts >= ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts < ? AT TIME ZONE s.time_zone
+	 * </pre>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param aggregation
+	 *        if provided and not {@code None} then treat the time criteria
+	 *        column name as {@code ts_start}; otherwise use {@code ts}
+	 * @param zoneClause
+	 *        if provided, then an extra clause to add after each local date
+	 *        parameter placeholder
+	 * @param startRoundingMode
+	 *        the rounding mode to apply to the start date, or {@literal null}
+	 *        for none
+	 * @param endRoundingMode
+	 *        the rounding mode to apply to the end date, or {@literal null}
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 */
+	public static int whereLocalDateRange(LocalDateRangeCriteria filter, Aggregation aggregation,
+			String zoneClause, RoundingMode startRoundingMode, RoundingMode endRoundingMode,
+			StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocalStartDate() != null ) {
-			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" >= ?");
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" >= ");
+			dateRoundedParameter(aggregation, startRoundingMode, buf);
 			if ( zoneClause != null ) {
 				buf.append(" ").append(zoneClause);
 			}
@@ -1162,7 +1214,8 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		}
 		if ( filter.getLocalEndDate() != null ) {
-			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" < ?");
+			buf.append("\tAND datum.").append(timeColumnName(aggregation)).append(" < ");
+			dateRoundedParameter(aggregation, endRoundingMode, buf);
 			if ( zoneClause != null ) {
 				buf.append(" ").append(zoneClause);
 			}
@@ -1170,6 +1223,131 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		}
 		return paramCount;
+	}
+
+	/**
+	 * Generate a rounded date SQL parameter clause.
+	 * 
+	 * <p>
+	 * The output is along the lines of {@literal date_trunc('day', ?)}. If no
+	 * rounding mode is needed (because {@code roundingMode} is {@literal null}
+	 * or {@literal UNNECESSARY}) then a simple {@literal ?} placeholder will be
+	 * generated.
+	 * </p>
+	 * 
+	 * @param aggregation
+	 *        the aggregation mode
+	 * @param roundingMode
+	 *        the rounding mode
+	 * @param buf
+	 *        the buffer to append the generated SQL to
+	 * @throws IllegalArgumentException
+	 *         if {@code roundingMode} is not supported
+	 */
+	public static void dateRoundedParameter(Aggregation aggregation, RoundingMode roundingMode,
+			StringBuilder buf) {
+		if ( roundingMode == null || roundingMode == RoundingMode.UNNECESSARY || aggregation == null
+				|| !(aggregation == Aggregation.Hour || aggregation == Aggregation.Day
+						|| aggregation == Aggregation.Month || aggregation == Aggregation.Year) ) {
+			buf.append("?");
+			return;
+		}
+
+		buf.append("date_trunc('").append(sqlDateRoundingInterval(aggregation)).append("', ?");
+		switch (roundingMode) {
+			case DOWN:
+			case FLOOR:
+				// nothing more
+				break;
+
+			case UP:
+			case CEILING:
+				buf.append(" + ").append(sqlInterval(aggregation, 1));
+				break;
+
+			default:
+				throw new IllegalArgumentException(format(
+						"The rounding mode %s is not supported for date parameters.", roundingMode));
+		}
+		buf.append(')');
+	}
+
+	/**
+	 * Generate a SQL {@literal INTERVAL} clause for an aggregation.
+	 * 
+	 * @param aggregation
+	 *        the aggregation
+	 * @param count
+	 *        the interval count
+	 * @return the SQL clause
+	 * @throws IllegalArgumentException
+	 *         if {@code aggregation} is {@literal null} or not supported
+	 */
+	public static String sqlInterval(Aggregation aggregation, int count) {
+		if ( aggregation == null ) {
+			throw new IllegalArgumentException("The aggregation argument must not be null.");
+		}
+		StringBuilder buf = new StringBuilder();
+		buf.append("INTERVAL 'P");
+		if ( aggregation == Aggregation.Hour ) {
+			buf.append('T');
+		}
+		buf.append(count);
+		switch (aggregation) {
+			case Hour:
+				buf.append('H');
+				break;
+
+			case Day:
+				buf.append('D');
+				break;
+
+			case Month:
+				buf.append('M');
+				break;
+
+			case Year:
+				buf.append('Y');
+				break;
+
+			default:
+				throw new IllegalArgumentException(format(
+						"The aggregation %s cannot be translated into a SQL interval.", aggregation));
+		}
+		buf.append("'");
+		return buf.toString();
+	}
+
+	/**
+	 * Get a SQL interval type for an aggregation.
+	 * 
+	 * @param aggregation
+	 *        the aggregation to get the type for
+	 * @return the type
+	 * @throws IllegalArgumentException
+	 *         if {@code aggregation} is {@literal null} or not supported
+	 */
+	public static String sqlDateRoundingInterval(Aggregation aggregation) {
+		if ( aggregation != null ) {
+			switch (aggregation) {
+				case Hour:
+					return "hour";
+
+				case Day:
+					return "day";
+
+				case Month:
+					return "month";
+
+				case Year:
+					return "year";
+
+				default:
+					// fall through to exception
+			}
+		}
+		throw new IllegalArgumentException(
+				format("The aggregation %s cannot be converted to a SQL interval."));
 	}
 
 	/**

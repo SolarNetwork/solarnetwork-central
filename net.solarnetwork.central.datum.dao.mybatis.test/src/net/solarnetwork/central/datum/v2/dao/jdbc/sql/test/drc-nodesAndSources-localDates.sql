@@ -18,21 +18,21 @@ WITH s AS (
 	FROM s
 	INNER JOIN solardatm.agg_datm_hourly datum ON datum.stream_id = s.stream_id
 	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
-		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+		AND datum.ts_start < date_trunc('hour', ?) AT TIME ZONE s.time_zone
 )
 , d AS (
 	SELECT COUNT(*) AS datum_daily_count
 	FROM s
 	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
-		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+		AND datum.ts_start < date_trunc('day', ?) AT TIME ZONE s.time_zone
 )
 , m AS (
 	SELECT COUNT(*) AS datum_monthly_count
 	FROM s
 	INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
 	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
-		AND datum.ts_start < ? AT TIME ZONE s.time_zone
+		AND datum.ts_start < date_trunc('month', ?) AT TIME ZONE s.time_zone
 )
 SELECT NULL::UUID AS stream_id,
 	CURRENT_TIMESTAMP AS ts_start,
