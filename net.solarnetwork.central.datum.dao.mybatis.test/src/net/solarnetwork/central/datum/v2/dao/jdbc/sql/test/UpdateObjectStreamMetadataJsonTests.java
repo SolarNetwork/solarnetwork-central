@@ -65,6 +65,7 @@ public class UpdateObjectStreamMetadataJsonTests {
 		String sql = new UpdateObjectStreamMetadataJson(filter, json).getSql();
 
 		// THEN
+		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("update-node-meta-json.sql", TestSqlResources.class));
 	}
@@ -85,9 +86,9 @@ public class UpdateObjectStreamMetadataJsonTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor))).andReturn(stmt);
 
-		stmt.setString(1, json);
-		stmt.setObject(2, filter.getNodeId());
-		stmt.setString(3, filter.getSourceId());
+		stmt.setObject(1, filter.getNodeId());
+		stmt.setString(2, filter.getSourceId());
+		stmt.setString(3, json);
 
 		// WHEN
 		replay(con, stmt);
@@ -136,9 +137,9 @@ public class UpdateObjectStreamMetadataJsonTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor))).andReturn(stmt);
 
-		stmt.setString(1, json);
-		stmt.setObject(2, filter.getLocationId());
-		stmt.setString(3, filter.getSourceId());
+		stmt.setObject(1, filter.getLocationId());
+		stmt.setString(2, filter.getSourceId());
+		stmt.setString(3, json);
 
 		// WHEN
 		replay(con, stmt);

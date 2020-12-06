@@ -31,7 +31,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 
 /**
- * Update the JSON value of a datum metadata stream.
+ * Update the JSON value of a datum metadata stream as an UPSERT.
  * 
  * @author matt
  * @version 1.0
@@ -100,24 +100,32 @@ public class UpdateObjectStreamMetadataJson implements PreparedStatementCreator,
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append("UPDATE solardatm.").append(sqlTableName()).append("\n");
-		buf.append("SET jdata = ?::jsonb\n");
-		buf.append("WHERE");
+		buf.append("INSERT INTO solardatm.").append(sqlTableName()).append(" (");
 		if ( kind == ObjectDatumKind.Location ) {
-			buf.append(" loc_id = ?\n");
+			buf.append("loc_id");
 		} else {
-			buf.append(" node_id = ?\n");
+			buf.append("node_id");
 		}
-		buf.append("	AND source_id = ?\n");
+		buf.append(", source_id, jdata)\n");
+		buf.append("VALUES (?, ?, ?::jsonb)\n");
+		buf.append("ON CONFLICT (");
+		if ( kind == ObjectDatumKind.Location ) {
+			buf.append("loc_id");
+		} else {
+			buf.append("node_id");
+		}
+		buf.append(", source_id) DO UPDATE SET\n");
+		buf.append("	jdata = EXCLUDED.jdata,\n");
+		buf.append("	updated = CURRENT_TIMESTAMP");
 		return buf.toString();
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		stmt.setString(1, json);
-		stmt.setObject(2, filter.getObjectId());
-		stmt.setString(3, filter.getSourceId());
+		stmt.setObject(1, filter.getObjectId());
+		stmt.setString(2, filter.getSourceId());
+		stmt.setString(3, json);
 		return stmt;
 	}
 

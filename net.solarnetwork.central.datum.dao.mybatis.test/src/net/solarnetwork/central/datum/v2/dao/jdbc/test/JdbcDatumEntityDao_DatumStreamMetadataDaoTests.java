@@ -603,6 +603,24 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void replaceJson_node_create_new() {
+		// GIVEN
+
+		// WHEN
+		replayAll();
+		final String json = "{\"foo\":\"bar\"}";
+		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = DatumDbUtils.listNodeMetadata(jdbcTemplate);
+		assertThat("Stream created", metas, hasSize(1));
+		assertThat("Stream object ID matches", metas.get(0).getObjectId(), equalTo(TEST_NODE_ID));
+		assertThat("Stream source ID matches", metas.get(0).getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("JSON persisted", getStringMap(metas.get(0).getMetaJson()),
+				equalTo(getStringMap(json)));
+	}
+
+	@Test
 	public void replaceJson_location_create() {
 		// GIVEN
 		setupTestLocation(); // for TZ
@@ -620,6 +638,24 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// THEN
 		ObjectDatumStreamMetadata result = metaForStream(streamId);
 		assertThat("JSON persisted", getStringMap(result.getMetaJson()), equalTo(getStringMap(json)));
+	}
+
+	@Test
+	public void replaceJson_location_create_new() {
+		// GIVEN
+
+		// WHEN
+		replayAll();
+		final String json = "{\"foo\":\"bar\"}";
+		dao.replaceJsonMeta(new LocationSourcePK(TEST_LOC_ID, TEST_SOURCE_ID), json);
+
+		// THEN
+		List<ObjectDatumStreamMetadata> metas = DatumDbUtils.listLocationMetadata(jdbcTemplate);
+		assertThat("Stream created", metas, hasSize(1));
+		assertThat("Stream object ID matches", metas.get(0).getObjectId(), equalTo(TEST_LOC_ID));
+		assertThat("Stream source ID matches", metas.get(0).getSourceId(), equalTo(TEST_SOURCE_ID));
+		assertThat("JSON persisted", getStringMap(metas.get(0).getMetaJson()),
+				equalTo(getStringMap(json)));
 	}
 
 }
