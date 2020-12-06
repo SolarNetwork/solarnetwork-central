@@ -46,6 +46,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -77,10 +79,11 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.util.JodaDateUtils;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -658,4 +661,22 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 				equalTo(getStringMap(json)));
 	}
 
+	@Test
+	public void replaceJson_node_storeVeryBigValues() {
+		// GIVEN
+		GeneralDatumMetadata m = new GeneralDatumMetadata();
+		m.putInfoValue("watt_hours", 39309570293789380L);
+		m.putInfoValue("very_big", new BigInteger("93475092039478209375027350293523957"));
+		m.putInfoValue("watts", 498475890235787897L);
+		m.putInfoValue("floating", new BigDecimal("293487590845639845728947589237.49087"));
+
+		// WHEN
+		replayAll();
+		final String json = JsonUtils.getJSONString(m, null);
+		dao.replaceJsonMeta(new NodeSourcePK(TEST_NODE_ID, TEST_SOURCE_ID), json);
+
+		// THEN
+		ObjectDatumStreamMetadata meta = DatumDbUtils.listNodeMetadata(jdbcTemplate).get(0);
+		assertThat("JSON persisted", getStringMap(meta.getMetaJson()), equalTo(getStringMap(json)));
+	}
 }
