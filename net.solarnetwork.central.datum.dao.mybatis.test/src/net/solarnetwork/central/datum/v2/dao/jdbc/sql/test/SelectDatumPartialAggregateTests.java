@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SQL_COMMENT;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.createMock;
@@ -125,6 +126,27 @@ public class SelectDatumPartialAggregateTests {
 				"select-datum-pagg-year-month-full-nodes.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
+	public void sql_find_nodes_Year_Month_full_customSort() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = new SelectDatumPartialAggregate(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-pagg-year-month-full-nodes-sortTimeNodeSource.sql",
+						TestSqlResources.class, SQL_COMMENT));
 	}
 
 	@Test

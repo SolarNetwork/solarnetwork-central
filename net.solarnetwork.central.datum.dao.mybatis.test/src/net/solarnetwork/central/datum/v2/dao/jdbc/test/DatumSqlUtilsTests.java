@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.eq;
@@ -407,5 +408,22 @@ public class DatumSqlUtilsTests {
 				nullValue());
 		assertThat("Result results is data", results.getResults(), sameInstance(data));
 		verify(jdbcTemplate, sql, mapper);
+	}
+
+	@Test
+	public void hasMetadataSortKey_no() {
+		// WHEN
+		assertThat("Metadata key not present",
+				DatumSqlUtils.hasMetadataSortKey(sorts("time", "foo", "bar")), equalTo(false));
+	}
+
+	@Test
+	public void hasMetadataSortKey_yes() {
+		assertThat("'loc' is metadata key", DatumSqlUtils.hasMetadataSortKey(sorts("time", "loc")),
+				equalTo(true));
+		assertThat("'node' is metadata key", DatumSqlUtils.hasMetadataSortKey(sorts("time", "node")),
+				equalTo(true));
+		assertThat("'source' is metadata key", DatumSqlUtils.hasMetadataSortKey(sorts("time", "source")),
+				equalTo(true));
 	}
 }

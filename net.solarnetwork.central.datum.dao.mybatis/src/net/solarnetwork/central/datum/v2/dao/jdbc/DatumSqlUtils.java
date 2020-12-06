@@ -307,6 +307,63 @@ public final class DatumSqlUtils {
 		return (appended ? 2 : 0);
 	}
 
+	private static String[] DEFAULT_METADATA_SORT_KEYS = new String[] { "loc", "node", "source" };
+
+	/**
+	 * Test if a default stream metadata sort key is present in a list of sort
+	 * descriptors.
+	 * 
+	 * <p>
+	 * The default list of metadata sort keys uesd is:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li>loc</li>
+	 * <li>node</li>
+	 * <li>source</li>
+	 * </ol>
+	 * 
+	 * @param sorts
+	 *        the sort descriptors to search for metadata keys in
+	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
+	 *         in the default list of metadata sort keys
+	 */
+	public static boolean hasMetadataSortKey(Iterable<SortDescriptor> sorts) {
+		return hasMetadataSortKey(sorts, DEFAULT_METADATA_SORT_KEYS);
+	}
+
+	/**
+	 * Test if a stream metadata sort key is present in a list of sort
+	 * descriptors.
+	 * 
+	 * <p>
+	 * This method can be useful for sorting datum stream result sets, to know
+	 * if stream metadata must be available to sort by. For example a SQL query
+	 * might need to include a {@literal JOIN} clause to a stream metadata table
+	 * if a metadata sort key is requested.
+	 * </p>
+	 * 
+	 * @param sorts
+	 *        the sort descriptors to search for metadata keys in
+	 * @param orderedMetaSortKeys
+	 *        a sorted list of metadata keys that represent all possible
+	 *        metadata sort keys
+	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
+	 *         in {@code orderedMetaSortKeys}
+	 */
+	public static boolean hasMetadataSortKey(Iterable<SortDescriptor> sorts,
+			String[] orderedMetaSortKeys) {
+		if ( sorts == null ) {
+			return false;
+		}
+		for ( SortDescriptor s : sorts ) {
+			if ( Arrays.binarySearch(orderedMetaSortKeys, s.getSortKey()) >= 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
 	 * 

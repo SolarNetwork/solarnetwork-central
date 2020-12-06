@@ -8,7 +8,7 @@ WITH s AS (
 , datum AS (
 	-- main agg
 	SELECT datum.stream_id,
-		datum.ts_start,
+		datum.ts_start AS ts,
 		datum.data_i,
 		datum.data_a,
 		datum.data_s,
@@ -23,7 +23,7 @@ WITH s AS (
 	-- trailing partial agg	
 	UNION ALL
 	SELECT datum.stream_id,
-		date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,
+		date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
 		(solardatm.rollup_agg_data(
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
@@ -34,5 +34,6 @@ WITH s AS (
 	GROUP BY datum.stream_id, date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 	HAVING COUNT(*) > 0
 )
-SELECT * FROM datum
-ORDER BY datum.stream_id, ts_start
+SELECT datum.*
+FROM datum
+ORDER BY datum.stream_id, ts

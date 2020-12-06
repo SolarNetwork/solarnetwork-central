@@ -24,27 +24,44 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -53,6 +70,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 
@@ -64,6 +82,11 @@ import net.solarnetwork.domain.SimpleSortDescriptor;
  * @version 1.0
  */
 public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport {
+
+	private static final Long TEST_NODE_ID_ALT = 123L;
+	private static final String TEST_SOURCE_ID_ALT = "s2";
+	private static final Long TEST_LOC_ID_ALT = -879L;
+	private static final String TEST_TZ_ALT = "America/New_York";
 
 	private JdbcDatumEntityDao dao;
 
@@ -501,6 +524,197 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Aggregate datum returned", d, instanceOf(AggregateDatum.class));
 		assertThat("Stream ID", d.getStreamId(), equalTo(streamId));
 		assertThat("Timestamp", d.getTimestamp(), equalTo(ts));
+	}
+
+	@Test
+	public void find_year_streamId_orderDefault() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = testStreamMetadata();
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-month-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+
+		// WHEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setStreamId(streamId);
+		filter.setLocalStartDate(start.toLocalDateTime());
+		filter.setLocalEndDate(start.toLocalDateTime().plusYears(1));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
+		assertThat("Result for year", results.getTotalResults(), equalTo(1L));
+		assertThat("Result for year", results.getReturnedResultCount(), equalTo(1));
+
+		Datum d = results.iterator().next();
+		assertThat("Aggregate datum returned", d, instanceOf(AggregateDatum.class));
+		DatumTestUtils.assertAggregateDatum("Year", (AggregateDatum) d,
+				new AggregateDatumEntity(streamId, start.toInstant(), Aggregation.Year,
+						propertiesOf(decimalArray("1.5", "5.1"), decimalArray("2800"), null, null),
+						statisticsOf(
+								new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
+										decimalArray("42", "2.0", "7.7") },
+								new BigDecimal[][] { decimalArray("100", "821", "721") })));
+	}
+
+	@Test
+	public void find_year_multipleYears_localTimeZones() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata fileMeta = testStreamMetadata();
+
+		setupTestLocation(TEST_LOC_ID, TEST_TZ);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, TEST_TZ);
+		List<AggregateDatum> datums_1 = loadJsonAggregateDatumResource("test-agg-month-datum-03.txt",
+				getClass(), staticProvider(singleton(fileMeta)), e -> {
+					// map data to stream 1 (with dates adjusted)
+					return new AggregateDatumEntity(meta_1.getStreamId(),
+							LocalDateTime.ofInstant(e.getTimestamp(), ZoneOffset.UTC)
+									.atZone(ZoneId.of(TEST_TZ)).toInstant(),
+							e.getAggregation(), e.getProperties(), e.getStatistics());
+				});
+
+		setupTestLocation(TEST_LOC_ID_ALT, TEST_TZ_ALT);
+		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID_ALT);
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID_ALT,
+				TEST_TZ_ALT);
+		List<AggregateDatum> datums_2 = loadJsonAggregateDatumResource("test-agg-month-datum-03.txt",
+				getClass(), staticProvider(singleton(fileMeta)), e -> {
+					// map data to stream 2 (with dates adjusted)
+					return new AggregateDatumEntity(meta_2.getStreamId(),
+							LocalDateTime.ofInstant(e.getTimestamp(), ZoneOffset.UTC)
+									.atZone(ZoneId.of(TEST_TZ_ALT)).toInstant(),
+							e.getAggregation(), e.getProperties(), e.getStatistics());
+				});
+		insertAggregateDatum(log, jdbcTemplate,
+				concat(datums_1.stream(), datums_2.stream()).collect(toList()));
+
+		log.debug("Month raw data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month)
+				.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		LocalDateTime start = LocalDateTime.of(2019, 1, 1, 0, 0);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_ALT });
+		filter.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_SOURCE_ID_ALT });
+		filter.setLocalStartDate(start);
+		filter.setLocalEndDate(filter.getLocalStartDate().plusYears(2));
+		filter.setAggregation(Aggregation.Year);
+		filter.setSorts(sorts("time", "node"));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("2x years per stream returned", results.getTotalResults(), equalTo(4L));
+		assertThat("2x years per stream returned", results.getReturnedResultCount(), equalTo(4));
+
+		List<AggregateDatum> data_1 = StreamSupport.stream(results.spliterator(), false)
+				.filter(e -> meta_1.getStreamId().equals(e.getStreamId()))
+				.map(AggregateDatum.class::cast).collect(toList());
+
+		List<AggregateDatum> data_2 = StreamSupport.stream(results.spliterator(), false)
+				.filter(e -> meta_2.getStreamId().equals(e.getStreamId()))
+				.map(AggregateDatum.class::cast).collect(toList());
+
+		assertYearStream("Stream 1", data_1, meta_1, start);
+		assertYearStream("Stream 1", data_2, meta_2, start);
+	}
+
+	private void assertYearStream(String prefix, List<AggregateDatum> data,
+			ObjectDatumStreamMetadata meta, LocalDateTime start) {
+		assertThat(prefix + " 2x years for stream 1", data, hasSize(2));
+		assertAggregateDatum(prefix + " year 1", data.get(0),
+				new AggregateDatumEntity(meta.getStreamId(),
+						start.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant(), Aggregation.Year,
+						propertiesOf(decimalArray("1.3", "3.1"), decimalArray("600"), null, null),
+						statisticsOf(
+								new BigDecimal[][] { decimalArray("18", "1.1", "3.3"),
+										decimalArray("18", "2.0", "7.3") },
+								new BigDecimal[][] { decimalArray("100", "403", "303") })));
+		assertAggregateDatum(prefix + " year 2", data.get(1),
+				new AggregateDatumEntity(meta.getStreamId(),
+						start.plusYears(1).atZone(ZoneId.of(meta.getTimeZoneId())).toInstant(),
+						Aggregation.Year,
+						propertiesOf(decimalArray("1.65", "6.6"), decimalArray("2200"), null, null),
+						statisticsOf(
+								new BigDecimal[][] { decimalArray("24", "1.4", "3.7"),
+										decimalArray("24", "2.3", "7.7") },
+								new BigDecimal[][] { decimalArray("403", "821", "418") })));
+	}
+
+	@Test
+	public void find_year_multipleYears_combine_sum() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata fileMeta = testStreamMetadata();
+
+		setupTestLocation(TEST_LOC_ID, "UTC");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata(TEST_NODE_ID, TEST_SOURCE_ID, "UTC");
+		List<AggregateDatum> datums_1 = loadJsonAggregateDatumResource("test-agg-month-datum-03.txt",
+				getClass(), staticProvider(singleton(fileMeta)), e -> {
+					// map data to stream 1 (with dates adjusted)
+					return new AggregateDatumEntity(meta_1.getStreamId(), e.getTimestamp(),
+							e.getAggregation(), e.getProperties(), e.getStatistics());
+				});
+
+		setupTestNode(TEST_NODE_ID_ALT, TEST_LOC_ID);
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata(TEST_NODE_ID_ALT, TEST_SOURCE_ID_ALT,
+				"UTC");
+		List<AggregateDatum> datums_2 = loadJsonAggregateDatumResource("test-agg-month-datum-03.txt",
+				getClass(), staticProvider(singleton(fileMeta)), e -> {
+					// map data to stream 2 (with dates adjusted)
+					return new AggregateDatumEntity(meta_2.getStreamId(), e.getTimestamp(),
+							e.getAggregation(), e.getProperties(), e.getStatistics());
+				});
+		insertAggregateDatum(log, jdbcTemplate,
+				concat(datums_1.stream(), datums_2.stream()).collect(toList()));
+
+		log.debug("Month raw data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month)
+				.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		LocalDateTime start = LocalDateTime.of(2019, 1, 1, 0, 0);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_ALT });
+		filter.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_SOURCE_ID_ALT });
+		filter.setLocalStartDate(start);
+		filter.setLocalEndDate(filter.getLocalStartDate().plusYears(2));
+		filter.setAggregation(Aggregation.Year);
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "2:-1,123" });
+		filter.setSourceIdMaps(new String[] { "V:test.source,s2" });
+		filter.setSorts(sorts("time", "node"));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		assertThat("Results available", results, notNullValue());
+		assertThat("2x years per combined streams", results.getTotalResults(), equalTo(2L));
+		assertThat("2x years per combined streams", results.getReturnedResultCount(), equalTo(2));
+
+		List<AggregateDatum> data = StreamSupport.stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+
+		assertThat("2x years for combined virtual stream", data, hasSize(2));
+		UUID virtualStreamId = DatumUtils.virtualStreamId(2L, "V");
+		assertAggregateDatum("Year 1", data.get(0),
+				new AggregateDatumEntity(virtualStreamId, start.atZone(ZoneOffset.UTC).toInstant(),
+						Aggregation.Year,
+						propertiesOf(decimalArray("1.3", "3.1"), decimalArray("600"), null, null),
+						statisticsOf(
+								new BigDecimal[][] { decimalArray("18", "1.1", "3.3"),
+										decimalArray("18", "2.0", "7.3") },
+								new BigDecimal[][] { decimalArray("100", "403", "303") })));
+		assertAggregateDatum("Year 2", data.get(1),
+				new AggregateDatumEntity(virtualStreamId,
+						start.plusYears(1).atZone(ZoneOffset.UTC).toInstant(), Aggregation.Year,
+						propertiesOf(decimalArray("1.65", "6.6"), decimalArray("2200"), null, null),
+						statisticsOf(
+								new BigDecimal[][] { decimalArray("24", "1.4", "3.7"),
+										decimalArray("24", "2.3", "7.7") },
+								new BigDecimal[][] { decimalArray("403", "821", "418") })));
 	}
 
 }

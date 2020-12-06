@@ -26,9 +26,7 @@ WITH rs AS (
 			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 			ORDER BY datum.ts_start)).*
 	FROM s
-	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
-	WHERE datum.ts_start >= ?
-		AND datum.ts_start < ?
+	INNER JOIN solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?) datum ON datum.stream_id = s.stream_id
 	GROUP BY s.vstream_id, ts
 )
 SELECT datum.*

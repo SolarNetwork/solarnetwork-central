@@ -133,10 +133,7 @@ public class SelectDatumPartialAggregate
 
 	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
-				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
-						: DatumSqlUtils.MetadataSelectStyle.Minimum,
-				buf);
+		DatumSqlUtils.nodeMetadataFilterSql(filter, DatumSqlUtils.MetadataSelectStyle.WithZone, buf);
 		buf.append(")\n");
 	}
 
@@ -161,7 +158,7 @@ public class SelectDatumPartialAggregate
 		buf.append("datum.stream_id,\n");
 		if ( filter.getAggregation() == aggregation && aggregation != Aggregation.Year ) {
 			// main agg: direct results
-			buf.append("datum.ts_start,\n");
+			buf.append("datum.ts_start AS ts,\n");
 			buf.append("datum.data_i,\n");
 			buf.append("datum.data_a,\n");
 			buf.append("datum.data_s,\n");
@@ -171,7 +168,7 @@ public class SelectDatumPartialAggregate
 		} else {
 			// partial agg: dynamic rollup to main agg
 			buf.append("date_trunc('").append(sqlAgg(aggregation)).append(
-					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts_start,\n");
+					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
 			buf.append("(solardatm.rollup_agg_data(\n");
 			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
 			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
@@ -225,7 +222,7 @@ public class SelectDatumPartialAggregate
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
 		} else {
-			order.append(", datum.stream_id, ts_start");
+			order.append(", datum.stream_id, ts");
 		}
 		if ( order.length() > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
@@ -250,13 +247,21 @@ public class SelectDatumPartialAggregate
 		}
 
 		buf.append(")\n");
-		buf.append("SELECT * FROM datum\n");
+		buf.append("SELECT datum.*\nFROM datum\n");
+	}
+
+	private void sqlOrderByJoins(StringBuilder buf) {
+		if ( !DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+			return;
+		}
+		buf.append("INNER JOIN s ON s.stream_id = datum.stream_id\n");
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
+		sqlOrderByJoins(buf);
 		sqlOrderBy(buf);
 		DatumSqlUtils.limitOffset(filter, buf);
 		return buf.toString();

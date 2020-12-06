@@ -33,4 +33,5 @@ WITH rs AS (
 )
 SELECT datum.*
 FROM datum
-ORDER BY datum.stream_id, ts
+INNER JOIN s ON s.vstream_id = datum.stream_id
+ORDER BY ts, node_id, source_id

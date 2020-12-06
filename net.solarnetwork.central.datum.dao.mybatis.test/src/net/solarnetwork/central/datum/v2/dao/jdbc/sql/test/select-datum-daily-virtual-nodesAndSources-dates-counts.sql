@@ -1,4 +1,4 @@
-WITH rs AS (
+SELECT COUNT(*) FROM (WITH rs AS (
 	SELECT s.stream_id
 		, CASE
 			WHEN array_position(?, s.node_id) IS NOT NULL THEN ?
@@ -33,4 +33,4 @@ WITH rs AS (
 )
 SELECT datum.*
 FROM datum
-ORDER BY datum.stream_id, ts
+) AS q

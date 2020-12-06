@@ -8,7 +8,7 @@ WITH s AS (
 , datum AS (
 	-- main agg
 	SELECT datum.stream_id,
-		datum.ts_start,
+		datum.ts_start AS ts,
 		datum.data_i,
 		datum.data_a,
 		datum.data_s,
@@ -20,5 +20,6 @@ WITH s AS (
 	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
 )
-SELECT * FROM datum
-ORDER BY datum.stream_id, ts_start
+SELECT datum.*
+FROM datum
+ORDER BY datum.stream_id, ts

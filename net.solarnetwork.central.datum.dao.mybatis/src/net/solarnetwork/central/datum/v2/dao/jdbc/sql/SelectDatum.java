@@ -103,6 +103,7 @@ public class SelectDatum
 			buf.append("	, *\n");
 			buf.append("	FROM rs\n");
 			buf.append(")\n");
+			buf.append(", datum AS (\n");
 		}
 	}
 
@@ -216,8 +217,6 @@ public class SelectDatum
 					filter.getLocationId() != null ? DatumSqlUtils.LOCATION_STREAM_SORT_KEY_MAPPING
 							: DatumSqlUtils.NODE_STREAM_SORT_KEY_MAPPING,
 					order);
-		} else if ( combine != null ) {
-			order.append(", s.vstream_id, ts");
 		} else {
 			order.append(", datum.stream_id, ts");
 		}
@@ -226,18 +225,26 @@ public class SelectDatum
 		}
 	}
 
-	private void sqlCore(StringBuilder buf) {
+	private void sqlCore(StringBuilder buf, boolean ordered) {
 		sqlCte(buf);
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
 		sqlGroup(buf);
+		if ( combine != null ) {
+			buf.append(")\n");
+			buf.append("SELECT datum.*\n");
+			buf.append("FROM datum\n");
+			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+				buf.append("INNER JOIN s ON s.vstream_id = datum.stream_id\n");
+			}
+		}
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf);
+		sqlCore(buf, true);
 		sqlOrderBy(buf);
 		DatumSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
@@ -294,7 +301,7 @@ public class SelectDatum
 			}
 
 			// non-minute aggregation; use normal wrapped count query
-			sqlCore(buf);
+			sqlCore(buf, false);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

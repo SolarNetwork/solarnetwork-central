@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SQL_COMMENT;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -212,6 +213,48 @@ public class SelectDatumTests {
 	}
 
 	@Test
+	public void sql_find_15min_nodesAndSources_absoluteDates_sortTimeNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-nodesAndSources-dates-sortTimeNodeSource.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_15min_nodesAndSources_absoluteDates_sortTimeNodeSource_count() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-nodesAndSources-dates-count.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
 	public void prep_find_15min_nodesAndSources_absoluteDates() throws SQLException {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
@@ -256,6 +299,110 @@ public class SelectDatumTests {
 	}
 
 	@Test
+	public void sql_find_daily_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-datum-daily-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_nodesAndSources_absoluteDates_count() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-nodesAndSources-dates-count.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_nodesAndSources_absoluteDates_sortTimeNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-nodesAndSources-dates-sortTimeNodeSource.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_nodesAndSources_absoluteDates_sortTimeNodeSource_count() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-nodesAndSources-dates-count.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_15min_vids() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-virtual-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -275,6 +422,78 @@ public class SelectDatumTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_vids_nodeAndSources_absoluteDates_counts() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates-counts.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_vids_nodeAndSources_absoluteDates_sortTimeNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource(
+						"select-datum-daily-virtual-nodesAndSources-dates-sortTimeNodeSource.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_daily_vids_nodeAndSources_absoluteDates_sortTimeNodeSource_counts() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = ((SqlProvider) new SelectDatum(filter).countPreparedStatementCreator()).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates-counts.sql",
 						TestSqlResources.class, SQL_COMMENT));
 	}
 
