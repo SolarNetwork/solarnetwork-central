@@ -26,19 +26,24 @@ import static java.lang.String.format;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.util.JsonUtils.getStringMap;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -147,6 +152,62 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
 			assertDatumStreamMetadata("location meta", meta, expected);
 		}
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_noSort() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		ObjectDatumStreamMetadata meta2 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "b", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		ObjectDatumStreamMetadata meta3 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "b", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta1, meta2, meta3));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		Set<UUID> metas = StreamSupport.stream(results.spliterator(), false)
+				.map(DatumStreamMetadata::getStreamId).collect(toSet());
+		assertThat("Results returned in unknown order", metas,
+				containsInAnyOrder(meta1.getStreamId(), meta2.getStreamId()));
+	}
+
+	@Test
+	public void findObjectMetadata_nodes_sortNodeSource() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta1 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "z", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		ObjectDatumStreamMetadata meta2 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		ObjectDatumStreamMetadata meta3 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "d", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		ObjectDatumStreamMetadata meta4 = new BasicObjectDatumStreamMetadata(randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "z", new String[] { "a", "b" }, new String[] { "c" }, null,
+				null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta1, meta2, meta3, meta4));
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSorts(sorts("node", "source"));
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		List<UUID> metas = StreamSupport.stream(results.spliterator(), false)
+				.map(DatumStreamMetadata::getStreamId).collect(toList());
+		assertThat("Results returned in node/source order", metas, contains(meta2.getStreamId(),
+				meta1.getStreamId(), meta3.getStreamId(), meta4.getStreamId()));
 	}
 
 	@Test
