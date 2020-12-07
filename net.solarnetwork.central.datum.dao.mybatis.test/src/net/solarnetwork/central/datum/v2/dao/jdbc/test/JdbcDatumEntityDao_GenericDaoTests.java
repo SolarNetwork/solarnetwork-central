@@ -35,7 +35,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -50,8 +52,10 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.JodaDateUtils;
 
 /**
@@ -108,6 +112,40 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		assertThat("Metadata for source ID", metas.get(0).getSourceId(), equalTo("a"));
 		assertThat("Datum properties", rows.get(0).getProperties(),
 				equalTo(propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null, null)));
+	}
+
+	@Test
+	public void store_veryBigValues() {
+		// GIVEN
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setNodeId(1L);
+		datum.setSourceId("a");
+		datum.setCreated(JodaDateUtils.toJoda(ZonedDateTime.now()));
+		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+		datum.setSamples(s);
+		s.putInstantaneousSampleValue("watts", 498475890235787897L);
+		s.putInstantaneousSampleValue("floating",
+				new BigDecimal("293487590845639845728947589237.49087"));
+		s.putAccumulatingSampleValue("watt_hours", 39309570293789380L);
+		s.putAccumulatingSampleValue("very_big", new BigInteger("93475092039478209375027350293523957"));
+		DatumPK id = dao.store(datum);
+
+		DatumEntity entity = dao.get(id);
+		ObjectDatumStreamMetadata meta = listNodeMetadata(jdbcTemplate).get(0);
+		GeneralNodeDatum storedDatum = DatumUtils.toGeneralNodeDatum(entity, meta);
+		// compare property by property because database stores as DECIMAL
+		assertThat("Datum stored very big watts",
+				storedDatum.getSamples().getInstantaneousSampleLong("watts"),
+				equalTo(s.getInstantaneousSampleLong("watts")));
+		assertThat("Datum stored very big watts",
+				storedDatum.getSamples().getInstantaneousSampleBigDecimal("floating"),
+				equalTo(s.getInstantaneousSampleBigDecimal("floating")));
+		assertThat("Datum stored very big watt_hours",
+				storedDatum.getSamples().getAccumulatingSampleLong("watt_hours"),
+				equalTo(s.getAccumulatingSampleLong("watt_hours")));
+		assertThat("Datum stored very big very_big",
+				storedDatum.getSamples().getAccumulatingSampleBigDecimal("very_big"),
+				equalTo(s.getAccumulatingSampleBigDecimal("very_big")));
 	}
 
 	@Test

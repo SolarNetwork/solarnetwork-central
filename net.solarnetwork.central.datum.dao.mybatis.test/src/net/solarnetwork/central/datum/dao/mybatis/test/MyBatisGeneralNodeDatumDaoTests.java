@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
-import static java.util.stream.Collectors.joining;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
@@ -36,9 +35,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,9 +44,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
@@ -60,19 +53,9 @@ import org.joda.time.Period;
 import org.joda.time.ReadableInterval;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.test.context.transaction.TestTransaction;
-import net.solarnetwork.central.dao.BulkExportingDao.ExportCallback;
-import net.solarnetwork.central.dao.BulkExportingDao.ExportCallbackAction;
-import net.solarnetwork.central.dao.BulkExportingDao.ExportResult;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.datum.dao.mybatis.MyBatisGeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch;
@@ -81,8 +64,6 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.FilterableBulkExportOptions;
-import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 
 /**
  * Test cases for the {@link MyBatisGeneralNodeDatumDao} class.
@@ -113,21 +94,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		storeNew();
 		GeneralNodeDatum datum = dao.get(lastDatum.getId());
 		validate(lastDatum, datum);
-	}
-
-	@Test
-	public void storeVeryBigValues() {
-		GeneralNodeDatum datum = getTestInstance();
-		datum.getSamples().getAccumulating().put("watt_hours", 39309570293789380L);
-		datum.getSamples().getAccumulating().put("very_big",
-				new BigInteger("93475092039478209375027350293523957"));
-		datum.getSamples().getInstantaneous().put("watts", 498475890235787897L);
-		datum.getSamples().getInstantaneous().put("floating",
-				new BigDecimal("293487590845639845728947589237.49087"));
-		dao.store(datum);
-
-		GeneralNodeDatum entity = dao.get(datum.getId());
-		validate(datum, entity);
 	}
 
 	private Map<String, Object> getAuditDatumHourlyPropCounts(GeneralNodeDatum datum) {
