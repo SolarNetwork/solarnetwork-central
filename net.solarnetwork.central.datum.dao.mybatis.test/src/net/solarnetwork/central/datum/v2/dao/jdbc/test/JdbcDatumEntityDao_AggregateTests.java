@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
@@ -44,11 +45,15 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +73,7 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -109,6 +115,22 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				new String[] { "w" }, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		return meta;
+	}
+
+	private void insertDatum(Aggregation agg, UUID streamId, ZonedDateTime start,
+			TemporalAmount frequency, int count) {
+		List<AggregateDatum> data = new ArrayList<>(count);
+		ZonedDateTime ts = start;
+		for ( int i = 0; i < count; i++ ) {
+			AggregateDatum d = new AggregateDatumEntity(streamId, ts.toInstant(), agg,
+					DatumProperties.propertiesOf(
+							new BigDecimal[] { BigDecimal.valueOf(Math.random() * 1000000) },
+							new BigDecimal[] { BigDecimal.valueOf(i + 1) }, null, null),
+					null);
+			data.add(d);
+			ts = ts.plus(frequency);
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, data);
 	}
 
 	@Test
@@ -719,6 +741,108 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 								new BigDecimal[][] { decimalArray("48", "1.4", "3.7"),
 										decimalArray("48", "2.3", "7.7") },
 								new BigDecimal[][] { decimalArray("403", "821", "836") })));
+	}
+
+	@Test
+	public void find_hour_source_mostRecent() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta_2 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 2L, "b");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Duration freq = Duration.ofHours(3);
+		insertDatum(Aggregation.Hour, meta_1.getStreamId(), start, freq, 4);
+		insertDatum(Aggregation.Hour, meta_2.getStreamId(), start.plusHours(1), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setSourceId("b");
+		filter.setMostRecent(true);
+		filter.setAggregation(Aggregation.Hour);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+
+		Datum d = datumList.get(0);
+		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
+		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusHours(3 * 3 + 1).toInstant()));
+	}
+
+	@Test
+	public void find_day_source_mostRecent() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta_2 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 2L, "b");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Duration freq = Duration.ofHours(36);
+		insertDatum(Aggregation.Day, meta_1.getStreamId(), start, freq, 4);
+		insertDatum(Aggregation.Day, meta_2.getStreamId(), start.plusHours(24), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setSourceId("b");
+		filter.setMostRecent(true);
+		filter.setAggregation(Aggregation.Day);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+
+		Datum d = datumList.get(0);
+		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
+		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusHours(3 * 36 + 24).toInstant()));
+	}
+
+	@Test
+	public void find_month_source_mostRecent() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta_2 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 2L, "b");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Period freq = Period.ofMonths(3);
+		insertDatum(Aggregation.Month, meta_1.getStreamId(), start, freq, 4);
+		insertDatum(Aggregation.Month, meta_2.getStreamId(), start.plusMonths(1), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setSourceId("b");
+		filter.setMostRecent(true);
+		filter.setAggregation(Aggregation.Month);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+
+		Datum d = datumList.get(0);
+		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
+		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusMonths(3 * 3 + 1).toInstant()));
 	}
 
 }
