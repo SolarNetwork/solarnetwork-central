@@ -31,7 +31,7 @@ WITH s AS (
 		datum.read_a
 	FROM s
 	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
-	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
+	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
 	
 	-- trailing partial agg	
@@ -43,7 +43,7 @@ WITH s AS (
 			ORDER BY datum.ts_start)).*
 	FROM s
 	INNER JOIN solardatm.agg_datm_hourly datum ON datum.stream_id = s.stream_id
-	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
+	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
 	GROUP BY datum.stream_id, date_trunc('day', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 	HAVING COUNT(*) > 0

@@ -518,3 +518,20 @@ $$
 		AND (COALESCE(cardinality(sources), 0) < 1 OR meta.source_id = ANY(sources))
 	GROUP BY nlt.time_zone
 $$;
+
+
+/**
+ * Get a virtual stream ID for a given object and source ID combination.
+ *
+ * The returned UUID is a V5 variant using the URL namespace. The URL is created in the form
+ * `objid://obj/{OBJ_ID}/{SOURCE_ID}` where `{OBJ_ID}` and `{SOURCE_ID}` are placeholders
+ * for the corresponding values. Any leading `/` character is first stripped from the source ID.
+ *
+ * @param obj_id 		the object ID (e.g. node, location)
+ * @param source_id 	the source ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.virutal_stream_id(obj_id BIGINT, source_id TEXT)
+	RETURNS UUID LANGUAGE SQL IMMUTABLE STRICT AS
+$$
+	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' || obj_id || '/' || TRIM(LEADING '/' FROM source_id))
+$$;

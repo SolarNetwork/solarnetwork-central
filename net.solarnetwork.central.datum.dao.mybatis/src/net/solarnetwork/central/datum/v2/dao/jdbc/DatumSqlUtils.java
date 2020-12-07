@@ -34,12 +34,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -314,7 +316,7 @@ public final class DatumSqlUtils {
 	 * descriptors.
 	 * 
 	 * <p>
-	 * The default list of metadata sort keys uesd is:
+	 * The default list of metadata sort keys used is:
 	 * </p>
 	 * 
 	 * <ol>
@@ -635,9 +637,9 @@ public final class DatumSqlUtils {
 			}
 			buf.append("	ELSE s.").append(objName).append("_id\n");
 			buf.append("	END AS ").append(objName).append("_id\n");
-
 			buf.append(", COALESCE(array_position(?, s.").append(objName).append("_id), 0) AS ")
 					.append(objName).append("_rank");
+			paramCount += 1;
 		}
 		if ( combiningConfig == null || !combiningConfig.isWithSourceIds() ) {
 			buf.append(", s.source_id");
@@ -647,13 +649,14 @@ public final class DatumSqlUtils {
 			buf.append("\n, CASE\n");
 			for ( Iterator<String> iterator = objIdConfig.getIdSets().keySet().iterator(); iterator
 					.hasNext(); ) {
-				buf.append("	WHEN array_position(?, s.source_id) IS NOT NULL THEN ?\n");
+				buf.append("	WHEN array_position(?, s.source_id::TEXT) IS NOT NULL THEN ?\n");
 				paramCount += 2;
 				iterator.next();
 			}
 			buf.append("	ELSE s.source_id\n");
 			buf.append("	END AS source_id\n");
-			buf.append(", COALESCE(array_position(?, s.source_id), 0) AS source_rank");
+			buf.append(", COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank");
+			paramCount += 1;
 		}
 		return paramCount;
 	}
@@ -825,6 +828,28 @@ public final class DatumSqlUtils {
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
 		return locationMetadataFilterSql(filter, style, null, null, null, null,
+				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
+	}
+
+	/**
+	 * Generate SQL query to find location metadata.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param style
+	 *        the select style
+	 * @param combiningConfig
+	 *        an optional combining configuration to remap source/node IDs
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
+			CombiningConfig combiningConfig, StringBuilder buf) {
+		return locationMetadataFilterSql(filter, style, null, null, null, combiningConfig,
 				SQL_AT_STREAM_METADATA_TIME_ZONE, buf);
 	}
 
@@ -1016,6 +1041,70 @@ public final class DatumSqlUtils {
 	 */
 	public static int prepareDatumMetadataFilter(ObjectStreamCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		return prepareDatumMetadataFilter(filter, null, con, stmt, parameterOffset);
+	}
+
+	/**
+	 * Prepare a SQL query to find datum metadata.
+	 * 
+	 * <p>
+	 * The first parameter set If a location ID is provided on the filter, then
+	 * the filter is assumed to be for location metadata; otherwise node
+	 * metadata is assumed.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param combiningConfig
+	 *        an optional combining configuration to remap source/node IDs
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @see #whereDatumMetadata(DatumStreamCriteria, StringBuilder)
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
+	 *      PreparedStatement, int)
+	 */
+	public static int prepareDatumMetadataFilter(ObjectStreamCriteria filter,
+			CombiningConfig combiningConfig, Connection con, PreparedStatement stmt, int parameterOffset)
+			throws SQLException {
+		if ( combiningConfig != null && combiningConfig.isWithObjectIds() ) {
+			CombiningIdsConfig<Long> objIdConfig = combiningConfig
+					.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG);
+			List<Long> allIds = new ArrayList<>();
+			for ( Map.Entry<Long, Set<Long>> me : objIdConfig.getIdSets().entrySet() ) {
+				allIds.addAll(me.getValue());
+				Long[] ids = me.getValue().toArray(new Long[me.getValue().size()]);
+				Array array = con.createArrayOf("bigint", ids);
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+				stmt.setObject(++parameterOffset, me.getKey());
+			}
+			Array array = con.createArrayOf("bigint", allIds.toArray(new Long[allIds.size()]));
+			stmt.setArray(++parameterOffset, array);
+			array.free();
+		}
+		if ( combiningConfig != null && combiningConfig.isWithSourceIds() ) {
+			CombiningIdsConfig<String> sourceIdConfig = combiningConfig
+					.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG);
+			List<String> allIds = new ArrayList<>();
+			for ( Map.Entry<String, Set<String>> me : sourceIdConfig.getIdSets().entrySet() ) {
+				allIds.addAll(me.getValue());
+				String[] ids = me.getValue().toArray(new String[me.getValue().size()]);
+				Array array = con.createArrayOf("text", ids);
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+				stmt.setString(++parameterOffset, me.getKey());
+			}
+			Array array = con.createArrayOf("text", allIds.toArray(new String[allIds.size()]));
+			stmt.setArray(++parameterOffset, array);
+			array.free();
+		}
 		if ( filter != null ) {
 			if ( filter.getLocationId() != null ) {
 				Array array = con.createArrayOf("bigint", filter.getLocationIds());

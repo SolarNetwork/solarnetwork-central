@@ -36,6 +36,7 @@ import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -89,20 +90,34 @@ public class SelectDatum
 		return (aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0);
 	}
 
-	private void sqlCte(StringBuilder buf) {
+	private void sqlCte(StringBuilder buf, boolean ordered) {
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter,
-				filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
-						: DatumSqlUtils.MetadataSelectStyle.Minimum,
-				combine, buf);
+		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
+			DatumSqlUtils.locationMetadataFilterSql(filter,
+					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+							: DatumSqlUtils.MetadataSelectStyle.Minimum,
+					combine, buf);
+		} else {
+			DatumSqlUtils.nodeMetadataFilterSql(filter,
+					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+							: DatumSqlUtils.MetadataSelectStyle.Minimum,
+					combine, buf);
+		}
 		buf.append(")\n");
 		if ( combine != null ) {
 			buf.append(", s AS (\n");
-			buf.append("	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' ");
-			buf.append("|| node_id || '/' || TRIM(LEADING '/' FROM source_id)) AS vstream_id\n");
+			buf.append("	SELECT solardatm.virutal_stream_id(")
+					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(", source_id) AS vstream_id\n");
 			buf.append("	, *\n");
 			buf.append("	FROM rs\n");
 			buf.append(")\n");
+			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+				buf.append(", vs AS (\n");
+				buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, node_id, source_id\n");
+				buf.append("	FROM s\n");
+				buf.append(")\n");
+			}
 			buf.append(", datum AS (\n");
 		}
 	}
@@ -226,7 +241,7 @@ public class SelectDatum
 	}
 
 	private void sqlCore(StringBuilder buf, boolean ordered) {
-		sqlCte(buf);
+		sqlCte(buf, ordered);
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
@@ -236,7 +251,7 @@ public class SelectDatum
 			buf.append("SELECT datum.*\n");
 			buf.append("FROM datum\n");
 			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
-				buf.append("INNER JOIN s ON s.vstream_id = datum.stream_id\n");
+				buf.append("INNER JOIN vs ON vs.vstream_id = datum.stream_id\n");
 			}
 		}
 	}
@@ -251,7 +266,7 @@ public class SelectDatum
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, combine, con, stmt, p);
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
@@ -287,7 +302,7 @@ public class SelectDatum
 				// We use a specialized count query here because the actual query does a lot 
 				// of computation to produce minute-level aggregation. The 
 				// solardatm.count_datm_time_span_slots() function is designed to run faster.
-				sqlCte(buf);
+				sqlCte(buf, false);
 				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
 				buf.append("FROM s\n");
 				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(s.stream_id");

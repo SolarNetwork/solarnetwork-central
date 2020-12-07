@@ -17,7 +17,7 @@ WITH s AS (
 		datum.read_a
 	FROM s
 	INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
-	WHERE  datum.ts_start >= ? AT TIME ZONE s.time_zone
+	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
 		AND datum.ts_start < ? AT TIME ZONE s.time_zone
 )
 SELECT datum.*

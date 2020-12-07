@@ -47,6 +47,7 @@ import org.easymock.EasyMock;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
 import net.solarnetwork.central.domain.Aggregation;
@@ -146,6 +147,137 @@ public class SelectDatumPartialAggregateTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-pagg-year-month-full-nodes-sortTimeNodeSource.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_nodes_Year_Month_virtual_full() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+
+		// WHEN
+		String sql = new SelectDatumPartialAggregate(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-pagg-year-month-virtual-full-nodes.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_nodes_Year_Month_virtual_full() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V:a,b,c" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		// set virtual ID parameters
+		Long[] virtRealNodeIds = new Long[] { 1L, 2L, 3L };
+		Array virtRealNodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds))).andReturn(virtRealNodeIdsArray);
+		stmt.setArray(1, virtRealNodeIdsArray);
+		virtRealNodeIdsArray.free();
+		stmt.setObject(2, 100L);
+
+		// set read ID virtual ordering
+		Array virtRealNodeIdsOrderArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds)))
+				.andReturn(virtRealNodeIdsOrderArray);
+		stmt.setArray(3, virtRealNodeIdsOrderArray);
+		virtRealNodeIdsOrderArray.free();
+
+		String[] virtRealSourceIds = new String[] { "a", "b", "c" };
+		Array virtRealSourceIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
+				.andReturn(virtRealSourceIdsArray);
+		stmt.setArray(4, virtRealSourceIdsArray);
+		virtRealSourceIdsArray.free();
+		stmt.setString(5, "V");
+
+		Array virtRealSourceIdsOrderArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
+				.andReturn(virtRealSourceIdsOrderArray);
+		stmt.setArray(6, virtRealSourceIdsOrderArray);
+		virtRealSourceIdsOrderArray.free();
+
+		// set metadata parameters
+		Array nodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(7, nodeIdsArray);
+		nodeIdsArray.free();
+
+		// partial leading date parameters
+		stmt.setObject(8, filter.getLocalStartDate(), Types.TIMESTAMP);
+		stmt.setObject(9, filter.getLocalStartDate().with(ChronoField.MONTH_OF_YEAR, 1).plusYears(1),
+				Types.TIMESTAMP);
+
+		// main date parameters
+		stmt.setObject(10, LocalDateTime.of(2021, 1, 1, 0, 0), Types.TIMESTAMP);
+		stmt.setObject(11, LocalDateTime.of(2023, 1, 1, 0, 0), Types.TIMESTAMP);
+
+		// partial trailing date parameters
+		stmt.setObject(12, filter.getLocalEndDate().with(ChronoField.MONTH_OF_YEAR, 1), Types.TIMESTAMP);
+		stmt.setObject(13, filter.getLocalEndDate(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
+				virtRealSourceIdsOrderArray, nodeIdsArray);
+		PreparedStatement result = new SelectDatumPartialAggregate(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-pagg-year-month-virtual-full-nodes.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
+				virtRealSourceIdsOrderArray, nodeIdsArray);
+	}
+
+	@Test
+	public void sql_find_nodes_Year_Month_virtual_full_customSort() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Year);
+		filter.setPartialAggregation(Aggregation.Month);
+		filter.setNodeId(1L);
+		filter.setLocalStartDate(LocalDateTime.of(2020, 3, 1, 0, 0));
+		filter.setLocalEndDate(LocalDateTime.of(2023, 3, 1, 0, 0));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+		filter.setSorts(sorts("time", "node", "source"));
+
+		// WHEN
+		String sql = new SelectDatumPartialAggregate(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource(
+						"select-datum-pagg-year-month-virtual-full-nodes-sortTimeNodeSource.sql",
 						TestSqlResources.class, SQL_COMMENT));
 	}
 

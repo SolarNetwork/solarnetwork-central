@@ -27,6 +27,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equ
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -413,7 +414,7 @@ public class SelectDatumTests {
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
 		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
-		filter.setSourceIdMaps(new String[] { "V1:a,b,c" });
+		filter.setSourceIdMaps(new String[] { "V:a,b,c" });
 
 		// WHEN
 		String sql = new SelectDatum(filter).getSql();
@@ -423,6 +424,85 @@ public class SelectDatumTests {
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
 						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_daily_vids_nodeAndSources_localDates() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.Day);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+		filter.setSourceIdMaps(new String[] { "V:a,b,c" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		// set virtual ID parameters
+		Long[] virtRealNodeIds = new Long[] { 1L, 2L, 3L };
+		Array virtRealNodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds))).andReturn(virtRealNodeIdsArray);
+		stmt.setArray(1, virtRealNodeIdsArray);
+		virtRealNodeIdsArray.free();
+		stmt.setObject(2, 100L);
+
+		// set read ID virtual ordering
+		Array virtRealNodeIdsOrderArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(virtRealNodeIds)))
+				.andReturn(virtRealNodeIdsOrderArray);
+		stmt.setArray(3, virtRealNodeIdsOrderArray);
+		virtRealNodeIdsOrderArray.free();
+
+		String[] virtRealSourceIds = new String[] { "a", "b", "c" };
+		Array virtRealSourceIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
+				.andReturn(virtRealSourceIdsArray);
+		stmt.setArray(4, virtRealSourceIdsArray);
+		virtRealSourceIdsArray.free();
+		stmt.setString(5, "V");
+
+		Array virtRealSourceIdsOrderArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(virtRealSourceIds)))
+				.andReturn(virtRealSourceIdsOrderArray);
+		stmt.setArray(6, virtRealSourceIdsOrderArray);
+		virtRealSourceIdsOrderArray.free();
+
+		// set metadata parameters
+		Array nodeIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(7, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(8, sourceIdsArray);
+		sourceIdsArray.free();
+
+		// main date parameters
+		stmt.setTimestamp(9, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(10, Timestamp.from(filter.getEndDate()));
+
+		// WHEN
+		replay(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
+				virtRealSourceIdsOrderArray, nodeIdsArray, sourceIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
+				virtRealSourceIdsOrderArray, nodeIdsArray, sourceIdsArray);
 	}
 
 	@Test

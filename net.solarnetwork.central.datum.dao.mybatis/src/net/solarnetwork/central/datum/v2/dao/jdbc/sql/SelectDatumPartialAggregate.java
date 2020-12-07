@@ -36,9 +36,11 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -61,6 +63,7 @@ public class SelectDatumPartialAggregate
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
+	private final CombiningConfig combine;
 	private final PartialAggregationInterval partialInterval;
 	private final List<DatumCriteria> intervalFilters;
 
@@ -118,6 +121,7 @@ public class SelectDatumPartialAggregate
 			throw new IllegalArgumentException(format(
 					"%s partial aggregation is too small to use with Year aggregation.", partial));
 		}
+		this.combine = CombiningConfig.configFromCriteria(filter);
 		this.partialInterval = new PartialAggregationInterval(aggregation, partial, start, end);
 		if ( partialInterval.getIntervals().isEmpty() ) {
 			throw new IllegalArgumentException("Invalid date range for partial aggregation.");
@@ -132,9 +136,30 @@ public class SelectDatumPartialAggregate
 	}
 
 	private void sqlCte(StringBuilder buf) {
-		buf.append("WITH s AS (\n");
-		DatumSqlUtils.nodeMetadataFilterSql(filter, DatumSqlUtils.MetadataSelectStyle.WithZone, buf);
+		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
+		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
+			DatumSqlUtils.locationMetadataFilterSql(filter, DatumSqlUtils.MetadataSelectStyle.WithZone,
+					combine, buf);
+		} else {
+			DatumSqlUtils.nodeMetadataFilterSql(filter, DatumSqlUtils.MetadataSelectStyle.WithZone,
+					combine, buf);
+		}
 		buf.append(")\n");
+		if ( combine != null ) {
+			buf.append(", s AS (\n");
+			buf.append("	SELECT solardatm.virutal_stream_id(")
+					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(", source_id) AS vstream_id\n");
+			buf.append("	, *\n");
+			buf.append("	FROM rs\n");
+			buf.append(")\n");
+			if ( DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+				buf.append(", vs AS (\n");
+				buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, node_id, source_id\n");
+				buf.append("	FROM s\n");
+				buf.append(")\n");
+			}
+		}
 	}
 
 	private static String sqlAgg(Aggregation agg) {
@@ -155,7 +180,11 @@ public class SelectDatumPartialAggregate
 
 	private void sqlSelect(DatumCriteria filter, StringBuilder buf) {
 		buf.append("SELECT ");
-		buf.append("datum.stream_id,\n");
+		if ( combine != null ) {
+			buf.append("s.vstream_id AS stream_id,\n");
+		} else {
+			buf.append("datum.stream_id,\n");
+		}
 		if ( filter.getAggregation() == aggregation && aggregation != Aggregation.Year ) {
 			// main agg: direct results
 			buf.append("datum.ts_start AS ts,\n");
@@ -205,8 +234,13 @@ public class SelectDatumPartialAggregate
 				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
 		buf.append("WHERE").append(where.substring(4));
 		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
-			buf.append("GROUP BY datum.stream_id, ");
-			buf.append("date_trunc('").append(sqlAgg(aggregation))
+			buf.append("GROUP BY ");
+			if ( combine != null ) {
+				buf.append("s.vstream_id");
+			} else {
+				buf.append("datum.stream_id");
+			}
+			buf.append(", date_trunc('").append(sqlAgg(aggregation))
 					.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 			// partial aggregation can produce NULL output; omit those
 			buf.append("HAVING COUNT(*) > 0\n");
@@ -254,7 +288,13 @@ public class SelectDatumPartialAggregate
 		if ( !DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
 			return;
 		}
-		buf.append("INNER JOIN s ON s.stream_id = datum.stream_id\n");
+		buf.append("INNER JOIN ");
+		if ( combine != null ) {
+			buf.append("vs ON vs.v");
+		} else {
+			buf.append("s ON s.");
+		}
+		buf.append("stream_id = datum.stream_id\n");
 	}
 
 	@Override
@@ -268,7 +308,7 @@ public class SelectDatumPartialAggregate
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, combine, con, stmt, p);
 		for ( DatumCriteria intervalFilter : intervalFilters ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(intervalFilter, con, stmt, p);
 		}

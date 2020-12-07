@@ -6,18 +6,22 @@ WITH rs AS (
 			END AS node_id
 		, COALESCE(array_position(?, s.node_id), 0) AS node_rank
 		, CASE
-			WHEN array_position(?, s.source_id) IS NOT NULL THEN ?
+			WHEN array_position(?, s.source_id::TEXT) IS NOT NULL THEN ?
 			ELSE s.source_id
 			END AS source_id
-		, COALESCE(array_position(?, s.source_id), 0) AS source_rank
+		, COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank
 	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
 		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
 )
 , s AS (
-	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' || node_id || '/' || TRIM(LEADING '/' FROM source_id)) AS vstream_id
-	, *
+	SELECT solardatm.virutal_stream_id(node_id, source_id) AS vstream_id
+		, *
 	FROM rs
+)
+, vs AS (
+	SELECT DISTINCT ON (vstream_id) vstream_id, node_id, source_id
+	FROM s
 )
 , datum AS (
 	SELECT s.vstream_id AS stream_id,
@@ -33,5 +37,5 @@ WITH rs AS (
 )
 SELECT datum.*
 FROM datum
-INNER JOIN s ON s.vstream_id = datum.stream_id
+INNER JOIN vs ON vs.vstream_id = datum.stream_id
 ORDER BY ts, node_id, source_id

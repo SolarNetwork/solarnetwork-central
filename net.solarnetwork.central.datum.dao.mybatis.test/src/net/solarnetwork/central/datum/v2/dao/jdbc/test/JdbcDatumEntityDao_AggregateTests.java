@@ -27,6 +27,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
@@ -690,6 +691,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setSorts(sorts("time", "node"));
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
+		log.debug("Got combined year agg results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+
 		assertThat("Results available", results, notNullValue());
 		assertThat("2x years per combined streams", results.getTotalResults(), equalTo(2L));
 		assertThat("2x years per combined streams", results.getReturnedResultCount(), equalTo(2));
@@ -702,19 +706,19 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertAggregateDatum("Year 1", data.get(0),
 				new AggregateDatumEntity(virtualStreamId, start.atZone(ZoneOffset.UTC).toInstant(),
 						Aggregation.Year,
-						propertiesOf(decimalArray("1.3", "3.1"), decimalArray("600"), null, null),
+						propertiesOf(decimalArray("1.3", "3.1"), decimalArray("1200"), null, null),
 						statisticsOf(
-								new BigDecimal[][] { decimalArray("18", "1.1", "3.3"),
-										decimalArray("18", "2.0", "7.3") },
-								new BigDecimal[][] { decimalArray("100", "403", "303") })));
+								new BigDecimal[][] { decimalArray("36", "1.1", "3.3"),
+										decimalArray("36", "2.0", "7.3") },
+								new BigDecimal[][] { decimalArray("100", "403", "606") })));
 		assertAggregateDatum("Year 2", data.get(1),
 				new AggregateDatumEntity(virtualStreamId,
 						start.plusYears(1).atZone(ZoneOffset.UTC).toInstant(), Aggregation.Year,
-						propertiesOf(decimalArray("1.65", "6.6"), decimalArray("2200"), null, null),
+						propertiesOf(decimalArray("1.65", "6.6"), decimalArray("4400"), null, null),
 						statisticsOf(
-								new BigDecimal[][] { decimalArray("24", "1.4", "3.7"),
-										decimalArray("24", "2.3", "7.7") },
-								new BigDecimal[][] { decimalArray("403", "821", "418") })));
+								new BigDecimal[][] { decimalArray("48", "1.4", "3.7"),
+										decimalArray("48", "2.3", "7.7") },
+								new BigDecimal[][] { decimalArray("403", "821", "836") })));
 	}
 
 }
