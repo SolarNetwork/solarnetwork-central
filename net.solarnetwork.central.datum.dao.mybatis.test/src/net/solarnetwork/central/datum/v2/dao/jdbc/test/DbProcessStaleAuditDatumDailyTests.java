@@ -117,7 +117,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		for ( int i = 0; i < 8; i++ ) {
 			long p = (i + 1) * 2L;
 			long q = (i + 1) * 100L;
-			AuditDatumEntity audit = AuditDatumEntity.hourlyAuditDatum(streamId,
+			AuditDatumEntity audit = AuditDatumEntity.ioAuditDatum(streamId,
 					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
 			hourlyAudits.add(audit);
 		}

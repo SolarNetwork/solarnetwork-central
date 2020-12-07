@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.accumulativeAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.dailyAuditDatum;
-import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.hourlyAuditDatum;
+import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.monthlyAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.accumulativeAuditDatumRollup;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup.hourlyAuditDatumRollup;
@@ -111,7 +111,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> audits = new ArrayList<>();
 		for ( int i = 0; i < count; i++ ) {
 			ZonedDateTime h = start.plusHours(i * hourStep);
-			audits.add(hourlyAuditDatum(streamId, h.toInstant(), 60L, 100L, 5L));
+			audits.add(ioAuditDatum(streamId, h.toInstant(), 60L, 100L, 5L));
 			hours.add(h.toInstant());
 
 			Instant d = h.truncatedTo(ChronoUnit.DAYS).toInstant();

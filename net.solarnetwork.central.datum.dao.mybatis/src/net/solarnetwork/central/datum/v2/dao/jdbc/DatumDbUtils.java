@@ -1760,7 +1760,11 @@ public final class DatumDbUtils {
 	}
 
 	/**
-	 * Get all available aggregate datum records.
+	 * Get all available audit datum records.
+	 * 
+	 * <p>
+	 * For I/O audit records, use the {@code Hour} aggregation kind.
+	 * </p>
 	 * 
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
@@ -1790,7 +1794,7 @@ public final class DatumDbUtils {
 
 			default:
 				tableName = "aud_datm_io";
-				mapper = AuditDatumHourlyEntityRowMapper.INSTANCE;
+				mapper = AuditDatumIoEntityRowMapper.INSTANCE;
 		}
 		return jdbcTemplate.query(
 				String.format("SELECT * FROM solardatm.%s ORDER BY stream_id, ts_start", tableName),

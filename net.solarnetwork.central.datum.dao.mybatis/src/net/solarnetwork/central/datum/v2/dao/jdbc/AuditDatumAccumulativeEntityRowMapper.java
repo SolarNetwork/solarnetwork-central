@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuditDatumHourlyEntityRowMapper.java - 3/11/2020 1:36:39 pm
+ * AuditDatumAccumulativeEntityRowMapper.java - 3/11/2020 1:36:39 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.dao.mybatis.test;
 
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -106,69 +105,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 			return Collections.emptyMap();
 		}
 		return propCounts;
-	}
-
-	@Test
-	public void storeNewCreatesHourAuditRecord() {
-		storeNew();
-		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(lastDatum);
-		assertThat("Audit counts", propCounts,
-				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 3)));
-	}
-
-	@Test
-	public void storeUpdateModifiesHourAuditRecord() {
-		DateTime now = new DateTime();
-		GeneralNodeDatum datum = dao.get(dao.store(getTestInstance(now, TEST_NODE_ID, TEST_SOURCE_ID)));
-
-		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(datum);
-		assertThat("Audit counts", propCounts,
-				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 3)));
-
-		// re-store the same datum, but with one new property added
-		GeneralNodeDatum updated = getTestInstance(now, TEST_NODE_ID, TEST_SOURCE_ID);
-		updated.getSamples().putAccumulatingSampleValue("just.one.more.after.dinner.mint", 1);
-		dao.store(updated);
-
-		// now datum_count should STILL be 1 because this tracks number CREATED only
-		// while prop_count INCREMENTS for every insert AND update
-		propCounts = getAuditDatumHourlyPropCounts(datum);
-		assertThat("Audit counts", propCounts,
-				allOf(hasEntry("datum_count", (Object) 1), hasEntry("prop_count", (Object) 7)));
-	}
-
-	@Test
-	public void storeMultiWithinHourUpdatesHourAuditRecord() {
-		final DateTime now = new DateTime();
-
-		GeneralNodeDatum datum1 = new GeneralNodeDatum();
-		datum1.setCreated(new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC));
-		datum1.setPosted(now);
-		datum1.setNodeId(TEST_NODE_ID);
-		datum1.setSourceId(TEST_SOURCE_ID);
-		datum1.setSampleJson("{\"a\":{\"watt_hours\":0}, \"t\":[\"foo\"]}");
-		dao.store(datum1);
-		lastDatum = datum1;
-
-		GeneralNodeDatum datum2 = new GeneralNodeDatum();
-		datum2.setCreated(datum1.getCreated().plusMinutes(20));
-		datum2.setPosted(now);
-		datum2.setNodeId(TEST_NODE_ID);
-		datum2.setSourceId(TEST_SOURCE_ID);
-		datum2.setSampleJson("{\"a\":{\"watt_hours\":5}}");
-		dao.store(datum2);
-
-		GeneralNodeDatum datum3 = new GeneralNodeDatum();
-		datum3.setCreated(datum2.getCreated().plusMinutes(20));
-		datum3.setPosted(now);
-		datum3.setNodeId(TEST_NODE_ID);
-		datum3.setSourceId(TEST_SOURCE_ID);
-		datum3.setSampleJson("{\"a\":{\"watt_hours\":10}}");
-		dao.store(datum3);
-
-		Map<String, Object> propCounts = getAuditDatumHourlyPropCounts(lastDatum);
-		assertThat("Audit counts", propCounts,
-				allOf(hasEntry("datum_count", (Object) 3), hasEntry("prop_count", (Object) 4)));
 	}
 
 	@Test

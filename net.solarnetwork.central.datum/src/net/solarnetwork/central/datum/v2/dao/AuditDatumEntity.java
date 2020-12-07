@@ -94,7 +94,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	 *        the datum query count
 	 * @return the audit datum
 	 */
-	public static AuditDatumEntity hourlyAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
+	public static AuditDatumEntity ioAuditDatum(UUID streamId, Instant timestamp, Long datumCount,
 			Long datumPropertyCount, Long datumQueryCount) {
 		return new AuditDatumEntity(streamId, timestamp, Aggregation.Hour, datumCount, null, null, null,
 				datumPropertyCount, datumQueryCount);

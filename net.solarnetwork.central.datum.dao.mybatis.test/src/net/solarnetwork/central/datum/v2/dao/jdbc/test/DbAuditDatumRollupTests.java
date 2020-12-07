@@ -139,7 +139,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long q = (i + 1) * 100L;
 			propCount += p;
 			datumQueryCount += q;
-			AuditDatumEntity audit = AuditDatumEntity.hourlyAuditDatum(streamId,
+			AuditDatumEntity audit = AuditDatumEntity.ioAuditDatum(streamId,
 					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
 			hourlyAudits.add(audit);
 		}
