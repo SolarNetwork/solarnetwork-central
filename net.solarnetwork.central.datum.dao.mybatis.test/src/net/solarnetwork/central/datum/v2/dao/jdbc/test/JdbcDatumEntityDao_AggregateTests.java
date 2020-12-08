@@ -744,6 +744,44 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	}
 
 	@Test
+	public void find_hour_nodeAndSource_absoluteDates() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta_2 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 2L, "b");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Duration freq = Duration.ofHours(3);
+		insertDatum(Aggregation.Hour, meta_1.getStreamId(), start, freq, 4);
+		insertDatum(Aggregation.Hour, meta_2.getStreamId(), start.plusHours(1), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(2L);
+		filter.setSourceId("b");
+		filter.setAggregation(Aggregation.Hour);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(7).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		for ( int i = 0; i < 2; i++ ) {
+			Datum d = datumList.get(i);
+			assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
+			assertThat("Timestamp", d.getTimestamp(), equalTo(start.plusHours(i * 3 + 1).toInstant()));
+		}
+	}
+
+	@Test
 	public void find_hour_source_mostRecent() {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
