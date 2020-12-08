@@ -117,7 +117,7 @@ public class SelectDatum
 				buf.append("	FROM s\n");
 				buf.append(")\n");
 			}
-			buf.append(", datum AS (\n");
+			buf.append(", d AS (\n");
 		}
 	}
 
@@ -142,20 +142,27 @@ public class SelectDatum
 			buf.append("datum.ts,\n");
 			buf.append("datum.received,\n");
 		}
-		buf.append("datum.data_i,\n");
-		buf.append("datum.data_a,\n");
-		buf.append("datum.data_s,\n");
-		buf.append("datum.data_t");
-		if ( aggregation != Aggregation.None ) {
-			buf.append(",\ndatum.stat_i,\n");
-			if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
-				// reading data not available for minute aggregation
-				buf.append("NULL::BIGINT[][] AS read_a\n");
-			} else {
-				buf.append("datum.read_a\n");
-			}
+		if ( combine != null && isMinuteAggregation() ) {
+			buf.append("(solardatm.rollup_agg_data(\n");
+			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
+			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
+			buf.append("\tORDER BY datum.ts_start)).*\n");
 		} else {
-			buf.append("\n");
+			buf.append("datum.data_i,\n");
+			buf.append("datum.data_a,\n");
+			buf.append("datum.data_s,\n");
+			buf.append("datum.data_t");
+			if ( aggregation != Aggregation.None ) {
+				buf.append(",\ndatum.stat_i,\n");
+				if ( isMinuteAggregation() ) {
+					// reading data not available for minute aggregation
+					buf.append("NULL::BIGINT[][] AS read_a\n");
+				} else {
+					buf.append("datum.read_a\n");
+				}
+			} else {
+				buf.append("\n");
+			}
 		}
 	}
 
@@ -237,7 +244,11 @@ public class SelectDatum
 		sqlFrom(buf);
 		sqlWhere(buf);
 		if ( combine != null ) {
+			if ( isMinuteAggregation() ) {
+				buf.append("	GROUP BY s.vstream_id, ts\n");
+			}
 			buf.append(")\n");
+			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
 			buf.append("SELECT datum.*\n");
 			buf.append("FROM datum\n");
 			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {

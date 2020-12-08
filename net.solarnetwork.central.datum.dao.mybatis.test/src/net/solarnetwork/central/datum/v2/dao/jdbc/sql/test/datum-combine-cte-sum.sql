@@ -15,7 +15,6 @@
 	WINDOW slot AS (PARTITION BY d.stream_id, d.ts_start, d.names_i[p.idx] ORDER BY d.obj_rank, d.source_rank RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	ORDER BY d.stream_id, d.ts_start, d.names_i[p.idx], d.obj_rank, d.source_rank
 )
-
 -- calculate instantaneous statistics
 , di AS (
 	SELECT
@@ -28,7 +27,6 @@
 	GROUP BY stream_id, ts_start, pname
 	ORDER BY stream_id, ts_start, pname
 )
-
 -- join property data back into arrays; no stat_i for virtual stream
 , di_ary AS (
 	SELECT
@@ -40,8 +38,6 @@
 	GROUP BY stream_id, ts_start
 	ORDER BY stream_id, ts_start
 )
-
-
 -- calculate accumulating values per date + property NAME (to support joining different streams with different index orders)
 -- ordered by object/source ranking defined by query metadata; assume names are unique per stream
 , wa AS (
@@ -60,7 +56,6 @@
 	WINDOW slot AS (PARTITION BY d.stream_id, d.ts_start, d.names_a[p.idx] ORDER BY d.obj_rank, d.source_rank RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	ORDER BY d.stream_id, d.ts_start, d.names_a[p.idx], d.obj_rank, d.source_rank
 )
-
 -- calculate accumulating statistics
 , da AS (
 	SELECT
@@ -73,7 +68,6 @@
 	GROUP BY stream_id, ts_start, pname
 	ORDER BY stream_id, ts_start, pname
 )
-
 -- join property data back into arrays; only read_a.diff for virtual stream
 , da_ary AS (
 	SELECT
@@ -88,15 +82,17 @@
 	GROUP BY stream_id, ts_start
 	ORDER BY stream_id, ts_start
 )
-SELECT
-	  di_ary.stream_id
-	, di_ary.data_i
-	, da_ary.data_a
-	, NULL::BIGINT[] AS data_s
-	, NULL::TEXT[] AS data_t
-	, NULL::BIGINT[][] AS stat_i
-	, da_ary.read_a
-	, di_ary.names_i
-	, da_ary.names_a
-FROM di_ary, da_ary
-WHERE data_i IS NOT NULL OR data_a IS NOT NULL
+, datum AS (
+	SELECT
+		  di_ary.stream_id
+		, di_ary.data_i
+		, da_ary.data_a
+		, NULL::BIGINT[] AS data_s
+		, NULL::TEXT[] AS data_t
+		, NULL::BIGINT[][] AS stat_i
+		, da_ary.read_a
+		, di_ary.names_i
+		, da_ary.names_a
+	FROM di_ary, da_ary
+	WHERE data_i IS NOT NULL OR data_a IS NOT NULL
+)
