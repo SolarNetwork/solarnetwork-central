@@ -63,7 +63,7 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter must be provided.");
 		}
-		return DatumSqlUtils.executeFilterQuery(jdbcTemplate, filter, sql,
+		return DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, sql,
 				AuditDatumEntityRollupRowMapper.INSTANCE);
 	}
 

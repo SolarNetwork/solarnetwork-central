@@ -55,7 +55,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -110,7 +110,7 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 
 		@Override
 		public MissingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-			UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+			UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 			Instant ts = rs.getTimestamp(2).toInstant();
 			return new MissingDatum(streamId, ts, rs.getString(3));
 		}

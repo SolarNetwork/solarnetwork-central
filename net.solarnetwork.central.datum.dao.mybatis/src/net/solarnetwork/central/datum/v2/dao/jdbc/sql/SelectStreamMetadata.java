@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.STREAM_METADATA_SORT_KEY_MAPPING;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +32,6 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.util.Cachable;
 
 /**

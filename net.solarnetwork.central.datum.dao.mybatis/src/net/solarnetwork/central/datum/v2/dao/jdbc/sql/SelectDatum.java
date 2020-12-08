@@ -23,8 +23,8 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.orderBySorts;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils.timeColumnName;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.timeColumnName;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,7 +35,6 @@ import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorPro
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 
@@ -128,36 +127,35 @@ public class SelectDatum
 	}
 
 	private void sqlColumns(StringBuilder buf) {
-		if ( combine == null ) {
+		if ( combine != null ) {
+			buf.append("s.vstream_id AS stream_id,\n");
+			buf.append("s.obj_rank,\n");
+			buf.append("s.source_rank,\n");
+			buf.append("s.names_i,\n");
+			buf.append("s.names_a,\n");
+		} else {
 			buf.append("datum.stream_id,\n");
-			if ( aggregation != Aggregation.None ) {
-				buf.append("datum.ts_start AS ts,\n");
+		}
+		if ( aggregation != Aggregation.None ) {
+			buf.append("datum.ts_start AS ts,\n");
+		} else {
+			buf.append("datum.ts,\n");
+			buf.append("datum.received,\n");
+		}
+		buf.append("datum.data_i,\n");
+		buf.append("datum.data_a,\n");
+		buf.append("datum.data_s,\n");
+		buf.append("datum.data_t");
+		if ( aggregation != Aggregation.None ) {
+			buf.append(",\ndatum.stat_i,\n");
+			if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
+				// reading data not available for minute aggregation
+				buf.append("NULL::BIGINT[][] AS read_a\n");
 			} else {
-				buf.append("datum.ts,\n");
-				buf.append("datum.received,\n");
-			}
-			buf.append("datum.data_i,\n");
-			buf.append("datum.data_a,\n");
-			buf.append("datum.data_s,\n");
-			buf.append("datum.data_t");
-			if ( aggregation != Aggregation.None ) {
-				buf.append(",\ndatum.stat_i,\n");
-				if ( aggregation.compareLevel(Aggregation.Hour) < 0 ) {
-					// reading data not available for minute aggregation
-					buf.append("NULL::BIGINT[][] AS read_a\n");
-				} else {
-					buf.append("datum.read_a\n");
-				}
-			} else {
-				buf.append("\n");
+				buf.append("datum.read_a\n");
 			}
 		} else {
-			buf.append("s.vstream_id AS stream_id,\n");
-			buf.append("datum.ts_start AS ts,\n");
-			buf.append("(solardatm.rollup_agg_data(\n");
-			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
-			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
-			buf.append("\tORDER BY datum.ts_start)).*\n");
+			buf.append("\n");
 		}
 	}
 
@@ -217,13 +215,6 @@ public class SelectDatum
 		}
 	}
 
-	private void sqlGroup(StringBuilder buf) {
-		if ( combine == null ) {
-			return;
-		}
-		buf.append("GROUP BY s.vstream_id, ts\n");
-	}
-
 	private void sqlOrderBy(StringBuilder buf) {
 		StringBuilder order = new StringBuilder();
 		int idx = 2;
@@ -245,7 +236,6 @@ public class SelectDatum
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
-		sqlGroup(buf);
 		if ( combine != null ) {
 			buf.append(")\n");
 			buf.append("SELECT datum.*\n");

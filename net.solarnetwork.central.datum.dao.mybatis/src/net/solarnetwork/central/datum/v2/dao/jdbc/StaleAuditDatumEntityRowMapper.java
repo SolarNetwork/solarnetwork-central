@@ -56,7 +56,7 @@ public class StaleAuditDatumEntityRowMapper implements RowMapper<StaleAuditDatum
 
 	@Override
 	public StaleAuditDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		String aggKind = rs.getString(3);
 		Instant created = rs.getTimestamp(4).toInstant();

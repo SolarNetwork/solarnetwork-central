@@ -59,7 +59,7 @@ public class AuditDatumMonthlyEntityRowMapper implements RowMapper<AuditDatum> {
 
 	@Override
 	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		boolean monthPresent = rs.getBoolean(8);
 		return AuditDatumEntity.monthlyAuditDatum(streamId, ts, rs.getLong(5), rs.getLong(6),

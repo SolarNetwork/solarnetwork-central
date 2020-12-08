@@ -86,7 +86,7 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	@Override
 	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		Aggregation agg = Aggregation.forKey(rs.getString(3));
 		Object objId = rs.getObject(4);

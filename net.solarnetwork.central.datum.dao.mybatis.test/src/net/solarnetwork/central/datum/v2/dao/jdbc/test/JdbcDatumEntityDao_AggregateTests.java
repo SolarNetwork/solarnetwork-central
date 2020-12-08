@@ -38,6 +38,7 @@ import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
@@ -74,6 +75,7 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -126,7 +128,9 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 					DatumProperties.propertiesOf(
 							new BigDecimal[] { BigDecimal.valueOf(Math.random() * 1000000) },
 							new BigDecimal[] { BigDecimal.valueOf(i + 1) }, null, null),
-					null);
+					DatumPropertiesStatistics.statisticsOf(
+							new BigDecimal[][] { decimalArray("6", "0", "100") }, new BigDecimal[][] {
+									decimalArray(String.valueOf(i), String.valueOf(i + 10), "10") }));
 			data.add(d);
 			ts = ts.plus(frequency);
 		}
@@ -813,6 +817,100 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		Datum d = datumList.get(0);
 		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
 		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusHours(3 * 3 + 1).toInstant()));
+	}
+
+	@Test
+	public void find_hour_nodeAndSource_localDates_combinedSum() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null, null);
+		ObjectDatumStreamMetadata meta_2 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "b", new String[] { "w" }, new String[] { "wh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Duration freq = Duration.ofHours(3);
+		insertDatum(Aggregation.Hour, meta_1.getStreamId(), start, freq, 4);
+		insertDatum(Aggregation.Hour, meta_2.getStreamId(), start, freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a", "b" });
+		filter.setAggregation(Aggregation.Hour);
+		filter.setLocalStartDate(start.plusHours(3).toLocalDateTime());
+		filter.setLocalEndDate(start.plusHours(9).toLocalDateTime());
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "0:1,2" });
+		filter.setSourceIdMaps(new String[] { "V:a,b" });
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		log.debug("Got sum results:\n{}",
+				datumList.stream().map(Object::toString).collect(joining("\n")));
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		UUID vStreamId = DatumUtils.virtualStreamId(0L, "V");
+		for ( int i = 0; i < 2; i++ ) {
+			Datum d = datumList.get(i);
+			assertThat("Stream ID ", d.getStreamId(), equalTo(vStreamId));
+			assertThat("Timestamp", d.getTimestamp(), equalTo(start.plusHours(i * 3 + 3).toInstant()));
+			assertThat("Accumulation is sum", d.getProperties().getAccumulating(),
+					arrayContaining(decimalArray(String.valueOf((i + 2) * 2))));
+		}
+	}
+
+	@Test
+	public void find_hour_nodeAndSource_localDates_combinedDiff() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null, null);
+		ObjectDatumStreamMetadata meta_2 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 2L, "b", new String[] { "w" }, new String[] { "wh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Duration freq = Duration.ofHours(3);
+		insertDatum(Aggregation.Hour, meta_1.getStreamId(), start, freq, 4);
+
+		// start 2nd stream at offset so Diff combine doesn't result in 0
+		insertDatum(Aggregation.Hour, meta_2.getStreamId(), start.plusHours(3), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a", "b" });
+		filter.setAggregation(Aggregation.Hour);
+		filter.setLocalStartDate(start.plusHours(3).toLocalDateTime());
+		filter.setLocalEndDate(start.plusHours(9).toLocalDateTime());
+		filter.setCombiningType(CombiningType.Difference);
+		filter.setObjectIdMaps(new String[] { "0:1,2" });
+		filter.setSourceIdMaps(new String[] { "V:a,b" });
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		log.debug("Got sum results:\n{}",
+				datumList.stream().map(Object::toString).collect(joining("\n")));
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		UUID vStreamId = DatumUtils.virtualStreamId(0L, "V");
+		for ( int i = 0; i < 2; i++ ) {
+			Datum d = datumList.get(i);
+			assertThat("Stream ID ", d.getStreamId(), equalTo(vStreamId));
+			assertThat("Timestamp", d.getTimestamp(), equalTo(start.plusHours(i * 3 + 3).toInstant()));
+			assertThat("Accumulation is diff", d.getProperties().getAccumulating(),
+					arrayContaining(decimalArray(String.valueOf((i + 2) - (i + 1)))));
+		}
 	}
 
 	@Test

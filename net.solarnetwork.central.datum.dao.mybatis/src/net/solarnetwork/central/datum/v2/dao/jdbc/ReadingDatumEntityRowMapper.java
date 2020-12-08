@@ -99,7 +99,7 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 
 	@Override
 	public ReadingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Timestamp ts = rs.getTimestamp(2);
 		Timestamp tsEnd = rs.getTimestamp(3);
 		BigDecimal[] data_i = getArray(rs, 4);

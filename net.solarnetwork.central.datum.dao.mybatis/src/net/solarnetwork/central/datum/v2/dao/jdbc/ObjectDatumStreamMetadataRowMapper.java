@@ -86,7 +86,7 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 
 	@Override
 	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 

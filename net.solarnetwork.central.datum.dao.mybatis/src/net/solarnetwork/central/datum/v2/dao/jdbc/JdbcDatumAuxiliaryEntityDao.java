@@ -128,7 +128,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	@Override
 	public FilterResults<DatumAuxiliary, DatumAuxiliaryPK> findFiltered(DatumAuxiliaryCriteria filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
-		return DatumSqlUtils.executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
+		return DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 	}
 

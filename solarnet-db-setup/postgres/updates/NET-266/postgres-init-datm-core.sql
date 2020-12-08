@@ -88,6 +88,19 @@ CREATE TYPE solardatm.agg_data AS (
 );
 
 -- type to use in aggregate functions regardless of physical table
+-- like solardatm.agg_data but includes property names (e.g. for virtual streams)
+CREATE TYPE solardatm.agg_data_virt AS (
+	data_i		NUMERIC[],
+	data_a		NUMERIC[],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][],
+	names_i		TEXT[],
+	names_a		TEXT[]
+);
+
+-- type to use in aggregate functions regardless of physical table
 CREATE TYPE solardatm.agg_datm AS (
 	stream_id	UUID,
 	ts_start	TIMESTAMP WITH TIME ZONE,
@@ -97,6 +110,20 @@ CREATE TYPE solardatm.agg_datm AS (
 	data_t		TEXT[],
 	stat_i		NUMERIC[][],
 	read_a		NUMERIC[][]
+);
+
+-- type to use in aggregate functions regardless of physical table
+CREATE TYPE solardatm.agg_data_combined AS (
+	stream_id	UUID,
+	ts_start	TIMESTAMP WITH TIME ZONE,
+	data_i		NUMERIC[][],
+	data_a		NUMERIC[][],
+	data_s		TEXT[],
+	data_t		TEXT[],
+	stat_i		NUMERIC[][],
+	read_a		NUMERIC[][],
+	names_i		TEXT[],
+	names_a		TEXT[]
 );
 
 -- type to use in aggregate diff functions regardless of physical table

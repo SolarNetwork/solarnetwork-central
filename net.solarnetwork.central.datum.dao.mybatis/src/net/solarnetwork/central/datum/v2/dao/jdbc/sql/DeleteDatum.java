@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumSqlUtils;
 
 /**
  * Delete datum stream data matching an {@link ObjectStreamCriteria} filter.

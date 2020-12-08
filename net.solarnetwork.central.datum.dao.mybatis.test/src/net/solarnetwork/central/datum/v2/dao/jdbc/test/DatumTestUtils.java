@@ -27,19 +27,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -51,6 +45,7 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.util.ClassUtils;
 import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.NumberUtils;
 
@@ -111,35 +106,8 @@ public final class DatumTestUtils {
 	 *         if the resource cannot be loaded
 	 */
 	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz, Pattern skip) {
-		try (InputStream in = clazz.getResourceAsStream(resource)) {
-			if ( in == null ) {
-				throw new RuntimeException(
-						"Resource " + resource + " not found from class " + clazz.getName() + ".");
-			}
-			String txt = null;
-			if ( skip == null ) {
-				txt = FileCopyUtils.copyToString(new InputStreamReader(in, Charset.forName("UTF-8")));
-			} else {
-				StringBuilder buf = new StringBuilder(1024);
-				try (BufferedReader r = new BufferedReader(
-						new InputStreamReader(in, Charset.forName("UTF-8")))) {
-					while ( true ) {
-						String line = r.readLine();
-						if ( line == null ) {
-							break;
-						}
-						if ( skip.matcher(line).find() ) {
-							continue;
-						}
-						buf.append(line).append("\n");
-					}
-				}
-				txt = buf.toString();
-			}
-			return Matchers.equalToIgnoringWhiteSpace(txt);
-		} catch ( IOException e ) {
-			throw new RuntimeException("Error reading text resource [" + resource + "]", e);
-		}
+		String txt = ClassUtils.getResourceAsString(resource, clazz, skip);
+		return Matchers.equalToIgnoringWhiteSpace(txt);
 	}
 
 	/**

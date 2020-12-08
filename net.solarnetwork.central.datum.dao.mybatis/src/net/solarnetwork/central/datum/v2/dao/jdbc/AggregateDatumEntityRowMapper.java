@@ -155,7 +155,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 
 	@Override
 	public AggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		BigDecimal[] data_i = getArray(rs, 3);
 		BigDecimal[] data_a = getArray(rs, 4);

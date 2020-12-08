@@ -53,7 +53,7 @@ public class StaleFluxDatumRowMapper implements RowMapper<StaleFluxDatum> {
 
 	@Override
 	public StaleFluxDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumSqlUtils.getUuid(rs, 1);
+		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		String aggKind = rs.getString(2);
 		return new BasicStaleFluxDatum(streamId, Aggregation.forKey(aggKind));
 	}

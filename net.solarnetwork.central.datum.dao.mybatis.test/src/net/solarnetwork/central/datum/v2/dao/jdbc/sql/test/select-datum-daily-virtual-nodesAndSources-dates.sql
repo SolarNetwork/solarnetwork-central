@@ -21,15 +21,21 @@ WITH rs AS (
 )
 , datum AS (
 	SELECT s.vstream_id AS stream_id,
+		s.obj_rank,
+		s.source_rank,
+		s.names_i,
+		s.names_a,
 		datum.ts_start AS ts,
-		(solardatm.rollup_agg_data(
-			(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
-			ORDER BY datum.ts_start)).*
+		datum.data_i,
+		datum.data_a,
+		datum.data_s,
+		datum.data_t,
+		datum.stat_i,
+		datum.read_a
 	FROM s
 	INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 	WHERE datum.ts_start >= ?
 		AND datum.ts_start < ?
-	GROUP BY s.vstream_id, ts
 )
 SELECT datum.*
 FROM datum
