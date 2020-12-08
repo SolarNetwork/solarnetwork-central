@@ -152,12 +152,12 @@ public class SelectDatumPartialAggregate
 			buf.append("	, *\n");
 			buf.append("	FROM rs\n");
 			buf.append(")\n");
-			if ( DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
-				buf.append(", vs AS (\n");
-				buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, node_id, source_id\n");
-				buf.append("	FROM s\n");
-				buf.append(")\n");
-			}
+			buf.append(", vs AS (\n");
+			buf.append("	SELECT DISTINCT ON (vstream_id) vstream_id, ")
+					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(", source_id\n");
+			buf.append("	FROM s\n");
+			buf.append(")\n");
 		}
 	}
 
@@ -181,26 +181,42 @@ public class SelectDatumPartialAggregate
 		buf.append("SELECT ");
 		if ( combine != null ) {
 			buf.append("s.vstream_id AS stream_id,\n");
+			buf.append("	s.obj_rank,\n");
+			buf.append("	s.source_rank,\n");
+			buf.append("	s.names_i,\n");
+			buf.append("	s.names_a,\n");
 		} else {
 			buf.append("datum.stream_id,\n");
 		}
 		if ( filter.getAggregation() == aggregation && aggregation != Aggregation.Year ) {
 			// main agg: direct results
-			buf.append("datum.ts_start AS ts,\n");
-			buf.append("datum.data_i,\n");
-			buf.append("datum.data_a,\n");
-			buf.append("datum.data_s,\n");
-			buf.append("datum.data_t,\n");
-			buf.append("datum.stat_i,\n");
-			buf.append("datum.read_a\n");
+			buf.append("	datum.ts_start AS ts,\n");
+			buf.append("	datum.data_i,\n");
+			buf.append("	datum.data_a,\n");
+			buf.append("	datum.data_s,\n");
+			buf.append("	datum.data_t,\n");
+			buf.append("	datum.stat_i,\n");
+			buf.append("	datum.read_a\n");
 		} else {
 			// partial agg: dynamic rollup to main agg
-			buf.append("date_trunc('").append(sqlAgg(aggregation)).append(
+			if ( combine != null ) {
+				buf.append("	ds.ts,\n");
+				buf.append("	ds.data_i,\n");
+				buf.append("	ds.data_a,\n");
+				buf.append("	ds.data_s,\n");
+				buf.append("	ds.data_t,\n");
+				buf.append("	ds.stat_i,\n");
+				buf.append("	ds.read_a\n");
+				buf.append("FROM s\n");
+				buf.append("INNER JOIN (\n");
+				buf.append("	SELECT datum.stream_id,\n");
+			}
+			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
 					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
-			buf.append("(solardatm.rollup_agg_data(\n");
-			buf.append("\t(datum.data_i, datum.data_a, datum.data_s");
+			buf.append("	(solardatm.rollup_agg_data(\n");
+			buf.append("		(datum.data_i, datum.data_a, datum.data_s");
 			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
-			buf.append("\tORDER BY datum.ts_start)).*\n");
+			buf.append("		ORDER BY datum.ts_start)).*\n");
 		}
 	}
 
@@ -233,16 +249,13 @@ public class SelectDatumPartialAggregate
 				DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where);
 		buf.append("WHERE").append(where.substring(4));
 		if ( filter.getAggregation() != aggregation || aggregation == Aggregation.Year ) {
-			buf.append("GROUP BY ");
-			if ( combine != null ) {
-				buf.append("s.vstream_id");
-			} else {
-				buf.append("datum.stream_id");
-			}
-			buf.append(", date_trunc('").append(sqlAgg(aggregation))
+			buf.append("GROUP BY datum.stream_id, date_trunc('").append(sqlAgg(aggregation))
 					.append("', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 			// partial aggregation can produce NULL output; omit those
 			buf.append("HAVING COUNT(*) > 0\n");
+			if ( combine != null ) {
+				buf.append(") AS ds ON ds.stream_id = s.stream_id\n");
+			}
 		}
 	}
 
@@ -266,7 +279,7 @@ public class SelectDatumPartialAggregate
 		sqlCte(buf);
 
 		// write main queries in CTE
-		buf.append(", datum AS (\n");
+		buf.append(", ").append(combine != null ? "d" : "datum").append(" AS (\n");
 
 		boolean multi = false;
 		for ( DatumCriteria intervalFilter : intervalFilters ) {
@@ -280,6 +293,9 @@ public class SelectDatumPartialAggregate
 		}
 
 		buf.append(")\n");
+		if ( combine != null ) {
+			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
+		}
 		buf.append("SELECT datum.*\nFROM datum\n");
 	}
 

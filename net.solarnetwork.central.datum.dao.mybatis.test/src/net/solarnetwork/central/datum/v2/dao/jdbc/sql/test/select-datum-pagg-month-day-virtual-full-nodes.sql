@@ -43,15 +43,15 @@ WITH rs AS (
 	FROM s
 	INNER JOIN (
 		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+			date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
 			(solardatm.rollup_agg_data(
 				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 				ORDER BY datum.ts_start)).*
 		FROM s
-		INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
+		INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 		WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
 			AND datum.ts_start < ? AT TIME ZONE s.time_zone
-		GROUP BY datum.stream_id, date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
+		GROUP BY datum.stream_id, date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 		HAVING COUNT(*) > 0
 		) AS ds ON ds.stream_id = s.stream_id
 	
@@ -62,27 +62,17 @@ WITH rs AS (
 		s.source_rank,
 		s.names_i,
 		s.names_a,
-		ds.ts,
-		ds.data_i,
-		ds.data_a,
-		ds.data_s,
-		ds.data_t,
-		ds.stat_i,
-		ds.read_a
+		datum.ts_start AS ts,
+		datum.data_i,
+		datum.data_a,
+		datum.data_s,
+		datum.data_t,
+		datum.stat_i,
+		datum.read_a
 	FROM s
-	INNER JOIN (
-		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
-			(solardatm.rollup_agg_data(
-				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
-				ORDER BY datum.ts_start)).*
-		FROM s
-		INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
-		WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
-			AND datum.ts_start < ? AT TIME ZONE s.time_zone
-		GROUP BY datum.stream_id, date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
-		HAVING COUNT(*) > 0
-		) AS ds ON ds.stream_id = s.stream_id
+	INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
+	WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
+		AND datum.ts_start < ? AT TIME ZONE s.time_zone
 	
 	-- trailing partial agg	
 	UNION ALL
@@ -101,15 +91,15 @@ WITH rs AS (
 	FROM s
 	INNER JOIN (
 		SELECT datum.stream_id,
-			date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
+			date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,
 			(solardatm.rollup_agg_data(
 				(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data
 				ORDER BY datum.ts_start)).*
 		FROM s
-		INNER JOIN solardatm.agg_datm_monthly datum ON datum.stream_id = s.stream_id
+		INNER JOIN solardatm.agg_datm_daily datum ON datum.stream_id = s.stream_id
 		WHERE datum.ts_start >= ? AT TIME ZONE s.time_zone
 			AND datum.ts_start < ? AT TIME ZONE s.time_zone
-		GROUP BY datum.stream_id, date_trunc('year', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
+		GROUP BY datum.stream_id, date_trunc('month', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone
 		HAVING COUNT(*) > 0
 		) AS ds ON ds.stream_id = s.stream_id
 )
@@ -214,5 +204,4 @@ WITH rs AS (
 )
 SELECT datum.*
 FROM datum
-INNER JOIN vs ON vs.vstream_id = datum.stream_id
-ORDER BY ts, node_id, source_id
+ORDER BY datum.stream_id, ts

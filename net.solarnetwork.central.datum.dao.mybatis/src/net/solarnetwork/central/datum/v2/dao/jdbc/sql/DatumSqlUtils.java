@@ -633,8 +633,7 @@ public final class DatumSqlUtils {
 			}
 			buf.append("	ELSE s.").append(objName).append("_id\n");
 			buf.append("	END AS ").append(objName).append("_id\n");
-			buf.append(", COALESCE(array_position(?, s.").append(objName).append("_id), 0) AS ")
-					.append(objName).append("_rank");
+			buf.append(", COALESCE(array_position(?, s.").append(objName).append("_id), 0) AS obj_rank");
 			paramCount += 1;
 		}
 		if ( combiningConfig == null || !combiningConfig.isWithSourceIds() ) {
@@ -653,6 +652,10 @@ public final class DatumSqlUtils {
 			buf.append("	END AS source_id\n");
 			buf.append(", COALESCE(array_position(?, s.source_id::TEXT), 0) AS source_rank");
 			paramCount += 1;
+		}
+		if ( combiningConfig != null ) {
+			buf.append("\n, s.names_i\n");
+			buf.append(", s.names_a");
 		}
 		return paramCount;
 	}
