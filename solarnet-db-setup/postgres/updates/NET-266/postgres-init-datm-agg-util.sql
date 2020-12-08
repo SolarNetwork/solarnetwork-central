@@ -2,8 +2,6 @@
  * Aggregate datum rollup state transition function, to rollup aggregate datum into a higher-level
  * aggregate datum.
  *
- * @param start_ts the timestamp to assign to the output aggregate
- *
  * @see solardatm.rollup_agg_data_ffunc()
  */
 CREATE OR REPLACE FUNCTION solardatm.rollup_agg_data_sfunc(agg_state solardatm.agg_data, el solardatm.agg_data)
@@ -49,7 +47,6 @@ BEGIN
 		FROM di
 	)
 	-- calculate accumulating values per property
-	-- NOTE: read_a accumulation not supported as first/last calculation not implemented
 	, wa AS (
 		SELECT
 			  p.idx
