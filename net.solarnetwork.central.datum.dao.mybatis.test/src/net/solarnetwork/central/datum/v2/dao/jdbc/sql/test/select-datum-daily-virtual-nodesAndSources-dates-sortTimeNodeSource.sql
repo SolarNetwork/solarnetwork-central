@@ -129,20 +129,20 @@ WITH rs AS (
 )
 , datum AS (
 	SELECT
-		  vs.vstream_id AS stream_id
+		  COALESCE(di_ary.stream_id, da_ary.stream_id) AS stream_id
 		, COALESCE(di_ary.ts, da_ary.ts) AS ts
-		, solarcommon.first(di_ary.data_i) AS data_i
-		, solarcommon.first(da_ary.data_a) AS data_a
+		, di_ary.data_i
+		, da_ary.data_a
 		, NULL::BIGINT[] AS data_s
 		, NULL::TEXT[] AS data_t
 		, NULL::BIGINT[][] AS stat_i
-		, solarcommon.first(da_ary.read_a) AS read_a
-		, solarcommon.first(di_ary.names_i) AS names_i
-		, solarcommon.first(da_ary.names_a) AS names_a
-	FROM vs, di_ary, da_ary
-	GROUP BY vs.vstream_id, COALESCE(di_ary.ts, da_ary.ts)
+		, da_ary.read_a
+		, di_ary.names_i
+		, da_ary.names_a
+	FROM di_ary
+	FULL OUTER JOIN da_ary ON da_ary.stream_id = di_ary.stream_id AND da_ary.ts = di_ary.ts
 )
-SELECT datum.*
+SELECT datum.*, vs.node_id, vs.source_id
 FROM datum
 INNER JOIN vs ON vs.vstream_id = datum.stream_id
 ORDER BY ts, node_id, source_id

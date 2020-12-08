@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static java.util.stream.Collectors.toList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -35,6 +38,15 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
  * @since 2.8
  */
 public interface ObjectDatumStreamMetadataProvider {
+
+	/**
+	 * Get a collection of all the available stream IDs this result instance has
+	 * metadata available for.
+	 * 
+	 * @return the set of stream IDs that {@link #metadataForStreamId(UUID)} will
+	 *         return a value for, or {@literal null} it not known
+	 */
+	Collection<UUID> metadataStreamIds();
 
 	/**
 	 * Get stream metadata for a given stream ID.
@@ -71,6 +83,12 @@ public interface ObjectDatumStreamMetadataProvider {
 			throw new IllegalArgumentException("The mapping argument must not be null.");
 		}
 		return new ObjectDatumStreamMetadataProvider() {
+
+			@Override
+			public Collection<UUID> metadataStreamIds() {
+				return StreamSupport.stream(metadatas.spliterator(), false)
+						.map(ObjectDatumStreamMetadata::getStreamId).collect(toList());
+			}
 
 			@Override
 			public ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {

@@ -262,11 +262,11 @@ public class SelectDatum
 			}
 			buf.append(")\n");
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
-			buf.append("SELECT datum.*\n");
+			buf.append("SELECT datum.*, vs.")
+					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(", vs.source_id\n");
 			buf.append("FROM datum\n");
-			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
-				buf.append("INNER JOIN vs ON vs.vstream_id = datum.stream_id\n");
-			}
+			buf.append("INNER JOIN vs ON vs.vstream_id = datum.stream_id\n");
 		}
 	}
 

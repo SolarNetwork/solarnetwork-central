@@ -33,7 +33,7 @@ import net.solarnetwork.domain.Identity;
  * 
  * <p>
  * This result API is used when querying for datum streams. The results can
- * include datum from different streams; the {@link #metadataForStream(UUID)}
+ * include datum from different streams; the {@link #metadataForStreamId(UUID)}
  * method provides a way to access the metadata for the streams included in the
  * results.
  * </p>
@@ -48,7 +48,7 @@ public interface ObjectDatumStreamFilterResults<M extends Identity<K>, K> extend
 	 * Get a collection of all the available stream IDs this result instance has
 	 * metadata available for.
 	 * 
-	 * @return the set of stream IDs that {@link #metadataForStream(UUID)} will
+	 * @return the set of stream IDs that {@link #metadataForStreamId(UUID)} will
 	 *         return a value for
 	 */
 	Collection<UUID> metadataStreamIds();
@@ -66,6 +66,6 @@ public interface ObjectDatumStreamFilterResults<M extends Identity<K>, K> extend
 	 * @return the metadata, or {@literal null} if not available in these
 	 *         results
 	 */
-	ObjectDatumStreamMetadata metadataForStream(UUID streamId);
+	ObjectDatumStreamMetadata metadataForStreamId(UUID streamId);
 
 }

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils.getArray;
 import java.math.BigDecimal;
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -142,15 +142,6 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 				mapper = readingMode ? READING_HOUR_INSTANCE : HOUR_INSTANCE;
 		}
 		return mapper;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
-		Array a = rs.getArray(colNum);
-		if ( a == null ) {
-			return null;
-		}
-		return (T) a.getArray();
 	}
 
 	@Override

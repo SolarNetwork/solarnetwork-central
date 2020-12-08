@@ -156,7 +156,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
@@ -192,7 +192,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
@@ -228,7 +228,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
@@ -265,7 +265,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
@@ -305,7 +305,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
@@ -345,7 +345,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
@@ -385,7 +385,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
@@ -411,7 +411,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
@@ -442,7 +442,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
@@ -476,7 +476,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
@@ -507,7 +507,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Results from start to end returned", results.getTotalResults(), equalTo(3L));
@@ -541,7 +541,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for most recent returned", results.getTotalResults(), equalTo(1L));
@@ -572,7 +572,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
-		ObjectDatumStreamMetadata resultMeta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Result for year", results.getTotalResults(), equalTo(1L));
@@ -736,7 +736,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("36", "1.1", "3.3"),
 										decimalArray("36", "2.0", "7.3") },
-								new BigDecimal[][] { decimalArray("100", "403", "606") })));
+								new BigDecimal[][] { decimalArray(null, null, "606") })));
 		assertAggregateDatum("Year 2", data.get(1),
 				new AggregateDatumEntity(virtualStreamId,
 						start.plusYears(1).atZone(ZoneOffset.UTC).toInstant(), Aggregation.Year,
@@ -744,7 +744,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("48", "1.4", "3.7"),
 										decimalArray("48", "2.3", "7.7") },
-								new BigDecimal[][] { decimalArray("403", "821", "836") })));
+								new BigDecimal[][] { decimalArray(null, null, "836") })));
 	}
 
 	@Test

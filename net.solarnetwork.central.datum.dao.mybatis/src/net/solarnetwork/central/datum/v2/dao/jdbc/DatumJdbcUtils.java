@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -135,6 +136,30 @@ public class DatumJdbcUtils {
 				return rs.next() ? rs.getLong(1) : null;
 			}
 		});
+	}
+
+	/**
+	 * Get an array result column value.
+	 * 
+	 * @param <T>
+	 *        the expected array type
+	 * @param rs
+	 *        the result set
+	 * @param colNum
+	 *        the column number
+	 * @return the array
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @throws ClassCastException
+	 *         if a casting error occurs
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
+		Array a = rs.getArray(colNum);
+		if ( a == null ) {
+			return null;
+		}
+		return (T) a.getArray();
 	}
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * BasicDatumStreamFilterResults.java - 23/10/2020 10:13:55 am
+ * ProviderObjectDatumStreamFilterResults.java - 23/10/2020 10:13:55 am
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -23,30 +23,31 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 
 /**
- * Basic implementation of {@link DatumStreamFilterResults}.
+ * Implementation of {@link DatumStreamFilterResults} that delegates to a
+ * {@link ObjectDatumStreamMetadataProvider} for metadata information.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K>
-		extends BasicFilterResults<M, K> implements ObjectDatumStreamFilterResults<M, K> {
+public class ProviderObjectDatumStreamFilterResults<M extends Identity<K>, K>
+		extends BasicFilterResults<M, K>
+		implements ObjectDatumStreamFilterResults<M, K>, ObjectDatumStreamMetadataProvider {
 
-	private final Map<UUID, ObjectDatumStreamMetadata> streamMetadata;
+	private final ObjectDatumStreamMetadataProvider metadataProvider;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param streamMetadata
-	 *        the stream metadata to associate with the results
+	 * @param metadataProvider
+	 *        the stream metadata provider
 	 * @param results
 	 *        the results iterable
 	 * @param totalResults
@@ -56,10 +57,10 @@ public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K>
 	 * @param returnedResultCount
 	 *        the count of objects in {@code results}
 	 */
-	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
+	public ProviderObjectDatumStreamFilterResults(ObjectDatumStreamMetadataProvider metadataProvider,
 			Iterable<M> results, Long totalResults, int startingOffset, int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
-		this.streamMetadata = streamMetadata;
+		this.metadataProvider = metadataProvider;
 	}
 
 	/**
@@ -71,23 +72,30 @@ public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K>
 	 * from the number of items in {@code results}.
 	 * </p>
 	 * 
+	 * @param metadataProvider
+	 *        the stream metadata provider
 	 * @param results
 	 *        the results iterable
 	 */
-	public BasicObjectDatumStreamFilterResults(Map<UUID, ObjectDatumStreamMetadata> streamMetadata,
+	public ProviderObjectDatumStreamFilterResults(ObjectDatumStreamMetadataProvider metadataProvider,
 			Iterable<M> results) {
 		super(results);
-		this.streamMetadata = streamMetadata;
+		this.metadataProvider = metadataProvider;
 	}
 
 	@Override
 	public Collection<UUID> metadataStreamIds() {
-		return (streamMetadata != null ? streamMetadata.keySet() : Collections.emptySet());
+		return metadataProvider.metadataStreamIds();
 	}
 
 	@Override
 	public ObjectDatumStreamMetadata metadataForStreamId(UUID streamId) {
-		return (streamMetadata != null ? streamMetadata.get(streamId) : null);
+		return metadataProvider.metadataForStreamId(streamId);
+	}
+
+	@Override
+	public ObjectDatumStreamMetadata metadataForObjectSource(Long objectId, String sourceId) {
+		return metadataProvider.metadataForObjectSource(objectId, sourceId);
 	}
 
 }

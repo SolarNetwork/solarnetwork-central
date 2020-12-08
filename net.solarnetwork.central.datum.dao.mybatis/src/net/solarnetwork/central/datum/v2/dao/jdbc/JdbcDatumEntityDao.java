@@ -73,6 +73,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.ProviderObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
@@ -106,6 +107,7 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
 import net.solarnetwork.central.datum.v2.domain.StreamRange;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -259,6 +261,19 @@ public class JdbcDatumEntityDao
 		return new SelectDatum(filter);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static RowMapper<Datum> mapper(DatumCriteria filter) {
+		if ( filter.getCombiningType() != null ) {
+			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
+					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
+							: ObjectDatumKind.Node);
+		}
+		return filter.getAggregation() != null
+				? (RowMapper) mapperForAggregate(filter.getAggregation(),
+						filter.getReadingType() != null)
+				: DatumEntityRowMapper.INSTANCE;
+	}
+
 	@Override
 	public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
@@ -266,12 +281,7 @@ public class JdbcDatumEntityDao
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
 		final PreparedStatementCreator sql = filterSql(filter);
-
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		final RowMapper<Datum> mapper = filter.getAggregation() != null
-				? (RowMapper) mapperForAggregate(filter.getAggregation(),
-						filter.getReadingType() != null)
-				: DatumEntityRowMapper.INSTANCE;
+		final RowMapper<Datum> mapper = mapper(filter);
 
 		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
 				sql, mapper);
@@ -289,6 +299,13 @@ public class JdbcDatumEntityDao
 			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
 			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
 					identity(), (u, v) -> u, LinkedHashMap::new));
+		}
+		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
+			// virtual streams use this
+			return new ProviderObjectDatumStreamFilterResults<>(
+					(ObjectDatumStreamMetadataProvider) mapper, results.getResults(),
+					results.getTotalResults(), results.getStartingOffset(),
+					results.getReturnedResultCount());
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),

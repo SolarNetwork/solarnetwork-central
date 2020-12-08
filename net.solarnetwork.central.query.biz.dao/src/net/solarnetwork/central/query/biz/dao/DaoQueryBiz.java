@@ -227,7 +227,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -243,7 +243,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -351,7 +351,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setReadingType(readingType);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -368,7 +368,7 @@ public class DaoQueryBiz implements QueryBiz {
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -395,7 +395,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Location);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<GeneralLocationDatumFilterMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
@@ -411,7 +411,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Location);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralLocationDatumMatch> data = stream(daoResults.spliterator(), false)
-				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStream(e.getStreamId())))
+				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());

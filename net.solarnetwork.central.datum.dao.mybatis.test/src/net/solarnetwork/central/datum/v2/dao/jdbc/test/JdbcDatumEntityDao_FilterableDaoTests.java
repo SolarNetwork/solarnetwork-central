@@ -186,7 +186,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(4));
 
-		ObjectDatumStreamMetadata meta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata meta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", meta.getObjectId(), equalTo(metas.get(streamId).getObjectId()));
 		Instant ts = start.toInstant();
@@ -227,7 +227,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(4));
 
-		ObjectDatumStreamMetadata meta = results.metadataForStream(streamId);
+		ObjectDatumStreamMetadata meta = results.metadataForStreamId(streamId);
 		assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", meta.getObjectId(), equalTo(metas.get(streamId).getObjectId()));
 		Instant ts = start.toInstant();
@@ -406,7 +406,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 
 		for ( int i = 0; i < 2; i++ ) {
 			Datum d = datumList.get(i);
-			ObjectDatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+			ObjectDatumStreamMetadata meta = results.metadataForStreamId(d.getStreamId());
 			assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
 			Long nodeId = meta.getObjectId();
 			assertThat("Node ID", nodeId, equalTo(metas.get(streamIds.get(i)).getObjectId()));
@@ -446,7 +446,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Result list size matches", datumList, hasSize(1));
 
 		Datum d = datumList.get(0);
-		ObjectDatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+		ObjectDatumStreamMetadata meta = results.metadataForStreamId(d.getStreamId());
 		assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", meta.getObjectId(), equalTo(2L));
 		assertThat("Source ID", meta.getSourceId(), equalTo("s2"));
@@ -488,7 +488,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 
 		for ( int i = 0; i < 2; i++ ) {
 			Datum d = datumList.get(i);
-			ObjectDatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+			ObjectDatumStreamMetadata meta = results.metadataForStreamId(d.getStreamId());
 			assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
 			Long nodeId = meta.getObjectId();
 			assertThat("Node ID", nodeId, equalTo(metas.get(streamIds.get(i)).getObjectId()));
@@ -540,7 +540,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 				.filter(e -> !e.getValue().getObjectId().equals(1L)).map(Map.Entry::getKey)
 				.collect(toSet());
 		for ( Datum d : results ) {
-			ObjectDatumStreamMetadata meta = results.metadataForStream(d.getStreamId());
+			ObjectDatumStreamMetadata meta = results.metadataForStreamId(d.getStreamId());
 			assertThat("User stream returned", streamIds.contains(meta.getStreamId()), equalTo(true));
 			Instant expectedTs;
 			if ( meta.getObjectId().equals(2L) ) {

@@ -132,7 +132,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 									Datum datum = results.iterator().next();
 									if ( datum != null ) {
 										GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
-												results.metadataForStream(datum.getStreamId()));
+												results.metadataForStreamId(datum.getStreamId()));
 										handled = aggProcessor.processDatum(gnd, stale.getKind());
 									}
 								} catch ( IllegalArgumentException e ) {

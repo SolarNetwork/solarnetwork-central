@@ -296,11 +296,18 @@ public class SelectDatumPartialAggregate
 		if ( combine != null ) {
 			buf.append(VirtualDatumSqlUtils.combineCteSql(combine.getType())).append("\n");
 		}
-		buf.append("SELECT datum.*\nFROM datum\n");
+		buf.append("SELECT datum.*");
+		if ( combine != null ) {
+			buf.append(", vs.")
+					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
+					.append(", vs.source_id");
+
+		}
+		buf.append("\nFROM datum\n");
 	}
 
 	private void sqlOrderByJoins(StringBuilder buf) {
-		if ( !DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+		if ( combine == null && !DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
 			return;
 		}
 		buf.append("INNER JOIN ");

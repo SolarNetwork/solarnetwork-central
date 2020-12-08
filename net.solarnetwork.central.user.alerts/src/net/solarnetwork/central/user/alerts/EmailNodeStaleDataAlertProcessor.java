@@ -401,7 +401,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			for ( Datum match : latestNodeData.getResults() ) {
 				// first add to node list
 				final ObjectDatumStreamMetadata meta = latestNodeData
-						.metadataForStream(match.getStreamId());
+						.metadataForStreamId(match.getStreamId());
 				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
 					log.warn("Node stream metadata not available for datum match {}", match);
 					continue;
@@ -443,7 +443,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					.findFiltered(filter);
 			for ( Datum match : latestNodeData.getResults() ) {
 				final ObjectDatumStreamMetadata meta = latestNodeData
-						.metadataForStream(match.getStreamId());
+						.metadataForStreamId(match.getStreamId());
 				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
 					log.warn("Node stream metadata not available for datum match {}", match);
 					continue;
