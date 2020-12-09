@@ -33,6 +33,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggr
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.remapStream;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
@@ -992,7 +993,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	}
 
 	@Test
-	public void find_runningTotal() throws IOException {
+	public void find_runningTotal_node_absoluteDates() throws IOException {
 		// GIVEN
 		ObjectDatumStreamMetadata meta = testStreamMetadata_simple();
 		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-runtot-datum-01.txt",
@@ -1025,6 +1026,90 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
 								new BigDecimal[][] { decimalArray("100", "1036", "936") })));
+	}
+
+	@Test
+	public void find_runningTotal_node_absoluteDates_subset() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = testStreamMetadata_simple();
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-runtot-datum-03.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setStartDate(Instant.EPOCH);
+		filter.setEndDate(LocalDateTime.of(2017, 2, 3, 3, 0).toInstant(ZoneOffset.UTC));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		log.debug("Agg results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
+				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
+						propertiesOf(decimalArray("1.203891051"), decimalArray("202"), null, null),
+						statisticsOf(new BigDecimal[][] { decimalArray("4626", "1.1", "3.3") },
+								new BigDecimal[][] { decimalArray("100", "403", "201") })));
+	}
+
+	@Test
+	public void find_runningTotal_nodes_sortNode() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta_1 = testStreamMetadata_simple(1L, "a", "UTC");
+		List<AggregateDatum> datums_1 = loadJsonAggregateDatumResource("test-agg-runtot-datum-01.txt",
+				getClass(), staticProvider(singleton(meta_1)));
+		ObjectDatumStreamMetadata meta_2 = testStreamMetadata_simple(2L, "a", "UTC");
+		List<AggregateDatum> datums_2 = loadJsonAggregateDatumResource("test-agg-runtot-datum-02.txt",
+				getClass(), staticProvider(singleton(meta_1)), remapStream(meta_2.getStreamId()));
+		insertAggregateDatum(log, jdbcTemplate,
+				concat(datums_1.stream(), datums_2.stream()).collect(toList()));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { meta_1.getObjectId(), meta_2.getObjectId() });
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setSorts(sorts("node"));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		log.debug("Agg results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		// stream 1 (order by node)
+		AggregateDatum d = datumList.get(0);
+		DatumTestUtils.assertAggregateDatum("Running total", d,
+				new AggregateDatumEntity(meta_1.getStreamId(), null, Aggregation.RunningTotal,
+						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
+						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
+								new BigDecimal[][] { decimalArray("100", "1036", "936") })));
+		// stream 2
+		d = datumList.get(1);
+		DatumTestUtils.assertAggregateDatum("Running total", d,
+				new AggregateDatumEntity(meta_2.getStreamId(), null, Aggregation.RunningTotal,
+						propertiesOf(decimalArray("10.314496644"), decimalArray("9450"), null, null),
+						statisticsOf(new BigDecimal[][] { decimalArray("13410", "10.1", "30.3") },
+								new BigDecimal[][] { decimalArray("1000", "10360", "9360") })));
 	}
 
 	@Test

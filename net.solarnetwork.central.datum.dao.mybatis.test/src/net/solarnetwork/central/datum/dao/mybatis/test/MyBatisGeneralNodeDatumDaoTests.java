@@ -428,66 +428,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	}
 
 	@Test
-	public void findFilteredAggregateRunningTotalTieredMultipleNodes() {
-		// this query only loads raw data for latest hour of query end date; the rest is loaded
-		// from hourly/daily/monthly aggregate tables
-		executeSqlScript(
-				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
-				false);
-		executeSqlScript(
-				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-02.sql",
-				false);
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeIds(new Long[] { -100L, -101L });
-		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setAggregate(Aggregation.RunningTotal);
-		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
-
-		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
-				null, null, null);
-
-		assertThat("Results", results, notNullValue());
-		assertThat("Running total query results", results.getTotalResults(), equalTo(2L));
-		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(2));
-
-		Iterator<ReportingGeneralNodeDatumMatch> itr = results.iterator();
-		Map<String, ?> data;
-
-		data = itr.next().getSampleData();
-		assertThat("Aggregate foo node -101", data, hasEntry("foo", (Object) 9470));
-
-		data = itr.next().getSampleData();
-		assertThat("Aggregate foo node -100", data, hasEntry("foo", (Object) 947));
-	}
-
-	@Test
-	public void findFilteredAggregateRunningTotalIgnoreStartDateParameter() {
-		// populate 1 hour of data
-		findFilteredAggregateDaily();
-
-		// first, verify that the the day is also at 10 Wh
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeId(TEST_NODE_ID);
-		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setAggregate(Aggregation.RunningTotal);
-		criteria.setStartDate(lastDatum.getCreated().dayOfMonth().roundFloorCopy());
-		criteria.setEndDate(criteria.getStartDate().plusDays(1));
-
-		FilterResults<ReportingGeneralNodeDatumMatch> results;
-		Map<String, ?> data;
-		results = dao.findAggregationFiltered(criteria, null, null, null);
-
-		assertNotNull(results);
-		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
-		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
-		data = results.getResults().iterator().next().getSampleData();
-		assertNotNull("Aggregate sample data", data);
-		assertNotNull("Aggregate Wh", data.get("watt_hours"));
-		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
-	}
-
-	@Test
 	public void findFilteredAggregateFiveMinute() {
 		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
 		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);

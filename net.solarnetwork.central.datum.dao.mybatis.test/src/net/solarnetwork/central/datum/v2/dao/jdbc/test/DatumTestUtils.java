@@ -30,10 +30,13 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -380,6 +383,20 @@ public final class DatumTestUtils {
 		jdbcTemplate.update("DELETE FROM solaruser.user_user");
 		jdbcTemplate.update("DELETE FROM solarnet.sn_node");
 		jdbcTemplate.update("DELETE FROM solarnet.sn_loc");
+	}
+
+	/**
+	 * Get a function that remaps the stream ID of {@link AggregateDatum}.
+	 * 
+	 * @param streamId
+	 *        the stream ID to remap datum to
+	 * @return the function
+	 */
+	public static Function<AggregateDatum, AggregateDatum> remapStream(UUID streamId) {
+		return e -> {
+			return new AggregateDatumEntity(streamId, e.getTimestamp(), e.getAggregation(),
+					e.getProperties(), e.getStatistics());
+		};
 	}
 
 }
