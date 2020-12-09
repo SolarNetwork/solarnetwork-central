@@ -577,4 +577,65 @@ public class SelectDatumTests {
 						TestSqlResources.class, SQL_COMMENT));
 	}
 
+	@Test
+	public void sql_find_runningTotal_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.EPOCH);
+		filter.setEndDate(Instant.now());
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-datum-runtot-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_runningTotal_nodesAndSources_absoluteDates() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.EPOCH);
+		filter.setEndDate(Instant.now());
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-datum-runtot-nodesAndSources-dates.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+	}
+
 }

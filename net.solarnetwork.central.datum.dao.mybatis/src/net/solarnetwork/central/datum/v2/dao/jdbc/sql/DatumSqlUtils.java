@@ -1649,4 +1649,19 @@ public final class DatumSqlUtils {
 		}
 	}
 
+	/**
+	 * Generate a {@code solardatm.rollup_agg_data()} SQL clause for aggregating
+	 * {@code agg_data} rows.
+	 * 
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	public static void rollupAggDataSql(StringBuilder buf) {
+		buf.append("	(solardatm.rollup_agg_data(\n");
+		buf.append("		(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i")
+				.append(", datum.read_a)::solardatm.agg_data\n");
+		buf.append("		ORDER BY datum.ts_start)).*\n");
+
+	}
+
 }

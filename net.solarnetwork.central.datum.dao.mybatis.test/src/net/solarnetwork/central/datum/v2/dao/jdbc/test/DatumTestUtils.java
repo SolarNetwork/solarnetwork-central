@@ -153,7 +153,13 @@ public final class DatumTestUtils {
 	public static void assertDatum(String prefix, Datum result, Datum expected) {
 		assertThat(prefix + " datum returned", result, notNullValue());
 		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
-		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
+
+		// don't verify timestamp for RunningTotal
+		if ( !(expected instanceof AggregateDatum
+				&& ((AggregateDatum) expected).getAggregation() == Aggregation.RunningTotal) ) {
+			assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
+		}
+
 		if ( expected.getProperties() != null ) {
 			if ( expected.getProperties().getInstantaneous() != null ) {
 				assertThat(prefix + " instantaneous", result.getProperties().getInstantaneous(),

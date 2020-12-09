@@ -130,6 +130,9 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 	public static RowMapper<AggregateDatum> mapperForAggregate(Aggregation kind, boolean readingMode) {
 		RowMapper<AggregateDatum> mapper;
 		switch (kind) {
+			case Hour:
+				mapper = readingMode ? READING_HOUR_INSTANCE : HOUR_INSTANCE;
+
 			case Day:
 				mapper = readingMode ? READING_DAY_INSTANCE : DAY_INSTANCE;
 				break;
@@ -139,7 +142,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 				break;
 
 			default:
-				mapper = readingMode ? READING_HOUR_INSTANCE : HOUR_INSTANCE;
+				mapper = new AggregateDatumEntityRowMapper(kind, readingMode);
 		}
 		return mapper;
 	}

@@ -129,7 +129,7 @@ public final class DatumDbUtils {
 	 * Regex for a line containing {@literal "kind":"X"} where {@literal X} is
 	 * one of {@literal Hour}, {@literal Day}, or {@literal Month}.
 	 */
-	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month)\"");
+	public static final Pattern AGG = Pattern.compile("\"kind\"\\s*:\\s*\"(?:Hour|Day|Month|None)\"");
 
 	/** Sort for typed datum by timestamp. */
 	public static final Comparator<TypedDatumEntity> SORT_TYPED_DATUM_BY_TS = new SortTypedDatumByTimestamp();
@@ -423,6 +423,16 @@ public final class DatumDbUtils {
 	 * 
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[100,200,100]}}}</code>
+	 * </pre>
+	 * 
+	 * <p>
+	 * Note that "raw" datum can be loaded by specifying
+	 * {@literal "kind":"None"} and leaving out the {@literal "stats"} object.
+	 * For example:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T01:02:03Z","kind":"None","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}}}</code>
 	 * </pre>
 	 * 
 	 * @param resource
@@ -917,10 +927,8 @@ public final class DatumDbUtils {
 
 			@Override
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement("INSERT INTO solardatm.da_datm "
-						+ "(stream_id,ts,received,data_i,data_a,data_s,data_t) VALUES "
-						+ "(?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])")) {
-					datumStmt.setTimestamp(3, Timestamp.from(Instant.now()));
+				try (PreparedStatement datumStmt = con.prepareStatement(insertDatumStmt())) {
+					final Timestamp now = Timestamp.from(Instant.now());
 					for ( Datum d : datums ) {
 						if ( log != null ) {
 							log.debug("Inserting Datum: {}", d);
@@ -931,32 +939,34 @@ public final class DatumDbUtils {
 						DatumProperties props = d.getProperties();
 						if ( props != null && props.getInstantaneousLength() > 0 ) {
 							Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
+							datumStmt.setArray(3, array);
+							array.free();
+						} else {
+							datumStmt.setNull(3, Types.ARRAY);
+						}
+						if ( props != null && props.getAccumulatingLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
 							datumStmt.setArray(4, array);
 							array.free();
 						} else {
 							datumStmt.setNull(4, Types.ARRAY);
 						}
-						if ( props != null && props.getAccumulatingLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
+						if ( props != null && props.getStatusLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getStatus());
 							datumStmt.setArray(5, array);
 							array.free();
 						} else {
 							datumStmt.setNull(5, Types.ARRAY);
 						}
-						if ( props != null && props.getStatusLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getStatus());
+						if ( props != null && props.getTagsLength() > 0 ) {
+							Array array = con.createArrayOf("TEXT", props.getTags());
 							datumStmt.setArray(6, array);
 							array.free();
 						} else {
 							datumStmt.setNull(6, Types.ARRAY);
 						}
-						if ( props != null && props.getTagsLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getTags());
-							datumStmt.setArray(7, array);
-							array.free();
-						} else {
-							datumStmt.setNull(7, Types.ARRAY);
-						}
+
+						datumStmt.setTimestamp(7, now);
 
 						datumStmt.execute();
 					}
@@ -964,6 +974,14 @@ public final class DatumDbUtils {
 				return null;
 			}
 		});
+	}
+
+	private static String insertDatumStmt() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("INSERT INTO solardatm.da_datm ");
+		buf.append("(stream_id,ts,data_i,data_a,data_s,data_t,received) VALUES ");
+		buf.append("(?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?)");
+		return buf.toString();
 	}
 
 	private static String insertAggStmt(Aggregation kind) {
@@ -991,6 +1009,11 @@ public final class DatumDbUtils {
 	/**
 	 * Insert aggregate datum records.
 	 * 
+	 * <p>
+	 * Note that {@link Aggregation#None} is supported, which loads the datum
+	 * into the {@code da_datm} table.
+	 * </p>
+	 * 
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1004,15 +1027,22 @@ public final class DatumDbUtils {
 
 			@Override
 			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement hourStmt = con.prepareStatement(insertAggStmt(Aggregation.Hour));
+				try (PreparedStatement rawStmt = con.prepareStatement(insertDatumStmt());
+						PreparedStatement hourStmt = con
+								.prepareStatement(insertAggStmt(Aggregation.Hour));
 						PreparedStatement dayStmt = con.prepareStatement(insertAggStmt(Aggregation.Day));
 						PreparedStatement monthStmt = con
 								.prepareStatement(insertAggStmt(Aggregation.Month))) {
+					final Timestamp now = Timestamp.from(Instant.now());
 					for ( AggregateDatum d : datums ) {
 						Aggregation kind = (d.getAggregation() != null ? d.getAggregation()
 								: Aggregation.Hour);
 						PreparedStatement datumStmt;
 						switch (kind) {
+							case Hour:
+								datumStmt = hourStmt;
+								break;
+
 							case Day:
 								datumStmt = dayStmt;
 								break;
@@ -1022,7 +1052,7 @@ public final class DatumDbUtils {
 								break;
 
 							default:
-								datumStmt = hourStmt;
+								datumStmt = rawStmt;
 								break;
 						}
 						if ( log != null ) {
@@ -1061,20 +1091,24 @@ public final class DatumDbUtils {
 							datumStmt.setNull(6, Types.ARRAY);
 						}
 
-						DatumPropertiesStatistics stats = d.getStatistics();
-						if ( stats != null && stats.getInstantaneousLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", stats.getInstantaneous());
-							datumStmt.setArray(7, array);
-							array.free();
+						if ( d.getAggregation() == Aggregation.None ) {
+							datumStmt.setTimestamp(7, now);
 						} else {
-							datumStmt.setNull(7, Types.ARRAY);
-						}
-						if ( stats != null && stats.getAccumulatingLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", stats.getAccumulating());
-							datumStmt.setArray(8, array);
-							array.free();
-						} else {
-							datumStmt.setNull(8, Types.ARRAY);
+							DatumPropertiesStatistics stats = d.getStatistics();
+							if ( stats != null && stats.getInstantaneousLength() > 0 ) {
+								Array array = con.createArrayOf("NUMERIC", stats.getInstantaneous());
+								datumStmt.setArray(7, array);
+								array.free();
+							} else {
+								datumStmt.setNull(7, Types.ARRAY);
+							}
+							if ( stats != null && stats.getAccumulatingLength() > 0 ) {
+								Array array = con.createArrayOf("NUMERIC", stats.getAccumulating());
+								datumStmt.setArray(8, array);
+								array.free();
+							} else {
+								datumStmt.setNull(8, Types.ARRAY);
+							}
 						}
 
 						datumStmt.execute();

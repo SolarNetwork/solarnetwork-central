@@ -48,11 +48,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +116,19 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 			String timeZoneId) {
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
 				timeZoneId, ObjectDatumKind.Node, nodeId, sourceId, new String[] { "x", "y" },
+				new String[] { "w" }, null);
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		return meta;
+	}
+
+	private ObjectDatumStreamMetadata testStreamMetadata_simple() {
+		return testStreamMetadata_simple(1L, "a", "UTC");
+	}
+
+	private ObjectDatumStreamMetadata testStreamMetadata_simple(Long nodeId, String sourceId,
+			String timeZoneId) {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				timeZoneId, ObjectDatumKind.Node, nodeId, sourceId, new String[] { "x" },
 				new String[] { "w" }, null);
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		return meta;
@@ -974,6 +989,98 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		Datum d = datumList.get(0);
 		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
 		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusMonths(3 * 3 + 1).toInstant()));
+	}
+
+	@Test
+	public void find_runningTotal() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = testStreamMetadata_simple();
+		List<AggregateDatum> datums = loadJsonAggregateDatumResource("test-agg-runtot-datum-01.txt",
+				getClass(), staticProvider(singleton(meta)));
+		insertAggregateDatum(log, jdbcTemplate, datums);
+		UUID streamId = meta.getStreamId();
+
+		// WHEN
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setStartDate(LocalDate.of(2017, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant());
+		filter.setEndDate(LocalDateTime.of(2017, 4, 4, 3, 0).toInstant(ZoneOffset.UTC));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		log.debug("Agg results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
+				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
+						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
+						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
+								new BigDecimal[][] { decimalArray("100", "1036", "936") })));
+	}
+
+	@Test
+	public void find_runningTotal_nodes_absoluteDates_sortNodeSource() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ObjectDatumStreamMetadata meta_1 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta_2 = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 2L, "b");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+		final Period freq = Period.ofMonths(3);
+		insertDatum(Aggregation.Month, meta_1.getStreamId(), start, freq, 4);
+
+		// give stream 2 double the data
+		insertDatum(Aggregation.Month, meta_2.getStreamId(), start.minusYears(1), freq, 4);
+		insertDatum(Aggregation.Month, meta_2.getStreamId(), start.plusMonths(1), freq, 4);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setAggregation(Aggregation.RunningTotal);
+		filter.setSorts(sorts("node", "source"));
+		filter.setStartDate(Instant.EPOCH);
+		filter.setEndDate(start.plusYears(2).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		log.debug("Agg results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(2));
+
+		List<ObjectDatumStreamMetadata> metas = asList(meta_1, meta_2);
+		for ( int i = 0; i < 2; i++ ) {
+			AggregateDatum d = datumList.get(i);
+			assertThat("Stream ID " + i, d.getStreamId(), equalTo(metas.get(i).getStreamId()));
+			assertThat("Agg type " + i, d.getAggregation(), equalTo(Aggregation.RunningTotal));
+			assertThat("Running total timestamp is 'now'",
+					d.getTimestamp().truncatedTo(ChronoUnit.MINUTES),
+					equalTo(Instant.now().truncatedTo(ChronoUnit.MINUTES)));
+			assertThat("Agg total", d.getProperties().getAccumulating(),
+					arrayContaining(i == 0 ? decimalArray("10") : decimalArray("20")));
+			assertThat("Instantaneous stats", d.getStatistics().getInstantaneous()[0], arrayContaining(
+					i == 0 ? decimalArray("24", "0", "100") : decimalArray("48", "0", "100")));
+			assertThat("Accumulating stats", d.getStatistics().getAccumulating()[0], arrayContaining(
+					i == 0 ? decimalArray("0", "13", "40") : decimalArray("0", "13", "80")));
+		}
 	}
 
 }

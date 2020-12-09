@@ -78,11 +78,19 @@ public class SelectDatum
 			throw new IllegalArgumentException(
 					format("The mostRecent flag cannot be used with aggregation %s.", aggregation));
 		}
-		if ( isMinuteAggregation() && !filter.hasDateOrLocalDateRange() ) {
+		if ( isDateOrLocalDateRangeRequired() && !filter.hasDateOrLocalDateRange() ) {
 			throw new IllegalArgumentException(
 					format("A date range must be specified for aggregation %s.", aggregation));
 		}
 		this.combine = CombiningConfig.configFromCriteria(filter);
+		if ( combine != null && aggregation == Aggregation.RunningTotal ) {
+			throw new IllegalArgumentException(
+					format("Combining streams is not supported with aggregation %s.", aggregation));
+		}
+	}
+
+	private boolean isDateOrLocalDateRangeRequired() {
+		return (isMinuteAggregation() || aggregation == Aggregation.RunningTotal);
 	}
 
 	private boolean isMinuteAggregation() {
@@ -103,7 +111,10 @@ public class SelectDatum
 					combine, buf);
 		}
 		buf.append(")\n");
-		if ( combine != null ) {
+		if ( ordered && aggregation == Aggregation.RunningTotal
+				&& DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+			buf.append(", datum AS (\n");
+		} else if ( combine != null ) {
 			buf.append(", s AS (\n");
 			buf.append("	SELECT solardatm.virutal_stream_id(")
 					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
@@ -136,7 +147,10 @@ public class SelectDatum
 		} else {
 			buf.append("	datum.stream_id,\n");
 		}
-		if ( combine != null && isMinuteAggregation() ) {
+		if ( aggregation == Aggregation.RunningTotal ) {
+			buf.append("	CURRENT_TIMESTAMP AS ts,\n");
+			DatumSqlUtils.rollupAggDataSql(buf);
+		} else if ( combine != null && isMinuteAggregation() ) {
 			buf.append("	ds.ts,\n");
 			buf.append("	ds.data_i,\n");
 			buf.append("	ds.data_a,\n");
@@ -148,10 +162,7 @@ public class SelectDatum
 			buf.append("INNER JOIN (\n");
 			buf.append("	SELECT datum.stream_id,\n");
 			buf.append("	datum.ts_start AS ts,\n");
-			buf.append("	(solardatm.rollup_agg_data(\n");
-			buf.append("		(datum.data_i, datum.data_a, datum.data_s");
-			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
-			buf.append("		ORDER BY datum.ts_start)).*\n");
+			DatumSqlUtils.rollupAggDataSql(buf);
 		} else {
 			if ( aggregation != Aggregation.None ) {
 				buf.append("	datum.ts_start AS ts,\n");
@@ -195,6 +206,11 @@ public class SelectDatum
 			case Month:
 				return "solardatm.agg_datm_monthly";
 
+			case RunningTotal:
+				return filter.hasLocalDateRange()
+						? "solardatm.find_agg_datm_running_total(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_running_total(s.stream_id, ?, ?)";
+
 			default:
 				return "solardatm.da_datm";
 		}
@@ -217,7 +233,8 @@ public class SelectDatum
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() || isMinuteAggregation() ) {
+		if ( filter.isMostRecent() || isMinuteAggregation()
+				|| aggregation == Aggregation.RunningTotal ) {
 			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
 			return;
 		}
@@ -230,6 +247,20 @@ public class SelectDatum
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
+	}
+
+	private void sqlOrderByJoins(StringBuilder buf) {
+		if ( (combine == null && !(DatumSqlUtils.hasMetadataSortKey(filter.getSorts())
+				&& aggregation == Aggregation.RunningTotal)) ) {
+			return;
+		}
+		buf.append("INNER JOIN ");
+		if ( combine != null ) {
+			buf.append("vs ON vs.v");
+		} else {
+			buf.append("s ON s.");
+		}
+		buf.append("stream_id = datum.stream_id\n");
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
@@ -253,6 +284,14 @@ public class SelectDatum
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
+		if ( aggregation == Aggregation.RunningTotal ) {
+			buf.append("GROUP BY datum.stream_id\n");
+			if ( ordered && DatumSqlUtils.hasMetadataSortKey(filter.getSorts()) ) {
+				buf.append(")\n");
+				buf.append("SELECT datum.*\n");
+				buf.append("FROM datum\n");
+			}
+		}
 		if ( combine != null ) {
 			if ( isMinuteAggregation() ) {
 				buf.append("	GROUP BY datum.stream_id, ts\n");
@@ -266,7 +305,6 @@ public class SelectDatum
 					.append(filter.getObjectKind() == ObjectDatumKind.Location ? "loc_id" : "node_id")
 					.append(", vs.source_id\n");
 			buf.append("FROM datum\n");
-			buf.append("INNER JOIN vs ON vs.vstream_id = datum.stream_id\n");
 		}
 	}
 
@@ -274,6 +312,7 @@ public class SelectDatum
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf, true);
+		sqlOrderByJoins(buf);
 		sqlOrderBy(buf);
 		DatumSqlUtils.limitOffset(filter, buf);
 		return buf.toString();

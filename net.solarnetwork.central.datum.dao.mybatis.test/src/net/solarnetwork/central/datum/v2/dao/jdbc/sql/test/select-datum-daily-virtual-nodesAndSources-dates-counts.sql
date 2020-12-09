@@ -144,5 +144,4 @@ SELECT COUNT(*) FROM (WITH rs AS (
 )
 SELECT datum.*, vs.node_id, vs.source_id
 FROM datum
-INNER JOIN vs ON vs.vstream_id = datum.stream_id
 ) AS q

@@ -213,10 +213,7 @@ public class SelectDatumPartialAggregate
 			}
 			buf.append("	date_trunc('").append(sqlAgg(aggregation)).append(
 					"', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
-			buf.append("	(solardatm.rollup_agg_data(\n");
-			buf.append("		(datum.data_i, datum.data_a, datum.data_s");
-			buf.append(", datum.data_t, datum.stat_i, datum.read_a)::solardatm.agg_data\n");
-			buf.append("		ORDER BY datum.ts_start)).*\n");
+			DatumSqlUtils.rollupAggDataSql(buf);
 		}
 	}
 
