@@ -428,54 +428,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 	}
 
 	@Test
-	public void findFilteredAggregateRunningTotal() {
-		// populate 1 hour of data
-		findFilteredAggregateDaily();
-
-		// first, verify that the the day is also at 10 Wh
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeId(TEST_NODE_ID);
-		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setAggregate(Aggregation.RunningTotal);
-
-		FilterResults<ReportingGeneralNodeDatumMatch> results;
-		Map<String, ?> data;
-		results = dao.findAggregationFiltered(criteria, null, null, null);
-
-		assertNotNull(results);
-		assertEquals("Daily query results", 1L, (long) results.getTotalResults());
-		assertEquals("Daily query results", 1, (int) results.getReturnedResultCount());
-		data = results.getResults().iterator().next().getSampleData();
-		assertNotNull("Aggregate sample data", data);
-		assertNotNull("Aggregate Wh", data.get("watt_hours"));
-		assertEquals("Aggregate Wh", Integer.valueOf(15), data.get("watt_hours"));
-	}
-
-	@Test
-	public void findFilteredAggregateRunningTotalTiered() {
-		// this query only loads raw data for latest hour of query end date; the rest is loaded
-		// from hourly/daily/monthly aggregate tables
-		executeSqlScript(
-				"/net/solarnetwork/central/datum/dao/mybatis/test/insert-running-total-data-01.sql",
-				false);
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeId(-100L);
-		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setAggregate(Aggregation.RunningTotal);
-		criteria.setEndDate(new DateTime(2017, 4, 4, 3, 3, DateTimeZone.UTC));
-
-		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
-				null, null, null);
-
-		assertThat("Results", results, notNullValue());
-		assertThat("Running total query results", results.getTotalResults(), equalTo(1L));
-		assertThat("Running total returned query results", results.getReturnedResultCount(), equalTo(1));
-		Map<String, ?> data = results.getResults().iterator().next().getSampleData();
-		assertThat("Aggregate foo", data, hasEntry("foo", (Object) 947));
-	}
-
-	@Test
 	public void findFilteredAggregateRunningTotalTieredMultipleNodes() {
 		// this query only loads raw data for latest hour of query end date; the rest is loaded
 		// from hourly/daily/monthly aggregate tables

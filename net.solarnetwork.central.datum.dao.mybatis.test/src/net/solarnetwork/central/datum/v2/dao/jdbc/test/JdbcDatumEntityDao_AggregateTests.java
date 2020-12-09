@@ -1001,7 +1001,6 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		UUID streamId = meta.getStreamId();
 
 		// WHEN
-		// WHEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(meta.getObjectId());
 		filter.setAggregation(Aggregation.RunningTotal);

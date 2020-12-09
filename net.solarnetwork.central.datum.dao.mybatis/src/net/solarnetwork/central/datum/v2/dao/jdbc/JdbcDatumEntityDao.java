@@ -87,6 +87,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumAvailableTimeRa
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumCalculatedAt;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumPartialAggregate;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumRecordCounts;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatumRunningTotal;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
@@ -257,6 +258,8 @@ public class JdbcDatumEntityDao
 			return new SelectDatumPartialAggregate(filter,
 					filter.getPartialAggregation() != null ? filter.getPartialAggregation()
 							: Aggregation.Month);
+		} else if ( filter.getAggregation() == Aggregation.RunningTotal ) {
+			return new SelectDatumRunningTotal(filter);
 		}
 		return new SelectDatum(filter);
 	}
