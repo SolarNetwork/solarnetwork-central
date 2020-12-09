@@ -271,7 +271,7 @@ public class JdbcDatumEntityDao
 					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
 							: ObjectDatumKind.Node);
 		}
-		return filter.getAggregation() != null
+		return filter.getAggregation() != null && filter.getAggregation() != Aggregation.None
 				? (RowMapper) mapperForAggregate(filter.getAggregation(),
 						filter.getReadingType() != null)
 				: DatumEntityRowMapper.INSTANCE;

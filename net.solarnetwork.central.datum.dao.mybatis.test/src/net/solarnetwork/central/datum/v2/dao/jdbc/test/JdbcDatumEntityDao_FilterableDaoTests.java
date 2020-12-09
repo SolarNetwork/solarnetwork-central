@@ -66,6 +66,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.domain.GeneralDatumSamples;
@@ -214,6 +215,47 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		// WHEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(m.getObjectId());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
+		assertThat("Result stream IDs count", streamIds, contains(streamId));
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(4));
+
+		ObjectDatumStreamMetadata meta = results.metadataForStreamId(streamId);
+		assertThat("Metadata is for node", meta.getKind(), equalTo(ObjectDatumKind.Node));
+		assertThat("Node ID", meta.getObjectId(), equalTo(metas.get(streamId).getObjectId()));
+		Instant ts = start.toInstant();
+		for ( int i = 0; i < 4; i++ ) {
+			Datum d = datumList.get(i);
+			assertThat("Stream ID ", d.getStreamId(), equalTo(streamId));
+			assertThat("Ordered by timestamp", d.getTimestamp(), not(lessThan(ts)));
+			ts = d.getTimestamp();
+		}
+	}
+
+	@Test
+	public void find_noneAgg_node() {
+		// GIVEN
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final Duration freq = Duration.ofMinutes(30);
+		insertDatum(1L, "s1", "foo", start, freq, 4);
+
+		Map<UUID, ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		final UUID streamId = metas.keySet().iterator().next();
+		final ObjectDatumStreamMetadata m = metas.get(streamId);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(m.getObjectId());
+		filter.setAggregation(Aggregation.None);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN

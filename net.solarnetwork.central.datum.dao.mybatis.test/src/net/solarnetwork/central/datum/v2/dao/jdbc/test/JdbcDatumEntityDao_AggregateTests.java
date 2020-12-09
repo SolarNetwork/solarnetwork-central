@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.lang.String.valueOf;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
@@ -153,6 +155,13 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, data);
 	}
 
+	private ObjectDatumStreamFilterResults<Datum, DatumPK> execute(DatumCriteria filter) {
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		log.debug("Filter results:\n{}",
+				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		return results;
+	}
+
 	@Test
 	public void find_hour_streamId_orderDefault() throws IOException {
 		// GIVEN
@@ -169,7 +178,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -205,7 +214,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
 		filter.setReadingType(DatumReadingType.Difference);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -241,7 +250,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.plusHours(1).toInstant());
 		filter.setEndDate(start.plusHours(12).toInstant());
 		filter.setSorts(singletonList(new SimpleSortDescriptor("time", true)));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -278,7 +287,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
 		filter.setWithoutTotalResultsCount(false);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -318,7 +327,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setMax(3);
 		filter.setOffset(3);
 		filter.setWithoutTotalResultsCount(false);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -358,7 +367,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setMax(3);
 		filter.setOffset(6);
 		filter.setWithoutTotalResultsCount(false);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -398,7 +407,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setMax(3);
 		filter.setOffset(8);
 		filter.setWithoutTotalResultsCount(false);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -424,7 +433,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.Hour);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -455,7 +464,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusDays(1).toInstant());
 		filter.setEndDate(start.plusDays(19).toInstant());
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -489,7 +498,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.Day);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -520,7 +529,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStreamId(streamId);
 		filter.setStartDate(start.plusMonths(1).toInstant());
 		filter.setEndDate(start.plusMonths(4).toInstant());
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -554,7 +563,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.Month);
 		filter.setStreamId(streamId);
 		filter.setMostRecent(true);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -585,7 +594,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStreamId(streamId);
 		filter.setLocalStartDate(start.toLocalDateTime());
 		filter.setLocalEndDate(start.toLocalDateTime().plusYears(1));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		ObjectDatumStreamMetadata resultMeta = results.metadataForStreamId(streamId);
@@ -649,7 +658,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setLocalEndDate(filter.getLocalStartDate().plusYears(2));
 		filter.setAggregation(Aggregation.Year);
 		filter.setSorts(sorts("time", "node"));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		assertThat("Results available", results, notNullValue());
 		assertThat("2x years per stream returned", results.getTotalResults(), equalTo(4L));
@@ -731,10 +740,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setObjectIdMaps(new String[] { "2:-1,123" });
 		filter.setSourceIdMaps(new String[] { "V:test.source,s2" });
 		filter.setSorts(sorts("time", "node"));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
-
-		log.debug("Got combined year agg results:\n{}",
-				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		assertThat("Results available", results, notNullValue());
 		assertThat("2x years per combined streams", results.getTotalResults(), equalTo(2L));
@@ -778,7 +784,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.Hour);
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(7).toInstant());
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -814,7 +820,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setSourceId("b");
 		filter.setMostRecent(true);
 		filter.setAggregation(Aggregation.Hour);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -853,7 +859,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setCombiningType(CombiningType.Sum);
 		filter.setObjectIdMaps(new String[] { "0:1,2" });
 		filter.setSourceIdMaps(new String[] { "V:a,b" });
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -862,8 +868,6 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
-		log.debug("Got sum results:\n{}",
-				datumList.stream().map(Object::toString).collect(joining("\n")));
 		assertThat("Result list size matches", datumList, hasSize(2));
 
 		UUID vStreamId = DatumUtils.virtualStreamId(0L, "V");
@@ -901,7 +905,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setCombiningType(CombiningType.Difference);
 		filter.setObjectIdMaps(new String[] { "0:1,2" });
 		filter.setSourceIdMaps(new String[] { "V:a,b" });
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -910,8 +914,6 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
-		log.debug("Got sum results:\n{}",
-				datumList.stream().map(Object::toString).collect(joining("\n")));
 		assertThat("Result list size matches", datumList, hasSize(2));
 
 		UUID vStreamId = DatumUtils.virtualStreamId(0L, "V");
@@ -942,7 +944,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setSourceId("b");
 		filter.setMostRecent(true);
 		filter.setAggregation(Aggregation.Day);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -976,7 +978,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setSourceId("b");
 		filter.setMostRecent(true);
 		filter.setAggregation(Aggregation.Month);
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -1007,10 +1009,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setStartDate(LocalDate.of(2017, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant());
 		filter.setEndDate(LocalDateTime.of(2017, 4, 4, 3, 0).toInstant(ZoneOffset.UTC));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
-
-		log.debug("Agg results:\n{}",
-				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -1043,10 +1042,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setStartDate(Instant.EPOCH);
 		filter.setEndDate(LocalDateTime.of(2017, 2, 3, 3, 0).toInstant(ZoneOffset.UTC));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
-
-		log.debug("Agg results:\n{}",
-				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -1081,10 +1077,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setNodeIds(new Long[] { meta_1.getObjectId(), meta_2.getObjectId() });
 		filter.setAggregation(Aggregation.RunningTotal);
 		filter.setSorts(sorts("node"));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
-
-		log.debug("Agg results:\n{}",
-				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -1135,10 +1128,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setSorts(sorts("node", "source"));
 		filter.setStartDate(Instant.EPOCH);
 		filter.setEndDate(start.plusYears(2).toInstant());
-		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
-
-		log.debug("Agg results:\n{}",
-				stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
@@ -1164,6 +1154,198 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 					i == 0 ? decimalArray("24", "0", "100") : decimalArray("48", "0", "100")));
 			assertThat("Accumulating stats", d.getStatistics().getAccumulating()[0], arrayContaining(
 					i == 0 ? decimalArray("0", "13", "40") : decimalArray("0", "13", "80")));
+		}
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void find_1min() {
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setAggregation(Aggregation.Minute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+		execute(filter);
+	}
+
+	@Test
+	public void find_5min_5minData_nodeSource_absoluteDates_sortNodeSourceTime() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 12; i++ ) {
+			DatumEntity d = new DatumEntity(meta.getStreamId(), start.plusMinutes(i * 5).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 5) }, null, null));
+			datums.add(d);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.FiveMinute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(12));
+		for ( int i = 0; i < datumList.size(); i++ ) {
+			AggregateDatumEntity expected = new AggregateDatumEntity(meta.getStreamId(),
+					start.plusMinutes(i * 5).toInstant(), Aggregation.FiveMinute,
+					propertiesOf(decimalArray(valueOf(i)), decimalArray(i == 11 ? "0" : "5"), null,
+							null),
+					statisticsOf(new BigDecimal[][] { decimalArray("1", valueOf(i), valueOf(i)) },
+							null));
+			assertAggregateDatum("Result " + i, datumList.get(i), expected);
+		}
+	}
+
+	@Test
+	public void find_5min_10minData_nodeSource_absoluteDates_sortNodeSourceTime() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// populate 7 10 minute, 10 Wh segments, for a total of 120 Wh in 60 minutes
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 7; i++ ) {
+			DatumEntity d = new DatumEntity(meta.getStreamId(), start.plusMinutes(i * 10).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 10) }, null, null));
+			datums.add(d);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.FiveMinute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(6));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(6));
+		for ( int i = 0; i < datumList.size(); i++ ) {
+			AggregateDatumEntity expected = new AggregateDatumEntity(meta.getStreamId(),
+					start.plusMinutes(i * 10).toInstant(), Aggregation.FiveMinute,
+					propertiesOf(decimalArray(valueOf(i)), decimalArray("10"), null, null), statisticsOf(
+							new BigDecimal[][] { decimalArray("1", valueOf(i), valueOf(i)) }, null));
+			assertAggregateDatum("5min result per 10min data " + i, datumList.get(i), expected);
+		}
+	}
+
+	@Test
+	public void find_10min_1minData_nodeSource_absoluteDates_sortNodeSourceTime() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 61; i++ ) {
+			DatumEntity d = new DatumEntity(meta.getStreamId(), start.plusMinutes(i).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 2) }, null, null));
+			datums.add(d);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.TenMinute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(6));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(6));
+		for ( int i = 0; i < datumList.size(); i++ ) {
+			AggregateDatumEntity expected = new AggregateDatumEntity(meta.getStreamId(),
+					start.plusMinutes(i * 10).toInstant(), Aggregation.TenMinute,
+					propertiesOf(decimalArray(valueOf(4.5 + i * 10)), decimalArray("20"), null, null),
+					statisticsOf(new BigDecimal[][] {
+							decimalArray("10", valueOf(i * 10), valueOf(i * 10 + 9)) }, null));
+			DatumTestUtils.assertAggregateDatum("Result " + i, datumList.get(i), expected);
+		}
+	}
+
+	@Test
+	public void find_15min_1minData_nodeSource_absoluteDates_sortNodeSourceTime() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 61; i++ ) {
+			DatumEntity d = new DatumEntity(meta.getStreamId(), start.plusMinutes(i).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 2) }, null, null));
+			datums.add(d);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<AggregateDatum> datumList = stream(results.spliterator(), false)
+				.map(AggregateDatum.class::cast).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(4));
+		for ( int i = 0; i < datumList.size(); i++ ) {
+			AggregateDatumEntity expected = new AggregateDatumEntity(meta.getStreamId(),
+					start.plusMinutes(i * 15).toInstant(), Aggregation.TenMinute,
+					propertiesOf(decimalArray(valueOf(7 + i * 15)), decimalArray("30"), null, null),
+					statisticsOf(new BigDecimal[][] {
+							decimalArray("15", valueOf(i * 15), valueOf(i * 15 + 14)) }, null));
+			DatumTestUtils.assertAggregateDatum("Result " + i, datumList.get(i), expected);
 		}
 	}
 
