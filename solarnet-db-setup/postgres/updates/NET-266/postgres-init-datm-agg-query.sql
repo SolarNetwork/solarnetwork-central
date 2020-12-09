@@ -15,29 +15,88 @@
 */
 
 /**
+ * Find the hourly datum with the smallest timestamp for a given stream, i.e. the "first" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least_hourly(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_hourly
+	WHERE stream_id = sid
+	ORDER BY ts_start
+	LIMIT 1
+$$;
+
+
+/**
+ * Find the daily datum with the smallest timestamp for a given stream, i.e. the "first" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least_daily(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_daily
+	WHERE stream_id = sid
+	ORDER BY ts_start
+	LIMIT 1
+$$;
+
+
+/**
+ * Find the monthly datum with the smallest timestamp for a given stream, i.e. the "first" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least_monthly(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_monthly
+	WHERE stream_id = sid
+	ORDER BY ts_start
+	LIMIT 1
+$$;
+
+
+/**
  * Find the datum with the smallest timestamp for a given stream, i.e. the "first" datum in a stream.
  *
  * Using this function can force the fastest index lookup for a single stream, when multiple streams
  * are being queried.
+ *
+ * The supported `kind` values are: 0, h, d, M.
  *
  * @param sid the stream ID
  */
 CREATE OR REPLACE FUNCTION solardatm.find_agg_time_least(
 		sid 		UUID,
 		kind 		CHARACTER
-	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 1 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE STRICT ROWS 1 AS
 $$
 BEGIN
-	RETURN QUERY EXECUTE format(
-		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-		'FROM solardatm.%I '
-		'WHERE stream_id = $1 ORDER BY ts_start LIMIT 1'
-		, CASE kind
-			WHEN 'd' THEN 'agg_datm_daily'
-			WHEN 'M' THEN 'agg_datm_monthly'
-			ELSE 'agg_datm_hourly' END)
-	USING sid;
-END;
+	CASE kind
+		WHEN '0' THEN
+			RETURN QUERY SELECT stream_id, ts AS ts_start, data_i, data_a, data_s, data_t
+					, NULL::NUMERIC[][] AS stat_i, NULL::NUMERIC[][] AS read_a
+				FROM solardatm.find_time_least(sid);
+
+		WHEN 'd' THEN
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_least_daily(sid);
+
+		WHEN 'M' THEN
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_least_monthly(sid);
+
+		ELSE
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_least_hourly(sid);
+	END CASE;
+END
 $$;
 
 
@@ -60,29 +119,88 @@ $$;
 
 
 /**
+ * Find the hourly datum with the largest timestamp for a given stream, i.e. the "last" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest_hourly(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_hourly
+	WHERE stream_id = sid
+	ORDER BY ts_start DESC
+	LIMIT 1
+$$;
+
+
+/**
+ * Find the daily datum with the largest timestamp for a given stream, i.e. the "last" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest_daily(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_daily
+	WHERE stream_id = sid
+	ORDER BY ts_start DESC
+	LIMIT 1
+$$;
+
+
+/**
+ * Find the monthly datum with the largest timestamp for a given stream, i.e. the "last" datum in a stream.
+ *
+ * @param sid the stream ID
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest_monthly(
+		sid 		UUID
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a
+	FROM solardatm.agg_datm_monthly
+	WHERE stream_id = sid
+	ORDER BY ts_start DESC
+	LIMIT 1
+$$;
+
+
+/**
  * Find the datum with the largest timestamp for a given stream, i.e. the "last" datum in a stream.
  *
  * Using this function can force the fastest index lookup for a single stream, when multiple streams
  * are being queried.
+ *
+ * The supported `kind` values are: 0, h, d, M.
  *
  * @param sid the stream ID
  */
 CREATE OR REPLACE FUNCTION solardatm.find_agg_time_greatest(
 		sid 		UUID,
 		kind 		CHARACTER
-	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE ROWS 1 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE plpgsql STABLE STRICT ROWS 1 AS
 $$
 BEGIN
-	RETURN QUERY EXECUTE format(
-		'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-		'FROM solardatm.%I '
-		'WHERE stream_id = $1 ORDER BY ts_start DESC LIMIT 1'
-		, CASE kind
-			WHEN 'd' THEN 'agg_datm_daily'
-			WHEN 'M' THEN 'agg_datm_monthly'
-			ELSE 'agg_datm_hourly' END)
-	USING sid;
-END;
+	CASE kind
+		WHEN '0' THEN
+			RETURN QUERY SELECT stream_id, ts AS ts_start, data_i, data_a, data_s, data_t
+					, NULL::NUMERIC[][] AS stat_i, NULL::NUMERIC[][] AS read_a
+				FROM solardatm.find_time_greatest(sid);
+
+		WHEN 'd' THEN
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_greatest_daily(sid);
+
+		WHEN 'M' THEN
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_greatest_monthly(sid);
+
+		ELSE
+			RETURN QUERY SELECT * FROM solardatm.find_agg_time_greatest_hourly(sid);
+	END CASE;
+END
 $$;
 
 
@@ -720,6 +838,135 @@ $$;
  * @see solardatm.find_agg_datm_for_time_span()
  */
 CREATE OR REPLACE FUNCTION solardatm.rollup_agg_data_for_time_span(
+		sid 			UUID,
+		start_ts 		TIMESTAMP WITH TIME ZONE,
+		end_ts 			TIMESTAMP WITH TIME ZONE,
+		kind 			CHARACTER
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
+$$
+	WITH d AS (
+		SELECT * FROM solardatm.find_agg_datm_for_time_span(
+			sid,
+			start_ts,
+			end_ts,
+			kind
+		)
+	)
+	-- calculate instantaneous values per property
+	, wi AS (
+		SELECT
+			  p.idx
+			, p.val
+			, d.stat_i[p.idx][1] AS cnt
+			, d.stat_i[p.idx][2] AS min
+			, d.stat_i[p.idx][3] AS max
+			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
+		FROM d
+		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+	)
+	-- calculate instantaneous statistics
+	, di AS (
+		SELECT
+			idx
+			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999990.999999999')::numeric AS val
+			, sum(cnt) AS cnt
+			, min(min) AS val_min
+			, max(max) AS val_max
+		FROM wi
+		GROUP BY idx
+	)
+	-- join data_i and stat_i property values back into arrays
+	, di_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_i
+			, array_agg(
+				ARRAY[cnt, val_min, val_max] ORDER BY idx
+			) AS stat_i
+		FROM di
+	)
+	-- calculate accumulating values per property
+	, wa AS (
+		SELECT
+			  p.idx
+			, p.val
+			, first_value(d.read_a[p.idx][1]) OVER slot AS rstart
+			, last_value(d.read_a[p.idx][2]) OVER slot AS rend
+			, d.read_a[p.idx][3] AS rdiff
+		FROM d
+		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts_start RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+	)
+	-- calculate accumulating statistics
+	, da AS (
+		SELECT
+			idx
+			, to_char(sum(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, min(rstart) AS rstart
+			, min(rend) AS rend
+			, sum(rdiff) AS rdiff
+		FROM wa
+		GROUP BY idx
+	)
+	-- join data_a and read_a property values back into arrays
+	, da_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_a
+			, array_agg(
+				ARRAY[rstart, rend, rdiff] ORDER BY idx
+			) AS read_a
+		FROM da
+	)
+	-- calculate status statistics, as most-frequent status values
+	, ds AS (
+		SELECT
+			  p.idx
+			, mode() WITHIN GROUP (ORDER BY p.val) AS val
+		FROM d
+		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
+		WHERE p.val IS NOT NULL
+		GROUP BY p.idx
+	)
+	-- join data_s property values back into arrays
+	, ds_ary AS (
+		SELECT
+			  array_agg(val ORDER BY idx) AS data_s
+		FROM ds
+	)
+	-- join data_t property values into mega array
+	, dt_ary AS (
+		SELECT
+			  array_agg(p.val ORDER BY d.ts_start) AS data_t
+		FROM d
+		INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
+		WHERE d.data_t IS NOT NULL
+	)
+	SELECT
+		sid AS stream_id,
+		start_ts AS ts_start
+		, di_ary.data_i
+		, da_ary.data_a
+		, ds_ary.data_s
+		, dt_ary.data_t
+		, di_ary.stat_i
+		, da_ary.read_a
+	FROM di_ary, da_ary, ds_ary, dt_ary
+	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
+$$;
+
+
+/**
+ * Compute a higher-level rollup datm record of lower=level aggregate datum records over a time range.
+ *
+ * @param sid 				the stream ID to find datm for
+ * @param start_ts			the minimum date (inclusive)
+ * @param end_ts 			the maximum date (exclusive)
+ * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
+ * @see solardatm.find_agg_datm_for_time_span()
+ */
+CREATE OR REPLACE FUNCTION solardatm.combine_agg_data_for_time_span(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE,

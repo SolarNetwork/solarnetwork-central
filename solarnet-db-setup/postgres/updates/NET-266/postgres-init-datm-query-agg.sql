@@ -193,21 +193,23 @@ CREATE OR REPLACE FUNCTION solardatm.find_agg_datm_running_total(
 		sid 			UUID,
 		start_ts 		TIMESTAMP WITH TIME ZONE,
 		end_ts 			TIMESTAMP WITH TIME ZONE
-	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 250 AS
+	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE STRICT ROWS 250 AS
 $$
 	WITH meta AS (
 		SELECT * FROM solardatm.find_metadata_for_stream(sid)
 	)
 
+	-- whole months from first whole month on start date to last whole month before end date
 	SELECT d.*
 	FROM solardatm.agg_datm_monthly d
 	INNER JOIN meta ON meta.stream_id = d.stream_id
 	WHERE d.stream_id = sid
-		AND d.ts_start >= start_ts
+		AND d.ts_start >= date_trunc('month', start_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
 		AND d.ts_start < date_trunc('month', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
 
 	UNION ALL
 
+	-- whole days from last whole month before end date to last whole day before end date
 	SELECT d.*
 	FROM solardatm.agg_datm_daily d
 	INNER JOIN meta ON meta.stream_id = d.stream_id
@@ -217,12 +219,14 @@ $$
 
 	UNION ALL
 
+	-- whole hours from last whole day before end date to last hour before end date
 	SELECT d.*
 	FROM solardatm.agg_datm_hourly d
 	INNER JOIN meta ON meta.stream_id = d.stream_id
 	WHERE d.stream_id = sid
 		AND d.ts_start >= date_trunc('day', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC')) AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
-		AND d.ts_start < end_ts
+		AND d.ts_start < date_trunc('hour', end_ts AT TIME ZONE COALESCE(meta.time_zone, 'UTC') + INTERVAL 'PT1H') AT TIME ZONE COALESCE(meta.time_zone, 'UTC')
 
 	ORDER BY ts_start
 $$;
+
