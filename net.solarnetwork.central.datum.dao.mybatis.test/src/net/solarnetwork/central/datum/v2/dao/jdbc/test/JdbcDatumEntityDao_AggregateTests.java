@@ -732,19 +732,14 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertAggregateDatum("Year 1", data.get(0),
 				new AggregateDatumEntity(virtualStreamId, start.atZone(ZoneOffset.UTC).toInstant(),
 						Aggregation.Year,
-						propertiesOf(decimalArray("1.3", "3.1"), decimalArray("1200"), null, null),
-						statisticsOf(
-								new BigDecimal[][] { decimalArray("36", "1.1", "3.3"),
-										decimalArray("36", "2.0", "7.3") },
-								new BigDecimal[][] { decimalArray(null, null, "606") })));
+						propertiesOf(decimalArray("2.6", "6.2"), decimalArray("1200"), null, null),
+						statisticsOf(null, new BigDecimal[][] { decimalArray(null, null, "606") })));
 		assertAggregateDatum("Year 2", data.get(1),
 				new AggregateDatumEntity(virtualStreamId,
 						start.plusYears(1).atZone(ZoneOffset.UTC).toInstant(), Aggregation.Year,
-						propertiesOf(decimalArray("1.65", "6.6"), decimalArray("4400"), null, null),
-						statisticsOf(
-								new BigDecimal[][] { decimalArray("48", "1.4", "3.7"),
-										decimalArray("48", "2.3", "7.7") },
-								new BigDecimal[][] { decimalArray(null, null, "836") })));
+						propertiesOf(decimalArray("3.3", "13.2"), decimalArray("4400"), null, null),
+						statisticsOf(null, new BigDecimal[][] { decimalArray(null, null, "836") })));
+
 	}
 
 	@Test
