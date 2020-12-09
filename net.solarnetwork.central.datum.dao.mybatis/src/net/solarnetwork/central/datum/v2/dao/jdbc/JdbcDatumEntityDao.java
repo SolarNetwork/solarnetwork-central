@@ -286,6 +286,14 @@ public class JdbcDatumEntityDao
 		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
 				sql, mapper);
 
+		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
+			// virtual streams use this
+			return new ProviderObjectDatumStreamFilterResults<>(
+					(ObjectDatumStreamMetadataProvider) mapper, results.getResults(),
+					results.getTotalResults(), results.getStartingOffset(),
+					results.getReturnedResultCount());
+		}
+
 		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
@@ -299,13 +307,6 @@ public class JdbcDatumEntityDao
 			Iterable<ObjectDatumStreamMetadata> metas = findDatumStreamMetadata(metaCriteria);
 			metaMap = stream(metas.spliterator(), false).collect(toMap(DatumStreamMetadata::getStreamId,
 					identity(), (u, v) -> u, LinkedHashMap::new));
-		}
-		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
-			// virtual streams use this
-			return new ProviderObjectDatumStreamFilterResults<>(
-					(ObjectDatumStreamMetadataProvider) mapper, results.getResults(),
-					results.getTotalResults(), results.getStartingOffset(),
-					results.getReturnedResultCount());
 		}
 		return new BasicObjectDatumStreamFilterResults<>(metaMap, results.getResults(),
 				results.getTotalResults(), results.getStartingOffset(),
