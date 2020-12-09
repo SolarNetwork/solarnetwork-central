@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
@@ -84,36 +83,6 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 	 */
 	public DatumEntity(UUID streamId, Instant timestamp, Instant received, DatumProperties properties) {
 		this(new DatumPK(streamId, timestamp), received, properties);
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * <p>
-	 * Note this constructor has {@code Object} arguments to work around MyBatis
-	 * mapping issues.
-	 * </p>
-	 * 
-	 * @param streamId
-	 *        the stream ID
-	 * @param timestamp
-	 *        the timestamp
-	 * @param received
-	 *        the date the datum was received by SolarNetwork
-	 * @param instantaneous
-	 *        the instantaneous values; must be {@code BigDecimal[]}
-	 * @param accumulating
-	 *        the accumulating values; must be {@code BigDecimal[]}
-	 * @param status
-	 *        the status values; must be {@code String[]}
-	 * @param tags
-	 *        the tag values; must be {@code String[]}
-	 */
-	public DatumEntity(UUID streamId, Instant timestamp, Instant received, Object instantaneous,
-			Object accumulating, Object status, Object tags) {
-		this(new DatumPK(streamId, timestamp), received,
-				DatumProperties.propertiesOf((BigDecimal[]) instantaneous, (BigDecimal[]) accumulating,
-						(String[]) status, (String[]) tags));
 	}
 
 	@Override
