@@ -619,7 +619,10 @@ public final class DatumSqlUtils {
 		final String objName = (kind == ObjectDatumKind.Location ? "loc" : "node");
 		int paramCount = 0;
 		if ( combiningConfig == null || !combiningConfig.isWithObjectIds() ) {
-			buf.append(", s.").append(objName).append("_id");
+			buf.append("\n, s.").append(objName).append("_id");
+			if ( combiningConfig != null ) {
+				buf.append("\n, 0 AS obj_rank");
+			}
 		} else {
 			CombiningIdsConfig<Long> objIdConfig = combiningConfig
 					.getIdsConfig(CombiningConfig.OBJECT_IDS_CONFIG);
@@ -637,7 +640,13 @@ public final class DatumSqlUtils {
 			paramCount += 1;
 		}
 		if ( combiningConfig == null || !combiningConfig.isWithSourceIds() ) {
+			if ( combiningConfig != null ) {
+				buf.append("\n");
+			}
 			buf.append(", s.source_id");
+			if ( combiningConfig != null ) {
+				buf.append("\n, 0 AS source_rank");
+			}
 		} else {
 			CombiningIdsConfig<String> objIdConfig = combiningConfig
 					.getIdsConfig(CombiningConfig.SOURCE_IDS_CONFIG);

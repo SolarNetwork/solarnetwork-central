@@ -404,6 +404,50 @@ public class SelectDatumTests {
 	}
 
 	@Test
+	public void sql_find_15min_vids_combineNodeOnly() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setObjectIdMaps(new String[] { "100:1,2,3" });
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-virtual-mapNodes-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_15min_vids_combineSourceOnly() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.FifteenMinute);
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
+		filter.setCombiningType(CombiningType.Sum);
+		filter.setSourceIdMaps(new String[] { "V:a,b,c" });
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-15min-virtual-mapSources-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
 	public void sql_find_daily_vids_nodeAndSources_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
