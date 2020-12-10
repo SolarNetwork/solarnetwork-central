@@ -24,13 +24,10 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
@@ -41,7 +38,6 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 
 /**
@@ -58,51 +54,6 @@ public class MyBatisGeneralNodeDatumDaoTests extends MyBatisGeneralNodeDatumDaoT
 		GeneralNodeDatumPK id = dao.store(datum);
 		assertNotNull(id);
 		lastDatum = datum;
-	}
-
-	private List<Map<String, Object>> selectAllDatumMostRecent() {
-		return jdbcTemplate
-				.queryForList("select * from solardatum.da_datum_range ORDER BY node_id, source_id");
-	}
-
-	public void findFilteredAggregateFiveMinute_page2() {
-		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
-		DateTime startDate = new DateTime(2014, 2, 1, 12, 0, 0, DateTimeZone.UTC);
-		for ( int i = 0; i < 12; i++ ) {
-			GeneralNodeDatum datum1 = new GeneralNodeDatum();
-			datum1.setCreated(startDate.plusMinutes(i * 5));
-			datum1.setNodeId(TEST_NODE_ID);
-			datum1.setSourceId(TEST_SOURCE_ID);
-			datum1.setSampleJson("{\"a\":{\"wattHours\":" + (i * 10) + "}}");
-			dao.store(datum1);
-			lastDatum = datum1;
-		}
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setNodeId(TEST_NODE_ID);
-		criteria.setSourceId(TEST_SOURCE_ID);
-		criteria.setStartDate(startDate);
-		criteria.setEndDate(startDate.plusHours(1));
-		criteria.setAggregate(Aggregation.FiveMinute);
-
-		FilterResults<ReportingGeneralNodeDatumMatch> results = dao.findAggregationFiltered(criteria,
-				null, 3, 3);
-
-		assertThat("Results available", results, notNullValue());
-		assertThat("Total result count", results.getTotalResults(), equalTo(11L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(3));
-
-		int i = 0;
-		for ( ReportingGeneralNodeDatumMatch match : results ) {
-			assertThat("Agg date", match.getId().getCreated(),
-					equalTo(startDate.plusMinutes(5 * (i + 3)).withZone(DateTimeZone.forID(TEST_TZ))));
-			if ( i > 0 ) {
-				assertThat("Wh for minute slot " + i, match.getSampleData().get("wattHours"),
-						equalTo(10));
-			}
-			i++;
-		}
-		assertThat("Processed result count", i, equalTo(3));
 	}
 
 	@Test

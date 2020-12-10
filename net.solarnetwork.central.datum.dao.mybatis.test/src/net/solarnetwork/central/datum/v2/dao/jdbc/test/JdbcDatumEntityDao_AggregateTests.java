@@ -1305,6 +1305,53 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	}
 
 	@Test
+	public void find_5min_paginated_withTotalResultCount() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
+		List<Datum> datums = new ArrayList<>();
+		final ZonedDateTime start = ZonedDateTime.of(2014, 2, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < 61; i++ ) {
+			DatumEntity d = new DatumEntity(meta.getStreamId(), start.plusMinutes(i).toInstant(),
+					Instant.now(), DatumProperties.propertiesOf(new BigDecimal[] { new BigDecimal(i) },
+							new BigDecimal[] { new BigDecimal(i * 2) }, null, null));
+			datums.add(d);
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(meta.getObjectId());
+		filter.setAggregation(Aggregation.FiveMinute);
+		filter.setSorts(sorts("node", "source", "time"));
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(1).toInstant());
+		filter.setMax(5);
+		filter.setWithoutTotalResultsCount(false);
+
+		for ( int i = 0; i < 3; i++ ) {
+			filter.setOffset(i * 5);
+			ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+			assertThat("Results returned " + i, results, notNullValue());
+			assertThat("Result total count " + i, results.getTotalResults(), equalTo(12L));
+			assertThat("Returned count " + i, results.getReturnedResultCount(), equalTo(i == 2 ? 2 : 5));
+			assertThat("Starting offset " + i, results.getStartingOffset(), equalTo(i * 5));
+
+			List<AggregateDatum> datumList = stream(results.spliterator(), false)
+					.map(AggregateDatum.class::cast).collect(toList());
+			for ( int j = 0; j < datumList.size(); j++ ) {
+				assertThat(String.format("Page %d result %d timestamp", i, j),
+						datumList.get(j).getTimestamp(),
+						equalTo(start.plusMinutes((i * 5 * 5) + (j * 5)).toInstant()));
+			}
+		}
+	}
+
+	@Test
 	public void find_15min_1minData_nodeSource_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
