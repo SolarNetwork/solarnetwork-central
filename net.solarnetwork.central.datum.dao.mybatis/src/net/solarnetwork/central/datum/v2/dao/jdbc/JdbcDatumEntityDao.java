@@ -266,7 +266,7 @@ public class JdbcDatumEntityDao
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static RowMapper<Datum> mapper(DatumCriteria filter) {
-		if ( filter.getCombiningType() != null ) {
+		if ( filter.hasIdMappings() ) {
 			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
 					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
 							: ObjectDatumKind.Node);
