@@ -175,6 +175,23 @@ public class SelectDatum
 		}
 	}
 
+	private boolean isDateRangeInJoin() {
+		switch (aggregation) {
+			case FiveMinute:
+			case TenMinute:
+			case FifteenMinute:
+			case ThirtyMinute:
+			case DayOfWeek:
+			case SeasonalDayOfWeek:
+			case HourOfDay:
+			case SeasonalHourOfDay:
+				return true;
+
+			default:
+				return false;
+		}
+	}
+
 	protected String sqlTableName() {
 		switch (aggregation) {
 			case FiveMinute:
@@ -193,6 +210,26 @@ public class SelectDatum
 
 			case Month:
 				return "solardatm.agg_datm_monthly";
+
+			case DayOfWeek:
+				return filter.hasLocalDateRange()
+						? "solardatm.find_agg_datm_dow(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_dow(s.stream_id, ?, ?)";
+
+			case SeasonalDayOfWeek:
+				return filter.hasLocalDateRange()
+						? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
+
+			case HourOfDay:
+				return filter.hasLocalDateRange()
+						? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_hod(s.stream_id, ?, ?)";
+
+			case SeasonalHourOfDay:
+				return filter.hasLocalDateRange()
+						? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
 
 			default:
 				return "solardatm.da_datm";
@@ -216,7 +253,7 @@ public class SelectDatum
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() || isMinuteAggregation() ) {
+		if ( filter.isMostRecent() || isDateRangeInJoin() ) {
 			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
 			return;
 		}
