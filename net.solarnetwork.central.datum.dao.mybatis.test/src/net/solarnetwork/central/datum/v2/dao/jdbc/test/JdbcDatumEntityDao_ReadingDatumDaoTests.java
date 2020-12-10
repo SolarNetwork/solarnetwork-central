@@ -369,6 +369,71 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 	}
 
 	@Test
+	public void diffAt_nodesAndSources_localDates() {
+		// GIVEN
+		setupTestLocation(1L, "UTC");
+		setupTestNode(1L, 1L);
+		setupTestLocation(2L, "America/Los_Angeles");
+		setupTestNode(2L, 2L);
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null, null);
+		ObjectDatumStreamMetadata meta_2 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"America/Los_Angeles", ObjectDatumKind.Node, 2L, "b", new String[] { "x" },
+				new String[] { "xh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1, meta_2));
+
+		final LocalDateTime start = LocalDateTime.of(2020, 6, 1, 12, 0, 0, 0);
+
+		List<Datum> datums = new ArrayList<>();
+		final Instant now = Instant.now();
+		for ( int i = 0; i < 2; i++ ) {
+			Instant ts = start.plusMinutes(i * 5).atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant();
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i * 3) },
+					new BigDecimal[] { new BigDecimal(i * 33) }, null, null);
+			datums.add(new DatumEntity(meta_1.getStreamId(), ts, now, props));
+
+			ts = start.plusMinutes(i * 5).atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant();
+			props = propertiesOf(new BigDecimal[] { new BigDecimal(i * 9) },
+					new BigDecimal[] { new BigDecimal(i * 99) }, null, null);
+			datums.add(new DatumEntity(meta_2.getStreamId(), ts, now, props));
+		}
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datums);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setReadingType(DatumReadingType.CalculatedAtDifference);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a", "b" });
+		filter.setLocalStartDate(start.plusMinutes(1)); // 1/5 of slot time
+		filter.setLocalEndDate(start.plusMinutes(4)); // 4/5 of slot time
+		filter.setSorts(sorts("node", "source"));
+
+		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Total result populated", results.getTotalResults(), equalTo(2L));
+		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+
+		List<ReadingDatum> datumList = stream(results.spliterator(), false).collect(toList());
+		ReadingDatum d = datumList.get(0);
+		assertReading("CalcualtedAt reading diff for stream 1 @ local time", d,
+				new ReadingDatumEntity(meta_1.getStreamId(),
+						filter.getLocalStartDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
+						null,
+						filter.getLocalEndDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
+						propertiesOf(decimalArray("1.5"), decimalArray("19.8"), null, null), null));
+
+		d = datumList.get(1);
+		assertReading("CalcualtedAt reading diff for stream 2 @ local time", d,
+				new ReadingDatumEntity(meta_2.getStreamId(),
+						filter.getLocalStartDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
+						null,
+						filter.getLocalEndDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
+						propertiesOf(decimalArray("4.5"), decimalArray("59.4"), null, null), null));
+	}
+
+	@Test
 	public void diffWithin_nodeAndSource() {
 		// GIVEN
 		UUID streamId = loadStreamWithAuxiliary("test-datum-02.txt").values().iterator().next()
