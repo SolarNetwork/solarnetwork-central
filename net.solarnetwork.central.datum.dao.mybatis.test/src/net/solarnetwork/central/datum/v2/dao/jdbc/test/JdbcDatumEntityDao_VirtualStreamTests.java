@@ -31,6 +31,7 @@ import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertie
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.virtualStreamId;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -138,9 +139,9 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("a"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf((i * 3 + 1) * 2))));
+					arrayContaining(decimalArray(valueOf((i * 3 + 1) * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray("30")));
+					arrayContaining(decimalArray("30")));
 		}
 	}
 
@@ -196,9 +197,9 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(1L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf((i * 3 + 1) * 2))));
+					arrayContaining(decimalArray(valueOf((i * 3 + 1) * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray("30")));
+					arrayContaining(decimalArray("30")));
 		}
 	}
 
@@ -255,9 +256,9 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf((i * 3 + 1) * 2))));
+					arrayContaining(decimalArray(valueOf((i * 3 + 1) * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray("30")));
+					arrayContaining(decimalArray("30")));
 		}
 	}
 
@@ -318,12 +319,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf(i * 2))));
+					arrayContaining(decimalArray(valueOf(i * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 5 * 2))));
+					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
 		}
 	}
 
@@ -384,12 +385,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf(i * 2))));
+					arrayContaining(decimalArray(valueOf(i * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 5 * 2))));
+					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
 		}
 	}
 
@@ -465,7 +466,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					equalTo(new BigDecimal((i * 5 + i * 50) / 2.0).setScale(1)));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf("181.5"))));
+					arrayContaining(decimalArray(null, null, valueOf("181.5"))));
 		}
 	}
 
@@ -534,12 +535,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal " + i, meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal " + i, meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams " + i, d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf(i - i * 10))));
+					arrayContaining(decimalArray(valueOf(i - i * 10))));
 			assertThat("Virtual Wh from combined streams " + i, d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 5 - i * 50))));
+					arrayContaining(decimalArray(valueOf(i * 5 - i * 50))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf("-297"))));
+					arrayContaining(decimalArray(null, null, valueOf("-297"))));
 		}
 	}
 
@@ -608,12 +609,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal " + i, meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal " + i, meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams " + i, d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf((i * 10 - i)))));
+					arrayContaining(decimalArray(valueOf((i * 10 - i)))));
 			assertThat("Virtual Wh from combined streams " + i, d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 50 - i * 5))));
+					arrayContaining(decimalArray(valueOf(i * 50 - i * 5))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf("297"))));
+					arrayContaining(decimalArray(null, null, valueOf("297"))));
 		}
 	}
 
@@ -674,12 +675,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal", meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal", meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams", d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf(i * 2))));
+					arrayContaining(decimalArray(valueOf(i * 2))));
 			assertThat("Virtual Wh from combined streams", d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 5 * 2))));
+					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
 		}
 	}
 
@@ -741,12 +742,12 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			assertThat("Result node ID is virutal " + i, meta.getObjectId(), equalTo(10L));
 			assertThat("Result source ID is virutal " + i, meta.getSourceId(), equalTo("V"));
 			assertThat("Virtual W from combined streams " + i, d.getProperties().getInstantaneous(),
-					equalTo(decimalArray(valueOf(1 + i * 4))));
+					arrayContaining(decimalArray(valueOf(1 + i * 4))));
 			assertThat("Virtual Wh from combined streams " + i, d.getProperties().getAccumulating(),
-					equalTo(decimalArray(valueOf(i * 40 + 10))));
+					arrayContaining(decimalArray(valueOf(i * 40 + 10))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					equalTo(decimalArray(null, null, valueOf(33 * 2 * 2))));
+					arrayContaining(decimalArray(null, null, valueOf(33 * 2 * 2))));
 		}
 	}
 

@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.lang.String.valueOf;
 import static java.time.temporal.TemporalAdjusters.firstDayOfMonth;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.ingestDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAggregateDatum;
@@ -34,9 +36,12 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleF
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -44,6 +49,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -469,6 +475,124 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("One stale flux record created", staleFluxRows, hasSize(1));
 		assertThat("Stale flux for same stream", staleFluxRows.get(0).getStreamId(),
 				equalTo(agg.getStreamId()));
+	}
+
+	@Test
+	public void processStaleDay_dstStart() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("America/New_York");
+		setupTestLocation(1L, zone.getId());
+		setupTestNode(1L, 1L);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				zone.getId(), ObjectDatumKind.Node, 1L, "a", null, new String[] { "wh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta));
+
+		// populate 100Wh hourly data from D-1 to D+1, where D is a DST boundary day
+		final ZonedDateTime start = ZonedDateTime.of(2019, 3, 9, 0, 0, 0, 0, zone);
+		final ZonedDateTime end = ZonedDateTime.of(2019, 3, 12, 0, 0, 0, 0, zone);
+
+		List<AggregateDatum> datums = new ArrayList<>();
+		ZonedDateTime date = start.withZoneSameInstant(ZoneOffset.UTC);
+		long wh = 0;
+		while ( !date.isAfter(end) ) {
+			DatumProperties props = propertiesOf(null, new BigDecimal[] { new BigDecimal(wh) }, null,
+					null);
+			DatumPropertiesStatistics stats = statisticsOf(null,
+					new BigDecimal[][] { decimalArray(valueOf(wh), valueOf(wh + 100), valueOf(100)) });
+			datums.add(new AggregateDatumEntity(meta.getStreamId(), date.toInstant(), Aggregation.Hour,
+					props, stats));
+			date = date.plusHours(1);
+			wh += 100L;
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertStaleAggregateDatum(log, jdbcTemplate,
+				asList((StaleAggregateDatum) new StaleAggregateDatumEntity(meta.getStreamId(),
+						start.toInstant(), Aggregation.Day, Instant.now()),
+						new StaleAggregateDatumEntity(meta.getStreamId(), start.plusDays(1).toInstant(),
+								Aggregation.Day, Instant.now()),
+						new StaleAggregateDatumEntity(meta.getStreamId(), start.plusDays(2).toInstant(),
+								Aggregation.Day, Instant.now())));
+
+		// WHEN
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+
+		// THEN
+		List<AggregateDatum> daily = aggDatum(Aggregation.Day);
+		assertThat("Daily agg found", daily, hasSize(3));
+
+		assertThat("Agg pre DST day data_a", daily.get(0).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("27600")));
+		assertThat("Agg pre DST day read_a", daily.get(0).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("0", "2400", "2400")));
+
+		assertThat("Agg DST day data_a", daily.get(1).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("80500")));
+		assertThat("Agg DST day read_a", daily.get(1).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("2400", "4700", "2300")));
+
+		assertThat("Agg post DST day data_a", daily.get(2).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("140400")));
+		assertThat("Agg post DST day read_a", daily.get(2).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("4700", "7100", "2400")));
+	}
+
+	@Test
+	public void processStaleDay_dstEnd() {
+		// GIVEN
+		ZoneId zone = ZoneId.of("America/New_York");
+		setupTestLocation(1L, zone.getId());
+		setupTestNode(1L, 1L);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				zone.getId(), ObjectDatumKind.Node, 1L, "a", null, new String[] { "wh" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta));
+
+		// populate 100Wh hourly data from D-1 to D+1, where D is a DST boundary day
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 3, 0, 0, 0, 0, zone);
+		final ZonedDateTime end = ZonedDateTime.of(2018, 11, 6, 0, 0, 0, 0, zone);
+
+		List<AggregateDatum> datums = new ArrayList<>();
+		ZonedDateTime date = start.withZoneSameInstant(ZoneOffset.UTC);
+		long wh = 0;
+		while ( !date.isAfter(end) ) {
+			DatumProperties props = propertiesOf(null, new BigDecimal[] { new BigDecimal(wh) }, null,
+					null);
+			DatumPropertiesStatistics stats = statisticsOf(null,
+					new BigDecimal[][] { decimalArray(valueOf(wh), valueOf(wh + 100), valueOf(100)) });
+			datums.add(new AggregateDatumEntity(meta.getStreamId(), date.toInstant(), Aggregation.Hour,
+					props, stats));
+			date = date.plusHours(1);
+			wh += 100L;
+		}
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
+		insertStaleAggregateDatum(log, jdbcTemplate,
+				asList((StaleAggregateDatum) new StaleAggregateDatumEntity(meta.getStreamId(),
+						start.toInstant(), Aggregation.Day, Instant.now()),
+						new StaleAggregateDatumEntity(meta.getStreamId(), start.plusDays(1).toInstant(),
+								Aggregation.Day, Instant.now()),
+						new StaleAggregateDatumEntity(meta.getStreamId(), start.plusDays(2).toInstant(),
+								Aggregation.Day, Instant.now())));
+
+		// WHEN
+		processStaleAggregateDatum(log, jdbcTemplate, EnumSet.of(Aggregation.Day));
+
+		// THEN
+		List<AggregateDatum> daily = aggDatum(Aggregation.Day);
+		assertThat("Daily agg found", daily, hasSize(3));
+
+		assertThat("Agg pre DST day data_a", daily.get(0).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("27600")));
+		assertThat("Agg pre DST day read_a", daily.get(0).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("0", "2400", "2400")));
+
+		assertThat("Agg DST day data_a", daily.get(1).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("90000")));
+		assertThat("Agg DST day read_a", daily.get(1).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("2400", "4900", "2500")));
+
+		assertThat("Agg post DST day data_a", daily.get(2).getProperties().getAccumulating(),
+				arrayContaining(decimalArray("145200")));
+		assertThat("Agg post DST day read_a", daily.get(2).getStatistics().getAccumulating()[0],
+				arrayContaining(decimalArray("4900", "7300", "2400")));
 	}
 
 }
