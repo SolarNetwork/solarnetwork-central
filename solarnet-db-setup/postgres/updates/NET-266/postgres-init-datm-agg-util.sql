@@ -56,7 +56,8 @@ BEGIN
 			, s.stat[2] AS rend
 			, s.stat[3] AS rdiff
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
-		INNER JOIN solarcommon.reduce_dim(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
+		-- allow for NULL read_a input, e.g. from Minute agg
+		LEFT OUTER JOIN solarcommon.reduce_dim(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 		UNION ALL
 		SELECT
 			  p.idx
@@ -66,7 +67,8 @@ BEGIN
 			, s.stat[2] AS rend
 			, s.stat[3] AS rdiff
 		FROM unnest(el.data_a) WITH ORDINALITY AS p(val,idx)
-		INNER JOIN solarcommon.reduce_dim(el.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
+		-- allow for NULL read_a input, e.g. from Minute agg
+		LEFT OUTER JOIN solarcommon.reduce_dim(el.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
 	)
 	-- calculate accumulating statistics
 	, da AS (
