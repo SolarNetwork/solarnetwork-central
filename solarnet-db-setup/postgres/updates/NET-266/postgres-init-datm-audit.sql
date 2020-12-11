@@ -143,12 +143,12 @@ $$;
 
 
 /**
- * Call the `solaragg.find_audit_datum_daily_missing(date)` function and insert the results
- * into the `solaragg.aud_datum_daily_stale` table with an `aud_kind = 'm'` so a record of the found
+ * Call the `solardatm.find_audit_datum_daily_missing(date)` function and insert the results
+ * into the `solardatm.aud_stale_datm` table with an `aud_kind = 'M'` so a record of the found
  * node sources gets generated.
  *
- * The `aud_kind = m` value is used because the processor that handles that record also populates
- * the `solaragg.aud_acc_datum_daily` table.
+ * The `aud_kind = M` value is used because the processor that handles that record also populates
+ * the `solardatm.aud_acc_datum_daily` table.
  *
  * @param ts the date to look for; defaults to the current date
  * @return the number of rows inserted
@@ -163,7 +163,7 @@ BEGIN
 	SELECT date_trunc('month', m.ts_start AT TIME ZONE m.time_zone) AT TIME ZONE m.time_zone
 		, m.stream_id
 		, 'M' AS aud_kind
-	FROM solaragg.find_audit_datum_daily_missing(ts) m
+	FROM solardatm.find_audit_datum_daily_missing(ts) m
 	ON CONFLICT DO NOTHING;
 
 	GET DIAGNOSTICS ins_count = ROW_COUNT;
