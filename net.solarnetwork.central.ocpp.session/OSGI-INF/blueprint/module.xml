@@ -21,7 +21,7 @@
 
 	<reference id="chargeSessionDao" interface="net.solarnetwork.ocpp.dao.ChargeSessionDao" filter="(function=central)"/>
 
-	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="datumDao" interface="net.solarnetwork.central.datum.v2.dao.DatumEntityDao"/>
 
 	<reference id="taskScheduler" interface="org.springframework.scheduling.TaskScheduler" filter="(function=central)"/>
 	
@@ -53,7 +53,7 @@
 		<argument ref="authService"/>
 		<argument ref="chargePointDao"/>
 		<argument ref="chargeSessionDao"/>
-		<argument ref="generalNodeDatumDao"/>
+		<argument ref="datumDao"/>
 		<argument ref="chargePointSettingsDao"/>
 		<argument ref="fluxPublisher"/>
 		<property name="taskScheduler" ref="taskScheduler"/>
