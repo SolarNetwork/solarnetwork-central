@@ -75,9 +75,6 @@
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeConfirmation.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/UserNodeTransfer.xml</value>
-
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
-
 			</list>
 		</property>
 	</bean>
