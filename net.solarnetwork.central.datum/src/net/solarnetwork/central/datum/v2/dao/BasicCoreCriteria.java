@@ -23,9 +23,11 @@
 package net.solarnetwork.central.datum.v2.dao;
 
 import java.util.Arrays;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimplePagination;
 
 /**
@@ -42,10 +44,15 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	private String[] sourceIds;
 	private Long[] userIds;
 	private String[] tokenIds;
+	private SimpleLocation location;
 
 	@Override
 	public BasicCoreCriteria clone() {
-		return (BasicCoreCriteria) super.clone();
+		BasicCoreCriteria result = (BasicCoreCriteria) super.clone();
+		if ( location != null ) {
+			result.location = location.clone();
+		}
+		return result;
 	}
 
 	@Override
@@ -57,6 +64,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		result = prime * result + Arrays.hashCode(sourceIds);
 		result = prime * result + Arrays.hashCode(tokenIds);
 		result = prime * result + Arrays.hashCode(userIds);
+		result = prime * result + Objects.hashCode(location);
 		return result;
 	}
 
@@ -74,7 +82,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		BasicCoreCriteria other = (BasicCoreCriteria) obj;
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
-				&& Arrays.equals(userIds, other.userIds);
+				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location);
 	}
 
 	/**
@@ -94,13 +102,18 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		setSorts(criteria.getSorts());
 		if ( criteria instanceof BasicCoreCriteria ) {
 			BasicCoreCriteria bcc = (BasicCoreCriteria) criteria;
-			setLocationIds(((LocationCriteria) criteria).getLocationIds());
 			setLocationIds(bcc.getLocationIds());
+			setLocation(bcc.getLocation());
 			setNodeIds(bcc.getNodeIds());
 			setSourceIds(bcc.getSourceIds());
 			setUserIds(bcc.getUserIds());
 			setTokenIds(bcc.getTokenIds());
 		} else {
+			if ( criteria instanceof LocationCriteria ) {
+				LocationCriteria lc = (LocationCriteria) criteria;
+				setLocationIds(lc.getLocationIds());
+				setLocation(SimpleLocation.locationValue(lc.getLocation()));
+			}
 			if ( criteria instanceof NodeCriteria ) {
 				setNodeIds(((NodeCriteria) criteria).getNodeIds());
 			}
@@ -312,6 +325,21 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	 */
 	public void setTokenIds(String[] tokenIds) {
 		this.tokenIds = tokenIds;
+	}
+
+	@Override
+	public SimpleLocation getLocation() {
+		return location;
+	}
+
+	/**
+	 * Set the location geographic criteria.
+	 * 
+	 * @param location
+	 *        the location to set
+	 */
+	public void setLocation(SimpleLocation location) {
+		this.location = location;
 	}
 
 }

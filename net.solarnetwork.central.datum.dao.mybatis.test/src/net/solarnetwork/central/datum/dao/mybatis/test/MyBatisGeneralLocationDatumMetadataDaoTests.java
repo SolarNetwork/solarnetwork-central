@@ -25,12 +25,7 @@ package net.solarnetwork.central.datum.dao.mybatis.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
@@ -107,99 +102,6 @@ public class MyBatisGeneralLocationDatumMetadataDaoTests extends AbstractMyBatis
 		assertEquals(src.getSourceId(), entity.getSourceId());
 		assertEquals(src.getCreated(), entity.getCreated());
 		assertEquals(src.getMeta(), entity.getMeta());
-	}
-
-	@Test
-	public void getByPrimaryKey() {
-		storeNew();
-		GeneralLocationDatumMetadata datum = dao.get(lastDatum.getId());
-		validate(lastDatum, datum);
-	}
-
-	@Test
-	public void storeVeryBigValues() {
-		GeneralLocationDatumMetadata datum = getTestInstance();
-		datum.getMeta().getInfo().put("watt_hours", 39309570293789380L);
-		datum.getMeta().getInfo().put("very_big", new BigInteger("93475092039478209375027350293523957"));
-		datum.getMeta().getInfo().put("watts", 498475890235787897L);
-		datum.getMeta().getInfo().put("floating",
-				new BigDecimal("293487590845639845728947589237.49087"));
-		dao.store(datum);
-
-		GeneralLocationDatumMetadata entity = dao.get(datum.getId());
-		validate(datum, entity);
-	}
-
-	@Test
-	public void findFilteredDefaultSort() {
-		storeNew();
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setLocationId(TEST_LOC_ID);
-
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
-				null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
-
-		GeneralLocationDatumMetadata datum2 = new GeneralLocationDatumMetadata();
-		datum2.setCreated(new DateTime().plusHours(1));
-		datum2.setLocationId(TEST_LOC_ID);
-		datum2.setSourceId(TEST_SOURCE_ID_2);
-		datum2.setMetaJson("{\"m\":{\"watts\":123}}");
-		dao.store(datum2);
-
-		results = dao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(2L, (long) results.getTotalResults());
-		assertEquals(2, (int) results.getReturnedResultCount());
-
-		GeneralLocationDatumMetadata datum3 = new GeneralLocationDatumMetadata();
-		datum3.setCreated(lastDatum.getCreated());
-		datum3.setLocationId(TEST_LOC_ID);
-		datum3.setSourceId("/test/source/2");
-		datum3.setMetaJson("{\"m\":{\"watt_hours\":789}}");
-		dao.store(datum3);
-
-		results = dao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(3L, (long) results.getTotalResults());
-		assertEquals(3, (int) results.getReturnedResultCount());
-		List<LocationSourcePK> ids = new ArrayList<LocationSourcePK>();
-		for ( GeneralLocationDatumMetadataFilterMatch d : results ) {
-			ids.add(d.getId());
-		}
-		// expect d3, d1, d2 because sorted by locationId,created,sourceId
-		assertEquals("Result order", Arrays.asList(datum3.getId(), lastDatum.getId(), datum2.getId()),
-				ids);
-	}
-
-	@Test
-	public void findFilteredWithMax() {
-		storeNew();
-
-		DatumFilterCommand criteria = new DatumFilterCommand();
-		criteria.setLocationId(TEST_LOC_ID);
-
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dao.findFiltered(criteria, null,
-				0, 1);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
-
-		GeneralLocationDatumMetadata datum2 = new GeneralLocationDatumMetadata();
-		datum2.setCreated(new DateTime().plusHours(1));
-		datum2.setLocationId(TEST_LOC_ID);
-		datum2.setSourceId(TEST_SOURCE_ID_2);
-		datum2.setMetaJson("{\"m\":{\"watts\":123}}");
-		dao.store(datum2);
-
-		results = dao.findFiltered(criteria, null, 0, 1);
-		assertNotNull(results);
-		assertEquals("Returned results", 2L, (long) results.getTotalResults());
-		assertEquals("Returned result count", 1, (int) results.getReturnedResultCount());
-		assertEquals("Datum ID", lastDatum.getId(), results.iterator().next().getId());
 	}
 
 	@Test

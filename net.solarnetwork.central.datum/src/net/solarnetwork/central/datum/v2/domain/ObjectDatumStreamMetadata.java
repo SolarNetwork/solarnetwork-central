@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import net.solarnetwork.domain.Location;
+
 /**
  * Object-specific (node or location) datum stream metadata.
  * 
@@ -58,5 +60,12 @@ public interface ObjectDatumStreamMetadata extends DatumStreamMetadata {
 	 * @return the kind
 	 */
 	ObjectDatumKind getKind();
+
+	/**
+	 * Get the object location.
+	 * 
+	 * @return the location
+	 */
+	Location getLocation();
 
 }

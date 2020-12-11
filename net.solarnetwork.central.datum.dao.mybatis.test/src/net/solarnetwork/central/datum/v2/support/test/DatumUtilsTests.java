@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.support.test;
 
+import static net.solarnetwork.domain.BasicLocation.locationOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -56,6 +57,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.DateUtils;
@@ -454,6 +456,40 @@ public class DatumUtilsTests {
 		SortDescriptor sort = c.getSorts().get(0);
 		assertThat("Sort key copied", sort.getSortKey(), equalTo(msd2.getSortKey()));
 		assertThat("Sort order copied", sort.isDescending(), equalTo(msd2.isDescending()));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_location() {
+		// GIVEN
+		SolarLocation sl = new SolarLocation();
+		sl.setCountry("NZ");
+		sl.setRegion("Wellington");
+		sl.setTimeZoneId("Pacific/Auckland");
+		DatumFilterCommand f = new DatumFilterCommand(sl);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Location converted from filter", c.getLocation(),
+				equalTo(locationOf(sl.getCountry(), sl.getRegion(), sl.getTimeZoneId())));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_location_emptyRemoved() {
+		// GIVEN
+		SolarLocation sl = new SolarLocation();
+		sl.setCountry("");
+		sl.setRegion("     ");
+		sl.setTimeZoneId("");
+		DatumFilterCommand f = new DatumFilterCommand(sl);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Location not converted from filter because has only empty values", c.getLocation(),
+				nullValue());
 	}
 
 	@Test

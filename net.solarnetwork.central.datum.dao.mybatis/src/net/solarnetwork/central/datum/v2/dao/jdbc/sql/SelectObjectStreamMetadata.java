@@ -35,7 +35,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
- * Generate dynamic SQL for a "find node metadata" query.
+ * Generate dynamic SQL for a "find stream metadata" query.
  * 
  * @author matt
  * @version 1.0

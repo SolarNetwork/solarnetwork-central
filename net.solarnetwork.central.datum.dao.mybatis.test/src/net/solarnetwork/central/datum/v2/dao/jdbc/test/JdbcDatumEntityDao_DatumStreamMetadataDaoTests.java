@@ -55,6 +55,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -87,6 +88,7 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.util.JodaDateUtils;
 import net.solarnetwork.util.JsonUtils;
 
@@ -118,6 +120,40 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	@After
 	public void teardown() {
 		EasyMock.verify(cache);
+	}
+
+	@Test
+	public void findObjectMetadata_nodes() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
+		filter.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
+
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadata("location meta", meta, expected);
+		}
 	}
 
 	@Test
@@ -358,6 +394,40 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void findObjectMetadata_locations() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Location,
+					(long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" }));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
+		filter.setObjectKind(ObjectDatumKind.Location);
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		assertThat("Stream IDs same", metas.keySet(), equalTo(streamIds));
+
+		for ( ObjectDatumStreamMetadata expected : data ) {
+			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
+			assertDatumStreamMetadata("location meta", meta, expected);
+		}
+	}
+
+	@Test
 	public void findObjectMetadata_locations_withJson() {
 		// GIVEN
 		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
@@ -445,48 +515,16 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
-	public void findNodeMetadata() {
+	public void findObjectMetadata_locations_geo() {
 		// GIVEN
 		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
 		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		final List<String> zones = Arrays.asList("Pacific/Auckland", "UTC", "America/Los_Angeles");
 		for ( int i = 1; i <= 3; i++ ) {
+			setupTestLocation((long) i, zones.get(i));
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
-					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
-					new String[] { "f" }));
-
-		}
-		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
-
-		// WHEN
-		replayAll();
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
-		filter.setObjectKind(ObjectDatumKind.Node);
-		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
-
-		assertThat("Results returned", results, notNullValue());
-		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
-				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
-		assertThat("Stream IDs same", metas.keySet(), equalTo(new LinkedHashSet<>(streamIds)));
-
-		for ( ObjectDatumStreamMetadata expected : data ) {
-			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
-			assertDatumStreamMetadata("location meta", meta, expected);
-		}
-	}
-
-	@Test
-	public void findLocationMetadata() {
-		// GIVEN
-		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
-		final Set<UUID> streamIds = new LinkedHashSet<>(3);
-		for ( int i = 1; i <= 3; i++ ) {
-			UUID streamId = UUID.randomUUID();
-			streamIds.add(streamId);
-			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Location,
+			data.add(new BasicObjectDatumStreamMetadata(streamId, zones.get(i), ObjectDatumKind.Location,
 					(long) i, format("s%d", i), new String[] { "a", "b", "c" },
 					new String[] { "d", "e" }, new String[] { "f" }));
 
@@ -496,20 +534,18 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// WHEN
 		replayAll();
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
 		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setRegion(TEST_LOC_REGION);
+		filter.setLocation(locFilter);
+
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
 
+		// THEN
 		assertThat("Results returned", results, notNullValue());
-		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport.stream(results.spliterator(), false)
-				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
-		assertThat("Stream IDs same", metas.keySet(), equalTo(streamIds));
-
-		for ( ObjectDatumStreamMetadata expected : data ) {
-			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
-			assertDatumStreamMetadata("location meta", meta, expected);
-		}
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Stream IDs same", metas, hasSize(3));
 	}
 
 	@Test
@@ -740,4 +776,5 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		ObjectDatumStreamMetadata meta = DatumDbUtils.listNodeMetadata(jdbcTemplate).get(0);
 		assertThat("JSON persisted", getStringMap(meta.getMetaJson()), equalTo(getStringMap(json)));
 	}
+
 }

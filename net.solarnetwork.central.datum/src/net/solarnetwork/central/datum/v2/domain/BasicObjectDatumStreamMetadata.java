@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.util.Arrays;
 import java.util.UUID;
+import net.solarnetwork.domain.BasicLocation;
+import net.solarnetwork.domain.Location;
 
 /**
  * Basic implementation of {@link ObjectDatumStreamMetadata}.
@@ -40,6 +42,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	private final ObjectDatumKind kind;
 	private final Long objectId;
 	private final String sourceId;
+	private final BasicLocation location;
 	private final String metaJson;
 
 	/**
@@ -95,7 +98,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, ObjectDatumKind kind,
 			Long objectId, String sourceId, String[] instantaneousProperties,
 			String[] accumulatingProperties, String[] statusProperties) {
-		this(streamId, timeZoneId, kind, objectId, sourceId, instantaneousProperties,
+		this(streamId, timeZoneId, kind, objectId, sourceId, null, instantaneousProperties,
 				accumulatingProperties, statusProperties, null);
 	}
 
@@ -133,6 +136,46 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, ObjectDatumKind kind,
 			Long objectId, String sourceId, String[] instantaneousProperties,
 			String[] accumulatingProperties, String[] statusProperties, String metaJson) {
+		this(streamId, timeZoneId, kind, objectId, sourceId, null, instantaneousProperties,
+				accumulatingProperties, statusProperties, metaJson);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * All arguments except {@code streamId}, {@code objectId}, and
+	 * {@code sourceId} are allowed to be {@literal null}. If any array is
+	 * empty, it will be treated as if it were {@literal null}.
+	 * </p>
+	 * 
+	 * @param streamId
+	 *        the stream ID
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @param kind
+	 *        the object kind
+	 * @param objectId
+	 *        the object ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param location
+	 *        the location
+	 * @param instantaneousProperties
+	 *        the instantaneous property names
+	 * @param accumulatingProperties
+	 *        the accumulating property names
+	 * @param statusProperties
+	 *        the status property names
+	 * @param metaJson
+	 *        the JSON metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} or {@code objectId} or {@code sourceId} is
+	 *         {@literal null}
+	 */
+	public BasicObjectDatumStreamMetadata(UUID streamId, String timeZoneId, ObjectDatumKind kind,
+			Long objectId, String sourceId, Location location, String[] instantaneousProperties,
+			String[] accumulatingProperties, String[] statusProperties, String metaJson) {
 		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
 		if ( kind == null ) {
 			throw new IllegalArgumentException("The kind argument must not be null.");
@@ -146,6 +189,7 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 			throw new IllegalArgumentException("The sourceId argument must not be null.");
 		}
 		this.sourceId = sourceId;
+		this.location = BasicLocation.locationValue(location);
 		this.metaJson = metaJson;
 	}
 
@@ -187,6 +231,11 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	@Override
 	public ObjectDatumKind getKind() {
 		return kind;
+	}
+
+	@Override
+	public BasicLocation getLocation() {
+		return location;
 	}
 
 }

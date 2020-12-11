@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.domain.Location;
+
 /**
  * Search criteria for location related data.
  * 
@@ -49,5 +51,13 @@ public interface LocationCriteria {
 	 * @return array of locations IDs (may be {@literal null})
 	 */
 	Long[] getLocationIds();
+
+	/**
+	 * Get a location to use as geographic criteria.
+	 * 
+	 * @return the location whose properties represent geographic search
+	 *         criteria
+	 */
+	Location getLocation();
 
 }

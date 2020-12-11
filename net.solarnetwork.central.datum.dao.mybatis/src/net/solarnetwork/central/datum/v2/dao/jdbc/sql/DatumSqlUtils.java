@@ -619,7 +619,10 @@ public final class DatumSqlUtils {
 		final String objName = (kind == ObjectDatumKind.Location ? "loc" : "node");
 		int paramCount = 0;
 		if ( combiningConfig == null || !combiningConfig.isWithObjectIds() ) {
-			buf.append("\n, s.").append(objName).append("_id");
+			if ( combiningConfig != null ) {
+				buf.append("\n");
+			}
+			buf.append(", s.").append(objName).append("_id");
 			if ( combiningConfig != null ) {
 				buf.append("\n, 0 AS obj_rank");
 			}

@@ -13,4 +13,4 @@ WHERE s.node_id = ANY(?)
 		)
 	AND (COALESCE(jsonb_array_length(ut.jpolicy->'nodeIds'), 0) < 1
 		OR s.node_id = ANY(ARRAY(SELECT solarcommon.jsonb_array_to_bigint_array(ut.jpolicy->'nodeIds')))
-			)
+		)

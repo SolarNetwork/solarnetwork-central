@@ -71,6 +71,7 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.DateRangeFilter;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
+import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.NodeFilter;
 import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.OptimizedQueryFilter;
@@ -79,6 +80,7 @@ import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.DateUtils;
@@ -102,7 +104,7 @@ public class DatumUtils {
 	 * 
 	 * @param filter
 	 *        the filter to convert
-	 * @return the filter, or {@literal null} if {@code filter} is
+	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null}
 	 */
 	public static BasicDatumCriteria criteriaFromFilter(Filter filter) {
@@ -120,7 +122,7 @@ public class DatumUtils {
 	 *        the optional offset
 	 * @param max
 	 *        the optional max
-	 * @return the filter, or {@literal null} if {@code filter} is
+	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null}
 	 */
 	public static BasicDatumCriteria criteriaFromFilter(Filter filter,
@@ -139,6 +141,7 @@ public class DatumUtils {
 			// most common
 			c.setNodeIds(f.getNodeIds());
 			c.setLocationIds(f.getLocationIds());
+			c.setLocation(locationFromFilter(f.getLocation()));
 			c.setSourceIds(f.getSourceIds());
 			c.setUserIds(f.getUserIds());
 			c.setAggregation(f.getAggregation());
@@ -166,7 +169,9 @@ public class DatumUtils {
 				c.setNodeIds(((NodeFilter) filter).getNodeIds());
 			}
 			if ( filter instanceof GeneralLocationDatumMetadataFilter ) {
-				c.setLocationIds(((GeneralLocationDatumMetadataFilter) filter).getLocationIds());
+				GeneralLocationDatumMetadataFilter gldmf = (GeneralLocationDatumMetadataFilter) filter;
+				c.setLocationIds(gldmf.getLocationIds());
+				c.setLocation(locationFromFilter(gldmf.getLocation()));
 			}
 			if ( filter instanceof SourceFilter ) {
 				c.setSourceIds(((SourceFilter) filter).getSourceIds());
@@ -221,6 +226,39 @@ public class DatumUtils {
 	}
 
 	/**
+	 * Convert a location filter to a location criteria.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @return the criteria, or {@literal null} if {@code filter} is
+	 *         {@literal null} or has only empty values
+	 */
+	public static SimpleLocation locationFromFilter(Location location) {
+		if ( location == null ) {
+			return null;
+		}
+		SimpleLocation l = new SimpleLocation();
+		l.setName(location.getName());
+		l.setCountry(location.getCountry());
+		l.setRegion(location.getRegion());
+		l.setStateOrProvince(location.getStateOrProvince());
+		l.setLocality(location.getLocality());
+		l.setPostalCode(location.getPostalCode());
+		l.setStreet(location.getStreet());
+		l.setLatitude(location.getLatitude());
+		l.setLongitude(location.getLongitude());
+		l.setElevation(location.getElevation());
+		l.setTimeZoneId(location.getTimeZoneId());
+
+		l.removeEmptyValues();
+		if ( !l.hasLocationCriteria() ) {
+			return null;
+		}
+
+		return l;
+	}
+
+	/**
 	 * Get a copy of a {@link ObjectStreamCriteria} with any date values
 	 * removed.
 	 * 
@@ -241,6 +279,7 @@ public class DatumUtils {
 			BasicDatumCriteria c = new BasicDatumCriteria();
 			c.setAggregation(criteria.getAggregation());
 			c.setLocationIds(criteria.getLocationIds());
+			c.setLocation(SimpleLocation.locationValue(criteria.getLocation()));
 			c.setMax(criteria.getMax());
 			c.setNodeIds(criteria.getNodeIds());
 			c.setObjectKind(criteria.getObjectKind());
