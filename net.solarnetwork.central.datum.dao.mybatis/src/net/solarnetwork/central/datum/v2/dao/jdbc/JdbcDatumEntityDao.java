@@ -660,6 +660,11 @@ public class JdbcDatumEntityDao
 			return null;
 		}
 
+		@Override
+		public String getSearchFilter() {
+			return null;
+		}
+
 	}
 
 	@Override

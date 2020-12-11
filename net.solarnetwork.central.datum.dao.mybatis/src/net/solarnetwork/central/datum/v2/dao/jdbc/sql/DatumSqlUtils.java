@@ -62,6 +62,9 @@ import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.support.SearchFilter;
+import net.solarnetwork.support.SearchFilter.LogicOperator;
+import net.solarnetwork.support.SearchFilter.VisitorCallback;
 import net.solarnetwork.util.ByteUtils;
 
 /**
@@ -1773,7 +1776,148 @@ public final class DatumSqlUtils {
 		buf.append("		(datum.data_i, datum.data_a, datum.data_s, datum.data_t, datum.stat_i")
 				.append(", datum.read_a)::solardatm.agg_data\n");
 		buf.append("		ORDER BY datum.ts_start)).*\n");
+	}
 
+	/**
+	 * Generate SQL {@code WHERE} clause components for a metadata search
+	 * filter.
+	 * 
+	 * @param filter
+	 *        the filter to use
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 */
+	public static int metadataSearchFilterSql(SearchFilter filter, StringBuilder buf) {
+		if ( filter == null ) {
+			return 0;
+		}
+		final int[] parameterCount = new int[] { 0 };
+		final boolean[] withTags = new boolean[] { false };
+		filter.walk(new VisitorCallback() {
+
+			private SearchFilter root = null;
+
+			@Override
+			public boolean visit(SearchFilter node, SearchFilter parentNode) {
+				if ( parentNode == null ) {
+					root = node;
+				} else if ( parentNode != root ) {
+					// TODO: work on this
+					throw new IllegalArgumentException("Nested search filter logic is not supported.");
+				}
+				for ( Map.Entry<String, ?> me : node.getFilter().entrySet() ) {
+					String path = me.getKey();
+					if ( me.getValue() instanceof SearchFilter || path.isEmpty()
+							|| me.getValue() == null ) {
+						continue;
+					}
+					if ( "/t".equals(path) ) {
+						withTags[0] = true;
+					} else {
+						if ( node.getLogicOperator() == LogicOperator.AND ) {
+							buf.append("\tAND ");
+						} else {
+							buf.append("\tOR ");
+						}
+						// generate "json value at path" clause for filter path to match
+						buf.append("(s.jdata #>> ?) = ?\n");
+						parameterCount[0] += 2;
+					}
+				}
+				return true;
+			}
+		});
+		if ( withTags[0] ) {
+			buf.append("	AND solarcommon.json_array_to_text_array(s.jdata -> 't') ");
+			if ( filter.getLogicOperator() == LogicOperator.AND ) {
+				// generate "array contains value" clause for AND tags to match
+				buf.append("@>");
+			} else {
+				// generate "array overlaps value" clause for OR tags to match
+				buf.append("&&");
+			}
+			buf.append(" ?\n");
+			parameterCount[0]++;
+
+		}
+		return parameterCount[0];
+	}
+
+	/**
+	 * Prepare a SQL query local date range filter.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 */
+	public static int prepareMetadataSearchFilter(SearchFilter filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter == null ) {
+			return parameterOffset;
+		}
+		final int[] offset = new int[] { parameterOffset };
+		// collect all tags into single array for end
+		final List<String> tags = new ArrayList<>();
+		try {
+			filter.walk(new VisitorCallback() {
+
+				private SearchFilter root = null;
+
+				@Override
+				public boolean visit(SearchFilter node, SearchFilter parentNode) {
+					if ( parentNode == null ) {
+						root = node;
+					} else if ( parentNode != root ) {
+						// TODO: work on this
+						throw new IllegalArgumentException(
+								"Nested search filter logic is not supported.");
+					}
+					for ( Map.Entry<String, ?> me : node.getFilter().entrySet() ) {
+						String path = me.getKey();
+						if ( me.getValue() instanceof SearchFilter || path.isEmpty()
+								|| me.getValue() == null ) {
+							continue;
+						}
+						try {
+							if ( "/t".equals(path) ) {
+								tags.add(me.getValue().toString());
+							} else {
+								if ( path.charAt(0) == '/' ) {
+									path = path.substring(1);
+								}
+								String[] jsonPath = path.split("/");
+								Array array = con.createArrayOf("text", jsonPath);
+								stmt.setArray(++offset[0], array);
+								array.free();
+								stmt.setString(++offset[0], me.getValue().toString());
+							}
+						} catch ( SQLException e ) {
+							throw new RuntimeException(e);
+						}
+					}
+					return true;
+				}
+			});
+		} catch ( RuntimeException e ) {
+			if ( e.getCause() instanceof SQLException ) {
+				throw (SQLException) e.getCause();
+			}
+			throw e;
+		}
+		if ( !tags.isEmpty() ) {
+			Array array = con.createArrayOf("text", tags.toArray(new String[tags.size()]));
+			stmt.setArray(++offset[0], array);
+			array.free();
+		}
+		return offset[0];
 	}
 
 }

@@ -305,6 +305,46 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
+	public void sql_streamMeta_geo_tag_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setSorts(sorts("node", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(/t=weather)");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-geo-tagsAnd-sortNodeSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_geo_tags_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setSorts(sorts("node", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(|(/t=weather)(/t=foo))");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-geo-tagsOr-sortNodeSource.sql", TestSqlResources.class));
+	}
+
+	@Test
 	public void sql_loc_streamMeta_locsAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -421,6 +461,85 @@ public class SelectObjectStreamMetadataTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource("loc-stream-meta-geo-fts-sortLocSource.sql",
 				TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_loc_streamMeta_geo_tag_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(/t=weather)");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"loc-stream-meta-geo-tagsAnd-sortLocSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_loc_streamMeta_geo_tags_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(|(/t=weather)(/t=forecast))");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"loc-stream-meta-geo-tagsOr-sortLocSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void prep_loc_streamMeta_geo_tags_sortNodeSource() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(|(/t=weather)(/t=forecast))");
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		stmt.setString(1, locFilter.getCountry());
+
+		Array tagsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(new String[] { "weather", "forecast" })))
+				.andReturn(tagsArray);
+		stmt.setArray(2, tagsArray);
+		tagsArray.free();
+
+		// WHEN
+		replay(con, stmt, tagsArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"loc-stream-meta-geo-tagsOr-sortLocSource.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, tagsArray);
 	}
 
 }

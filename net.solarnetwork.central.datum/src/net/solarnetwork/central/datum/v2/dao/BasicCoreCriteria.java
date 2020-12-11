@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SimplePagination;
  * @version 1.0
  */
 public class BasicCoreCriteria extends SimplePagination implements PaginationCriteria, LocationCriteria,
-		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria {
+		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
@@ -45,6 +45,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	private Long[] userIds;
 	private String[] tokenIds;
 	private SimpleLocation location;
+	private String searchFilter;
 
 	@Override
 	public BasicCoreCriteria clone() {
@@ -65,6 +66,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		result = prime * result + Arrays.hashCode(tokenIds);
 		result = prime * result + Arrays.hashCode(userIds);
 		result = prime * result + Objects.hashCode(location);
+		result = prime * result + Objects.hashCode(searchFilter);
 		return result;
 	}
 
@@ -82,7 +84,8 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		BasicCoreCriteria other = (BasicCoreCriteria) obj;
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
-				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location);
+				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location)
+				&& Objects.equals(searchFilter, other.searchFilter);
 	}
 
 	/**
@@ -108,6 +111,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 			setSourceIds(bcc.getSourceIds());
 			setUserIds(bcc.getUserIds());
 			setTokenIds(bcc.getTokenIds());
+			setSearchFilter(bcc.getSearchFilter());
 		} else {
 			if ( criteria instanceof LocationCriteria ) {
 				LocationCriteria lc = (LocationCriteria) criteria;
@@ -125,6 +129,9 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 			}
 			if ( criteria instanceof SecurityTokenCriteria ) {
 				setTokenIds(((SecurityTokenCriteria) criteria).getTokenIds());
+			}
+			if ( criteria instanceof SearchFilterCriteria ) {
+				setSearchFilter(((SearchFilterCriteria) criteria).getSearchFilter());
 			}
 		}
 	}
@@ -340,6 +347,21 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	 */
 	public void setLocation(SimpleLocation location) {
 		this.location = location;
+	}
+
+	@Override
+	public String getSearchFilter() {
+		return searchFilter;
+	}
+
+	/**
+	 * Set the search filter.
+	 * 
+	 * @param searchFilter
+	 *        the filter to set
+	 */
+	public void setSearchFilter(String searchFilter) {
+		this.searchFilter = searchFilter;
 	}
 
 }

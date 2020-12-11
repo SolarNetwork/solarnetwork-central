@@ -556,6 +556,104 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	}
 
 	@Test
+	public void findObjectMetadata_locations_geo_tags_and() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<UUID> streamIds = new ArrayList<>(3);
+		final List<String> zones = Arrays.asList("Pacific/Auckland", "UTC", "America/Los_Angeles");
+		for ( int i = 1; i <= 3; i++ ) {
+			setupTestLocation((long) i, zones.get(i - 1));
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+
+			// add tags like t1, p
+			GeneralDatumMetadata meta = new GeneralDatumMetadata();
+			meta.setTags(new LinkedHashSet<>(
+					asList(format("t%d", i), zones.get(i - 1).substring(0, 1).toLowerCase())));
+
+			data.add(new BasicObjectDatumStreamMetadata(streamId, zones.get(i - 1),
+					ObjectDatumKind.Location, (long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" },
+					JsonUtils.getJSONString(meta, null)));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setRegion(TEST_LOC_REGION);
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(&(/t=t3)(/t=a))");
+
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("One match for region +  tag criteria", metas, hasSize(1));
+		assertThat("Expected stream match", metas.get(0).getStreamId(), equalTo(streamIds.get(2)));
+		assertLocation("Region + tag location", metas.get(0).getLocation(),
+				new BasicLocation(null, TEST_LOC_COUNTRY, TEST_LOC_REGION, null, null,
+						TEST_LOC_POSTAL_CODE, null, null, null, null, "America/Los_Angeles"));
+	}
+
+	@Test
+	public void findObjectMetadata_locations_geo_tags_or() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final List<UUID> streamIds = new ArrayList<>(3);
+		final List<String> zones = Arrays.asList("Pacific/Auckland", "UTC", "America/Los_Angeles");
+		for ( int i = 1; i <= 3; i++ ) {
+			setupTestLocation((long) i, zones.get(i - 1));
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+
+			// add tags like t1, p
+			GeneralDatumMetadata meta = new GeneralDatumMetadata();
+			meta.setTags(new LinkedHashSet<>(
+					asList(format("t%d", i), zones.get(i - 1).substring(0, 1).toLowerCase())));
+
+			data.add(new BasicObjectDatumStreamMetadata(streamId, zones.get(i - 1),
+					ObjectDatumKind.Location, (long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" },
+					JsonUtils.getJSONString(meta, null)));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setRegion(TEST_LOC_REGION);
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(|(/t=t3)(/t=p))");
+
+		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
+		assertThat("Two match for region +  tags criteria", metas, hasSize(2));
+
+		assertThat("Expected stream match", metas.get(0).getStreamId(), equalTo(streamIds.get(0)));
+		assertLocation("Region + tags location 1", metas.get(0).getLocation(),
+				new BasicLocation(null, TEST_LOC_COUNTRY, TEST_LOC_REGION, null, null,
+						TEST_LOC_POSTAL_CODE, null, null, null, null, "Pacific/Auckland"));
+
+		assertThat("Expected stream match", metas.get(1).getStreamId(), equalTo(streamIds.get(2)));
+		assertLocation("Region + tags location 1", metas.get(1).getLocation(),
+				new BasicLocation(null, TEST_LOC_COUNTRY, TEST_LOC_REGION, null, null,
+						TEST_LOC_POSTAL_CODE, null, null, null, null, "America/Los_Angeles"));
+	}
+
+	@Test
 	public void metadataForStream_notFound() {
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
 				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },

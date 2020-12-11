@@ -33,8 +33,10 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.joda.time.DateTime;
@@ -48,6 +50,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
@@ -83,6 +86,9 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.support.SearchFilter;
+import net.solarnetwork.support.SearchFilter.CompareOperator;
+import net.solarnetwork.support.SearchFilter.LogicOperator;
 import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.JodaDateUtils;
 
@@ -93,7 +99,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * @version 1.0
  * @since 2.8
  */
-public class DatumUtils {
+public final class DatumUtils {
 
 	private DatumUtils() {
 		// don't construct me
@@ -135,6 +141,7 @@ public class DatumUtils {
 		List<? extends net.solarnetwork.central.domain.SortDescriptor> s = sortDescriptors;
 		Integer m = max;
 		Integer o = offset;
+		String[] tags = null;
 
 		if ( filter instanceof DatumFilterCommand ) {
 			DatumFilterCommand f = (DatumFilterCommand) filter;
@@ -155,6 +162,8 @@ public class DatumUtils {
 			c.setCombiningType(f.getCombiningType());
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
+			c.setSearchFilter(f.getMetadataFilter());
+			tags = f.getTags();
 			if ( s == null || s.isEmpty() ) {
 				s = f.getSorts();
 			}
@@ -172,6 +181,9 @@ public class DatumUtils {
 				GeneralLocationDatumMetadataFilter gldmf = (GeneralLocationDatumMetadataFilter) filter;
 				c.setLocationIds(gldmf.getLocationIds());
 				c.setLocation(locationFromFilter(gldmf.getLocation()));
+				tags = gldmf.getTags();
+			} else if ( filter instanceof GeneralNodeDatumMetadataFilter ) {
+				tags = ((GeneralNodeDatumMetadataFilter) filter).getTags();
 			}
 			if ( filter instanceof SourceFilter ) {
 				c.setSourceIds(((SourceFilter) filter).getSourceIds());
@@ -221,6 +233,17 @@ public class DatumUtils {
 		}
 		c.setMax(m);
 		c.setOffset(o);
+
+		if ( tags != null && tags.length > 0 ) {
+			// turn tags into metadata query
+			Map<String, Object> map = new LinkedHashMap<>(tags.length);
+			for ( int i = 0; i < tags.length; i++ ) {
+				map.put(String.valueOf(i), new SearchFilter("t", tags[i], CompareOperator.EQUAL));
+			}
+			SearchFilter sf = new SearchFilter(map, LogicOperator.OR);
+			// support merging into existing metadata query? for now assume tags take over
+			c.setSearchFilter(sf.asLDAPSearchFilterString());
+		}
 
 		return c;
 	}

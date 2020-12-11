@@ -493,6 +493,32 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void criteriaFromFilter_datumFilterCommand_tag() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setTag("foo");
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Tag converted to search filter", c.getSearchFilter(), equalTo("(t=foo)"));
+	}
+
+	@Test
+	public void criteriaFromFilter_datumFilterCommand_tags() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setTags(new String[] { "foo", "bar" });
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Tags converted to search filter", c.getSearchFilter(), equalTo("(|(t=foo)(t=bar))"));
+	}
+
+	@Test
 	public void truncateDate_local_hour() {
 		// WHEN
 		LocalDateTime result = DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6),

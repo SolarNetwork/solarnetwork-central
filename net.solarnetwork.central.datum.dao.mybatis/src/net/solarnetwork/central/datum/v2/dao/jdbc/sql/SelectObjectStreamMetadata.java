@@ -33,6 +33,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.support.SearchFilter;
 
 /**
  * Generate dynamic SQL for a "find stream metadata" query.
@@ -47,6 +48,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 
 	private final ObjectStreamCriteria filter;
 	private final ObjectDatumKind kind;
+	private final SearchFilter searchFilter;
 
 	/**
 	 * Constructor.
@@ -83,6 +85,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		}
 		this.filter = filter;
 		this.kind = kind;
+		this.searchFilter = filter.searchFilter();
 	}
 
 	@Override
@@ -90,15 +93,20 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		StringBuilder buf = new StringBuilder();
 		MetadataSelectStyle style = (filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
 				: MetadataSelectStyle.Full);
+		int idx = 0;
 		if ( kind == ObjectDatumKind.Location ) {
-			DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
+			idx = DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
 					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		} else {
-			DatumSqlUtils.nodeMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
+			idx = DatumSqlUtils.nodeMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
 					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		}
+		// only allowing searchFilter if some other criteria specified as well
+		if ( idx > 0 && searchFilter != null ) {
+			DatumSqlUtils.metadataSearchFilterSql(searchFilter, buf);
+		}
 		StringBuilder order = new StringBuilder();
-		int idx = orderBySorts(filter.getSorts(),
+		idx = orderBySorts(filter.getSorts(),
 				kind == ObjectDatumKind.Location
 						? DatumSqlUtils.LOCATION_STREAM_METADATA_SORT_KEY_MAPPING
 						: DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING,
@@ -119,7 +127,10 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
 		}
-		DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, p);
+		if ( p > 0 && searchFilter != null ) {
+			DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
+		}
 		return stmt;
 	}
 
