@@ -60,4 +60,14 @@ public interface LocationCriteria {
 	 */
 	Location getLocation();
 
+	/**
+	 * Test if a {@link Location} is present and any of its properties have a
+	 * non-empty value.
+	 * 
+	 * @return {@literal true} if some property is not empty on the location
+	 */
+	default boolean hasLocationCriteria() {
+		return (getLocation() != null && getLocation().hasLocationCriteria());
+	}
+
 }

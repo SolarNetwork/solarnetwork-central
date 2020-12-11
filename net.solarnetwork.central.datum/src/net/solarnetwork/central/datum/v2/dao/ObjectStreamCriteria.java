@@ -32,8 +32,8 @@ import net.solarnetwork.dao.SortCriteria;
  * Search criteria for datum streams.
  * 
  * <p>
- * Since this API extends <b>both</b> {@link NodeMetadataCriteria} and
- * {@link LocationMetadataCriteria}, the {@link ObjectMetadataCriteria} API is
+ * Since this API extends <b>both</b> {@link NodeCriteria} and
+ * {@link LocationCriteria}, the {@link ObjectMetadataCriteria} API is
  * implemented here such that if a location ID is available the location IDs
  * will be returned, otherwise any node IDs will be returned.
  * </p>
@@ -44,8 +44,8 @@ import net.solarnetwork.dao.SortCriteria;
  */
 public interface ObjectStreamCriteria
 		extends DateRangeCriteria, LocalDateRangeCriteria, AggregationCriteria, UserCriteria,
-		SecurityTokenCriteria, NodeMetadataCriteria, LocationMetadataCriteria, ObjectMappingCriteria,
-		SourceMappingCriteria, CombiningCriteria, PaginationCriteria, SortCriteria {
+		SecurityTokenCriteria, NodeMetadataCriteria, ObjectMappingCriteria, SourceMappingCriteria,
+		CombiningCriteria, PaginationCriteria, SortCriteria {
 
 	/**
 	 * Test if this filter has any location, node, or source criteria.

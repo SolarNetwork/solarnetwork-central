@@ -31,7 +31,7 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  * @since 3.8
  */
-public interface StreamMetadataCriteria
-		extends StreamCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SortCriteria {
+public interface StreamMetadataCriteria extends StreamCriteria, SourceCriteria, LocationCriteria,
+		UserCriteria, SecurityTokenCriteria, SortCriteria {
 
 }

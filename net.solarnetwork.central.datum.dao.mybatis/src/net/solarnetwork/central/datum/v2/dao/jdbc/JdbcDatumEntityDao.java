@@ -116,6 +116,7 @@ import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
 import net.solarnetwork.domain.GeneralDatumSamples;
+import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -366,9 +367,16 @@ public class JdbcDatumEntityDao
 	@Override
 	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
 		ObjectDatumKind kind = filter.effectiveObjectKind();
-		RowMapper<ObjectDatumStreamMetadata> mapper = (kind == ObjectDatumKind.Location
-				? ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE
-				: ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
+		RowMapper<ObjectDatumStreamMetadata> mapper;
+		if ( filter.hasLocationCriteria() ) {
+			mapper = (kind == ObjectDatumKind.Location
+					? ObjectDatumStreamMetadataGeoRowMapper.LOCATION_INSTANCE
+					: ObjectDatumStreamMetadataGeoRowMapper.NODE_INSTANCE);
+		} else {
+			mapper = (kind == ObjectDatumKind.Location
+					? ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE
+					: ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
+		}
 		PreparedStatementCreator sql = new SelectObjectStreamMetadata(filter, kind);
 		return jdbcTemplate.query(sql, mapper);
 	}
@@ -609,6 +617,21 @@ public class JdbcDatumEntityDao
 
 		@Override
 		public String[] getSourceIds() {
+			return null;
+		}
+
+		@Override
+		public Long getLocationId() {
+			return null;
+		}
+
+		@Override
+		public Long[] getLocationIds() {
+			return null;
+		}
+
+		@Override
+		public Location getLocation() {
 			return null;
 		}
 

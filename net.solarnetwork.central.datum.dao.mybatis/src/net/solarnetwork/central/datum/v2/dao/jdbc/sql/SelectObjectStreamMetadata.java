@@ -88,12 +88,14 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
+		MetadataSelectStyle style = (filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
+				: MetadataSelectStyle.Full);
 		if ( kind == ObjectDatumKind.Location ) {
-			DatumSqlUtils.locationMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
+			DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
+					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		} else {
-			DatumSqlUtils.nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, filter,
-					"solardatm.da_datm", Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
+			DatumSqlUtils.nodeMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
+					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
 		}
 		StringBuilder order = new StringBuilder();
 		int idx = orderBySorts(filter.getSorts(),
@@ -102,7 +104,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 						: DatumSqlUtils.NODE_STREAM_METADATA_SORT_KEY_MAPPING,
 				order);
 		if ( idx > 0 ) {
-			buf.append("\nORDER BY ");
+			buf.append("ORDER BY ");
 			buf.append(order.substring(idx));
 		}
 		return buf.toString();

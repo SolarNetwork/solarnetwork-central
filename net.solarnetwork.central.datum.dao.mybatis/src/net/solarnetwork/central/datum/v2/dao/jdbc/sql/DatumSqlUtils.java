@@ -49,7 +49,6 @@ import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
-import net.solarnetwork.central.datum.v2.dao.LocationMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
@@ -61,6 +60,7 @@ import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
+import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.ByteUtils;
 
@@ -403,6 +403,49 @@ public final class DatumSqlUtils {
 					"		OR s.node_id = ANY(ARRAY(SELECT solarcommon.jsonb_array_to_bigint_array(ut.jpolicy->'nodeIds')))\n");
 			buf.append("	)\n");
 		}
+		if ( filter.hasLocationCriteria() ) {
+			Location l = filter.getLocation();
+			if ( l.getCountry() != null ) {
+				buf.append("	AND l.country = ?\n");
+				paramCount += 1;
+			}
+			if ( l.getRegion() != null ) {
+				buf.append("	AND l.region = ?\n");
+				paramCount += 1;
+			}
+			if ( l.getStateOrProvince() != null ) {
+				buf.append("	AND l.state_prov = ?\n");
+				paramCount += 1;
+			}
+			if ( l.getLocality() != null ) {
+				buf.append("	AND l.locality = ?\n");
+				paramCount += 1;
+			}
+			if ( l.getPostalCode() != null ) {
+				buf.append("	AND l.postal_code = ?\n");
+				paramCount += 1;
+			}
+			if ( l.getTimeZoneId() != null ) {
+				buf.append("	AND l.time_zone = ?\n");
+				paramCount += 1;
+			}
+
+			if ( l.getName() != null ) {
+				// full-text search implies public-only locations that don't include address/lat/lon values
+				buf.append("	AND l.address IS NULL\n");
+				buf.append("	AND l.latitude IS NULL\n");
+				buf.append("	AND l.longitude IS NULL\n");
+				buf.append("	AND l.elevation IS NULL\n");
+				buf.append("	AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(?)\n");
+				paramCount += 1;
+			} else {
+				if ( l.getStreet() != null ) {
+					buf.append("	AND l.address = ?\n");
+					paramCount += 1;
+				}
+				// TODO lat/lon/el
+			}
+		}
 		return paramCount;
 	}
 
@@ -509,7 +552,7 @@ public final class DatumSqlUtils {
 		Minimum,
 
 		/**
-		 * Query for the minimum metadata.
+		 * Query for the minimum metadata with time zone information.
 		 * 
 		 * <p>
 		 * This will output the following columns:
@@ -523,6 +566,32 @@ public final class DatumSqlUtils {
 		 * </ol>
 		 */
 		WithZone,
+
+		/**
+		 * Query for metadata with time zone and geography information.
+		 * 
+		 * <p>
+		 * This will output the following columns:
+		 * </p>
+		 * 
+		 * <ol>
+		 * <li>stream_id</li>
+		 * <li>obj_id</li>
+		 * <li>source_id</li>
+		 * <li>jdata</li>
+		 * <li>country</li>
+		 * <li>region</li>
+		 * <li>state_prov</li>
+		 * <li>locality</li>
+		 * <li>postal_code</li>
+		 * <li>address</li>
+		 * <li>latitude</li>
+		 * <li>longitude</li>
+		 * <li>elevation</li>
+		 * <li>time_zone</li>
+		 * </ol>
+		 */
+		WithGeography,
 
 		/**
 		 * Query for the full metadata including time zone.
@@ -702,7 +771,11 @@ public final class DatumSqlUtils {
 			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Node, buf);
-		if ( style == MetadataSelectStyle.Full ) {
+		if ( style == MetadataSelectStyle.WithGeography ) {
+			buf.append(", s.jdata\n");
+			buf.append("	, l.country, l.region, l.state_prov, l.locality, l.postal_code\n");
+			buf.append("	, l.address, l.latitude, l.longitude, l.elevation\n\t");
+		} else if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'n'::CHARACTER AS kind");
 		}
 		if ( style != MetadataSelectStyle.Minimum ) {
@@ -717,8 +790,10 @@ public final class DatumSqlUtils {
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
 		if ( style != MetadataSelectStyle.Minimum ) {
-			buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id\n");
-			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id\n");
+			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
+					: "LEFT OUTER JOIN");
+			buf.append(joinStyle).append(" solarnet.sn_node n ON n.node_id = s.node_id\n");
+			buf.append(joinStyle).append(" solarnet.sn_loc l ON l.id = n.loc_id\n");
 		}
 		if ( filter != null || streamFilter != null ) {
 			StringBuilder where = new StringBuilder();
@@ -815,8 +890,6 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #locationMetadataFilterSql(LocationMetadataCriteria,
-	 *      MetadataSelectStyle, StringBuilder)
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return locationMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
@@ -832,9 +905,6 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
@@ -854,9 +924,6 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			CombiningConfig combiningConfig, StringBuilder buf) {
@@ -887,16 +954,17 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereLocationMetadata(LocationMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(LocationMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
 	 */
 	public static int locationMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
 			CombiningConfig combiningConfig, String zoneClause, StringBuilder buf) {
 		buf.append("SELECT s.stream_id");
 		int paramCount = metadataObjectSourceIdsSql(combiningConfig, ObjectDatumKind.Location, buf);
-		if ( style == MetadataSelectStyle.Full ) {
+		if ( style == MetadataSelectStyle.WithGeography ) {
+			buf.append(", s.jdata\n");
+			buf.append("	, l.country, l.region, l.state_prov, l.locality, l.postal_code\n");
+			buf.append("	, l.address, l.latitude, l.longitude, l.elevation\n\t");
+		} else if ( style == MetadataSelectStyle.Full ) {
 			buf.append(", s.names_i, s.names_a, s.names_s, s.jdata, 'l'::CHARACTER AS kind");
 		}
 		if ( style != MetadataSelectStyle.Minimum ) {
@@ -908,7 +976,9 @@ public final class DatumSqlUtils {
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
 		if ( style != MetadataSelectStyle.Minimum ) {
-			buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = s.loc_id\n");
+			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
+					: "LEFT OUTER JOIN");
+			buf.append(joinStyle).append(" solarnet.sn_loc l ON l.id = s.loc_id\n");
 		}
 
 		if ( filter != null || streamFilter != null ) {
@@ -989,6 +1059,36 @@ public final class DatumSqlUtils {
 				Array array = con.createArrayOf("text", filter.getTokenIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
+			}
+			if ( filter.hasLocationCriteria() ) {
+				Location l = filter.getLocation();
+				if ( l.getCountry() != null ) {
+					stmt.setString(++parameterOffset, l.getCountry());
+				}
+				if ( l.getRegion() != null ) {
+					stmt.setString(++parameterOffset, l.getRegion());
+				}
+				if ( l.getStateOrProvince() != null ) {
+					stmt.setString(++parameterOffset, l.getStateOrProvince());
+				}
+				if ( l.getLocality() != null ) {
+					stmt.setString(++parameterOffset, l.getLocality());
+				}
+				if ( l.getPostalCode() != null ) {
+					stmt.setString(++parameterOffset, l.getPostalCode());
+				}
+				if ( l.getTimeZoneId() != null ) {
+					stmt.setString(++parameterOffset, l.getTimeZoneId());
+				}
+
+				if ( l.getName() != null ) {
+					stmt.setString(++parameterOffset, l.getName());
+				} else {
+					if ( l.getStreet() != null ) {
+						stmt.setString(++parameterOffset, l.getStreet());
+					}
+					// TODO lat/lon/el
+				}
 			}
 		}
 		return parameterOffset;

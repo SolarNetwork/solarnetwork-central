@@ -35,6 +35,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatu
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.util.JsonUtils.getStringMap;
@@ -87,6 +88,7 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.util.JodaDateUtils;
@@ -518,14 +520,14 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	public void findObjectMetadata_locations_geo() {
 		// GIVEN
 		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
-		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		final List<UUID> streamIds = new ArrayList<>(3);
 		final List<String> zones = Arrays.asList("Pacific/Auckland", "UTC", "America/Los_Angeles");
 		for ( int i = 1; i <= 3; i++ ) {
-			setupTestLocation((long) i, zones.get(i));
+			setupTestLocation((long) i, zones.get(i - 1));
 			UUID streamId = UUID.randomUUID();
 			streamIds.add(streamId);
-			data.add(new BasicObjectDatumStreamMetadata(streamId, zones.get(i), ObjectDatumKind.Location,
-					(long) i, format("s%d", i), new String[] { "a", "b", "c" },
+			data.add(new BasicObjectDatumStreamMetadata(streamId, zones.get(i - 1),
+					ObjectDatumKind.Location, (long) i, format("s%d", i), new String[] { "a", "b", "c" },
 					new String[] { "d", "e" }, new String[] { "f" }));
 
 		}
@@ -538,6 +540,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		filter.setSorts(sorts("loc"));
 		SimpleLocation locFilter = new SimpleLocation();
 		locFilter.setRegion(TEST_LOC_REGION);
+		locFilter.setTimeZoneId("UTC");
 		filter.setLocation(locFilter);
 
 		Iterable<ObjectDatumStreamMetadata> results = dao.findDatumStreamMetadata(filter);
@@ -545,7 +548,11 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		List<ObjectDatumStreamMetadata> metas = stream(results.spliterator(), false).collect(toList());
-		assertThat("Stream IDs same", metas, hasSize(3));
+		assertThat("One match for region +  time zone criteria", metas, hasSize(1));
+		assertThat("Expected stream match", metas.get(0).getStreamId(), equalTo(streamIds.get(1)));
+		assertLocation("Region + time zone location", metas.get(0).getLocation(),
+				new BasicLocation(null, TEST_LOC_COUNTRY, TEST_LOC_REGION, null, null,
+						TEST_LOC_POSTAL_CODE, null, null, null, null, "UTC"));
 	}
 
 	@Test

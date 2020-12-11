@@ -25,7 +25,6 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
-import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -54,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
-import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.util.ByteUtils;
 
@@ -199,29 +197,6 @@ public class SelectStreamMetadataTests {
 		String sha1Hex = ByteUtils.encodeHexString(sha1, 0, sha1.length, false, true);
 
 		assertThat("Cache key matches", cacheKey, equalTo(sha1Hex));
-	}
-
-	@Test
-	public void sql_streamMeta_geo_sortLocSource() {
-		// GIVEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setSorts(sorts("loc", "source"));
-		SimpleLocation locFilter = new SimpleLocation();
-		locFilter.setCountry("NZ");
-		locFilter.setRegion("Wellington");
-		locFilter.setStateOrProvince("Wellywood");
-		locFilter.setLocality("Te Aro");
-		locFilter.setPostalCode("6011");
-		locFilter.setStreet("Eva Street");
-		locFilter.setTimeZoneId("Pacific/Auckland");
-		filter.setLocation(locFilter);
-
-		// WHEN
-		String sql = new SelectStreamMetadata(filter).getSql();
-
-		// THEN
-		assertThat("SQL matches", sql,
-				equalToTextResource("stream-meta-geo-sortObjSource.sql", TestSqlResources.class));
 	}
 
 }

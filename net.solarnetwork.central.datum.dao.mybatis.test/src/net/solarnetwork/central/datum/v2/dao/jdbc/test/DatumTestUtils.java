@@ -48,6 +48,7 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.Location;
 import net.solarnetwork.util.ClassUtils;
 import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.NumberUtils;
@@ -397,6 +398,31 @@ public final class DatumTestUtils {
 			return new AggregateDatumEntity(streamId, e.getTimestamp(), e.getAggregation(),
 					e.getProperties(), e.getStatistics());
 		};
+	}
+
+	/**
+	 * Assert one location has values that match another.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	public static final void assertLocation(String prefix, Location result, Location expected) {
+		assertThat(prefix + " returned", result, notNullValue());
+		assertThat(prefix + " country", result.getCountry(), equalTo(expected.getCountry()));
+		assertThat(prefix + " region", result.getRegion(), equalTo(expected.getRegion()));
+		assertThat(prefix + " state", result.getStateOrProvince(),
+				equalTo(expected.getStateOrProvince()));
+		assertThat(prefix + " locality", result.getLocality(), equalTo(expected.getLocality()));
+		assertThat(prefix + " postal code", result.getPostalCode(), equalTo(expected.getPostalCode()));
+		assertThat(prefix + " street", result.getStreet(), equalTo(expected.getStreet()));
+		assertThat(prefix + " lat", result.getLatitude(), equalTo(expected.getLatitude()));
+		assertThat(prefix + " lon", result.getLongitude(), equalTo(expected.getLongitude()));
+		assertThat(prefix + " elevation", result.getCountry(), equalTo(expected.getCountry()));
+		assertThat(prefix + " time zone", result.getTimeZoneId(), equalTo(expected.getTimeZoneId()));
 	}
 
 }

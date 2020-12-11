@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.SimpleLocation;
 
 /**
  * Test cases for the {@link SelectObjectStreamMetadata} class.
@@ -258,7 +260,52 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void sql_loc_streamMeta_nodesAndSources() {
+	public void sql_streamMeta_geo_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setSorts(sorts("node", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		locFilter.setRegion("Wellington");
+		locFilter.setStateOrProvince("Wellywood");
+		locFilter.setLocality("Te Aro");
+		locFilter.setPostalCode("6011");
+		locFilter.setStreet("Eva Street");
+		locFilter.setTimeZoneId("Pacific/Auckland");
+		filter.setLocation(locFilter);
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("node-stream-meta-geo-sortNodeSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_geo_fts_sortNodeSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setSorts(sorts("node", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setName("Wellington");
+		locFilter.setTimeZoneId("Pacific/Auckland");
+		filter.setLocation(locFilter);
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("node-stream-meta-geo-fts-sortNodeSource.sql",
+				TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_loc_streamMeta_locsAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
@@ -273,7 +320,7 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void sql_loc_streamMeta_nodesAndSourcesAndUsers() {
+	public void sql_loc_streamMeta_locsAndSourcesAndUsers() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
@@ -289,7 +336,7 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void prep_loc_streamMeta_nodesAndSourcesAndUsers() throws SQLException {
+	public void prep_loc_streamMeta_locsAndSourcesAndUsers() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
@@ -329,6 +376,51 @@ public class SelectObjectStreamMetadataTests {
 				"loc-stream-meta-locsAndSourcesAndUsers.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
+	}
+
+	@Test
+	public void sql_loc_streamMeta_geo_sortLocSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setCountry("NZ");
+		locFilter.setRegion("Wellington");
+		locFilter.setStateOrProvince("Wellywood");
+		locFilter.setLocality("Te Aro");
+		locFilter.setPostalCode("6011");
+		locFilter.setStreet("Eva Street");
+		locFilter.setTimeZoneId("Pacific/Auckland");
+		filter.setLocation(locFilter);
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("loc-stream-meta-geo-sortLocSource.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_loc_streamMeta_geo_fts_sortLocSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setName("Wellington");
+		locFilter.setTimeZoneId("Pacific/Auckland");
+		filter.setLocation(locFilter);
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("loc-stream-meta-geo-fts-sortLocSource.sql",
+				TestSqlResources.class));
 	}
 
 }
