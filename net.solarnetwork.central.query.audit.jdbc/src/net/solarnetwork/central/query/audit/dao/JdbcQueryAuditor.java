@@ -52,7 +52,7 @@ import net.solarnetwork.util.OptionalService;
  * data.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class JdbcQueryAuditor implements QueryAuditor {
 
@@ -287,8 +287,8 @@ public class JdbcQueryAuditor implements QueryAuditor {
 				}
 				try {
 					keepGoing.compareAndSet(true, execute());
-				} catch ( SQLException e ) {
-					log.warn("JDBC exception with query auditing", e);
+				} catch ( SQLException | RuntimeException e ) {
+					log.warn("Exception with query auditing", e);
 					// sleep, then try again
 					try {
 						Thread.sleep(connectionRecoveryDelay);
@@ -296,8 +296,6 @@ public class JdbcQueryAuditor implements QueryAuditor {
 						log.info("Writer thread interrupted: exiting now.");
 						keepGoing.set(false);
 					}
-				} catch ( RuntimeException e ) {
-					log.warn("Exception with query auditing", e);
 				}
 			}
 		}
@@ -305,7 +303,7 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		private Boolean execute() throws SQLException {
 			DataSource ds = dataSource.service();
 			if ( ds == null ) {
-				throw new RuntimeException("DataSource service not available.");
+				throw new SQLException("DataSource service not available.");
 			}
 			try (Connection conn = ds.getConnection()) {
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately

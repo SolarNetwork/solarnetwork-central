@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork JDBC Query Auditor
 Bundle-Description: Audit query results and store the results in a database using JDBC.
 Bundle-SymbolicName: net.solarnetwork.central.query.audit.jdbc
-Bundle-Version: 1.2.0
+Bundle-Version: 1.2.1
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
