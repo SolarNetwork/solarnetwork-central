@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>net.solarnetwork.central.datum.dao.mybatis.test</name>
+	<name>net.solarnetwork.central.datum.dao.jdbc</name>
 	<comment></comment>
 	<projects>
 	</projects>

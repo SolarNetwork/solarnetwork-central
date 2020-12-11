@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ctx="http://www.springframework.org/schema/context"
+	xmlns:osgix="http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+		http://www.osgi.org/xmlns/blueprint/v1.0.0
+		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium
+		http://www.eclipse.org/gemini/blueprint/schema/blueprint-compendium/gemini-blueprint-compendium.xsd
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util-4.2.xsd">
+
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.dao.jdbc">
+		<beans:prop key="cache.node.flush">900000</beans:prop>
+		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/datum/dao/jdbc/ehcache.xml</beans:prop>
+		<beans:prop key="userNodeCache.ttl">60</beans:prop>
+		<beans:prop key="userNodeCache.heapMaxEntries">10000</beans:prop>
+		<beans:prop key="userNodeCache.diskMaxSizeMB">100</beans:prop>
+		<beans:prop key="datum.maxMinuteAggregationHours">840</beans:prop>
+		<beans:prop key="streamMetadataCache.ttl">300</beans:prop>
+		<beans:prop key="streamMetadataCache.heapMaxEntries">10000</beans:prop>
+		<beans:prop key="streamMetadataCache.diskMaxSizeMB">100</beans:prop>
+	</osgix:cm-properties>
+	
+	<ctx:property-placeholder properties-ref="cfg"/>
+
+	<!-- Service References -->
+	
+	<reference id="jdbcOps" interface="org.springframework.jdbc.core.JdbcOperations" filter="(db=central)"/>
+
+	<reference id="dataSource" interface="javax.sql.DataSource" filter="(db=central)"/>
+	
+	<reference id="txManager" interface="org.springframework.transaction.PlatformTransactionManager"
+		filter="(db=central)"/>
+	
+	<!-- Published Services -->
+		
+	<service interface="net.solarnetwork.central.datum.dao.DatumSupportDao">
+		<bean class="net.solarnetwork.central.datum.dao.jdbc.JdbcDatumSupportDao">
+			<argument ref="jdbcOps"/>
+			<property name="userNodeCache" ref="userNodeCache"/>
+		</bean>
+	</service>
+	
+	<service interface="net.solarnetwork.central.datum.v2.dao.AuditDatumDao">
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao">
+			<argument ref="jdbcOps"/>
+		</bean>
+	</service>
+	
+	<service>
+		<interfaces>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumEntityDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao</value>
+			<value>net.solarnetwork.central.datum.v2.dao.ReadingDatumDao</value>
+		</interfaces>
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
+			<argument ref="jdbcOps"/>
+			<property name="streamMetadataCache" ref="streamMetadataCache"/>
+		</bean>
+	</service>
+	
+	<service interface="net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao">
+		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao">
+			<argument ref="jdbcOps"/>
+		</bean>
+	</service>	
+	<!-- Supporting Services -->
+
+	<!-- Use Java @Transactional annotations to declare transactions. -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+	
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
+	</bean>
+
+	<bean id="streamMetadataCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.util.UUID"/>
+		<argument value="net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata"/>
+		<property name="name" value="metadata-for-stream"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${streamMetadataCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${streamMetadataCache.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${streamMetadataCache.diskMaxSizeMB}"/>
+	</bean>
+
+	<bean id="userNodeCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.Long"/>
+		<argument value="java.lang.Long"/>
+		<property name="name" value="user-for-node"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${userNodeCache.ttl}"/>
+			</bean>
+		</property>
+		<property name="heapMaxEntries" value="${userNodeCache.heapMaxEntries}"/>
+		<property name="diskMaxSizeMB" value="${userNodeCache.diskMaxSizeMB}"/>
+	</bean>
+
+</blueprint>
