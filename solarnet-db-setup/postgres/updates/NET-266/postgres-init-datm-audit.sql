@@ -163,7 +163,7 @@ BEGIN
 	SELECT date_trunc('month', m.ts_start AT TIME ZONE m.time_zone) AT TIME ZONE m.time_zone
 		, m.stream_id
 		, 'M' AS aud_kind
-	FROM solardatm.find_audit_datum_daily_missing(ts) m
+	FROM solardatm.find_audit_datm_daily_missing(ts) m
 	ON CONFLICT DO NOTHING;
 
 	GET DIAGNOSTICS ins_count = ROW_COUNT;
