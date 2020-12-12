@@ -25,7 +25,6 @@ package net.solarnetwork.central.dao.mybatis.support;
 import java.util.List;
 import java.util.Map;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
-import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
@@ -79,7 +78,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	/**
 	 * Callback to alter the default SQL properties set up by
-	 * {@link #findFiltered(Filter, List, Integer, Integer)}.
+	 * {@link #findFiltered(Object, List, Integer, Integer)}
 	 * 
 	 * @param filter
 	 *        the current filter
@@ -99,7 +98,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * 
 	 * <ol>
 	 * <li>Compute the MyBatis query name by calling
-	 * {@link #getFilteredQuery(String, Object)}.</li>
+	 * {@link #getFilteredQuery(String, PaginationCriteria)}.</li>
 	 * <li>Call
 	 * {@link BaseMyBatisDao#selectFiltered(String, Object, List, Integer, Integer, java.util.function.BiConsumer)}.</li>
 	 * </ol>

@@ -252,8 +252,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 */
 	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max,
-			BiConsumer<F, Map<String, Object>> propertyProcessory) {
-		return selectFiltered(query, filter, sorts, offset, max, propertyProcessory, null);
+			BiConsumer<F, Map<String, Object>> propertyProcessor) {
+		return selectFiltered(query, filter, sorts, offset, max, propertyProcessor, null);
 	}
 
 	/**
@@ -279,8 +279,9 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * {@link OptimizedQueryCriteria} and does not disable a total results
 	 * count, then call {@link #executeCountQuery(String, Map)}</li>
 	 * <li>Call {@link #selectList(String, Object, Integer, Integer)}</li>
-	 * <li>Call
-	 * {@link #createFilterResults(Object, Map, Iterable, Long, Integer, Integer)}
+	 * <li>Create a result object, or if {@code resultsFactory} provided then
+	 * call
+	 * {@link FilterResultsFactory#createFilterResults(Object, Map, Iterable, Long, Integer, Integer)}
 	 * and return the result.</li>
 	 * </ol>
 	 * 
