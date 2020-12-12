@@ -14,7 +14,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.10.1" />
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="2.0"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,)"/>
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 	</dependencies>
 </ivy-module>

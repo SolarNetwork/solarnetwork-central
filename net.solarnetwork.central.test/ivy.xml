@@ -31,6 +31,6 @@
 		<dependency org="org.springframework" name="spring-jdbc" rev="4.2.6.RELEASE"/>
 
 		<!-- SolarNetwork -->
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="1.16"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.16,)"/>
     </dependencies>
 </ivy-module>
