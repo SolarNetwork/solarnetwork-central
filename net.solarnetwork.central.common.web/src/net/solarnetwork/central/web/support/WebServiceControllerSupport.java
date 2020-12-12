@@ -466,6 +466,8 @@ public abstract class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param locale
+	 *        the desired locale
 	 * @return an error response object
 	 * @since 1.18
 	 */
