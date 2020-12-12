@@ -125,8 +125,8 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 *        the ad hoc task DAO to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
-	 * @param generalNodeDatumDao
-	 *        the node datum DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
