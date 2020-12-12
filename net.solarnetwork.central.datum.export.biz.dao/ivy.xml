@@ -13,7 +13,7 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[1.45,2.0)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.6,3.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.8,3.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.export" rev="[1.1,2.0)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[2.3,3.0)"/>
