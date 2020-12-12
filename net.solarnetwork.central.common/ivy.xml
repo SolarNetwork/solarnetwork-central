@@ -16,7 +16,7 @@
 		<dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.4.3" />
 		<dependency org="javax.cache" name="cache-api" rev="1.0.0" />
 		<dependency org="javax.validation" name="validation-api" rev="1.1.0.Final"/>
-		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.59,2.0)"/>
+		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="1.59"/>
 		<dependency org="org.hibernate" name="hibernate-validator" rev="5.0.1.Final"/>
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.ehcache" name="ehcache" rev="3.4.0" />

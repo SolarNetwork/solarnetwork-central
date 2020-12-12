@@ -15,10 +15,10 @@
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
 		<dependency org="org.mybatis" name="mybatis" rev="3.5.4" />
 		<dependency org="org.mybatis" name="mybatis-spring" rev="1.3.3" />
- 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.67,2.0)"/>
- 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.ocpp" rev="[1.0,2.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,3.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.8,3.0)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="[1.1,2.0)"/>
+ 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="1.67"/>
+ 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.ocpp" rev="1.0"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="2.0"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="2.8"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="1.1"/>
 	</dependencies>
 </ivy-module>
