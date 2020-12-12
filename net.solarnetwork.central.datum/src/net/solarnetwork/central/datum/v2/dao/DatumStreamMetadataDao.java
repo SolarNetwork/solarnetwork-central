@@ -66,7 +66,7 @@ public interface DatumStreamMetadataDao {
 	 * @param id
 	 *        the ID of the stream to update
 	 * @param json
-	 *        the new JSON, or {@litearl null} to remove
+	 *        the new JSON, or {@literal null} to remove
 	 */
 	void replaceJsonMeta(ObjectSourcePK id, String json);
 

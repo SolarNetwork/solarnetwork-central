@@ -62,7 +62,7 @@ public class DateInterval {
 	 *        the start date
 	 * @param end
 	 *        the end date
-	 * @param zone
+	 * @param timeZoneId
 	 *        the time zone ID
 	 */
 	public DateInterval(Instant start, Instant end, String timeZoneId) {

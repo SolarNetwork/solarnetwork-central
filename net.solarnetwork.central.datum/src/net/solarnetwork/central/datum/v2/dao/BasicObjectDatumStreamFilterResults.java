@@ -31,7 +31,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 
 /**
- * Basic implementation of {@link DatumStreamFilterResults}.
+ * Basic implementation of {@link ObjectDatumStreamFilterResults}.
  * 
  * @author matt
  * @version 1.0
@@ -71,6 +71,8 @@ public class BasicObjectDatumStreamFilterResults<M extends Identity<K>, K>
 	 * from the number of items in {@code results}.
 	 * </p>
 	 * 
+	 * @param streamMetadata
+	 *        the stream metadata to associate with the results
 	 * @param results
 	 *        the results iterable
 	 */

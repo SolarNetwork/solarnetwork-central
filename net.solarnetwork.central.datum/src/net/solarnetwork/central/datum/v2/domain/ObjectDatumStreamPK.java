@@ -152,7 +152,7 @@ public class ObjectDatumStreamPK extends BasePK
 	 * 
 	 * @param objectId
 	 *        the stream object ID
-	 * @param source
+	 * @param sourceId
 	 *        ID the stream source ID
 	 * @param timestamp
 	 *        the time stamp

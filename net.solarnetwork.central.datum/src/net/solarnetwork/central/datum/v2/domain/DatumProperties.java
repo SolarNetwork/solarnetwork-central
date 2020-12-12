@@ -219,7 +219,7 @@ public class DatumProperties implements Serializable {
 	/**
 	 * Set the status values.
 	 * 
-	 * @param values
+	 * @param status
 	 *        the values to set
 	 */
 	public void setStatus(String[] status) {

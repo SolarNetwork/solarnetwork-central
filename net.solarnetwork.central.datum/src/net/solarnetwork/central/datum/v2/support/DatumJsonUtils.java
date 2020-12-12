@@ -98,7 +98,7 @@ public final class DatumJsonUtils {
 	 * 
 	 * @param generator
 	 *        the generator
-	 * @param array
+	 * @param arrayOfArrays
 	 *        the array whose contents should be written to {@code generator}
 	 * @throws IOException
 	 *         if any IO error occurs
@@ -242,7 +242,7 @@ public final class DatumJsonUtils {
 	 * 
 	 * <p>
 	 * The output array will contain the following elements:
-	 * <p>
+	 * </p>
 	 * 
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
@@ -258,7 +258,7 @@ public final class DatumJsonUtils {
 	 * contributed to the output JSON array. Any {@literal null} values
 	 * <i>within</i> a property array will contribute {@literal null} literals
 	 * to the output JSON array.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * An example JSON properties value array looks like this:
@@ -400,7 +400,7 @@ public final class DatumJsonUtils {
 	 * 
 	 * <p>
 	 * The output array will contain the following elements:
-	 * <p>
+	 * </p>
 	 * 
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
@@ -416,7 +416,7 @@ public final class DatumJsonUtils {
 	 * contributed to the output JSON array. Any {@literal null} values
 	 * <i>within</i> a property array will contribute {@literal null} literals
 	 * to the output JSON array.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * For example here is the JSON for a stream with one instantaneous and two

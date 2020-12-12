@@ -268,7 +268,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	 * @param expectedKind
 	 *        the kind to match
 	 * @return {@literal true} if {@code expectedKind} is the same as this
-	 *         object's {@code kind} and {@code objectId], {@code sourceId}, and
+	 *         object's {@code kind} and {@code objectId}, {@code sourceId}, and
 	 *         {@code timestamp} are all non-null and non-empty
 	 */
 	public boolean isValidObjectId(ObjectDatumKind expectedKind) {

@@ -168,10 +168,8 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	/**
 	 * Create a copy of a criteria.
 	 * 
-	 * @param c
+	 * @param criteria
 	 *        the criteria to copy
-	 * @param overrides
-	 *        the overrides
 	 * @return the copy
 	 */
 	public static BasicDatumCriteria copy(ObjectStreamCriteria criteria) {

@@ -251,8 +251,8 @@ public final class DatumUtils {
 	/**
 	 * Convert a location filter to a location criteria.
 	 * 
-	 * @param filter
-	 *        the filter
+	 * @param location
+	 *        the location
 	 * @return the criteria, or {@literal null} if {@code filter} is
 	 *         {@literal null} or has only empty values
 	 */
@@ -582,8 +582,8 @@ public final class DatumUtils {
 	 *        the datum to convert
 	 * @param meta
 	 *        the metadata
-	 * @retur nthe general datum auziliary, or {@literal null} if either
-	 *        {@code datum} or {@code meta} is {@literal null}
+	 * @return the general datum auxiliary, or {@literal null} if either
+	 *         {@code datum} or {@code meta} is {@literal null}
 	 */
 	public static GeneralNodeDatumAuxiliary toGeneralNodeDatumAuxiliary(DatumAuxiliary datum,
 			ObjectDatumStreamMetadata meta) {

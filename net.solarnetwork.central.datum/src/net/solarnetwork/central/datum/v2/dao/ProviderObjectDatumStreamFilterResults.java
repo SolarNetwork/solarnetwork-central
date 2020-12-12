@@ -30,7 +30,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 
 /**
- * Implementation of {@link DatumStreamFilterResults} that delegates to a
+ * Implementation of {@link ObjectDatumStreamFilterResults} that delegates to a
  * {@link ObjectDatumStreamMetadataProvider} for metadata information.
  * 
  * @author matt

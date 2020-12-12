@@ -54,8 +54,8 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 	 *        the time zone ID
 	 * @param kind
 	 *        the object kind
-	 * @param nodeId
-	 *        the node ID
+	 * @param objectId
+	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
 	 * @return the new instance

@@ -76,6 +76,8 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	 * 
 	 * @param o
 	 *        the other key to compare to
+	 * @return {@literal -1}, {@literal 0}, {@literal 1} if {@code o} is less
+	 *         than, equal to, or greater than this object
 	 */
 	public int compareWith(StreamPK o) {
 		if ( this == o ) {
