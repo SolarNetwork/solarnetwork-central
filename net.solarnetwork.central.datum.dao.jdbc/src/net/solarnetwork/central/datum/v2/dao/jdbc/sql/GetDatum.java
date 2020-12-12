@@ -62,8 +62,8 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 	 * 
 	 * @param id
 	 *        the primary key
-	 * @param the
-	 *        aggregation
+	 * @param aggregation
+	 *        the aggregation
 	 * @throws IllegalArgumentException
 	 *         if {@code id} is {@literal null}
 	 */

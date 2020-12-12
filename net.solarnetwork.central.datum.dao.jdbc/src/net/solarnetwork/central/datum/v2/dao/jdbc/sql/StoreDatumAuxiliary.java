@@ -46,7 +46,7 @@ public class StoreDatumAuxiliary implements CallableStatementCreator, SqlProvide
 	/**
 	 * Constructor.
 	 * 
-	 * @param to
+	 * @param datum
 	 *        the datum to store
 	 */
 	public StoreDatumAuxiliary(DatumAuxiliary datum) {

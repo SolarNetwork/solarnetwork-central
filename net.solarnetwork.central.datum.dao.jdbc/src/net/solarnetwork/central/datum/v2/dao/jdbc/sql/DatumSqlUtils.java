@@ -47,9 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
-import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
-import net.solarnetwork.central.datum.v2.dao.NodeMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
@@ -626,8 +624,8 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, MetadataSelectStyle,
-	 *      StringBuilder)
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria,
+	 *      MetadataSelectStyle,StringBuilder)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
@@ -643,8 +641,8 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
+	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
@@ -665,8 +663,8 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
+	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
@@ -753,7 +751,7 @@ public final class DatumSqlUtils {
 	 *        the select style
 	 * @param streamFilter
 	 *        the filter whose date or local date range to use
-	 * @param tableName
+	 * @param datumTableName
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
@@ -765,8 +763,8 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #whereNodeMetadata(NodeMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(NodeMetadataCriteria, Connection,
+	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
@@ -942,10 +940,8 @@ public final class DatumSqlUtils {
 	 * @param style
 	 *        the select style
 	 * @param streamFilter
-	 *        optional stream filter to use date ranges from
-	 * @param streamFilter
 	 *        the filter whose date or local date range to use
-	 * @param tableName
+	 * @param datumTableName
 	 *        the datum table name to use
 	 * @param aggregation
 	 *        the aggregation level of the datum table name to determine the SQL
@@ -1111,7 +1107,7 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see #nodeMetadataFilterSql(NodeMetadataCriteria, StringBuilder)
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
 	 * @see #locationMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
@@ -1149,7 +1145,7 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see #whereDatumMetadata(DatumCriteria, StringBuilder)
+	 * @see #whereDatumMetadata(DatumStreamCriteria, StringBuilder)
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
@@ -1237,7 +1233,7 @@ public final class DatumSqlUtils {
 	/**
 	 * Get the SQL column name representing the time component of a query.
 	 * 
-	 * @param agg
+	 * @param aggregation
 	 *        the aggregate level being queried
 	 * @return if {@code aggregation} is provided and not {@literal None} then
 	 *         {@code ts_start}; otherwise {@code ts}
@@ -1334,7 +1330,6 @@ public final class DatumSqlUtils {
 	 *        the search criteria
 	 * @param buf
 	 *        the buffer to append the SQL to
-	 * @return the number of JDBC query parameters generated
 	 */
 	public static void limitOffsetLiteral(PaginationCriteria filter, StringBuilder buf) {
 		if ( filter != null && filter.getMax() != null ) {
@@ -1355,11 +1350,8 @@ public final class DatumSqlUtils {
 	 * 
 	 * @param skipLocked
 	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
-	 * @param filter
-	 *        the search criteria
 	 * @param buf
 	 *        the buffer to append the SQL to
-	 * @return the number of JDBC query parameters generated
 	 */
 	public static void forUpdate(boolean skipLocked, StringBuilder buf) {
 		buf.append("\nFOR UPDATE");
@@ -1396,8 +1388,8 @@ public final class DatumSqlUtils {
 	 * </p>
 	 * 
 	 * <pre>
-	 * 	AND datum.ts >= ? AT TIME ZONE s.time_zone
-	 * 	AND datum.ts < ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts &gt;= ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts &lt; ? AT TIME ZONE s.time_zone
 	 * </pre>
 	 * 
 	 * @param filter
@@ -1439,8 +1431,8 @@ public final class DatumSqlUtils {
 	 * </p>
 	 * 
 	 * <pre>
-	 * 	AND datum.ts >= ? AT TIME ZONE s.time_zone
-	 * 	AND datum.ts < ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts &gt;= ? AT TIME ZONE s.time_zone
+	 * 	AND datum.ts &lt; ? AT TIME ZONE s.time_zone
 	 * </pre>
 	 * 
 	 * @param filter
@@ -1786,6 +1778,7 @@ public final class DatumSqlUtils {
 	 *        the filter to use
 	 * @param buf
 	 *        the buffer to append the SQL to
+	 * @return the number of JDBC parameters generated
 	 */
 	public static int metadataSearchFilterSql(SearchFilter filter, StringBuilder buf) {
 		if ( filter == null ) {

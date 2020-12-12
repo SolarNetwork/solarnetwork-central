@@ -300,7 +300,7 @@ public final class DatumDbUtils {
 	 * @return the loaded data, never {@literal null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
-	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Function,
+	 * @see #loadJsonDatumAndAuxiliaryResource(String, Class, Consumer,
 	 *      Consumer)
 	 */
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz)
@@ -441,8 +441,8 @@ public final class DatumDbUtils {
 	 *        the class to load the resource from
 	 * @param metadataProvider
 	 *        the metadata provider
-	 * @param an
-	 *        optional function to map the parsed datum with
+	 * @param mapper
+	 *        an optional function to map the parsed datum with
 	 * @return the loaded data, never {@literal null}
 	 * @throws IOException
 	 *         if the resource cannot be found or parsed correctly
@@ -487,6 +487,8 @@ public final class DatumDbUtils {
 	 * 
 	 * @param datums
 	 *        the datums
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @param nspk
 	 *        the specific node+source to create the metadata for
 	 * @return the metadata
@@ -547,6 +549,8 @@ public final class DatumDbUtils {
 	 *        the JDBC template to use
 	 * @param datums
 	 *        the datum to insert
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(Logger log,
@@ -805,6 +809,8 @@ public final class DatumDbUtils {
 	 *        the JDBC template to use
 	 * @param datums
 	 *        the datum to insert
+	 * @param timeZoneId
+	 *        the time zone ID
 	 * @return the resulting stream metadata
 	 */
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(Logger log,
@@ -1126,8 +1132,6 @@ public final class DatumDbUtils {
 	 *        a logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
-	 * @param streamId
-	 *        the stream ID to use
 	 * @param datums
 	 *        the datum to insert
 	 */
@@ -1326,8 +1330,11 @@ public final class DatumDbUtils {
 	 *        a logger for debug message
 	 * @param jdbcTemplate
 	 *        the JDBC template
-	 * @param datums
-	 *        the datum to insert
+	 * @param from
+	 *        the datum ID to move
+	 * @param to
+	 *        the updated datum value
+	 * @return {@literal true} if a datum was found and moved
 	 */
 	public static boolean moveDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
 			DatumAuxiliaryPK from, DatumAuxiliary to) {

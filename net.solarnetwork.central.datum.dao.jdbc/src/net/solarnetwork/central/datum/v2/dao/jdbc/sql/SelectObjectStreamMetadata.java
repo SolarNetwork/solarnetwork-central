@@ -72,6 +72,8 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	 * 
 	 * @param filter
 	 *        the filter
+	 * @param kind
+	 *        the datum kind
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
