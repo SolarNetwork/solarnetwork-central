@@ -11,15 +11,22 @@
 \i postgres-init-core-schema.sql
 \i postgres-init-core.sql
 \i postgres-init-instructor.sql
-\i postgres-init-generic-datum-schema.sql
-\i postgres-init-generic-datum.sql
-\i postgres-init-generic-datum-agg-functions.sql
-\i postgres-init-generic-datum-agg-triggers.sql
-\i postgres-init-generic-loc-datum.sql
-\i postgres-init-generic-loc-datum-agg-functions.sql
-\i postgres-init-generic-loc-datum-agg-triggers.sql
-\i postgres-init-generic-datum-x-functions.sql
-\i postgres-init-generic-loc-datum-x-functions.sql
+
+\i postgres-init-datm-schema.sql
+\i postgres-init-datm-core.sql
+\i postgres-init-datm-agg-query.sql
+\i postgres-init-datm-agg.sql
+\i postgres-init-datm-agg-util.sql
+\i postgres-init-datm-audit-query.sql
+\i postgres-init-datm-audit.sql
+\i postgres-init-datm-delete.sql
+\i postgres-init-datm-in.sql
+\i postgres-init-datm-in-loc.sql
+\i postgres-init-datm-util.sql
+\i postgres-init-datm-query.sql
+\i postgres-init-datm-query-agg.sql
+\i postgres-init-datm-query-diff.sql
+
 \i postgres-init-datum-export.sql
 \i postgres-init-user-schema.sql
 \i postgres-init-users.sql

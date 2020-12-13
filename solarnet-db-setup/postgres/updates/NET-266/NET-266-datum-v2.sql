@@ -1,6 +1,10 @@
 -- this view called into solaragg.agg_datum_daily table; replaced by datum metadata query
 DROP VIEW IF EXISTS solaruser.user_auth_token_sources;
 
+-- these function called into solardatum tables
+DROP FUNCTION IF EXISTS solaruser.find_most_recent_datum_for_user_direct(bigint[]);
+DROP FUNCTION IF EXISTS solaruser.find_most_recent_datum_for_user(bigint[]);
+
 -- tweak to add STRICT and ROWS
 CREATE OR REPLACE FUNCTION solarcommon.reduce_dim(anyarray)
 	RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE STRICT ROWS 20 AS
@@ -14,6 +18,32 @@ BEGIN
 	RETURN;
 END
 $$;
+
+-- drop PLV8 functions
+DROP FUNCTION IF EXISTS solarnet.find_nodes_for_meta(bigint[], text);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_sum(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_sum_sfunc(jsonb, jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_sum_object(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_sum_object_sfunc(jsonb, jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_avg(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_avg_sfunc(jsonb, jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_avg_finalfunc(jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_avg_object(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_avg_object_sfunc(jsonb, jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_avg_object_finalfunc(jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_sub_object(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_sub_object_sfunc(jsonb, jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_diff_object(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_diff_object_sfunc(jsonb, jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_diff_object_finalfunc(jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_weighted_proj_object(jsonb, float8);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_weighted_proj_object_sfunc(jsonb, jsonb, float8);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_weighted_proj_object_finalfunc(jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_diffsum_object(jsonb);
+DROP AGGREGATE IF EXISTS solarcommon.jsonb_diffsum_jdata(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_diffsum_object_sfunc(jsonb, jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_diffsum_object_finalfunc(jsonb);
+DROP FUNCTION IF EXISTS solarcommon.jsonb_diffsum_jdata_finalfunc(jsonb);
 
 -- update user expire functions that delete from datum tables
 

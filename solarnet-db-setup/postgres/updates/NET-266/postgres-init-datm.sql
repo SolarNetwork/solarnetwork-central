@@ -1,3 +1,6 @@
+--DROP SCHEMA IF EXISTS solardatm CASCADE;
+CREATE SCHEMA IF NOT EXISTS solardatm;
+
 \i postgres-init-datm-core.sql
 \i postgres-init-datm-agg-query.sql
 \i postgres-init-datm-agg.sql
