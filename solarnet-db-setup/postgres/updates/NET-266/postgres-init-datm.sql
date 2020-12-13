@@ -6,10 +6,10 @@
 \i postgres-init-datm-audit.sql
 \i postgres-init-datm-delete.sql
 \i postgres-init-datm-in.sql
+\i postgres-init-datm-in-loc.sql
 \i postgres-init-datm-migration.sql
+\i postgres-init-datm-migration-loc.sql
 \i postgres-init-datm-util.sql
-\i postgres-init-loc-datm-in.sql
-\i postgres-init-loc-datm-migration.sql
 \i postgres-init-datm-query.sql
 \i postgres-init-datm-query-agg.sql
 \i postgres-init-datm-query-diff.sql
