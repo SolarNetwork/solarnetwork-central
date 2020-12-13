@@ -17,23 +17,6 @@ $$;
 
 -- update user expire functions that delete from datum tables
 
-/**
- * Get a "preview" of calling the `solaruser.expire_datum_for_policy(bigint,jsonb,interval)` function
- * in the form of a record of counts for each type of datum record that would match an expiration
- * policy (and be deleted).
- *
- * The following fields are supported in the expiration policy:
- *
- * nodeIds - an array of node ID values to limit to; all nodes will be included otherwise
- * sourceIds - an array of source ID Ant path patterns to limit to; all sources will be included otherwise
- * aggregationKey - one of `h`, `d`, or `M` for hour, day, and month level records to be included;
- *                  only raw datum are included otherwise; any level automatically includes all levels
- *                  below it, e.g. `M` includes both `d` and `h`
- *
- * @param userid the ID of the user to query on
- * @pram jpolicy an expiration policy, with optional fields to limit the selected datum to
- * @param age only records older than this are included
- */
 CREATE OR REPLACE FUNCTION solaruser.preview_expire_datum_for_policy(userid bigint, jpolicy jsonb, age interval)
 	RETURNS TABLE(
 		query_date 			TIMESTAMP WITH TIME ZONE,
@@ -135,21 +118,6 @@ BEGIN
 END;
 $$;
 
-/**
- * Delete expired datum records according to an expiration policy.
- *
- * The following fields are supported in the expiration policy:
- *
- * nodeIds - an array of node ID values to limit to; all nodes will be included otherwise
- * sourceIds - an array of source ID Ant path patterns to limit to; all sources will be included otherwise
- * aggregationKey - one of `h`, `d`, or `M` for hour, day, and month level records to be included;
- *                  only raw datum are included otherwise; any level automatically includes all levels
- *                  below it, e.g. `M` includes both `d` and `h`
- *
- * @param userid the ID of the user to query on
- * @pram jpolicy an expiration policy, with optional fields to limit the selected datum to
- * @param age only records older than this are included
- */
 CREATE OR REPLACE FUNCTION solaruser.expire_datum_for_policy(userid bigint, jpolicy jsonb, age interval)
   RETURNS bigint LANGUAGE plpgsql VOLATILE AS
 $$

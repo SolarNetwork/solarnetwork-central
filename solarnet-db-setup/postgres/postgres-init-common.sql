@@ -2,16 +2,16 @@
  * Reduce a 2d array into a set of 1d arrays.
  */
 CREATE OR REPLACE FUNCTION solarcommon.reduce_dim(anyarray)
-  RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE AS
+	RETURNS SETOF anyarray LANGUAGE plpgsql IMMUTABLE STRICT ROWS 20 AS
 $$
 DECLARE
 	s $1%TYPE;
 BEGIN
-	FOREACH s SLICE 1  IN ARRAY $1 LOOP
+	FOREACH s SLICE 1 IN ARRAY $1 LOOP
 		RETURN NEXT s;
 	END LOOP;
 	RETURN;
-END;
+END
 $$;
 
 CREATE OR REPLACE FUNCTION solarcommon.plainto_prefix_tsquery(config regconfig, qtext TEXT)
