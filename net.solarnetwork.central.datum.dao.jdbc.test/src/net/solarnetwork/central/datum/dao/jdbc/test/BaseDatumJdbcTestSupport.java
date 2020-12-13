@@ -22,28 +22,17 @@
 
 package net.solarnetwork.central.datum.dao.jdbc.test;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static net.solarnetwork.central.support.JsonUtils.getJSONString;
-import java.sql.CallableStatement;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.transaction.PlatformTransactionManager;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-import net.solarnetwork.domain.GeneralNodeDatumSamples;
 
 /**
  * Base class for datum JDBC test support.
@@ -176,59 +165,6 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 				userId);
 	}
 
-	/**
-	 * Get the available stale datum records.
-	 * 
-	 * @param type
-	 *        the type of records to get
-	 * @return the results, never {@literal null}
-	 */
-	protected List<Map<String, Object>> getStaleDatum(Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = ? ORDER BY ts_start, node_id, source_id",
-				type.getKey());
-	}
-
-	/**
-	 * Get the available stale datum records.
-	 * 
-	 * @param type
-	 *        the type of records to get
-	 * @return the results, never {@literal null}
-	 */
-	protected List<Map<String, Object>> getStaleDatumOrderedByNode(Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum WHERE agg_kind = ? ORDER BY node_id, ts_start, source_id",
-				type.getKey());
-	}
-
-	/**
-	 * Get the available stale flux records, ordered by
-	 * 
-	 * @param type
-	 *        the type of records to get
-	 * @return the results, never {@literal null}
-	 */
-	protected List<Map<String, Object>> getStaleFlux(Aggregation type) {
-		return jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_flux WHERE agg_kind = ? ORDER BY node_id, source_id",
-				type.getKey());
-	}
-
-	/**
-	 * Delete all stale datum rows.
-	 * 
-	 * @return count of deleted rows
-	 */
-	protected int deleteStaleDatum() {
-		return jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
-
-	}
-
-	protected int datumRowCount() {
-		return jdbcTemplate.queryForObject("select count(*) from solardatum.da_datum", Integer.class);
-	}
-
 	protected Date[] sqlDates(String... str) {
 		return Arrays.stream(str)
 				.map(s -> new Date(ISODateTimeFormat.localDateParser().parseLocalDate(s)
@@ -238,96 +174,6 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractCentralTransactio
 
 	protected List<Date> sqlDatesFromLocalDates(List<Map<String, Object>> rows) {
 		return rows.stream().map(d -> (Date) d.get("local_date")).collect(toList());
-	}
-
-	protected List<Map<String, Object>> getDatum() {
-		return jdbcTemplate
-				.queryForList("select * from solardatum.da_datum order by node_id,ts,source_id");
-	}
-
-	protected List<Map<String, Object>> getDatumAggregateHourly() {
-		return jdbcTemplate.queryForList(
-				"select * from solaragg.agg_datum_hourly order by node_id,ts_start,source_id");
-	}
-
-	protected List<Map<String, Object>> getDatumAggregateDaily() {
-		return jdbcTemplate.queryForList(
-				"select * from solaragg.agg_datum_daily order by node_id,ts_start,source_id");
-	}
-
-	protected List<Map<String, Object>> getDatumAggregateDaily(Long nodeId) {
-		return jdbcTemplate.queryForList(
-				"select * from solaragg.agg_datum_daily where node_id = ? order by ts_start,source_id",
-				nodeId);
-	}
-
-	protected List<Map<String, Object>> getDatumAggregateMonthly() {
-		return jdbcTemplate.queryForList(
-				"select * from solaragg.agg_datum_monthly order by node_id,ts_start,source_id");
-	}
-
-	protected List<Map<String, Object>> getDatumRanges() {
-		return jdbcTemplate
-				.queryForList("select * from solardatum.da_datum_range order by node_id,source_id");
-	}
-
-	protected void insertDatum(long date, Long nodeId, String sourceId,
-			GeneralNodeDatumSamples samples) {
-		jdbcTemplate.call(new CallableStatementCreator() {
-
-			@Override
-			public CallableStatement createCallableStatement(Connection con) throws SQLException {
-				CallableStatement stmt = con.prepareCall("{call solardatum.store_datum(?, ?, ?, ?, ?)}");
-				stmt.setTimestamp(1, new Timestamp(date));
-				stmt.setLong(2, nodeId);
-				stmt.setString(3, sourceId);
-				stmt.setTimestamp(4, new Timestamp(date));
-				stmt.setString(5, JsonUtils.getJSONString(samples, null));
-				return stmt;
-			}
-		}, emptyList());
-	}
-
-	protected void insertAggDatumHourlyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
-			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
-			Map<String, ?> adData) {
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_hourly (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
-						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
-				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId, getJSONString(iData, null),
-				getJSONString(aData, null), getJSONString(jMeta, null), getJSONString(asData, null),
-				getJSONString(afData, null), getJSONString(adData, null));
-	}
-
-	protected void insertAggDatumDailyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
-			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
-			Map<String, ?> adData) {
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_daily (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
-						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
-				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId, getJSONString(iData, null),
-				getJSONString(aData, null), getJSONString(jMeta, null), getJSONString(asData, null),
-				getJSONString(afData, null), getJSONString(adData, null));
-	}
-
-	protected void insertAggDatumMonthlyRow(long ts, Long nodeId, String sourceId, Map<String, ?> iData,
-			Map<String, ?> aData, Map<String, ?> jMeta, Map<String, ?> asData, Map<String, ?> afData,
-			Map<String, ?> adData) {
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_monthly (ts_start,local_date,node_id,source_id,jdata_i,jdata_a,jmeta,jdata_as,jdata_af,jdata_ad)"
-						+ " VALUES (?,?,?,?,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb,?::jsonb)",
-				new Timestamp(ts), new Timestamp(ts), nodeId, sourceId, getJSONString(iData, null),
-				getJSONString(aData, null), getJSONString(jMeta, null), getJSONString(asData, null),
-				getJSONString(afData, null), getJSONString(adData, null));
-	}
-
-	protected void insertResetDatumAuxiliaryRecord(DateTime date, Long nodeId, String sourceId,
-			Map<String, Number> finalSamples, Map<String, Number> startSamples) {
-		jdbcTemplate.update(
-				"INSERT INTO solardatum.da_datum_aux(ts, node_id, source_id, atype, updated, jdata_af, jdata_as) "
-						+ "VALUES (?, ?, ?, 'Reset'::solardatum.da_datum_aux_type, CURRENT_TIMESTAMP, ?::jsonb, ?::jsonb)",
-				new Timestamp(date.getMillis()), nodeId, sourceId, getJSONString(finalSamples, null),
-				getJSONString(startSamples, null));
 	}
 
 }

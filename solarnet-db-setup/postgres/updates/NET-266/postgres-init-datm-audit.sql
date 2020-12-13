@@ -170,3 +170,26 @@ BEGIN
 	RETURN ins_count;
 END;
 $$;
+
+
+/**
+ * Increment the `solardatm.aud_datm_io` table `datum_q_count` for a stream.
+ *
+ * @param sid 				the stream ID to update audit datum for
+ * @param ts				ts the query date
+ * @param dcount			the datum count to insert, or add to an existing record
+ */
+CREATE OR REPLACE FUNCTION solardatm.audit_increment_datum_q_count(
+		node	BIGINT,
+		source	TEXT,
+		ts 		TIMESTAMP WITH TIME ZONE,
+		dcount 	INTEGER
+	) RETURNS void LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solardatm.aud_datm_io(stream_id, ts_start, datum_q_count)
+	SELECT s.stream_id, date_trunc('hour', ts), dcount
+	FROM solardatm.da_datm_meta s
+	WHERE s.node_id = node AND s.source_id = source
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET datum_q_count = aud_datm_io.datum_q_count + EXCLUDED.datum_q_count;
+$$;

@@ -24,14 +24,11 @@ package net.solarnetwork.central.test;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -166,104 +163,6 @@ public abstract class AbstractCentralTransactionalTest
 		jdbcTemplate.update(
 				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
 				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
-	}
-
-	/**
-	 * Call the {@code solaragg.process_agg_stale_datum} and
-	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
-	 * reporting data.
-	 * 
-	 * @since 1.1
-	 * @deprecated since 2.2
-	 */
-	@Deprecated
-	protected void processAggregateStaleData() {
-		processAggregateStaleData(log, jdbcTemplate);
-	}
-
-	/**
-	 * Call the {@code solaragg.process_agg_stale_datum} and
-	 * {@code solaragg.process_agg_stale_loc_datum} procedures to populate
-	 * reporting data.
-	 * 
-	 * @param log
-	 *        the logger to use
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @since 2.1
-	 * @deprecated since 2.2
-	 */
-	@Deprecated
-	public static void processAggregateStaleData(Logger log, JdbcTemplate jdbcTemplate) {
-		throw new UnsupportedOperationException("No longer supported.");
-	}
-
-	/**
-	 * List all raw datum rows.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @return the rows
-	 * @since 2.1
-	 */
-	public static List<Map<String, Object>> getDatum(JdbcTemplate jdbcTemplate) {
-		return jdbcTemplate.queryForList("select * from solardatm.da_datm order by ts,stream_id");
-	}
-
-	/**
-	 * List all raw datum rows.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @return the rows
-	 * @since 2.1
-	 */
-	public static List<Map<String, Object>> getDatumAggregateHourly(JdbcTemplate jdbcTemplate) {
-		return jdbcTemplate
-				.queryForList("select * from solardatm.agg_datm_hourly order by ts_start,stream_id");
-	}
-
-	/**
-	 * List all raw datum rows.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @return the rows
-	 * @since 2.1
-	 */
-	public static List<Map<String, Object>> getDatumAggregateDaily(JdbcTemplate jdbcTemplate) {
-		return jdbcTemplate
-				.queryForList("select * from solardatm.agg_datm_daily order by ts_start,stream_id");
-	}
-
-	/**
-	 * List all raw datum rows for a given node.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @param nodeId
-	 *        the node ID to limit the results to
-	 * @return the rows
-	 * @since 2.1
-	 */
-	public static List<Map<String, Object>> getDatumAggregateDaily(JdbcTemplate jdbcTemplate,
-			Long nodeId) {
-		return jdbcTemplate.queryForList(
-				"select * from solardatm.agg_datm_daily where node_id = ? order by ts_start,stream_id",
-				nodeId);
-	}
-
-	/**
-	 * List all raw datum rows.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @return the rows
-	 * @since 2.1
-	 */
-	public static List<Map<String, Object>> getDatumAggregateMonthly(JdbcTemplate jdbcTemplate) {
-		return jdbcTemplate
-				.queryForList("select * from solardatm.agg_datm_monthly order by ts_start,stream_id");
 	}
 
 }

@@ -173,9 +173,9 @@ public class JdbcQueryAuditorTests extends AbstractCentralTest {
 		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
 				.andReturn(jdbcStatement);
 
-		jdbcStatement.setTimestamp(1, new Timestamp(topOfHour.getMillis()));
-		jdbcStatement.setLong(2, TEST_NODE_ID);
-		jdbcStatement.setString(3, TEST_SOURCE_1);
+		jdbcStatement.setObject(1, TEST_NODE_ID);
+		jdbcStatement.setString(2, TEST_SOURCE_1);
+		jdbcStatement.setTimestamp(3, new Timestamp(topOfHour.getMillis()));
 		jdbcStatement.setInt(4, 3);
 		expect(jdbcStatement.execute()).andReturn(false);
 
