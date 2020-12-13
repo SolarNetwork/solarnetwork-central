@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.util.SerializeIgnore;
+
 /**
  * A "match" to a {@link SolarNode}.
  * 
@@ -31,11 +34,23 @@ package net.solarnetwork.central.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.40
  */
 public class SolarNodeMatch extends SolarNode implements SolarNodeFilterMatch {
 
 	private static final long serialVersionUID = 7972204667914199552L;
+
+	private String metaJson;
+
+	@JsonIgnore
+	@SerializeIgnore
+	public String getMetaJson() {
+		return metaJson;
+	}
+
+	public void setMetaJson(String infoJson) {
+		this.metaJson = infoJson;
+	}
 
 }

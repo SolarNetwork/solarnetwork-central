@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis;
 
+import static java.util.stream.Collectors.toList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,9 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.support.MapPathMatcher;
+import net.solarnetwork.support.SearchFilter;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link SolarNodeMetadataDao}.
@@ -70,18 +74,18 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 		}
 
-		// attempt count first, if max NOT specified as -1
-		Long totalCount = null;
-		if ( max != null && max.intValue() != -1 ) {
-			totalCount = executeCountQuery(query + "-count", sqlProps);
+		List<SolarNodeMetadataFilterMatch> rows = selectList(query, sqlProps, null, null);
+
+		SearchFilter sf = SearchFilter.forLDAPSearchFilterString(filter.getMetadataFilter());
+		if ( sf != null ) {
+			// filter out only those matching the SearchFilter
+			rows = rows.stream().filter(m -> {
+				Map<String, Object> map = JsonUtils.getStringMap(m.getMetaJson());
+				return (map != null && MapPathMatcher.matches(map, sf));
+			}).collect(toList());
 		}
 
-		List<SolarNodeMetadataFilterMatch> rows = selectList(query, sqlProps, offset, max);
-
-		BasicFilterResults<SolarNodeMetadataFilterMatch> results = new BasicFilterResults<SolarNodeMetadataFilterMatch>(
-				rows, (totalCount != null ? totalCount : Long.valueOf(rows.size())), offset,
-				rows.size());
-
-		return results;
+		return new BasicFilterResults<SolarNodeMetadataFilterMatch>(rows, Long.valueOf(rows.size()),
+				offset, rows.size());
 	}
 }
