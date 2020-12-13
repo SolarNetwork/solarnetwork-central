@@ -19,6 +19,7 @@
 		<dependency org="net.solarnetwork.central.test" name="net.solarnetwork.central.test" rev="[2.0,)"/>
 		
 		<!-- Testing support -->
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.dao.jdbc" rev="[1.0,)"/>
 		
 		<!-- SolarNetwork -->
     </dependencies>
