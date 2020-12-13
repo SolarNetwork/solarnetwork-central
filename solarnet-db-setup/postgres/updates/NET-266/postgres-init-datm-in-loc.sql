@@ -134,10 +134,8 @@ $$;
  * @param src 	the source ID
  * @param rdate the date the datum was received by SolarNetwork
  * @param jdata the datum JSON object (with jdata_i, jdata_a, jdata_s, and jdata_t properties)
- * @param track if `TRUE` then also insert results of `solardatum.calculate_stale_datum()`
- *                     into the `solaragg.agg_stale_datum` table and call
- *                     `solardatum.update_datum_range_dates()` to keep the
- *                     `solardatum.da_datum_range` table up-to-date
+ * @param track if `TRUE` then also insert results of `solardatm.calc_stale_datm()`
+ *                     into the `solardatm.agg_stale_datm` table
  */
 CREATE OR REPLACE FUNCTION solardatm.store_loc_datum(
 	ddate 			TIMESTAMP WITH TIME ZONE,

@@ -1,7 +1,10 @@
--- this view called into solaragg.agg_datum_daily table; replaced by datum metadata query
+-- this view called into legacy tables
+DROP VIEW IF EXISTS solaruser.million_metric_avg_hour_costs;
+DROP VIEW IF EXISTS solaruser.million_metric_monthly_costs;
 DROP VIEW IF EXISTS solaruser.user_auth_token_sources;
 
--- these function called into solardatum tables
+
+-- these function called into legacy tables
 DROP FUNCTION IF EXISTS solaruser.find_most_recent_datum_for_user_direct(bigint[]);
 DROP FUNCTION IF EXISTS solaruser.find_most_recent_datum_for_user(bigint[]);
 

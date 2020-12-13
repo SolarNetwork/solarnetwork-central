@@ -75,7 +75,7 @@ BEGIN
 	ON CONFLICT (agg_kind, stream_id, ts_start) DO NOTHING;
 
 	--GET DIAGNOSTICS stale_count = ROW_COUNT;
-	--RAISE NOTICE 'INSERTED % solaragg.agg_stale_datum rows after delete.', stale_count;
+	--RAISE NOTICE 'INSERTED % solardatm.agg_stale_datm rows after delete.', stale_count;
 
 	RETURN total_count;
 END

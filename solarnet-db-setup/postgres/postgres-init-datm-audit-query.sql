@@ -192,7 +192,7 @@ $$;
 
 
 /**
- * Look for node sources that have no corresponding row in the `solaragg.aud_acc_datum_daily` table
+ * Look for node sources that have no corresponding row in the `solardatm.aud_acc_datm_daily` table
  * on a particular date. The purpose of this is to support populating the accumulating storage
  * date for nodes even if they are offline and not posting data currently.
  *

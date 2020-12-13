@@ -145,8 +145,6 @@ $$;
  * needed. For example, to select the first timestamp for each datum by node and source:
  *
  * 		SELECT solarcommon.first(ts ORDER BY ts) AS ts_start
- * 		FROM solardatum.da_datum
- * 		GROUP BY node_id, source_id
  */
 CREATE AGGREGATE solarcommon.first(
 	sfunc    = solarcommon.first_sfunc,
