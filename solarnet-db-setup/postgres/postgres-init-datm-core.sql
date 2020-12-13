@@ -47,11 +47,10 @@ CREATE TABLE solardatm.da_datm (
 	data_i		NUMERIC[],
 	data_a		NUMERIC[],
 	data_s		TEXT[],
-	data_t		TEXT[],
-	CONSTRAINT da_datm_pkey PRIMARY KEY (stream_id, ts)
+	data_t		TEXT[]
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS da_datm_unq_reverse ON solardatm.da_datm (stream_id, ts DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS da_datm_pkey ON solardatm.da_datm (stream_id, ts DESC);
 
 -- datum aux table
 CREATE TYPE solardatm.da_datm_aux_type AS ENUM ('Reset');
@@ -152,9 +151,10 @@ CREATE TABLE solardatm.agg_datm_hourly (
 	data_s		TEXT[],
 	data_t		TEXT[],
 	stat_i		NUMERIC[][],
-	read_a		NUMERIC[][],
-	CONSTRAINT agg_datm_hourly_pkey PRIMARY KEY (stream_id, ts_start)
+	read_a		NUMERIC[][]
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS agg_datm_hourly_pkey ON solardatm.agg_datm_hourly (stream_id, ts_start DESC);
 
 -- agg daily datum table
 CREATE TABLE solardatm.agg_datm_daily (
@@ -165,9 +165,10 @@ CREATE TABLE solardatm.agg_datm_daily (
 	data_s		TEXT[],
 	data_t		TEXT[],
 	stat_i		NUMERIC[][],
-	read_a		NUMERIC[][],
-	CONSTRAINT agg_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+	read_a		NUMERIC[][]
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS agg_datm_daily_pkey ON solardatm.agg_datm_daily (stream_id, ts_start DESC);
 
 -- agg monthly datum table
 CREATE TABLE solardatm.agg_datm_monthly (
@@ -178,9 +179,10 @@ CREATE TABLE solardatm.agg_datm_monthly (
 	data_s		TEXT[],
 	data_t		TEXT[],
 	stat_i		NUMERIC[][],
-	read_a		NUMERIC[][],
-	CONSTRAINT agg_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
+	read_a		NUMERIC[][]
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS agg_datm_monthly_pkey ON solardatm.agg_datm_monthly (stream_id, ts_start DESC);
 
 -- "stale" aggregate queue table
 CREATE TABLE solardatm.agg_stale_datm (
@@ -237,9 +239,10 @@ CREATE TABLE solardatm.aud_datm_io (
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
-	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum INGESTED
-	CONSTRAINT aud_datm_io_pkey PRIMARY KEY (stream_id, ts_start)
+	datum_count 			INTEGER NOT NULL DEFAULT 0 -- this is a count of datum INGESTED
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_datm_io_pkey ON solardatm.aud_datm_io (stream_id, ts_start DESC);
 
 /**
  * Audit daily summary data table.
@@ -257,9 +260,10 @@ CREATE TABLE solardatm.aud_datm_daily (
 	datum_daily_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
 	processed_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	processed_hourly_count 	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	processed_io_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT aud_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+	processed_io_count 		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_datm_daily_pkey ON solardatm.aud_datm_daily (stream_id, ts_start DESC);
 
 -- audit monthly data
 CREATE TABLE solardatm.aud_datm_monthly (
@@ -271,9 +275,10 @@ CREATE TABLE solardatm.aud_datm_monthly (
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
 	datum_daily_count 		SMALLINT NOT NULL DEFAULT 0,
 	datum_monthly_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
-	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT aud_datm_monthly_pkey PRIMARY KEY (stream_id, ts_start)
+	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_datm_monthly_pkey ON solardatm.aud_datm_monthly (stream_id, ts_start DESC);
 
 -- track total accumulated counts per day
 CREATE TABLE solardatm.aud_acc_datm_daily (
@@ -283,9 +288,10 @@ CREATE TABLE solardatm.aud_acc_datm_daily (
 	datum_hourly_count 		INTEGER NOT NULL DEFAULT 0,
 	datum_daily_count 		INTEGER NOT NULL DEFAULT 0,
 	datum_monthly_count 	INTEGER NOT NULL DEFAULT 0,
-	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT aud_acc_datm_daily_pkey PRIMARY KEY (stream_id, ts_start)
+	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_acc_datm_daily_pkey ON solardatm.aud_acc_datm_daily (stream_id, ts_start DESC);
 
 -- "stale" audit queue table
 CREATE TABLE solardatm.aud_stale_datm (
