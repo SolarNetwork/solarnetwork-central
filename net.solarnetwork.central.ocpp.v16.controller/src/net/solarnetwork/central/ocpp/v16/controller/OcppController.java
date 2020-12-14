@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.v16.controller;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.OptionalService.service;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
@@ -94,7 +95,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OcppController extends BasicIdentifiable
 		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
@@ -350,11 +351,13 @@ public class OcppController extends BasicIdentifiable
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		final String topic = instruction.getTopic();
 		final Long nodeId = instruction.getNodeId();
+		log.trace("Inspecting {} instruction for node {}", topic, nodeId);
 		if ( !OCPP_V16_TOPIC.equals(topic) || nodeId == null ) {
 			return instruction;
 		}
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
+			log.trace("UserNode not found for node {}; ignoring OCPPv16 instruction {}", nodeId, topic);
 			return instruction;
 		}
 		Map<String, String> params = instructionParameterMap(instruction);
@@ -407,10 +410,9 @@ public class OcppController extends BasicIdentifiable
 		}
 		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
 
-		ActionMessageProcessor<JsonNode, Void> handler = (instructionHandler != null
-				? instructionHandler.service()
-				: null);
+		ActionMessageProcessor<JsonNode, Void> handler = service(instructionHandler);
 		if ( handler != null ) {
+			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
 					instr.getId().toString(), instr.action, instr.jsonPayload);
 			handler.processActionMessage(cpMsg, (msg, res, err) -> {
@@ -428,12 +430,15 @@ public class OcppController extends BasicIdentifiable
 			return;
 		}
 
+		log.info("Sending OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (msg, res, err) -> {
 			if ( err != null ) {
 				Throwable root = err;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
+				log.info("Failed to send OCPPv16 {} to charge point {}: {}", instr.action,
+						instr.chargePointIdentity, root.getMessage());
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 						instr.getState(), InstructionState.Declined,
 						singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
@@ -442,6 +447,7 @@ public class OcppController extends BasicIdentifiable
 				if ( res != null ) {
 					resultParameters = JsonUtils.getStringMapFromTree(objectMapper.valueToTree(res));
 				}
+				log.info("Sent OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 						instr.getState(), InstructionState.Completed, resultParameters);
 			}

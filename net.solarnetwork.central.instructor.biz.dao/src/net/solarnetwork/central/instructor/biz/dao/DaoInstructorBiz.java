@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,13 +50,15 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
 
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Construct without queue hooks.
@@ -169,6 +173,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
+		log.debug("Received node {} instruction {}", nodeId, instruction.getTopic());
 		NodeInstruction instr = new NodeInstruction(instruction.getTopic(),
 				instruction.getInstructionDate(), nodeId);
 		if ( instr.getInstructionDate() == null ) {
@@ -179,6 +184,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 			for ( InstructionParameter param : instruction.getParameters() ) {
 				instr.addParameter(param.getName(), param.getValue());
 			}
+		}
+		if ( log.isTraceEnabled() ) {
+			log.trace("Processing instruction {} with {} hooks", instr.getId(), queueHooks.size());
 		}
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
 			instr = hook.willQueueNodeInstruction(instr);
