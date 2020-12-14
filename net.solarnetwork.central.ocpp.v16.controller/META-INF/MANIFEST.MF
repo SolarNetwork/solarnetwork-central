@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: OCPP 1.6 Central System Controller
 Bundle-SymbolicName: net.solarnetwork.central.ocpp.v16.controller
-Bundle-Version: 1.1.0
+Bundle-Version: 1.1.1
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.ocpp.v16.controller
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
