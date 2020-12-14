@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -454,6 +455,13 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
 			ChargeSession sess, SampledValue reading) {
+		final String sourceId = sourceId(chargePointSettings, chargePoint.getInfo().getId(),
+				sess.getConnectorId(), reading.getLocation(), reading.getPhase());
+		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
+	}
+
+	private Datum datum(String sourceId, CentralChargePoint chargePoint,
+			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
 		Datum d = new Datum(chargePointSettings);
 		d.setNodeId(chargePoint.getNodeId());
 		d.setSamples(new GeneralNodeDatumSamples());
@@ -534,39 +542,45 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		}
 		if ( !newReadings.isEmpty() ) {
 			chargeSessionDao.addReadings(newReadings);
-			// group readings by timestamp into Datum
-			Datum d = null;
+			// group readings by timestamp into Datum; need to possibly create different datum per reading phase
+			// so track datum also by source ID
+			Map<String, Datum> datumBySourceId = new LinkedHashMap<>(4);
 			for ( SampledValue reading : newReadings ) {
+				final ChargeSession s = sessions.get(reading.getSessionId());
+				CentralChargePoint cp = chargePoints.get(s.getChargePointId());
+				if ( cp == null ) {
+					cp = (CentralChargePoint) chargePointDao.get(s.getChargePointId());
+					if ( cp == null ) {
+						throw new AuthorizationException(
+								String.format("ChargePoint %d not available.", s.getChargePointId()),
+								new AuthorizationInfo(s.getAuthId(), AuthorizationStatus.Invalid));
+					}
+					chargePoints.put(cp.getId(), cp);
+				}
+
+				ChargePointSettings cps = settings.get(cp.getId());
+				if ( cps == null ) {
+					cps = settingsForChargePoint(cp.getUserId(), cp.getId());
+					settings.put(cp.getId(), cps);
+				}
+
+				final String sourceId = sourceId(cps, cp.getInfo().getId(), s.getConnectorId(),
+						reading.getLocation(), reading.getPhase());
+				Datum d = datumBySourceId.get(sourceId);
 				if ( d == null || d.getCreated().getMillis() != reading.getTimestamp().toEpochMilli() ) {
 					if ( d != null ) {
 						publishDatum(d);
+						datumBySourceId.remove(sourceId);
 						d = null;
 					}
 
-					ChargeSession s = sessions.get(reading.getSessionId());
-					CentralChargePoint cp = chargePoints.get(s.getChargePointId());
-					if ( cp == null ) {
-						cp = (CentralChargePoint) chargePointDao.get(s.getChargePointId());
-						if ( cp == null ) {
-							throw new AuthorizationException(
-									String.format("ChargePoint %d not available.", s.getChargePointId()),
-									new AuthorizationInfo(s.getAuthId(), AuthorizationStatus.Invalid));
-						}
-						chargePoints.put(cp.getId(), cp);
-					}
-
-					ChargePointSettings cps = settings.get(cp.getId());
-					if ( cps == null ) {
-						cps = settingsForChargePoint(cp.getUserId(), cp.getId());
-						settings.put(cp.getId(), cps);
-					}
-
-					d = datum(cp, cps, sessions.get(reading.getSessionId()), reading);
+					d = datum(sourceId, cp, cps, s, reading);
+					datumBySourceId.put(sourceId, d);
 				} else {
 					populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getValue());
 				}
 			}
-			if ( d != null ) {
+			for ( Datum d : datumBySourceId.values() ) {
 				publishDatum(d);
 			}
 		}
@@ -587,6 +601,19 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			cps.setSourceIdTemplate(sourceIdTemplate);
 		}
 		return cps;
+	}
+
+	/**
+	 * Get the source ID template to use.
+	 * 
+	 * @param chargePointSettings
+	 *        the settings
+	 * @return the template, never {@literal null}
+	 */
+	private String sourceIdTemplate(ChargePointSettings chargePointSettings) {
+		return chargePointSettings.getSourceIdTemplate() != null
+				? chargePointSettings.getSourceIdTemplate()
+				: sourceIdTemplate;
 	}
 
 	/**
@@ -613,9 +640,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		params.put("location", location);
 		params.put("phase", phase);
 		return UserSettings.removeEmptySourceIdSegments(
-				StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate() != null
-						? chargePointSettings.getSourceIdTemplate()
-						: sourceIdTemplate, params));
+				StringUtils.expandTemplateString(sourceIdTemplate(chargePointSettings), params));
 	}
 
 	private void populateProperty(GeneralNodeDatum datum, Measurand measurand, UnitOfMeasure unit,
