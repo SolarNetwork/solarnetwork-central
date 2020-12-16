@@ -439,6 +439,13 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
+	@Test
+	public void deleteById() {
+		insert();
+		dao.delete(last);
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
 	@Test(expected = DataRetrievalFailureException.class)
 	public void deleteByUserAndId_noMatch() {
 		insert();
