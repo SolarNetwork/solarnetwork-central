@@ -28,13 +28,16 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 
 /**
  * DAO API for {@link GeneralNodeDatumAuxiliary} entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
+ * @deprecated since 1.2; use {@link DatumAuxiliaryEntityDao}
  */
+@Deprecated
 public interface GeneralNodeDatumAuxiliaryDao
 		extends GenericDao<GeneralNodeDatumAuxiliary, GeneralNodeDatumAuxiliaryPK>,
 		FilterableDao<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK, GeneralNodeDatumAuxiliaryFilter> {

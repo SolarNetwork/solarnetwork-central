@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
@@ -104,14 +104,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.3
 	 */
 	public static final String QUERY_NODE_IDS_FOR_TOKEN = "find-node-ids-for-token-id";
-
-	/**
-	 * The query name used for
-	 * {@link #findSourceIdsForToken(String, DatumFilter)}.
-	 * 
-	 * @since 1.3
-	 */
-	public static final String QUERY_SOURCE_IDS_FOR_TOKEN = "find-source-ids-for-token-id";
 
 	/**
 	 * Default constructor.
@@ -225,23 +217,11 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * {@inheritDoc}
 	 * 
 	 * @since 1.3
+	 * @deprecated since 1.4
 	 */
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Deprecated
 	public Set<NodeSourcePK> findSourceIdsForToken(String tokenId, DatumFilter filter) {
-		Map<String, Object> params = new HashMap<String, Object>(3);
-		params.put("id", tokenId);
-		if ( filter != null ) {
-			if ( filter.getStartDate() != null ) {
-				params.put("startDate", filter.getStartDate());
-			}
-			if ( filter.getEndDate() != null ) {
-				params.put("endDate", filter.getEndDate());
-			}
-		}
-		List<NodeSourcePK> ids = selectList(QUERY_SOURCE_IDS_FOR_TOKEN, params, null, null);
-		return (ids == null || ids.isEmpty() ? Collections.<NodeSourcePK> emptySet()
-				: new LinkedHashSet<NodeSourcePK>(ids));
+		throw new UnsupportedOperationException("Use DatumStreamMetadataDao.findFiltered() now.");
 	}
 
 }

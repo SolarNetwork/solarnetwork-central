@@ -26,6 +26,9 @@ import java.util.List;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 
@@ -34,7 +37,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * {@link AuditDatumBiz}, designed primarily for use with AOP.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingAuditDatumBiz implements AuditDatumBiz {
 
@@ -52,12 +55,26 @@ public class DelegatingAuditDatumBiz implements AuditDatumBiz {
 	}
 
 	@Override
+	public net.solarnetwork.dao.FilterResults<AuditDatumRollup, DatumPK> findAuditDatumFiltered(
+			AuditDatumCriteria filter) {
+		return delegate.findAuditDatumFiltered(filter);
+	}
+
+	@Override
+	public net.solarnetwork.dao.FilterResults<AuditDatumRollup, DatumPK> findAccumulativeAuditDatumFiltered(
+			AuditDatumCriteria filter) {
+		return delegate.findAccumulativeAuditDatumFiltered(filter);
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
 	public FilterResults<AuditDatumRecordCounts> findFilteredAuditRecordCounts(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		return delegate.findFilteredAuditRecordCounts(filter, sortDescriptors, offset, max);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public FilterResults<AuditDatumRecordCounts> findFilteredAccumulativeAuditRecordCounts(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,

@@ -181,7 +181,7 @@ public enum Aggregation {
 				}
 			}
 		}
-		throw new IllegalArgumentException("Invalid Aggregation value");
+		throw new IllegalArgumentException("Invalid Aggregation value [" + key + "]");
 	}
 
 }

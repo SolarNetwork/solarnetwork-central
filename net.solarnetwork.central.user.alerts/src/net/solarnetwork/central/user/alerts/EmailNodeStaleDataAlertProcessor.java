@@ -44,10 +44,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
@@ -69,7 +74,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  * Process stale data alerts for nodes.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
@@ -110,7 +115,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	private final UserNodeDao userNodeDao;
 	private final UserAlertDao userAlertDao;
 	private final UserAlertSituationDao userAlertSituationDao;
-	private final GeneralNodeDatumDao generalNodeDatumDao;
+	private final DatumEntityDao datumDao;
 	private final MailService mailService;
 	private Integer batchSize = DEFAULT_BATCH_SIZE;
 	private final MessageSource messageSource;
@@ -122,10 +127,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 	// maintain a cache of node data during the execution of the job (cleared after each invocation)
 	private final Map<Long, SolarNode> nodeCache = new HashMap<Long, SolarNode>(64);
-	private final Map<Long, List<GeneralNodeDatumFilterMatch>> nodeDataCache = new HashMap<Long, List<GeneralNodeDatumFilterMatch>>(
-			64);
-	private final Map<Long, List<GeneralNodeDatumFilterMatch>> userDataCache = new HashMap<Long, List<GeneralNodeDatumFilterMatch>>(
-			16);
+	private final Map<Long, List<NodeDatumStreamPK>> nodeDataCache = new HashMap<>(64);
+	private final Map<Long, List<NodeDatumStreamPK>> userDataCache = new HashMap<>(16);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -142,8 +145,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 *        The {@link UserAlertDao} to use.
 	 * @param userAlertSituationDao
 	 *        The {@link UserAlertSituationDao} to use.
-	 * @param generalNodeDatumDao
-	 *        The {@link GeneralNodeDatumDao} to use.
+	 * @param datumDao
+	 *        The {@link DatumEntityDao} to use.
 	 * @param mailService
 	 *        The {@link MailService} to use.
 	 * @param messageSource
@@ -151,7 +154,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 */
 	public EmailNodeStaleDataAlertProcessor(SolarNodeDao solarNodeDao, UserDao userDao,
 			UserNodeDao userNodeDao, UserAlertDao userAlertDao,
-			UserAlertSituationDao userAlertSituationDao, GeneralNodeDatumDao generalNodeDatumDao,
+			UserAlertSituationDao userAlertSituationDao, DatumEntityDao datumDao,
 			MailService mailService, MessageSource messageSource) {
 		super();
 		this.solarNodeDao = solarNodeDao;
@@ -159,7 +162,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		this.userNodeDao = userNodeDao;
 		this.userAlertDao = userAlertDao;
 		this.userAlertSituationDao = userAlertSituationDao;
-		this.generalNodeDatumDao = generalNodeDatumDao;
+		this.datumDao = datumDao;
 		this.mailService = mailService;
 		this.messageSource = messageSource;
 	}
@@ -221,15 +224,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 				// look for first stale data matching age + source criteria
 				final List<Interval> timePeriods = new ArrayList<Interval>(2);
-				GeneralNodeDatumFilterMatch stale = getFirstStaleDatum(alert, nowDateTime, age,
-						sourceIds, timeFormatter, timePeriods);
+				NodeDatumStreamPK stale = getFirstStaleDatum(alert, nowDateTime, age, sourceIds,
+						timeFormatter, timePeriods);
 
 				Map<String, Object> staleInfo = new HashMap<String, Object>(4);
 				if ( stale != null ) {
-					staleInfo.put(SITUATION_INFO_DATUM_CREATED,
-							Long.valueOf(stale.getId().getCreated().getMillis()));
-					staleInfo.put(SITUATION_INFO_NODE_ID, stale.getId().getNodeId());
-					staleInfo.put(SITUATION_INFO_SOURCE_ID, stale.getId().getSourceId());
+					staleInfo.put(SITUATION_INFO_DATUM_CREATED, stale.getTimestamp().toEpochMilli());
+					staleInfo.put(SITUATION_INFO_NODE_ID, stale.getNodeId());
+					staleInfo.put(SITUATION_INFO_SOURCE_ID, stale.getSourceId());
 				}
 
 				// get UserAlertSitutation for this alert
@@ -281,8 +283,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						sit.setNotified(new DateTime(now));
 						userAlertSituationDao.store(sit);
 
-						GeneralNodeDatumFilterMatch nonStale = getFirstNonStaleDatum(alert, now, age,
-								sourceIds);
+						NodeDatumStreamPK nonStale = getFirstNonStaleDatum(alert, now, age, sourceIds);
 
 						sendAlertMail(alert, "user.alert.NodeStaleData.Resolved.mail.subject",
 								mailTemplateResolvedResource, nonStale);
@@ -392,33 +393,40 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 		// load up data for users first, as that might pull in all node data already
 		if ( userIds.isEmpty() == false ) {
-			DatumFilterCommand filter = new DatumFilterCommand();
+			BasicDatumCriteria filter = new BasicDatumCriteria();
 			filter.setUserIds(userIds.toArray(new Long[userIds.size()]));
 			filter.setMostRecent(true);
-			FilterResults<GeneralNodeDatumFilterMatch> latestNodeData = generalNodeDatumDao
-					.findFiltered(filter, null, null, null);
-			for ( GeneralNodeDatumFilterMatch match : latestNodeData.getResults() ) {
+			ObjectDatumStreamFilterResults<Datum, DatumPK> latestNodeData = datumDao
+					.findFiltered(filter);
+			for ( Datum match : latestNodeData.getResults() ) {
 				// first add to node list
-				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache
-						.get(match.getId().getNodeId());
-				if ( datumMatches == null ) {
-					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
-					nodeDataCache.put(match.getId().getNodeId(), datumMatches);
+				final ObjectDatumStreamMetadata meta = latestNodeData
+						.metadataForStreamId(match.getStreamId());
+				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
+					log.warn("Node stream metadata not available for datum match {}", match);
+					continue;
 				}
-				datumMatches.add(match);
+				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
+						meta.getSourceId(), match.getTimestamp());
+				List<NodeDatumStreamPK> datumMatches = nodeDataCache.get(pk.getNodeId());
+				if ( datumMatches == null ) {
+					datumMatches = new ArrayList<>();
+					nodeDataCache.put(pk.getNodeId(), datumMatches);
+				}
+				datumMatches.add(pk);
 
 				// now add match to User list
-				Long userId = nodeUserMapping.get(match.getId().getNodeId());
+				Long userId = nodeUserMapping.get(pk.getNodeId());
 				if ( userId == null ) {
-					log.warn("No user ID found for node ID: {}", match.getId().getNodeId());
+					log.warn("No user ID found for node ID: {}", pk.getNodeId());
 					continue;
 				}
 				datumMatches = userDataCache.get(userId);
 				if ( datumMatches == null ) {
-					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
+					datumMatches = new ArrayList<>();
 					userDataCache.put(userId, datumMatches);
 				}
-				datumMatches.add(match);
+				datumMatches.add(pk);
 			}
 			log.debug("Loaded most recent datum for users {}: {}", userIds, userDataCache);
 		}
@@ -428,23 +436,29 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 
 		// for any node IDs still around, query for them now
 		if ( nodeIds.isEmpty() == false ) {
-			DatumFilterCommand filter = new DatumFilterCommand();
+			BasicDatumCriteria filter = new BasicDatumCriteria();
 			filter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
 			filter.setMostRecent(true);
-			FilterResults<GeneralNodeDatumFilterMatch> latestNodeData = generalNodeDatumDao
-					.findFiltered(filter, null, null, null);
-			for ( GeneralNodeDatumFilterMatch match : latestNodeData.getResults() ) {
-				List<GeneralNodeDatumFilterMatch> datumMatches = nodeDataCache
-						.get(match.getId().getNodeId());
+			ObjectDatumStreamFilterResults<Datum, DatumPK> latestNodeData = datumDao
+					.findFiltered(filter);
+			for ( Datum match : latestNodeData.getResults() ) {
+				final ObjectDatumStreamMetadata meta = latestNodeData
+						.metadataForStreamId(match.getStreamId());
+				if ( meta == null || meta.getKind() != ObjectDatumKind.Node ) {
+					log.warn("Node stream metadata not available for datum match {}", match);
+					continue;
+				}
+				final NodeDatumStreamPK pk = ObjectDatumStreamPK.nodeId(meta.getObjectId(),
+						meta.getSourceId(), match.getTimestamp());
+				List<NodeDatumStreamPK> datumMatches = nodeDataCache.get(pk.getNodeId());
 				if ( datumMatches == null ) {
-					datumMatches = new ArrayList<GeneralNodeDatumFilterMatch>();
-					nodeDataCache.put(match.getId().getNodeId(), datumMatches);
+					datumMatches = new ArrayList<>();
+					nodeDataCache.put(pk.getNodeId(), datumMatches);
 				}
-				if ( !nodeCache.containsKey(match.getId().getNodeId()) ) {
-					nodeCache.put(match.getId().getNodeId(),
-							solarNodeDao.get(match.getId().getNodeId()));
+				if ( !nodeCache.containsKey(pk.getNodeId()) ) {
+					nodeCache.put(pk.getNodeId(), solarNodeDao.get(pk.getNodeId()));
 				}
-				datumMatches.add(match);
+				datumMatches.add(pk);
 			}
 			log.debug("Loaded most recent datum for nodes {}: {}", nodeIds, nodeDataCache);
 		}
@@ -456,16 +470,16 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	 * 
 	 * @param alert
 	 *        The alert to get the most recent data for.
-	 * @return The associated data, never <em>null</em>.
+	 * @return The associated data, never {@literal null}.
 	 */
-	private List<GeneralNodeDatumFilterMatch> getLatestNodeData(final UserAlert alert) {
-		List<GeneralNodeDatumFilterMatch> results;
+	private List<NodeDatumStreamPK> getLatestNodeData(final UserAlert alert) {
+		List<NodeDatumStreamPK> results;
 		if ( alert.getNodeId() != null ) {
 			results = nodeDataCache.get(alert.getNodeId());
 		} else {
 			results = userDataCache.get(alert.getUserId());
 		}
-		return (results == null ? Collections.<GeneralNodeDatumFilterMatch> emptyList() : results);
+		return (results == null ? Collections.<NodeDatumStreamPK> emptyList() : results);
 	}
 
 	private boolean withinIntervals(final long now, List<Interval> intervals) {
@@ -504,11 +518,11 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return earliest.getStart().plusDays(1);
 	}
 
-	private GeneralNodeDatumFilterMatch getFirstStaleDatum(final UserAlert alert, final DateTime now,
+	private NodeDatumStreamPK getFirstStaleDatum(final UserAlert alert, final DateTime now,
 			final Number age, final String[] sourceIds, final DateTimeFormatter timeFormatter,
 			final List<Interval> outputIntervals) {
-		GeneralNodeDatumFilterMatch stale = null;
-		List<GeneralNodeDatumFilterMatch> latestNodeData = getLatestNodeData(alert);
+		NodeDatumStreamPK stale = null;
+		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
 		List<Interval> intervals = new ArrayList<Interval>(2);
 		if ( alert.getNodeId() != null ) {
 			try {
@@ -518,12 +532,11 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			}
 		}
 
-		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
+		for ( NodeDatumStreamPK datum : latestNodeData ) {
 			List<Interval> nodeIntervals = intervals;
 			if ( alert.getNodeId() == null ) {
 				try {
-					nodeIntervals = parseAlertTimeWindows(now, timeFormatter, alert,
-							datum.getId().getNodeId());
+					nodeIntervals = parseAlertTimeWindows(now, timeFormatter, alert, datum.getNodeId());
 					if ( nodeIntervals != null ) {
 						for ( Interval interval : nodeIntervals ) {
 							if ( !intervals.contains(interval) ) {
@@ -536,10 +549,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					continue;
 				}
 			}
-			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) < now
+			if ( datum.getTimestamp().toEpochMilli() + (long) (age.doubleValue() * 1000) < now
 					.getMillis()
-					&& (sourceIds == null
-							|| Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0)
+					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getSourceId()) >= 0)
 					&& withinIntervals(now.getMillis(), nodeIntervals) ) {
 				stale = datum;
 				break;
@@ -551,14 +563,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return stale;
 	}
 
-	private GeneralNodeDatumFilterMatch getFirstNonStaleDatum(final UserAlert alert, final long now,
+	private NodeDatumStreamPK getFirstNonStaleDatum(final UserAlert alert, final long now,
 			final Number age, final String[] sourceIds) {
-		GeneralNodeDatumFilterMatch nonStale = null;
-		List<GeneralNodeDatumFilterMatch> latestNodeData = getLatestNodeData(alert);
-		for ( GeneralNodeDatumFilterMatch datum : latestNodeData ) {
-			if ( datum.getId().getCreated().getMillis() + (long) (age.doubleValue() * 1000) >= now
+		NodeDatumStreamPK nonStale = null;
+		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
+		for ( NodeDatumStreamPK datum : latestNodeData ) {
+			if ( datum.getTimestamp().toEpochMilli() + (long) (age.doubleValue() * 1000) >= now
 					&& (sourceIds == null
-							|| Arrays.binarySearch(sourceIds, datum.getId().getSourceId()) >= 0) ) {
+							|| Arrays.binarySearch(sourceIds, datum.getSourceId()) >= 0) ) {
 				nonStale = datum;
 				break;
 			}
@@ -567,14 +579,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	private void sendAlertMail(UserAlert alert, String subjectKey, String resourcePath,
-			GeneralNodeDatumFilterMatch datum) {
+			NodeDatumStreamPK datum) {
 		if ( alert.getStatus() == UserAlertStatus.Suppressed ) {
 			// no emails for this alert
 			log.debug("Alert email suppressed: {}; datum {}; subject {}", alert, datum, subjectKey);
 			return;
 		}
 		User user = userDao.get(alert.getUserId());
-		SolarNode node = (datum != null ? nodeCache.get(datum.getId().getNodeId()) : null);
+		SolarNode node = (datum != null ? nodeCache.get(datum.getNodeId()) : null);
 		if ( user != null && node != null ) {
 			BasicMailAddress addr = new BasicMailAddress(user.getName(), user.getEmail());
 			Locale locale = Locale.US; // TODO: get Locale from User entity
@@ -588,10 +600,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			if ( node != null && node.getTimeZone() != null ) {
 				dateFormat = dateFormat.withZone(DateTimeZone.forTimeZone(node.getTimeZone()));
 			}
-			model.put("datumDate", dateFormat.print(datum.getId().getCreated()));
+			model.put("datumDate", dateFormat.print(new DateTime(datum.getTimestamp().toEpochMilli())));
 
-			String subject = messageSource.getMessage(subjectKey,
-					new Object[] { datum.getId().getNodeId() }, locale);
+			String subject = messageSource.getMessage(subjectKey, new Object[] { datum.getNodeId() },
+					locale);
 
 			log.debug("Sending NodeStaleData alert {} to {} with model {}", subject, user.getEmail(),
 					model);

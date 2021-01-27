@@ -41,7 +41,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * before/after samples at a specific point in time for a node data stream.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.35
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "type", "updated", "notes", "final", "start",
@@ -194,9 +194,9 @@ public class GeneralNodeDatumAuxiliary
 	}
 
 	@Override
-	public Object clone() {
+	public GeneralNodeDatumAuxiliary clone() {
 		try {
-			return super.clone();
+			return (GeneralNodeDatumAuxiliary) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);

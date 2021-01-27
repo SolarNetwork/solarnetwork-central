@@ -41,9 +41,10 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -52,6 +53,7 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test case for the {@link DaoDataCollectorBiz} class.
@@ -65,7 +67,7 @@ public class DaoDataCollectorBizTest {
 
 	private DaoDataCollectorBiz biz;
 
-	private GeneralNodeDatumDao datumDao;
+	private DatumEntityDao datumDao;
 	private SolarLocationDao locationDao;
 	private DatumMetadataBiz datumMetadataBiz;
 	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
@@ -73,13 +75,13 @@ public class DaoDataCollectorBizTest {
 	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		datumMetadataBiz = EasyMock.createMock(DatumMetadataBiz.class);
 		locationDao = EasyMock.createMock(SolarLocationDao.class);
 		datumCache = EasyMock.createMock(Cache.class);
 		biz = new DaoDataCollectorBiz();
 		biz.setDatumMetadataBiz(datumMetadataBiz);
-		biz.setGeneralNodeDatumDao(datumDao);
+		biz.setDatumDao(datumDao);
 		biz.setSolarLocationDao(locationDao);
 	}
 
@@ -142,7 +144,8 @@ public class DaoDataCollectorBizTest {
 		d.setSamples(new GeneralNodeDatumSamples());
 		d.getSamples().putInstantaneousSampleValue("foo", 1);
 
-		expect(datumDao.store(d)).andReturn(d.getId());
+		expect(datumDao.store(d)).andReturn(
+				new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d.getCreated())));
 
 		// WHEN
 		replayAll();

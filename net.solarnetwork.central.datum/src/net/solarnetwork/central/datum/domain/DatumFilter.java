@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumFilter.java - Dec 2, 2013 5:08:29 PM
+ * DatumCriteria.java - Dec 2, 2013 5:08:29 PM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 

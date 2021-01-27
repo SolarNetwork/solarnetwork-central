@@ -37,8 +37,13 @@ CREATE INDEX user_expire_data_conf_user_idx ON solaruser.user_expire_data_conf (
  * @param age only records older than this are included
  */
 CREATE OR REPLACE FUNCTION solaruser.preview_expire_datum_for_policy(userid bigint, jpolicy jsonb, age interval)
-  RETURNS TABLE(query_date timestamptz, datum_count bigint, datum_hourly_count integer, datum_daily_count integer, datum_monthly_count integer)
-  LANGUAGE plpgsql STABLE AS
+	RETURNS TABLE(
+		query_date 			TIMESTAMP WITH TIME ZONE,
+		datum_count 		BIGINT,
+		datum_hourly_count 	INTEGER,
+		datum_daily_count 	INTEGER,
+		datum_monthly_count INTEGER
+	) LANGUAGE plpgsql STABLE AS
 $$
 DECLARE
 	node_ids bigint[];
@@ -62,68 +67,68 @@ BEGIN
 	INTO source_id_regexs;
 
 	-- count raw data
-	WITH nlt AS (
-		SELECT
-			node_id,
-			(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-		FROM solarnet.node_local_time
-		WHERE node_id = ANY (node_ids)
+	WITH s AS (
+		SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_datm_meta s
+		INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE s.node_id = ANY(node_ids)
+			AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 	)
-	SELECT count(*)
-	FROM solardatum.da_datum d, nlt
-	WHERE d.node_id = nlt.node_id
-		AND d.ts < nlt.older_than
-		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+	SELECT COUNT(*)
+	FROM s
+	INNER JOIN solardatm.da_datm d ON d.stream_id = s.stream_id
+	WHERE d.ts < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
 	INTO datum_count;
 
 	IF agg_key IN ('h', 'd', 'M') THEN
 		-- count hourly data
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		SELECT count(*)
-		FROM solaragg.agg_datum_hourly d, nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		SELECT COUNT(*)
+		FROM s
+		INNER JOIN solardatm.agg_datm_hourly d ON d.stream_id = s.stream_id
+		WHERE d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
 		INTO datum_hourly_count;
 	END IF;
 
 	IF agg_key IN ('d', 'M') THEN
 		-- count daily data
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		SELECT count(*)
-		FROM solaragg.agg_datum_daily d, nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		SELECT COUNT(*)
+		FROM s
+		INNER JOIN solardatm.agg_datm_daily d ON d.stream_id = s.stream_id
+		WHERE d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
 		INTO datum_daily_count;
 	END IF;
 
 	IF agg_key = 'M' THEN
 		-- count monthly data (round down to whole months only)
-		WITH nlt AS (
-			SELECT
-				node_id,
-				date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age)) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		SELECT count(*)
-		FROM solaragg.agg_datum_monthly d, nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		SELECT COUNT(*)
+		FROM s
+		INNER JOIN solardatm.agg_datm_monthly d ON d.stream_id = s.stream_id
+		WHERE d.ts_start < date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age)) AT TIME ZONE s.time_zone
 		INTO datum_monthly_count;
 	END IF;
 
@@ -174,155 +179,117 @@ BEGIN
 	INTO source_id_regexs;
 
 	-- delete raw data
-	WITH nlt AS (
-		SELECT
-			node_id,
-			(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-		FROM solarnet.node_local_time
-		WHERE node_id = ANY (node_ids)
+	WITH s AS (
+		SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+		FROM solardatm.da_datm_meta s
+		INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+		INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE s.node_id = ANY(node_ids)
+			AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 	)
-	DELETE FROM solardatum.da_datum d
-	USING nlt
-	WHERE d.node_id = nlt.node_id
-		AND d.ts < nlt.older_than
-		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
+	, audit AS (
+		UPDATE solardatm.aud_datm_daily d
+		SET datum_count = 0
+		FROM s
+		WHERE d.stream_id = s.stream_id
+			AND d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
+	)
+	DELETE FROM solardatm.da_datm d
+	USING s
+	WHERE d.stream_id = s.stream_id
+		AND d.ts < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone;
 	GET DIAGNOSTICS total_count = ROW_COUNT;
-
-	-- delete any triggered stale rows
-	WITH nlt AS (
-		SELECT
-			node_id,
-			(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-		FROM solarnet.node_local_time
-		WHERE node_id = ANY (node_ids)
-	)
-	DELETE FROM solaragg.agg_stale_datum d
-	USING nlt
-	WHERE d.node_id = nlt.node_id
-		AND d.ts_start <= nlt.older_than
-		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
-		AND d.agg_kind = 'h';
-
-	-- update daily audit datum counts
-	WITH nlt AS (
-		SELECT
-			node_id,
-			(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-		FROM solarnet.node_local_time
-		WHERE node_id = ANY (node_ids)
-	)
-	UPDATE solaragg.aud_datum_daily d
-	SET datum_count = 0
-	FROM nlt
-	WHERE d.node_id = nlt.node_id
-		AND d.ts_start < nlt.older_than
-		AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
 
 	IF agg_key IN ('h', 'd', 'M') THEN
 		-- delete hourly data
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		DELETE FROM solaragg.agg_datum_hourly d
-		USING nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
+		, audit AS (
+			UPDATE solardatm.aud_datm_daily d
+			SET datum_hourly_count = 0
+			FROM s
+			WHERE d.stream_id = s.stream_id
+				AND d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
+		)
+		DELETE FROM solardatm.agg_datm_hourly d
+		USING s
+		WHERE d.stream_id = s.stream_id
+			AND d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone;
 		GET DIAGNOSTICS one_count = ROW_COUNT;
 		total_count := total_count + one_count;
-
-		-- update daily audit datum counts
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
-		)
-		UPDATE solaragg.aud_datum_daily d
-		SET datum_hourly_count = 0
-		FROM nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < nlt.older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
 	END IF;
 
 	IF agg_key IN ('d', 'M') THEN
 		-- delete daily data
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		DELETE FROM solaragg.agg_datum_daily d
-		USING nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
+		, audit AS (
+			UPDATE solardatm.aud_datm_daily d
+			SET datum_daily_pres = FALSE
+			FROM s
+			WHERE d.stream_id = s.stream_id
+				AND d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
+		)
+		DELETE FROM solardatm.agg_datm_daily d
+		USING s
+		WHERE d.stream_id = s.stream_id
+			AND d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone;
 		GET DIAGNOSTICS one_count = ROW_COUNT;
 		total_count := total_count + one_count;
-
-		-- update daily audit datum counts
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
-		)
-		UPDATE solaragg.aud_datum_daily d
-		SET datum_daily_pres = FALSE
-		FROM nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < nlt.older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
 	END IF;
 
 	IF agg_key = 'M' THEN
 		-- delete monthly data (round down to whole months only)
-		WITH nlt AS (
-			SELECT
-				node_id,
-				date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age)) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		DELETE FROM solaragg.agg_datum_monthly d
-		USING nlt
-		WHERE d.node_id = nlt.node_id
-			AND d.ts_start < older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs));
+		DELETE FROM solardatm.agg_datm_monthly d
+		USING s
+		WHERE d.stream_id = s.stream_id
+			AND d.ts_start < date_trunc('month', (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age)) AT TIME ZONE s.time_zone;
 		GET DIAGNOSTICS one_count = ROW_COUNT;
 		total_count := total_count + one_count;
 	END IF;
 
 	-- mark all monthly audit data as stale for recalculation
 	IF total_count > 0 THEN
-		INSERT INTO solaragg.aud_datum_daily_stale (node_id, ts_start, source_id, aud_kind)
-		WITH nlt AS (
-			SELECT
-				node_id,
-				(date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE time_zone) - age) AT TIME ZONE time_zone AS older_than
-			FROM solarnet.node_local_time
-			WHERE node_id = ANY (node_ids)
+		INSERT INTO solardatm.aud_stale_datm (stream_id, ts_start, aud_kind)
+		WITH s AS (
+			SELECT s.stream_id, COALESCE(l.time_zone, 'UTC') AS time_zone
+			FROM solardatm.da_datm_meta s
+			INNER JOIN solarnet.sn_node n ON n.node_id = s.node_id
+			INNER JOIN solarnet.sn_loc l ON l.id = n.loc_id
+			WHERE s.node_id = ANY(node_ids)
+				AND (have_source_ids OR s.source_id ~ ANY(source_id_regexs))
 		)
-		SELECT d.node_id, d.ts_start, d.source_id, 'm'
-		FROM solaragg.aud_datum_monthly d
-		INNER JOIN nlt ON nlt.node_id = d.node_id
-		WHERE d.ts_start < nlt.older_than
-			AND (have_source_ids OR d.source_id ~ ANY(source_id_regexs))
+		SELECT s.stream_id, d.ts_start, 'M'
+		FROM s
+		INNER JOIN solardatm.aud_datm_monthly d ON d.stream_id = s.stream_id
+		WHERE d.ts_start < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE s.time_zone) - age) AT TIME ZONE s.time_zone
 		ON CONFLICT DO NOTHING;
 	END IF;
-	
+
 	RETURN total_count;
 END;
 $$;
+
 
 /**************************************************************************************************
  * TABLE solaruser.user_datum_delete_job

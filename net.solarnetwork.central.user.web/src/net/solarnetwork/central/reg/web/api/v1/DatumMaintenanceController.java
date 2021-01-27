@@ -111,7 +111,7 @@ public class DatumMaintenanceController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Mark a set of datum aggregates as "stale" so they are re-computed.
+	 * Find datum aggregates maarked as "stale".
 	 * 
 	 * <p>
 	 * The following criteria should be specified at a minimum:

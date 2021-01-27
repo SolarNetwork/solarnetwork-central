@@ -28,10 +28,10 @@ import java.io.Serializable;
  * Primary key based on a node ID and source ID.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NodeSourcePK extends BasicNodeSourcePK
-		implements Serializable, Cloneable, Comparable<NodeSourcePK> {
+		implements Serializable, Cloneable, Comparable<NodeSourcePK>, ObjectSourcePK {
 
 	private static final long serialVersionUID = 959344239925688873L;
 
@@ -67,6 +67,20 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	@Override
 	public int compareTo(NodeSourcePK o) {
 		return super.compareTo(o);
+	}
+
+	/**
+	 * Get the object ID.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link BasicNodeSourcePK#getNodeId()}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Long getObjectId() {
+		return getNodeId();
 	}
 
 }

@@ -22,14 +22,24 @@
 
 package net.solarnetwork.central.dao.mybatis;
 
+import static java.util.stream.Collectors.toList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
+import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
+import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.support.MapPathMatcher;
+import net.solarnetwork.support.SearchFilter;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link SolarNodeDao}.
@@ -84,6 +94,32 @@ public class MyBatisSolarNodeDao
 		preprocessInsert(datum);
 		getSqlSession().insert(getInsert(), datum);
 		return id;
+	}
+
+	@Override
+	public FilterResults<SolarNodeFilterMatch> findFiltered(SolarNodeFilter filter,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		// manually implemented to support metadataFilter
+		final String filterDomain = getMemberDomainKey(SolarNodeMatch.class);
+		final String query = getFilteredQuery(filterDomain, filter);
+		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
+		sqlProps.put(FILTER_PROPERTY, filter);
+		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
+		}
+
+		List<SolarNodeFilterMatch> rows = selectList(query, sqlProps, null, null);
+
+		SearchFilter sf = SearchFilter.forLDAPSearchFilterString(filter.getMetadataFilter());
+		if ( sf != null ) {
+			// filter out only those matching the SearchFilter
+			rows = rows.stream().filter(m -> {
+				Map<String, Object> map = JsonUtils.getStringMap(m.getMetaJson());
+				return (map != null && MapPathMatcher.matches(map, sf));
+			}).collect(toList());
+		}
+
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset, rows.size());
 	}
 
 }

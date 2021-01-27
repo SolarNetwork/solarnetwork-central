@@ -45,7 +45,7 @@ import net.solarnetwork.util.SerializeIgnore;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
@@ -139,9 +139,9 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	}
 
 	@Override
-	public Object clone() {
+	public GeneralNodeDatum clone() {
 		try {
-			return super.clone();
+			return (GeneralNodeDatum) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);

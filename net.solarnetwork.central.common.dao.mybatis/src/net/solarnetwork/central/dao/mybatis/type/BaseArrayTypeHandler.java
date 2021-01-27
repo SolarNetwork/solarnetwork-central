@@ -36,7 +36,7 @@ import org.apache.ibatis.type.JdbcType;
  * Base {@link org.apache.ibatis.type.TypeHandler} for SQL arrays.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object[]> {
 
@@ -61,25 +61,32 @@ public abstract class BaseArrayTypeHandler extends BaseTypeHandler<Object[]> {
 			Connection conn = ps.getConnection();
 			Array loc = conn.createArrayOf(elementJdbcType, parameter);
 			ps.setArray(i, loc);
+			loc.free();
 		}
+	}
+
+	private Object[] extractArray(Array array) throws SQLException {
+		if ( array == null ) {
+			return null;
+		}
+		Object[] result = (Object[]) array.getArray();
+		array.free();
+		return result;
 	}
 
 	@Override
 	public Object[] getNullableResult(ResultSet rs, String columnName) throws SQLException {
-		Array result = rs.getArray(columnName);
-		return (result == null ? null : (Object[]) result.getArray());
+		return extractArray(rs.getArray(columnName));
 	}
 
 	@Override
 	public Object[] getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-		Array result = rs.getArray(columnIndex);
-		return (result == null ? null : (Object[]) result.getArray());
+		return extractArray(rs.getArray(columnIndex));
 	}
 
 	@Override
 	public Object[] getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-		Array result = cs.getArray(columnIndex);
-		return (result == null ? null : (Object[]) result.getArray());
+		return extractArray(cs.getArray(columnIndex));
 	}
 
 }

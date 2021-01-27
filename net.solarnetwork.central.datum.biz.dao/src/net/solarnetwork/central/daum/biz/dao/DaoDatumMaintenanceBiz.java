@@ -22,50 +22,105 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * DAO based implementation of {@link DatumMaintenanceBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.6
  */
 public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 
-	private final GeneralNodeDatumDao datumDao;
+	private static final Logger log = LoggerFactory.getLogger(DaoDatumMaintenanceBiz.class);
+
+	private final DatumMaintenanceDao datumDao;
+	private final DatumStreamMetadataDao metaDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param datumDao
 	 *        the datum DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DaoDatumMaintenanceBiz(GeneralNodeDatumDao datumDao) {
+	public DaoDatumMaintenanceBiz(DatumMaintenanceDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
+		if ( datumDao == null ) {
+			throw new IllegalArgumentException("The datumDao argument must not be null.");
+		}
 		this.datumDao = datumDao;
+		if ( metaDao == null ) {
+			throw new IllegalArgumentException("The metaDao argument must not be null.");
+		}
+		this.metaDao = metaDao;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void markDatumAggregatesStale(GeneralNodeDatumFilter criteria) {
-		datumDao.markDatumAggregatesStale(criteria);
-
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria);
+		DatumUtils.populateAggregationType(criteria, c);
+		int count = datumDao.markDatumAggregatesStale(c);
+		log.info("Marked {} aggregate datum stale for criteria {}", count, c);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		return datumDao.findStaleAggregateDatum(criteria, sortDescriptors, offset, max);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+		c.setObjectKind(ObjectDatumKind.Node);
+		DatumUtils.populateAggregationType(criteria, c);
+		net.solarnetwork.dao.FilterResults<net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum, net.solarnetwork.central.datum.v2.domain.StreamKindPK> r = datumDao
+				.findStaleAggregateDatum(c);
+		List<StaleAggregateDatum> data = new ArrayList<>(r.getReturnedResultCount());
+		if ( r.getReturnedResultCount() > 0 ) {
+			Map<UUID, ObjectDatumStreamMetadata> metas = stream(
+					metaDao.findDatumStreamMetadata(c).spliterator(), false)
+							.collect(toMap(DatumStreamMetadata::getStreamId, identity()));
+			for ( net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum d : r ) {
+				ObjectDatumStreamMetadata meta = metas.get(d.getStreamId());
+				StaleAggregateDatum stale = new StaleAggregateDatum();
+				if ( meta != null ) {
+					stale.setCreated(JodaDateUtils.toJoda(d.getTimestamp(), meta.getTimeZoneId()));
+					stale.setNodeId(meta.getObjectId());
+					stale.setSourceId(meta.getSourceId());
+					stale.setKind(d.getKind().getKey());
+					data.add(stale);
+				}
+			}
+		}
+		return new BasicFilterResults<>(data, r.getTotalResults(), r.getStartingOffset(),
+				r.getReturnedResultCount());
 	}
 
 }

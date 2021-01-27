@@ -124,8 +124,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to reading datum metadata.
 	 * 
-	 * @param nodeId
-	 *        the ID of the node to verify
+	 * @param filter
+	 *        the filter to verify
 	 */
 	@Before("findMetadata(filter)")
 	public void readMetadataCheck(GeneralNodeDatumMetadataFilter filter) {
@@ -146,6 +146,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 *        The node IDs.
 	 * @return The set of NodeSourcePK results.
 	 * @throws Throwable
+	 *         if any error occurs
 	 * @since 1.2
 	 */
 	@Around("getMetadataFilteredSources(nodeIds)")

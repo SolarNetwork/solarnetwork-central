@@ -23,8 +23,10 @@
 package net.solarnetwork.central.ocpp.v16.controller.test;
 
 import static java.util.UUID.randomUUID;
-import static net.solarnetwork.central.ocpp.v16.controller.OcppController.OCPP_V16_ACTION_PARAM;
-import static net.solarnetwork.central.ocpp.v16.controller.OcppController.OCPP_V16_TOPIC;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_MESSAGE_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -186,10 +188,73 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
 		instruction.addParameter("connectorId", "1");
 		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
+		Long instructionId = randomUUID().getMostSignificantBits();
+
+		UserNode userNode = new UserNode(
+				new User(randomUUID().getMostSignificantBits(), "test@localhost"),
+				new SolarNode(nodeId, randomUUID().getMostSignificantBits()));
+		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+
+		CentralChargePoint cp = new CentralChargePoint(userNode.getUserId(), nodeId, Instant.now(),
+				chargerIdentity, "SolarNetwork", "SolarNode");
+		expect(chargePointDao.getForIdentifier(userNode.getUserId(), chargerIdentity)).andReturn(cp);
+
+		ChargePointIdentity cpIdent = new ChargePointIdentity(chargerIdentity, userNode.getUserId());
+		expect(chargePointRouter.brokerForChargePoint(cpIdent)).andReturn(chargePointBroker);
+
+		Capture<ActionMessage<Object>> actionCaptor = new Capture<>();
+		Capture<ActionMessageResultHandler<Object, Object>> resultHandlerCaptor = new Capture<>();
+		expect(chargePointBroker.sendMessageToChargePoint(capture(actionCaptor),
+				capture(resultHandlerCaptor))).andAnswer(new IAnswer<Boolean>() {
+
+					@Override
+					public Boolean answer() throws Throwable {
+						// invoke result handler
+						ActionMessage<Object> message = actionCaptor.getValue();
+						assertThat("Message sent to charge point is ChangeAvailability",
+								message.getMessage(), instanceOf(ChangeAvailabilityRequest.class));
+						ActionMessageResultHandler<Object, Object> resultHandler = resultHandlerCaptor
+								.getValue();
+						ChangeAvailabilityResponse res = new ChangeAvailabilityResponse();
+						res.setStatus(AvailabilityStatus.ACCEPTED);
+						boolean handlerResult = resultHandler.handleActionMessageResult(message, res,
+								null);
+						assertThat("Result handled", handlerResult, equalTo(true));
+						return true;
+					}
+				});
+
+		Capture<Map<String, Object>> resultParamsCaptor = new Capture<>();
+		expect(instructionDao.compareAndUpdateInstructionState(eq(instructionId), eq(nodeId),
+				eq(InstructionState.Executing), eq(InstructionState.Completed),
+				capture(resultParamsCaptor))).andReturn(true);
+
+		// WHEN
+		replayAll();
+		NodeInstruction instr = controller.willQueueNodeInstruction(instruction);
+		controller.didQueueNodeInstruction(instr, instructionId);
+
+		// THEN
+		log.debug("Instruction result parameters: {}", instr.getResultParameters());
+		assertThat("Instruction executing", instr.getState(), equalTo(InstructionState.Executing));
+		assertThat("Result parameters has accepted result", resultParamsCaptor.getValue(),
+				hasEntry("status", AvailabilityStatus.ACCEPTED.value()));
+	}
+
+	@Test
+	public void handleInstruction_toggleConnectorAvailability_msgParam() {
+		// GIVEN
+		Long nodeId = randomUUID().getMostSignificantBits();
+		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
+		String chargerIdentity = randomUUID().toString();
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_MESSAGE_PARAM, String.format("{\"connectorId\":1,\"type\":\"%s\"}",
+				AvailabilityType.INOPERATIVE.value()));
 		Long instructionId = randomUUID().getMostSignificantBits();
 
 		UserNode userNode = new UserNode(
@@ -250,8 +315,8 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
 		instruction.addParameter("connectorId", "1");
 		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
 		Long instructionId = randomUUID().getMostSignificantBits();

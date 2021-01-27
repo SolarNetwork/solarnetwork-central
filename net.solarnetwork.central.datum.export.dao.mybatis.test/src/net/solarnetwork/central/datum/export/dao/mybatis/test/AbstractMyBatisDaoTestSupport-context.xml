@@ -18,27 +18,6 @@
 		<property name="typeAliases">
 			<list>
 				<value>java.util.UUID</value>
-
-				<value>net.solarnetwork.central.domain.SolarLocation</value>
-				<value>net.solarnetwork.central.domain.SolarNode</value>
-				
-				<value>net.solarnetwork.central.datum.domain.LocationSourcePK</value>
-				<value>net.solarnetwork.central.datum.domain.NodeSourcePK</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumPK</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumPK</value>
-			
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatum</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatum</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata</value>
-				<value>net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch</value>
-				
-				<value>net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum</value>
-				<value>net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum</value>
-
 				<value>net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo</value>
 			</list>
 		</property>
@@ -56,16 +35,6 @@
 		<property name="mapperLocations">
 			<!-- Note: the order of these elements is significant because of inter-resource includes -->
 			<list>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
-				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
-
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/Global.xml</value>
-
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralLocationDatumMetadata.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatum.xml</value>
-				<value>classpath:/net/solarnetwork/central/datum/dao/mybatis/map/GeneralNodeDatumMetadata.xml</value>
-
 				<value>classpath:/net/solarnetwork/central/datum/export/dao/mybatis/map/DatumExportTaskInfo.xml</value>
 			</list>
 		</property>

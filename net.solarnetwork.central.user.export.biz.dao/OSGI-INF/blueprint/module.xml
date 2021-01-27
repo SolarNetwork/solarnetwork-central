@@ -18,7 +18,7 @@
 	<reference id="datumExportConfDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao"/>
 	<reference id="dataConfDao" interface="net.solarnetwork.central.user.export.dao.UserDataConfigurationDao"/>
 	<reference id="destinationConfDao" interface="net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao"/>
-	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="stremMetadataDao" interface="net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao"/>
 	<reference id="outputConfDao" interface="net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao"/>
 	<reference id="taskDao" interface="net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao"/>
 	<reference id="adhocTaskDao" interface="net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao"/>
@@ -52,7 +52,7 @@
 		<argument ref="taskDao"/>
 		<argument ref="adhocTaskDao"/>
 		<argument ref="userNodeDao"/>
-		<argument ref="generalNodeDatumDao"/>
+		<argument ref="stremMetadataDao"/>
 		<property name="outputFormatServices">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>

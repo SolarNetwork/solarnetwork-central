@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.expire.biz.dao;
 
 import static java.util.Arrays.stream;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
@@ -50,10 +51,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -81,7 +83,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	public static final Duration MIN_BATCH_DURATION = Duration.standardHours(1);
 
 	private final UserNodeDao userNodeDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumMaintenanceDao datumDao;
 	private final UserDatumDeleteJobInfoDao jobInfoDao;
 	private final ExecutorService executor;
 
@@ -110,7 +112,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 *        the job DAO to use
 	 */
 	public DaoUserDatumDeleteBiz(ExecutorService executor, UserNodeDao userNodeDao,
-			GeneralNodeDatumDao datumDao, UserDatumDeleteJobInfoDao jobInfoDao) {
+			DatumMaintenanceDao datumDao, UserDatumDeleteJobInfoDao jobInfoDao) {
 		super();
 		this.executor = executor;
 		this.userNodeDao = userNodeDao;
@@ -175,14 +177,16 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
+	public net.solarnetwork.central.datum.domain.DatumRecordCounts countDatumRecords(
+			GeneralNodeDatumFilter filter) {
 		filter = prepareFilter(filter);
 		if ( filter.getNodeId() == null ) {
-			DatumRecordCounts counts = new DatumRecordCounts();
+			net.solarnetwork.central.datum.domain.DatumRecordCounts counts = new net.solarnetwork.central.datum.domain.DatumRecordCounts();
 			counts.setDate(new DateTime());
 			return counts;
 		}
-		return datumDao.countDatumRecords(filter);
+		BasicDatumCriteria c = criteriaFromFilter(filter);
+		return DatumUtils.toRecordCounts(datumDao.countDatumRecords(c));
 	}
 
 	@Override
@@ -410,7 +414,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 					batchFilter.setLocalStartDate(currStartDate);
 					batchFilter.setLocalEndDate(currEndDate);
 					final long batchStart = System.currentTimeMillis();
-					final long batchResult = datumDao.deleteFiltered(batchFilter);
+					final long batchResult = datumDao.deleteFiltered(criteriaFromFilter(batchFilter));
 					log.info(
 							"Deleted {} datum in {}s for user {} request {}: nodes = {}; sources = {}; {} - {}",
 							batchResult, (int) ((System.currentTimeMillis() - batchStart) / 1000.0),
@@ -421,7 +425,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 					updateTaskProgress(Math.min((double) offsetTime / intervalTime, 1.0), result);
 				}
 			} else {
-				result = datumDao.deleteFiltered(f);
+				result = datumDao.deleteFiltered(criteriaFromFilter(f));
 				info.setPercentComplete(1.0);
 			}
 			info.setResultCount(result);

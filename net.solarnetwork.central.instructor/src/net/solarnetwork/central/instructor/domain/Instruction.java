@@ -38,7 +38,7 @@ import net.solarnetwork.central.support.JsonUtils;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class Instruction extends BaseEntity {
 
@@ -164,7 +164,7 @@ public class Instruction extends BaseEntity {
 	 * 
 	 * @return the parameters as a map, or {@literal null} if
 	 *         {@link #getParameters()} is {@literal null}
-	 * @since 1.4
+	 * @since 1.3
 	 */
 	@JsonIgnore
 	public Map<String, String> getParams() {
@@ -175,7 +175,7 @@ public class Instruction extends BaseEntity {
 		Map<String, String> params = new LinkedHashMap<>(l.size());
 		for ( InstructionParameter p : l ) {
 			if ( p.getName() != null && p.getValue() != null ) {
-				params.put(p.getName(), p.getValue());
+				params.merge(p.getName(), p.getValue(), String::concat);
 			}
 		}
 		return params;
@@ -191,7 +191,7 @@ public class Instruction extends BaseEntity {
 	 * 
 	 * @param params
 	 *        the parameters to set
-	 * @since 1.4
+	 * @since 1.3
 	 */
 	@JsonSetter("params")
 	public void setParams(Map<String, String> params) {

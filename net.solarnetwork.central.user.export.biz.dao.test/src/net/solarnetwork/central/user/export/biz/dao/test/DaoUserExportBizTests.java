@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.export.biz.dao.test;
 
+import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -32,9 +34,11 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
@@ -42,10 +46,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.util.AntPathMatcher;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.dao.DaoUserExportBiz;
@@ -61,7 +68,6 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.test.Assertion;
-import net.solarnetwork.test.EasyMockUtils;
 
 /**
  * Test cases for the {@link UserExportBiz} class.
@@ -83,7 +89,7 @@ public class DaoUserExportBizTests {
 	private UserDatumExportTaskInfoDao taskDao;
 	private UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private UserNodeDao userNodeDao;
-	private GeneralNodeDatumDao generalNodeDatumDao;
+	private DatumStreamMetadataDao metaDao;
 
 	private DaoUserExportBiz biz;
 
@@ -96,21 +102,21 @@ public class DaoUserExportBizTests {
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
 		adhocTaskDao = EasyMock.createMock(UserAdhocDatumExportTaskInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		generalNodeDatumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 
 		biz = new DaoUserExportBiz(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	private void replayAll() {
 		EasyMock.replay(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	@After
 	public void teardown() {
 		EasyMock.verify(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, generalNodeDatumDao);
+				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {
@@ -173,9 +179,12 @@ public class DaoUserExportBizTests {
 
 		Set<String> allSourceIds = new LinkedHashSet<>(
 				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
-		Capture<GeneralNodeDatumFilter> sourceFilterCaptor = new Capture<>();
-		expect(generalNodeDatumDao.getAvailableSources(capture(sourceFilterCaptor)))
-				.andReturn(allSourceIds);
+		List<ObjectDatumStreamMetadata> allMetas = allSourceIds.stream().map(e -> {
+			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
+		}).collect(Collectors.toList());
+		Capture<ObjectStreamCriteria> sourceFilterCaptor = new Capture<>();
+		expect(metaDao.findDatumStreamMetadata(capture(sourceFilterCaptor))).andReturn(allMetas);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -201,11 +210,12 @@ public class DaoUserExportBizTests {
 				task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds(),
 				arrayContaining("/test/foo", "/test/bar"));
 
-		GeneralNodeDatumFilter sourceFilter = sourceFilterCaptor.getValue();
+		ObjectStreamCriteria sourceFilter = sourceFilterCaptor.getValue();
 		assertThat("Source filter node", sourceFilter.getNodeId(), equalTo(TEST_NODE_ID));
-		assertThat("Source filter start date", sourceFilter.getStartDate(), equalTo(exportDate));
+		assertThat("Source filter start date", sourceFilter.getStartDate(),
+				equalTo(fromJodaToInstant(exportDate)));
 		assertThat("Source filter end date", sourceFilter.getEndDate(),
-				equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
+				equalTo(fromJodaToInstant(ScheduleType.Hourly.nextExportDate(exportDate))));
 	}
 
 	@Test
@@ -228,27 +238,34 @@ public class DaoUserExportBizTests {
 
 		Set<String> allSourceIdsNode1 = new LinkedHashSet<>(
 				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
+		List<ObjectDatumStreamMetadata> allMetas1 = allSourceIdsNode1.stream().map(e -> {
+			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
+		}).collect(Collectors.toList());
 		Set<String> allSourceIdsNode2 = new LinkedHashSet<>(Arrays.asList("/test/bam"));
-		expect(generalNodeDatumDao
-				.getAvailableSources(EasyMockUtils.assertWith(new Assertion<GeneralNodeDatumFilter>() {
+		List<ObjectDatumStreamMetadata> allMetas2 = allSourceIdsNode2.stream().map(e -> {
+			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
+		}).collect(Collectors.toList());
+		expect(metaDao.findDatumStreamMetadata(assertWith(new Assertion<ObjectStreamCriteria>() {
 
-					private int call = 0;
+			private int call = 0;
 
-					@Override
-					public void check(GeneralNodeDatumFilter sourceFilter) throws Throwable {
-						call++;
-						if ( call < 3 ) {
-							assertThat("Source filter node " + call, sourceFilter.getNodeId(),
-									equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
-							assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
-									equalTo(exportDate));
-							assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
-									equalTo(ScheduleType.Hourly.nextExportDate(exportDate)));
-						} else {
-							fail("Expected only 2 calls to getAvailableSources(filter)");
-						}
-					}
-				}))).andReturn(allSourceIdsNode1).andReturn(allSourceIdsNode2);
+			@Override
+			public void check(ObjectStreamCriteria sourceFilter) throws Throwable {
+				call++;
+				if ( call < 3 ) {
+					assertThat("Source filter node " + call, sourceFilter.getNodeId(),
+							equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
+					assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
+							equalTo(fromJodaToInstant(exportDate)));
+					assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
+							equalTo(fromJodaToInstant(ScheduleType.Hourly.nextExportDate(exportDate))));
+				} else {
+					fail("Expected only 2 calls to getAvailableSources(filter)");
+				}
+			}
+		}))).andReturn(allMetas1).andReturn(allMetas2);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
