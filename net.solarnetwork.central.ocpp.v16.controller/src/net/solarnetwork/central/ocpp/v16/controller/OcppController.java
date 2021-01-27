@@ -95,7 +95,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class OcppController extends BasicIdentifiable
 		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
@@ -108,6 +108,13 @@ public class OcppController extends BasicIdentifiable
 
 	/** A node instruction parameter name for an OCPP v1.6 action name. */
 	public static final String OCPP_V16_ACTION_PARAM = "action";
+
+	/**
+	 * A node instruction parameter name for an OCPP v1.6 JSON message.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String OCPP_V16_MESSAGE_PARAM = "msg";
 
 	/**
 	 * A node instruction parameter name for an OCPP v1.6 ChargePoint
@@ -380,7 +387,19 @@ public class OcppController extends BasicIdentifiable
 		ObjectNode jsonPayload;
 		Object payload;
 		try {
-			jsonPayload = objectMapper.valueToTree(params);
+			if ( params.containsKey(OCPP_V16_MESSAGE_PARAM) ) {
+				JsonNode jsonNode = objectMapper.readTree(params.get(OCPP_V16_MESSAGE_PARAM));
+				if ( jsonNode.isNull() ) {
+					jsonPayload = null;
+				} else if ( jsonNode instanceof ObjectNode ) {
+					jsonPayload = (ObjectNode) jsonNode;
+				} else {
+					throw new IOException(
+							"OCPP " + OCPP_V16_MESSAGE_PARAM + " parameter must be a JSON object.");
+				}
+			} else {
+				jsonPayload = objectMapper.valueToTree(params);
+			}
 			if ( chargePointActionPayloadDecoder != null ) {
 				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
 						jsonPayload);
