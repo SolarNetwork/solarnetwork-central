@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarIn/OCPP 1.6 JSON Central System
 Bundle-SymbolicName: net.solarnetwork.central.in.ocpp.json
-Bundle-Version: 1.1.0
+Bundle-Version: 1.2.0
 Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.in.ocpp.json
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -26,6 +26,7 @@ Import-Package:
  net.solarnetwork.central.instructor.support;version="[1.5,2.0)",
  net.solarnetwork.central.ocpp.dao;version="[1.1,2.0)",
  net.solarnetwork.central.ocpp.domain;version="[1.0,2.0)",
+ net.solarnetwork.central.ocpp.util;version="[1.0,2.0)",
  net.solarnetwork.domain;version="[1.19,2.0)",
  net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
  net.solarnetwork.ocpp.domain;version="[1.1,2.0)",

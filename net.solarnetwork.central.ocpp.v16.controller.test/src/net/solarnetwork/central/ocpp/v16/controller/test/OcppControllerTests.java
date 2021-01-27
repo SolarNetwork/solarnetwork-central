@@ -23,8 +23,10 @@
 package net.solarnetwork.central.ocpp.v16.controller.test;
 
 import static java.util.UUID.randomUUID;
-import static net.solarnetwork.central.ocpp.v16.controller.OcppController.OCPP_V16_ACTION_PARAM;
-import static net.solarnetwork.central.ocpp.v16.controller.OcppController.OCPP_V16_TOPIC;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_MESSAGE_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -186,8 +188,8 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
 		instruction.addParameter("connectorId", "1");
 		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
 		Long instructionId = randomUUID().getMostSignificantBits();
@@ -249,10 +251,10 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
-		instruction.addParameter(OcppController.OCPP_V16_MESSAGE_PARAM, String
-				.format("{\"connectorId\":1,\"type\":\"%s\"}", AvailabilityType.INOPERATIVE.value()));
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_MESSAGE_PARAM, String.format("{\"connectorId\":1,\"type\":\"%s\"}",
+				AvailabilityType.INOPERATIVE.value()));
 		Long instructionId = randomUUID().getMostSignificantBits();
 
 		UserNode userNode = new UserNode(
@@ -313,8 +315,8 @@ public class OcppControllerTests {
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, new DateTime(), nodeId);
 		String chargerIdentity = randomUUID().toString();
-		instruction.addParameter(OcppController.OCPP_V16_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
-		instruction.addParameter(OCPP_V16_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
+		instruction.addParameter(OCPP_CHARGER_IDENTIFIER_PARAM, chargerIdentity);
+		instruction.addParameter(OCPP_ACTION_PARAM, ChargePointAction.ChangeAvailability.getName());
 		instruction.addParameter("connectorId", "1");
 		instruction.addParameter("type", AvailabilityType.INOPERATIVE.value());
 		Long instructionId = randomUUID().getMostSignificantBits();

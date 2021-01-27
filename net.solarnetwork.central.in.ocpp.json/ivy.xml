@@ -22,7 +22,7 @@
     	<dependency org="net.solarnetwork.external" name="net.solarnetwork.external.ocpp" rev="[1.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.9,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="[1.1,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="[1.2,)"/>
     	<dependency org="org.slf4j" name="slf4j-api" rev="1.7.21"/>
 		<dependency org="org.springframework" name="spring-beans" rev="4.3.23.RELEASE"/>
 		<dependency org="org.springframework" name="spring-context" rev="4.3.23.RELEASE"/>

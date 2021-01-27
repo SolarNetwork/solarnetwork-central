@@ -23,7 +23,10 @@
 package net.solarnetwork.central.in.ocpp.json;
 
 import static java.util.Collections.singletonMap;
-import java.io.IOException;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
+import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -32,7 +35,6 @@ import java.util.UUID;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -41,6 +43,7 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
@@ -49,35 +52,17 @@ import net.solarnetwork.ocpp.web.json.OcppWebSocketHandler;
 import net.solarnetwork.util.JsonUtils;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeResolver;
-import ocpp.domain.SchemaValidationException;
 import ocpp.json.ActionPayloadDecoder;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
 		extends OcppWebSocketHandler<C, S> {
-
-	/** A node instruction topic for OCPP v1.6 actions. */
-	public static final String OCPP_V16_TOPIC = "OCPP_v16";
-
-	/** A node instruction parameter name for an OCPP v1.6 action name. */
-	public static final String OCPP_V16_ACTION_PARAM = "action";
-
-	/**
-	 * A node instruction parameter name for an OCPP v1.6 ChargePoint
-	 * identifier.
-	 */
-	public static final String OCPP_V16_CHARGER_IDENTIFIER_PARAM = "chargerIdentifier";
-
-	/**
-	 * A node instruction parameter name for an OCPP v1.6 ChargePoint entity ID.
-	 */
-	public static final String OCPP_V16_CHARGE_POINT_ID_PARAM = "chargePointId";
 
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
@@ -195,7 +180,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 		private void processInstruction(Instruction instruction, CentralChargePoint cp) {
 			Map<String, String> params = instructionParameterMap(instruction);
-			Action action = chargePointAction(params.remove(OCPP_V16_ACTION_PARAM));
+			Action action = chargePointAction(params.remove(OCPP_ACTION_PARAM));
 			if ( action == null ) {
 				instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
 						InstructionState.Received, InstructionState.Declined, Collections.singletonMap(
@@ -205,7 +190,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 			// verify the instruction is for this charge point, first via ID
 			try {
-				String instructionChargePointId = params.remove(OCPP_V16_CHARGE_POINT_ID_PARAM);
+				String instructionChargePointId = params.remove(OCPP_CHARGE_POINT_ID_PARAM);
 				if ( instructionChargePointId != null
 						&& !cp.getId().equals(Long.valueOf(instructionChargePointId)) ) {
 					// not for this charge point
@@ -214,68 +199,66 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			} catch ( NumberFormatException e ) {
 				instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
 						InstructionState.Received, InstructionState.Declined,
-						Collections.singletonMap("error", "OCPP " + OCPP_V16_CHARGE_POINT_ID_PARAM
-								+ " parameter invalid syntax."));
+						Collections.singletonMap("error",
+								"OCPP " + OCPP_CHARGE_POINT_ID_PARAM + " parameter invalid syntax."));
 				return;
 			}
 
 			// next via identifier
-			String instructionIdentifier = params.remove(OCPP_V16_CHARGER_IDENTIFIER_PARAM);
+			String instructionIdentifier = params.remove(OCPP_CHARGER_IDENTIFIER_PARAM);
 			if ( instructionIdentifier != null && !instructionIdentifier.equals(cp.getInfo().getId()) ) {
 				// not for this charge point
 				return;
 			}
 
 			// this instruction is for this charge point... send it now
-			ObjectNode jsonPayload;
-			Object payload;
-			try {
-				jsonPayload = getObjectMapper().valueToTree(params);
-				ActionPayloadDecoder chargePointActionPayloadDecoder = getChargePointActionPayloadDecoder();
-				if ( chargePointActionPayloadDecoder != null ) {
-					payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
-							jsonPayload);
-				} else {
-					payload = params;
-				}
-			} catch ( IOException | SchemaValidationException e ) {
-				Throwable root = e;
-				while ( root.getCause() != null ) {
-					root = root.getCause();
-				}
-				instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-						InstructionState.Received, InstructionState.Declined, Collections.singletonMap(
-								"error", "Error decoding OCPP action message: " + root.getMessage()));
-				return;
-			}
+			OcppInstructionUtils.decodeJsonOcppInstructionMessage(getObjectMapper(), action, params,
+					getChargePointActionPayloadDecoder(), (e, jsonPayload, payload) -> {
+						if ( e != null ) {
+							Throwable root = e;
+							while ( root.getCause() != null ) {
+								root = root.getCause();
+							}
+							instructionDao.compareAndUpdateInstructionState(instruction.getId(),
+									cp.getNodeId(), InstructionState.Received, InstructionState.Declined,
+									Collections.singletonMap("error",
+											"Error decoding OCPP action message: " + root.getMessage()));
+							return null;
+						}
 
-			if ( !instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-					InstructionState.Received, InstructionState.Executing, null) ) {
-				return;
-			}
+						if ( !instructionDao.compareAndUpdateInstructionState(instruction.getId(),
+								cp.getNodeId(), InstructionState.Received, InstructionState.Executing,
+								null) ) {
+							return null;
+						}
 
-			ActionMessage<Object> message = new BasicActionMessage<Object>(identity,
-					UUID.randomUUID().toString(), action, payload);
-			sendMessageToChargePoint(message, (msg, res, err) -> {
-				if ( err != null ) {
-					Throwable root = err;
-					while ( root.getCause() != null ) {
-						root = root.getCause();
-					}
-					instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-							InstructionState.Executing, InstructionState.Declined,
-							singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
-				} else {
-					Map<String, Object> resultParameters = null;
-					if ( res != null ) {
-						resultParameters = JsonUtils
-								.getStringMapFromTree(getObjectMapper().valueToTree(res));
-					}
-					instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-							InstructionState.Executing, InstructionState.Completed, resultParameters);
-				}
-				return true;
-			});
+						ActionMessage<Object> message = new BasicActionMessage<Object>(identity,
+								UUID.randomUUID().toString(), action, payload);
+						sendMessageToChargePoint(message, (msg, res, err) -> {
+							if ( err != null ) {
+								Throwable root = err;
+								while ( root.getCause() != null ) {
+									root = root.getCause();
+								}
+								instructionDao.compareAndUpdateInstructionState(instruction.getId(),
+										cp.getNodeId(), InstructionState.Executing,
+										InstructionState.Declined, singletonMap("error",
+												"Error handling OCPP action: " + root.getMessage()));
+							} else {
+								Map<String, Object> resultParameters = null;
+								if ( res != null ) {
+									resultParameters = JsonUtils
+											.getStringMapFromTree(getObjectMapper().valueToTree(res));
+								}
+								instructionDao.compareAndUpdateInstructionState(instruction.getId(),
+										cp.getNodeId(), InstructionState.Executing,
+										InstructionState.Completed, resultParameters);
+							}
+							return true;
+						});
+
+						return null;
+					});
 		}
 
 	}
