@@ -50,13 +50,21 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
 
+	/**
+	 * The default value for the {@code maxParamValueLength} property.
+	 * 
+	 * @since 1.8
+	 */
+	public static final int DEFAULT_MAX_PARAM_VALUE_LENGTH = 256;
+
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
+	private int maxParamValueLength = DEFAULT_MAX_PARAM_VALUE_LENGTH;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -182,7 +190,18 @@ public class DaoInstructorBiz implements InstructorBiz {
 		instr.setState(InstructionState.Queued);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
-				instr.addParameter(param.getName(), param.getValue());
+				if ( param == null || param.getName() == null || param.getValue().isEmpty()
+						|| param.getValue() == null ) {
+					continue;
+				}
+				String v = param.getValue();
+				while ( v.length() > maxParamValueLength ) {
+					instr.addParameter(param.getName(), v.substring(0, maxParamValueLength));
+					v = v.substring(maxParamValueLength);
+				}
+				if ( !v.isEmpty() ) {
+					instr.addParameter(param.getName(), v);
+				}
 			}
 		}
 		if ( log.isTraceEnabled() ) {
@@ -264,6 +283,32 @@ public class DaoInstructorBiz implements InstructorBiz {
 			Map<String, ?> params = (resultParameters != null ? resultParameters.get(id) : null);
 			updateInstructionState(id, state, params);
 		}
+	}
+
+	/**
+	 * Get the maximum parameter value length.
+	 * 
+	 * @return the length; defaults to {@link #DEFAULT_MAX_PARAM_VALUE_LENGTH}
+	 * @since 1.8
+	 */
+	public int getMaxParamValueLength() {
+		return maxParamValueLength;
+	}
+
+	/**
+	 * Set the maximum parameter value length.
+	 * 
+	 * @param maxParamValueLength
+	 *        the length to set
+	 * @throws IllegalArgumentException
+	 *         if {@code maxParamValueLength} is 0 or less
+	 * @since 1.8
+	 */
+	public void setMaxParamValueLength(int maxParamValueLength) {
+		if ( maxParamValueLength < 1 ) {
+			throw new IllegalArgumentException("The maxParamValueLength value must be greater than 0.");
+		}
+		this.maxParamValueLength = maxParamValueLength;
 	}
 
 }
