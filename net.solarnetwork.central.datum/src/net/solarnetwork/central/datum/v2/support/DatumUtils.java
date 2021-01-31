@@ -97,7 +97,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public final class DatumUtils {
@@ -539,7 +539,9 @@ public final class DatumUtils {
 			// populate reading (accumulating) data from stats when available
 			DatumPropertiesStatistics stats = read.getStatistics();
 			if ( stats != null ) {
-				s.getA().clear();
+				if ( s.getA() != null ) {
+					s.getA().clear();
+				}
 				populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
 				if ( read.getEndTimestamp() != null ) {
 					s.putStatusSampleValue("timeZone", meta.getTimeZoneId());
@@ -681,7 +683,9 @@ public final class DatumUtils {
 		}
 		if ( datum instanceof ReadingDatum ) {
 			// populate reading (accumulating) data from stats
-			s.getA().clear();
+			if ( s.getA() != null ) {
+				s.getA().clear();
+			}
 			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
 			populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
 		}
