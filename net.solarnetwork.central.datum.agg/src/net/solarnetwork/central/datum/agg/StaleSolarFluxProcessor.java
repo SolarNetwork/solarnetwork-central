@@ -129,11 +129,18 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 									filter.setStreamId(stale.getStreamId());
 									ObjectDatumStreamFilterResults<Datum, DatumPK> results = datumDao
 											.findFiltered(filter);
-									Datum datum = results.iterator().next();
-									if ( datum != null ) {
-										GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
-												results.metadataForStreamId(datum.getStreamId()));
-										handled = aggProcessor.processDatum(gnd, stale.getKind());
+									if ( results.getReturnedResultCount() > 0 ) {
+										Datum datum = results.iterator().next();
+										if ( datum != null ) {
+											GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
+													results.metadataForStreamId(datum.getStreamId()));
+											handled = aggProcessor.processDatum(gnd, stale.getKind());
+										}
+									} else {
+										log.warn(
+												"Most recent {} datum for stream {} not found (not node stream?).",
+												stale.getKind(), stale.getStreamId());
+										handled = true;
 									}
 								} catch ( IllegalArgumentException e ) {
 									log.error("Unsupported stale type: {}", e.toString());
@@ -149,6 +156,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 							}
 							con.commit();
 						} catch ( Throwable t ) {
+							log.warn("Error processing stale solar flux: " + t, t);
 							con.rollback();
 						}
 					} while ( resultCount > 0 && remainingCount.get() > 0 );
