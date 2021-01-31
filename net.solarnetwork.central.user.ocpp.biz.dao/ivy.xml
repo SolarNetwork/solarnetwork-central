@@ -14,6 +14,7 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.ocpp" rev="[1.0,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.6,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.ocpp" rev="[1.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.ocpp" rev="[1.0,)"/>
     </dependencies>
