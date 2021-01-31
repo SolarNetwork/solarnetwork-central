@@ -146,8 +146,9 @@ BEGIN
 				ON CONFLICT DO NOTHING;
 		END CASE;
 
-		-- mark flux stale if processed record is for the "current" time
-		IF local_ts_start = date_trunc(
+		-- mark flux stale if node datum and processed record is for the "current" time
+		-- TODO: consider publishing location datum as well; would require support in SolarJobs
+		IF meta.kind = 'n' AND local_ts_start = date_trunc(
 							CASE kind WHEN 'h' THEN 'hour' WHEN 'd' THEN 'day' ELSE 'month' END
 							, CURRENT_TIMESTAMP AT TIME ZONE tz) THEN
 			INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
