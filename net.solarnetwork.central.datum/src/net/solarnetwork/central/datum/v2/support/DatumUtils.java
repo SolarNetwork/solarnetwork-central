@@ -42,6 +42,7 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
+import net.solarnetwork.central.datum.domain.CommonFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
@@ -96,7 +97,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public final class DatumUtils {
@@ -157,6 +158,7 @@ public final class DatumUtils {
 			c.setEndDate(JodaDateUtils.fromJodaToInstant(f.getEndDate()));
 			c.setLocalStartDate(JodaDateUtils.fromJoda(f.getLocalStartDate()));
 			c.setLocalEndDate(JodaDateUtils.fromJoda(f.getLocalEndDate()));
+			c.setMostRecent(f.isMostRecent());
 			c.setDatumRollupTypes(f.getDatumRollupTypes());
 			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
 			c.setCombiningType(f.getCombiningType());
@@ -205,6 +207,9 @@ public final class DatumUtils {
 				LocalDateRangeFilter f = (LocalDateRangeFilter) filter;
 				c.setLocalStartDate(JodaDateUtils.fromJoda(f.getLocalStartDate()));
 				c.setLocalEndDate(JodaDateUtils.fromJoda(f.getLocalEndDate()));
+			}
+			if ( filter instanceof CommonFilter ) {
+				c.setMostRecent(((CommonFilter) filter).isMostRecent());
 			}
 			if ( filter instanceof DatumRollupFilter ) {
 				c.setDatumRollupTypes(((DatumRollupFilter) filter).getDatumRollupTypes());
