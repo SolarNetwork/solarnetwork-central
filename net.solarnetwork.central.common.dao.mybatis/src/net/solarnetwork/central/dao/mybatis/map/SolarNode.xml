@@ -67,15 +67,13 @@
 	-->
 
 	<resultMap id="SolarNodeMatchResult" type="net.solarnetwork.central.domain.SolarNodeMatch"
-		extends="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+		extends="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult">
+		<result property="metaJson" column="sn_node_meta_jdata"/>
+	</resultMap>
 
 	<sql id="fragment-findall-SolarNode-SolarNodeMatch-join">
 		<if test="filter.metadataFilter != null and filter.nodeIds != null and filter.nodeIds.length > 0">
-			INNER JOIN (
-				SELECT node_id FROM solarnet.find_nodes_for_meta(
-					#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler},
-					#{filter.metadataFilter})
-				) AS fnfm ON fnfm.node_id = n.node_id
+			INNER JOIN solarnet.sn_node_meta nmeta ON nmeta.node_id = n.node_id
 		</if>
 	</sql>
 
@@ -91,6 +89,9 @@
 	<select id="findall-SolarNode-SolarNodeMatch" resultMap="SolarNodeMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-SolarNode-full-result"/>
+			<if test="filter.metadataFilter != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+				, nmeta.jdata AS sn_node_meta_jdata
+			</if>
 		FROM
 			solarnet.sn_node n
 		<include refid="fragment-findall-SolarNode-SolarNodeMatch-join"/>

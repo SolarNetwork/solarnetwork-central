@@ -52,7 +52,7 @@ import net.solarnetwork.util.OptionalService;
  * data.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.5
  */
 public class JdbcQueryAuditor implements QueryAuditor {
 
@@ -69,7 +69,7 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
 
 	/** The default value for the {@code nodeSourceIncrementSql} property. */
-	public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solaragg.aud_inc_datum_query_count(?, ?, ?, ?)}";
+	public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solardatm.audit_increment_datum_q_count(?,?,?,?)}";
 
 	/**
 	 * A regular expression that matches if a JDBC statement is a
@@ -221,9 +221,9 @@ public class JdbcQueryAuditor implements QueryAuditor {
 				continue;
 			}
 			try {
-				stmt.setTimestamp(1, new java.sql.Timestamp(key.getCreated().getMillis()));
-				stmt.setLong(2, key.getNodeId());
-				stmt.setString(3, key.getSourceId());
+				stmt.setObject(1, key.getNodeId());
+				stmt.setString(2, key.getSourceId());
+				stmt.setTimestamp(3, new java.sql.Timestamp(key.getCreated().getMillis()));
 				stmt.setInt(4, count);
 				stmt.execute();
 				long currUpdateCount = updateCount.incrementAndGet();
@@ -287,8 +287,8 @@ public class JdbcQueryAuditor implements QueryAuditor {
 				}
 				try {
 					keepGoing.compareAndSet(true, execute());
-				} catch ( SQLException e ) {
-					log.warn("JDBC exception with query auditing", e);
+				} catch ( SQLException | RuntimeException e ) {
+					log.warn("Exception with query auditing", e);
 					// sleep, then try again
 					try {
 						Thread.sleep(connectionRecoveryDelay);
@@ -296,8 +296,6 @@ public class JdbcQueryAuditor implements QueryAuditor {
 						log.info("Writer thread interrupted: exiting now.");
 						keepGoing.set(false);
 					}
-				} catch ( RuntimeException e ) {
-					log.warn("Exception with query auditing", e);
 				}
 			}
 		}
@@ -305,7 +303,7 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		private Boolean execute() throws SQLException {
 			DataSource ds = dataSource.service();
 			if ( ds == null ) {
-				throw new RuntimeException("DataSource service not available.");
+				throw new SQLException("DataSource service not available.");
 			}
 			try (Connection conn = ds.getConnection()) {
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
@@ -425,9 +423,10 @@ public class JdbcQueryAuditor implements QueryAuditor {
 	 * </p>
 	 * 
 	 * <ol>
-	 * <li>timestamp - the audit date</li>
 	 * <li>long - the node ID</li>
 	 * <li>string - the source ID</li>
+	 * <li>timestamp - the audit date</li>
+	 * <li>integer - the query count</li>
 	 * </ol>
 	 * 
 	 * @param sql

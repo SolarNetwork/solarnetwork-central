@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,8 +50,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -159,7 +160,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private final AuthorizationService authService;
 	private final ChargePointDao chargePointDao;
 	private final ChargeSessionDao chargeSessionDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumEntityDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
@@ -190,7 +191,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppSessionDatumManager(AuthorizationService authService, ChargePointDao chargePointDao,
-			ChargeSessionDao chargeSessionDao, GeneralNodeDatumDao datumDao,
+			ChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
 			ChargePointSettingsDao chargePointSettingsDao,
 			OptionalService<DatumProcessor> fluxPublisher) {
 		super();
@@ -454,14 +455,22 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
 			ChargeSession sess, SampledValue reading) {
+		final String sourceId = sourceId(chargePointSettings, chargePoint.getInfo().getId(),
+				sess.getConnectorId(), reading.getLocation());
+		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
+	}
+
+	private Datum datum(String sourceId, CentralChargePoint chargePoint,
+			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
 		Datum d = new Datum(chargePointSettings);
 		d.setNodeId(chargePoint.getNodeId());
 		d.setSamples(new GeneralNodeDatumSamples());
-		populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getValue());
+		populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
+				reading.getValue());
 		if ( d.getSamples() != null && !d.getSamples().isEmpty() ) {
 			d.setCreated(new DateTime(reading.getTimestamp().toEpochMilli()));
 			d.setSourceId(sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-					sess.getConnectorId(), reading.getLocation(), reading.getPhase()));
+					sess.getConnectorId(), reading.getLocation()));
 			d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
 					DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
 			// TODO - implement support for reservation ID
@@ -534,39 +543,45 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		}
 		if ( !newReadings.isEmpty() ) {
 			chargeSessionDao.addReadings(newReadings);
-			// group readings by timestamp into Datum
-			Datum d = null;
+			// group readings by timestamp  and source ID into Datum
+			Map<String, Datum> datumBySourceId = new LinkedHashMap<>(4);
 			for ( SampledValue reading : newReadings ) {
+				final ChargeSession s = sessions.get(reading.getSessionId());
+				CentralChargePoint cp = chargePoints.get(s.getChargePointId());
+				if ( cp == null ) {
+					cp = (CentralChargePoint) chargePointDao.get(s.getChargePointId());
+					if ( cp == null ) {
+						throw new AuthorizationException(
+								String.format("ChargePoint %d not available.", s.getChargePointId()),
+								new AuthorizationInfo(s.getAuthId(), AuthorizationStatus.Invalid));
+					}
+					chargePoints.put(cp.getId(), cp);
+				}
+
+				ChargePointSettings cps = settings.get(cp.getId());
+				if ( cps == null ) {
+					cps = settingsForChargePoint(cp.getUserId(), cp.getId());
+					settings.put(cp.getId(), cps);
+				}
+
+				final String sourceId = sourceId(cps, cp.getInfo().getId(), s.getConnectorId(),
+						reading.getLocation());
+				Datum d = datumBySourceId.get(sourceId);
 				if ( d == null || d.getCreated().getMillis() != reading.getTimestamp().toEpochMilli() ) {
 					if ( d != null ) {
 						publishDatum(d);
+						datumBySourceId.remove(sourceId);
 						d = null;
 					}
 
-					ChargeSession s = sessions.get(reading.getSessionId());
-					CentralChargePoint cp = chargePoints.get(s.getChargePointId());
-					if ( cp == null ) {
-						cp = (CentralChargePoint) chargePointDao.get(s.getChargePointId());
-						if ( cp == null ) {
-							throw new AuthorizationException(
-									String.format("ChargePoint %d not available.", s.getChargePointId()),
-									new AuthorizationInfo(s.getAuthId(), AuthorizationStatus.Invalid));
-						}
-						chargePoints.put(cp.getId(), cp);
-					}
-
-					ChargePointSettings cps = settings.get(cp.getId());
-					if ( cps == null ) {
-						cps = settingsForChargePoint(cp.getUserId(), cp.getId());
-						settings.put(cp.getId(), cps);
-					}
-
-					d = datum(cp, cps, sessions.get(reading.getSessionId()), reading);
+					d = datum(sourceId, cp, cps, s, reading);
+					datumBySourceId.put(sourceId, d);
 				} else {
-					populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getValue());
+					populateProperty(d, reading.getMeasurand(), reading.getUnit(), reading.getPhase(),
+							reading.getValue());
 				}
 			}
-			if ( d != null ) {
+			for ( Datum d : datumBySourceId.values() ) {
 				publishDatum(d);
 			}
 		}
@@ -590,6 +605,19 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	}
 
 	/**
+	 * Get the source ID template to use.
+	 * 
+	 * @param chargePointSettings
+	 *        the settings
+	 * @return the template, never {@literal null}
+	 */
+	private String sourceIdTemplate(ChargePointSettings chargePointSettings) {
+		return chargePointSettings.getSourceIdTemplate() != null
+				? chargePointSettings.getSourceIdTemplate()
+				: sourceIdTemplate;
+	}
+
+	/**
 	 * Resolve a datum source ID from configurable properties.
 	 * 
 	 * @param chargePointSettings
@@ -600,26 +628,21 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *        the connector ID
 	 * @param location
 	 *        the location
-	 * @param phase
-	 *        the phase
 	 * @return the source ID, never {@literal null}
 	 */
 	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int connectorId,
-			Location location, Phase phase) {
+			Location location) {
 		Map<String, Object> params = new HashMap<>(4);
 		params.put("chargerIdentifier", identifier);
 		params.put("chargePointId", chargePointSettings.getId());
 		params.put("connectorId", connectorId);
 		params.put("location", location);
-		params.put("phase", phase);
 		return UserSettings.removeEmptySourceIdSegments(
-				StringUtils.expandTemplateString(chargePointSettings.getSourceIdTemplate() != null
-						? chargePointSettings.getSourceIdTemplate()
-						: sourceIdTemplate, params));
+				StringUtils.expandTemplateString(sourceIdTemplate(chargePointSettings), params));
 	}
 
 	private void populateProperty(GeneralNodeDatum datum, Measurand measurand, UnitOfMeasure unit,
-			Object value) {
+			Phase phase, Object value) {
 		if ( value == null ) {
 			return;
 		}
@@ -636,7 +659,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			}
 		}
 		num = normalizedUnit(num, unit);
-		String propName = propertyName(measurand);
+		String propName = propertyName(measurand, phase);
 		if ( propName != null ) {
 			datum.getSamples().putSampleValue(propertyType(measurand), propName, num);
 		}
@@ -690,6 +713,51 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			default:
 				return GeneralDatumSamplesType.Instantaneous;
 		}
+	}
+
+	private String propertyName(Measurand measurand, Phase phase) {
+		if ( phase == null || phase == Phase.Unknown ) {
+			return propertyName(measurand);
+		}
+		StringBuilder buf = new StringBuilder(propertyName(measurand));
+		buf.append('_');
+		switch (phase) {
+			case N:
+				buf.append('n');
+				break;
+
+			case L1:
+			case L1N:
+				buf.append('a');
+				break;
+
+			case L2:
+			case L2N:
+				buf.append('b');
+				break;
+
+			case L3:
+			case L3N:
+				buf.append('c');
+				break;
+
+			case L1L2:
+				buf.append("ab");
+				break;
+
+			case L2L3:
+				buf.append("bc");
+				break;
+
+			case L3L1:
+				buf.append("ca");
+				break;
+
+			case Unknown:
+				// unreachable
+				break;
+		}
+		return buf.toString();
 	}
 
 	private String propertyName(Measurand measurand) {
@@ -788,7 +856,6 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * <li><code>{location}</code> - the location (string)</li>
-	 * <li><code>{phase}</code> - the phase (string)</li>
 	 * </ol>
 	 * 
 	 * @param sourceIdTemplate

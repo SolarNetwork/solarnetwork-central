@@ -18,7 +18,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[2.3,)"/>
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.11,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.1,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.2,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.3,)"/>
 		<dependency org="org.aopalliance" name="com.springsource.org.aopalliance" rev="1.0.0" />
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="org.mybatis" name="mybatis" rev="3.5.4" />

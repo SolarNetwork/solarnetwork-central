@@ -123,6 +123,8 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	@Override
 	public void processActionMessage(ActionMessage<JsonNode> message,
 			ActionMessageResultHandler<JsonNode, Void> resultHandler) {
+		log.debug("Posting OCPP instruction {} action {} to MQTT topic {} for charge point {}",
+				message.getMessageId(), message.getAction(), mqttTopic, message.getClientId());
 		MqttConnection conn = mqttConnection.get();
 		if ( conn != null && conn.isEstablished() ) {
 			try {
@@ -135,6 +137,9 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 				resultHandler.handleActionMessageResult(message, null, e);
 			}
 		} else {
+			log.debug(
+					"MQTT connection not available to post OCPP instruction {} action {} for charge point {}",
+					message.getMessageId(), message.getAction(), message.getClientId());
 			resultHandler.handleActionMessageResult(message, null,
 					new IOException("Not connected to MQTT server."));
 		}
@@ -143,11 +148,14 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	@Override
 	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
 			Throwable cause) {
+		log.info("MQTT connection lost for {} instructions: {}", mqttTopic,
+				(cause != null ? cause.getMessage() : "unknown reason"));
 		mqttConnection.compareAndSet(connection, null);
 	}
 
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
+		log.info("MQTT connection established for {} instructions.", mqttTopic);
 		mqttConnection.set(connection);
 		if ( publishOnly ) {
 			return;
@@ -169,18 +177,21 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 		}
 		try {
 			JsonNode json = objectMapper.readTree(message.getPayload());
+			log.trace("Received OCPP instruction {}", json);
 			if ( json.isObject() ) {
 				Long instructionId = json.path("messageId").asLong();
 				ChargePointIdentity identity = objectMapper.readValue(
 						objectMapper.treeAsTokens(json.path("clientId")), ChargePointIdentity.class);
 				CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
 				if ( cp == null ) {
+					log.trace("ChargePoint {} not found for instruction {}; ignoring.", identity,
+							instructionId);
 					return;
 				}
 
 				Action action = null;
 				String actionName = json.path("action").textValue();
-				JsonNode payload = json.path("payload");
+				JsonNode payload = json.path("message");
 				if ( actionName != null ) {
 					for ( T a : actionClass.getEnumConstants() ) {
 						if ( a.name().equals(actionName) ) {
@@ -199,12 +210,18 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 						}
 						BasicActionMessage<Object> actionMessage = new BasicActionMessage<Object>(
 								identity, action, payload);
+						log.info("Sending instruction {} action {} to charge point {}", instructionId,
+								action, identity);
 						broker.sendMessageToChargePoint(actionMessage, (msg, res, err) -> {
 							if ( err != null ) {
 								Throwable root = err;
 								while ( root.getCause() != null ) {
 									root = root.getCause();
 								}
+								log.info(
+										"Failed to send instruction {} action {} to charge point {}: {}",
+										instructionId, actionMessage.getAction(),
+										actionMessage.getClientId(), root.getMessage());
 								instructionDao.compareAndUpdateInstructionState(instructionId,
 										cp.getNodeId(), InstructionState.Executing,
 										InstructionState.Declined, singletonMap("error",
@@ -215,6 +232,9 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 									resultParameters = JsonUtils
 											.getStringMapFromTree(objectMapper.valueToTree(res));
 								}
+								log.info("Sent instruction {} action {} to charge point {}.",
+										instructionId, actionMessage.getAction(),
+										actionMessage.getClientId());
 								instructionDao.compareAndUpdateInstructionState(instructionId,
 										cp.getNodeId(), InstructionState.Executing,
 										InstructionState.Completed,
@@ -224,6 +244,10 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 							}
 							return true;
 						});
+					} else {
+						log.info(
+								"No ChargePointBroker available to send instruction {} action {} to charge point {}",
+								instructionId, action, identity);
 					}
 				} else {
 					instructionDao.compareAndUpdateInstructionState(instructionId, cp.getNodeId(),

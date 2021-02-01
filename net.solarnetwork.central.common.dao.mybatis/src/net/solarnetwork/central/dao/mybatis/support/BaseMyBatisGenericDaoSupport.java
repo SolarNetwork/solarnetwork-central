@@ -29,8 +29,6 @@ import java.util.List;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -44,7 +42,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.1
  */
 public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
@@ -71,13 +69,10 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	public static final String DELETE_OBJECT = "delete-%s";
 
 	/** The query property for any custom sort descriptors that are provided. */
-	public static final String SORT_DESCRIPTORS_PROPERTY = "SortDescriptors";
+	public static final String SORT_DESCRIPTORS_PROPERTY = BaseMyBatisDao.SORT_DESCRIPTORS_PROPERTY;
 
 	/** The query property for a filter (search criteria) object. */
-	public static final String FILTER_PROPERTY = "filter";
-
-	/** A class-level logger. */
-	protected final Logger log = LoggerFactory.getLogger(getClass());
+	public static final String FILTER_PROPERTY = BaseMyBatisDao.FILTER_PROPERTY;
 
 	private final Class<? extends T> objectType;
 	private final Class<? extends K> keyType;

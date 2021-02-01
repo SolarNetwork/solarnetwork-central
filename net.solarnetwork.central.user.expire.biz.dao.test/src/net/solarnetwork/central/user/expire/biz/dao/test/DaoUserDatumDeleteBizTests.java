@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.expire.biz.dao.test;
 
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static net.solarnetwork.util.JodaDateUtils.fromJoda;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.captureDouble;
 import static org.easymock.EasyMock.captureLong;
@@ -35,6 +37,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -47,10 +51,12 @@ import org.joda.time.LocalDateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.DatumRecordCounts;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -61,6 +67,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
 import net.solarnetwork.test.Assertion;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link DaoUserDatumDeleteBiz} class.
@@ -70,7 +77,7 @@ import net.solarnetwork.test.Assertion;
  */
 public class DaoUserDatumDeleteBizTests {
 
-	private GeneralNodeDatumDao datumDao;
+	private DatumMaintenanceDao datumDao;
 	private UserNodeDao userNodeDao;
 	private UserDatumDeleteJobInfoDao jobInfoDao;
 
@@ -78,7 +85,7 @@ public class DaoUserDatumDeleteBizTests {
 
 	@Before
 	public void setup() {
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		datumDao = EasyMock.createMock(DatumMaintenanceDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		jobInfoDao = EasyMock.createMock(UserDatumDeleteJobInfoDao.class);
 		biz = new DaoUserDatumDeleteBiz(new CallingThreadExecutorService(), userNodeDao, datumDao,
@@ -94,11 +101,35 @@ public class DaoUserDatumDeleteBizTests {
 		EasyMock.replay(datumDao, userNodeDao, jobInfoDao);
 	}
 
+	/**
+	 * Assert one legacy datum record counts has values that match a
+	 * {@link DatumRecordCounts} instance.
+	 * 
+	 * @param prefix
+	 *        an assertion message prefix
+	 * @param result
+	 *        the result datum
+	 * @param expected
+	 *        the expected datum
+	 */
+	private static void assertDatumRecordCounts(String prefix,
+			net.solarnetwork.central.datum.domain.DatumRecordCounts result, DatumRecordCounts expected) {
+		assertThat(prefix + " ts", result.getDate(),
+				equalTo(JodaDateUtils.toJoda(expected.getTimestamp(), ZoneOffset.UTC)));
+		assertThat(prefix + " datum count", result.getDatumCount(), equalTo(expected.getDatumCount()));
+		assertThat(prefix + " datum hourly count", result.getDatumHourlyCount(),
+				equalTo(expected.getDatumHourlyCount()));
+		assertThat(prefix + " datum daily count", result.getDatumDailyCount(),
+				equalTo(expected.getDatumDailyCount()));
+		assertThat(prefix + " datum monthly count", result.getDatumMonthlyCount(),
+				equalTo(expected.getDatumMonthlyCount()));
+	}
+
 	@Test
 	public void countDatum() {
 		// given
-		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
-		DatumRecordCounts counts = new DatumRecordCounts();
+		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
+		DatumRecordCounts counts = AuditDatumEntity.datumRecordCounts(Instant.now(), 1L, 2L, 3, 4);
 		expect(datumDao.countDatumRecords(capture(filterCaptor))).andReturn(counts);
 
 		// when
@@ -106,11 +137,12 @@ public class DaoUserDatumDeleteBizTests {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(1L);
 		filter.setNodeId(2L);
-		DatumRecordCounts result = biz.countDatumRecords(filter);
+		net.solarnetwork.central.datum.domain.DatumRecordCounts result = biz.countDatumRecords(filter);
 
 		// then
-		assertThat("Result returned", result, sameInstance(counts));
-		assertThat("Filter passed through", filterCaptor.getValue(), sameInstance(filter));
+		assertDatumRecordCounts("Result", result, counts);
+		assertThat("Filter passed through", filterCaptor.getValue(),
+				equalTo(criteriaFromFilter(filter)));
 	}
 
 	@Test(expected = AuthorizationException.class)
@@ -132,8 +164,8 @@ public class DaoUserDatumDeleteBizTests {
 		expect(userNodeDao.findNodeIdsForUser(userId))
 				.andReturn(new LinkedHashSet<>(Arrays.asList(userNodeIds)));
 
-		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
-		DatumRecordCounts counts = new DatumRecordCounts();
+		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
+		DatumRecordCounts counts = AuditDatumEntity.datumRecordCounts(Instant.now(), 1L, 2L, 3, 4);
 		expect(datumDao.countDatumRecords(capture(filterCaptor))).andReturn(counts);
 
 		// when
@@ -144,10 +176,10 @@ public class DaoUserDatumDeleteBizTests {
 		filter.setSourceIds(sourceIds);
 		filter.setLocalStartDate(new LocalDateTime(2018, 11, 1, 0, 0));
 		filter.setLocalEndDate(new LocalDateTime(2018, 12, 1, 0, 0));
-		DatumRecordCounts result = biz.countDatumRecords(filter);
+		net.solarnetwork.central.datum.domain.DatumRecordCounts result = biz.countDatumRecords(filter);
 
 		// then
-		assertThat("Result returned", result, sameInstance(counts));
+		assertDatumRecordCounts("Result", result, counts);
 		assertThat("Filter not passed through", filterCaptor.getValue(), not(sameInstance(filter)));
 		assertThat("Filter user ID unchanged", filterCaptor.getValue().getUserId(), equalTo(userId));
 		assertThat("Filter node IDs populated", filterCaptor.getValue().getNodeIds(),
@@ -155,9 +187,9 @@ public class DaoUserDatumDeleteBizTests {
 		assertThat("Filter source IDs unchanged", filterCaptor.getValue().getSourceIds(),
 				arrayContaining(sourceIds));
 		assertThat("Filter local start date unchanged", filterCaptor.getValue().getLocalStartDate(),
-				equalTo(filter.getLocalStartDate()));
+				equalTo(fromJoda(filter.getLocalStartDate())));
 		assertThat("Filter local end date unchanged", filterCaptor.getValue().getLocalEndDate(),
-				equalTo(filter.getLocalEndDate()));
+				equalTo(fromJoda(filter.getLocalEndDate())));
 	}
 
 	@Test
@@ -179,7 +211,7 @@ public class DaoUserDatumDeleteBizTests {
 		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
 
 		// delete in week-based batches
-		Capture<GeneralNodeDatumFilter> filterCaptor = new Capture<>();
+		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
 		final long count = 123L;
 		expect(datumDao.deleteFiltered(capture(filterCaptor))).andReturn(count);
 
@@ -190,10 +222,10 @@ public class DaoUserDatumDeleteBizTests {
 		// then
 		assertThat("Result", result, notNullValue());
 		assertThat("Result delete count", result.get().getResultCount(), equalTo(count));
-		assertThat("Executed filter same", filterCaptor.getValue(), equalTo(filter));
+		assertThat("Executed filter same", filterCaptor.getValue(), equalTo(criteriaFromFilter(filter)));
 	}
 
-	private static final class FilterCapture extends Capture<GeneralNodeDatumFilter> {
+	private static final class FilterCapture extends Capture<ObjectStreamCriteria> {
 
 		private static final long serialVersionUID = 1052142891458580229L;
 
@@ -202,9 +234,9 @@ public class DaoUserDatumDeleteBizTests {
 		}
 
 		@Override
-		public void setValue(GeneralNodeDatumFilter value) {
+		public void setValue(ObjectStreamCriteria value) {
 			// make copy of argument, as code mutates same instance values
-			super.setValue(new DatumFilterCommand(value));
+			super.setValue(BasicDatumCriteria.copy(value));
 		}
 
 	}
@@ -236,7 +268,7 @@ public class DaoUserDatumDeleteBizTests {
 		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
 
 		// delete in week-based batches
-		Capture<GeneralNodeDatumFilter> filterCaptor = new FilterCapture(CaptureType.ALL);
+		Capture<ObjectStreamCriteria> filterCaptor = new FilterCapture(CaptureType.ALL);
 		long count = 0;
 		for ( int i = 1; i <= 5; i++ ) {
 			expect(datumDao.deleteFiltered(capture(filterCaptor))).andReturn((long) i);
@@ -252,14 +284,14 @@ public class DaoUserDatumDeleteBizTests {
 		assertThat("Result delete count is sum of batch results", result.get().getResultCount(),
 				equalTo(count));
 
-		List<GeneralNodeDatumFilter> batchFilters = filterCaptor.getValues();
+		List<ObjectStreamCriteria> batchFilters = filterCaptor.getValues();
 
 		// first 4 batch periods are exactly 1w, 5th remaining
-		LocalDateTime currStartDate = filter.getLocalStartDate();
+		java.time.LocalDateTime currStartDate = fromJoda(filter.getLocalStartDate());
 		Double lastProgressValue = 0.0;
 		long accumulatedResultCount = 0L;
 		for ( int i = 0; i < 5; i++ ) {
-			GeneralNodeDatumFilter batchFilter = batchFilters.get(i);
+			ObjectStreamCriteria batchFilter = batchFilters.get(i);
 			assertThat("User ID preserved " + i, batchFilter.getUserId(), equalTo(filter.getUserId()));
 			assertThat("Node ID preserved " + i, batchFilter.getNodeId(), equalTo(filter.getNodeId()));
 			assertThat("Batch start date " + i, batchFilter.getLocalStartDate(), equalTo(currStartDate));
@@ -269,9 +301,9 @@ public class DaoUserDatumDeleteBizTests {
 			assertThat("Result count " + i, resultCountsCapture.getValues().get(i),
 					equalTo(accumulatedResultCount));
 
-			LocalDateTime currEndDate = currStartDate.plusDays(7);
-			if ( currEndDate.isAfter(filter.getLocalEndDate()) ) {
-				currEndDate = filter.getLocalEndDate();
+			java.time.LocalDateTime currEndDate = currStartDate.plusDays(7);
+			if ( currEndDate.isAfter(fromJoda(filter.getLocalEndDate())) ) {
+				currEndDate = fromJoda(filter.getLocalEndDate());
 			}
 			assertThat("Batch end date " + i, batchFilter.getLocalEndDate(), equalTo(currEndDate));
 			currStartDate = currEndDate;

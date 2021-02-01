@@ -75,37 +75,38 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
 				final String sql = getJdbcCall();
 				final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
-				CallableStatement call = con.prepareCall(sql);
-				int idx = 0;
-				if ( CALL_RETURN_COUNT.matcher(sql).find() && idx < paramCount ) {
-					call.registerOutParameter(++idx, Types.INTEGER);
-				}
-				if ( idx < paramCount ) {
-					call.setString(++idx, tierProcessType);
-				}
-				if ( tierProcessMax != null && idx < paramCount ) {
-					call.setInt(++idx, tierProcessMax);
-				}
-				con.setAutoCommit(true); // we want every execution of our loop to commit immediately
-				int resultCount = 0;
-				int processedCount = 0;
-				do {
-					if ( call.execute() ) {
-						try (ResultSet rs = call.getResultSet()) {
-							if ( rs.next() ) {
-								processResultRow(rs);
-								resultCount = 1;
-							} else {
-								resultCount = 0;
-							}
-						}
-					} else {
-						resultCount = call.getInt(1);
+				try (CallableStatement call = con.prepareCall(sql)) {
+					int idx = 0;
+					if ( CALL_RETURN_COUNT.matcher(sql).find() && idx < paramCount ) {
+						call.registerOutParameter(++idx, Types.INTEGER);
 					}
-					processedCount += resultCount;
-					remainingCount.addAndGet(-resultCount);
-				} while ( resultCount > 0 && remainingCount.get() > 0 );
-				return processedCount;
+					if ( idx < paramCount ) {
+						call.setString(++idx, tierProcessType);
+					}
+					if ( tierProcessMax != null && idx < paramCount ) {
+						call.setInt(++idx, tierProcessMax);
+					}
+					con.setAutoCommit(true); // we want every execution of our loop to commit immediately
+					int resultCount = 0;
+					int processedCount = 0;
+					do {
+						if ( call.execute() ) {
+							try (ResultSet rs = call.getResultSet()) {
+								if ( rs.next() ) {
+									processResultRow(rs);
+									resultCount = 1;
+								} else {
+									resultCount = 0;
+								}
+							}
+						} else {
+							resultCount = call.getInt(1);
+						}
+						processedCount += resultCount;
+						remainingCount.addAndGet(-resultCount);
+					} while ( resultCount > 0 && remainingCount.get() > 0 );
+					return processedCount;
+				}
 			}
 
 		});

@@ -39,7 +39,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumExportTaskInfo, UUID>
 		implements DatumExportTaskInfoDao {
 
-	/** The default query name used for {@link #claimQueuedTask(Long)}. */
+	/** The default query name used for {@link #claimQueuedTask()}. */
 	public static final String QUERY_FOR_CLAIMING_TASK = "get-DatumExportTaskInfo-for-claim";
 
 	/**

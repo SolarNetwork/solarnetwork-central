@@ -41,6 +41,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessException;
@@ -78,7 +79,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.17
+ * @version 1.18
  */
 public abstract class WebServiceControllerSupport {
 
@@ -453,6 +454,33 @@ public abstract class WebServiceControllerSupport {
 			msgKey = "error.dao.transientDataAccess";
 			code = "DAO.00200";
 		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle a {@link InvalidDataAccessResourceUsageException} .
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param locale
+	 *        the desired locale
+	 * @return an error response object
+	 * @since 1.18
+	 */
+	@ExceptionHandler(InvalidDataAccessResourceUsageException.class)
+	@ResponseBody
+	@ResponseStatus
+	public Response<?> handleInvalidDataAccessResourceUsageException(
+			InvalidDataAccessResourceUsageException e, Locale locale) {
+		log.error("InvalidDataAccessResourceUsageException in {} controller", getClass().getSimpleName(),
+				e.getMostSpecificCause());
+		String msg = "Internal error";
+		String msgKey = "error.dao.invalidResourceUsage";
+		String code = "DAO.00500";
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);

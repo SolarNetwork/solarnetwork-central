@@ -82,27 +82,14 @@ if [ -n "$VERBOSE" ]; then
 fi
 if [ -n "$DRY_RUN" ]; then
 	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c 'CREATE DATABASE $PG_DB WITH ENCODING='UTF8' OWNER=$PG_USER TEMPLATE=$PG_TEMPLATE_DB LC_COLLATE='C' LC_CTYPE='C''"
-	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS plv8 WITH SCHEMA pg_catalog'"
 	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public'"
 	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public'"
 	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS "'"'"uuid-ossp"'"'" WITH SCHEMA public'"
 else
 	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_ADMIN_DB -c "CREATE DATABASE $PG_DB WITH ENCODING='UTF8' OWNER=$PG_USER TEMPLATE=$PG_TEMPLATE_DB LC_COLLATE='C' LC_CTYPE='C'" || exit 3
-	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c "CREATE EXTENSION IF NOT EXISTS plv8 WITH SCHEMA pg_catalog" || exit 3
 	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c "CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public" || exit 3
 	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c "CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public" || exit 3
 	psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public' || exit 3
-fi
-
-if [ -n "$VERBOSE" ]; then
-	echo "Creating plv8 scripts"
-fi
-if [ -n "$DRY_RUN" ]; then
-	echo "psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -f postgres-init-plv8.sql"
-else		
-	# for some reason, plv8 often chokes on the inline comments, so strip them out
-	sed -e '/^\/\*/d' -e '/^ \*/d' postgres-init-plv8.sql \
-		| psql $PSQL_CONN_ARGS -U $PG_ADMIN_USER -d $PG_DB -f postgres-init-plv8.sql  || exit 3
 fi
 
 if [ -n "$VERBOSE" ]; then
@@ -110,7 +97,7 @@ if [ -n "$VERBOSE" ]; then
 fi
 if [ -n "$DRY_RUN" ]; then
 	echo "psql $PSQL_CONN_ARGS -U $PG_USER -d $PG_DB -f postgres-init.sql"
-else		
+else
 	psql $PSQL_CONN_ARGS -U $PG_USER -d $PG_DB -f postgres-init.sql || exit 3
 fi
 

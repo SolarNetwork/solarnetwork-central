@@ -127,6 +127,12 @@
 		<include refid="fragment-findall-CentralChargePointConnector-order"/>
 	</select>
 
+	<delete id="delete-CentralChargePointConnector" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
+		DELETE FROM solarev.ocpp_charge_point_conn
+		WHERE cp_id = #{chargePointId}
+			AND conn_id = #{connectorId}
+	</delete>
+
 	<delete id="delete-CentralChargePointConnector-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
 		DELETE FROM solarev.ocpp_charge_point_conn
 		USING solarev.ocpp_charge_point

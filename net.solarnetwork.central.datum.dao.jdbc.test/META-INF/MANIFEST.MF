@@ -1,0 +1,34 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SolarNet JDBC Datum DAO Tests
+Bundle-SymbolicName: net.solarnetwork.central.datum.dao.jdbc.test
+Bundle-Version: 1.0.0
+Bundle-Vendor: SolarNetwork
+Fragment-Host: net.solarnetwork.central.datum.dao.jdbc;bundle-version="1.0.0"
+Automatic-Module-Name: net.solarnetwork.central.datum.dao.jdbc.test
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: 
+ net.solarnetwork.central.security;version="[1.14,2.0)",
+ net.solarnetwork.central.test;version="[2.0,3.0)",
+ net.solarnetwork.test;version="[1.5,2.0)",
+ org.apache.commons.codec.digest;version="[1.7,2.0)",
+ org.apache.commons.logging;version="[1.1,2.0)",
+ org.easymock;version="[3.1,4.0)",
+ org.hamcrest;version="[1.1,2.0)",
+ org.joda.time.format;version="[2.4,3.0)",
+ org.junit;version="[4.5,5.0)",
+ org.junit.runner;version="[4.5,5.0)",
+ org.junit.runners;version="4.7.0",
+ org.slf4j;version="[1.7,2.0)",
+ org.springframework.asm;version="[4.3,5.0)",
+ org.springframework.beans.factory.annotation;version="[4.3,5.0)",
+ org.springframework.dao;version="[4.3,5.0)",
+ org.springframework.expression;version="[4.3,5.0)",
+ org.springframework.jdbc.core;version="[4.3,5.0)",
+ org.springframework.jdbc.core.simple;version="[4.3,5.0)",
+ org.springframework.test.annotation;version="[4.3,5.0)",
+ org.springframework.test.context;version="[4.3,5.0)",
+ org.springframework.test.context.junit4;version="[4.3,5.0)",
+ org.springframework.test.context.support;version="[4.3,5.0)",
+ org.springframework.test.context.transaction;version="[4.3,5.0)",
+ org.springframework.transaction.support;version="[4.3,5.0)"

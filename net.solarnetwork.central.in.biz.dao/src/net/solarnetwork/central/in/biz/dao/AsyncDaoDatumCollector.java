@@ -50,12 +50,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.domain.PingTest;
 import net.solarnetwork.domain.PingTestResult;
@@ -64,7 +63,7 @@ import net.solarnetwork.domain.PingTestResult;
  * Data collector that processes datum and location datum asynchronously.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AsyncDaoDatumCollector
 		implements CacheEntryCreatedListener<BasePK, Entity<? extends BasePK>>, PingTest {
@@ -82,8 +81,7 @@ public class AsyncDaoDatumCollector
 	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
 	private final Cache<BasePK, Entity<? extends BasePK>> datumCache;
-	private final GeneralNodeDatumDao generalNodeDatumDao;
-	private final GeneralLocationDatumDao generalLocationDatumDao;
+	private final DatumEntityDao datumDao;
 	private final TransactionTemplate transactionTemplate;
 	private final CollectorStats stats;
 	private final CacheEntryListenerConfiguration<BasePK, Entity<? extends BasePK>> listenerConfiguration;
@@ -107,18 +105,14 @@ public class AsyncDaoDatumCollector
 	 * 
 	 * @param datumCache
 	 *        the cache to use
-	 * @param generalNodeDatumDao
+	 * @param datumDao
 	 *        the datum DAO
-	 * @param generalLocationDatumDao
-	 *        the location datum DAO
 	 * @param transactionTemplate
 	 *        the transaction template
 	 */
 	public AsyncDaoDatumCollector(Cache<BasePK, Entity<? extends BasePK>> datumCache,
-			GeneralNodeDatumDao generalNodeDatumDao, GeneralLocationDatumDao generalLocationDatumDao,
-			TransactionTemplate transactionTemplate) {
-		this(datumCache, generalNodeDatumDao, generalLocationDatumDao, transactionTemplate,
-				new CollectorStats("AsyncDaoDatum", 200));
+			DatumEntityDao datumDao, TransactionTemplate transactionTemplate) {
+		this(datumCache, datumDao, transactionTemplate, new CollectorStats("AsyncDaoDatum", 200));
 	}
 
 	/**
@@ -126,10 +120,8 @@ public class AsyncDaoDatumCollector
 	 * 
 	 * @param datumCache
 	 *        the cache to use
-	 * @param generalNodeDatumDao
+	 * @param datumDao
 	 *        the datum DAO
-	 * @param generalLocationDatumDao
-	 *        the location datum DAO
 	 * @param transactionTemplate
 	 *        the transaction template
 	 * @param stats
@@ -138,22 +130,16 @@ public class AsyncDaoDatumCollector
 	 *         if any argument is {@literal null}
 	 */
 	public AsyncDaoDatumCollector(Cache<BasePK, Entity<? extends BasePK>> datumCache,
-			GeneralNodeDatumDao generalNodeDatumDao, GeneralLocationDatumDao generalLocationDatumDao,
-			TransactionTemplate transactionTemplate, CollectorStats stats) {
+			DatumEntityDao datumDao, TransactionTemplate transactionTemplate, CollectorStats stats) {
 		super();
 		if ( datumCache == null ) {
 			throw new IllegalArgumentException("The datumCache parameter must not be null.");
 		}
 		this.datumCache = datumCache;
-		if ( generalNodeDatumDao == null ) {
-			throw new IllegalArgumentException("The generalNodeDatumDao parameter must not be null.");
+		if ( datumDao == null ) {
+			throw new IllegalArgumentException("The datumDao parameter must not be null.");
 		}
-		this.generalNodeDatumDao = generalNodeDatumDao;
-		if ( generalLocationDatumDao == null ) {
-			throw new IllegalArgumentException(
-					"The generalLocationDatumDao parameter must not be null.");
-		}
-		this.generalLocationDatumDao = generalLocationDatumDao;
+		this.datumDao = datumDao;
 		if ( transactionTemplate == null ) {
 			throw new IllegalArgumentException("The transactionTemplate parameter must not be null.");
 		}
@@ -301,9 +287,9 @@ public class AsyncDaoDatumCollector
 							@Override
 							protected void doInTransactionWithoutResult(TransactionStatus status) {
 								if ( entity instanceof GeneralNodeDatum ) {
-									generalNodeDatumDao.store((GeneralNodeDatum) entity);
+									datumDao.store((GeneralNodeDatum) entity);
 								} else if ( entity instanceof GeneralLocationDatum ) {
-									generalLocationDatumDao.store((GeneralLocationDatum) entity);
+									datumDao.store((GeneralLocationDatum) entity);
 								}
 							}
 						});

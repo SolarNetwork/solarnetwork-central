@@ -27,7 +27,7 @@
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
-	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="streamMetadataDao" interface="net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao"/>
 
 	<reference id="datumAuxiliaryBiz"
 		interface="net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz"
@@ -82,7 +82,7 @@
 
 	<bean id="datumAuxiliarySecurityAspect" class="net.solarnetwork.central.datum.aop.DatumAuxiliarySecurityAspect">
 		<argument ref="userNodeDao"/>
-		<argument ref="generalNodeDatumDao"/>
+		<argument ref="streamMetadataDao"/>
 	</bean>
 	
 	<bean id="aopDatumAuxiliaryBiz" class="net.solarnetwork.central.datum.support.DelegatingDatumAuxiliaryBiz">

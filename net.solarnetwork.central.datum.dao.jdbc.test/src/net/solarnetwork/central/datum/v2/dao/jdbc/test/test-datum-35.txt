@@ -1,0 +1,11 @@
+# single hour of data on imperfect times, with leading day > 3 months
+
+{"nodeId":1,"sourceId":"a","created":"2020-02-01T11:59:00Z","samples":{"i":{"x":1.1,"y":1.1},"a":{"w":100}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:09:00Z","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":105}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:19:00Z","samples":{"i":{"x":1.3,"y":3.1},"a":{"w":110}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:29:00Z","samples":{"i":{"x":1.4,"y":4.1},"a":{"w":115}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:39:00Z","samples":{"i":{"x":1.5,"y":5.1},"a":{"w":120}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:49:00Z","samples":{"i":{"x":1.6,"y":6.1},"a":{"w":125}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:59:00Z","samples":{"i":{"x":1.7,"y":7.1},"a":{"w":130}}}
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T13:09:00Z","samples":{"i":{"x":1.8,"y":8.1},"a":{"w":135}}}

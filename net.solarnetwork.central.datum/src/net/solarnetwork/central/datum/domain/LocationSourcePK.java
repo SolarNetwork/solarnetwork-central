@@ -28,9 +28,10 @@ import java.io.Serializable;
  * Primary key based on a location ID and source ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class LocationSourcePK implements Serializable, Cloneable, Comparable<LocationSourcePK> {
+public class LocationSourcePK
+		implements Serializable, Cloneable, Comparable<LocationSourcePK>, ObjectSourcePK {
 
 	private static final long serialVersionUID = 2535992672383477286L;
 
@@ -163,6 +164,21 @@ public class LocationSourcePK implements Serializable, Cloneable, Comparable<Loc
 		this.locationId = locationId;
 	}
 
+	/**
+	 * Get the object ID.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link #getLocationId()}.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Long getObjectId() {
+		return getLocationId();
+	}
+
+	@Override
 	public String getSourceId() {
 		return sourceId;
 	}

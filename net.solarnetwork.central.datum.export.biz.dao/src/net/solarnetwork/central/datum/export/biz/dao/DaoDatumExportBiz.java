@@ -24,9 +24,13 @@ package net.solarnetwork.central.datum.export.biz.dao;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
+import static net.solarnetwork.util.JodaDateUtils.toJoda;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -41,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
@@ -49,11 +52,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.dao.BulkExportingDao.ExportCallback;
-import net.solarnetwork.central.dao.BulkExportingDao.ExportCallbackAction;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.export.biz.DatumExportBiz;
@@ -72,8 +71,13 @@ import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.export.support.DatumExportException;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryAuditor;
-import net.solarnetwork.central.support.FilterableBulkExportOptions;
+import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
+import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
+import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.OptionalService;
@@ -84,10 +88,14 @@ import net.solarnetwork.util.ProgressListener;
  * DAO-based implementation of {@link DatumExportBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoDatumExportBiz implements DatumExportBiz {
 
+	/** The datum export task name. */
+	public static final String DATUM_EXPORT_NAME = "datum-export";
+
+	/** The default query page size. */
 	public static final int DEFAULT_QUERY_PAGE_SIZE = 1000;
 
 	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
@@ -99,14 +107,14 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final DatumExportTaskInfoDao taskDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumEntityDao datumDao;
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
 	private final TransactionTemplate transactionTemplate;
 	private ScheduledFuture<?> taskPurgerTask;
 	private OptionalService<QueryAuditor> queryAuditor;
 
-	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, GeneralNodeDatumDao datumDao,
+	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
 			ScheduledExecutorService scheduler, ExecutorService executor,
 			TransactionTemplate transactionTemplate) {
 		super();
@@ -300,29 +308,25 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 						"No output service available for identifier [" + serviceId + "]", null);
 			}
 
-			DateTimeZone zone = (config.getTimeZoneId() != null
-					? DateTimeZone.forID(config.getTimeZoneId())
-					: DateTimeZone.UTC);
-			DatumFilterCommand filter = new DatumFilterCommand(datumFilter);
+			ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
+					: ZoneOffset.UTC);
+			BasicDatumCriteria filter = DatumUtils.criteriaFromFilter(datumFilter);
 			if ( schedule == ScheduleType.Adhoc ) {
-				DateTime s = datumFilter.getStartDate();
-				DateTime e = datumFilter.getEndDate();
-				if ( s == null || e == null ) {
+				if ( !(filter.hasLocalDateRange() || filter.hasDateRange()) ) {
 					throw new DatumExportException(info.getId(),
 							"Adhoc export missing start or end date in data configuration", null);
 				}
-				filter.setStartDate(s);
-				filter.setEndDate(e);
 			} else {
-				filter.setStartDate(info.getExportDate().withZone(zone));
-				filter.setEndDate(schedule.nextExportDate(filter.getStartDate()));
+				filter.setStartDate(fromJodaToInstant(info.getExportDate()));
+				filter.setEndDate(fromJodaToInstant(
+						schedule.nextExportDate(toJoda(filter.getStartDate(), zone.getId()))));
 			}
 
 			try (DatumExportOutputFormatService.ExportContext exportContext = outputService
 					.createExportContext(config.getOutputConfiguration())) {
 
-				FilterableBulkExportOptions options = new FilterableBulkExportOptions("test", filter,
-						null);
+				BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
+						singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
 
 				QueryAuditor auditor = (queryAuditor != null ? queryAuditor.service() : null);
 				if ( auditor != null ) {
@@ -333,7 +337,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 				GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
 				auditDatumKey.setCreated(new DateTime().hourOfDay().roundFloorCopy());
 
-				datumDao.batchExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+				datumDao.bulkExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
 
 					@Override
 					public void didBegin(Long totalResultCountEstimate) {

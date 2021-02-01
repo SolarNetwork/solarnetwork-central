@@ -42,7 +42,7 @@
 		<beans:prop key="staleSolarFluxProcessor.jobCron">45 0/1 * * * ?</beans:prop>
 
 		<beans:prop key="auditDatumDailyMissingPopulator.jobCron">45 15 2/8 * * ?</beans:prop>
-		<beans:prop key="auditDatumDailyMissingPopulator.jdbcCall">{? = call solaragg.populate_audit_datum_daily_missing()}</beans:prop>
+		<beans:prop key="auditDatumDailyMissingPopulator.jdbcCall">{? = call solardatm.populate_audit_datm_daily_missing()}</beans:prop>
 	</osgix:cm-properties>
 
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -70,7 +70,7 @@
 		</argument>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -79,12 +79,12 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorHourly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="h"/>
+		<property name="jobId" value="StaleDatumStreamProcessorHourly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Hour.getKey()}"/>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -93,12 +93,12 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorDaily"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="d"/>
+		<property name="jobId" value="StaleDatumStreamProcessorDaily"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Day.getKey()}"/>
 	</bean>
 	
-	<bean id="staleGeneralNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralNodeDatumProcessor"
+	<bean id="staleDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -107,51 +107,12 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralNodeDatumProcessorMonthly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralNodeDatumProcessor"/>
-		<property name="aggregateProcessType" value="m"/>
+		<property name="jobId" value="StaleDatumStreamProcessorMonthly"/>
+		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
+		<property name="aggregateProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Month.getKey()}"/>
 	</bean>
 	
-	<bean id="staleGeneralLocationDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.hourly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorHourly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="h"/>
-	</bean>
-	
-	<bean id="staleGeneralLocationDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.daily.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorDaily"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="d"/>
-	</bean>
-	
-	<bean id="staleGeneralLocationDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleGeneralLocationDatumProcessor"
-				init-method="setup">
-		<argument ref="eventAdmin"/>
-		<argument ref="jdbcOps"/>
-		<property name="executorService" ref="executorService"/>
-		<property name="maximumIterations" value="${staleLocationDatumProcessor.maximumRowCount}"/>
-		<property name="parallelism" value="${staleLocationDatumProcessor.taskCount}"/>
-		<property name="jobCron" value="${staleGeneralLocationDatumProcessor.monthly.jobCron}"/>
-		<property name="jobId" value="StaleGeneralLocationDatumProcessorMonthly"/>
-		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleGeneralLocationDatumProcessor"/>
-		<property name="aggregateProcessType" value="m"/>
-	</bean>
-	
-	<bean id="staleAuditNodeDatumProcessorRaw" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
+	<bean id="staleAuditDatumProcessorRaw" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -161,10 +122,10 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.raw.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorRaw"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="r"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).None.getKey()}"/>
 	</bean>
 	
-	<bean id="staleAuditNodeDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
+	<bean id="staleAuditDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -174,10 +135,10 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="h"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Hour.getKey()}"/>
 	</bean>
 	
-	<bean id="staleAuditNodeDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
+	<bean id="staleAuditDatumProcessorDaily" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -187,10 +148,10 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="d"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Day.getKey()}"/>
 	</bean>
 	
-	<bean id="staleAuditNodeDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
+	<bean id="staleAuditDatumProcessorMonthly" class="net.solarnetwork.central.datum.agg.StaleAuditDataProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
@@ -200,7 +161,7 @@
 		<property name="jobCron" value="${staleAuditNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleAuditNodeDatumProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleAuditNodeDatumProcessor"/>
-		<property name="tierProcessType" value="m"/>
+		<property name="tierProcessType" value="#{T(net.solarnetwork.central.domain.Aggregation).Month.getKey()}"/>
 	</bean>
 	
 	<bean id="auditDatumDailyMissingPopulator" class="net.solarnetwork.central.datum.agg.JdbcCallJob"
@@ -216,111 +177,78 @@
 	
 	<!-- Published Services -->
 
-	<service ref="staleGeneralNodeDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralNodeDatumProcessorHourly.jobTopic}</value>
+					<value>#{staleDatumProcessorHourly.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralNodeDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralNodeDatumProcessorDaily.jobTopic}</value>
+					<value>#{staleDatumProcessorDaily.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralNodeDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralNodeDatumProcessorMonthly.jobTopic}</value>
+					<value>#{staleDatumProcessorMonthly.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralLocationDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleAuditDatumProcessorRaw" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorHourly.jobTopic}</value>
+					<value>#{staleAuditDatumProcessorRaw.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralLocationDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleAuditDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorDaily.jobTopic}</value>
+					<value>#{staleAuditDatumProcessorHourly.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleGeneralLocationDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleAuditDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleGeneralLocationDatumProcessorMonthly.jobTopic}</value>
+					<value>#{staleAuditDatumProcessorDaily.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>
 	</service>
 
-	<service ref="staleAuditNodeDatumProcessorRaw" interface="org.osgi.service.event.EventHandler">
+	<service ref="staleAuditDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
 		<service-properties>
 			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
 				<array value-type="java.lang.String">
 					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleAuditNodeDatumProcessorRaw.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
-	<service ref="staleAuditNodeDatumProcessorHourly" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleAuditNodeDatumProcessorHourly.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
-	<service ref="staleAuditNodeDatumProcessorDaily" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleAuditNodeDatumProcessorDaily.jobTopic}</value>
-				</array>
-			</entry>
-		</service-properties>
-	</service>
-
-	<service ref="staleAuditNodeDatumProcessorMonthly" interface="org.osgi.service.event.EventHandler">
-		<service-properties>
-			<entry key="#{T(org.osgi.service.event.EventConstants).EVENT_TOPIC}">
-				<array value-type="java.lang.String">
-					<value>#{T(net.solarnetwork.central.scheduler.SchedulerConstants).TOPIC_SCHEDULER_READY}</value>
-					<value>#{staleAuditNodeDatumProcessorMonthly.jobTopic}</value>
+					<value>#{staleAuditDatumProcessorMonthly.jobTopic}</value>
 				</array>
 			</entry>
 		</service-properties>

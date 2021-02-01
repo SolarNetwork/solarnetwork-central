@@ -22,19 +22,39 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatumAuxiliaryFilterMatch;
+import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumAuxiliaryDao;
+import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
+import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.support.BasicFilterResults;
 
 /**
  * DAO based implementation of {@link DatumAuxiliaryBiz}.
@@ -45,46 +65,95 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
  */
 public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 
-	private final GeneralNodeDatumAuxiliaryDao datumAuxiliaryDao;
+	private final DatumAuxiliaryEntityDao datumAuxiliaryDao;
+	private final DatumStreamMetadataDao metaDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param datumAuxiliaryDao
 	 *        the DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
 	 */
-	public DaoDatumAuxiliaryBiz(GeneralNodeDatumAuxiliaryDao datumAuxiliaryDao) {
+	public DaoDatumAuxiliaryBiz(DatumAuxiliaryEntityDao datumAuxiliaryDao,
+			DatumStreamMetadataDao metaDao) {
 		super();
+		if ( datumAuxiliaryDao == null ) {
+			throw new IllegalArgumentException("The datumAuxiliaryDao argument must not be null.");
+		}
 		this.datumAuxiliaryDao = datumAuxiliaryDao;
+		if ( metaDao == null ) {
+			throw new IllegalArgumentException("The metaDao argument must not be null.");
+		}
+		this.metaDao = metaDao;
+	}
+
+	private ObjectDatumStreamMetadata metaForId(GeneralNodeDatumAuxiliaryPK id) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(id.getNodeId());
+		filter.setSourceId(id.getSourceId());
+		filter.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(filter);
+		for ( ObjectDatumStreamMetadata meta : metas ) {
+			return meta;
+		}
+		throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public GeneralNodeDatumAuxiliary getGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
-		GeneralNodeDatumAuxiliary aux = datumAuxiliaryDao.get(id);
-		if ( aux == null ) {
+		ObjectDatumStreamMetadata meta = metaForId(id);
+		DatumAuxiliaryPK auxId = new DatumAuxiliaryPK(meta.getStreamId(),
+				fromJodaToInstant(id.getCreated()),
+				id.getType() != null ? id.getType() : DatumAuxiliaryType.Reset);
+		DatumAuxiliaryEntity datum = datumAuxiliaryDao.get(auxId);
+		if ( datum == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 		}
-		return aux;
+		return DatumUtils.toGeneralNodeDatumAuxiliary(datum, meta);
+	}
+
+	private DatumAuxiliaryEntity convert(GeneralNodeDatumAuxiliary d, UUID streamId) {
+		return new DatumAuxiliaryEntity(streamId, fromJodaToInstant(d.getCreated()),
+				d.getType() != null ? d.getType() : DatumAuxiliaryType.Reset,
+				fromJodaToInstant(d.getCreated()), d.getSamplesFinal(), d.getSamplesStart(),
+				d.getNotes(), d.getMeta());
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void storeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliary datum) {
-		datumAuxiliaryDao.store(datum);
+		ObjectDatumStreamMetadata meta = metaForId(datum.getId());
+		DatumAuxiliaryEntity d = convert(datum, meta.getStreamId());
+		datumAuxiliaryDao.save(d);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public boolean moveGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK from,
 			GeneralNodeDatumAuxiliary to) {
-		return datumAuxiliaryDao.move(from, to);
+		ObjectDatumStreamMetadata fromMeta = metaForId(from);
+		DatumAuxiliaryPK fromId = new DatumAuxiliaryPK(fromMeta.getStreamId(),
+				fromJodaToInstant(from.getCreated()),
+				from.getType() != null ? from.getType() : DatumAuxiliaryType.Reset);
+
+		// re-use the same metadata if node+source same in from & to
+		ObjectDatumStreamMetadata toMeta = (from.getNodeId().equals(to.getId().getNodeId())
+				&& from.getSourceId().equals(to.getId().getSourceId()) ? fromMeta
+						: metaForId(to.getId()));
+		DatumAuxiliaryEntity toDatum = convert(to, toMeta.getStreamId());
+		return datumAuxiliaryDao.move(fromId, toDatum);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralNodeDatumAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
-		GeneralNodeDatumAuxiliary aux = datumAuxiliaryDao.get(id);
+		ObjectDatumStreamMetadata meta = metaForId(id);
+		DatumAuxiliaryPK datumId = new DatumAuxiliaryPK(meta.getStreamId(),
+				fromJodaToInstant(id.getCreated()), id.getType());
+		DatumAuxiliaryEntity aux = datumAuxiliaryDao.get(datumId);
 		if ( aux == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
 		}
@@ -96,7 +165,18 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	public FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return datumAuxiliaryDao.findFiltered(criteria, sortDescriptors, offset, max);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
+		c.setObjectKind(ObjectDatumKind.Node);
+		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport
+				.stream(metaDao.findDatumStreamMetadata(c).spliterator(), false)
+				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
+		net.solarnetwork.dao.FilterResults<DatumAuxiliary, DatumAuxiliaryPK> r = datumAuxiliaryDao
+				.findFiltered(c);
+		List<GeneralNodeDatumAuxiliaryFilterMatch> data = stream(r.spliterator(), false)
+				.map(d -> toGeneralNodeDatumAuxiliaryFilterMatch(d, metas.get(d.getStreamId())))
+				.collect(Collectors.toList());
+		return new BasicFilterResults<>(data, r.getTotalResults(), r.getStartingOffset(),
+				r.getReturnedResultCount());
 	}
 
 }

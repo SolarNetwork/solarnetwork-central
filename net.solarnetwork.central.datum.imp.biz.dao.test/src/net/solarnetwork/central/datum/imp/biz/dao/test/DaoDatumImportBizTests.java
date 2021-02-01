@@ -71,12 +71,8 @@ import org.junit.Test;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import net.solarnetwork.central.dao.BulkLoadingDao;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -94,6 +90,7 @@ import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
@@ -101,6 +98,8 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.dao.BulkLoadingDao;
+import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.io.ResourceStorageService;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -126,18 +125,17 @@ public class DaoDatumImportBizTests {
 	private ExecutorService executorSercvice;
 	private UserNodeDao userNodeDao;
 	private DatumImportJobInfoDao jobInfoDao;
-	private GeneralNodeDatumDao datumDao;
+	private DatumEntityDao datumDao;
 	private ResourceStorageService resourceStorageService;
 
 	@SuppressWarnings("unchecked")
-	private final BulkLoadingDao.LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loadingContext = EasyMock
+	private final BulkLoadingDao.LoadingContext<GeneralNodeDatum> loadingContext = EasyMock
 			.createMock(BulkLoadingDao.LoadingContext.class);
 
 	private class TestDaoDatumImportBiz extends DaoDatumImportBiz {
 
 		private TestDaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
-				UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
-				GeneralNodeDatumDao datumDao) {
+				UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
 			super(scheduler, executor, userNodeDao, jobInfoDao, datumDao);
 		}
 
@@ -156,7 +154,7 @@ public class DaoDatumImportBizTests {
 
 		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		resourceStorageService = EasyMock.createMock(ResourceStorageService.class);
 
 		biz = new TestDaoDatumImportBiz(scheduledExecutorService, executorSercvice, userNodeDao,

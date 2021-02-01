@@ -30,8 +30,6 @@ import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.joda.time.DateTime;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.context.MessageSource;
@@ -138,7 +136,7 @@ import net.solarnetwork.domain.Identity;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
@@ -185,9 +183,6 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	public static final String CHILD_INSERT = "insert-";
 	public static final String CHILD_UPDATE = "update-";
 	public static final String CHILD_DELETE = "delete-";
-
-	/** A class-level logger. */
-	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final Class<? extends T> domainClass;
 	private final Class<? extends PK> pkClass;

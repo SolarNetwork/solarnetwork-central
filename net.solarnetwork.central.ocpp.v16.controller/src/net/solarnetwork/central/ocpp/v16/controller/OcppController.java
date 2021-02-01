@@ -23,7 +23,7 @@
 package net.solarnetwork.central.ocpp.v16.controller;
 
 import static java.util.Collections.singletonMap;
-import java.io.IOException;
+import static net.solarnetwork.util.OptionalService.service;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +53,7 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.ocpp.domain.ActionMessage;
@@ -81,7 +82,6 @@ import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.OptionalService;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeException;
-import ocpp.domain.SchemaValidationException;
 import ocpp.json.ActionPayloadDecoder;
 import ocpp.v16.ActionErrorCode;
 import ocpp.v16.ChargePointAction;
@@ -94,30 +94,13 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class OcppController extends BasicIdentifiable
 		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
 
 	/** The default {@code initialRegistrationStatus} value. */
 	public static final RegistrationStatus DEFAULT_INITIAL_REGISTRATION_STATUS = RegistrationStatus.Pending;
-
-	/** A node instruction topic for OCPP v1.6 actions. */
-	public static final String OCPP_V16_TOPIC = "OCPP_v16";
-
-	/** A node instruction parameter name for an OCPP v1.6 action name. */
-	public static final String OCPP_V16_ACTION_PARAM = "action";
-
-	/**
-	 * A node instruction parameter name for an OCPP v1.6 ChargePoint
-	 * identifier.
-	 */
-	public static final String OCPP_V16_CHARGER_IDENTIFIER_PARAM = "chargerIdentifier";
-
-	/**
-	 * A node instruction parameter name for an OCPP v1.6 ChargePoint entity ID.
-	 */
-	public static final String OCPP_V16_CHARGE_POINT_ID_PARAM = "chargePointId";
 
 	private final Executor executor;
 	private final UserNodeDao userNodeDao;
@@ -350,11 +333,13 @@ public class OcppController extends BasicIdentifiable
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		final String topic = instruction.getTopic();
 		final Long nodeId = instruction.getNodeId();
-		if ( !OCPP_V16_TOPIC.equals(topic) || nodeId == null ) {
+		log.trace("Inspecting {} instruction for node {}", topic, nodeId);
+		if ( !OcppInstructionUtils.OCPP_V16_TOPIC.equals(topic) || nodeId == null ) {
 			return instruction;
 		}
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
+			log.trace("UserNode not found for node {}; ignoring OCPPv16 instruction {}", nodeId, topic);
 			return instruction;
 		}
 		Map<String, String> params = instructionParameterMap(instruction);
@@ -367,37 +352,30 @@ public class OcppController extends BasicIdentifiable
 		}
 		ChargePointAction action;
 		try {
-			action = ChargePointAction.valueOf(params.remove(OCPP_V16_ACTION_PARAM));
+			action = ChargePointAction.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			instruction.setState(InstructionState.Declined);
 			instruction.setResultParameters(
 					Collections.singletonMap("error", "OCPP action parameter missing."));
 			return instruction;
 		}
-		ObjectNode jsonPayload;
-		Object payload;
-		try {
-			jsonPayload = objectMapper.valueToTree(params);
-			if ( chargePointActionPayloadDecoder != null ) {
-				payload = chargePointActionPayloadDecoder.decodeActionPayload(action, false,
-						jsonPayload);
-			} else {
-				payload = params;
-			}
-		} catch ( IOException | SchemaValidationException e ) {
-			Throwable root = e;
-			while ( root.getCause() != null ) {
-				root = root.getCause();
-			}
-			instruction.setState(InstructionState.Declined);
-			instruction.setResultParameters(
-					singletonMap("error", "Error decoding OCPP action message: " + root.getMessage()));
-			return instruction;
-		}
-		return new OcppNodeInstruction(instruction,
-				(getInstructionHandler() == null ? InstructionState.Executing
-						: InstructionState.Received),
-				cp.chargePointIdentity(), action, jsonPayload, payload);
+		return OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
+				chargePointActionPayloadDecoder, (e, jsonPayload, payload) -> {
+					if ( e != null ) {
+						Throwable root = e;
+						while ( root.getCause() != null ) {
+							root = root.getCause();
+						}
+						instruction.setState(InstructionState.Declined);
+						instruction.setResultParameters(singletonMap("error",
+								"Error decoding OCPP action message: " + root.getMessage()));
+						return instruction;
+					}
+					return new OcppNodeInstruction(instruction,
+							(getInstructionHandler() == null ? InstructionState.Executing
+									: InstructionState.Received),
+							cp.chargePointIdentity(), action, jsonPayload, payload);
+				});
 	}
 
 	@Override
@@ -407,10 +385,9 @@ public class OcppController extends BasicIdentifiable
 		}
 		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
 
-		ActionMessageProcessor<JsonNode, Void> handler = (instructionHandler != null
-				? instructionHandler.service()
-				: null);
+		ActionMessageProcessor<JsonNode, Void> handler = service(instructionHandler);
 		if ( handler != null ) {
+			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
 					instr.getId().toString(), instr.action, instr.jsonPayload);
 			handler.processActionMessage(cpMsg, (msg, res, err) -> {
@@ -428,12 +405,15 @@ public class OcppController extends BasicIdentifiable
 			return;
 		}
 
+		log.info("Sending OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 		sendToChargePoint(instr.chargePointIdentity, instr.action, instr.payload, (msg, res, err) -> {
 			if ( err != null ) {
 				Throwable root = err;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
+				log.info("Failed to send OCPPv16 {} to charge point {}: {}", instr.action,
+						instr.chargePointIdentity, root.getMessage());
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 						instr.getState(), InstructionState.Declined,
 						singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
@@ -442,6 +422,7 @@ public class OcppController extends BasicIdentifiable
 				if ( res != null ) {
 					resultParameters = JsonUtils.getStringMapFromTree(objectMapper.valueToTree(res));
 				}
+				log.info("Sent OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 						instr.getState(), InstructionState.Completed, resultParameters);
 			}
@@ -479,11 +460,11 @@ public class OcppController extends BasicIdentifiable
 			Map<String, String> parameters) {
 		CentralChargePoint result = null;
 		try {
-			Long id = Long.valueOf(parameters.remove(OCPP_V16_CHARGE_POINT_ID_PARAM));
+			Long id = Long.valueOf(parameters.remove(OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM));
 			result = chargePointDao.get(userNode.getUserId(), id);
 		} catch ( NumberFormatException e ) {
 			// try via identifier
-			String ident = parameters.remove(OCPP_V16_CHARGER_IDENTIFIER_PARAM);
+			String ident = parameters.remove(OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM);
 			if ( ident != null ) {
 				result = (CentralChargePoint) chargePointDao.getForIdentifier(userNode.getUserId(),
 						ident);

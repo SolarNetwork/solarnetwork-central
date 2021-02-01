@@ -22,48 +22,103 @@
 
 package net.solarnetwork.central.daum.biz.dao;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import org.joda.time.DateTime;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumMetadataDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumMetadataDao;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadata;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.ObjectSourcePK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.support.MapPathMatcher;
+import net.solarnetwork.support.SearchFilter;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * DAO-based implementation of {@link DatumMetadataBiz}.
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>generalLocationDatumMetadataDao</dt>
- * <dd>The {@link GeneralLocationDatumMetadataDao} to use.</dd>
- * 
- * <dt>generalNodeDatumMetadataDao</dt>
- * <dd>The {@link GeneralNodeDatumMetadataDao} to use.</dd>
- * </dl>
- * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
-	private GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao = null;
-	private GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao = null;
+	private final DatumStreamMetadataDao metaDao;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param metaDao
+	 *        the metadata DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao) {
+		super();
+		if ( metaDao == null ) {
+			throw new IllegalArgumentException("The metaDao argument must not be null.");
+		}
+		this.metaDao = metaDao;
+	}
+
+	private static GeneralDatumMetadata extractGeneralDatumMetadata(
+			Iterable<ObjectDatumStreamMetadata> metas) {
+		if ( metas != null ) {
+			// assume at most 1 result... use first available
+			for ( ObjectDatumStreamMetadata m : metas ) {
+				return JsonUtils.getObjectFromJSON(m.getMetaJson(), GeneralDatumMetadata.class);
+			}
+		}
+		return null;
+	}
+
+	private void mergeMetadata(ObjectSourcePK id, GeneralDatumMetadata meta) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		if ( id instanceof LocationSourcePK ) {
+			filter.setLocationId(id.getObjectId());
+			filter.setObjectKind(ObjectDatumKind.Location);
+		} else {
+			filter.setNodeId(id.getObjectId());
+			filter.setObjectKind(ObjectDatumKind.Node);
+		}
+		filter.setSourceId(id.getSourceId());
+		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(filter);
+
+		final GeneralDatumMetadata existingMeta = extractGeneralDatumMetadata(metas);
+		GeneralDatumMetadata newMeta = meta;
+		if ( existingMeta == null ) {
+			newMeta = meta;
+		} else if ( existingMeta != null && !existingMeta.equals(meta) ) {
+			newMeta = new GeneralDatumMetadata(existingMeta);
+			newMeta.merge(meta, true);
+		}
+		if ( newMeta != null && !newMeta.equals(existingMeta) ) {
+			// have changes, so persist
+			String json = JsonUtils.getJSONString(newMeta, null);
+			metaDao.replaceJsonMeta(id, json);
+		}
+	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
@@ -71,23 +126,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert nodeId != null;
 		assert sourceId != null;
 		assert meta != null;
-		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
-		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
-		GeneralDatumMetadata newMeta = meta;
-		if ( gdm == null ) {
-			gdm = new GeneralNodeDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			newMeta = meta;
-		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
-			newMeta = new GeneralDatumMetadata(gdm.getMeta());
-			newMeta.merge(meta, true);
-		}
-		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
-			// have changes, so persist
-			gdm.setMeta(newMeta);
-			generalNodeDatumMetadataDao.store(gdm);
-		}
+		mergeMetadata(new NodeSourcePK(nodeId, sourceId), meta);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -96,35 +135,28 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert nodeId != null;
 		assert sourceId != null;
 		assert meta != null;
-		NodeSourcePK pk = new NodeSourcePK(nodeId, sourceId);
-		GeneralNodeDatumMetadata gdm = generalNodeDatumMetadataDao.get(pk);
-		if ( gdm == null ) {
-			gdm = new GeneralNodeDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			gdm.setMeta(meta);
-		}
-		generalNodeDatumMetadataDao.store(gdm);
+		String json = JsonUtils.getJSONString(meta, null);
+		metaDao.replaceJsonMeta(new NodeSourcePK(nodeId, sourceId), json);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralNodeDatumMetadata(Long nodeId, String sourceId) {
-		GeneralNodeDatumMetadata meta = generalNodeDatumMetadataDao
-				.get(new NodeSourcePK(nodeId, sourceId));
-		if ( meta != null ) {
-			generalNodeDatumMetadataDao.delete(meta);
-		}
+		metaDao.replaceJsonMeta(new NodeSourcePK(nodeId, sourceId), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
-		return generalNodeDatumMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+			GeneralNodeDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
+				max);
+		criteria.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
+		List<GeneralNodeDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
+				.map(DatumUtils::toGeneralNodeDatumMetadataMatch).collect(toList());
+		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -134,23 +166,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert locationId != null;
 		assert sourceId != null;
 		assert meta != null;
-		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
-		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
-		GeneralDatumMetadata newMeta = meta;
-		if ( gdm == null ) {
-			gdm = new GeneralLocationDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			newMeta = meta;
-		} else if ( gdm.getMeta() != null && gdm.getMeta().equals(meta) == false ) {
-			newMeta = new GeneralDatumMetadata(gdm.getMeta());
-			newMeta.merge(meta, true);
-		}
-		if ( newMeta != null && newMeta.equals(gdm.getMeta()) == false ) {
-			// have changes, so persist
-			gdm.setMeta(newMeta);
-			generalLocationDatumMetadataDao.store(gdm);
-		}
+		mergeMetadata(new LocationSourcePK(locationId, sourceId), meta);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -160,66 +176,74 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		assert locationId != null;
 		assert sourceId != null;
 		assert meta != null;
-		LocationSourcePK pk = new LocationSourcePK(locationId, sourceId);
-		GeneralLocationDatumMetadata gdm = generalLocationDatumMetadataDao.get(pk);
-		if ( gdm == null ) {
-			gdm = new GeneralLocationDatumMetadata();
-			gdm.setCreated(new DateTime());
-			gdm.setId(pk);
-			gdm.setMeta(meta);
-		} else {
-			gdm.setMeta(meta);
-		}
-		generalLocationDatumMetadataDao.store(gdm);
+		String json = JsonUtils.getJSONString(meta, null);
+		metaDao.replaceJsonMeta(new LocationSourcePK(locationId, sourceId), json);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void removeGeneralLocationDatumMetadata(Long locationId, String sourceId) {
-		GeneralLocationDatumMetadata meta = generalLocationDatumMetadataDao
-				.get(new LocationSourcePK(locationId, sourceId));
-		if ( meta != null ) {
-			generalLocationDatumMetadataDao.delete(meta);
-		}
+		metaDao.replaceJsonMeta(new LocationSourcePK(locationId, sourceId), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
+			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) {
-		return generalLocationDatumMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
+		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
+				max);
+		criteria.setObjectKind(ObjectDatumKind.Location);
+		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
+		List<GeneralLocationDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
+				.map(DatumUtils::toGeneralLocationDatumMetadataMatch).collect(toList());
+		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
+	}
+
+	private <T extends ObjectSourcePK> Set<T> findMetadataForMetadataFilter(
+			ObjectStreamCriteria criteria, String metadataFilter, BiFunction<Long, String, T> factory) {
+		// parse metadata filter into SearchFilter
+		SearchFilter filter = SearchFilter.forLDAPSearchFilterString(metadataFilter);
+		if ( filter == null ) {
+			throw new IllegalArgumentException("Invalid metadata filter.");
+		}
+
+		// execute query to find all metadata matching IDS
+		Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(criteria);
+
+		// filter out only those matching the SearchFilter
+		return StreamSupport.stream(metas.spliterator(), false).filter(m -> {
+			Map<String, Object> map = JsonUtils.getStringMap(m.getMetaJson());
+			return (map != null && MapPathMatcher.matches(map, filter));
+		}).map(m -> {
+			return factory.apply(m.getObjectId(), m.getSourceId());
+		}).collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Set<NodeSourcePK> getGeneralNodeDatumMetadataFilteredSources(Long[] nodeIds,
 			String metadataFilter) {
-		return generalNodeDatumMetadataDao.getFilteredSources(nodeIds, metadataFilter);
+		if ( nodeIds == null || nodeIds.length < 1 || metadataFilter == null
+				|| metadataFilter.isEmpty() ) {
+			return Collections.emptySet();
+		}
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setNodeIds(nodeIds);
+		return findMetadataForMetadataFilter(criteria, metadataFilter, NodeSourcePK::new);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,
 			String metadataFilter) {
-		return generalLocationDatumMetadataDao.getFilteredSources(locationIds, metadataFilter);
-	}
-
-	public GeneralNodeDatumMetadataDao getGeneralNodeDatumMetadataDao() {
-		return generalNodeDatumMetadataDao;
-	}
-
-	public void setGeneralNodeDatumMetadataDao(GeneralNodeDatumMetadataDao generalNodeDatumMetadataDao) {
-		this.generalNodeDatumMetadataDao = generalNodeDatumMetadataDao;
-	}
-
-	public GeneralLocationDatumMetadataDao getGeneralLocationDatumMetadataDao() {
-		return generalLocationDatumMetadataDao;
-	}
-
-	public void setGeneralLocationDatumMetadataDao(
-			GeneralLocationDatumMetadataDao generalLocationDatumMetadataDao) {
-		this.generalLocationDatumMetadataDao = generalLocationDatumMetadataDao;
+		if ( locationIds == null || locationIds.length < 1 || metadataFilter == null
+				|| metadataFilter.isEmpty() ) {
+			return Collections.emptySet();
+		}
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setLocationIds(locationIds);
+		return findMetadataForMetadataFilter(criteria, metadataFilter, LocationSourcePK::new);
 	}
 
 }

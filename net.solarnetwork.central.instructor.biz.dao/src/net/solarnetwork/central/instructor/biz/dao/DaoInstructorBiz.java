@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,13 +50,23 @@ import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.8
  */
 @Service
 public class DaoInstructorBiz implements InstructorBiz {
 
+	/**
+	 * The default value for the {@code maxParamValueLength} property.
+	 * 
+	 * @since 1.8
+	 */
+	public static final int DEFAULT_MAX_PARAM_VALUE_LENGTH = 256;
+
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
+	private int maxParamValueLength = DEFAULT_MAX_PARAM_VALUE_LENGTH;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Construct without queue hooks.
@@ -169,6 +181,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
+		log.debug("Received node {} instruction {}", nodeId, instruction.getTopic());
 		NodeInstruction instr = new NodeInstruction(instruction.getTopic(),
 				instruction.getInstructionDate(), nodeId);
 		if ( instr.getInstructionDate() == null ) {
@@ -177,8 +190,22 @@ public class DaoInstructorBiz implements InstructorBiz {
 		instr.setState(InstructionState.Queued);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
-				instr.addParameter(param.getName(), param.getValue());
+				if ( param == null || param.getName() == null || param.getValue().isEmpty()
+						|| param.getValue() == null ) {
+					continue;
+				}
+				String v = param.getValue();
+				while ( v.length() > maxParamValueLength ) {
+					instr.addParameter(param.getName(), v.substring(0, maxParamValueLength));
+					v = v.substring(maxParamValueLength);
+				}
+				if ( !v.isEmpty() ) {
+					instr.addParameter(param.getName(), v);
+				}
 			}
+		}
+		if ( log.isTraceEnabled() ) {
+			log.trace("Processing instruction {} with {} hooks", instr.getId(), queueHooks.size());
 		}
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
 			instr = hook.willQueueNodeInstruction(instr);
@@ -256,6 +283,32 @@ public class DaoInstructorBiz implements InstructorBiz {
 			Map<String, ?> params = (resultParameters != null ? resultParameters.get(id) : null);
 			updateInstructionState(id, state, params);
 		}
+	}
+
+	/**
+	 * Get the maximum parameter value length.
+	 * 
+	 * @return the length; defaults to {@link #DEFAULT_MAX_PARAM_VALUE_LENGTH}
+	 * @since 1.8
+	 */
+	public int getMaxParamValueLength() {
+		return maxParamValueLength;
+	}
+
+	/**
+	 * Set the maximum parameter value length.
+	 * 
+	 * @param maxParamValueLength
+	 *        the length to set
+	 * @throws IllegalArgumentException
+	 *         if {@code maxParamValueLength} is 0 or less
+	 * @since 1.8
+	 */
+	public void setMaxParamValueLength(int maxParamValueLength) {
+		if ( maxParamValueLength < 1 ) {
+			throw new IllegalArgumentException("The maxParamValueLength value must be greater than 0.");
+		}
+		this.maxParamValueLength = maxParamValueLength;
 	}
 
 }

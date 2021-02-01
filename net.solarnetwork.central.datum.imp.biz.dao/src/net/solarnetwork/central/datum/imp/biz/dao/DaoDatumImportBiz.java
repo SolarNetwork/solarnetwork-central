@@ -54,13 +54,8 @@ import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
-import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportException;
@@ -85,14 +80,18 @@ import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.dao.BasicBulkLoadingOptions;
+import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
+import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
+import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.io.ResourceStorageService;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.ProgressListener;
@@ -102,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
 
@@ -119,7 +118,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private final ExecutorService executor;
 	private final UserNodeDao userNodeDao;
 	private final DatumImportJobInfoDao jobInfoDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumEntityDao datumDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private ExecutorService previewExecutor;
 	private OptionalService<ResourceStorageService> resourceStorageService;
@@ -146,7 +145,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 *        the datum DAO
 	 */
 	public DaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
-			UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao, GeneralNodeDatumDao datumDao) {
+			UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
 		super();
 		this.scheduler = scheduler;
 		this.executor = executor;
@@ -550,8 +549,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	}
 
 	private class DatumImportTask implements Callable<DatumImportResult>, DatumImportStatus,
-			ProgressListener<DatumImportService>,
-			LoadingExceptionHandler<GeneralNodeDatum, GeneralNodeDatumPK> {
+			ProgressListener<DatumImportService>, LoadingExceptionHandler<GeneralNodeDatum> {
 
 		private DatumImportJobInfo info;
 		private Future<DatumImportResult> delegate;
@@ -672,8 +670,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 
 		@Override
-		public void handleLoadingException(Throwable t,
-				LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> context) {
+		public void handleLoadingException(Throwable t, LoadingContext<GeneralNodeDatum> context) {
 			if ( t instanceof DatumImportValidationException ) {
 				DatumImportValidationException ve = (DatumImportValidationException) t;
 				throw new DatumImportException(ve.getMessage(), ve.getCause(), ve.getLineNumber(),
@@ -702,7 +699,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					batchSize = config.getBatchSize();
 				}
 			}
-			SimpleBulkLoadingOptions loadingOptions = new SimpleBulkLoadingOptions(config.getName(),
+			BasicBulkLoadingOptions loadingOptions = new BasicBulkLoadingOptions(config.getName(),
 					batchSize, txMode, null);
 
 			log.info(
@@ -711,7 +708,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					config);
 
 			try (ImportContext input = createImportContext(info, this);
-					LoadingContext<GeneralNodeDatum, GeneralNodeDatumPK> loader = datumDao
+					LoadingContext<GeneralNodeDatum> loader = datumDao
 							.createBulkLoadingContext(loadingOptions, this)) {
 				try {
 					for ( GeneralNodeDatum d : input ) {

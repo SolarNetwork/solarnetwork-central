@@ -53,28 +53,28 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link AsyncDaoDatumCollector}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
-	private GeneralNodeDatumDao datumDao;
-	private GeneralLocationDatumDao locationDatumDao;
+	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
 	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
@@ -98,8 +98,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Before
 	public void setup() throws Exception {
-		datumDao = EasyMock.createMock(GeneralNodeDatumDao.class);
-		locationDatumDao = EasyMock.createMock(GeneralLocationDatumDao.class);
+		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 
 		cacheManager = createCacheManager();
@@ -115,8 +114,8 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		stats = new CollectorStats("AsyncDaoDatumCollector", 1);
 
-		collector = new AsyncDaoDatumCollector(datumCache, datumDao, locationDatumDao,
-				new TransactionTemplate(txManager), stats);
+		collector = new AsyncDaoDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
+				stats);
 		collector.setConcurrency(2);
 		collector.setQueueSize(5);
 		collector.setExceptionHandler(this);
@@ -129,14 +128,14 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		collector.shutdownAndWait();
 		cacheManager.destroyCache("Test Datum Buffer");
 		log.info(stats.toString());
-		EasyMock.verify(datumDao, locationDatumDao, txManager);
+		EasyMock.verify(datumDao, txManager);
 		if ( !uncaughtExceptions.isEmpty() ) {
 			throw uncaughtExceptions.get(0);
 		}
 	}
 
 	private void replayAll(Object... mocks) {
-		EasyMock.replay(datumDao, locationDatumDao, txManager);
+		EasyMock.replay(datumDao, txManager);
 		if ( mocks != null ) {
 			EasyMock.replay(mocks);
 		}
@@ -174,7 +173,8 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(d.getId());
+		expect(datumDao.store(d)).andReturn(
+				new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d.getCreated())));
 		txManager.commit(txStatus);
 
 		// WHEN
@@ -198,7 +198,8 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 			GeneralNodeDatum d = createDatum();
 			TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 			expect(txManager.getTransaction(anyObject())).andReturn(txStatus);
-			expect(datumDao.store(d)).andReturn(d.getId());
+			expect(datumDao.store(d)).andReturn(
+					new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d.getCreated())));
 			txManager.commit(txStatus);
 			txStatuses[i] = txStatus;
 			datum.add(d);
@@ -233,7 +234,8 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(locationDatumDao.store(d)).andReturn(d.getId());
+		expect(datumDao.store(d)).andReturn(
+				new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d.getCreated())));
 		txManager.commit(txStatus);
 
 		// WHEN
@@ -256,8 +258,10 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus).times(2);
-		expect(datumDao.store(d1)).andReturn(d1.getId());
-		expect(locationDatumDao.store(d2)).andReturn(d2.getId());
+		expect(datumDao.store(d1)).andReturn(
+				new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d1.getCreated())));
+		expect(datumDao.store(d2)).andReturn(
+				new DatumPK(UUID.randomUUID(), JodaDateUtils.fromJodaToInstant(d2.getCreated())));
 		txManager.commit(txStatus);
 		expectLastCall().times(2);
 

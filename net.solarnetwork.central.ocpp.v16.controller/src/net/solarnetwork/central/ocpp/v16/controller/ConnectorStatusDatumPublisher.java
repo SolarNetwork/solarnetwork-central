@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -59,7 +59,7 @@ public class ConnectorStatusDatumPublisher {
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final CentralChargePointConnectorDao chargePointConnectorDao;
 	private final ChargeSessionDao chargeSessionDao;
-	private final GeneralNodeDatumDao datumDao;
+	private final DatumEntityDao datumDao;
 	private final OptionalService<DatumProcessor> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private String sourceIdSuffix = DEFAULT_SOURCE_ID_SUFFIX;
@@ -80,7 +80,7 @@ public class ConnectorStatusDatumPublisher {
 	 */
 	public ConnectorStatusDatumPublisher(ChargePointSettingsDao chargePointSettingsDao,
 			CentralChargePointConnectorDao chargePointConnectorDao, ChargeSessionDao chargeSessionDao,
-			GeneralNodeDatumDao datumDao, OptionalService<DatumProcessor> fluxPublisher) {
+			DatumEntityDao datumDao, OptionalService<DatumProcessor> fluxPublisher) {
 		super();
 		this.chargePointSettingsDao = chargePointSettingsDao;
 		this.chargePointConnectorDao = chargePointConnectorDao;

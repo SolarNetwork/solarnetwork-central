@@ -21,6 +21,6 @@
 		<!-- Testing support -->
 		
 		<!-- SolarNetwork -->
-		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.dao.mybatis" rev="[3.0,4.0)"/>
+		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum.dao.mybatis" rev="[3.0,)"/>
     </dependencies>
 </ivy-module>

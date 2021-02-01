@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.user.expire.dao.mybatis.test;
 
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
-import static org.hamcrest.Matchers.allOf;
+import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
@@ -32,12 +35,17 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
@@ -46,10 +54,24 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.util.JodaDateUtils;
 
 /**
  * Test cases for the {@link MyBatisUserDataConfigurationDao} class.
@@ -68,6 +90,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	private User user;
 	private UserDataConfiguration conf;
+	private ObjectDatumStreamMetadata streamMeta;
 
 	@Before
 	public void setUp() throws Exception {
@@ -81,6 +104,10 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		setupTestNode();
 
 		setupUserNode(TEST_NODE_ID, this.user.getId());
+
+		streamMeta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ, ObjectDatumKind.Node,
+				TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "watts" }, null, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(streamMeta));
 	}
 
 	private void setupUserNode(Long nodeId, Long userId) {
@@ -251,93 +278,102 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Nothing to delete", result, equalTo(0L));
 	}
 
-	private void insertDatum(DateTime date, Long nodeId, String sourceId) {
-		jdbcTemplate.update(
-				"INSERT INTO solardatum.da_datum (posted, ts, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb)",
-				new Timestamp(System.currentTimeMillis()), new Timestamp(date.getMillis()), nodeId,
-				sourceId, "{\"watts\":10}");
+	private void insertDatum(DateTime date, UUID streamId) {
+		DatumProperties p = propertiesOf(decimalArray("10"), null, null, null);
+		DatumEntity d = new DatumEntity(streamId, JodaDateUtils.fromJodaToInstant(date), Instant.now(),
+				p);
+		DatumDbUtils.insertDatum(log, jdbcTemplate, singleton(d));
 	}
 
-	private void insertHourlyDatum(DateTime date, Long nodeId, String sourceId) {
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_hourly (ts_start, local_date, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb)",
-				new Timestamp(date.getMillis()),
-				new Timestamp(date.toLocalDateTime().toDateTime().getMillis()), nodeId, sourceId,
-				"{\"watts\":10}");
+	private void insertHourlyDatum(DateTime date, UUID streamId) {
+		DatumProperties p = propertiesOf(decimalArray("10"), null, null, null);
+		DatumPropertiesStatistics s = DatumPropertiesStatistics
+				.statisticsOf(new BigDecimal[][] { decimalArray("6", "10", "10") }, null);
+		AggregateDatumEntity d = new AggregateDatumEntity(streamId,
+				JodaDateUtils.fromJodaToInstant(date), Aggregation.Hour, p, s);
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, singleton(d));
 	}
 
-	private void insertDailyDatum(DateTime date, Long nodeId, String sourceId) {
-		log.debug("Inserting day datum {} {} @ {}", nodeId, sourceId, date);
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_daily (ts_start, local_date, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb) ON CONFLICT DO NOTHING",
-				new Timestamp(date.getMillis()),
-				new Timestamp(date.toLocalDateTime().toDateTime().getMillis()), nodeId, sourceId,
-				"{\"watts\":10}");
+	private void insertDailyDatum(DateTime date, UUID streamId) {
+		log.debug("Inserting day datum {} @ {}", streamId, date);
+		DatumProperties p = propertiesOf(decimalArray("10"), null, null, null);
+		DatumPropertiesStatistics s = DatumPropertiesStatistics
+				.statisticsOf(new BigDecimal[][] { decimalArray("6", "10", "10") }, null);
+		AggregateDatumEntity d = new AggregateDatumEntity(streamId,
+				JodaDateUtils.fromJodaToInstant(date), Aggregation.Day, p, s);
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, singleton(d));
 	}
 
-	private void insertMonthlyDatum(DateTime date, Long nodeId, String sourceId) {
-		log.debug("Inserting month datum {} {} @ {}", nodeId, sourceId, date);
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.agg_datum_monthly (ts_start, local_date, node_id, source_id, jdata_i) VALUES (?,?,?,?,?::jsonb) ON CONFLICT DO NOTHING",
-				new Timestamp(date.getMillis()),
-				new Timestamp(date.toLocalDateTime().toDateTime().getMillis()), nodeId, sourceId,
-				"{\"watts\":10}");
+	private void insertMonthlyDatum(DateTime date, UUID streamId) {
+		log.debug("Inserting month datum {} @ {}", streamId, date);
+		DatumProperties p = propertiesOf(decimalArray("10"), null, null, null);
+		DatumPropertiesStatistics s = DatumPropertiesStatistics
+				.statisticsOf(new BigDecimal[][] { decimalArray("6", "10", "10") }, null);
+		AggregateDatumEntity d = new AggregateDatumEntity(streamId,
+				JodaDateUtils.fromJodaToInstant(date), Aggregation.Month, p, s);
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, singleton(d));
 	}
 
-	private void insertAuditDatumMonthly(DateTime date, Long nodeId, String sourceId) {
-		jdbcTemplate.update(
-				"INSERT INTO solaragg.aud_datum_monthly (ts_start, node_id, source_id) VALUES (?,?,?) ON CONFLICT DO NOTHING",
-				new Timestamp(date.getMillis()), nodeId, sourceId);
+	private void insertAuditDatumMonthly(DateTime date, UUID streamId) {
+		AuditDatumEntity d = AuditDatumEntity.monthlyAuditDatum(streamId,
+				JodaDateUtils.fromJodaToInstant(date), 0L, 0L, 0, 0, 0L, 0L);
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(d));
 	}
 
-	private List<Map<String, Object>> findAllDatum(Long nodeId, String sourceId) {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solardatum.da_datum WHERE node_id = ? AND source_id = ? ORDER BY ts",
-				nodeId, sourceId);
-		log.debug("Current solardatum.da_datum table:\n{}\n",
+	private List<Datum> findAllDatum(UUID streamId) {
+		List<Datum> rows = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Current datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
 
-	private List<Map<String, Object>> findAllHourlyDatum(Long nodeId, String sourceId) {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_datum_hourly WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
-				nodeId, sourceId);
-		log.debug("Current solaragg.agg_datum_hourly table:\n{}\n",
+	private Comparator<AggregateDatum> orderByTime() {
+		return new Comparator<AggregateDatum>() {
+
+			@Override
+			public int compare(AggregateDatum o1, AggregateDatum o2) {
+				return o1.getTimestamp().compareTo(o2.getTimestamp());
+			}
+		};
+	}
+
+	private List<AggregateDatum> findAllHourlyDatum(UUID streamId) {
+		List<AggregateDatum> rows = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Hour)
+				.stream().filter(e -> e.getStreamId().equals(streamId)).sorted(orderByTime())
+				.collect(toList());
+		log.debug("Current Hour datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
 
-	private List<Map<String, Object>> findAllDailyDatum(Long nodeId, String sourceId) {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_datum_daily WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
-				nodeId, sourceId);
-		log.debug("Current solaragg.agg_datum_daily table:\n{}\n",
+	private List<AggregateDatum> findAllDailyDatum(UUID streamId) {
+		List<AggregateDatum> rows = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Day)
+				.stream().filter(e -> e.getStreamId().equals(streamId)).sorted(orderByTime())
+				.collect(toList());
+		log.debug("Current Day datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
 
-	private List<Map<String, Object>> findAllMonthlyDatum(Long nodeId, String sourceId) {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_datum_monthly WHERE node_id = ? AND source_id = ? ORDER BY ts_start",
-				nodeId, sourceId);
-		log.debug("Current solaragg.agg_datum_monthly table:\n{}\n",
+	private List<AggregateDatum> findAllMonthlyDatum(UUID streamId) {
+		List<AggregateDatum> rows = DatumDbUtils.listAggregateDatum(jdbcTemplate, Aggregation.Month)
+				.stream().filter(e -> e.getStreamId().equals(streamId)).sorted(orderByTime())
+				.collect(toList());
+		log.debug("Current Month datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
 
-	private List<Map<String, Object>> findAllAggStaleDatum() {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.agg_stale_datum ORDER BY agg_kind, node_id, ts_start, source_id");
-		log.debug("Current solaragg.agg_stale_datum table:\n{}\n",
+	private List<StaleAggregateDatum> findAllAggStaleDatum() {
+		List<StaleAggregateDatum> rows = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
+		log.debug("Current stale datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
 
-	private List<Map<String, Object>> findAllAuditDatumDailyStale() {
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-				"SELECT * FROM solaragg.aud_datum_daily_stale ORDER BY aud_kind, node_id, ts_start, source_id");
-		log.debug("Current solaragg.aud_datum_daily_stale table:\n{}\n",
+	private List<StaleAuditDatum> findAllAuditDatumDailyStale() {
+		List<StaleAuditDatum> rows = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
+		log.debug("Current stale audit datum table:\n{}\n",
 				rows.stream().map(Object::toString).collect(joining("\n")));
 		return rows;
 	}
@@ -365,18 +401,16 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		DateTime start = today.minusWeeks(8);
 		result.start = start;
 		DateTime month = start.monthOfYear().roundFloorCopy();
+		Set<DateTime> months = new LinkedHashSet<>();
 		for ( int i = 0; i < 8; i++ ) {
 			DateTime currDay = start.plusWeeks(i);
 			DateTime currMonth = currDay.monthOfYear().roundFloorCopy();
 
-			insertDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
-			insertHourlyDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
-			insertDailyDatum(currDay, TEST_NODE_ID, TEST_SOURCE_ID);
+			insertDatum(currDay, streamMeta.getStreamId());
+			insertHourlyDatum(currDay, streamMeta.getStreamId());
+			insertDailyDatum(currDay, streamMeta.getStreamId());
 
-			insertMonthlyDatum(currMonth, TEST_NODE_ID, TEST_SOURCE_ID);
-
-			// make sure monthly audit record exists, because "stale" records for these will be created
-			insertAuditDatumMonthly(currMonth, TEST_NODE_ID, TEST_SOURCE_ID);
+			months.add(currMonth);
 
 			result.rawCount++;
 			result.hourCount++;
@@ -397,27 +431,31 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 				month = currMonth;
 			}
 		}
+		for ( DateTime currMonth : months ) {
+			insertMonthlyDatum(currMonth, streamMeta.getStreamId());
 
-		findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
-		findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+			// make sure monthly audit record exists, because "stale" records for these will be created
+			insertAuditDatumMonthly(currMonth, streamMeta.getStreamId());
+		}
 
-		// delete any "stale hourly agg" records
-		jdbcTemplate.update("DELETE FROM solaragg.agg_stale_datum");
+		findAllDatum(streamMeta.getStreamId());
+		findAllHourlyDatum(streamMeta.getStreamId());
+		findAllDailyDatum(streamMeta.getStreamId());
+		findAllMonthlyDatum(streamMeta.getStreamId());
 
 		return result;
 	}
 
 	private void assertAuditDatumDailyStaleMonths(DateTime start, int count) {
-		List<Map<String, Object>> datum = findAllAuditDatumDailyStale();
+		List<StaleAuditDatum> datum = findAllAuditDatumDailyStale();
 		assertThat("Datum daily stale month count", datum, hasSize(count));
 		DateTime month = start.monthOfYear().roundFloorCopy();
 		for ( int i = 0; i < count; i++ ) {
-			assertThat("Monthly stale " + i, datum.get(i),
-					allOf(hasEntry("ts_start", (Object) new Timestamp(month.plusMonths(i).getMillis())),
-							hasEntry("node_id", (Object) TEST_NODE_ID),
-							hasEntry("aud_kind", (Object) "m")));
+			StaleAuditDatum d = datum.get(i);
+			assertThat("Monthly stale stream " + i, d.getStreamId(), equalTo(streamMeta.getStreamId()));
+			assertThat("Monthly stale date " + i, d.getTimestamp(),
+					equalTo(JodaDateUtils.fromJodaToInstant(month.plusMonths(i))));
+			assertThat("Monhly stale kind " + i, d.getKind(), equalTo(Aggregation.Month));
 		}
 	}
 
@@ -431,7 +469,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	}
 
 	private void assertNoAggStaleDatum() {
-		List<Map<String, Object>> datum = findAllAggStaleDatum();
+		List<StaleAggregateDatum> datum = findAllAggStaleDatum();
 		if ( !datum.isEmpty() ) {
 			log.warn("Unexpected agg stale datum: {}", datum);
 		}
@@ -458,18 +496,18 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		long result = confDao.deleteExpiredDataForConfiguration(this.conf);
 		assertThat("Deleted raw datum count", result, equalTo(range.expiredCount));
 
-		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0), hasEntry("ts",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
+		assertThat("First datum date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredCount))));
 
-		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum, hasSize((int) range.hourCount));
 
-		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount));
 
-		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
@@ -497,21 +535,21 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Deleted raw + hourly datum count", result,
 				equalTo(range.expiredCount + range.expiredHourCount));
 
-		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0), hasEntry("ts",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
+		assertThat("First datum date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredCount))));
 
-		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
+		assertThat("First hourly date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredHourCount))));
 
-		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount));
 
-		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
@@ -540,23 +578,23 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Deleted raw + hourly + daily datum count", result,
 				equalTo(range.expiredCount + range.expiredHourCount + range.expiredDayCount));
 
-		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0), hasEntry("ts",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
+		assertThat("First datum date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredCount))));
 
-		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
+		assertThat("First hourly date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredHourCount))));
 
-		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
-		assertThat("First daily date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks(range.expiredDayCount).getMillis())));
+		assertThat("First daily date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks(range.expiredDayCount))));
 
-		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount));
 
 		assertAuditDatumDailyStaleMonths(start, range.staleAuditMonthCount);
@@ -585,26 +623,27 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		assertThat("Deleted raw + hourly + daily datum count", result, equalTo(range.expiredCount
 				+ range.expiredHourCount + range.expiredDayCount + range.expiredMonthCount));
 
-		List<Map<String, Object>> datum = findAllDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0), hasEntry("ts",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredCount).getMillis())));
+		assertThat("First datum date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredCount))));
 
-		datum = findAllHourlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks((int) range.expiredHourCount).getMillis())));
+		assertThat("First hourly date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks((int) range.expiredHourCount))));
 
-		datum = findAllDailyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
-		assertThat("First daily date", datum.get(0), hasEntry("ts_start",
-				(Object) new Timestamp(start.plusWeeks(range.expiredDayCount).getMillis())));
+		assertThat("First daily date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(start.plusWeeks(range.expiredDayCount))));
 
-		datum = findAllMonthlyDatum(TEST_NODE_ID, TEST_SOURCE_ID);
+		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount - range.expiredMonthCount));
-		assertThat("First monthly date", datum.get(0), hasEntry("ts_start", (Object) new Timestamp(
-				start.monthOfYear().roundFloorCopy().plusMonths(range.expiredMonthCount).getMillis())));
+		assertThat("First monthly date", datum.get(0).getTimestamp(),
+				equalTo(JodaDateUtils.fromJodaToInstant(
+						start.monthOfYear().roundFloorCopy().plusMonths(range.expiredMonthCount))));
 
 		Period p = new Period(range.start.monthOfYear().roundFloorCopy(),
 				range.expire.monthOfYear().roundCeilingCopy());

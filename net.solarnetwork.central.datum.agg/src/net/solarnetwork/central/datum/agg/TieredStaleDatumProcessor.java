@@ -52,14 +52,14 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.6
  */
 public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 
 	private final String taskDescription;
 	private String tierProcessType = "h";
-	private Integer tierProcessMax = 1;
+	private Integer tierProcessMax;
 
 	/**
 	 * Constructor.
@@ -147,7 +147,7 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	 * 
 	 * @param tierProcessMax
 	 *        the maximum number of rows, or {@literal null} for no explicit
-	 *        limit; default is {@literal 1}
+	 *        limit; default is {@literal null}
 	 */
 	public void setTierProcessMax(Integer tierProcessMax) {
 		this.tierProcessMax = tierProcessMax;

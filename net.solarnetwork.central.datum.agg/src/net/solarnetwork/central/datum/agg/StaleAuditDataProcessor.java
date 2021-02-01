@@ -29,10 +29,13 @@ import org.springframework.jdbc.core.JdbcOperations;
  * Job to process "stale" audit datum reporting data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.6
  */
 public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
+
+	/** The default {@code jdbcCall} value. */
+	public static final String DEFAULT_SQL = "{? = call solardatm.process_one_aud_stale_datm(?)}";
 
 	/**
 	 * Construct with properties.
@@ -44,7 +47,7 @@ public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProc
 	 */
 	public StaleAuditDataProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
 		super(eventAdmin, jdbcOps, "stale audit data");
-		setJdbcCall("{? = call solaragg.process_one_aud_datum_daily_stale(?)}");
+		setJdbcCall(DEFAULT_SQL);
 		setTierProcessMax(null);
 	}
 

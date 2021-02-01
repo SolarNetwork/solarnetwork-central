@@ -26,9 +26,17 @@ package net.solarnetwork.central.domain;
  * API for a {@link SolarNode} search or filter match result.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.40
  */
 public interface SolarNodeFilterMatch extends NodeIdentity, FilterMatch<Long> {
+
+	/**
+	 * Get the metadata JSON.
+	 * 
+	 * @return the metadata
+	 * @since 1.1
+	 */
+	String getMetaJson();
 
 }

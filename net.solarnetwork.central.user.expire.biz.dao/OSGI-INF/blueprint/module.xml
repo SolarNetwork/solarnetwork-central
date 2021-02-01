@@ -33,7 +33,7 @@
 
 	<reference id="dataConfDao" interface="net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao"/>
 
-	<reference id="generalNodeDatumDao" interface="net.solarnetwork.central.datum.dao.GeneralNodeDatumDao"/>
+	<reference id="datumMaintenanceDao" interface="net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao"/>
 
 	<reference id="userNodeDao" interface="net.solarnetwork.central.user.dao.UserNodeDao"/>
 
@@ -79,7 +79,7 @@
 	<bean id="userDatumDeleteBiz" class="net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz">
 		<argument ref="executor"/>
 		<argument ref="userNodeDao"/>
-		<argument ref="generalNodeDatumDao"/>
+		<argument ref="datumMaintenanceDao"/>
 		<argument ref="datumDeleteJobInfoDao"/>
 		<property name="scheduler" ref="scheduler"/>
 		<property name="completedTaskMinimumCacheTime" value="${completedTaskMinimumCacheTime}"/>

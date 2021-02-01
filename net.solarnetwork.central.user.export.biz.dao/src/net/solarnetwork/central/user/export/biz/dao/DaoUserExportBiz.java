@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.export.biz.dao;
 
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,7 +43,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.PathMatcher;
-import net.solarnetwork.central.datum.dao.GeneralNodeDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -50,6 +52,10 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
@@ -92,7 +98,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	private final UserDatumExportTaskInfoDao taskDao;
 	private final UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private final UserNodeDao userNodeDao;
-	private final GeneralNodeDatumDao generalNodeDatumDao;
+	private final DatumStreamMetadataDao metaDao;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -119,14 +125,14 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 	 *        the ad hoc task DAO to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
-	 * @param generalNodeDatumDao
-	 *        the node datum DAO to use
+	 * @param metaDao
+	 *        the metadata DAO to use
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
 			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao,
 			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao,
-			GeneralNodeDatumDao generalNodeDatumDao) {
+			DatumStreamMetadataDao metaDao) {
 		super();
 		this.datumExportConfigDao = datumExportConfigDao;
 		this.dataConfigDao = dataConfigDao;
@@ -135,7 +141,7 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 		this.taskDao = taskDao;
 		this.adhocTaskDao = adhocTaskDao;
 		this.userNodeDao = userNodeDao;
-		this.generalNodeDatumDao = generalNodeDatumDao;
+		this.metaDao = metaDao;
 	}
 
 	@Override
@@ -417,12 +423,16 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 
 		if ( taskDatumFilter.getSourceId() != null ) {
 			Set<String> allSourceIds = new LinkedHashSet<>();
-			DatumFilterCommand filter = new DatumFilterCommand();
-			filter.setStartDate(currExportDate);
-			filter.setEndDate(nextExportDate);
+			BasicDatumCriteria filter = new BasicDatumCriteria();
+			filter.setStartDate(fromJodaToInstant(currExportDate));
+			filter.setEndDate(fromJodaToInstant(nextExportDate));
+			filter.setObjectKind(ObjectDatumKind.Node);
 			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
 				filter.setNodeId(nodeId);
-				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(filter);
+				Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(filter);
+				Set<String> nodeSources = stream(results.spliterator(), false)
+						.map(ObjectDatumStreamMetadata::getSourceId)
+						.collect(toCollection(LinkedHashSet::new));
 				if ( nodeSources != null ) {
 					allSourceIds.addAll(nodeSources);
 				}
@@ -498,12 +508,15 @@ public class DaoUserExportBiz implements UserExportBiz, UserExportTaskBiz, Event
 			DateTime endDate = taskDatumFilter.getEndDate();
 
 			Set<String> allSourceIds = new LinkedHashSet<>();
-			DatumFilterCommand filter = new DatumFilterCommand();
-			filter.setStartDate(startDate);
-			filter.setEndDate(endDate);
+			BasicDatumCriteria filter = new BasicDatumCriteria();
+			filter.setStartDate(fromJodaToInstant(startDate));
+			filter.setEndDate(fromJodaToInstant(endDate));
 			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
 				filter.setNodeId(nodeId);
-				Set<String> nodeSources = generalNodeDatumDao.getAvailableSources(filter);
+				Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(filter);
+				Set<String> nodeSources = stream(results.spliterator(), false)
+						.map(ObjectDatumStreamMetadata::getSourceId)
+						.collect(toCollection(LinkedHashSet::new));
 				if ( nodeSources != null ) {
 					allSourceIds.addAll(nodeSources);
 				}

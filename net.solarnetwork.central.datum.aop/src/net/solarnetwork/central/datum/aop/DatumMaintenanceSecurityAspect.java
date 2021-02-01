@@ -46,8 +46,6 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 	 * 
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
-	 * @param nodeDatumDao
-	 *        the datum DAO to use
 	 */
 	public DatumMaintenanceSecurityAspect(UserNodeDao userNodeDao) {
 		super(userNodeDao);
