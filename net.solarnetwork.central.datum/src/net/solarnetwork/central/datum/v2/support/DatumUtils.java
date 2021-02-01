@@ -97,7 +97,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
 public final class DatumUtils {
@@ -478,7 +478,7 @@ public final class DatumUtils {
 		}
 		BigDecimal[][] aStats = stats.getAccumulating();
 		String[] propNames = meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating);
-		if ( propNames == null || propNames.length > len ) {
+		if ( propNames == null || propNames.length < len ) {
 			return;
 		}
 		for ( int i = 0; i < len; i++ ) {

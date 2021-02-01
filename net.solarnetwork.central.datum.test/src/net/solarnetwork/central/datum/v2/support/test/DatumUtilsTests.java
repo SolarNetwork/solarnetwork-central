@@ -341,6 +341,37 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void toGeneralNodeDatum_moreAccumulatingPropNamesThanStatValues() {
+		// GIVEN
+		DatumProperties props = newProps();
+		DatumPropertiesStatistics stats = newStats();
+		ReadingDatumEntity datum = new ReadingDatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.HOURS).plusMillis(123L), Aggregation.Hour,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).plusSeconds(3600).plusMillis(234L), props,
+				stats);
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
+				"Pacific/Auckland", ObjectDatumKind.Node, 1L, "a", new String[] { "a", "b", "c", "d" },
+				new String[] { "e", "f", "g", "gg", "ggg" }, new String[] { "h", "i" });
+
+		// WHEN
+		ReportingGeneralNodeDatum d = DatumUtils.toGeneralNodeDatum(datum, meta);
+
+		// THEN
+		assertThat("Node ID copied from meta", d.getNodeId(), equalTo(meta.getObjectId()));
+		assertThat("Source ID copied from meta", d.getSourceId(), equalTo(meta.getSourceId()));
+		assertThat("Timestamp copied from datum and meta time zone", d.getCreated(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId()))));
+		assertThat("Local date copied from datum and meta time zone", d.getLocalDateTime(),
+				equalTo(new org.joda.time.DateTime(datum.getTimestamp().toEpochMilli(),
+						org.joda.time.DateTimeZone.forID(meta.getTimeZoneId())).toLocalDateTime()));
+		assertThat("Received date NOT copied from datum (not part of Datum API)", d.getPosted(),
+				nullValue());
+		assertReadingGeneralDatumSamples(d.getSamples(),
+				datum.getEndTimestamp().atZone(ZoneId.of(meta.getTimeZoneId())));
+	}
+
+	@Test
 	public void criteriaFromFilter_datumFilterCommand_aggNodeSourceDateRange() {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();
