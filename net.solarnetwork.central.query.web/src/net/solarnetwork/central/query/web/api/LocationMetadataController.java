@@ -46,7 +46,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location metadata actions.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
@@ -93,7 +93,7 @@ public class LocationMetadataController extends WebServiceControllerSupport {
 			loc = new SolarLocation();
 		}
 		if ( query != null ) {
-			loc.setRegion(query);
+			loc.setName(query);
 		}
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		if ( command != null ) {
