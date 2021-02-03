@@ -891,9 +891,9 @@ $$
 		SELECT
 			  p.idx
 			, p.val
-			, first_value(d.read_a[p.idx][1]) OVER slot AS rstart
-			, last_value(d.read_a[p.idx][2]) OVER slot AS rend
-			, d.read_a[p.idx][3] AS rdiff
+			, d.read_a[p.idx][1] AS rdiff
+			, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
+			, last_value(d.read_a[p.idx][3]) OVER slot AS rend
 		FROM d
 		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
@@ -904,9 +904,9 @@ $$
 		SELECT
 			idx
 			, to_char(sum(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, sum(rdiff) AS rdiff
 			, min(rstart) AS rstart
 			, min(rend) AS rend
-			, sum(rdiff) AS rdiff
 		FROM wa
 		GROUP BY idx
 	)
@@ -915,7 +915,7 @@ $$
 		SELECT
 			  array_agg(val ORDER BY idx) AS data_a
 			, array_agg(
-				ARRAY[rstart, rend, rdiff] ORDER BY idx
+				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
 		FROM da
 	)
@@ -1020,9 +1020,9 @@ $$
 		SELECT
 			  p.idx
 			, p.val
-			, first_value(d.read_a[p.idx][1]) OVER slot AS rstart
-			, last_value(d.read_a[p.idx][2]) OVER slot AS rend
-			, d.read_a[p.idx][3] AS rdiff
+			, d.read_a[p.idx][1] AS rdiff
+			, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
+			, last_value(d.read_a[p.idx][3]) OVER slot AS rend
 		FROM d
 		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 		WHERE p.val IS NOT NULL
@@ -1044,7 +1044,7 @@ $$
 		SELECT
 			  array_agg(val ORDER BY idx) AS data_a
 			, array_agg(
-				ARRAY[rstart, rend, rdiff] ORDER BY idx
+				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
 		FROM da
 	)

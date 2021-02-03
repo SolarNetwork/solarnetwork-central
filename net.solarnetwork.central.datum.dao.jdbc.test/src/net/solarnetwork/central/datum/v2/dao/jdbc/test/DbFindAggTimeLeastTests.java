@@ -152,7 +152,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "200", "100") })));
+								new BigDecimal[][] { decimalArray("100", "100", "200") })));
 	}
 
 	@Test
@@ -176,7 +176,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "200", "100") })));
+								new BigDecimal[][] { decimalArray("100", "100", "200") })));
 	}
 
 	@Test
@@ -200,7 +200,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "200", "100") })));
+								new BigDecimal[][] { decimalArray("100", "100", "200") })));
 	}
 
 	@Test
@@ -245,7 +245,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "200", "100") })));
+								new BigDecimal[][] { decimalArray("100", "100", "200") })));
 
 		ZonedDateTime date_b = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		assertAggregateDatum("Least result returned B", datum_b,
@@ -254,7 +254,7 @@ public class DbFindAggTimeLeastTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "201", "101") })));
+								new BigDecimal[][] { decimalArray("101", "100", "201") })));
 	}
 
 }

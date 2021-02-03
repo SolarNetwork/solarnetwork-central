@@ -136,7 +136,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
 												decimalArray("48", "2.0", "7.8") },
-										new BigDecimal[][] { decimalArray("100", "928", "828") }));
+										new BigDecimal[][] { decimalArray("828", "100", "928") }));
 
 						assertAggregateDatum("Function results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
@@ -168,7 +168,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 												decimalArray("6", "2.0", "7.1") },
-										new BigDecimal[][] { decimalArray("100", "201", "101") }));
+										new BigDecimal[][] { decimalArray("101", "100", "201") }));
 
 						assertAggregateDatum("Function results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
@@ -244,8 +244,8 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 										new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
 												decimalArray("36", "2.0", "7.7"),
 												decimalArray("18", "40.0", "100.1") },
-										new BigDecimal[][] { decimalArray("100", "928", "621"),
-												decimalArray("1000", "3402", "2402") }));
+										new BigDecimal[][] { decimalArray("621", "100", "928"),
+												decimalArray("2402", "1000", "3402") }));
 
 						assertAggregateDatum("Function results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);

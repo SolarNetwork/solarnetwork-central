@@ -131,7 +131,7 @@ public class DbFindAggDowTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("18", "1.1", "3.1"),
 										decimalArray("18", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "800", null) })));
+								new BigDecimal[][] { decimalArray(null, "100", "800") })));
 		assertAggregateDatum("Tuesday result", results.get(1),
 				new AggregateDatumEntity(streamId, date.plusDays(1).toInstant(), Aggregation.DayOfWeek,
 						propertiesOf(decimalArray("1.4", "4.1"), decimalArray("600"), null, null),

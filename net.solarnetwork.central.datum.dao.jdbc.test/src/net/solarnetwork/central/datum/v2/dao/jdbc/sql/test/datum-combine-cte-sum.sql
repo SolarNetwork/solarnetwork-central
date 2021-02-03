@@ -47,9 +47,9 @@
 		, p.val
 		, rank() OVER slot as prank
 		, d.names_a[p.idx] AS pname 
-		, first_value(d.read_a[p.idx][1]) OVER slot AS rstart
-		, last_value(d.read_a[p.idx][2]) OVER slot AS rend
-		, d.read_a[p.idx][3] AS rdiff
+		, d.read_a[p.idx][1] AS rdiff
+		, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
+		, last_value(d.read_a[p.idx][3]) OVER slot AS rend
 	FROM d
 	INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 	WHERE p.val IS NOT NULL
@@ -75,7 +75,7 @@
 		, ts
 		, array_agg(val ORDER BY pname) AS data_a
 		, array_agg(
-			ARRAY[NULL, NULL, rdiff] ORDER BY pname
+			ARRAY[rdiff, NULL, NULL] ORDER BY pname
 		) AS read_a
 		, array_agg(pname ORDER BY pname) AS names_a
 	FROM da
