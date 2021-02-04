@@ -50,7 +50,7 @@ import org.osgi.service.event.EventAdmin;
  * 
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -76,6 +76,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	private String jobGroup;
 	private String jobCron = DEFAULT_CRON;
 	private ExecutorService executorService = Executors.newCachedThreadPool();
+	private ExecutorService parallelTaskExecutorService = null;
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
@@ -220,6 +221,17 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	protected abstract boolean handleJob(Event job) throws Exception;
 
+	private ExecutorService executorServiceForParallelTasks() {
+		ExecutorService s = getParallelTaskExecutorService();
+		if ( s == null ) {
+			s = getExecutorService();
+		}
+		if ( s == null ) {
+			throw new RuntimeException("No ExecutorService is configured for parallel tasks.");
+		}
+		return s;
+	}
+
 	/**
 	 * Execute the job in parallel via multiple threads.
 	 * 
@@ -267,7 +279,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 		final AtomicInteger remainingCount = new AtomicInteger(tIterations);
 		boolean allDone = false;
 		if ( tCount > 1 ) {
-			final ExecutorService executorService = getExecutorService();
+			final ExecutorService executorService = executorServiceForParallelTasks();
 			final CountDownLatch latch = new CountDownLatch(tCount);
 			final long tJitter = getJitter();
 			final List<Future<?>> futures = new ArrayList<>();
@@ -483,6 +495,31 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	public void setExecutorService(ExecutorService executorService) {
 		this.executorService = executorService;
+	}
+
+	/**
+	 * Get the executor to handle parallel job tasks with.
+	 * 
+	 * <p>
+	 * If not defined, then {@link #getExecutorService()} will be used.
+	 * </p>
+	 * 
+	 * @return the service
+	 * @since 1.8
+	 */
+	public ExecutorService getParallelTaskExecutorService() {
+		return parallelTaskExecutorService;
+	}
+
+	/**
+	 * Set the executor to handle parallel job tasks with.
+	 * 
+	 * @param parallelTaskExecutorService
+	 *        the service to set
+	 * @since 1.8
+	 */
+	public void setParallelTaskExecutorService(ExecutorService parallelTaskExecutorService) {
+		this.parallelTaskExecutorService = parallelTaskExecutorService;
 	}
 
 	/**
