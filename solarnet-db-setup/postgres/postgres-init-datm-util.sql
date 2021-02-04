@@ -105,7 +105,7 @@ BEGIN
 		-- join data_t property values into mega array
 		, dt_ary AS (
 			SELECT
-				  array_agg(p.val ORDER BY d.ts) AS data_t
+				  array_agg(DISTINCT p.val) AS data_t
 			FROM d
 			INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
 			WHERE d.data_t IS NOT NULL

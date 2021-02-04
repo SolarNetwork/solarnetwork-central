@@ -30,6 +30,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDa
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
@@ -804,6 +805,51 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 				assertThat("Stats accumulating", result.getStatistics().getAccumulating(), nullValue());
 				assertThat("Agg status is most frequent value", result.getProperties().getStatus(),
 						arrayContaining("B", "DD"));
+			}
+		});
+	}
+
+	@Test
+	public void hour_withTag() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-14.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatum> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatum result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg instantaneous", result.getProperties().getInstantaneous(),
+						arrayOfDecimals("1.45", "5.1", "45.1"));
+				assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+						arrayOfDecimals("20", "200"));
+				assertThat("Agg tags", result.getProperties().getTags(), arrayContaining("Ohboy"));
+			}
+		});
+	}
+
+	@Test
+	public void hour_withTags_repeatedTag() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-datum-36.txt", start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatum> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatum result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+				assertThat("Agg tags", result.getProperties().getTags(),
+						arrayContainingInAnyOrder("Yeehaw", "Blamo", "Ohboy"));
 			}
 		});
 	}

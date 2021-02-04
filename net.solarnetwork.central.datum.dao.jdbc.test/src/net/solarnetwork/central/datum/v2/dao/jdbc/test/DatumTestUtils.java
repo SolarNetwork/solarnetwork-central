@@ -178,8 +178,8 @@ public final class DatumTestUtils {
 						Matchers.arrayContaining(expected.getProperties().getStatus()));
 			}
 			if ( expected.getProperties().getTags() != null ) {
-				assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
-						Matchers.arrayContaining(expected.getProperties().getAccumulating()));
+				assertThat(prefix + " tags", result.getProperties().getTags(),
+						Matchers.arrayContainingInAnyOrder(expected.getProperties().getTags()));
 			}
 		}
 	}
