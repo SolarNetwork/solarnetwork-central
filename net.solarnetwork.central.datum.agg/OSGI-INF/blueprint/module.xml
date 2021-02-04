@@ -61,10 +61,19 @@
 	<!-- Supporting Services -->
 	
 	<!-- A common thread pool for these jobs -->
-	<bean id="executorService" class="org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean" destroy-method="shutdown">
-		<property name="threadFactory">
+	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown">
+		<argument>
 			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
 				<argument value="SolarNet-Datum-Agg-"/>
+			</bean>
+		</argument>
+	</bean>
+
+	<!-- A common parallel task thread pool for these jobs -->
+	<bean id="parallelTaskExecutorService" class="org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean" destroy-method="shutdown">
+		<property name="threadFactory">
+			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
+				<argument value="SolarNet-Datum-Agg-Task-"/>
 			</bean>
 		</property>
 		<property name="corePoolSize" value="${threadPool.core}"/>
@@ -73,12 +82,12 @@
 		<property name="allowCoreThreadTimeOut" value="${threadPool.allowCoreTimeout}"/>
 	</bean>
 	
-	
 	<bean id="staleDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
@@ -93,6 +102,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
@@ -107,6 +117,7 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
