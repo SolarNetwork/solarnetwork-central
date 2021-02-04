@@ -20,6 +20,11 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
+		<beans:prop key="threadPool.core">4</beans:prop>
+		<beans:prop key="threadPool.max">16</beans:prop>
+		<beans:prop key="threadPool.timeout">60</beans:prop>
+		<beans:prop key="threadPool.allowCoreTimeout">true</beans:prop>
+	
 		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
 		<beans:prop key="staleNodeDatumProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
@@ -30,12 +35,6 @@
 		<beans:prop key="staleAuditNodeDatumProcessor.hourly.jobCron">45 3/5 * * * ?</beans:prop>
 		<beans:prop key="staleAuditNodeDatumProcessor.daily.jobCron">30 4/5 * * * ?</beans:prop>
 		<beans:prop key="staleAuditNodeDatumProcessor.monthly.jobCron">45 10/20 * * * ?</beans:prop>
-		
-		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
-		<beans:prop key="staleLocationDatumProcessor.taskCount">2</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.hourly.jobCron">5 0/1 * * * ?</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.daily.jobCron">20 0/5 * * * ?</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.monthly.jobCron">35 0/20 * * * ?</beans:prop>
 		
 		<beans:prop key="staleSolarFluxProcessor.maximumRowCount">1000</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.taskCount">4</beans:prop>
@@ -62,13 +61,18 @@
 	<!-- Supporting Services -->
 	
 	<!-- A common thread pool for these jobs -->
-	<bean id="executorService" class="java.util.concurrent.Executors" factory-method="newCachedThreadPool" destroy-method="shutdown">
-		<argument>
+	<bean id="executorService" class="org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean" destroy-method="shutdown">
+		<property name="threadFactory">
 			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
 				<argument value="SolarNet-Datum-Agg-"/>
 			</bean>
-		</argument>
+		</property>
+		<property name="corePoolSize" value="${threadPool.core}"/>
+		<property name="maxPoolSize" value="${threadPool.max}"/>
+		<property name="keepAliveSeconds" value="${threadPool.timeout}"/>
+		<property name="allowCoreThreadTimeOut" value="${threadPool.allowCoreTimeout}"/>
 	</bean>
+	
 	
 	<bean id="staleDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
