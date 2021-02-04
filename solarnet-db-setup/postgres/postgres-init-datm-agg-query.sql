@@ -517,7 +517,7 @@ $$
 	, di AS (
 		SELECT
 			w.idx
-			, to_char(avg(w.val), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(avg(w.val), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, count(w.val) AS cnt
 			, min(val) AS val_min
 			, max(val) AS val_max
@@ -574,8 +574,8 @@ $$
 	, da AS (
 		SELECT
 			  idx
-			, to_char(sum(diff * portion), 'FM999999999999999999990.999999999')::numeric AS cdiff
-			, to_char(sum(diff) FILTER (WHERE rinc), 'FM999999999999999999990.999999999')::numeric AS rdiff
+			, to_char(sum(diff * portion), 'FM999999999999999999999999990.999999999')::numeric AS cdiff
+			, to_char(sum(diff) FILTER (WHERE rinc), 'FM999999999999999999999999990.999999999')::numeric AS rdiff
 			, solarcommon.first(val ORDER BY ts, rtype) FILTER (WHERE rinc) AS rstart
 			, solarcommon.first(val ORDER BY ts DESC, rtype DESC) FILTER (WHERE rinc) AS rend
 		FROM wa
@@ -705,7 +705,7 @@ $$
 		SELECT
 			  p.idx
 			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
-			, to_char(avg(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(avg(val), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, count(p.val) AS cnt
 			, min(p.val) AS val_min
 			, max(p.val) AS val_max
@@ -764,7 +764,7 @@ $$
 		SELECT
 			  idx
 			, ts_start
-			, to_char(sum((diff_before * portion_before) + (diff_after * portion_after)), 'FM999999999999999999990.999999999')::numeric AS cdiff
+			, to_char(sum((diff_before * portion_before) + (diff_after * portion_after)), 'FM999999999999999999999999990.999999999')::numeric AS cdiff
 		FROM wa
 		GROUP BY idx, ts_start
 	)
@@ -870,7 +870,7 @@ $$
 	, di AS (
 		SELECT
 			idx
-			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, sum(cnt) AS cnt
 			, min(min) AS val_min
 			, max(max) AS val_max
@@ -903,7 +903,7 @@ $$
 	, da AS (
 		SELECT
 			idx
-			, to_char(sum(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(sum(val), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, sum(rdiff) AS rdiff
 			, min(rstart) AS rstart
 			, min(rend) AS rend
@@ -999,7 +999,7 @@ $$
 	, di AS (
 		SELECT
 			idx
-			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, sum(cnt) AS cnt
 			, min(min) AS val_min
 			, max(max) AS val_max
@@ -1032,7 +1032,7 @@ $$
 	, da AS (
 		SELECT
 			idx
-			, to_char(sum(val), 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(sum(val), 'FM999999999999999999999999990.999999999')::numeric AS val
 			, min(rstart) AS rstart
 			, min(rend) AS rend
 			, sum(rdiff) AS rdiff
