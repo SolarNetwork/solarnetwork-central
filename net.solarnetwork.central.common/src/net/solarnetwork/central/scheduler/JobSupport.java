@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.scheduler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
@@ -267,8 +270,9 @@ public abstract class JobSupport extends EventHandlerSupport {
 			final ExecutorService executorService = getExecutorService();
 			final CountDownLatch latch = new CountDownLatch(tCount);
 			final long tJitter = getJitter();
+			final List<Future<?>> futures = new ArrayList<>();
 			for ( int i = 0; i < tCount; i++ ) {
-				executorService.submit(new Runnable() {
+				futures.add(executorService.submit(new Runnable() {
 
 					@Override
 					public void run() {
@@ -300,12 +304,21 @@ public abstract class JobSupport extends EventHandlerSupport {
 							latch.countDown();
 						}
 					}
-				});
+				}));
 			}
 			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
 			if ( !allDone ) {
 				log.warn("Timeout processing {} iterations; {}/{} tasks completed", taskName,
 						(tCount - latch.getCount()), tCount);
+				for ( Future<?> f : futures ) {
+					try {
+						if ( f.cancel(false) ) {
+							log.info("Cancelled task {}", taskName);
+						}
+					} catch ( Exception e ) {
+						log.warn("Error cancelling task {}: {}", taskName, e.toString());
+					}
+				}
 			}
 		} else
 
