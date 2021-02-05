@@ -56,7 +56,7 @@ BEGIN
 				  p.idx
 				, to_char(solarcommon.first(val ORDER BY ts) +
 					(solarcommon.first(val ORDER BY ts DESC) - solarcommon.first(val ORDER BY ts)) * min(portion)
-					, 'FM999999999999999999999999990.999999999')::numeric AS val
+					, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			FROM d
 			INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
 			WHERE p.val IS NOT NULL
@@ -74,7 +74,7 @@ BEGIN
 				  p.idx
 				, to_char(solarcommon.first(val ORDER BY ts) +
 					(solarcommon.first(val ORDER BY ts DESC) - solarcommon.first(val ORDER BY ts)) * min(portion)
-					, 'FM999999999999999999999999990.999999999')::numeric AS val
+					, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			FROM d
 			INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
 			WHERE p.val IS NOT NULL
@@ -293,7 +293,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -311,7 +311,7 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val, 'FM999999999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
 	)
 	, da_ary AS (
