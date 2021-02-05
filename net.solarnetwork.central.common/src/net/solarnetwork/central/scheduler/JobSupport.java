@@ -31,6 +31,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
@@ -284,39 +285,46 @@ public abstract class JobSupport extends EventHandlerSupport {
 			final long tJitter = getJitter();
 			final List<Future<?>> futures = new ArrayList<>();
 			for ( int i = 0; i < tCount; i++ ) {
-				futures.add(executorService.submit(new Runnable() {
+				try {
+					futures.add(executorService.submit(new Runnable() {
 
-					@Override
-					public void run() {
-						if ( tJitter > 0 ) {
-							long delay = (long) Math.ceil(Math.random() * tJitter);
-							if ( delay > 0 ) {
-								log.debug("Delaying thread {} start of processing {} by jitter of {}ms",
-										Thread.currentThread().getName(), taskName, delay);
-								try {
-									Thread.sleep(delay);
-								} catch ( InterruptedException e ) {
-									// ignore
+						@Override
+						public void run() {
+							if ( tJitter > 0 ) {
+								long delay = (long) Math.ceil(Math.random() * tJitter);
+								if ( delay > 0 ) {
+									log.debug(
+											"Delaying thread {} start of processing {} by jitter of {}ms",
+											Thread.currentThread().getName(), taskName, delay);
+									try {
+										Thread.sleep(delay);
+									} catch ( InterruptedException e ) {
+										// ignore
+									}
 								}
 							}
-						}
-						log.debug("Thread {} processing at most {} {} iterations",
-								Thread.currentThread().getName(), tIterations, taskName);
-						try {
-							int processedCount = executeJobTask(job, remainingCount);
-							log.debug("Thread {} processed {} {} iterations",
-									Thread.currentThread().getName(), processedCount, taskName);
-						} catch ( Exception e ) {
-							Throwable root = e;
-							while ( root.getCause() != null ) {
-								root = root.getCause();
+							log.debug("Thread {} processing at most {} {} iterations",
+									Thread.currentThread().getName(), tIterations, taskName);
+							try {
+								int processedCount = executeJobTask(job, remainingCount);
+								log.debug("Thread {} processed {} {} iterations",
+										Thread.currentThread().getName(), processedCount, taskName);
+							} catch ( Exception e ) {
+								Throwable root = e;
+								while ( root.getCause() != null ) {
+									root = root.getCause();
+								}
+								log.error("Error processing {} iteration: {}", taskName, e.toString(),
+										root);
+							} finally {
+								latch.countDown();
 							}
-							log.error("Error processing {} iteration: {}", taskName, e.toString(), root);
-						} finally {
-							latch.countDown();
 						}
-					}
-				}));
+					}));
+				} catch ( RejectedExecutionException e ) {
+					latch.countDown();
+					log.warn("Unable to process {}: queue full", taskName);
+				}
 			}
 			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
 			if ( !allDone ) {
@@ -332,9 +340,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 					}
 				}
 			}
-		} else
-
-		{
+		} else {
 			executeJobTask(job, remainingCount);
 			allDone = true;
 		}
