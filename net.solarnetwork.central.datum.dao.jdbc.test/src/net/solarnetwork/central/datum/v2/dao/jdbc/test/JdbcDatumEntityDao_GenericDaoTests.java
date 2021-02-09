@@ -245,7 +245,7 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 				ObjectDatumKind.Node, 1L, "a",
 				new String[] { "watts", "current", "dcPower", "voltage", "dcVoltage", "frequency",
 						"reactivePower", "neutralCurrent" },
-				new String[] { "wattHours" },
+				new String[] { "wattHours", "wh" },
 				new String[] { "limits", "opState", "opStates", "faults" });
 
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Collections.singleton(meta));
@@ -262,25 +262,23 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 		/*-
 		 {"i":{
-		 	"watts":			36700, 
-		 	"current":			41.7, 
 		 	"dcPower":			36901, 
 		 	"voltage":			11.5, 
 		 	"dcVoltage":		833.0, 
 		 	"frequency":		60.0, 
-		 	"reactivePower":	0, 
 		 	"neutralCurrent":	0.8,
 		 "a":{
-		 	"wattHours":		36614420, 
+		 	"wh":				36614420, 
 		 "s":{
 		 	"opState":			"1", 
 		 	"opStates":			"1289",
 		 */
 
 		DatumProperties expectedProps = DatumProperties.propertiesOf(
-				decimalArray("36700", "41.7", "36901", "11.5", "833.0", "60.0", "0", "0.8"),
-				decimalArray("36614420"), new String[] { null, "1", "1289", null }, null);
-		assertThat("Properties stored correctly", d.getProperties(), equalTo(expectedProps));
+				decimalArray(null, null, "36901", "11.5", "833.0", "60.0", null, "0.8"),
+				decimalArray(null, "36614420"), new String[] { null, "1", "1289" }, null);
+		assertThat("Properties stored with leading NULL elements", d.getProperties(),
+				equalTo(expectedProps));
 	}
 
 }
