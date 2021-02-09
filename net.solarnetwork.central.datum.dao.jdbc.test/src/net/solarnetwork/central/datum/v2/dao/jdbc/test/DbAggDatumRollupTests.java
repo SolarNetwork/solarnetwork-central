@@ -131,14 +131,16 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.55", "5.6"), decimalArray("3600"), null,
-										null),
+								propertiesOf(decimalArray("1.55", "5.6", null),
+										decimalArray("3600", null), null, null),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
-												decimalArray("48", "2.0", "7.8") },
-										new BigDecimal[][] { decimalArray("828", "100", "928") }));
+												decimalArray("48", "2.0", "7.8"),
+												decimalArray(null, null, null) },
+										new BigDecimal[][] { decimalArray("828", "100", "928"),
+												decimalArray(null, null, null) }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -161,16 +163,19 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
+						// NOTE: the extra NULL props/stats are because our stream is defined with 3 inst, 2 acc
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null,
-										null),
+								propertiesOf(decimalArray("1.2", "2.1", null), decimalArray("100", null),
+										null, null),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
-												decimalArray("6", "2.0", "7.1") },
-										new BigDecimal[][] { decimalArray("101", "100", "201") }));
+												decimalArray("6", "2.0", "7.1"),
+												decimalArray(null, null, null) },
+										new BigDecimal[][] { decimalArray("101", "100", "201"),
+												decimalArray(null, null, null) }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -210,11 +215,12 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.55", "5.6"), null, null, null),
+								propertiesOf(decimalArray("1.55", "5.6", null), null, null, null),
 								statisticsOf(new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
-										decimalArray("48", "2.0", "7.8") }, null));
+										decimalArray("48", "2.0", "7.8"),
+										decimalArray(null, null, null) }, null));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -236,6 +242,8 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
+						//TestTransaction.flagForCommit();
+
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
 								propertiesOf(decimalArray("1.5", "5.266666667", "60.1"),
@@ -247,7 +255,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 										new BigDecimal[][] { decimalArray("621", "100", "928"),
 												decimalArray("2402", "1000", "3402") }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -274,7 +282,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 								propertiesOf(null, null, null, new String[] { "Ok", "Blamo", "Yeehaw" }),
 								statisticsOf(null, null));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});

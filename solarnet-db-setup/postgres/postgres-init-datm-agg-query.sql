@@ -505,13 +505,14 @@ $$
 		)
 	)
 	-- calculate instantaneous values per property
+	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
 	, wi AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_i[p.idx] AS val
 		FROM d
-		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL AND d.inc
+		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
+		WHERE d.inc
 	)
 	-- calculate instantaneous statistics
 	, di AS (
@@ -534,14 +535,15 @@ $$
 		FROM di d
 	)
 	-- calculate clock accumulation for data_a values per property
+	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
 	, wa AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_a[p.idx] AS val
 			, d.ts
 			, d.rtype
 			, COALESCE(CASE
-				WHEN rtype <> 2 THEN p.val - lag(p.val) OVER slot
+				WHEN rtype <> 2 THEN d.data_a[p.idx] - lag(d.data_a[p.idx]) OVER slot
 				ELSE 0::numeric
 				END, 0)::numeric AS diff
 			, CASE
@@ -566,9 +568,9 @@ $$
 			, (ts < end_ts AND NOT (ts <= start_ts AND rtype = 1)
 				OR (ts = end_ts AND rtype = 1)) AS rinc
 		FROM d
-		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts, d.rtype RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts, d.rtype
+			RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (
@@ -590,15 +592,23 @@ $$
 			) AS read_a
 		FROM da
 	)
+	-- calculate status for data_s values per property
+	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
+	, ws AS (
+		SELECT
+			  p.idx AS idx
+			, d.data_s[p.idx] AS val
+		FROM d
+		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+		WHERE d.inc
+	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
 		SELECT
-			  p.idx
-			, mode() WITHIN GROUP (ORDER BY p.val) AS val
-		FROM d
-		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL AND d.inc
-		GROUP BY p.idx
+			  ws.idx
+			, mode() WITHIN GROUP (ORDER BY ws.val) AS val
+		FROM ws
+		GROUP BY ws.idx
 	)
 	-- join data_s property values back into arrays
 	, ds_ary AS (
@@ -705,13 +715,13 @@ $$
 		SELECT
 			  p.idx
 			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
-			, to_char(avg(val), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
-			, count(p.val) AS cnt
-			, min(p.val) AS val_min
-			, max(p.val) AS val_max
+			, to_char(avg(d.data_i[p.idx]), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, count(d.data_i[p.idx]) AS cnt
+			, min(d.data_i[p.idx]) AS val_min
+			, max(d.data_i[p.idx]) AS val_max
 		FROM d
-		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL AND d.inc
+		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
+		WHERE d.inc
 		GROUP BY p.idx, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
 	)
 	-- join data_i and stat_i property values back into arrays
@@ -730,8 +740,8 @@ $$
 		SELECT
 			  p.idx
 			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
-			, COALESCE(p.val - lag(p.val) OVER slot, 0)::numeric AS diff_before
-			, COALESCE(lead(p.val) OVER slot - p.val, 0)::numeric AS diff_after
+			, COALESCE(d.data_a[p.idx] - lag(d.data_a[p.idx]) OVER slot, 0)::numeric AS diff_before
+			, COALESCE(lead(d.data_a[p.idx]) OVER slot - d.data_a[p.idx], 0)::numeric AS diff_after
 			, CASE
 				-- reset record
 				WHEN rtype = 2
@@ -755,9 +765,9 @@ $$
 				ELSE 0
 				END as portion_after
 		FROM d
-		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts, d.rtype RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts, d.rtype
+			RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (
@@ -776,16 +786,25 @@ $$
 		FROM da
 		GROUP BY ts_start
 	)
+	-- calculate status for data_s values per property
+	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
+	, ws AS (
+		SELECT
+			  p.idx AS idx
+			, d.data_s[p.idx] AS val
+			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
+		FROM d
+		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+		WHERE d.inc
+	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
 		SELECT
-			  p.idx
-			, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs)) AS ts_start
-			, mode() WITHIN GROUP (ORDER BY p.val) AS val
-		FROM d
-		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL AND d.inc
-		GROUP BY p.idx, solardatm.minute_time_slot(d.ts, solardatm.slot_seconds(secs))
+			  ws.idx
+			, ws.ts_start
+			, mode() WITHIN GROUP (ORDER BY ws.val) AS val
+		FROM ws
+		GROUP BY ws.idx, ws.ts_start
 	)
 	-- join data_s property values back into arrays
 	, ds_ary AS (
@@ -856,14 +875,13 @@ $$
 	, wi AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_i[p.idx] AS val
 			, d.stat_i[p.idx][1] AS cnt
 			, d.stat_i[p.idx][2] AS min
 			, d.stat_i[p.idx][3] AS max
 			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
 		FROM d
-		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
+		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
 		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate instantaneous statistics
@@ -890,14 +908,16 @@ $$
 	, wa AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_a[p.idx] AS val
 			, d.read_a[p.idx][1] AS rdiff
-			, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
-			, last_value(d.read_a[p.idx][3]) OVER slot AS rend
+			, first_value(d.read_a[p.idx][2]) OVER slot_start AS rstart
+			, first_value(d.read_a[p.idx][3]) OVER slot_end AS rend
 		FROM d
-		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts_start RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
+		WINDOW slot_start AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start
+				RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
+			slot_end AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start DESC
+				RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (
@@ -919,15 +939,21 @@ $$
 			) AS read_a
 		FROM da
 	)
+	-- calculate status for data_s values per property
+	, ws AS (
+		SELECT
+			  p.idx AS idx,
+			  d.data_s[p.idx] AS val
+		FROM d
+		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
 		SELECT
-			  p.idx
-			, mode() WITHIN GROUP (ORDER BY p.val) AS val
-		FROM d
-		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		GROUP BY p.idx
+			  ws.idx
+			, mode() WITHIN GROUP (ORDER BY ws.val) AS val
+		FROM ws
+		GROUP BY ws.idx
 	)
 	-- join data_s property values back into arrays
 	, ds_ary AS (
@@ -985,14 +1011,13 @@ $$
 	, wi AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_i[p.idx] AS val
 			, d.stat_i[p.idx][1] AS cnt
 			, d.stat_i[p.idx][2] AS min
 			, d.stat_i[p.idx][3] AS max
 			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
 		FROM d
-		INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
+		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
 		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate instantaneous statistics
@@ -1019,14 +1044,14 @@ $$
 	, wa AS (
 		SELECT
 			  p.idx
-			, p.val
+			, d.data_a[p.idx] AS val
 			, d.read_a[p.idx][1] AS rdiff
 			, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
 			, last_value(d.read_a[p.idx][3]) OVER slot AS rend
 		FROM d
-		INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY d.ts_start RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
+		WINDOW slot AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start
+			RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate accumulating statistics
 	, da AS (
@@ -1048,15 +1073,21 @@ $$
 			) AS read_a
 		FROM da
 	)
+	-- calculate status for data_s values per property
+	, ws AS (
+		SELECT
+			  p.idx AS idx,
+			  d.data_s[p.idx] AS val
+		FROM d
+		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
 		SELECT
-			  p.idx
-			, mode() WITHIN GROUP (ORDER BY p.val) AS val
-		FROM d
-		INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-		WHERE p.val IS NOT NULL
-		GROUP BY p.idx
+			  ws.idx
+			, mode() WITHIN GROUP (ORDER BY ws.val) AS val
+		FROM ws
+		GROUP BY ws.idx
 	)
 	-- join data_s property values back into arrays
 	, ds_ary AS (

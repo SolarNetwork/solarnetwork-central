@@ -1,0 +1,1 @@
+{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:09:00Z","samples":{"i":{"frequency":60.0, "voltage":11.5, "current":41.7, "neutralCurrent":0.8, "dcVoltage":833.0, "dcPower":36901, "watts":36700, "reactivePower":0}, "a":{"wattHours":36614420}, "s":{"opState":"1", "opStates":"1289"}}}
