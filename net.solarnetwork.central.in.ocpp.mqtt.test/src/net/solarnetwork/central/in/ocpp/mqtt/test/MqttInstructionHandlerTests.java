@@ -1,5 +1,5 @@
 /* ==================================================================
- * MattInstructionHandlerTests.java - 2/04/2020 7:01:41 pm
+ * MqttInstructionHandlerTests.java - 2/04/2020 7:01:41 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -77,7 +77,7 @@ import ocpp.v16.cp.ConfigurationStatus;
  * @author matt
  * @version 1.0
  */
-public class MattInstructionHandlerTests {
+public class MqttInstructionHandlerTests {
 
 	private ObjectMapper objectMapper;
 	private NodeInstructionDao instructionDao;
