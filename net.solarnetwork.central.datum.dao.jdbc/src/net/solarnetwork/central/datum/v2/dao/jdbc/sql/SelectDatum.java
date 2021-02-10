@@ -29,6 +29,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.time.LocalDate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
@@ -42,7 +44,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectDatum
@@ -100,12 +102,14 @@ public class SelectDatum
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
 		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
-					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+					filter.hasLocalDateRange() || isDefaultLocalDateRange()
+							? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
 		} else {
 			DatumSqlUtils.nodeMetadataFilterSql(filter,
-					filter.hasLocalDateRange() ? DatumSqlUtils.MetadataSelectStyle.WithZone
+					filter.hasLocalDateRange() || isDefaultLocalDateRange()
+							? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
 		}
@@ -192,6 +196,13 @@ public class SelectDatum
 		}
 	}
 
+	private boolean isDefaultLocalDateRange() {
+		return !filter.hasDateOrLocalDateRange() && (filter.getAggregation() == Aggregation.DayOfWeek
+				|| filter.getAggregation() == Aggregation.SeasonalDayOfWeek
+				|| filter.getAggregation() == Aggregation.HourOfDay
+				|| filter.getAggregation() == Aggregation.SeasonalHourOfDay);
+	}
+
 	protected String sqlTableName() {
 		switch (aggregation) {
 			case FiveMinute:
@@ -212,22 +223,22 @@ public class SelectDatum
 				return "solardatm.agg_datm_monthly";
 
 			case DayOfWeek:
-				return filter.hasLocalDateRange()
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_dow(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_dow(s.stream_id, ?, ?)";
 
 			case SeasonalDayOfWeek:
-				return filter.hasLocalDateRange()
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
 
 			case HourOfDay:
-				return filter.hasLocalDateRange()
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_hod(s.stream_id, ?, ?)";
 
 			case SeasonalHourOfDay:
-				return filter.hasLocalDateRange()
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
 
@@ -327,7 +338,11 @@ public class SelectDatum
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = DatumSqlUtils.prepareDatumMetadataFilter(filter, combine, con, stmt, p);
-		if ( filter.hasLocalDateRange() ) {
+		if ( isDefaultLocalDateRange() ) {
+			// currently this implies a DOW/HOD style query; default date range will be the past 2 years
+			stmt.setObject(++p, LocalDate.now().minusYears(2).atStartOfDay(), Types.TIMESTAMP);
+			stmt.setObject(++p, LocalDate.now().plusDays(1).atStartOfDay(), Types.TIMESTAMP);
+		} else if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);

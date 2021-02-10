@@ -40,7 +40,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
@@ -619,6 +621,128 @@ public class SelectDatumTests {
 		assertThat("SQL matches", sql,
 				equalToTextResource("select-datum-daily-virtual-nodesAndSources-dates-counts.sql",
 						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_seasonal_hod_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.SeasonalHourOfDay);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_seasonal_hod_nodesAndSources_absoluteDates() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.SeasonalHourOfDay);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		stmt.setTimestamp(3, Timestamp.from(filter.getStartDate()));
+		stmt.setTimestamp(4, Timestamp.from(filter.getEndDate()));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-dates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+	}
+
+	@Test
+	public void sql_find_seasonal_hod_nodesAndSources_defaultDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.SeasonalHourOfDay);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-localDates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_seasonal_hod_nodesAndSources_defaultDates() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.SeasonalHourOfDay);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		Array sourceIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getSourceIds()))).andReturn(sourceIdsArray);
+		stmt.setArray(2, sourceIdsArray);
+		sourceIdsArray.free();
+
+		stmt.setObject(3, LocalDate.now().minusYears(2).atStartOfDay(), Types.TIMESTAMP);
+		stmt.setObject(4, LocalDate.now().plusDays(1).atStartOfDay(), Types.TIMESTAMP);
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray, sourceIdsArray);
+		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-seasonal_hod-nodesAndSources-localDates.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray, sourceIdsArray);
 	}
 
 }
