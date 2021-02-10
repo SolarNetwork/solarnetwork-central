@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
-import java.util.Set;
 import java.util.TimeZone;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -54,7 +52,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -64,7 +62,6 @@ public class DatumController extends WebServiceControllerSupport {
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
 
 	private final QueryBiz queryBiz;
-	private final PathMatcher pathMatcher;
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
@@ -93,7 +90,6 @@ public class DatumController extends WebServiceControllerSupport {
 			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
-		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -110,29 +106,12 @@ public class DatumController extends WebServiceControllerSupport {
 				new JodaDateFormatEditor(this.requestDateFormats, null, ParseMode.LocalDateTime));
 	}
 
-	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
-		if ( cmd == null || pathMatcher == null || queryBiz == null ) {
-			return;
-		}
-		String sourceId = cmd.getSourceId();
-		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getNodeIds() != null ) {
-			Set<String> allSources = queryBiz.getAvailableSources(cmd);
-			allSources = filterSources(allSources, pathMatcher, sourceId);
-			if ( !allSources.isEmpty() ) {
-				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
-			}
-		}
-	}
-
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
-				// support filtering based on sourceId path pattern, by simply finding the sources that match first
-				resolveSourceIdPattern(cmd);
-
 				FilterResults<?> results;
 				if ( cmd.getAggregation() != null ) {
 					results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd,
@@ -181,9 +160,6 @@ public class DatumController extends WebServiceControllerSupport {
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
-				// support filtering based on sourceId path pattern, by simply finding the sources that match first
-				resolveSourceIdPattern(cmd);
-
 				FilterResults<?> results;
 				if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
 					results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
