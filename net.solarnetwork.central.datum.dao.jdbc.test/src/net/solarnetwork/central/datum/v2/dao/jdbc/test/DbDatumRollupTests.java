@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
@@ -49,7 +52,11 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -83,6 +90,16 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 					Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
 		}
 		callback.doWithStream(datums, meta, streamId, results);
+	}
+
+	private void rollup(UUID streamId, ZonedDateTime aggStart, ZonedDateTime aggEnd,
+			RollupCallback callback) {
+		List<AggregateDatum> results = Collections.emptyList();
+		results = jdbcTemplate.query("select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
+				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
+				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+
+		callback.doWithStream(null, null, streamId, results);
 	}
 
 	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,
@@ -850,6 +867,41 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 				assertThat("Agg tags", result.getProperties().getTags(),
 						arrayContainingInAnyOrder("Yeehaw", "Blamo", "Ohboy"));
+			}
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void gapsInAccumulating() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", new String[] { "temp", "watts", "dcPower", "dcVoltage",
+						"frequency", "ambientTemp", "apparentPower" },
+				new String[] { "wattHours" }, null);
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-03.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2021, 2, 10, 21, 35, 0, 0, ZoneOffset.UTC);
+		rollup(meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
+					List<AggregateDatum> results) {
+				assertThat("Agg result returned", results, hasSize(1));
+
+				AggregateDatum result = results.get(0);
+				log.debug("Got result: {}", result);
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+
+				assertThat("Stats accumulating ignores gaps", result.getStatistics().getAccumulating(),
+						arrayContaining(
+								arrayOfDecimals(new String[] { "-112", "1067564247", "1067564135" })));
 			}
 		});
 	}

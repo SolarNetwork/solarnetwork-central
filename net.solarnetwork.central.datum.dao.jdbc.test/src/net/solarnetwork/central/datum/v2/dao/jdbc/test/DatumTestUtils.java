@@ -27,8 +27,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -36,6 +39,8 @@ import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
@@ -47,6 +52,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.util.ClassUtils;
@@ -57,7 +63,7 @@ import net.solarnetwork.util.NumberUtils;
  * Helper methods for datum tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class DatumTestUtils {
 
@@ -423,6 +429,51 @@ public final class DatumTestUtils {
 		assertThat(prefix + " lon", result.getLongitude(), equalTo(expected.getLongitude()));
 		assertThat(prefix + " elevation", result.getCountry(), equalTo(expected.getCountry()));
 		assertThat(prefix + " time zone", result.getTimeZoneId(), equalTo(expected.getTimeZoneId()));
+	}
+
+	/**
+	 * Get an iterator for Datum parsed from a classpath CSV file.
+	 * 
+	 * @param clazz
+	 *        the class to load the CSV resource from
+	 * @param resource
+	 *        the CSV resource to load
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @return the iterator
+	 * @since 1.1
+	 */
+	public static Iterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
+			ObjectDatumStreamMetadataProvider metaProvider) {
+		try {
+			return new DatumCsvIterator(new CsvListReader(
+					new InputStreamReader(clazz.getResourceAsStream(resource), "UTF-8"),
+					CsvPreference.STANDARD_PREFERENCE), metaProvider);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Get a list of Datum parsed from a classpath CSV file.
+	 * 
+	 * @param clazz
+	 *        the class to load the CSV resource from
+	 * @param resource
+	 *        the CSV resource to load
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @return the list
+	 * @since 1.1
+	 */
+	public static List<Datum> datumResourceToList(Class<?> clazz, String resource,
+			ObjectDatumStreamMetadataProvider metaProvider) {
+		List<Datum> result = new ArrayList<>();
+		Iterator<Datum> itr = datumResourceIterator(clazz, resource, metaProvider);
+		while ( itr.hasNext() ) {
+			result.add(itr.next());
+		}
+		return result;
 	}
 
 }
