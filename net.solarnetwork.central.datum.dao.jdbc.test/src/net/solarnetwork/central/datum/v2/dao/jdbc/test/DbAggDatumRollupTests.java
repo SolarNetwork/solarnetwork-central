@@ -131,14 +131,16 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.55", "5.6"), decimalArray("3600"), null,
-										null),
+								propertiesOf(decimalArray("1.55", "5.6", null),
+										decimalArray("3600", null), null, null),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
-												decimalArray("48", "2.0", "7.8") },
-										new BigDecimal[][] { decimalArray("100", "928", "828") }));
+												decimalArray("48", "2.0", "7.8"),
+												decimalArray(null, null, null) },
+										new BigDecimal[][] { decimalArray("828", "100", "928"),
+												decimalArray(null, null, null) }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -161,16 +163,19 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
+						// NOTE: the extra NULL props/stats are because our stream is defined with 3 inst, 2 acc
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.2", "2.1"), decimalArray("100"), null,
-										null),
+								propertiesOf(decimalArray("1.2", "2.1", null), decimalArray("100", null),
+										null, null),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
-												decimalArray("6", "2.0", "7.1") },
-										new BigDecimal[][] { decimalArray("100", "201", "101") }));
+												decimalArray("6", "2.0", "7.1"),
+												decimalArray(null, null, null) },
+										new BigDecimal[][] { decimalArray("101", "100", "201"),
+												decimalArray(null, null, null) }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -210,11 +215,12 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.55", "5.6"), null, null, null),
+								propertiesOf(decimalArray("1.55", "5.6", null), null, null, null),
 								statisticsOf(new BigDecimal[][] { decimalArray("48", "1.1", "3.8"),
-										decimalArray("48", "2.0", "7.8") }, null));
+										decimalArray("48", "2.0", "7.8"),
+										decimalArray(null, null, null) }, null));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});
@@ -236,18 +242,47 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 						AggregateDatum result = results.get(0);
 						log.debug("Got result: {}", result);
 
+						//TestTransaction.flagForCommit();
+
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
 								propertiesOf(decimalArray("1.5", "5.266666667", "60.1"),
-										decimalArray("2700", "2400"), null, null),
+										decimalArray("2700", "2400"), null, new String[] { "Ok" }),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
 												decimalArray("36", "2.0", "7.7"),
 												decimalArray("18", "40.0", "100.1") },
-										new BigDecimal[][] { decimalArray("100", "928", "621"),
-												decimalArray("1000", "3402", "2402") }));
+										new BigDecimal[][] { decimalArray("621", "100", "928"),
+												decimalArray("2402", "1000", "3402") }));
 
-						assertAggregateDatum("Function results same", results.get(0), expected);
+						assertAggregateDatum("Agg results same", results.get(0), expected);
+						assertAggregateDatum("Function results same", fnResults.get(0), expected);
+					}
+				});
+	}
+
+	@Test
+	public void multipleTags_withRepeatedTag() throws IOException {
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		loadStreamAndRollup("test-agg-hour-datum-06.txt", Aggregation.Hour, start, start.plusHours(24),
+				new RollupCallback() {
+
+					@Override
+					public void doWithStream(List<AggregateDatum> datums, ObjectDatumStreamMetadata meta,
+							UUID streamId, List<AggregateDatum> results,
+							List<AggregateDatum> fnResults) {
+						assertThat("Agg result returned", results, hasSize(1));
+						assertThat("Agg function result returned", results, hasSize(results.size()));
+
+						AggregateDatum result = results.get(0);
+						log.debug("Got result: {}", result);
+
+						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
+								Aggregation.Hour,
+								propertiesOf(null, null, null, new String[] { "Ok", "Blamo", "Yeehaw" }),
+								statisticsOf(null, null));
+
+						assertAggregateDatum("Agg results same", results.get(0), expected);
 						assertAggregateDatum("Function results same", fnResults.get(0), expected);
 					}
 				});

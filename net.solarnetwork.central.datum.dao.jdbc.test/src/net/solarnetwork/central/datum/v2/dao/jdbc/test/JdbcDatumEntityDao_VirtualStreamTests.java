@@ -280,7 +280,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Hour, props, stats));
 			datums.add(
@@ -324,7 +324,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(valueOf(33 * 2), null, null)));
 		}
 	}
 
@@ -346,7 +346,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Day, props, stats));
 			datums.add(
@@ -390,7 +390,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(valueOf(33 * 2), null, null)));
 		}
 	}
 
@@ -412,7 +412,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Day, props, stats));
 
@@ -421,7 +421,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 100)) },
 					new BigDecimal[][] {
-							decimalArray(valueOf(330 * i), valueOf(330 * (i + 1)), "330") });
+							decimalArray("330", valueOf(330 * i), valueOf(330 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_2.getStreamId(), ts, Aggregation.Day, props, stats));
 		}
@@ -466,7 +466,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					equalTo(new BigDecimal((i * 5 + i * 50) / 2.0).setScale(1)));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf("181.5"))));
+					arrayContaining(decimalArray(valueOf("181.5"), null, null)));
 		}
 	}
 
@@ -488,7 +488,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Day, props, stats));
 
@@ -497,7 +497,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 100)) },
 					new BigDecimal[][] {
-							decimalArray(valueOf(330 * i), valueOf(330 * (i + 1)), "330") });
+							decimalArray("330", valueOf(330 * i), valueOf(330 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_2.getStreamId(), ts, Aggregation.Day, props, stats));
 		}
@@ -540,7 +540,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 5 - i * 50))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf("-297"))));
+					arrayContaining(decimalArray(valueOf("-297"), null, null)));
 		}
 	}
 
@@ -562,7 +562,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Day, props, stats));
 
@@ -571,7 +571,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 			stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 100)) },
 					new BigDecimal[][] {
-							decimalArray(valueOf(330 * i), valueOf(330 * (i + 1)), "330") });
+							decimalArray("330", valueOf(330 * i), valueOf(330 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_2.getStreamId(), ts, Aggregation.Day, props, stats));
 		}
@@ -614,7 +614,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 50 - i * 5))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf("297"))));
+					arrayContaining(decimalArray(valueOf("297"), null, null)));
 		}
 	}
 
@@ -636,7 +636,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Month, props, stats));
 			datums.add(
@@ -680,7 +680,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 5 * 2))));
 			assertThat("Virtual reading Wh from combined streams",
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf(33 * 2))));
+					arrayContaining(decimalArray(valueOf(33 * 2), null, null)));
 		}
 	}
 
@@ -703,7 +703,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					new BigDecimal[] { new BigDecimal(i * 5) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { decimalArray("6", valueOf(i - 10), valueOf(i + 10)) },
-					new BigDecimal[][] { decimalArray(valueOf(33 * i), valueOf(33 * (i + 1)), "33") });
+					new BigDecimal[][] { decimalArray("33", valueOf(33 * i), valueOf(33 * (i + 1))) });
 			datums.add(
 					new AggregateDatumEntity(meta_1.getStreamId(), ts, Aggregation.Month, props, stats));
 			datums.add(
@@ -747,7 +747,7 @@ public class JdbcDatumEntityDao_VirtualStreamTests extends BaseDatumJdbcTestSupp
 					arrayContaining(decimalArray(valueOf(i * 40 + 10))));
 			assertThat("Virtual reading Wh from combined streams " + i,
 					d.getStatistics().getAccumulating()[0],
-					arrayContaining(decimalArray(null, null, valueOf(33 * 2 * 2))));
+					arrayContaining(decimalArray(valueOf(33 * 2 * 2), null, null)));
 		}
 	}
 

@@ -144,8 +144,8 @@ public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(18), new BigDecimal(i - 1),
 							new BigDecimal(i + 3) } },
-					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(i + 1),
-							new BigDecimal(3 * (i + 1)), null } });
+					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
+							new BigDecimal(3 * (i + 1)) } });
 			assertAggregateDatum("Hour " + i, d, new AggregateDatumEntity(meta.getStreamId(),
 					date.plusHours(i).toInstant(), Aggregation.HourOfDay, props, stats));
 		}

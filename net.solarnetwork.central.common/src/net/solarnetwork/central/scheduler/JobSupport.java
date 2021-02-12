@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.scheduler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
@@ -47,7 +51,7 @@ import org.osgi.service.event.EventAdmin;
  * 
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public abstract class JobSupport extends EventHandlerSupport {
 
@@ -73,6 +77,7 @@ public abstract class JobSupport extends EventHandlerSupport {
 	private String jobGroup;
 	private String jobCron = DEFAULT_CRON;
 	private ExecutorService executorService = Executors.newCachedThreadPool();
+	private ExecutorService parallelTaskExecutorService = null;
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
@@ -217,6 +222,17 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	protected abstract boolean handleJob(Event job) throws Exception;
 
+	private ExecutorService executorServiceForParallelTasks() {
+		ExecutorService s = getParallelTaskExecutorService();
+		if ( s == null ) {
+			s = getExecutorService();
+		}
+		if ( s == null ) {
+			throw new RuntimeException("No ExecutorService is configured for parallel tasks.");
+		}
+		return s;
+	}
+
 	/**
 	 * Execute the job in parallel via multiple threads.
 	 * 
@@ -264,52 +280,67 @@ public abstract class JobSupport extends EventHandlerSupport {
 		final AtomicInteger remainingCount = new AtomicInteger(tIterations);
 		boolean allDone = false;
 		if ( tCount > 1 ) {
-			final ExecutorService executorService = getExecutorService();
+			final ExecutorService executorService = executorServiceForParallelTasks();
 			final CountDownLatch latch = new CountDownLatch(tCount);
 			final long tJitter = getJitter();
+			final List<Future<?>> futures = new ArrayList<>();
 			for ( int i = 0; i < tCount; i++ ) {
-				executorService.submit(new Runnable() {
+				try {
+					futures.add(executorService.submit(new Runnable() {
 
-					@Override
-					public void run() {
-						if ( tJitter > 0 ) {
-							long delay = (long) Math.ceil(Math.random() * tJitter);
-							if ( delay > 0 ) {
-								log.debug("Delaying thread {} start of processing {} by jitter of {}ms",
-										Thread.currentThread().getName(), taskName, delay);
-								try {
-									Thread.sleep(delay);
-								} catch ( InterruptedException e ) {
-									// ignore
+						@Override
+						public void run() {
+							if ( tJitter > 0 ) {
+								long delay = (long) Math.ceil(Math.random() * tJitter);
+								if ( delay > 0 ) {
+									log.debug(
+											"Delaying thread {} start of processing {} by jitter of {}ms",
+											Thread.currentThread().getName(), taskName, delay);
+									try {
+										Thread.sleep(delay);
+									} catch ( InterruptedException e ) {
+										// ignore
+									}
 								}
 							}
-						}
-						log.debug("Thread {} processing at most {} {} iterations",
-								Thread.currentThread().getName(), tIterations, taskName);
-						try {
-							int processedCount = executeJobTask(job, remainingCount);
-							log.debug("Thread {} processed {} {} iterations",
-									Thread.currentThread().getName(), processedCount, taskName);
-						} catch ( Exception e ) {
-							Throwable root = e;
-							while ( root.getCause() != null ) {
-								root = root.getCause();
+							log.debug("Thread {} processing at most {} {} iterations",
+									Thread.currentThread().getName(), tIterations, taskName);
+							try {
+								int processedCount = executeJobTask(job, remainingCount);
+								log.debug("Thread {} processed {} {} iterations",
+										Thread.currentThread().getName(), processedCount, taskName);
+							} catch ( Exception e ) {
+								Throwable root = e;
+								while ( root.getCause() != null ) {
+									root = root.getCause();
+								}
+								log.error("Error processing {} iteration: {}", taskName, e.toString(),
+										root);
+							} finally {
+								latch.countDown();
 							}
-							log.error("Error processing {} iteration: {}", taskName, e.toString(), root);
-						} finally {
-							latch.countDown();
 						}
-					}
-				});
+					}));
+				} catch ( RejectedExecutionException e ) {
+					latch.countDown();
+					log.warn("Unable to process {}: queue full", taskName);
+				}
 			}
 			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
 			if ( !allDone ) {
 				log.warn("Timeout processing {} iterations; {}/{} tasks completed", taskName,
 						(tCount - latch.getCount()), tCount);
+				for ( Future<?> f : futures ) {
+					try {
+						if ( f.cancel(false) ) {
+							log.info("Cancelled task {}", taskName);
+						}
+					} catch ( Exception e ) {
+						log.warn("Error cancelling task {}: {}", taskName, e.toString());
+					}
+				}
 			}
-		} else
-
-		{
+		} else {
 			executeJobTask(job, remainingCount);
 			allDone = true;
 		}
@@ -470,6 +501,31 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	public void setExecutorService(ExecutorService executorService) {
 		this.executorService = executorService;
+	}
+
+	/**
+	 * Get the executor to handle parallel job tasks with.
+	 * 
+	 * <p>
+	 * If not defined, then {@link #getExecutorService()} will be used.
+	 * </p>
+	 * 
+	 * @return the service
+	 * @since 1.8
+	 */
+	public ExecutorService getParallelTaskExecutorService() {
+		return parallelTaskExecutorService;
+	}
+
+	/**
+	 * Set the executor to handle parallel job tasks with.
+	 * 
+	 * @param parallelTaskExecutorService
+	 *        the service to set
+	 * @since 1.8
+	 */
+	public void setParallelTaskExecutorService(ExecutorService parallelTaskExecutorService) {
+		this.parallelTaskExecutorService = parallelTaskExecutorService;
 	}
 
 	/**

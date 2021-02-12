@@ -35,7 +35,6 @@ BEGIN
 			, min(val_min) AS val_min
 			, max(val_max) AS val_max
 		FROM wi
-		WHERE val IS NOT NULL
 		GROUP BY idx
 	)
 	, di_ary AS (
@@ -52,9 +51,9 @@ BEGIN
 			  p.idx
 			, p.val
 			, 0::SMALLINT AS rtype
-			, s.stat[1] AS rstart
-			, s.stat[2] AS rend
-			, s.stat[3] AS rdiff
+			, s.stat[1] AS rdiff
+			, s.stat[2] AS rstart
+			, s.stat[3] AS rend
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
 		-- allow for NULL read_a input, e.g. from Minute agg
 		LEFT OUTER JOIN solarcommon.reduce_dim(agg_state.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
@@ -63,9 +62,9 @@ BEGIN
 			  p.idx
 			, p.val
 			, 1::SMALLINT AS rtype
-			, s.stat[1] AS rstart
-			, s.stat[2] AS rend
-			, s.stat[3] AS rdiff
+			, s.stat[1] AS rdiff
+			, s.stat[2] AS rstart
+			, s.stat[3] AS rend
 		FROM unnest(el.data_a) WITH ORDINALITY AS p(val,idx)
 		-- allow for NULL read_a input, e.g. from Minute agg
 		LEFT OUTER JOIN solarcommon.reduce_dim(el.read_a) WITH ORDINALITY AS s(stat, idx) ON s.idx = p.idx
@@ -75,11 +74,10 @@ BEGIN
 		SELECT
 			idx
 			, sum(val) AS val
+			, sum(rdiff) AS rdiff
 			, solarcommon.first(rstart ORDER BY rtype) AS rstart
 			, solarcommon.first(rend ORDER BY rtype DESC) AS rend
-			, sum(rdiff) AS rdiff
 		FROM wa
-		WHERE val IS NOT NULL
 		GROUP BY idx
 	)
 	-- join data_a and read_a property values back into arrays
@@ -87,7 +85,7 @@ BEGIN
 		SELECT
 			  array_agg(val ORDER BY idx) AS data_a
 			, array_agg(
-				ARRAY[rstart, rend, rdiff] ORDER BY idx
+				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
 		FROM da
 	)
@@ -132,7 +130,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -150,7 +148,7 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val, 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
 	)
 	, da_ary AS (
@@ -324,7 +322,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -342,7 +340,7 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
@@ -352,7 +350,7 @@ BEGIN
 		SELECT
 			  array_agg(val ORDER BY idx) AS data_a
 			, array_agg(
-				ARRAY[val_min, val_max, NULL] ORDER BY idx
+				ARRAY[NULL, val_min, val_max] ORDER BY idx
 			) AS read_a
 		FROM da
 	)

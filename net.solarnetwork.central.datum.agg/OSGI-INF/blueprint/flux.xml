@@ -36,6 +36,7 @@
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleSolarFluxProcessor.taskCount}"/>
 		<property name="jobCron" value="${staleSolarFluxProcessor.jobCron}"/>
+		<property name="maximumWaitMs" value="${staleSolarFluxProcessor.maximumWaitMs}"/>
 		<property name="jobId" value="StaleSolarFluxProcessor"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleSolarFluxProcessor"/>
 	</bean>

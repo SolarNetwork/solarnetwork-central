@@ -20,26 +20,30 @@
 	<!-- Configuration -->
 	
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.datum.agg">
+		<beans:prop key="threadPool.core">4</beans:prop>
+		<beans:prop key="threadPool.max">16</beans:prop>
+		<beans:prop key="threadPool.queueCapacity">16</beans:prop>
+		<beans:prop key="threadPool.timeout">60</beans:prop>
+		<beans:prop key="threadPool.allowCoreTimeout">true</beans:prop>
+	
 		<beans:prop key="staleNodeDatumProcessor.maximumRowCount">200</beans:prop>
 		<beans:prop key="staleNodeDatumProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.jobCron">15 0/1 * * * ?</beans:prop>
+		<beans:prop key="staleGeneralNodeDatumProcessor.hourly.maximumWaitMs">59000</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.daily.jobCron">30 0/5 * * * ?</beans:prop>
+		<beans:prop key="staleGeneralNodeDatumProcessor.daily.maximumWaitMs">299000</beans:prop>
 		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.jobCron">45 0/20 * * * ?</beans:prop>
+		<beans:prop key="staleGeneralNodeDatumProcessor.monthly.maximumWaitMs">1199000</beans:prop>
 
 		<beans:prop key="staleAuditNodeDatumProcessor.raw.jobCron">45 0/5 * * * ?</beans:prop>
 		<beans:prop key="staleAuditNodeDatumProcessor.hourly.jobCron">45 3/5 * * * ?</beans:prop>
 		<beans:prop key="staleAuditNodeDatumProcessor.daily.jobCron">30 4/5 * * * ?</beans:prop>
 		<beans:prop key="staleAuditNodeDatumProcessor.monthly.jobCron">45 10/20 * * * ?</beans:prop>
 		
-		<beans:prop key="staleLocationDatumProcessor.maximumRowCount">200</beans:prop>
-		<beans:prop key="staleLocationDatumProcessor.taskCount">2</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.hourly.jobCron">5 0/1 * * * ?</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.daily.jobCron">20 0/5 * * * ?</beans:prop>
-		<beans:prop key="staleGeneralLocationDatumProcessor.monthly.jobCron">35 0/20 * * * ?</beans:prop>
-		
 		<beans:prop key="staleSolarFluxProcessor.maximumRowCount">1000</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.taskCount">4</beans:prop>
 		<beans:prop key="staleSolarFluxProcessor.jobCron">45 0/1 * * * ?</beans:prop>
+		<beans:prop key="staleSolarFluxProcessor.maximumWaitMs">59000</beans:prop>
 
 		<beans:prop key="auditDatumDailyMissingPopulator.jobCron">45 15 2/8 * * ?</beans:prop>
 		<beans:prop key="auditDatumDailyMissingPopulator.jdbcCall">{? = call solardatm.populate_audit_datm_daily_missing()}</beans:prop>
@@ -69,15 +73,31 @@
 			</bean>
 		</argument>
 	</bean>
+
+	<!-- A common parallel task thread pool for these jobs -->
+	<bean id="parallelTaskExecutorService" class="org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean" destroy-method="shutdown">
+		<property name="threadFactory">
+			<bean class="org.springframework.scheduling.concurrent.CustomizableThreadFactory">
+				<argument value="SolarNet-Datum-Agg-Task-"/>
+			</bean>
+		</property>
+		<property name="corePoolSize" value="${threadPool.core}"/>
+		<property name="maxPoolSize" value="${threadPool.max}"/>
+		<property name="queueCapacity" value="${threadPool.queueCapacity}"/>
+		<property name="keepAliveSeconds" value="${threadPool.timeout}"/>
+		<property name="allowCoreThreadTimeOut" value="${threadPool.allowCoreTimeout}"/>
+	</bean>
 	
 	<bean id="staleDatumProcessorHourly" class="net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor"
 				init-method="setup">
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumWaitMs" value="${staleGeneralNodeDatumProcessor.hourly.maximumWaitMs}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.hourly.jobCron}"/>
 		<property name="jobId" value="StaleDatumStreamProcessorHourly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
@@ -89,9 +109,11 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumWaitMs" value="${staleGeneralNodeDatumProcessor.daily.maximumWaitMs}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.daily.jobCron}"/>
 		<property name="jobId" value="StaleDatumStreamProcessorDaily"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>
@@ -103,9 +125,11 @@
 		<argument ref="eventAdmin"/>
 		<argument ref="jdbcOps"/>
 		<property name="executorService" ref="executorService"/>
+		<property name="parallelTaskExecutorService" ref="parallelTaskExecutorService"/>
 		<property name="datumAppEventAcceptors" ref="datumAppEventAcceptors"/>
 		<property name="maximumIterations" value="${staleNodeDatumProcessor.maximumRowCount}"/>
 		<property name="parallelism" value="${staleNodeDatumProcessor.taskCount}"/>
+		<property name="maximumWaitMs" value="${staleGeneralNodeDatumProcessor.monthly.maximumWaitMs}"/>
 		<property name="jobCron" value="${staleGeneralNodeDatumProcessor.monthly.jobCron}"/>
 		<property name="jobId" value="StaleDatumStreamProcessorMonthly"/>
 		<property name="jobTopic" value="net/solarnetwork/central/datum/agg/StaleDatumStreamProcessor"/>

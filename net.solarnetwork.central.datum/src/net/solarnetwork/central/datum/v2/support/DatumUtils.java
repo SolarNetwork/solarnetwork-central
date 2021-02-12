@@ -97,7 +97,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 2.8
  */
 public final class DatumUtils {
@@ -243,7 +243,7 @@ public final class DatumUtils {
 			// turn tags into metadata query
 			Map<String, Object> map = new LinkedHashMap<>(tags.length);
 			for ( int i = 0; i < tags.length; i++ ) {
-				map.put(String.valueOf(i), new SearchFilter("t", tags[i], CompareOperator.EQUAL));
+				map.put(String.valueOf(i), new SearchFilter("/t", tags[i], CompareOperator.EQUAL));
 			}
 			SearchFilter sf = new SearchFilter(map, LogicOperator.OR);
 			// support merging into existing metadata query? for now assume tags take over

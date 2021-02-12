@@ -152,7 +152,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.8", "3.8"),
 										decimalArray("6", "2.7", "7.8") },
-								new BigDecimal[][] { decimalArray("821", "928", "107") })));
+								new BigDecimal[][] { decimalArray("107", "821", "928") })));
 	}
 
 	@Test
@@ -176,7 +176,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.7", "3.7"),
 										decimalArray("6", "2.6", "7.7") },
-								new BigDecimal[][] { decimalArray("715", "821", "106") })));
+								new BigDecimal[][] { decimalArray("106", "715", "821") })));
 	}
 
 	@Test
@@ -200,7 +200,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.7", "3.7"),
 										decimalArray("6", "2.6", "7.7") },
-								new BigDecimal[][] { decimalArray("715", "821", "106") })));
+								new BigDecimal[][] { decimalArray("106", "715", "821") })));
 	}
 
 	@Test
@@ -245,7 +245,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.8", "3.8"),
 										decimalArray("6", "2.7", "7.8") },
-								new BigDecimal[][] { decimalArray("821", "928", "107") })));
+								new BigDecimal[][] { decimalArray("107", "821", "928") })));
 
 		ZonedDateTime date_b = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		assertAggregateDatum("Greatest result returned B", datum_b,
@@ -254,7 +254,7 @@ public class DbFindAggTimeGreatestTests extends BaseDatumJdbcTestSupport {
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("6", "1.1", "3.1"),
 										decimalArray("6", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray("100", "201", "101") })));
+								new BigDecimal[][] { decimalArray("101", "100", "201") })));
 	}
 
 }

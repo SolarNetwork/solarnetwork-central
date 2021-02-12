@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.sql.SQLException;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.ListIterator;
@@ -79,7 +80,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.18
+ * @version 1.19
  */
 public abstract class WebServiceControllerSupport {
 
@@ -370,9 +371,28 @@ public abstract class WebServiceControllerSupport {
 			msgKey = "error.dao.duplicateKey";
 			code = "DAO.00101";
 		} else {
-			msg = "Data integrity violation";
-			msgKey = "error.dao.dataIntegrityViolation";
-			code = "DAO.00100";
+			SQLException sqlEx = null;
+			Throwable t = e;
+			while ( t.getCause() != null ) {
+				t = t.getCause();
+				if ( t instanceof SQLException ) {
+					sqlEx = (SQLException) t;
+					break;
+				}
+			}
+			if ( sqlEx != null ) {
+				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
+			}
+			if ( sqlEx != null && sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("22") ) {
+				// Class 22 — Data Exception
+				msg = "Invalid query parameter";
+				msgKey = "error.dao.sqlState.class.22";
+				code = "DAO.00103";
+			} else {
+				msg = "Data integrity violation";
+				msgKey = "error.dao.dataIntegrityViolation";
+				code = "DAO.00100";
+			}
 		}
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,

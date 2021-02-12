@@ -123,6 +123,10 @@ BEGIN
 			v_i[idx] := NULL;
 		END;
 	END LOOP;
+	IF array_lower(v_i, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_i := array_fill(NULL::NUMERIC, ARRAY[array_lower(v_i, 1) - 1]) || v_i;
+	END IF;
 
 	-- copy accumulating props
 	FOR p IN SELECT * FROM jsonb_each_text(jdata_a) LOOP
@@ -141,9 +145,13 @@ BEGIN
 		EXCEPTION WHEN others THEN
 			RAISE WARNING 'JSON value not numeric: stream %, source %, ts %, i.key %, i.value %',
 				sid, src, ddate, p.key, p.value;
-			v_i[idx] := NULL;
+			v_a[idx] := NULL;
 		END;
 	END LOOP;
+	IF array_lower(v_a, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_a := array_fill(NULL::NUMERIC, ARRAY[array_lower(v_a, 1) - 1]) || v_a;
+	END IF;
 
 	-- copy status props
 	FOR p IN SELECT * FROM jsonb_each_text(jdata_s) LOOP
@@ -159,6 +167,10 @@ BEGIN
 		END IF;
 		v_s[idx] := p.value;
 	END LOOP;
+	IF array_lower(v_s, 1) > 1 THEN
+		-- ensure array starts at position 1, because JDBC doesn't handle offset slice easily
+		v_s := array_fill(NULL::TEXT, ARRAY[array_lower(v_s, 1) - 1]) || v_s;
+	END IF;
 
 	INSERT INTO solardatm.da_datm (stream_id, ts, received, data_i, data_a, data_s, data_t)
 	VALUES (

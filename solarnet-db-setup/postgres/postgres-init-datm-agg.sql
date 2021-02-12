@@ -64,37 +64,46 @@ BEGIN
 		ts_end         := local_ts_end AT TIME ZONE tz;
 		ts_prevstart   := (local_ts_start - agg_span) AT TIME ZONE tz;
 
-		IF kind = 'h' THEN
-			EXECUTE format(
-					'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
-					'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-					'FROM solardatm.rollup_datm_for_time_span($1, $2, $3) '
-					'ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
-					'    data_i = EXCLUDED.data_i, '
-					'    data_a = EXCLUDED.data_a, '
-					'    data_s = EXCLUDED.data_s, '
-					'    data_t = EXCLUDED.data_t, '
-					'    stat_i = EXCLUDED.stat_i, '
-					'    read_a = EXCLUDED.read_a'
-					, dest_name)
-			USING stale.stream_id, stale.ts_start, ts_end;
-		ELSE
-			EXECUTE format(
-					'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
-					'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
-					'FROM solardatm.rollup_agg_data_for_time_span($1, $2, $3, $4) '
-					'ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
-					'    data_i = EXCLUDED.data_i,'
-					'    data_a = EXCLUDED.data_a,'
-					'    data_s = EXCLUDED.data_s,'
-					'    data_t = EXCLUDED.data_t,'
-					'    stat_i = EXCLUDED.stat_i,'
-					'    read_a = EXCLUDED.read_a'
-					, dest_name)
-			USING stale.stream_id, stale.ts_start, ts_end, CASE kind WHEN 'M' THEN 'd' ELSE 'h' END;
-		END IF;
+		BEGIN
+			IF kind = 'h' THEN
+				EXECUTE format(
+						'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
+						'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+						'FROM solardatm.rollup_datm_for_time_span($1, $2, $3) '
+						'ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
+						'    data_i = EXCLUDED.data_i, '
+						'    data_a = EXCLUDED.data_a, '
+						'    data_s = EXCLUDED.data_s, '
+						'    data_t = EXCLUDED.data_t, '
+						'    stat_i = EXCLUDED.stat_i, '
+						'    read_a = EXCLUDED.read_a'
+						, dest_name)
+				USING stale.stream_id, stale.ts_start, ts_end;
+			ELSE
+				EXECUTE format(
+						'INSERT INTO solardatm.%I (stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a) '
+						'SELECT stream_id, ts_start, data_i, data_a, data_s, data_t, stat_i, read_a '
+						'FROM solardatm.rollup_agg_data_for_time_span($1, $2, $3, $4) '
+						'ON CONFLICT (stream_id, ts_start) DO UPDATE SET '
+						'    data_i = EXCLUDED.data_i,'
+						'    data_a = EXCLUDED.data_a,'
+						'    data_s = EXCLUDED.data_s,'
+						'    data_t = EXCLUDED.data_t,'
+						'    stat_i = EXCLUDED.stat_i,'
+						'    read_a = EXCLUDED.read_a'
+						, dest_name)
+				USING stale.stream_id, stale.ts_start, ts_end, CASE kind WHEN 'M' THEN 'd' ELSE 'h' END;
+			END IF;
+			GET DIAGNOSTICS num_rows = ROW_COUNT;
+		EXCEPTION WHEN invalid_text_representation THEN
+			RAISE EXCEPTION 'Invalid text representation processing stream % aggregate % range % - %',
+				stale.stream_id, kind, stale.ts_start, ts_end
+			USING ERRCODE = 'invalid_text_representation',
+				SCHEMA = 'solardatm',
+				TABLE = dest_name,
+				HINT = 'Check the solardatm.rollup_datm_for_time_span()/da_datum or solardatm.rollup_agg_data_for_time_span()/solardatm.find_agg_datm_for_time_span() with matching stream/date range parameters.';
+		END;
 
-		GET DIAGNOSTICS num_rows = ROW_COUNT;
 		IF num_rows < 1 THEN
 			-- delete everything within time span, using >ts_prevstart to handle tz changes
 			EXECUTE format(

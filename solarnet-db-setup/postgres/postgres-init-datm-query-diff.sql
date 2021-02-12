@@ -18,6 +18,7 @@ $$
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts < start_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -29,6 +30,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts >= start_ts
 				AND d.ts < end_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
@@ -39,6 +41,7 @@ $$
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts < end_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -140,6 +143,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts < start_ts
 				AND d.ts >= start_ts - tolerance
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -151,6 +155,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts >= start_ts
 				AND d.ts < end_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
@@ -162,6 +167,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts < end_ts
 				AND d.ts >= start_ts - tolerance
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -260,6 +266,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts >= start_ts
 				AND d.ts < end_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
@@ -271,6 +278,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts > start_ts
 				AND d.ts <= end_ts
+				AND d.data_a IS NOT NULL
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)

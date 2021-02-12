@@ -318,6 +318,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ZonedDateTime hour = now.truncatedTo(ChronoUnit.HOURS);
 		DatumEntity d = new DatumEntity(UUID.randomUUID(), now.toInstant(), Instant.now(),
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null));
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(d.getStreamId(), "UTC",
+				ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(d.getStreamId(),
@@ -391,6 +394,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
 				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
 						null));
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
@@ -460,6 +466,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null),
 				DatumPropertiesStatistics.statisticsOf(new BigDecimal[][] { decimalArray("100") },
 						null));
+		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(agg.getStreamId(),
+				"UTC", ObjectDatumKind.Node, 1L, "a");
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		insertAggregateDatum(log, jdbcTemplate, Collections.singleton(agg));
 		insertStaleAggregateDatum(log, jdbcTemplate,
 				singleton((StaleAggregateDatum) new StaleAggregateDatumEntity(agg.getStreamId(),
@@ -498,7 +507,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 			DatumProperties props = propertiesOf(null, new BigDecimal[] { new BigDecimal(wh) }, null,
 					null);
 			DatumPropertiesStatistics stats = statisticsOf(null,
-					new BigDecimal[][] { decimalArray(valueOf(wh), valueOf(wh + 100), valueOf(100)) });
+					new BigDecimal[][] { decimalArray(valueOf(100), valueOf(wh), valueOf(wh + 100)) });
 			datums.add(new AggregateDatumEntity(meta.getStreamId(), date.toInstant(), Aggregation.Hour,
 					props, stats));
 			date = date.plusHours(1);
@@ -523,17 +532,17 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("Agg pre DST day data_a", daily.get(0).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("27600")));
 		assertThat("Agg pre DST day read_a", daily.get(0).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("0", "2400", "2400")));
+				arrayContaining(decimalArray("2400", "0", "2400")));
 
 		assertThat("Agg DST day data_a", daily.get(1).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("80500")));
 		assertThat("Agg DST day read_a", daily.get(1).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("2400", "4700", "2300")));
+				arrayContaining(decimalArray("2300", "2400", "4700")));
 
 		assertThat("Agg post DST day data_a", daily.get(2).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("140400")));
 		assertThat("Agg post DST day read_a", daily.get(2).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("4700", "7100", "2400")));
+				arrayContaining(decimalArray("2400", "4700", "7100")));
 	}
 
 	@Test
@@ -557,7 +566,7 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 			DatumProperties props = propertiesOf(null, new BigDecimal[] { new BigDecimal(wh) }, null,
 					null);
 			DatumPropertiesStatistics stats = statisticsOf(null,
-					new BigDecimal[][] { decimalArray(valueOf(wh), valueOf(wh + 100), valueOf(100)) });
+					new BigDecimal[][] { decimalArray(valueOf(100), valueOf(wh), valueOf(wh + 100)) });
 			datums.add(new AggregateDatumEntity(meta.getStreamId(), date.toInstant(), Aggregation.Hour,
 					props, stats));
 			date = date.plusHours(1);
@@ -582,17 +591,17 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("Agg pre DST day data_a", daily.get(0).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("27600")));
 		assertThat("Agg pre DST day read_a", daily.get(0).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("0", "2400", "2400")));
+				arrayContaining(decimalArray("2400", "0", "2400")));
 
 		assertThat("Agg DST day data_a", daily.get(1).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("90000")));
 		assertThat("Agg DST day read_a", daily.get(1).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("2400", "4900", "2500")));
+				arrayContaining(decimalArray("2500", "2400", "4900")));
 
 		assertThat("Agg post DST day data_a", daily.get(2).getProperties().getAccumulating(),
 				arrayContaining(decimalArray("145200")));
 		assertThat("Agg post DST day read_a", daily.get(2).getStatistics().getAccumulating()[0],
-				arrayContaining(decimalArray("4900", "7300", "2400")));
+				arrayContaining(decimalArray("2400", "4900", "7300")));
 	}
 
 }

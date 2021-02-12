@@ -39,6 +39,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
@@ -47,10 +48,13 @@ import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.dao.GenericDao;
@@ -232,6 +236,49 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 		saveNew();
 		DatumEntity datum = dao.get(lastDatum.getId());
 		assertSame(lastDatum, datum);
+	}
+
+	@Test
+	public void store_withLeadingNullPropertyArrayValues() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a",
+				new String[] { "watts", "current", "dcPower", "voltage", "dcVoltage", "frequency",
+						"reactivePower", "neutralCurrent" },
+				new String[] { "wattHours", "wh" },
+				new String[] { "limits", "opState", "opStates", "faults" });
+
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, Collections.singleton(meta));
+
+		GeneralNodeDatum datum = loadJsonDatumResource("test-datum-37.txt", getClass()).get(0);
+
+		// WHEN
+		dao.store(datum);
+
+		// THEN
+		List<Datum> rows = listDatum(jdbcTemplate);
+		assertThat("Datum stored in table", rows, hasSize(1));
+		Datum d = rows.get(0);
+
+		/*-
+		 {"i":{
+		 	"dcPower":			36901, 
+		 	"voltage":			11.5, 
+		 	"dcVoltage":		833.0, 
+		 	"frequency":		60.0, 
+		 	"neutralCurrent":	0.8,
+		 "a":{
+		 	"wh":				36614420, 
+		 "s":{
+		 	"opState":			"1", 
+		 	"opStates":			"1289",
+		 */
+
+		DatumProperties expectedProps = DatumProperties.propertiesOf(
+				decimalArray(null, null, "36901", "11.5", "833.0", "60.0", null, "0.8"),
+				decimalArray(null, "36614420"), new String[] { null, "1", "1289" }, null);
+		assertThat("Properties stored with leading NULL elements", d.getProperties(),
+				equalTo(expectedProps));
 	}
 
 }

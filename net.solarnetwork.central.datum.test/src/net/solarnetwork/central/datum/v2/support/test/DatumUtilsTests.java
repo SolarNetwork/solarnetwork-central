@@ -533,7 +533,7 @@ public class DatumUtilsTests {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
 
 		// THEN
-		assertThat("Tag converted to search filter", c.getSearchFilter(), equalTo("(t=foo)"));
+		assertThat("Tag converted to search filter", c.getSearchFilter(), equalTo("(/t=foo)"));
 	}
 
 	@Test
@@ -546,7 +546,8 @@ public class DatumUtilsTests {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
 
 		// THEN
-		assertThat("Tags converted to search filter", c.getSearchFilter(), equalTo("(|(t=foo)(t=bar))"));
+		assertThat("Tags converted to search filter", c.getSearchFilter(),
+				equalTo("(|(/t=foo)(/t=bar))"));
 	}
 
 	@Test

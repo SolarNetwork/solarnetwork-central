@@ -54,12 +54,11 @@ BEGIN
 		, di AS (
 			SELECT
 				  p.idx
-				, to_char(solarcommon.first(val ORDER BY ts) +
-					(solarcommon.first(val ORDER BY ts DESC) - solarcommon.first(val ORDER BY ts)) * min(portion)
-					, 'FM999999999999999999990.999999999')::numeric AS val
+				, to_char(solarcommon.first(d.data_i[p.idx] ORDER BY ts) +
+					(solarcommon.first(d.data_i[p.idx] ORDER BY ts DESC) - solarcommon.first(d.data_i[p.idx] ORDER BY ts)) * min(portion)
+					, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			FROM d
-			INNER JOIN unnest(d.data_i) WITH ORDINALITY AS p(val, idx) ON TRUE
-			WHERE p.val IS NOT NULL
+			INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
 			GROUP BY p.idx
 		)
 		-- join data_i and stat_i property values back into arrays
@@ -72,12 +71,11 @@ BEGIN
 		, da AS (
 			SELECT
 				  p.idx
-				, to_char(solarcommon.first(val ORDER BY ts) +
-					(solarcommon.first(val ORDER BY ts DESC) - solarcommon.first(val ORDER BY ts)) * min(portion)
-					, 'FM999999999999999999990.999999999')::numeric AS val
+				, to_char(solarcommon.first(d.data_a[p.idx] ORDER BY ts) +
+					(solarcommon.first(d.data_a[p.idx] ORDER BY ts DESC) - solarcommon.first(d.data_a[p.idx] ORDER BY ts)) * min(portion)
+					, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			FROM d
-			INNER JOIN unnest(d.data_a) WITH ORDINALITY AS p(val, idx) ON TRUE
-			WHERE p.val IS NOT NULL
+			INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
 			GROUP BY p.idx
 		)
 		-- join data_a property values back into arrays
@@ -86,15 +84,21 @@ BEGIN
 				  array_agg(val ORDER BY idx) AS data_a
 			FROM da
 		)
+		-- calculate status for data_s values per property
+		, ws AS (
+			SELECT
+				  p.idx AS idx,
+				  d.data_s[p.idx] AS val
+			FROM d
+			INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+		)
 		-- calculate status statistics, as most-frequent status values
 		, ds AS (
 			SELECT
-				  p.idx
-				, mode() WITHIN GROUP (ORDER BY p.val) AS val
-			FROM d
-			INNER JOIN unnest(d.data_s) WITH ORDINALITY AS p(val, idx) ON TRUE
-			WHERE p.val IS NOT NULL
-			GROUP BY p.idx
+				  ws.idx
+				, mode() WITHIN GROUP (ORDER BY ws.val) AS val
+			FROM ws
+			GROUP BY ws.idx
 		)
 		-- join data_s property values back into arrays
 		, ds_ary AS (
@@ -105,7 +109,7 @@ BEGIN
 		-- join data_t property values into mega array
 		, dt_ary AS (
 			SELECT
-				  array_agg(p.val ORDER BY d.ts) AS data_t
+				  array_agg(DISTINCT p.val) AS data_t
 			FROM d
 			INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
 			WHERE d.data_t IS NOT NULL
@@ -293,7 +297,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -311,7 +315,7 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val, 'FM999999999999999999990.999999999')::numeric AS val
+			, to_char(p.val, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
 	)
 	, da_ary AS (
