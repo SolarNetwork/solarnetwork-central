@@ -27,8 +27,6 @@ import static java.util.Collections.singletonMap;
 import static net.solarnetwork.util.JodaDateUtils.fromJodaToInstant;
 import static net.solarnetwork.util.JodaDateUtils.toJoda;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Iterator;
@@ -75,9 +73,9 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryAuditor;
+import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
-import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.domain.IdentifiableConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.OptionalService;
@@ -88,7 +86,7 @@ import net.solarnetwork.util.ProgressListener;
  * DAO-based implementation of {@link DatumExportBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoDatumExportBiz implements DatumExportBiz {
 
@@ -230,22 +228,21 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, new DateTime());
 			} catch ( Exception e ) {
-				log.warn("Error exporting datum for task {}", this, e);
+				log.warn("Error exporting datum for task {}", this, e.getMessage());
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
+				final boolean justMessage = (root instanceof DatumExportException);
 				StringBuilder msg = new StringBuilder();
-				msg.append(root.getClass().getSimpleName());
-				if ( root.getMessage() != null ) {
+				if ( !justMessage || root.getMessage() == null ) {
+					msg.append(root.getClass().getSimpleName());
+				}
+				if ( !justMessage && root.getMessage() != null ) {
 					msg.append(": ").append(root.getMessage());
 				}
-				msg.append("\n");
-				try (StringWriter sout = new StringWriter(); PrintWriter out = new PrintWriter(sout)) {
-					root.printStackTrace(out);
-					msg.append(sout.toString());
-				} catch ( IOException e2 ) {
-					// ignore
+				if ( !justMessage ) {
+					log.warn("Task {} root cause", this, root);
 				}
 				updateTaskStatus(DatumExportState.Completed, Boolean.FALSE, msg.toString(),
 						new DateTime());
