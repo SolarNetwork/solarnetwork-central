@@ -70,6 +70,8 @@
 		<bean class="net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao">
 			<argument ref="jdbcOps"/>
 			<property name="streamMetadataCache" ref="streamMetadataCache"/>
+			<property name="bulkLoadDataSource" ref="dataSource"/>
+			<property name="bulkLoadTransactionManager" ref="txManager"/>
 		</bean>
 	</service>
 	

@@ -61,6 +61,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
@@ -80,7 +81,7 @@ import net.solarnetwork.web.domain.Response;
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.19
+ * @version 1.20
  */
 public abstract class WebServiceControllerSupport {
 
@@ -698,6 +699,27 @@ public abstract class WebServiceControllerSupport {
 			cause = cause.getCause();
 		}
 		return new Response<Object>(Boolean.FALSE, "E.00500", cause.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link MultipartException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 1.20
+	 */
+	@ExceptionHandler(MultipartException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleMultipartException(MultipartException e) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Error parsing multipart HTTP request");
+		String msg = e.getMostSpecificCause().getMessage();
+		if ( msg != null && !msg.isEmpty() ) {
+			buf.append(": ").append(msg);
+		}
+		return new Response<Object>(Boolean.FALSE, "422", buf.toString(), null);
 	}
 
 	/**

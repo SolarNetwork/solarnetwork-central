@@ -569,8 +569,8 @@ public class JdbcDatumEntityDao
 		*/
 
 		SelectDatum sql = new SelectDatum(filter);
-		RowMapper<? extends Datum> mapper = (filter.getAggregation() != null
-				? mapperForAggregate(filter.getAggregation(), filter.getReadingType() != null)
+		RowMapper<? extends Datum> mapper = (agg != Aggregation.None
+				? mapperForAggregate(agg, filter.getReadingType() != null)
 				: DatumEntityRowMapper.INSTANCE);
 
 		// attempt count first, if NOT mostRecent query and NOT a *Minute, *DayOfWeek, or *HourOfDay, or RunningTotal aggregate levels
