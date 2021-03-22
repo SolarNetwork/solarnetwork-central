@@ -453,7 +453,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				CompletableFuture<Set<String>> f = rss
 						.deleteResources(Arrays.asList(dataFile.getName()));
 				f.get(resourceStorageWaitMs, TimeUnit.MILLISECONDS);
-				log.info("Deleted completed data import resource from storage [{}]: {}", rss.getUid());
+				log.info("Deleted completed data import resource from storage [{}]: {}", rss.getUid(),
+						dataFile.getName());
 			} catch ( TimeoutException e ) {
 				log.warn(
 						"Timeout waiting {}ms to delete data import file [{}] from resource storage [{}]",
@@ -579,8 +580,17 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			this.info = info;
 		}
 
-		private boolean isExecuting() {
+		private synchronized boolean isExecuting() {
 			return progressExecutor != null;
+		}
+
+		private synchronized ExecutorService progressExecutor() {
+			ExecutorService s = this.progressExecutor;
+			if ( s == null ) {
+				s = Executors.newSingleThreadExecutor();
+				this.progressExecutor = s;
+			}
+			return s;
 		}
 
 		@Override
@@ -638,8 +648,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				if ( info.getImportState() != DatumImportState.Completed ) {
 					updateTaskStatus(DatumImportState.Completed);
 				}
-				if ( progressExecutor != null && !progressExecutor.isShutdown() ) {
-					progressExecutor.shutdown();
+				ExecutorService s = progressExecutor();
+				if ( !s.isShutdown() ) {
+					s.shutdown();
 				}
 			}
 			return new BasicDatumImportResult(info);
@@ -664,9 +675,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			if ( completionDate != null ) {
 				info.setCompleted(completionDate);
 			}
-			jobInfoDao.store(info);
-
 			postJobStatusChangedEvent(this, info);
+			progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
 		}
 
 		@Override
@@ -748,10 +758,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
-			if ( progressExecutor == null ) {
-				progressExecutor = Executors.newSingleThreadExecutor();
-			}
-			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
+			progressExecutor()
+					.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
 		}
@@ -852,6 +860,22 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					+ (info != null ? info.getConfig() : null) + ",jobState=" + getJobState()
 					+ ",percentComplete=" + getPercentComplete() + ",completionDate="
 					+ getCompletionDate() + "}";
+		}
+
+	}
+
+	private class StatusUpdater implements Runnable {
+
+		private final DatumImportJobInfo info;
+
+		private StatusUpdater(DatumImportJobInfo info) {
+			super();
+			this.info = info;
+		}
+
+		@Override
+		public void run() {
+			jobInfoDao.store(info);
 		}
 
 	}
