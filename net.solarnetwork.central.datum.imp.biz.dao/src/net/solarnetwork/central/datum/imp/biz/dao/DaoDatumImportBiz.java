@@ -554,7 +554,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 		private DatumImportJobInfo info;
 		private Future<DatumImportResult> delegate;
-		private final ExecutorService progressExecutor = Executors.newSingleThreadExecutor();
+		private ExecutorService progressExecutor;
 
 		/**
 		 * Construct from a task info.
@@ -580,8 +580,17 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			this.info = info;
 		}
 
-		private boolean isExecuting() {
+		private synchronized boolean isExecuting() {
 			return progressExecutor != null;
+		}
+
+		private synchronized ExecutorService progressExecutor() {
+			ExecutorService s = this.progressExecutor;
+			if ( s == null ) {
+				s = Executors.newSingleThreadExecutor();
+				this.progressExecutor = s;
+			}
+			return s;
 		}
 
 		@Override
@@ -639,8 +648,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				if ( info.getImportState() != DatumImportState.Completed ) {
 					updateTaskStatus(DatumImportState.Completed);
 				}
-				if ( !progressExecutor.isShutdown() ) {
-					progressExecutor.shutdown();
+				ExecutorService s = progressExecutor();
+				if ( !s.isShutdown() ) {
+					s.shutdown();
 				}
 			}
 			return new BasicDatumImportResult(info);
@@ -666,7 +676,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				info.setCompleted(completionDate);
 			}
 			postJobStatusChangedEvent(this, info);
-			progressExecutor.submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
+			progressExecutor().submit(new StatusUpdater((DatumImportJobInfo) info.clone()));
 		}
 
 		@Override
@@ -748,7 +758,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 					info.getUserId(), amountComplete);
 			// update progress in different thread, so state updated outside import transaction
 			DatumImportJobInfo info = this.info;
-			progressExecutor.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
+			progressExecutor()
+					.submit(new ProgressUpdater(info.getId(), amountComplete, getLoadedCount()));
 			info.setPercentComplete(amountComplete);
 			postJobStatusChangedEvent(this, info);
 		}
