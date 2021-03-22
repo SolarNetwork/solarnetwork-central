@@ -10,6 +10,7 @@
 			<if test="modified != null">, modified</if>
 			, import_date
 			, state
+			<if test="groupKey != null">, group_key</if>
 			, config
 			, success
 			, message
@@ -24,6 +25,7 @@
 			<if test="modified != null">, #{modified}</if>
 			, #{importDate}
 			, #{importStateKey}
+			<if test="groupKey != null">, #{groupKey}</if>
 			, #{configJson}::jsonb
 			, #{jobSuccess}
 			, #{message}
@@ -50,6 +52,7 @@
 		dij.modified AS datum_import_job_modified,
 		dij.import_date AS datum_import_job_import_date,
 		dij.state AS datum_import_job_state,
+		dij.group_key AS datum_import_job_group_key,
 		dij.config AS datum_import_job_config,
 		dij.success AS datum_import_job_success,
 		dij.message AS datum_import_job_message,
@@ -66,6 +69,7 @@
 		<result property="modified" column="datum_import_job_modified"/>
 		<result property="importDate" column="datum_import_job_import_date"/>
 		<result property="importStateKey" column="datum_import_job_state"/>
+		<result property="groupKey" column="datum_import_group_key"/>
 		<result property="configJson" column="datum_import_job_config"/>
 		<result property="jobSuccess" column="datum_import_job_success"/>
 		<result property="message" column="datum_import_job_message"/>
@@ -82,6 +86,7 @@
 		<result property="modified" column="modified"/>
 		<result property="importDate" column="import_date"/>
 		<result property="importStateKey" column="state"/>
+		<result property="groupKey" column="group_key"/>
 		<result property="configJson" column="config"/>
 		<result property="jobSuccess" column="success"/>
 		<result property="message" column="message"/>
@@ -100,7 +105,7 @@
 			dij.id = #{id} AND dij.user_id = #{userId}
 	</select>
 
-	<select id="get-DatumImportJobInfo-for-claim" resultMap="DatumImportJobInfoDirectResult" statementType="CALLABLE">
+	<select id="get-DatumImportJobInfo-for-claim" resultMap="DatumImportJobInfoDirectResult" statementType="CALLABLE" flushCache="true" useCache="false">
 		{call solarnet.claim_datum_import_job()}
 	</select>
 	

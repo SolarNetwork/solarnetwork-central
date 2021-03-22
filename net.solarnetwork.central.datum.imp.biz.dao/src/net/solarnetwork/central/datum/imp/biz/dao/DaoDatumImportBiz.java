@@ -49,6 +49,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
@@ -101,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
 
@@ -186,6 +188,30 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 	}
 
+	/**
+	 * Generate a job group key based on the request user and given group key.
+	 * 
+	 * <p>
+	 * If the request does not provide a group key, then a random UUID will be
+	 * generated so the group is effectively unique for the request.
+	 * </p>
+	 * 
+	 * @param request
+	 *        the request to get a derived group key for
+	 * @return the group key to use
+	 */
+	private String groupKeyForRequest(DatumImportRequest request) {
+		StringBuilder buf = new StringBuilder();
+		buf.append(request.getUserId());
+		buf.append('|');
+		if ( request.getConfiguration() != null && request.getConfiguration().getGroupKey() != null ) {
+			buf.append(request.getConfiguration().getGroupKey());
+		} else {
+			buf.append(UUID.randomUUID().toString());
+		}
+		return Base64.encodeBase64String(DigestUtils.sha256(buf.toString()));
+	}
+
 	@Override
 	public DatumImportReceipt submitDatumImportRequest(DatumImportRequest request,
 			DatumImportResource resource) throws IOException {
@@ -197,6 +223,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		info.setImportDate(request.getImportDate());
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
+		info.setGroupKey(groupKeyForRequest(request));
 
 		File f = saveToWorkDirectory(resource, id);
 		ResourceStorageService rss = resourceStorageService();

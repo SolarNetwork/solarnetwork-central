@@ -28,6 +28,7 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -44,6 +45,9 @@ public abstract class AbstractMyBatisDatumImportDaoTestSupport extends AbstractC
 	public static final String TEST_EMAIL = "foo@localhost.localdomain";
 	public static final String TEST_NAME = "Foo Bar";
 	public static final String TEST_PASSWORD = "password";
+
+	@Autowired
+	protected PlatformTransactionManager txManager;
 
 	private SqlSessionFactory sqlSessionFactory;
 

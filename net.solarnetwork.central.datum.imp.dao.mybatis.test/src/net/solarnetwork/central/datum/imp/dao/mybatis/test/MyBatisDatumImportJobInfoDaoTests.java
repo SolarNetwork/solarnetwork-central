@@ -23,19 +23,27 @@
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
 import static java.util.Collections.singleton;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.imp.dao.mybatis.MyBatisDatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
@@ -56,6 +64,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 	private User user;
 	private DatumImportJobInfo info;
+	private TransactionTemplate txTemplate;
 
 	@Before
 	public void setUp() throws Exception {
@@ -66,6 +75,8 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Test user", this.user, notNullValue());
 
 		info = null;
+
+		txTemplate = new TransactionTemplate(txManager);
 	}
 
 	private BasicConfiguration createNewConfig() {
@@ -83,12 +94,17 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		return conf;
 	}
 
-	@Test
-	public void storeNew() {
+	private DatumImportJobInfo createTestInfo() {
 		DatumImportJobInfo info = new DatumImportJobInfo();
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
 		info.setImportDate(new DateTime());
 		info.setConfig(createNewConfig());
+		return info;
+	}
+
+	@Test
+	public void storeNew() {
+		DatumImportJobInfo info = createTestInfo();
 
 		UserUuidPK id = dao.store(info);
 		assertThat("Primary key assigned", id, notNullValue());
@@ -450,4 +466,318 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Progress not updated", info.getPercentComplete(), equalTo(0.0));
 		assertThat("Loaded not updated", info.getLoadedCount(), equalTo(0L));
 	}
+
+	@Test
+	public void claimQueuedJob_none() {
+		// GIVEN
+
+		// WHEN
+		DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		assertThat("No job claimed when no jobs present", claimed, nullValue());
+	}
+
+	@Test
+	public void claimQueuedJob_noneInQueuedState() {
+		// GIVEN
+		DatumImportJobInfo info = createTestInfo();
+		info.setImportState(DatumImportState.Completed);
+		dao.store(info);
+
+		// WHEN
+		DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		assertThat("No job claimed when only completed job present", claimed, nullValue());
+	}
+
+	@Test
+	public void claimQueuedJob_oneInQueuedState() {
+		// GIVEN
+		DatumImportJobInfo info = createTestInfo();
+		info.setImportState(DatumImportState.Queued);
+		UserUuidPK id = dao.store(info);
+
+		// WHEN
+		DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		assertThat("Job claimed when queued job present", claimed.getId(), equalTo(id));
+	}
+
+	@Test
+	public void claimQueuedJob_multipleInQueuedState() {
+		// GIVEN
+		List<UserUuidPK> ids = new ArrayList<>(3);
+		DateTime start = new DateTime().minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo info = createTestInfo();
+			info.setImportState(DatumImportState.Queued);
+			info.setCreated(start.plusMinutes(i));
+			UserUuidPK id = dao.store(info);
+			ids.add(id);
+		}
+
+		// WHEN
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+			// THEN
+			assertThat("Oldest job " + i + " claimed when queued job present", claimed.getId(),
+					equalTo(ids.get(i)));
+		}
+
+		assertThat("No more queued jobs available", dao.claimQueuedJob(), nullValue());
+	}
+
+	@Test
+	public void claimQueuedJob_ignoreExecutingGroupKey() throws Exception {
+		// GIVEN
+		List<UserUuidPK> ids = new ArrayList<>(3);
+		DateTime start = new DateTime().minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo info = createTestInfo();
+			if ( i == 0 ) {
+				info.setImportState(DatumImportState.Executing);
+			} else {
+				info.setImportState(DatumImportState.Queued);
+			}
+			info.setGroupKey("foo");
+			info.setCreated(start.plusMinutes(i));
+			UserUuidPK id = dao.store(info);
+			ids.add(id);
+		}
+
+		// WHEN
+		DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		assertThat("No queued job available when executing in group", claimed, nullValue());
+	}
+
+	@Test
+	public void claimQueuedJob_completedGroupKey() throws Exception {
+		// GIVEN
+		List<UserUuidPK> ids = new ArrayList<>(3);
+		DateTime start = new DateTime().minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo info = createTestInfo();
+			if ( i == 0 ) {
+				info.setImportState(DatumImportState.Completed);
+			} else {
+				info.setImportState(DatumImportState.Queued);
+			}
+			info.setGroupKey("foo");
+			info.setCreated(start.plusMinutes(i));
+			UserUuidPK id = dao.store(info);
+			ids.add(id);
+		}
+
+		// WHEN
+		DatumImportJobInfo claimed = dao.claimQueuedJob();
+
+		// THEN
+		assertThat("Oldest queued job claimed when group has completed tasks", claimed.getId(),
+				equalTo(ids.get(1)));
+	}
+
+	private void runExternalTransaction(Runnable task, Runnable main) throws Exception {
+		// GIVEN
+
+		// latch for row lock thread to indicate it has locked the row and the main thread can continue
+		final CountDownLatch lockedLatch = new CountDownLatch(1);
+
+		// list to capture exception thrown by row lock thread
+		final List<Exception> threadExceptions = new ArrayList<Exception>(1);
+
+		// object monitor for main thread to signal to row lock thread to complete
+		final Object lockThreadSignal = new Object();
+
+		// lock a stale row
+		Thread lockThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				txTemplate.execute(new TransactionCallback<Object>() {
+
+					@Override
+					public Object doInTransaction(TransactionStatus status) {
+						try {
+							task.run();
+
+							log.debug("Waiting for signal while keeping transaction open...");
+
+							lockedLatch.countDown();
+
+							// wait
+							try {
+								synchronized ( lockThreadSignal ) {
+									lockThreadSignal.wait();
+								}
+							} catch ( InterruptedException e ) {
+								log.error("StaleRowLockingThread interrupted waiting", e);
+							}
+						} catch ( RuntimeException e ) {
+							threadExceptions.add(e);
+							throw e;
+						} finally {
+							status.setRollbackOnly();
+						}
+						return null;
+					}
+
+				});
+			}
+
+		}, "ExternalTransactionThread");
+		lockThread.setDaemon(true);
+		lockThread.start();
+
+		// wait for our latch
+		boolean locked = lockedLatch.await(5, TimeUnit.SECONDS);
+		if ( !threadExceptions.isEmpty() ) {
+			throw threadExceptions.get(0);
+		}
+		assertThat("External transaction executed: {}", locked, equalTo(true));
+
+		// WHEN
+		txTemplate.execute(new TransactionCallback<Object>() {
+
+			@Override
+			public Object doInTransaction(TransactionStatus status) {
+				try {
+					main.run();
+				} finally {
+					synchronized ( lockThreadSignal ) {
+						lockThreadSignal.notifyAll();
+					}
+				}
+				return null;
+			}
+
+		});
+
+		// wait for the lock thread to complete
+		lockThread.join(5000);
+	}
+
+	@Test
+	public void claimQueuedJob_ignoreClaimedInOtherTransaction() throws Exception {
+		final DatumImportJobInfo info = createTestInfo();
+		info.setImportState(DatumImportState.Queued);
+		final UserUuidPK id = dao.store(info);
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
+
+		try {
+			// GIVEN
+			runExternalTransaction(new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo info = dao.claimQueuedJob();
+					assertThat("Claimed job in external transaction", info.getId(), equalTo(id));
+				}
+			}, new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo claimed = dao.claimQueuedJob();
+					assertThat("Job claimed in external transaction not re-claimed", claimed,
+							nullValue());
+				}
+			});
+		} finally {
+			jdbcTemplate.execute("delete from solarnet.sn_datum_import_job");
+			jdbcTemplate.execute("delete from solaruser.user_user");
+		}
+	}
+
+	@Test
+	public void claimQueuedJob_ignoreClaimedGroupKeyInOtherTransaction() throws Exception {
+		List<UserUuidPK> ids = new ArrayList<>(3);
+		DateTime start = new DateTime().minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo info = createTestInfo();
+			info.setImportState(DatumImportState.Queued);
+			info.setGroupKey("foo");
+			info.setCreated(start.plusMinutes(i));
+			UserUuidPK id = dao.store(info);
+			ids.add(id);
+		}
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
+
+		try {
+			// GIVEN
+			runExternalTransaction(new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo info = dao.claimQueuedJob();
+					log.debug("Claimed job {}", info.getId());
+					assertThat("Claimed oldest job in external transaction", info.getId(),
+							equalTo(ids.get(0)));
+				}
+			}, new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo claimed = dao.claimQueuedJob();
+					assertThat("No other jobs claimed because of shared group key", claimed,
+							nullValue());
+				}
+			});
+		} finally {
+			jdbcTemplate.execute("delete from solarnet.sn_datum_import_job");
+			jdbcTemplate.execute("delete from solaruser.user_user");
+		}
+	}
+
+	@Test
+	public void claimQueuedJob_ignoreClaimedGroupKeyInOtherTransaction_withCompleted() throws Exception {
+		List<UserUuidPK> ids = new ArrayList<>(3);
+		DateTime start = new DateTime().minuteOfDay().roundFloorCopy();
+		for ( int i = 0; i < 3; i++ ) {
+			DatumImportJobInfo info = createTestInfo();
+			if ( i == 0 ) {
+				info.setImportState(DatumImportState.Completed);
+			} else {
+				info.setImportState(DatumImportState.Queued);
+			}
+			info.setGroupKey("foo");
+			info.setCreated(start.plusMinutes(i));
+			UserUuidPK id = dao.store(info);
+			ids.add(id);
+		}
+		TestTransaction.flagForCommit();
+		TestTransaction.end();
+
+		try {
+			// GIVEN
+			runExternalTransaction(new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo info = dao.claimQueuedJob();
+					log.debug("Claimed job {}", info.getId());
+					assertThat("Claimed oldest non-completed job in external transaction", info.getId(),
+							equalTo(ids.get(1)));
+				}
+			}, new Runnable() {
+
+				@Override
+				public void run() {
+					DatumImportJobInfo claimed = dao.claimQueuedJob();
+					assertThat("No other jobs claimed because of shared group key", claimed,
+							nullValue());
+				}
+			});
+		} finally {
+			jdbcTemplate.execute("delete from solarnet.sn_datum_import_job");
+			jdbcTemplate.execute("delete from solaruser.user_user");
+		}
+	}
+
 }
