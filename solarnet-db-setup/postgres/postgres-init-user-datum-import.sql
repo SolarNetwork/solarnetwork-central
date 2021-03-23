@@ -47,21 +47,22 @@ DECLARE
 	-- then locks all rows within the group while changing the oldest queued state to claimed
 	curs CURSOR FOR
 			WITH jg AS (
-				SELECT DISTINCT group_key
+				SELECT DISTINCT user_id || '.' || group_key AS gkey
 				FROM solarnet.sn_datum_import_job
 				WHERE state IN ('p', 'e')
-			), jgg AS (
-				SELECT j.*
+			)
+			, jgg AS (
+				SELECT j.*, j.user_id || '.' || j.group_key AS gkey
 				FROM solarnet.sn_datum_import_job j
-				LEFT OUTER JOIN jg ON jg.group_key = j.group_key
+				LEFT OUTER JOIN jg ON jg.gkey = j.user_id || '.' || j.group_key
 				WHERE j.state = 'q'
-					AND jg.group_key IS NULL
+					AND jg.gkey IS NULL
 				ORDER BY j.created, j.id
 				LIMIT 1
 			)
 			SELECT j.*
 			FROM solarnet.sn_datum_import_job j
-			INNER JOIN jgg ON jgg.group_key = j.group_key
+			INNER JOIN jgg ON jgg.gkey = j.user_id || '.' || j.group_key
 			WHERE j.state = 'q'
 			ORDER BY j.created, j.id
 			FOR UPDATE SKIP LOCKED;

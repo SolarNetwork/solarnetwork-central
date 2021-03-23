@@ -49,8 +49,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.springframework.core.io.FileSystemResource;
@@ -201,15 +199,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 * @return the group key to use
 	 */
 	private String groupKeyForRequest(DatumImportRequest request) {
-		StringBuilder buf = new StringBuilder();
-		buf.append(request.getUserId());
-		buf.append('|');
 		if ( request.getConfiguration() != null && request.getConfiguration().getGroupKey() != null ) {
-			buf.append(request.getConfiguration().getGroupKey());
+			return request.getConfiguration().getGroupKey();
 		} else {
-			buf.append(UUID.randomUUID().toString());
+			return UUID.randomUUID().toString();
 		}
-		return Base64.encodeBase64String(DigestUtils.sha256(buf.toString()));
 	}
 
 	@Override

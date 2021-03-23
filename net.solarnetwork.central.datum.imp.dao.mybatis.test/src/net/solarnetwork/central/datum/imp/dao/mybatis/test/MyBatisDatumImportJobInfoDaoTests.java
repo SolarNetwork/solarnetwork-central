@@ -132,6 +132,13 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	@Test
+	public void storeNew_generateGroupKey() {
+		storeNew();
+		DatumImportJobInfo info = dao.get(this.info.getId());
+		assertThat("Group key generated on save when not supplied", info.getGroupKey(), notNullValue());
+	}
+
+	@Test
 	public void update() {
 		storeNew();
 
@@ -379,6 +386,30 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 				singleton(DatumImportState.Staged));
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(info));
+	}
+
+	@Test
+	public void findForUserFoundWithGroupKey() {
+		// add job that should _not_ be found
+		storeNew();
+
+		final String groupKey = UUID.randomUUID().toString();
+
+		// add another job that _should_ be found
+		DatumImportJobInfo info = new DatumImportJobInfo();
+		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setConfig(new BasicConfiguration());
+		info.setImportDate(new DateTime());
+		info.setImportState(DatumImportState.Staged);
+		info.setCreated(new DateTime().hourOfDay().roundFloorCopy());
+		info.setGroupKey(groupKey);
+		info = dao.get(dao.store(info));
+
+		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+				singleton(DatumImportState.Staged));
+		assertThat("Results returned", results, hasSize(1));
+		assertThat("Result matches", results.get(0), equalTo(info));
+		assertThat("Result group matches", results.get(0).getGroupKey(), equalTo(groupKey));
 	}
 
 	@Test

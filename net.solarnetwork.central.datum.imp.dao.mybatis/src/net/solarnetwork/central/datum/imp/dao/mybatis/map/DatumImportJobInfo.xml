@@ -69,7 +69,7 @@
 		<result property="modified" column="datum_import_job_modified"/>
 		<result property="importDate" column="datum_import_job_import_date"/>
 		<result property="importStateKey" column="datum_import_job_state"/>
-		<result property="groupKey" column="datum_import_group_key"/>
+		<result property="groupKey" column="datum_import_job_group_key"/>
 		<result property="configJson" column="datum_import_job_config"/>
 		<result property="jobSuccess" column="datum_import_job_success"/>
 		<result property="message" column="datum_import_job_message"/>
