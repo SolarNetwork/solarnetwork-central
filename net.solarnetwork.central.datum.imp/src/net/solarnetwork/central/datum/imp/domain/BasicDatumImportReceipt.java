@@ -26,12 +26,13 @@ package net.solarnetwork.central.datum.imp.domain;
  * Basic immutable implementation of {@link DatumImportReceipt}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicDatumImportReceipt implements DatumImportReceipt {
 
 	private final String jobId;
 	private final DatumImportState jobState;
+	private final String groupKey;
 
 	/**
 	 * Constructor.
@@ -42,9 +43,25 @@ public class BasicDatumImportReceipt implements DatumImportReceipt {
 	 *        the job state
 	 */
 	public BasicDatumImportReceipt(String jobId, DatumImportState jobState) {
+		this(jobId, jobState, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param jobId
+	 *        the job ID
+	 * @param jobState
+	 *        the job state
+	 * @param groupKey
+	 *        the group key
+	 * @since 1.1
+	 */
+	public BasicDatumImportReceipt(String jobId, DatumImportState jobState, String groupKey) {
 		super();
 		this.jobId = jobId;
 		this.jobState = jobState;
+		this.groupKey = groupKey;
 	}
 
 	@Override
@@ -55,6 +72,11 @@ public class BasicDatumImportReceipt implements DatumImportReceipt {
 	@Override
 	public DatumImportState getJobState() {
 		return jobState;
+	}
+
+	@Override
+	public String getGroupKey() {
+		return groupKey;
 	}
 
 }

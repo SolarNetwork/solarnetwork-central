@@ -257,7 +257,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		task.setDelegate(future);
 
-		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
+		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState(), info.getGroupKey());
 	}
 
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
@@ -803,6 +803,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		@Override
 		public DatumImportState getJobState() {
 			return info.getImportState();
+		}
+
+		@Override
+		public String getGroupKey() {
+			return info.getGroupKey();
 		}
 
 		@Override

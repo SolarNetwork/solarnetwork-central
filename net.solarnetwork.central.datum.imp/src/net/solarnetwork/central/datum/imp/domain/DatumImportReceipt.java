@@ -26,7 +26,7 @@ package net.solarnetwork.central.datum.imp.domain;
  * Receipt information about a datum import request.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumImportReceipt {
 
@@ -43,5 +43,12 @@ public interface DatumImportReceipt {
 	 * @return the state, never {@literal null}
 	 */
 	DatumImportState getJobState();
+
+	/**
+	 * Get the group key.
+	 * 
+	 * @return the group key
+	 */
+	String getGroupKey();
 
 }
