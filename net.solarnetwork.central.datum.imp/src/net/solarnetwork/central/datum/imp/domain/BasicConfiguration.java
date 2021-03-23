@@ -30,15 +30,16 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  * Basic implementation of {@link Configuration}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicConfiguration implements Configuration, Serializable {
 
-	private static final long serialVersionUID = -2834408245202599062L;
+	private static final long serialVersionUID = 7933356242287626694L;
 
 	private String name;
 	private boolean stage;
 	private Integer batchSize;
+	private String groupKey;
 	private InputConfiguration inputConfiguration;
 
 	/**
@@ -144,6 +145,15 @@ public class BasicConfiguration implements Configuration, Serializable {
 	@JsonDeserialize(as = BasicInputConfiguration.class)
 	public void setInputConfiguration(InputConfiguration inputConfiguration) {
 		this.inputConfiguration = inputConfiguration;
+	}
+
+	@Override
+	public String getGroupKey() {
+		return groupKey;
+	}
+
+	public void setGroupKey(String groupKey) {
+		this.groupKey = groupKey;
 	}
 
 }

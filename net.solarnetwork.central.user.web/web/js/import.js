@@ -47,6 +47,14 @@ $(document).ready(function() {
 		var estimatedRemainingMinutes = estimatedMinutes - numMinutes;
 		return moment.duration(estimatedRemainingMinutes, 'minutes').locale('en').humanize();
 	}
+
+	function groupKeyDisplay(key) {
+		// if the key looks like a UUID, don't display it
+		if ( /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(key) ) {
+			return '';
+		}
+		return key;
+	}
 	
 	function populateDatumImportJobs(jobs, preserve) {
 		jobs = Array.isArray(jobs) ? jobs : [];
@@ -62,6 +70,8 @@ $(document).ready(function() {
 			var item = SolarReg.Settings.serviceConfigurationItem(ctx, inputServices);
 			item.id = id;
 			item.shortId = shortId;
+			item.groupKey = job.groupKey;
+			item.groupKeyDisplay = groupKeyDisplay(job.groupKey);
 			item.timeZoneId = ctx.timeZoneId;
 			item.batchSize = job.configuration.batchSize;
 			item.state = job.jobState;

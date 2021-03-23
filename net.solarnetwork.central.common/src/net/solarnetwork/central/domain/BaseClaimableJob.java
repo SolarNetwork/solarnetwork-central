@@ -29,17 +29,18 @@ import org.joda.time.DateTime;
  * Abstract implementation support for {@link ClaimableJob}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.44
  */
 public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, PK extends Comparable<PK> & Serializable>
 		extends BaseObjectEntity<PK> implements ClaimableJob<C, R, S, PK> {
 
-	private static final long serialVersionUID = -8302284466999867890L;
+	private static final long serialVersionUID = 5432479029787759481L;
 
 	private S jobState;
 	private C configuration;
 	private R result;
+	private String groupKey;
 	private Boolean jobSuccess;
 	private String message;
 	private DateTime started;
@@ -137,6 +138,15 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, PK ext
 
 	public void setPercentComplete(double percentComplete) {
 		this.percentComplete = percentComplete;
+	}
+
+	@Override
+	public String getGroupKey() {
+		return groupKey;
+	}
+
+	public void setGroupKey(String groupKey) {
+		this.groupKey = groupKey;
 	}
 
 }

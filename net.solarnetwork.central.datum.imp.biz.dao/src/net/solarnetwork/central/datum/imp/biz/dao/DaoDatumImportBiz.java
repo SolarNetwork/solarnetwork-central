@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
 
@@ -186,6 +186,26 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		}
 	}
 
+	/**
+	 * Generate a job group key based on the request user and given group key.
+	 * 
+	 * <p>
+	 * If the request does not provide a group key, then a random UUID will be
+	 * generated so the group is effectively unique for the request.
+	 * </p>
+	 * 
+	 * @param request
+	 *        the request to get a derived group key for
+	 * @return the group key to use
+	 */
+	private String groupKeyForRequest(DatumImportRequest request) {
+		if ( request.getConfiguration() != null && request.getConfiguration().getGroupKey() != null ) {
+			return request.getConfiguration().getGroupKey();
+		} else {
+			return UUID.randomUUID().toString();
+		}
+	}
+
 	@Override
 	public DatumImportReceipt submitDatumImportRequest(DatumImportRequest request,
 			DatumImportResource resource) throws IOException {
@@ -197,6 +217,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		info.setImportDate(request.getImportDate());
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
+		info.setGroupKey(groupKeyForRequest(request));
 
 		File f = saveToWorkDirectory(resource, id);
 		ResourceStorageService rss = resourceStorageService();
@@ -236,7 +257,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
 		task.setDelegate(future);
 
-		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState());
+		return new BasicDatumImportReceipt(jobId.toString(), info.getImportState(), info.getGroupKey());
 	}
 
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
@@ -782,6 +803,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		@Override
 		public DatumImportState getJobState() {
 			return info.getImportState();
+		}
+
+		@Override
+		public String getGroupKey() {
+			return info.getGroupKey();
 		}
 
 		@Override
