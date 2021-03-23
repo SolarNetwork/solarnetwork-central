@@ -26,7 +26,7 @@ package net.solarnetwork.central.datum.imp.domain;
  * A complete configuration for a datum import task.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface Configuration {
 
@@ -75,6 +75,20 @@ public interface Configuration {
 	 * @return a batch size
 	 */
 	Integer getBatchSize();
+
+	/**
+	 * Get a job group key.
+	 * 
+	 * <p>
+	 * A group key represents a grouping of related jobs, such that only one job
+	 * within a given group should be allowed to execute at a time. This
+	 * provides a way to synchronize multiple related jobs in a reliable manner.
+	 * </p>
+	 * 
+	 * @return the group key, or {@literal null} for the "default" group
+	 * @since 1.1
+	 */
+	String getGroupKey();
 
 	/**
 	 * Get the configuration of the input format of the data to import.

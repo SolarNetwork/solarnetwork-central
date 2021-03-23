@@ -21,6 +21,7 @@
 		<thead>
 			<tr>
 				<th><fmt:message key='import.job.id.label'/></th>
+				<th><fmt:message key='import.job.groupKey.label'/></th>
 				<th><fmt:message key='import.job.name.label'/></th>
 				<th><fmt:message key='import.job.timeZoneId.label'/></th>
 				<th><fmt:message key='import.job.batchSize.label'/></th>
@@ -35,6 +36,7 @@
 					<a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#edit-datum-import-job-modal"></a>
 					<div data-tprop="submitDateDisplay"></div>
 				</td>
+				<td data-tprop="groupKeyDisplay"></td>
 				<td data-tprop="name"></td>
 				<td data-tprop="timeZoneId"></td>
 				<td data-tprop="batchSize"></td>
@@ -85,7 +87,7 @@
 				</td>
 			</tr>
 			<tr class="rule">
-				<td colspan="6">
+				<td colspan="7">
 					<dl class="service-props-container hbox" style="font-size: 86%">
 					</dl>
 					<dl class="service-props-template hidden">

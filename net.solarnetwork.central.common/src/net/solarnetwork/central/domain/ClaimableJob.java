@@ -37,7 +37,7 @@ import org.joda.time.Duration;
  * @param <PK>
  *        the job entity primary key type
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.44
  */
 public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Entity<PK> {
@@ -55,6 +55,20 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Ent
 	 * @return the job state
 	 */
 	S getJobState();
+
+	/**
+	 * Get a job group key.
+	 * 
+	 * <p>
+	 * A group key represents a grouping of related jobs, such that only one job
+	 * within a given group should be allowed to execute at a time. This
+	 * provides a way to synchronize multiple related jobs in a reliable manner.
+	 * </p>
+	 * 
+	 * @return the group key, or {@literal null} for the "default" group
+	 * @since 1.1
+	 */
+	String getGroupKey();
 
 	/**
 	 * Get a percentage complete for the job overall.
