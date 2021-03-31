@@ -167,8 +167,16 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 			Integer offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
+
+		// ignore all date ranges for meta query here
+		BasicDatumCriteria metaCriteria = c.clone();
+		metaCriteria.setStartDate(null);
+		metaCriteria.setEndDate(null);
+		metaCriteria.setLocalStartDate(null);
+		metaCriteria.setLocalEndDate(null);
+
 		Map<UUID, ObjectDatumStreamMetadata> metas = StreamSupport
-				.stream(metaDao.findDatumStreamMetadata(c).spliterator(), false)
+				.stream(metaDao.findDatumStreamMetadata(metaCriteria).spliterator(), false)
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
 		net.solarnetwork.dao.FilterResults<DatumAuxiliary, DatumAuxiliaryPK> r = datumAuxiliaryDao
 				.findFiltered(c);
