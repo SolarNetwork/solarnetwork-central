@@ -28,12 +28,19 @@ import com.amazonaws.services.s3.AmazonS3URI;
  * Service properties for the S3 export destination.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class S3DestinationProperties {
 
 	/** The default value for the {@code filenameTemplate} property. */
 	public static final String DEFAULT_FILENAME_TEMPLATE = "data-export-{date}.{ext}";
+
+	/**
+	 * The default value for the {@code storageClass} property.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String DEFAULT_STORAGE_CLASS = "STANDARD";
 
 	/** A filename parameter for the export date. */
 	public static final String FILENAME_PARAM_DATE = "date";
@@ -45,6 +52,7 @@ public class S3DestinationProperties {
 	private String filenameTemplate = DEFAULT_FILENAME_TEMPLATE;
 	private String accessKey;
 	private String secretKey;
+	private String storageClass = DEFAULT_STORAGE_CLASS;
 
 	private AmazonS3URI uri;
 
@@ -169,6 +177,27 @@ public class S3DestinationProperties {
 	 */
 	public void setSecretKey(String secretKey) {
 		this.secretKey = secretKey;
+	}
+
+	/**
+	 * Get the S3 storage class to use.
+	 * 
+	 * @return the S3 storage class; defaults to {@link #DEFAULT_STORAGE_CLASS}
+	 * @since 1.1
+	 */
+	public String getStorageClass() {
+		return storageClass;
+	}
+
+	/**
+	 * Set the S3 storage class to use.
+	 * 
+	 * @param storageClass
+	 *        the S3 storage class to set
+	 * @since 1.1
+	 */
+	public void setStorageClass(String storageClass) {
+		this.storageClass = storageClass;
 	}
 
 }

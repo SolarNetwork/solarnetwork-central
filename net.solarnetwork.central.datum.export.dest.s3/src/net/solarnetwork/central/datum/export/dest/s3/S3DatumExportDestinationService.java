@@ -59,7 +59,7 @@ import net.solarnetwork.util.StringUtils;
  * AWS S3 implementation of {@link DatumExportDestinationService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class S3DatumExportDestinationService extends BaseDatumExportDestinationService {
 
@@ -80,6 +80,7 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 				S3DestinationProperties.DEFAULT_FILENAME_TEMPLATE));
 		result.add(new BasicTextFieldSettingSpecifier("accessKey", ""));
 		result.add(new BasicTextFieldSettingSpecifier("secretKey", "", true));
+		result.add(new BasicTextFieldSettingSpecifier("storageClass", ""));
 		return result;
 	}
 
@@ -140,6 +141,9 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 			objectMetadata.setLastModified(new Date(resource.lastModified()));
 			try (InputStream in = resource.getInputStream()) {
 				PutObjectRequest req = new PutObjectRequest(uri.getBucket(), key, in, objectMetadata);
+				if ( props.getStorageClass() != null ) {
+					req.setStorageClass(props.getStorageClass());
+				}
 				if ( progressListener != null ) {
 					req.withGeneralProgressListener(s3ProgressListener);
 				}
