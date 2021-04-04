@@ -129,7 +129,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 		@Override
 		public Iterable<DatumExportResource> finish() throws IOException {
-			if ( !generator.isClosed() ) {
+			if ( started && !generator.isClosed() ) {
 				generator.writeEndArray();
 			}
 			flush();
