@@ -22,19 +22,20 @@
 
 package net.solarnetwork.central.reg.web.domain;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 
 /**
  * DTO for datum insight overall statistics.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.30
  */
 public class DatumInsightOverallStatistics {
@@ -69,14 +70,27 @@ public class DatumInsightOverallStatistics {
 	 *        the counts
 	 * @param accumulative
 	 *        the accumulative counts
+	 * @since 1.1
 	 */
-	public DatumInsightOverallStatistics(Iterable<AuditDatumRecordCounts> counts,
-			Iterable<AuditDatumRecordCounts> accumulative) {
+	public DatumInsightOverallStatistics(Iterable<AuditDatumRollup> counts,
+			Iterable<AuditDatumRollup> accumulative) {
 		super();
-		setCounts(stream(counts.spliterator(), false).collect(toList()));
-		populateStatsFromCounts(counts);
-		setAccumulative(stream(accumulative.spliterator(), false).collect(toList()));
-		populateStatsFromAccumulativeCounts(accumulative);
+		setCounts(convert(counts));
+		populateStatsFromCounts(this.counts);
+		setAccumulative(convert(accumulative));
+		populateStatsFromAccumulativeCounts(this.accumulative);
+	}
+
+	private static List<AuditDatumRecordCounts> convert(Iterable<AuditDatumRollup> rollups) {
+		return StreamSupport.stream(rollups.spliterator(), false).map(e -> {
+			AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+					e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
+					e.getDatumMonthlyCount());
+			if ( e.getTimestamp() != null ) {
+				c.setCreated(new org.joda.time.DateTime(e.getTimestamp().toEpochMilli()));
+			}
+			return c;
+		}).collect(Collectors.toList());
 	}
 
 	/**

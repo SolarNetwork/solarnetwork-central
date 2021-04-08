@@ -23,26 +23,27 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
-import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.reg.web.domain.DatumInsightOverallStatistics;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -83,29 +84,28 @@ public class DatumInsightController {
 				: TimeZone.getTimeZone("UTC");
 
 		// get last 30 days of audit data
-		DateTime today = new DateTime(DateTimeZone.forTimeZone(userTimeZone)).hourOfDay()
-				.roundFloorCopy();
-		DateTime tomorrow = today.plusDays(1);
-		DateTime thirtyDaysAgo = tomorrow.minusDays(30);
-		DatumFilterCommand filter = new DatumFilterCommand();
+		ZonedDateTime today = ZonedDateTime.now(userTimeZone.toZoneId()).truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime tomorrow = today.plusDays(1);
+		ZonedDateTime thirtyDaysAgo = tomorrow.minusDays(30);
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setUserId(userId);
-		filter.setStartDate(thirtyDaysAgo);
-		filter.setEndDate(tomorrow);
+		filter.setStartDate(thirtyDaysAgo.toInstant());
+		filter.setEndDate(tomorrow.toInstant());
 
 		List<SortDescriptor> sorts = Arrays.asList(
 				(SortDescriptor) new SimpleSortDescriptor("created", true),
 				(SortDescriptor) new SimpleSortDescriptor("node"),
 				(SortDescriptor) new SimpleSortDescriptor("source"));
-
-		FilterResults<AuditDatumRecordCounts> last30days = auditDatumBiz
-				.findFilteredAuditRecordCounts(filter, sorts, null, null);
+		filter.setSorts(sorts);
+		FilterResults<AuditDatumRollup, DatumPK> last30days = auditDatumBiz
+				.findAccumulativeAuditDatumFiltered(filter);
 
 		// accumulative most recent
 		filter.setMostRecent(true);
 		filter.setStartDate(null);
 		filter.setEndDate(null);
-		FilterResults<AuditDatumRecordCounts> accumulative = auditDatumBiz
-				.findFilteredAccumulativeAuditRecordCounts(filter, null, null, null);
+		FilterResults<AuditDatumRollup, DatumPK> accumulative = auditDatumBiz
+				.findAuditDatumFiltered(filter);
 
 		DatumInsightOverallStatistics result = new DatumInsightOverallStatistics(last30days,
 				accumulative);
