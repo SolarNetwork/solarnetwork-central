@@ -46,10 +46,10 @@
 	<osgi:reference id="auditDatumBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.datum.biz.AuditDatumBiz"/>
 	
-	<osgi:reference id="registrationBiz" sticky="false" depends-on="userValidator"
+	<osgi:reference id="registrationBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.user.biz.RegistrationBiz"/>
 	
-	<osgi:reference id="userBiz" filter="(secured=true)" depends-on="userValidator"
+	<osgi:reference id="userBiz" filter="(secured=true)"
 		interface="net.solarnetwork.central.user.biz.UserBiz"/>
 		
 	<osgi:reference id="userMetadataBiz" sticky="false"
@@ -70,6 +70,10 @@
 		interface="org.springframework.security.crypto.password.PasswordEncoder"/>
 		
 	<osgi:reference id="certificateService" interface="net.solarnetwork.support.CertificateService"/>
+	
+	<osgi:reference id="userValidator" interface="org.springframework.validation.Validator"
+		availability="optional"
+		filter="(&amp;(targetClassName=net.solarnetwork.central.user.domain.User)(mode=Registration))"/>
 	
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.domain.PingTest"/>
 
@@ -119,17 +123,6 @@
 		<property name="serviceClassName" value="net.solarnetwork.central.user.ocpp.biz.UserOcppBiz"/>
 		<property name="serviceFilter" value="(secured=true)"/>
 	</bean>
-
-	<!-- Published Services -->
-	
-	<osgi:service ref="userValidator" 
-		interface="org.springframework.validation.Validator"
-		ranking="1">
-		<osgi:service-properties>
-			<entry key="targetClassName" value="net.solarnetwork.central.user.domain.User"/>
-			<entry key="mode" value="Registration"/>
-		</osgi:service-properties>
-	</osgi:service>
 	
 	<!-- Supporting Services -->
 	

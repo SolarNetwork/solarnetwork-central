@@ -20,10 +20,8 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web;
+package net.solarnetwork.central.user.biz.dao;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -34,9 +32,8 @@ import net.solarnetwork.central.user.domain.User;
  * 
  * @author matt
  * @version 1.0
+ * @since 2.1
  */
-@Component
-@Qualifier("Registration")
 public class UserValidator implements Validator {
 
 	/**
