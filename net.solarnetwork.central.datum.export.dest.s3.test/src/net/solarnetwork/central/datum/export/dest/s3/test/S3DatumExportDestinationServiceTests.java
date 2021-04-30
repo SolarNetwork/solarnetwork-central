@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.BeforeClass;
@@ -139,16 +138,16 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		// given
 		S3DatumExportDestinationService service = new S3DatumExportDestinationService();
 
-		//when
+		// when
 		List<SettingSpecifier> specs = service.getSettingSpecifiers();
 
 		// then
-		assertThat("Setting specs provided", specs, hasSize(4));
+		assertThat("Setting specs provided", specs, hasSize(5));
 
 		Set<String> keys = specs.stream().filter(s -> s instanceof KeyedSettingSpecifier<?>)
 				.map(s -> ((KeyedSettingSpecifier<?>) s).getKey()).collect(Collectors.toSet());
-		assertThat("Setting keys", keys,
-				Matchers.containsInAnyOrder("accessKey", "secretKey", "path", "filenameTemplate"));
+		assertThat("Setting keys", keys, containsInAnyOrder("accessKey", "secretKey", "path",
+				"filenameTemplate", "storageClass"));
 	}
 
 	private DatumExportResource getTestResource() {

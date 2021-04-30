@@ -32,14 +32,18 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -52,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -62,6 +66,7 @@ public class DatumController extends WebServiceControllerSupport {
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
 
 	private final QueryBiz queryBiz;
+	private SmartValidator readingFilterValidator;
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
@@ -149,6 +154,8 @@ public class DatumController extends WebServiceControllerSupport {
 	 *        the reading type
 	 * @param tolerance
 	 *        the query tolerance
+	 * @param validationResult
+	 *        a result for validations
 	 * @return the results
 	 * @since 2.3
 	 */
@@ -156,7 +163,14 @@ public class DatumController extends WebServiceControllerSupport {
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
 	public Response<FilterResults<?>> datumReading(final DatumFilterCommand cmd,
 			@RequestParam("readingType") DatumReadingType readingType,
-			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance) {
+			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
+			BindingResult validationResult) {
+		if ( readingFilterValidator != null ) {
+			readingFilterValidator.validate(cmd, validationResult, readingType, tolerance);
+			if ( validationResult.hasErrors() ) {
+				throw new ValidationException(validationResult);
+			}
+		}
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
@@ -204,6 +218,37 @@ public class DatumController extends WebServiceControllerSupport {
 	 */
 	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
 		this.transientExceptionRetryCount = transientExceptionRetryCount;
+	}
+
+	/**
+	 * Get the reading filter validator to use.
+	 * 
+	 * @return the validator
+	 * @since 2.9
+	 */
+	public SmartValidator getReadingFilterValidator() {
+		return readingFilterValidator;
+	}
+
+	/**
+	 * Set the reading filter validator to use.
+	 * 
+	 * @param readingFilterValidator
+	 *        the valiadtor to set
+	 * @throws IllegalArgumentException
+	 *         if {@code validator} does not support the
+	 *         {@link GeneralNodeDatumFilter} class
+	 * @since 2.9
+	 */
+	@Autowired
+	@Qualifier("readingFilterValidator")
+	public void setReadingFilterValidator(SmartValidator readingFilterValidator) {
+		if ( readingFilterValidator != null
+				&& !readingFilterValidator.supports(GeneralNodeDatumFilter.class) ) {
+			throw new IllegalArgumentException(
+					"The Validator must support the GeneralNodeDatumFilter class.");
+		}
+		this.readingFilterValidator = readingFilterValidator;
 	}
 
 }

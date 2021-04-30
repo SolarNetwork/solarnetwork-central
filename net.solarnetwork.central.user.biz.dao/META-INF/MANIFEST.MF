@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central DAO User Biz
 Bundle-SymbolicName: net.solarnetwork.central.user.biz.dao
-Bundle-Version: 2.0.0
+Bundle-Version: 2.1.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: net.solarnetwork.central.user.biz.dao;version="1.8.1"
+Export-Package: net.solarnetwork.central.user.biz.dao;version="1.9.0"
 Import-Package: 
  javax.crypto,
  javax.crypto.spec,

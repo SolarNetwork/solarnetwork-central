@@ -90,6 +90,8 @@ public final class UserBizConstants {
 	/**
 	 * Generate a 20-character random authorization token.
 	 * 
+	 * @param rng
+	 *        the generator to use
 	 * @return the random token
 	 */
 	public static String generateRandomAuthToken(SecureRandom rng) {
@@ -99,6 +101,8 @@ public final class UserBizConstants {
 	/**
 	 * Generate a random token string.
 	 * 
+	 * @param rng
+	 *        the generator to use
 	 * @param byteCount
 	 *        The number of random bytes to use.
 	 * @return the random token, encoded in a base-85 form

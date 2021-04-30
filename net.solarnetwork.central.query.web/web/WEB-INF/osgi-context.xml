@@ -51,6 +51,9 @@
 
 	<osgi:list id="pingTests" availability="optional" interface="net.solarnetwork.domain.PingTest"/>
 	
+	<osgi:reference id="readingFilterValidator" interface="org.springframework.validation.SmartValidator"
+		filter="(&amp;(targetClassName=net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter)(mode=ReadingDatumQuery))"/>
+
 	<bean id="queryAuditor" class="net.solarnetwork.util.DynamicServiceTracker">
 		<property name="bundleContext" ref="bundleContext"/>
 		<property name="serviceClassName" value="net.solarnetwork.central.query.biz.QueryAuditor"/>

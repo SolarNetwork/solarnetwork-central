@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet S3 Datum Export Destination Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.export.dest.s3.test
-Bundle-Version: 1.0.0
-Fragment-Host: net.solarnetwork.central.datum.export.dest.s3;bundle-version="[1.0,2.0)"
+Bundle-Version: 1.1.0
+Fragment-Host: net.solarnetwork.central.datum.export.dest.s3;bundle-version="[1.1,2.0)"
 Automatic-Module-Name: net.solarnetwork.central.datum.export.dest.s3.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 

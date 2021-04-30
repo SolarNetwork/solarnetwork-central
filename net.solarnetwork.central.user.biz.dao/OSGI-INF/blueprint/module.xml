@@ -26,10 +26,6 @@
 	<reference id="userNodeCertificateDao" interface="net.solarnetwork.central.user.dao.UserNodeCertificateDao"/>
 	<reference id="userNodeConfirmationDao" interface="net.solarnetwork.central.user.dao.UserNodeConfirmationDao"/>
 	
-	<reference id="userValidator" interface="org.springframework.validation.Validator"
-		availability="optional"
-		filter="(&amp;(targetClassName=net.solarnetwork.central.user.domain.User)(mode=Registration))"/>
-	
 	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
 	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
 	
@@ -61,6 +57,13 @@
 	<service ref="daoUserAlertBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserAlertBiz"/>
 	
 	<service ref="daoUserMetadataBiz" ranking="1" interface="net.solarnetwork.central.user.biz.UserMetadataBiz"/>
+	
+	<service ref="userValidator" interface="org.springframework.validation.Validator" ranking="1">
+		<service-properties>
+			<entry key="targetClassName" value="net.solarnetwork.central.user.domain.User"/>
+			<entry key="mode" value="Registration"/>
+		</service-properties>
+	</service>
 	
 	<!-- Supporting Services -->
 	
@@ -116,5 +119,7 @@
 		<argument ref="userAlertDao"/>
 		<argument ref="userAlertSituationDao"/>
 	</bean>
+
+	<bean id="userValidator" class="net.solarnetwork.central.user.biz.dao.UserValidator"/>
 	
 </blueprint>
