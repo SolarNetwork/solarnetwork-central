@@ -154,6 +154,8 @@ public class DatumController extends WebServiceControllerSupport {
 	 *        the reading type
 	 * @param tolerance
 	 *        the query tolerance
+	 * @param validationResult
+	 *        a result for validations
 	 * @return the results
 	 * @since 2.3
 	 */
