@@ -47,6 +47,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
@@ -64,6 +68,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
@@ -93,7 +98,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -102,6 +107,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private final ReadingDatumDao readingDao;
 	private SolarLocationDao solarLocationDao;
 	private UserNodeDao userNodeDao;
+	private Validator readingCriteriaValidator;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
 	private long maxDaysForHourAggregation = 31;
@@ -349,6 +355,7 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
+		validateReadingCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
@@ -365,6 +372,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(JodaDateUtils.fromJoda(tolerance));
+		validateReadingCriteria(c);
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
@@ -372,6 +380,24 @@ public class DaoQueryBiz implements QueryBiz {
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
+	}
+
+	private void validateReadingCriteria(ReadingDatumCriteria criteria) {
+		Validator v = (readingCriteriaValidator != null
+				&& readingCriteriaValidator.supports(criteria.getClass()) ? readingCriteriaValidator
+						: null);
+		if ( v == null ) {
+			return;
+		}
+		Errors errors = new BindException(criteria, "filter");
+		v.validate(criteria, errors);
+		if ( errors.hasErrors() ) {
+			throw new ValidationException(errors);
+		}
+
+		if ( !criteria.hasDateOrLocalDateRange() ) {
+			throw new IllegalArgumentException("A date range is required.");
+		}
 	}
 
 	@Override
@@ -545,6 +571,17 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setUserNodeDao(UserNodeDao userNodeDao) {
 		this.userNodeDao = userNodeDao;
+	}
+
+	/**
+	 * Set a validator to use for reading datum queries.
+	 * 
+	 * @param readingCriteriaValidator
+	 *        the validator to set
+	 * @since 3.4
+	 */
+	public void setReadingCriteriaValidator(Validator readingCriteriaValidator) {
+		this.readingCriteriaValidator = readingCriteriaValidator;
 	}
 
 }

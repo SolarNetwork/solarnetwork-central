@@ -50,12 +50,29 @@
 	
 	<service ref="queryBiz" interface="net.solarnetwork.central.query.biz.QueryBiz"/>
 	
+	<service ref="readingCriteriaValidator" interface="org.springframework.validation.Validator">
+		<service-properties>
+			<entry key="targetClassName" value="net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria"/>
+			<entry key="mode" value="ReadingDatumQuery"/>
+		</service-properties>
+	</service>
+	
+	<service interface="org.springframework.validation.SmartValidator">
+		<service-properties>
+			<entry key="targetClassName" value="net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter"/>
+			<entry key="mode" value="ReadingDatumQuery"/>
+		</service-properties>
+		<bean class="net.solarnetwork.central.query.biz.dao.ReadingDatumFilterValidator"/>
+	</service>
+	
 	<!-- Supporting Services -->
 
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 	
 	<ctx:annotation-config/>
+	
+	<bean id="readingCriteriaValidator" class="net.solarnetwork.central.query.biz.dao.ReadingDatumCriteriaValidator"/>
 	
 	<bean id="queryBiz" class="net.solarnetwork.central.query.biz.dao.DaoQueryBiz">
 		<osgix:managed-properties 
