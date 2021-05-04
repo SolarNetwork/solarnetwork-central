@@ -79,6 +79,7 @@ import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.NodeFilter;
 import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.OptimizedQueryFilter;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceMappingFilter;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
@@ -97,7 +98,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 2.8
  */
 public final class DatumUtils {
@@ -714,7 +715,40 @@ public final class DatumUtils {
 		m.setLocationId(meta.getObjectId());
 		m.setSourceId(meta.getSourceId());
 		m.setMetaJson(meta.getMetaJson());
+
+		net.solarnetwork.domain.Location l = meta.getLocation();
+		if ( l != null ) {
+			m.setLocation(toSolarLocation(l));
+		}
 		return m;
+	}
+
+	/**
+	 * Create a new {@link SolarLocation} out of a
+	 * {@link net.solarnetwork.domain.Location}.
+	 * 
+	 * @param l
+	 *        the location to convert
+	 * @return the solar location
+	 * @since 1.5
+	 */
+	public static SolarLocation toSolarLocation(net.solarnetwork.domain.Location l) {
+		if ( l instanceof SolarLocation ) {
+			return (SolarLocation) l;
+		}
+		SolarLocation sl = new SolarLocation();
+		sl.setCountry(l.getCountry());
+		sl.setElevation(l.getElevation());
+		sl.setLatitude(l.getLatitude());
+		sl.setLocality(l.getLocality());
+		sl.setLongitude(l.getLongitude());
+		sl.setName(l.getName());
+		sl.setPostalCode(l.getPostalCode());
+		sl.setRegion(l.getRegion());
+		sl.setStateOrProvince(l.getStateOrProvince());
+		sl.setStreet(l.getStreet());
+		sl.setTimeZoneId(l.getTimeZoneId());
+		return sl;
 	}
 
 	/**
