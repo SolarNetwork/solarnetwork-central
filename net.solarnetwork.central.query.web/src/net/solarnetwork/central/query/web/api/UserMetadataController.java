@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserMetadataBiz;
 import net.solarnetwork.central.user.domain.UserFilterCommand;
 import net.solarnetwork.central.user.domain.UserMetadataFilterMatch;
@@ -43,7 +44,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for read-only user metadata access.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1UserMetadataController")
 @RequestMapping({ "/api/v1/pub/users/meta", "/api/v1/sec/users/meta" })
@@ -72,12 +73,17 @@ public class UserMetadataController extends WebServiceControllerSupport {
 	 * Get metadata for a specific user ID.
 	 * 
 	 * @param userId
-	 *        the user ID
+	 *        the user ID; if not provided the user ID of the current actor will
+	 *        be used
 	 * @return the result
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{userId}" }, method = RequestMethod.GET)
-	public Response<UserMetadataFilterMatch> getMetadata(@PathVariable("userId") Long userId) {
+	@RequestMapping(value = { "", "/", "/{userId}" }, method = RequestMethod.GET)
+	public Response<UserMetadataFilterMatch> getMetadata(
+			@PathVariable(name = "userId", required = false) Long userId) {
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setUserId(userId);
 		FilterResults<UserMetadataFilterMatch> results = userMetadataBiz.findUserMetadata(criteria, null,
