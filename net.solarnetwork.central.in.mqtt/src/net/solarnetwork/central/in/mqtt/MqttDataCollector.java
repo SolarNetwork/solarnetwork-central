@@ -62,7 +62,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -100,6 +100,17 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 	/** The InstructionStatus type. */
 	public static final String INSTRUCTION_STATUS_TYPE = "InstructionStatus";
+
+	/**
+	 * The Instruction type.
+	 * 
+	 * <p>
+	 * This type represents an instruction from a node to SolarIn.
+	 * </p>
+	 * 
+	 * @since 1.6
+	 */
+	public static final String INSTRUCTION_TYPE = "Instruction";
 
 	/** The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type. */
 	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
@@ -371,6 +382,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			}
 		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 			handleInstructionStatus(nodeId, node);
+		} else if ( INSTRUCTION_TYPE.equalsIgnoreCase(nodeType) ) {
+			handleInstruction(nodeId, node);
 		}
 	}
 
@@ -386,6 +399,10 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			InstructionState state = InstructionState.valueOf(status);
 			dao.updateNodeInstructionState(id, nodeId, state, resultParams);
 		}
+	}
+
+	private void handleInstruction(final Long nodeId, final JsonNode node) {
+		// TODO
 	}
 
 	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node,
