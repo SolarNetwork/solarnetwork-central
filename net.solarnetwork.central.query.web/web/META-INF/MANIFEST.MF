@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Query Web
 Bundle-SymbolicName: net.solarnetwork.central.query.web
-Bundle-Version: 3.1.6
+Bundle-Version: 3.1.7
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
@@ -36,7 +36,7 @@ Import-Package:
  net.solarnetwork.central.query.support;version="[1.11,2.0)",
  net.solarnetwork.central.security;version="[1.14,2.0)",
  net.solarnetwork.central.security.jdbc;version="[1.4,2.0)",
- net.solarnetwork.central.security.web;version="[1.9,2.0)",
+ net.solarnetwork.central.security.web;version="[1.9.1,2.0)",
  net.solarnetwork.central.security.web.support;version="[1.0,2.0)",
  net.solarnetwork.central.support;version="[2.0,3.0)",
  net.solarnetwork.central.user.biz;version="[2.0,3.0)",
