@@ -615,7 +615,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
 										decimalArray("42", "2.0", "7.7") },
-								new BigDecimal[][] { decimalArray("100", "715", "3556") })));
+								new BigDecimal[][] { decimalArray("721", "100", "821") })));
 	}
 
 	@Test
@@ -690,7 +690,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("18", "1.1", "3.3"),
 										decimalArray("18", "2.0", "7.3") },
-								new BigDecimal[][] { decimalArray("100", "301", "904") })));
+								new BigDecimal[][] { decimalArray("303", "100", "403") })));
 		assertAggregateDatum(prefix + " year 2", data.get(1),
 				new AggregateDatumEntity(meta.getStreamId(),
 						start.plusYears(1).atZone(ZoneId.of(meta.getTimeZoneId())).toInstant(),
@@ -699,7 +699,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("24", "1.4", "3.7"),
 										decimalArray("24", "2.3", "7.7") },
-								new BigDecimal[][] { decimalArray("103", "715", "2652") })));
+								new BigDecimal[][] { decimalArray("418", "403", "821") })));
 	}
 
 	@Test
@@ -759,12 +759,12 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				new AggregateDatumEntity(virtualStreamId, start.atZone(ZoneOffset.UTC).toInstant(),
 						Aggregation.Year,
 						propertiesOf(decimalArray("2.6", "6.2"), decimalArray("1200"), null, null),
-						statisticsOf(null, new BigDecimal[][] { decimalArray("200", null, null) })));
+						statisticsOf(null, new BigDecimal[][] { decimalArray("606", null, null) })));
 		assertAggregateDatum("Year 2", data.get(1),
 				new AggregateDatumEntity(virtualStreamId,
 						start.plusYears(1).atZone(ZoneOffset.UTC).toInstant(), Aggregation.Year,
 						propertiesOf(decimalArray("3.3", "13.2"), decimalArray("4400"), null, null),
-						statisticsOf(null, new BigDecimal[][] { decimalArray("206", null, null) })));
+						statisticsOf(null, new BigDecimal[][] { decimalArray("836", null, null) })));
 
 	}
 
@@ -1096,7 +1096,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
-								new BigDecimal[][] { decimalArray("100", "928", "5520") })));
+								new BigDecimal[][] { decimalArray("936", "100", "1036") })));
 	}
 
 	@Test
@@ -1129,7 +1129,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.203891051"), decimalArray("202"), null, null),
 						statisticsOf(new BigDecimal[][] { decimalArray("4626", "1.1", "3.3") },
-								new BigDecimal[][] { decimalArray("100", "391", "2078") })));
+								new BigDecimal[][] { decimalArray("201", "100", "403") })));
 	}
 
 	@Test
@@ -1167,14 +1167,14 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 				new AggregateDatumEntity(meta_1.getStreamId(), null, Aggregation.RunningTotal,
 						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
-								new BigDecimal[][] { decimalArray("100", "928", "5520") })));
+								new BigDecimal[][] { decimalArray("936", "100", "1036") })));
 		// stream 2
 		d = datumList.get(1);
 		DatumTestUtils.assertAggregateDatum("Running total", d,
 				new AggregateDatumEntity(meta_2.getStreamId(), null, Aggregation.RunningTotal,
 						propertiesOf(decimalArray("10.314496644"), decimalArray("9450"), null, null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "10.1", "30.3") },
-								new BigDecimal[][] { decimalArray("1000", "9280", "55200") })));
+								new BigDecimal[][] { decimalArray("9360", "1000", "10360") })));
 	}
 
 	@Test
@@ -1225,7 +1225,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 			assertThat("Instantaneous stats", d.getStatistics().getInstantaneous()[0], arrayContaining(
 					i == 0 ? decimalArray("24", "0", "100") : decimalArray("48", "0", "100")));
 			assertThat("Accumulating stats", d.getStatistics().getAccumulating()[0], arrayContaining(
-					i == 0 ? decimalArray("10", "3", "46") : decimalArray("10", "3", "92")));
+					i == 0 ? decimalArray("40", "0", "13") : decimalArray("80", "0", "13")));
 		}
 	}
 
