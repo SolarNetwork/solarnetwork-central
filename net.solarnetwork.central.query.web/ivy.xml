@@ -20,7 +20,7 @@
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.8,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.3,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.16,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security.web" rev="[1.12,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security.web" rev="[1.12.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.query" rev="[3.0,)"/>
 		<dependency org="commons-codec" name="commons-codec" rev="1.7"/>

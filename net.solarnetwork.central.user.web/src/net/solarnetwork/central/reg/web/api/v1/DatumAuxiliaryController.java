@@ -70,10 +70,6 @@ public class DatumAuxiliaryController extends WebServiceControllerSupport {
 	 * 
 	 * @param datumAuxiliaryBiz
 	 *        the biz to use
-	 * @param queryBiz
-	 *        the QueryBiz to use
-	 * @param pathMatcher
-	 *        the source ID path matcher to use
 	 */
 	@Autowired
 	public DatumAuxiliaryController(DatumAuxiliaryBiz datumAuxiliaryBiz) {

@@ -68,7 +68,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
@@ -106,8 +106,9 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	 *        the matcher to use, or {@literal null} if not supported
 	 * @param pathMatcherPrefixStrip
 	 *        a path prefix to strip from
-	 *        {@link HttpServletRequest#getPathInfo()} before comparing paths,
-	 *        or {@literal null} to not strip any prefix
+	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
+	 *        {@link HttpServletRequest#getContextPath()} has been removed,
+	 *        before comparing paths, or {@literal null} to not strip any prefix
 	 * @since 1.5
 	 */
 	public UserAuthTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
@@ -193,9 +194,13 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 		} else if ( request == null ) {
 			return false;
 		}
-		String path = request.getPathInfo();
+		String path = request.getRequestURI();
 		if ( path == null ) {
 			return false;
+		}
+		String ctxPath = request.getContextPath();
+		if ( ctxPath != null && !ctxPath.isEmpty() ) {
+			path = path.substring(ctxPath.length());
 		}
 		if ( pathMatcherPrefixStrip != null && !pathMatcherPrefixStrip.isEmpty()
 				&& path.startsWith(pathMatcherPrefixStrip) ) {

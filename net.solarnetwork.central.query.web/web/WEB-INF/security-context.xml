@@ -55,7 +55,7 @@
 				<beans:property name="caseSensitive" value="true"/>
 			</beans:bean>
 		</beans:constructor-arg>
-		<beans:constructor-arg value="/v1/sec"/>
+		<beans:constructor-arg value="/api/v1/sec"/>
 		<beans:property name="userDetailsService" ref="jdbcUserService"/>
 		<beans:property name="authenticationEntryPoint" ref="authTokenEntryPoint"/>
 	</beans:bean>

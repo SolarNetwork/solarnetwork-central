@@ -50,7 +50,7 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 
 /**
- * Utilities for Datum domain classes.
+ * Utilities for Datum JSON processing.
  * 
  * @author matt
  * @version 1.0

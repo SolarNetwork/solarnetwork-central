@@ -37,11 +37,13 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ass
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.remapStream;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
@@ -60,6 +62,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
@@ -68,6 +71,7 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -834,6 +838,74 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		Datum d = datumList.get(0);
 		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_2.getStreamId()));
 		assertThat("Max timestamp", d.getTimestamp(), equalTo(start.plusHours(3 * 3 + 1).toInstant()));
+	}
+
+	@Test
+	public void find_hour_nodeAndSource_mostRecent_fewerDatumPropsThanMetadataProps() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta_1 = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a",
+				new String[] { "watts", "current", "voltage", "frequency", "realPower", "powerFactor",
+						"phaseVoltage", "apparentPower", "reactivePower", "tou", "cost" },
+				new String[] { "wattHours", "cost" }, null);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta_1));
+
+		// @formatter:off
+		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		AggregateDatum h1 = new AggregateDatumEntity(meta_1.getStreamId(), start.toInstant(), Aggregation.Hour,
+				DatumProperties.propertiesOf(
+						decimalArray("6528.083333333","2.03884575","230.905399167","49.969080083","6011.75","0.999999953","13.063502917","6011.75","1.333333333","11"),
+						decimalArray("1192.249933333","13.114749267"),
+						new String[] {"_v2"},
+						null),
+				DatumPropertiesStatistics.statisticsOf(
+						new BigDecimal[][] { 
+							decimalArray("12","833","17305"),
+							decimalArray("12","-33.023814","56.901104"),
+							decimalArray("12","225.10013","234.99686"),
+							decimalArray("12","49.50017","50.49986"),
+							decimalArray("12","3485","10181"),
+							decimalArray("12","0.99999991","0.99999999"),
+							decimalArray("12","-298.8894","330.6257"),
+							decimalArray("12","3485","10181"),
+							decimalArray("12","0","4"),
+							decimalArray("12","11","11"),
+							}, 
+						new BigDecimal[][] { 
+							decimalArray("1195","5983591","5984786"),
+							decimalArray("13.145","-182.25348","-169.10848"),
+						}));
+		// @formatter:on
+		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, asList(h1));
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setMostRecent(true);
+		filter.setAggregation(Aggregation.Hour);
+		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
+
+		// THEN
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
+		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+
+		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
+		assertThat("Result list size matches", datumList, hasSize(1));
+
+		Datum d = datumList.get(0);
+		assertThat("Stream ID ", d.getStreamId(), equalTo(meta_1.getStreamId()));
+		assertThat("Timestamp", d.getTimestamp(), equalTo(h1.getTimestamp()));
+
+		List<ReportingGeneralNodeDatumMatch> data = stream(results.spliterator(), false)
+				.map(e -> toGeneralNodeDatum(e, results.metadataForStreamId(e.getStreamId())))
+				.collect(toList());
+		ReportingGeneralNodeDatumMatch m = data.get(0);
+		Map<String, ?> sample = m.getSampleData();
+		assertThat("Watts min", sample, hasEntry("watts_min", new BigDecimal("833")));
+		assertThat("Watts max", sample, hasEntry("watts_max", new BigDecimal("17305")));
 	}
 
 	@Test

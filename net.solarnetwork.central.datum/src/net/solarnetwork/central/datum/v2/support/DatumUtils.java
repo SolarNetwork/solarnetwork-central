@@ -98,7 +98,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  * @since 2.8
  */
 public final class DatumUtils {
@@ -441,10 +441,11 @@ public final class DatumUtils {
 		}
 		BigDecimal[][] iStats = stats.getInstantaneous();
 		String[] propNames = meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous);
-		if ( propNames == null || propNames.length > len ) {
+		if ( propNames == null ) {
 			return;
 		}
-		for ( int i = 0; i < len; i++ ) {
+		final int max = Math.min(len, propNames.length);
+		for ( int i = 0; i < max; i++ ) {
 			BigDecimal[] propStats = iStats[i]; // count, min, max
 			if ( propStats == null || propStats.length < 3 ) {
 				continue;
@@ -479,10 +480,11 @@ public final class DatumUtils {
 		}
 		BigDecimal[][] aStats = stats.getAccumulating();
 		String[] propNames = meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating);
-		if ( propNames == null || propNames.length < len ) {
+		if ( propNames == null ) {
 			return;
 		}
-		for ( int i = 0; i < len; i++ ) {
+		final int max = Math.min(len, propNames.length);
+		for ( int i = 0; i < max; i++ ) {
 			BigDecimal[] propStats = aStats[i]; // diff, start, end
 			if ( propStats == null || propStats.length < 3 ) {
 				continue;
