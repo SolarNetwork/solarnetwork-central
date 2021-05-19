@@ -22,18 +22,31 @@
 
 package net.solarnetwork.central.datum.v2.support;
 
+import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.prefs.CsvPreference;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * Utilities for Datum CSV processing.
@@ -49,6 +62,24 @@ public final class DatumCsvUtils {
 	}
 
 	/**
+	 * A timestamp formatter like {@link DateUtils#ISO_DATE_OPT_TIME_ALT} but
+	 * using an hour-only offset pattern.
+	 */
+	public static final DateTimeFormatter ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET;
+	static {
+		// @formatter:off
+		ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET = new DateTimeFormatterBuilder()
+				.append(DateTimeFormatter.ISO_DATE)
+				.optionalStart()
+				.appendLiteral(' ')
+                .append(DateTimeFormatter.ISO_LOCAL_TIME)
+                .optionalStart()
+                .appendOffset("+HH", "+00")
+				.toFormatter();
+		// @formatter:on
+	}
+
+	/**
 	 * Parse CSV formatted stream metadata.
 	 * 
 	 * @param in
@@ -61,7 +92,7 @@ public final class DatumCsvUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
-	public static List<ObjectDatumStreamMetadata> parseCsvMetadata(Reader in, ObjectDatumKind kind,
+	public static List<ObjectDatumStreamMetadata> parseMetadata(Reader in, ObjectDatumKind kind,
 			ZoneId zone) throws IOException {
 		List<ObjectDatumStreamMetadata> result = new ArrayList<>();
 		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
@@ -107,13 +138,9 @@ public final class DatumCsvUtils {
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <T> T parseArrayValue(String value) {
+	private static String[] parseArrayValue(String value) {
 		if ( value == null || value.isEmpty() ) {
 			return null;
-		}
-		if ( value.startsWith("{{") ) {
-			return (T) parse2dArrayValue(value);
 		}
 		if ( value.startsWith("{") ) {
 			value = value.substring(1);
@@ -121,12 +148,94 @@ public final class DatumCsvUtils {
 		if ( value.endsWith("}") ) {
 			value = value.substring(0, value.length() - 1);
 		}
-		return (T) org.springframework.util.StringUtils.commaDelimitedListToStringArray(value);
+		return commaDelimitedListToStringArray(value);
 	}
 
 	private static String[][] parse2dArrayValue(String value) {
-		// TODO Auto-generated method stub
-		return null;
+		if ( value.startsWith("{") ) {
+			value = value.substring(1);
+		}
+		if ( value.endsWith("}") ) {
+			value = value.substring(0, value.length() - 1);
+		}
+		String[] components = value.split("\\}\\s*,\\s*\\{");
+		String[][] result = new String[components.length][];
+		for ( int i = 0; i < components.length; i++ ) {
+			result[i] = parseArrayValue(components[i]);
+		}
+		return result;
+	}
+
+	private static BigDecimal[][] parase2dDecimalArray(String[][] strings) {
+		if ( strings == null ) {
+			return null;
+		}
+		if ( strings.length == 0 ) {
+			return new BigDecimal[0][];
+		}
+		BigDecimal[][] result = new BigDecimal[strings.length][];
+		for ( int i = 0; i < strings.length; i++ ) {
+			result[i] = decimalArray(strings[i]);
+		}
+		return result;
+	}
+
+	private static Instant parseInstant(String value) {
+		try {
+			return ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET.parse(value, Instant::from);
+		} catch ( DateTimeParseException e ) {
+			try {
+				return DateUtils.ISO_DATE_OPT_TIME_ALT.parse(value, Instant::from);
+			} catch ( DateTimeParseException e2 ) {
+				return DateTimeFormatter.ISO_INSTANT.parse(value, Instant::from);
+			}
+		}
+	}
+
+	/**
+	 * Parse CSV formatted aggregate datum.
+	 * 
+	 * @param in
+	 *        the input to parse as CSV
+	 * @param aggregation
+	 *        the aggregate type
+	 * @return the list of aggregate datum, never {@literal null}
+	 * @throws IOException
+	 *         if any parsing error occurs
+	 */
+	public static List<AggregateDatum> parseAggregateDatum(Reader in, Aggregation aggregation)
+			throws IOException {
+		List<AggregateDatum> result = new ArrayList<>();
+		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
+			r.getHeader(true);
+			List<String> row = null;
+			while ( (row = r.read()) != null ) {
+				if ( row.size() < 8 ) {
+					continue;
+				}
+				final UUID streamId = UUID.fromString(row.get(0));
+				final Instant ts = parseInstant(row.get(1));
+
+				String[] iCol = parseArrayValue(row.get(2));
+				String[] aCol = parseArrayValue(row.get(3));
+				String[] sCol = parseArrayValue(row.get(4));
+				String[] tCol = parseArrayValue(row.get(5));
+
+				DatumProperties props = DatumProperties.propertiesOf(decimalArray(iCol),
+						decimalArray(aCol), sCol, tCol);
+
+				String[][] statsCol = parse2dArrayValue(row.get(6));
+				String[][] readingStatsCol = parse2dArrayValue(row.get(7));
+
+				DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(
+						parase2dDecimalArray(statsCol), parase2dDecimalArray(readingStatsCol));
+
+				AggregateDatumEntity d = new AggregateDatumEntity(streamId, ts, aggregation, props,
+						stats);
+				result.add(d);
+			}
+		}
+		return result;
 	}
 
 }
