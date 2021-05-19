@@ -31,7 +31,6 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.util.UUID;
 import org.easymock.Capture;
@@ -46,6 +45,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
@@ -335,8 +335,11 @@ public class DaoDatumAuxiliaryBizTests {
 
 		asssertCriteria(filterCaptor.getValue(), TEST_NODE_ID, TEST_SOURCE_ID);
 
-		assertThat("Same criteria used to find datum and meta", filterCaptor.getValue(),
-				sameInstance(metaFilterCaptor.getValue()));
+		BasicDatumCriteria expectedMetaCriteria = ((BasicDatumCriteria) filterCaptor.getValue()).clone();
+		expectedMetaCriteria.setStartDate(null);
+		expectedMetaCriteria.setEndDate(null);
+		assertThat("Same criteria used to find datum, minus date range, used to find meta",
+				metaFilterCaptor.getValue(), equalTo(expectedMetaCriteria));
 	}
 
 }

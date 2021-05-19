@@ -31,7 +31,7 @@ import net.solarnetwork.central.datum.domain.BasePK;
  * Primary key for a datum based on object/source/timestamp values.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class ObjectDatumStreamPK extends BasePK
@@ -165,7 +165,7 @@ public class ObjectDatumStreamPK extends BasePK
 	}
 
 	@Override
-	protected ObjectDatumStreamPK clone() {
+	public ObjectDatumStreamPK clone() {
 		return (ObjectDatumStreamPK) super.clone();
 	}
 
