@@ -1,4 +1,5 @@
 .DS_Store
+test.jpage
 junit*.properties
 /solarnetwork-osgi-lib
 /solarnetwork-osgi-target
