@@ -63,7 +63,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
-	 * @param datumPropertyUpdatedCount
+	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
 	 * @return the audit datum
 	 */
@@ -93,7 +93,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
-	 * @param datumPropertyUpdatedCount
+	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
 	 * @return the audit datum
 	 */
@@ -126,7 +126,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
-	 * @param datumPropertyUpdatedCount
+	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
 	 * @return the audit datum
 	 */
@@ -188,7 +188,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
-	 * @param datumPropertyUpdatedCount
+	 * @param datumPropertyUpdateCount
 	 *        the datum property update count
 	 */
 	public AuditDatumEntityRollup(Long nodeId, String sourceId, Instant timestamp,
