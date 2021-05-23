@@ -40,7 +40,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectAuditDatum
@@ -127,10 +127,12 @@ public class SelectAuditDatum
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 		}
 		buf.append("NULL::bigint AS aud_datum_hourly_count,\n");
@@ -149,6 +151,7 @@ public class SelectAuditDatum
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append(
@@ -156,6 +159,7 @@ public class SelectAuditDatum
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append(
@@ -169,6 +173,7 @@ public class SelectAuditDatum
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_count) AS aud_datum_count,\n");
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
+			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append("SUM(datum.datum_daily_count) AS aud_datum_daily_count,\n");
@@ -177,6 +182,7 @@ public class SelectAuditDatum
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
+			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append("datum.datum_daily_count AS aud_datum_daily_count,\n");

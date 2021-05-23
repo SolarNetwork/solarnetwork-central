@@ -59,7 +59,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
  * Test cases for the database audit rollup stored procedures.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
@@ -133,14 +133,17 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> hourlyAudits = new ArrayList<>();
 		long propCount = 0;
+		long propUpdateCount = 0;
 		long datumQueryCount = 0;
 		for ( int i = 0; i < 8; i++ ) {
 			long p = (i + 1) * 2L;
+			long p_u = p / 2;
 			long q = (i + 1) * 100L;
 			propCount += p;
+			propUpdateCount += p_u;
 			datumQueryCount += q;
 			AuditDatumEntity audit = AuditDatumEntity.ioAuditDatum(streamId,
-					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
+					start.plusHours(i * 3).toInstant(), i + 1L, p, q, p_u);
 			hourlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, hourlyAudits);
@@ -150,12 +153,14 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 				"SELECT * FROM solardatm.calc_audit_datm_daily(?::uuid,?,?)", streamId.toString(),
 				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(24).toInstant()));
 		assertThat("Row returned with result columns", result.keySet(), containsInAnyOrder("stream_id",
-				"ts_start", "datum_daily_pres", "prop_count", "datum_q_count"));
+				"ts_start", "datum_daily_pres", "prop_count", "prop_u_count", "datum_q_count"));
 		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
 		assertThat("Timestamp matches", result.get("ts_start"),
 				equalTo(Timestamp.from(start.toInstant())));
 		assertThat("Daily datum present flag matches", result.get("datum_daily_pres"), equalTo(true));
 		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
+		assertThat("Datum property update count matches", result.get("prop_u_count"),
+				equalTo(propUpdateCount));
 		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
 	}
 
@@ -174,20 +179,23 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		int datumHourlyCount = 0;
 		int datumDailyCount = 0;
 		long propCount = 0;
+		long propUpdateCount = 0;
 		long datumQueryCount = 0;
 		for ( int i = 0; i < 8; i++ ) {
 			long r = (i + 1) * 5000;
 			long h = (i + 1) * 720;
 			int d = 1; // day present
 			long p = (i + 1) * 2L;
+			long p_u = p / 2;
 			long q = (i + 1) * 100L;
 			datumCount += r;
 			datumHourlyCount += h;
 			datumDailyCount += d;
 			propCount += p;
+			propUpdateCount += p_u;
 			datumQueryCount += q;
 			AuditDatumEntity audit = AuditDatumEntity.dailyAuditDatum(streamId,
-					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
+					start.plusHours(i * 24).toInstant(), r, h, d, p, q, p_u);
 			dailyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, dailyAudits);
@@ -199,7 +207,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 						start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(1).toInstant()));
 		assertThat("Row returned with result columns", result.keySet(),
 				containsInAnyOrder("stream_id", "ts_start", "datum_count", "datum_hourly_count",
-						"datum_daily_count", "datum_monthly_pres", "prop_count", "datum_q_count"));
+						"datum_daily_count", "datum_monthly_pres", "prop_count", "prop_u_count",
+						"datum_q_count"));
 		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
 		assertThat("Timestamp matches", result.get("ts_start"),
 				equalTo(Timestamp.from(start.toInstant())));
@@ -211,6 +220,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		assertThat("Monthly datum present flag matches", result.get("datum_monthly_pres"),
 				equalTo(true));
 		assertThat("Datum property count matches", result.get("prop_count"), equalTo(propCount));
+		assertThat("Datum property update count matches", result.get("prop_u_count"),
+				equalTo(propUpdateCount));
 		assertThat("Datum query count matches", result.get("datum_q_count"), equalTo(datumQueryCount));
 	}
 
@@ -234,13 +245,14 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long h = (i + 1) * 720;
 			int d = 1; // day present
 			long p = (i + 1) * 2L;
+			long p_u = p / 2;
 			long q = (i + 1) * 100L;
 			datumCount += r;
 			datumHourlyCount += h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
-					1, p, q);
+					1, p, q, p_u);
 			monthlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
@@ -286,13 +298,14 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long h = (i + 1) * 720;
 			int d = 1; // day present
 			long p = (i + 1) * 2L;
+			long p_u = p / 2;
 			long q = (i + 1) * 100L;
 			datumCount += r;
 			datumHourlyCount += h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
-					1, p, q);
+					1, p, q, p_u);
 			monthlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, monthlyAudits);

@@ -126,7 +126,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -145,7 +145,7 @@ public class JdbcDatumEntityDao
 	/**
 	 * The default value for the {@code bulkLoadAuditJdbcCall} property.
 	 */
-	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.add_aud_datm_io(?, ?, ?, ?)}";
+	public static final String DEFAULT_BULK_LOADING_AUDIT_CALL = "{call solardatm.audit_increment_datum_count(?, ?, ?, ?)}";
 
 	/**
 	 * The {@code maxMinuteAggregationHours} property default value.

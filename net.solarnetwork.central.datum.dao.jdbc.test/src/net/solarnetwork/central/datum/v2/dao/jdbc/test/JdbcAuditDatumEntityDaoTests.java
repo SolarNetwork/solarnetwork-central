@@ -66,7 +66,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link JdbcAuditDatumEntityDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -102,6 +102,8 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 				equalTo(expected.getDatumMonthlyCount()));
 		assertThat(prefix + " prop posted count", result.getDatumPropertyCount(),
 				equalTo(expected.getDatumPropertyCount()));
+		assertThat(prefix + " prop reposted count", result.getDatumPropertyUpdateCount(),
+				equalTo(expected.getDatumPropertyUpdateCount()));
 		assertThat(prefix + " datum query count", result.getDatumQueryCount(),
 				equalTo(expected.getDatumQueryCount()));
 	}
@@ -111,19 +113,19 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> audits = new ArrayList<>();
 		for ( int i = 0; i < count; i++ ) {
 			ZonedDateTime h = start.plusHours(i * hourStep);
-			audits.add(ioAuditDatum(streamId, h.toInstant(), 60L, 100L, 5L));
+			audits.add(ioAuditDatum(streamId, h.toInstant(), 60L, 100L, 5L, 0L));
 			hours.add(h.toInstant());
 
 			Instant d = h.truncatedTo(ChronoUnit.DAYS).toInstant();
 			if ( days.isEmpty() || !days.get(days.size() - 1).equals(d) ) {
-				audits.add(dailyAuditDatum(streamId, d, 100L, 24L, 1, 1000L, 10L));
+				audits.add(dailyAuditDatum(streamId, d, 100L, 24L, 1, 1000L, 10L, 0L));
 				days.add(d);
 			}
 
 			Instant m = h.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS)
 					.toInstant();
 			if ( months.isEmpty() || !months.get(months.size() - 1).equals(m) ) {
-				audits.add(monthlyAuditDatum(streamId, m, 3000L, 720L, 30, 1, 30000L, 300L));
+				audits.add(monthlyAuditDatum(streamId, m, 3000L, 720L, 30, 1, 30000L, 300L, 0L));
 				months.add(m);
 			}
 		}
@@ -196,8 +198,8 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Hour rows for first 4 weeks returned", results.getReturnedResultCount(), equalTo(4));
 		int i = 0;
 		for ( AuditDatumRollup row : results ) {
-			assertAuditDatum("Hour " + i, row,
-					hourlyAuditDatumRollup(TEST_NODE_ID, TEST_SOURCE_ID, hours.get(i), 60L, 100L, 5L));
+			assertAuditDatum("Hour " + i, row, hourlyAuditDatumRollup(TEST_NODE_ID, TEST_SOURCE_ID,
+					hours.get(i), 60L, 100L, 5L, 0L));
 			i++;
 		}
 	}
@@ -237,7 +239,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		for ( AuditDatumRollup row : results ) {
 			// audit counts doubled from rollup
 			assertAuditDatum("Hour " + i, row,
-					hourlyAuditDatumRollup(TEST_NODE_ID, null, hours.get(i), 120L, 200L, 10L));
+					hourlyAuditDatumRollup(TEST_NODE_ID, null, hours.get(i), 120L, 200L, 10L, 0L));
 			i++;
 		}
 	}
@@ -287,7 +289,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		for ( AuditDatumRollup row : results ) {
 			// audit counts doubled from rollup
 			assertAuditDatum("Hour " + i, row,
-					hourlyAuditDatumRollup(null, null, hours.get(i), 180L, 300L, 15L));
+					hourlyAuditDatumRollup(null, null, hours.get(i), 180L, 300L, 15L, 0L));
 			i++;
 		}
 	}
@@ -334,7 +336,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Rolled up hour row for first 4 weeks returned", results.getReturnedResultCount(),
 				equalTo(1));
 		assertAuditDatum("Hour (All)", results.iterator().next(),
-				hourlyAuditDatumRollup(null, null, null, 720L, 1200L, 60L));
+				hourlyAuditDatumRollup(null, null, null, 720L, 1200L, 60L, 0L));
 	}
 
 	@Test
@@ -363,7 +365,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		int i = 0;
 		for ( AuditDatumRollup row : results ) {
 			assertAuditDatum("Hour " + i, row, AuditDatumEntityRollup.dailyAuditDatumRollup(TEST_NODE_ID,
-					TEST_SOURCE_ID, days.get(i), 100L, 24L, 1, 1000L, 10L));
+					TEST_SOURCE_ID, days.get(i), 100L, 24L, 1, 1000L, 10L, 0L));
 			i++;
 		}
 	}
@@ -395,7 +397,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		int i = 0;
 		for ( AuditDatumRollup row : results ) {
 			assertAuditDatum("Hour " + i, row, AuditDatumEntityRollup.dailyAuditDatumRollup(TEST_NODE_ID,
-					TEST_SOURCE_ID, days.get(i), 100L, 24L, 1, 1000L, 10L));
+					TEST_SOURCE_ID, days.get(i), 100L, 24L, 1, 1000L, 10L, 0L));
 			i++;
 		}
 	}
@@ -426,7 +428,7 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 		assertThat("Month rows for first 4 weeks returned", results.getReturnedResultCount(),
 				equalTo(1));
 		assertAuditDatum("Month 1", results.iterator().next(), monthlyAuditDatumRollup(TEST_NODE_ID,
-				TEST_SOURCE_ID, start.toInstant(), 3000L, 720L, 30, 1, 30000L, 300L));
+				TEST_SOURCE_ID, start.toInstant(), 3000L, 720L, 30, 1, 30000L, 300L, 0L));
 	}
 
 	@Test

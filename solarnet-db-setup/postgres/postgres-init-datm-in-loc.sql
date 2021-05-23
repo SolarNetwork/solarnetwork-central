@@ -183,11 +183,7 @@ BEGIN
 					p_i, p_a, p_s)
 	INTO p_i, p_a, p_s, is_insert;
 
-	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, datum_count, prop_count)
-	VALUES (sid, ts_recv_hour, 1, jdata_prop_count)
-	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET datum_count = aud_datm_io.datum_count + (CASE is_insert WHEN TRUE THEN 1 ELSE 0 END),
-		prop_count = aud_datm_io.prop_count + EXCLUDED.prop_count;
+	PERFORM solardatm.audit_increment_datum_count(sid, ts_recv, 1, jdata_prop_count, is_insert);
 
 	IF track THEN
 		INSERT INTO solardatm.agg_stale_datm (stream_id, ts_start, agg_kind)
