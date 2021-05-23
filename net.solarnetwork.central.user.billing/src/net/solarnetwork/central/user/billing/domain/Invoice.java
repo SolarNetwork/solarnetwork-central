@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface Invoice extends Entity<String> {
 
@@ -88,5 +88,13 @@ public interface Invoice extends Entity<String> {
 	 * @return the invoice items
 	 */
 	List<InvoiceItem> getInvoiceItems();
+
+	/**
+	 * Get the node usage records.
+	 * 
+	 * @return the records
+	 * @since 1.2
+	 */
+	List<InvoiceUsageRecord<Long>> getNodeUsageRecords();
 
 }

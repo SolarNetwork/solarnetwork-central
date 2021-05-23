@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface LocalizedInvoiceInfo {
 
@@ -115,5 +115,13 @@ public interface LocalizedInvoiceInfo {
 	 * @since 1.1
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription();
+
+	/**
+	 * Get the localized invoice usage records.
+	 * 
+	 * @return the localized usage records
+	 * @since 1.3
+	 */
+	List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords();
 
 }

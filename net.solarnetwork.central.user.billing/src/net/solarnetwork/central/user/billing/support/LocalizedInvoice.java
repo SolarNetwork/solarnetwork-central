@@ -36,15 +36,17 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordInfo;
 import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
  * Localized version of {@link Invoice}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -166,6 +168,11 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
+	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
+		return invoice.getNodeUsageRecords();
+	}
+
+	@Override
 	public List<LocalizedInvoiceItemInfo> getLocalizedInvoiceItems() {
 		List<InvoiceItem> items = getInvoiceItems();
 		if ( items == null ) {
@@ -224,6 +231,16 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 									return agg1.addItems(agg2);
 								})))
 				.values().stream().sorted(Comparator.comparing(item -> ordering.indexOf(item.getId())))
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords() {
+		List<InvoiceUsageRecord<Long>> recs = getNodeUsageRecords();
+		if ( recs == null ) {
+			return null;
+		}
+		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale))
 				.collect(Collectors.toList());
 	}
 
