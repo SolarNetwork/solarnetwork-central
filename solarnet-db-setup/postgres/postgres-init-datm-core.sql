@@ -238,6 +238,7 @@ CREATE TABLE solardatm.aud_datm_io (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
+	prop_u_count			INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0 -- this is a count of datum INGESTED
 );
@@ -254,6 +255,7 @@ CREATE TABLE solardatm.aud_datm_daily (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
     prop_count 				BIGINT NOT NULL DEFAULT 0,
+	prop_u_count			BIGINT NOT NULL DEFAULT 0,
     datum_q_count 			BIGINT NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum ROWS
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
@@ -270,6 +272,7 @@ CREATE TABLE solardatm.aud_datm_monthly (
 	stream_id				UUID NOT NULL,
 	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
     prop_count 				BIGINT NOT NULL DEFAULT 0,
+	prop_u_count			BIGINT NOT NULL DEFAULT 0,
     datum_q_count 			BIGINT NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0,
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,

@@ -57,14 +57,15 @@ BEGIN
 			WHEN 'd' THEN
 				-- day data counts, including sum of hourly audit prop_count, datum_q_count
 				INSERT INTO solardatm.aud_datm_daily (stream_id, ts_start,
-					datum_daily_pres, prop_count, datum_q_count, processed_io_count)
-				SELECT stream_id, ts_start, datum_daily_pres, prop_count, datum_q_count,
+					datum_daily_pres, prop_count, prop_u_count, datum_q_count, processed_io_count)
+				SELECT stream_id, ts_start, datum_daily_pres, prop_count, prop_u_count, datum_q_count,
 					CURRENT_TIMESTAMP AS processed_io_count
 				FROM solardatm.calc_audit_datm_daily(
 					stale.stream_id, stale.ts_start, stale.ts_start + interval '1 day')
 				ON CONFLICT (stream_id, ts_start) DO UPDATE
 				SET datum_daily_pres = EXCLUDED.datum_daily_pres,
 					prop_count = EXCLUDED.prop_count,
+					prop_u_count = EXCLUDED.prop_u_count,
 					datum_q_count = EXCLUDED.datum_q_count,
 					processed_io_count = EXCLUDED.processed_io_count;
 
@@ -72,9 +73,9 @@ BEGIN
 				-- month data counts
 				INSERT INTO solardatm.aud_datm_monthly (stream_id, ts_start,
 					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
-					prop_count, datum_q_count, processed)
+					prop_count, prop_u_count, datum_q_count, processed)
 				SELECT stream_id, ts_start, datum_count, datum_hourly_count, datum_daily_count,
-					datum_monthly_pres,prop_count, datum_q_count, CURRENT_TIMESTAMP AS processed
+					datum_monthly_pres, prop_count, prop_u_count, datum_q_count, CURRENT_TIMESTAMP AS processed
 				FROM solardatm.calc_audit_datm_monthly(
 					stale.stream_id, stale.ts_start, (stale.ts_start AT TIME ZONE tz + interval '1 month') AT TIME ZONE tz)
 				ON CONFLICT (stream_id, ts_start) DO UPDATE
@@ -83,6 +84,7 @@ BEGIN
 					datum_daily_count = EXCLUDED.datum_daily_count,
 					datum_monthly_pres = EXCLUDED.datum_monthly_pres,
 					prop_count = EXCLUDED.prop_count,
+					prop_u_count = EXCLUDED.prop_u_count,
 					datum_q_count = EXCLUDED.datum_q_count,
 					processed = EXCLUDED.processed;
 		END CASE;
@@ -169,6 +171,33 @@ BEGIN
 	GET DIAGNOSTICS ins_count = ROW_COUNT;
 	RETURN ins_count;
 END;
+$$;
+
+
+/**
+ * Update the `solardatm.aud_datm_io` table by adding count values.
+ *
+ * @param sid 		the stream ID
+ * @param ts_recv 	the datum receive date; this will be truncated to the hour
+ * @param dcount	the datum count to add
+ * @param pcount	the datum property count to add
+ * @param is_insert `TRUE` if the datum was inserted, `FALSE` for updated
+ */
+CREATE OR REPLACE FUNCTION solardatm.audit_increment_datum_count(
+	sid					UUID,
+	ts_recv 			TIMESTAMP WITH TIME ZONE,
+	dcount				INTEGER,
+	pcount				INTEGER,
+	is_insert			BOOL DEFAULT TRUE
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, datum_count, prop_count, prop_u_count)
+	VALUES (sid, date_trunc('hour', ts_recv), dcount, pcount
+		, CASE is_insert WHEN TRUE THEN 0 ELSE pcount END)
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET datum_count = aud_datm_io.datum_count + EXCLUDED.datum_count,
+		prop_count = aud_datm_io.prop_count + EXCLUDED.prop_count,
+		prop_u_count = aud_datm_io.prop_u_count + EXCLUDED.prop_u_count
 $$;
 
 

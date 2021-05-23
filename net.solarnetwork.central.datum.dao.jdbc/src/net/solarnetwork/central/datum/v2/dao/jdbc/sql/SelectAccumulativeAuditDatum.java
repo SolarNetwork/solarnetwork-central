@@ -72,6 +72,7 @@ public class SelectAccumulativeAuditDatum extends SelectAuditDatum
 			buf.append("datum.datum_count AS aud_datum_count,\n");
 		}
 		buf.append("NULL::bigint AS aud_datum_prop_count,\n");
+		buf.append("NULL::bigint AS aud_datum_prop_update_count,\n");
 		buf.append("NULL::bigint AS aud_datum_query_count,\n");
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");

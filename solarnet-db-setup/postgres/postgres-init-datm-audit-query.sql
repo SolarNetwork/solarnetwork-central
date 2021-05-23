@@ -79,6 +79,7 @@ CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_daily(
 		ts_start 				TIMESTAMP WITH TIME ZONE,
 		datum_daily_pres		BOOLEAN,
 		prop_count				BIGINT,
+		prop_u_count			BIGINT,
 		datum_q_count	 		BIGINT
 	) LANGUAGE SQL STABLE ROWS 1 AS
 $$
@@ -93,6 +94,7 @@ $$
 		start_ts,
 		bool_or(d.datum_daily_pres) AS datum_daily_pres,
 		sum(aud.prop_count) AS prop_count,
+		sum(aud.prop_u_count) AS prop_u_count,
 		sum(aud.datum_q_count) AS datum_q_count
 	FROM solardatm.aud_datm_io aud
 	CROSS JOIN datum d
@@ -125,6 +127,7 @@ CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_monthly(
 		datum_daily_count		SMALLINT,
 		datum_monthly_pres		BOOLEAN,
 		prop_count				BIGINT,
+		prop_u_count			BIGINT,
 		datum_q_count	 		BIGINT
 	) LANGUAGE SQL STABLE ROWS 1 AS
 $$
@@ -142,6 +145,7 @@ $$
 		sum(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END)::SMALLINT AS datum_daily_count,
 		bool_or(d.datum_monthly_pres) AS datum_monthly_pres,
 		sum(aud.prop_count)::BIGINT AS prop_count,
+		sum(aud.prop_u_count)::BIGINT AS prop_u_count,
 		sum(aud.datum_q_count)::BIGINT AS datum_q_count
 	FROM solardatm.aud_datm_daily aud
 	CROSS JOIN datum d
