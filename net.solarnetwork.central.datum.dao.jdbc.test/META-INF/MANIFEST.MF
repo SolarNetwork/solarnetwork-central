@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet JDBC Datum DAO Tests
 Bundle-SymbolicName: net.solarnetwork.central.datum.dao.jdbc.test
-Bundle-Version: 1.0.2
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork
-Fragment-Host: net.solarnetwork.central.datum.dao.jdbc;bundle-version="1.0.2"
+Fragment-Host: net.solarnetwork.central.datum.dao.jdbc;bundle-version="1.1.0"
 Automatic-Module-Name: net.solarnetwork.central.datum.dao.jdbc.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 

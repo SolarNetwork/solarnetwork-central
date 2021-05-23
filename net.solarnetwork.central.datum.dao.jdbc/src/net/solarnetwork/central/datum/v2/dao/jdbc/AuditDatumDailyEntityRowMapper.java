@@ -41,6 +41,7 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
  * <li>stream_id</li>
  * <li>ts_start</li>
  * <li>prop_count</li>
+ * <li>prop_u_count</li>
  * <li>datum_q_count</li>
  * <li>datum_count</li>
  * <li>datum_hourly_count</li>
@@ -48,7 +49,7 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatum> {
@@ -60,9 +61,9 @@ public class AuditDatumDailyEntityRowMapper implements RowMapper<AuditDatum> {
 	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
-		boolean dayPresent = rs.getBoolean(7);
-		return AuditDatumEntity.dailyAuditDatum(streamId, ts, rs.getLong(5), rs.getLong(6),
-				dayPresent ? 1 : 0, rs.getLong(3), rs.getLong(4));
+		boolean dayPresent = rs.getBoolean(8);
+		return AuditDatumEntity.dailyAuditDatum(streamId, ts, rs.getLong(6), rs.getLong(7),
+				dayPresent ? 1 : 0, rs.getLong(3), rs.getLong(5), rs.getLong(4));
 	}
 
 }

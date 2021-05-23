@@ -67,7 +67,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * records.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport {
 
@@ -118,7 +118,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 			long p = (i + 1) * 2L;
 			long q = (i + 1) * 100L;
 			AuditDatumEntity audit = AuditDatumEntity.ioAuditDatum(streamId,
-					start.plusHours(i * 3).toInstant(), i + 1L, p, q);
+					start.plusHours(i * 3).toInstant(), i + 1L, p, q, 0L);
 			hourlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, hourlyAudits);
@@ -134,7 +134,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 			long p = (i + 1) * 2L;
 			long q = (i + 1) * 100L;
 			AuditDatumEntity audit = AuditDatumEntity.dailyAuditDatum(streamId,
-					start.plusHours(i * 24).toInstant(), r, h, d, p, q);
+					start.plusHours(i * 24).toInstant(), r, h, d, p, q, 0L);
 			dailyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, dailyAudits);
@@ -151,7 +151,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 			long q = (i + 1) * 100L;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
-					1, p, q);
+					1, p, q, 0L);
 			monthlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
@@ -181,7 +181,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
-				7L, null, null, null, null);
+				7L, null, null, null, null, null);
 		assertAuditDatumId("Daily audit rollup", result.get(0), expected);
 		assertThat("Datum count", result.get(0).getDatumCount(), equalTo(expected.getDatumCount()));
 
@@ -217,7 +217,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 		assertThat("Hour rollup result stored database", result, hasSize(1));
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
-				null, 8L, null, null, null);
+				null, 8L, null, null, null, null);
 		assertAuditDatumId("Daily audit rollup", result.get(0), expected);
 		assertThat("Hourly datum count", result.get(0).getDatumHourlyCount(),
 				equalTo(expected.getDatumHourlyCount()));
@@ -257,7 +257,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 
 		AuditDatumEntity expected = AuditDatumEntity.dailyAuditDatum(meta.getStreamId(), day.toInstant(),
 				null, null, 1, hourAuditData.stream().mapToLong(AuditDatum::getDatumPropertyCount).sum(),
-				hourAuditData.stream().mapToLong(AuditDatum::getDatumQueryCount).sum());
+				hourAuditData.stream().mapToLong(AuditDatum::getDatumQueryCount).sum(), 0L);
 		assertAuditDatumId("Daily audit rollup", result.get(0), expected);
 		assertThat("Daily datum count", result.get(0).getDatumDailyCount(),
 				equalTo(expected.getDatumDailyCount()));
@@ -307,7 +307,7 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumHourlyCount).sum(),
 				dayAuditDatum.stream().mapToInt(AuditDatum::getDatumDailyCount).sum(), 1,
 				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumPropertyCount).sum(),
-				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumQueryCount).sum());
+				dayAuditDatum.stream().mapToLong(AuditDatum::getDatumQueryCount).sum(), 0L);
 		assertAuditDatumId("Daily audit rollup", result.get(0), expectedMonth);
 		assertThat("Month datum count", result.get(0).getDatumCount(),
 				equalTo(expectedMonth.getDatumCount()));
@@ -319,6 +319,8 @@ public class DbProcessStaleAuditDatumDailyTests extends BaseDatumJdbcTestSupport
 				equalTo(expectedMonth.getDatumMonthlyCount()));
 		assertThat("Month datum property count", result.get(0).getDatumPropertyCount(),
 				equalTo(expectedMonth.getDatumPropertyCount()));
+		assertThat("Month datum property update count", result.get(0).getDatumPropertyUpdateCount(),
+				equalTo(expectedMonth.getDatumPropertyUpdateCount()));
 		assertThat("Month datum query count", result.get(0).getDatumQueryCount(),
 				equalTo(expectedMonth.getDatumQueryCount()));
 

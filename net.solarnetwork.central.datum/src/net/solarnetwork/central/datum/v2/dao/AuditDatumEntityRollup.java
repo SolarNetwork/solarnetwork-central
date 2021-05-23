@@ -33,12 +33,12 @@ import net.solarnetwork.central.domain.Aggregation;
  * Implementation of {@link AuditDatumRollup}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 @JsonPropertyOrder({ "ts", "nodeId", "sourceId", "aggregation", "datumTotalCount", "datumCount",
 		"datumHourlyCount", "datumDailyCount", "datumMonthlyCount", "datumPropertyPostedCount",
-		"datumQueryCount" })
+		"datumPropertyRepostedCount", "datumQueryCount" })
 @JsonIgnoreProperties({ "id", "streamId" })
 public class AuditDatumEntityRollup extends AuditDatumEntity
 		implements AuditDatumRollup, Cloneable, Serializable {
@@ -63,12 +63,15 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
+	 * @param datumPropertyUpdateCount
+	 *        the datum property update count
 	 * @return the audit datum
 	 */
 	public static AuditDatumEntityRollup hourlyAuditDatumRollup(Long nodeId, String sourceId,
-			Instant timestamp, Long datumCount, Long datumPropertyCount, Long datumQueryCount) {
+			Instant timestamp, Long datumCount, Long datumPropertyCount, Long datumQueryCount,
+			Long datumPropertyUpdateCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Hour, datumCount,
-				null, null, null, datumPropertyCount, datumQueryCount);
+				null, null, null, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount);
 	}
 
 	/**
@@ -90,13 +93,16 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
+	 * @param datumPropertyUpdateCount
+	 *        the datum property update count
 	 * @return the audit datum
 	 */
 	public static AuditDatumEntityRollup dailyAuditDatumRollup(Long nodeId, String sourceId,
 			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Long datumPropertyCount, Long datumQueryCount) {
+			Long datumPropertyCount, Long datumQueryCount, Long datumPropertyUpdateCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Day, datumCount,
-				datumHourlyCount, datumDailyCount, null, datumPropertyCount, datumQueryCount);
+				datumHourlyCount, datumDailyCount, null, datumPropertyCount, datumQueryCount,
+				datumPropertyUpdateCount);
 	}
 
 	/**
@@ -120,14 +126,17 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
+	 * @param datumPropertyUpdateCount
+	 *        the datum property update count
 	 * @return the audit datum
 	 */
 	public static AuditDatumEntityRollup monthlyAuditDatumRollup(Long nodeId, String sourceId,
 			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount) {
+			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
+			Long datumPropertyUpdateCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.Month, datumCount,
 				datumHourlyCount, datumDailyCount, datumMonthlyCount, datumPropertyCount,
-				datumQueryCount);
+				datumQueryCount, datumPropertyUpdateCount);
 	}
 
 	/**
@@ -153,7 +162,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 			Instant timestamp, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
 			Integer datumMonthlyCount) {
 		return new AuditDatumEntityRollup(nodeId, sourceId, timestamp, Aggregation.RunningTotal,
-				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null);
+				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount, null, null, null);
 	}
 
 	/**
@@ -179,12 +188,15 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	 *        the datum property count
 	 * @param datumQueryCount
 	 *        the datum query count
+	 * @param datumPropertyUpdateCount
+	 *        the datum property update count
 	 */
 	public AuditDatumEntityRollup(Long nodeId, String sourceId, Instant timestamp,
 			Aggregation aggregation, Long datumCount, Long datumHourlyCount, Integer datumDailyCount,
-			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount) {
+			Integer datumMonthlyCount, Long datumPropertyCount, Long datumQueryCount,
+			Long datumPropertyUpdateCount) {
 		super(null, timestamp, aggregation, datumCount, datumHourlyCount, datumDailyCount,
-				datumMonthlyCount, datumPropertyCount, datumQueryCount);
+				datumMonthlyCount, datumPropertyCount, datumQueryCount, datumPropertyUpdateCount);
 		this.nodeId = nodeId;
 		this.sourceId = sourceId;
 	}
@@ -222,6 +234,10 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 		if ( getDatumPropertyCount() != null ) {
 			builder.append(", datumPropertyCount=");
 			builder.append(getDatumPropertyCount());
+		}
+		if ( getDatumPropertyUpdateCount() != null ) {
+			builder.append(", datumPropertyUpdateCount=");
+			builder.append(getDatumPropertyUpdateCount());
 		}
 		if ( getDatumQueryCount() != null ) {
 			builder.append(", datumQueryCount=");

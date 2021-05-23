@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central Datum
 Bundle-SymbolicName: net.solarnetwork.central.datum
-Bundle-Version: 2.9.0
+Bundle-Version: 2.10.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: net.solarnetwork.central.datum
@@ -11,8 +11,8 @@ Export-Package:
  net.solarnetwork.central.datum.dao;version="3.2.0",
  net.solarnetwork.central.datum.domain;version="2.5.0",
  net.solarnetwork.central.datum.support;version="2.1.0",
- net.solarnetwork.central.datum.v2.dao;version="1.0.0",
- net.solarnetwork.central.datum.v2.domain;version="1.0.0",
+ net.solarnetwork.central.datum.v2.dao;version="1.1.0",
+ net.solarnetwork.central.datum.v2.domain;version="1.1.0",
  net.solarnetwork.central.datum.v2.support;version="1.1.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.4,3.0)",
