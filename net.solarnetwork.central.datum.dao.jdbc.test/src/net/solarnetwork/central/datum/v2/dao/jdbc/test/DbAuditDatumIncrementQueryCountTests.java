@@ -49,7 +49,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * database procedure.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSupport {
 
@@ -91,7 +91,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 
 		// THEN
 		DatumTestUtils.assertAuditDatum("Inserted query row", d, AuditDatumEntity.ioAuditDatum(streamId,
-				now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L));
+				now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L));
 	}
 
 	@Test
@@ -103,14 +103,14 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 				ObjectDatumKind.Node, 1L, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, Collections
-				.singleton(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L)));
+				.singleton(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L)));
 
 		// WHEN
 		AuditDatum d = incrementAndGet(meta, now, 321);
 
 		// THEN
 		DatumTestUtils.assertAuditDatum("Updated query row", d,
-				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 444L));
+				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 444L, 0L));
 	}
 
 }

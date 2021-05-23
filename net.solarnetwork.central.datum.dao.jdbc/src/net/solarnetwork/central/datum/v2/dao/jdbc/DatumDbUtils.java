@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
@@ -104,7 +105,7 @@ import net.solarnetwork.util.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -1178,26 +1179,29 @@ public final class DatumDbUtils {
 						switch (d.getAggregation()) {
 							case Hour:
 								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumQueryCount());
-								datumStmt.setObject(5, d.getDatumCount());
+								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+								datumStmt.setObject(5, d.getDatumQueryCount());
+								datumStmt.setObject(6, d.getDatumCount());
 								break;
 
 							case Day:
 								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumQueryCount());
-								datumStmt.setObject(5, d.getDatumCount());
-								datumStmt.setObject(6, d.getDatumHourlyCount());
-								datumStmt.setBoolean(7,
+								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+								datumStmt.setObject(5, d.getDatumQueryCount());
+								datumStmt.setObject(6, d.getDatumCount());
+								datumStmt.setObject(7, d.getDatumHourlyCount());
+								datumStmt.setBoolean(8,
 										d.getDatumDailyCount().intValue() > 0 ? true : false);
 								break;
 
 							case Month:
 								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumQueryCount());
-								datumStmt.setObject(5, d.getDatumCount());
-								datumStmt.setObject(6, d.getDatumHourlyCount());
-								datumStmt.setObject(7, d.getDatumDailyCount());
-								datumStmt.setBoolean(8,
+								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+								datumStmt.setObject(5, d.getDatumQueryCount());
+								datumStmt.setObject(6, d.getDatumCount());
+								datumStmt.setObject(7, d.getDatumHourlyCount());
+								datumStmt.setObject(8, d.getDatumDailyCount());
+								datumStmt.setBoolean(9,
 										d.getDatumMonthlyCount().intValue() > 0 ? true : false);
 								break;
 
@@ -1240,16 +1244,17 @@ public final class DatumDbUtils {
 		buf.append(" (stream_id,ts_start,");
 		switch (kind) {
 			case Hour:
-				buf.append("prop_count,datum_q_count,datum_count");
+				buf.append("prop_count,prop_u_count,datum_q_count,datum_count");
 				break;
 
 			case Day:
-				buf.append("prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres");
+				buf.append(
+						"prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres");
 				break;
 
 			case Month:
 				buf.append(
-						"prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
+						"prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
 				break;
 
 			default:
@@ -1259,15 +1264,15 @@ public final class DatumDbUtils {
 		buf.append(") VALUES (?::uuid,?,");
 		switch (kind) {
 			case Hour:
-				buf.append("?,?,?");
+				buf.append("?,?,?,?");
 				break;
 
 			case Day:
-				buf.append("?,?,?,?,?");
+				buf.append("?,?,?,?,?,?");
 				break;
 
 			case Month:
-				buf.append("?,?,?,?,?,?");
+				buf.append("?,?,?,?,?,?,?");
 				break;
 
 			default:
@@ -1817,28 +1822,33 @@ public final class DatumDbUtils {
 	public static List<AuditDatum> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;
 		RowMapper<AuditDatum> mapper;
+		String rowNames;
 		switch (kind) {
 			case Day:
 				tableName = "aud_datm_daily";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres";
 				mapper = AuditDatumDailyEntityRowMapper.INSTANCE;
 				break;
 
 			case Month:
 				tableName = "aud_datm_monthly";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
 				mapper = AuditDatumMonthlyEntityRowMapper.INSTANCE;
 				break;
 
 			case RunningTotal:
 				tableName = "aud_acc_datm_daily";
+				rowNames = "stream_id,ts_start,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count";
 				mapper = AuditDatumAccumulativeEntityRowMapper.INSTANCE;
 				break;
 
 			default:
 				tableName = "aud_datm_io";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count";
 				mapper = AuditDatumIoEntityRowMapper.INSTANCE;
 		}
 		return jdbcTemplate.query(
-				String.format("SELECT * FROM solardatm.%s ORDER BY stream_id, ts_start", tableName),
+				format("SELECT %s FROM solardatm.%s ORDER BY stream_id, ts_start", rowNames, tableName),
 				mapper);
 	}
 

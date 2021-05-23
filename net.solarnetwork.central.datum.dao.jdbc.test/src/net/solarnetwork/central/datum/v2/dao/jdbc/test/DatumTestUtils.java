@@ -63,7 +63,7 @@ import net.solarnetwork.util.NumberUtils;
  * Helper methods for datum tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class DatumTestUtils {
 
@@ -237,6 +237,9 @@ public final class DatumTestUtils {
 					audit.getDatumPropertyCount(), equalTo(expected.getDatumPropertyCount()));
 			assertThat(prefix + " " + expected.getAggregation() + " audit datum query count",
 					audit.getDatumQueryCount(), equalTo(expected.getDatumQueryCount()));
+			assertThat(prefix + " " + expected.getAggregation() + " audit prop update count",
+					audit.getDatumPropertyUpdateCount(),
+					equalTo(expected.getDatumPropertyUpdateCount()));
 		}
 		if ( expected.getAggregation() == Aggregation.Day
 				|| expected.getAggregation() == Aggregation.Month ) {

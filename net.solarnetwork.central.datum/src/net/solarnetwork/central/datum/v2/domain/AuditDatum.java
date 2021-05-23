@@ -31,7 +31,7 @@ import net.solarnetwork.domain.Identity;
  * API for an audit record count of datum properties.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface AuditDatum extends Identity<DatumPK>, DatumRecordCounts {
@@ -77,6 +77,13 @@ public interface AuditDatum extends Identity<DatumPK>, DatumRecordCounts {
 	 * @return the datum property count
 	 */
 	Long getDatumPropertyCount();
+
+	/**
+	 * Get the count of datum properties that were updated, instead of inserted.
+	 * 
+	 * @return the datum property update count
+	 */
+	Long getDatumPropertyUpdateCount();
 
 	/**
 	 * Get the count of datum queried.

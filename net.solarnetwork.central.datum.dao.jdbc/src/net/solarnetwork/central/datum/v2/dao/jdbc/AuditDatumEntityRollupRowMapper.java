@@ -44,6 +44,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * <li>agg_kind</li>
  * <li>datum_count</li>
  * <li>prop_count</li>
+ * <li>prop_u_count</li>
  * <li>datum_q_count</li>
  * <li>datum_hourly_count</li>
  * <li>datum_daily_count</li>
@@ -51,7 +52,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRollup> {
@@ -67,10 +68,11 @@ public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRoll
 		Aggregation aggregation = Aggregation.forKey(rs.getString(4));
 		Number datumCount = (Number) rs.getObject(5);
 		Number datumPropertyCount = (Number) rs.getObject(6);
-		Number datumQueryCount = (Number) rs.getObject(7);
-		Number datumHourlyCount = (Number) rs.getObject(8);
-		Number datumDailyCount = (Number) rs.getObject(9);
-		Number datumMonthlyCount = (Number) rs.getObject(10);
+		Number datumPropertyUpdateCount = (Number) rs.getObject(7);
+		Number datumQueryCount = (Number) rs.getObject(8);
+		Number datumHourlyCount = (Number) rs.getObject(9);
+		Number datumDailyCount = (Number) rs.getObject(10);
+		Number datumMonthlyCount = (Number) rs.getObject(11);
 		return new AuditDatumEntityRollup(nodeId != null ? nodeId.longValue() : null, sourceId,
 				timestamp != null ? timestamp.toInstant() : null, aggregation,
 				datumCount != null ? datumCount.longValue() : null,
@@ -78,7 +80,8 @@ public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRoll
 				datumDailyCount != null ? datumDailyCount.intValue() : null,
 				datumMonthlyCount != null ? datumMonthlyCount.intValue() : null,
 				datumPropertyCount != null ? datumPropertyCount.longValue() : null,
-				datumQueryCount != null ? datumQueryCount.longValue() : null);
+				datumQueryCount != null ? datumQueryCount.longValue() : null,
+				datumPropertyUpdateCount != null ? datumPropertyUpdateCount.longValue() : null);
 	}
 
 }

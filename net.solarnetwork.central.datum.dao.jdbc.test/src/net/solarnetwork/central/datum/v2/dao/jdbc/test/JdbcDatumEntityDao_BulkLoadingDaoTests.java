@@ -54,11 +54,11 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.util.JodaDateUtils;
 
@@ -67,7 +67,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * {@link BulkLoadingDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -156,7 +156,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 			assertThat("One audit hour", audits, hasSize(1));
 			assertAuditDatum("Audit hour", audits.get(0), ioAuditDatum(loaded.get(0).getStreamId(),
-					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L));
+					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L));
 		} finally {
 			// manually clean up transactionally circumvented data import data
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
@@ -177,8 +177,8 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					ZoneId.systemDefault().toString(), ObjectDatumKind.Node, TEST_NODE_ID,
 					TEST_SOURCE_ID);
 			DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-			AuditDatum hourAudit = AuditDatumEntity.ioAuditDatum(streamId, thisHour.toInstant(),
-					1000L, 10000L, 123456789L);
+			AuditDatum hourAudit = AuditDatumEntity.ioAuditDatum(streamId, thisHour.toInstant(), 1000L,
+					10000L, 123456789L, 0L);
 			DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(hourAudit));
 
 			// load 1 hour of data
@@ -204,11 +204,12 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 
 			List<AuditDatum> audits = DatumDbUtils.listAuditDatum(jdbcTemplate, Aggregation.None);
 			assertThat("One audit hour", audits, hasSize(1));
+			// NOTE: the prop update count is NOT incremented during bulk import, as we  can't tell insert vs. update
 			assertAuditDatum("Existing audit hour updated", audits.get(0),
 					ioAuditDatum(loaded.get(0).getStreamId(), thisHour.toInstant(),
 							datumCount + hourAudit.getDatumCount(),
 							(long) datumCount * 2 + hourAudit.getDatumPropertyCount(),
-							hourAudit.getDatumQueryCount()));
+							hourAudit.getDatumQueryCount(), 0L));
 		} finally {
 			// manually clean up transactionally circumvented data import data
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
@@ -275,7 +276,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					date = start2;
 				}
 				assertAuditDatum("Audit hour " + i, audits.get(i), ioAuditDatum(streamId,
-						thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L));
+						thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L));
 			}
 		} finally {
 			// manually clean up transactionally circumvented data import data
