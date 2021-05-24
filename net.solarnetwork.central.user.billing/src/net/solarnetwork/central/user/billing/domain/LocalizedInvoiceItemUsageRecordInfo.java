@@ -32,7 +32,7 @@ package net.solarnetwork.central.user.billing.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface LocalizedInvoiceItemUsageRecordInfo {
 
@@ -49,5 +49,12 @@ public interface LocalizedInvoiceItemUsageRecordInfo {
 	 * @return the amount
 	 */
 	String getLocalizedAmount();
+
+	/**
+	 * Get the usage cost, as a formatted and localized string.
+	 * 
+	 * @return the usage cost
+	 */
+	String getLocalizedCost();
 
 }

@@ -46,6 +46,7 @@ public class LocalizedInvoiceUsageRecord<T>
 	private final String localizedDescription;
 	private final InvoiceUsageRecord<T> usage;
 	private final Locale locale;
+	private final String currencyCode;
 
 	/**
 	 * Convenience builder.
@@ -56,10 +57,13 @@ public class LocalizedInvoiceUsageRecord<T>
 	 *        the usage to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param currencyCode
+	 *        the currency code
 	 * @return the localized invoice
 	 */
-	public static <T> LocalizedInvoiceUsageRecord<T> of(InvoiceUsageRecord<T> usage, Locale locale) {
-		return new LocalizedInvoiceUsageRecord<>(usage, locale);
+	public static <T> LocalizedInvoiceUsageRecord<T> of(InvoiceUsageRecord<T> usage, Locale locale,
+			String currencyCode) {
+		return new LocalizedInvoiceUsageRecord<>(usage, locale, currencyCode);
 	}
 
 	/**
@@ -69,9 +73,11 @@ public class LocalizedInvoiceUsageRecord<T>
 	 *        the usage to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param currencyCode
+	 *        the currency code
 	 */
-	public LocalizedInvoiceUsageRecord(InvoiceUsageRecord<T> usage, Locale locale) {
-		this(usage, locale, null);
+	public LocalizedInvoiceUsageRecord(InvoiceUsageRecord<T> usage, Locale locale, String currencyCode) {
+		this(usage, locale, null, currencyCode);
 	}
 
 	/**
@@ -83,13 +89,16 @@ public class LocalizedInvoiceUsageRecord<T>
 	 *        the locale to localize to
 	 * @param localizedDescription
 	 *        the localized description
+	 * @param currencyCode
+	 *        the currency code
 	 */
 	public LocalizedInvoiceUsageRecord(InvoiceUsageRecord<T> usage, Locale locale,
-			String localizedDescription) {
+			String localizedDescription, String currencyCode) {
 		super();
 		this.usage = usage;
 		this.locale = locale;
 		this.localizedDescription = localizedDescription;
+		this.currencyCode = currencyCode;
 	}
 
 	@Override
@@ -119,7 +128,7 @@ public class LocalizedInvoiceUsageRecord<T>
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
 				return (LocalizedInvoiceItemUsageRecordInfo) record;
 			}
-			return LocalizedInvoiceItemUsageRecord.of(record, locale);
+			return LocalizedInvoiceItemUsageRecord.of(record, locale, currencyCode);
 		}).collect(Collectors.toList());
 	}
 

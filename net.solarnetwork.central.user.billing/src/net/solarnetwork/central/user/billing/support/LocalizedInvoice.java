@@ -240,7 +240,7 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		if ( recs == null ) {
 			return null;
 		}
-		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale))
+		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale, getCurrencyCode()))
 				.collect(Collectors.toList());
 	}
 

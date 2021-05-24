@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface LocalizedInvoiceItemInfo {
 
@@ -66,6 +66,14 @@ public interface LocalizedInvoiceItemInfo {
 	 * @return the amount
 	 */
 	String getLocalizedAmount();
+
+	/**
+	 * Get the usage amount, as a formatted and localized string.
+	 * 
+	 * @return the formatted usage amount
+	 * @since 1.1
+	 */
+	String getLocalizedTotalUsageAmount();
 
 	/**
 	 * Get the localized invoice item usage records.

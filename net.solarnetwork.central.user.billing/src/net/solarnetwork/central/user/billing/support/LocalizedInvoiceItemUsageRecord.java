@@ -28,12 +28,13 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRecordInfo;
+import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
  * Localized version of {@link InvoiceItemUsageRecord}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocalizedInvoiceItemUsageRecord
 		implements InvoiceItemUsageRecord, LocalizedInvoiceItemUsageRecordInfo {
@@ -41,6 +42,7 @@ public class LocalizedInvoiceItemUsageRecord
 	private final String localizedUnitType;
 	private final InvoiceItemUsageRecord item;
 	private final Locale locale;
+	private final String currencyCode;
 
 	/**
 	 * Convenience builder.
@@ -49,10 +51,13 @@ public class LocalizedInvoiceItemUsageRecord
 	 *        the item to localize
 	 * @param locale
 	 *        the locale to localize to
+	 * @param currencyCode
+	 *        the currency code
 	 * @return the localized invoice
 	 */
-	public static LocalizedInvoiceItemUsageRecord of(InvoiceItemUsageRecord item, Locale locale) {
-		return new LocalizedInvoiceItemUsageRecord(item, locale, null);
+	public static LocalizedInvoiceItemUsageRecord of(InvoiceItemUsageRecord item, Locale locale,
+			String currencyCode) {
+		return new LocalizedInvoiceItemUsageRecord(item, locale, null, currencyCode);
 	}
 
 	/**
@@ -64,13 +69,16 @@ public class LocalizedInvoiceItemUsageRecord
 	 *        the locale to localize to
 	 * @param localizedUnitType
 	 *        the localized unit type name
+	 * @param currencyCode
+	 *        the currency code
 	 */
 	public LocalizedInvoiceItemUsageRecord(InvoiceItemUsageRecord item, Locale locale,
-			String localizedUnitType) {
+			String localizedUnitType, String currencyCode) {
 		super();
 		this.item = item;
 		this.locale = locale;
 		this.localizedUnitType = localizedUnitType;
+		this.currencyCode = currencyCode;
 	}
 
 	@Override
@@ -85,6 +93,12 @@ public class LocalizedInvoiceItemUsageRecord
 	}
 
 	@Override
+	public String getLocalizedCost() {
+		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode,
+				getCost());
+	}
+
+	@Override
 	public String getUnitType() {
 		return item.getUnitType();
 	}
@@ -92,6 +106,11 @@ public class LocalizedInvoiceItemUsageRecord
 	@Override
 	public BigDecimal getAmount() {
 		return item.getAmount();
+	}
+
+	@Override
+	public BigDecimal getCost() {
+		return item.getCost();
 	}
 
 }

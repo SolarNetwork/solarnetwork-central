@@ -28,7 +28,7 @@ import java.math.BigDecimal;
  * A usage record attached to an invoice item.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface InvoiceItemUsageRecord {
 
@@ -45,5 +45,13 @@ public interface InvoiceItemUsageRecord {
 	 * @return the amount
 	 */
 	BigDecimal getAmount();
+
+	/**
+	 * Get an associated usage cost.
+	 * 
+	 * @return the cost
+	 * @since 1.1
+	 */
+	BigDecimal getCost();
 
 }

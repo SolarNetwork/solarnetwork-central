@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -195,6 +197,11 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
+	public BigDecimal getTotalUsageAmount() {
+		return item.getTotalUsageAmount();
+	}
+
+	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getItemUsageRecords();
 		if ( recs == null ) {
@@ -206,8 +213,14 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
 				return (LocalizedInvoiceItemUsageRecordInfo) record;
 			}
-			return LocalizedInvoiceItemUsageRecord.of(record, locale);
+			return LocalizedInvoiceItemUsageRecord.of(record, locale, getCurrencyCode());
 		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public String getLocalizedTotalUsageAmount() {
+		NumberFormat fmt = DecimalFormat.getNumberInstance(locale);
+		return fmt.format(getTotalUsageAmount());
 	}
 
 }
