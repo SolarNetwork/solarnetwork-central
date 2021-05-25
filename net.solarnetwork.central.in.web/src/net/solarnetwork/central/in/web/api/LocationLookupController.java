@@ -45,7 +45,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
@@ -92,7 +92,11 @@ public class LocationLookupController extends WebServiceControllerSupport {
 			loc = new SolarLocation();
 		}
 		if ( query != null ) {
-			loc.setRegion(query);
+			loc.setName(query);
+		} else if ( loc.getRegion() != null ) {
+			// backwards-compat for SolarNode that posts query as location.region
+			loc.setName(loc.getRegion());
+			loc.setRegion(null);
 		}
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		if ( command != null ) {
