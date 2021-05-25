@@ -206,6 +206,8 @@ public class MqttDataCollectorTests_CBOR {
 				equalTo(new BigDecimal(new BigInteger("41899999"), 3)));
 		assertThat("wattHoursReverse", samples.getAccumulatingSampleInteger("wattHoursReverse"),
 				equalTo(1440));
+		assertThat("_v2 tag should have been removed",
+				postedDatum.getSamples().hasTag(MqttDataCollector.TAG_V2), equalTo(false));
 	}
 
 }

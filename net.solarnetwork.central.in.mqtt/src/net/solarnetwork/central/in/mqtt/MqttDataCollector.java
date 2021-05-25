@@ -62,7 +62,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -397,8 +397,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
-				if ( d.getSamples() != null && !d.getSamples().hasTag(TAG_V2) ) {
-					if ( checkVersion ) {
+				if ( d.getSamples() != null ) {
+					if ( checkVersion && !d.getSamples().hasTag(TAG_V2) ) {
 						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
@@ -423,8 +423,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				log.warn("Ignoring location {} datum with missing source ID: {}", d.getLocationId(),
 						node);
 			} else {
-				if ( d.getSamples() != null && !d.getSamples().hasTag(TAG_V2) ) {
-					if ( checkVersion ) {
+				if ( d.getSamples() != null ) {
+					if ( checkVersion && !d.getSamples().hasTag(TAG_V2) ) {
 						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
