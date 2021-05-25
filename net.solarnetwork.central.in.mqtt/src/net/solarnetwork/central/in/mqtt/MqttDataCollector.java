@@ -402,6 +402,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
+					if ( d.getSamples().getTags() != null && d.getSamples().getTags().isEmpty() ) {
+						d.getSamples().setTags(null);
+					}
 				}
 				dataCollectorBiz.postGeneralNodeDatum(singleton(d));
 			}
@@ -428,6 +431,9 @@ public class MqttDataCollector extends BaseMqttConnectionService
 						throw new UseLegacyObjectMapperException();
 					}
 					d.getSamples().removeTag(TAG_V2);
+					if ( d.getSamples().getTags() != null && d.getSamples().getTags().isEmpty() ) {
+						d.getSamples().setTags(null);
+					}
 				}
 				dataCollectorBiz.postGeneralLocationDatum(singleton(d));
 			}

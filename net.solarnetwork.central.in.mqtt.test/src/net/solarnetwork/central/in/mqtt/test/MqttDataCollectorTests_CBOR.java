@@ -25,8 +25,12 @@ package net.solarnetwork.central.in.mqtt.test;
 import static org.easymock.EasyMock.capture;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -43,8 +47,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.CBORFactoryBean;
@@ -55,11 +63,8 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
+import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
-import net.solarnetwork.util.JodaDateTimeSerializer;
-import net.solarnetwork.util.JodaLocalDateSerializer;
-import net.solarnetwork.util.JodaLocalDateTimeSerializer;
-import net.solarnetwork.util.JodaLocalTimeSerializer;
 import net.solarnetwork.util.ObjectMapperFactoryBean;
 import net.solarnetwork.util.StaticOptionalService;
 
@@ -79,13 +84,44 @@ public class MqttDataCollectorTests_CBOR {
 	private NodeInstructionDao nodeInstructionDao;
 	private MqttDataCollector service;
 
+	private static final class GeneralNodeDatumSerializer extends StdScalarSerializer<GeneralNodeDatum>
+			implements Serializable {
+
+		private static final long serialVersionUID = 1564431501442940772L;
+
+		/**
+		 * Default constructor.
+		 */
+		public GeneralNodeDatumSerializer() {
+			super(GeneralNodeDatum.class);
+		}
+
+		@Override
+		public void serialize(GeneralNodeDatum datum, JsonGenerator generator,
+				SerializerProvider provider) throws IOException, JsonGenerationException {
+			GeneralDatumSamples samples = datum.getSamples();
+
+			generator.writeStartObject();
+			if ( datum.getCreated() != null ) {
+				generator.writeNumberField("created", datum.getCreated().getMillis());
+			}
+
+			if ( datum.getSourceId() != null ) {
+				generator.writeStringField("sourceId", datum.getSourceId());
+			}
+
+			generator.writeObjectField("samples", samples);
+
+			generator.writeEndObject();
+		}
+	}
+
 	private ObjectMapper createObjectMapper(JsonFactory jsonFactory) {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		if ( jsonFactory != null ) {
 			factory.setJsonFactory(jsonFactory);
 		}
-		factory.setSerializers(Arrays.asList(new JodaDateTimeSerializer(), new JodaLocalDateSerializer(),
-				new JodaLocalDateTimeSerializer(), new JodaLocalTimeSerializer()));
+		factory.setSerializers(Arrays.asList(new GeneralNodeDatumSerializer()));
 		factory.setFeaturesToDisable(Arrays.asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
 		try {
 			return factory.getObject();
@@ -206,8 +242,47 @@ public class MqttDataCollectorTests_CBOR {
 				equalTo(new BigDecimal(new BigInteger("41899999"), 3)));
 		assertThat("wattHoursReverse", samples.getAccumulatingSampleInteger("wattHoursReverse"),
 				equalTo(1440));
-		assertThat("_v2 tag should have been removed",
-				postedDatum.getSamples().hasTag(MqttDataCollector.TAG_V2), equalTo(false));
+		assertThat("_v2 tag should have been removed", postedDatum.getSamples().getTags(), nullValue());
+	}
+
+	@Test
+	public void processGeneralNodeDatum_v2_otherTags() throws Exception {
+		// GIVEN
+		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();
+		s.putInstantaneousSampleValue("foo", 123);
+		s.addTag(MqttDataCollector.TAG_V2);
+		s.addTag("bar");
+
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setSamples(s);
+		datum.setCreated(new DateTime(1576472400000L));
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId("/DE/G2/GM/GEN/1");
+
+		byte[] data = objectMapper.writeValueAsBytes(datum);
+
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+
+		// WHEN
+		replayAll();
+		String topic = datumTopic(TEST_NODE_ID);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, data);
+		service.onMqttMessage(msg);
+
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<GeneralNodeDatum> postedDatumList = StreamSupport
+				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralNodeDatum postedDatum = postedDatumList.get(0);
+
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		GeneralNodeDatumSamples samples = postedDatum.getSamples();
+		assertThat("foo", samples.getInstantaneousSampleInteger("foo"), equalTo(123));
+		assertThat("_v2 tag should have been removed, leaving bar tag",
+				postedDatum.getSamples().getTags(), containsInAnyOrder("bar"));
+
 	}
 
 }
