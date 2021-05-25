@@ -75,7 +75,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	 * 
 	 * @param query
 	 *        a general search query
-	 * @param criteria
+	 * @param command
 	 *        specific criteria, such as source ID, sort order, max results,
 	 *        etc.
 	 * @return the results
@@ -119,11 +119,10 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	/**
 	 * Query for general location datum metadata.
 	 * 
-	 * @param query
-	 *        a general search query
-	 * @param criteria
-	 *        specific criteria, such as source ID, sort order, max results,
-	 *        etc.
+	 * @param locationId
+	 *        a location ID
+	 * @param sourceId
+	 *        the source ID
 	 * @return the results
 	 * @since 1.2
 	 */
