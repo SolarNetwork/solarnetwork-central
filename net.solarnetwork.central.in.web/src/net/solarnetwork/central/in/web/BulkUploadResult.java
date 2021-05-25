@@ -28,15 +28,6 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 /**
  * Result object for bulk upload operations.
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt></dt>
- * <dd></dd>
- * </dl>
- * 
  * @author matt
  * @version 1.0
  */

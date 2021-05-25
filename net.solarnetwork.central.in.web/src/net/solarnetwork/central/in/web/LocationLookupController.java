@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
-import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
@@ -77,8 +76,6 @@ public class LocationLookupController {
 	 * 
 	 * @param dataCollectorBiz
 	 *        the {@link DataCollectorBiz} to use
-	 * @param solarNodeDao
-	 *        the {@link SolarNodeDao} to use
 	 */
 	@Autowired
 	public LocationLookupController(DataCollectorBiz dataCollectorBiz) {
@@ -133,8 +130,6 @@ public class LocationLookupController {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param response
-	 *        the response
 	 * @return an error response object
 	 */
 	@ExceptionHandler({ BindException.class, RuntimeException.class })
