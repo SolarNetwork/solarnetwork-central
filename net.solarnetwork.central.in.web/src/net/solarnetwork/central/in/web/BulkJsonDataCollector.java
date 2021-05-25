@@ -125,6 +125,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	 *        an optional encoding value
 	 * @param in
 	 *        the request input stream
+	 * @param model
+	 *        the model
 	 * @return the result model
 	 * @throws IOException
 	 *         if any IO error occurs

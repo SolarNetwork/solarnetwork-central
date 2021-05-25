@@ -45,7 +45,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
@@ -75,7 +75,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	 * 
 	 * @param query
 	 *        a general search query
-	 * @param criteria
+	 * @param command
 	 *        specific criteria, such as source ID, sort order, max results,
 	 *        etc.
 	 * @return the results
@@ -92,7 +92,11 @@ public class LocationLookupController extends WebServiceControllerSupport {
 			loc = new SolarLocation();
 		}
 		if ( query != null ) {
-			loc.setRegion(query);
+			loc.setName(query);
+		} else if ( loc.getRegion() != null ) {
+			// backwards-compat for SolarNode that posts query as location.region
+			loc.setName(loc.getRegion());
+			loc.setRegion(null);
 		}
 		DatumFilterCommand criteria = new DatumFilterCommand(loc);
 		if ( command != null ) {
@@ -115,11 +119,10 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	/**
 	 * Query for general location datum metadata.
 	 * 
-	 * @param query
-	 *        a general search query
-	 * @param criteria
-	 *        specific criteria, such as source ID, sort order, max results,
-	 *        etc.
+	 * @param locationId
+	 *        a location ID
+	 * @param sourceId
+	 *        the source ID
 	 * @return the results
 	 * @since 1.2
 	 */

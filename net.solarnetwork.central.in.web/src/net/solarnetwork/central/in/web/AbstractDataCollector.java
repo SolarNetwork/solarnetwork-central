@@ -27,6 +27,14 @@ package net.solarnetwork.central.in.web;
 import java.beans.PropertyEditor;
 import java.util.List;
 import javax.annotation.Resource;
+import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -37,14 +45,6 @@ import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.util.JodaDateFormatEditor;
 import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.util.OptionalServiceTracker;
-import org.joda.time.DateTime;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * Base class for data collector implementations.
@@ -76,12 +76,12 @@ public abstract class AbstractDataCollector {
 	public static final String TIME_FORMAT = "HH:mm";
 
 	/** A cloneable PropertyEditor for the {@link #DATE_FORMAT}. */
-	protected static final JodaDateFormatEditor LOCAL_DATE_EDITOR = new JodaDateFormatEditor(
-			DATE_FORMAT, ParseMode.LocalDate);
+	protected static final JodaDateFormatEditor LOCAL_DATE_EDITOR = new JodaDateFormatEditor(DATE_FORMAT,
+			ParseMode.LocalDate);
 
 	/** A cloneable PropertyEditor for the {@link #TIME_FORMAT}. */
-	protected static final JodaDateFormatEditor LOCAL_TIME_EDITOR = new JodaDateFormatEditor(
-			TIME_FORMAT, ParseMode.LocalTime);
+	protected static final JodaDateFormatEditor LOCAL_TIME_EDITOR = new JodaDateFormatEditor(TIME_FORMAT,
+			ParseMode.LocalTime);
 
 	/** A cloneable PropertyEditor for the {@link #DATE_TIME_FORMAT}. */
 	protected static final JodaDateFormatEditor DATE_TIME_EDITOR = new JodaDateFormatEditor(
@@ -99,6 +99,8 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Warn that POST is required.
+	 * 
+	 * @return the view name
 	 */
 	@RequestMapping(method = RequestMethod.GET)
 	public String getData() {
