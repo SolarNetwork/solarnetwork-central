@@ -36,6 +36,7 @@ import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -46,7 +47,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -123,6 +124,17 @@ public class DaoBillingBiz implements BillingBiz {
 			return null;
 		}
 		return system.renderInvoice(userId, invoiceId, outputType, locale);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
+			Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.previewInvoice(userId, options, outputType, locale);
 	}
 
 }

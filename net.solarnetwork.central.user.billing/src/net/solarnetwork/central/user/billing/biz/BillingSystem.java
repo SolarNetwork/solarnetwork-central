@@ -31,6 +31,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
 /**
@@ -113,5 +114,25 @@ public interface BillingSystem {
 	 *         if {@code outputType} is not supported
 	 */
 	Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale);
+
+	/**
+	 * Preview the next billing cycle's invoice.
+	 * 
+	 * @param userId
+	 *        the ID of the user to render the invoice for
+	 * @param options
+	 *        the options
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 * @since 1.1
+	 */
+	Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
+			Locale locale);
 
 }

@@ -44,6 +44,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.domain.BasicInvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
@@ -59,7 +60,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for billing management.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
@@ -228,6 +229,47 @@ public class BillingController extends WebServiceControllerSupport {
 		}
 
 		return response(results);
+	}
+
+	/**
+	 * Preview the current billing cycle's invoice.
+	 * 
+	 * @param accept
+	 *        an optional output type, defaults to {@literal text/html}
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 * @since 1.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderInvoice(
+			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
+				: acceptTypes.get(0).removeQualityValue();
+		Resource result = biz.previewInvoice(userId, new BasicInvoiceGenerationOptions(useCredit),
+				outputType, locale);
+		if ( result != null ) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(outputType);
+			if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
+				// add "attachment" header with suggested file name based on invoice
+				headers.set(HttpHeaders.CONTENT_DISPOSITION,
+						format("attachment; filename=\"%s\"", result.getFilename()));
+			}
+			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+		}
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
 
 }

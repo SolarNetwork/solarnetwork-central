@@ -32,13 +32,14 @@ import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
 /**
  * Delegating implementation of {@link BillingBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DelegatingBillingBiz implements BillingBiz {
 
@@ -74,6 +75,12 @@ public class DelegatingBillingBiz implements BillingBiz {
 	@Override
 	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
 		return delegate.renderInvoice(userId, invoiceId, outputType, locale);
+	}
+
+	@Override
+	public Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
+			Locale locale) {
+		return delegate.previewInvoice(userId, options, outputType, locale);
 	}
 
 }
