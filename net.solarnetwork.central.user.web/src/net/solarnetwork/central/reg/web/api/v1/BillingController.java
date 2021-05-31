@@ -246,7 +246,7 @@ public class BillingController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
-	public ResponseEntity<Resource> renderInvoice(
+	public ResponseEntity<Resource> previewInvoice(
 			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
 			@RequestParam(value = "userId", required = false) Long userId,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
