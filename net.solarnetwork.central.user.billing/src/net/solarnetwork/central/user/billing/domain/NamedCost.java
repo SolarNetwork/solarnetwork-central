@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
+ * NamedCost.java - 31/05/2021 4:23:14 PM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,45 +23,53 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.math.BigInteger;
 
 /**
- * A usage record attached to an invoice item.
+ * A named cost, such as a tier break-down within a usage item.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.3
  */
-public interface InvoiceItemUsageRecord {
+public interface NamedCost {
 
 	/**
-	 * Get the usage unit type.
+	 * Get the resource name.
 	 * 
-	 * @return the usage unit type
+	 * @return the name, never {@literal null}
 	 */
-	String getUnitType();
+	String getName();
 
 	/**
-	 * Get the usage amount.
+	 * Get the resource quantity.
 	 * 
-	 * @return the amount
+	 * @return the quantity, never {@literal null}
 	 */
-	BigDecimal getAmount();
+	BigInteger getQuantity();
 
 	/**
-	 * Get an associated usage cost.
+	 * Get the cost.
 	 * 
-	 * @return the cost
-	 * @since 1.1
+	 * @return the cost, never {@literal null}
 	 */
 	BigDecimal getCost();
 
 	/**
-	 * Get a break-down of this usage record into a list of tiers.
+	 * Get the effective rate, derived from the quantity and cost.
 	 * 
-	 * @return the usage tiers for this record, or an empty list if there are no
-	 *         tiers
-	 * @since 1.1
+	 * <p>
+	 * If {@code quantity} is {@literal 0} then {@code cost} is returned.
+	 * </p>
+	 * 
+	 * @return the effective rate
 	 */
-	List<NamedCost> getUsageTiers();
+	default BigDecimal getEffectiveRate() {
+		BigInteger quantity = getQuantity();
+		if ( BigInteger.ZERO.compareTo(quantity) == 0 ) {
+			return getCost();
+		}
+		return getCost().divide(new BigDecimal(quantity));
+	}
 
 }
