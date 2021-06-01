@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
+import java.time.YearMonth;
+
 /**
  * Options to use when generating an invoice.
  * 
@@ -30,6 +32,14 @@ package net.solarnetwork.central.user.billing.domain;
  * @since 1.3
  */
 public interface InvoiceGenerationOptions {
+
+	/**
+	 * Get the year-month to generate the invoice for, or {@literal null} for
+	 * the "current" month.
+	 * 
+	 * @return the year month
+	 */
+	YearMonth getMonth();
 
 	/**
 	 * Get the "use account credit" flag.

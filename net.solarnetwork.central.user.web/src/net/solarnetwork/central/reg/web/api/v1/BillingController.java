@@ -23,7 +23,14 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.lang.String.format;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
 import static net.solarnetwork.web.domain.Response.response;
+import java.time.YearMonth;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -231,6 +238,20 @@ public class BillingController extends WebServiceControllerSupport {
 		return response(results);
 	}
 
+	/** A YYYY-MM date format to use for parsing a billing month. */
+	public static final DateTimeFormatter MONTH_FORMAT;
+	static {
+		// @formatter:off
+		MONTH_FORMAT = new DateTimeFormatterBuilder()
+				.parseStrict()
+                .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+                .appendLiteral('-')
+                .appendValue(MONTH_OF_YEAR, 2)
+                .toFormatter()
+                .withChronology(IsoChronology.INSTANCE);
+		// @formatter:on
+	}
+
 	/**
 	 * Preview the current billing cycle's invoice.
 	 * 
@@ -239,6 +260,9 @@ public class BillingController extends WebServiceControllerSupport {
 	 * @param userId
 	 *        the optional user ID to get the invoice for; if not provided the
 	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
 	 * @param locale
 	 *        the request locale
 	 * @return the rendered invoice entity
@@ -249,6 +273,7 @@ public class BillingController extends WebServiceControllerSupport {
 	public ResponseEntity<Resource> previewInvoice(
 			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
 			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( userId == null ) {
@@ -257,7 +282,11 @@ public class BillingController extends WebServiceControllerSupport {
 		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
 				: acceptTypes.get(0).removeQualityValue();
-		Resource result = biz.previewInvoice(userId, new BasicInvoiceGenerationOptions(useCredit),
+		YearMonth date = null;
+		if ( month != null && !month.isEmpty() ) {
+			date = MONTH_FORMAT.parse(month, YearMonth::from);
+		}
+		Resource result = biz.previewInvoice(userId, new BasicInvoiceGenerationOptions(date, useCredit),
 				outputType, locale);
 		if ( result != null ) {
 			HttpHeaders headers = new HttpHeaders();

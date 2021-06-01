@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
+import java.time.YearMonth;
+
 /**
  * Basic implementation of {@link InvoiceGenerationOptions}.
  * 
@@ -31,6 +33,7 @@ package net.solarnetwork.central.user.billing.domain;
  */
 public class BasicInvoiceGenerationOptions implements InvoiceGenerationOptions {
 
+	private final YearMonth month;
 	private final boolean useAccountCredit;
 
 	/**
@@ -40,8 +43,26 @@ public class BasicInvoiceGenerationOptions implements InvoiceGenerationOptions {
 	 *        {@literal true} to use any available account credit
 	 */
 	public BasicInvoiceGenerationOptions(boolean useAccountCredit) {
+		this(null, useAccountCredit);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param month
+	 *        the month, or {@literal null} for current month
+	 * @param useAccountCredit
+	 *        {@literal true} to use any available account credit
+	 */
+	public BasicInvoiceGenerationOptions(YearMonth month, boolean useAccountCredit) {
 		super();
+		this.month = month;
 		this.useAccountCredit = useAccountCredit;
+	}
+
+	@Override
+	public YearMonth getMonth() {
+		return month;
 	}
 
 	@Override
