@@ -54,4 +54,14 @@ public interface LocalizedInvoiceUsageRecordInfo {
 	 */
 	List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedUsageRecords();
 
+	/**
+	 * Get the first available usage record, if available.
+	 * 
+	 * @return the first usage record, or {@literal null}
+	 */
+	default LocalizedInvoiceItemUsageRecordInfo getFirstLocalizedUsageRecord() {
+		List<LocalizedInvoiceItemUsageRecordInfo> records = getLocalizedUsageRecords();
+		return (records != null && !records.isEmpty() ? records.get(0) : null);
+	}
+
 }
