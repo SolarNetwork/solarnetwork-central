@@ -36,6 +36,23 @@ import net.solarnetwork.central.domain.Entity;
 public interface Invoice extends Entity<String> {
 
 	/**
+	 * The invoice ID used for dry-run (draft) invoice generation.
+	 * 
+	 * @since 1.2
+	 */
+	String DRAFT_INVOICE_ID = "-23108249"; // -DRAFT base 36
+
+	/**
+	 * Test if this is a dry-run (draft) invoice.
+	 * 
+	 * @return {@literal true} if this is a draft invoice
+	 */
+	default boolean isDraft() {
+		String id = getId();
+		return DRAFT_INVOICE_ID.equals(id);
+	}
+
+	/**
 	 * Get the month that represents the date range of this invoice, if the
 	 * invoice represents a month period.
 	 * 
