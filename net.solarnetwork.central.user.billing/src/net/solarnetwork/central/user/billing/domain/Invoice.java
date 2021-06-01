@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
 import net.solarnetwork.central.domain.Entity;
 
@@ -33,6 +34,16 @@ import net.solarnetwork.central.domain.Entity;
  * @version 1.2
  */
 public interface Invoice extends Entity<String> {
+
+	/**
+	 * Get the month that represents the date range of this invoice, if the
+	 * invoice represents a month period.
+	 * 
+	 * @return the month, or {@literal null} if the invoice is not for a month
+	 *         period
+	 * @since 1.2
+	 */
+	YearMonth getInvoiceMonth();
 
 	/**
 	 * Get the time zone this invoice was created in.

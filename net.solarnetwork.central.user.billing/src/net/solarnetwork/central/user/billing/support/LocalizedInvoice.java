@@ -23,6 +23,11 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoField;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -91,6 +96,23 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
+	public String getLocalizedInvoiceDateRange() {
+		YearMonth month = invoice.getInvoiceMonth();
+		// @formatter:off
+		java.time.format.DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+				.appendText(ChronoField.MONTH_OF_YEAR, TextStyle.SHORT)
+				.appendLiteral(' ')
+				.appendValue(ChronoField.YEAR)
+				.toFormatter(locale);
+		// @formatter:on
+		String tz = getTimeZoneId();
+		if ( tz != null ) {
+			fmt = fmt.withZone(ZoneId.of(tz));
+		}
+		return fmt.format(month);
+	}
+
+	@Override
 	public String getLocalizedAmount() {
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getAmount());
@@ -120,6 +142,11 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public DateTime getCreated() {
 		return invoice.getCreated();
+	}
+
+	@Override
+	public YearMonth getInvoiceMonth() {
+		return invoice.getInvoiceMonth();
 	}
 
 	@Override
