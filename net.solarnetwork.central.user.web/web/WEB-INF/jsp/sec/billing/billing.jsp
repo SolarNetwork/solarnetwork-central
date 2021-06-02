@@ -4,6 +4,61 @@
 	<fmt:message key='billing.intro'/>
 </p>
 
+<section id="upcoming-invoice">
+	<h2>
+		<fmt:message key='billing.upcomingInvoice.header'/>
+	</h2>
+	<p class="intro">
+		<fmt:message key='billing.upcomingInvoice.intro'/>
+	</p>
+	<table class="details table" id="upcoming-invoice-table">
+		<thead>
+			<tr class="template">
+				<th data-tprop="localizedDescription"></th>
+				<td>
+					<table class="table">
+						<thead>
+							<tr>
+								<th><fmt:message key='billing.usage.tier'/></th>
+								<th><fmt:message key='billing.usage.quantity'/></th>
+								<th><fmt:message key='billing.usage.cost'/></th>
+							</tr>
+							<tr class="template">
+								<td data-tprop="localizedDescription"></td>
+								<td data-tprop="localizedQuantity"></td>
+								<td data-tprop="localizedCost"></td>
+							</tr>
+						</thead>
+						<tbody class="tiers">
+						</tbody>
+						<tfoot>
+							<tr>
+								<td></td>
+								<th data-tprop="localizedAmount"></th>
+								<th data-tprop="localizedCost"></th>
+							</tr>
+					</tfoot>
+					</table>
+				</td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+	<table class="details totals">
+		<tbody>
+			<tr>
+				<td>Total</td>
+				<td>$611.82</td>
+			</tr>
+			<tr>
+				<td>Due</td>
+				<td>$611.82</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
 <section id="outstanding-invoices" class="hidden">
 	<h2>
 		<fmt:message key='billing.outstandingInvoiceList.header'/>

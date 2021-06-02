@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,34 +68,5 @@ public interface LocalizedInvoiceItemUsageRecordInfo {
 	 * @since 1.1
 	 */
 	List<LocalizedNamedCostInfo> getLocalizedUsageTiers();
-
-	/**
-	 * Get the first available localized usage tier.
-	 * 
-	 * @return the first available localized usage tier, or {@literal null}
-	 */
-	default LocalizedNamedCostInfo getFirstLocalizedUsageTier() {
-		List<LocalizedNamedCostInfo> tiers = getLocalizedUsageTiers();
-		return (tiers != null && !tiers.isEmpty() ? tiers.get(0) : null);
-	}
-
-	/**
-	 * Get all the available localized usage tiers after the first one.
-	 * 
-	 * @return the localized usage tiers other than the first, or
-	 *         {@literal null}
-	 */
-	default List<LocalizedNamedCostInfo> getLocalizedUsageTiersAfterFirst() {
-		List<LocalizedNamedCostInfo> tiers = getLocalizedUsageTiers();
-		int size = (tiers != null ? tiers.size() : 0);
-		if ( size < 2 ) {
-			return null;
-		}
-		List<LocalizedNamedCostInfo> result = new ArrayList<>(size - 1);
-		for ( int i = 1; i < size; i++ ) {
-			result.add(tiers.get(i));
-		}
-		return result;
-	}
 
 }

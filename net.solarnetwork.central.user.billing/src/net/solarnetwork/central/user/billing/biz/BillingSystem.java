@@ -116,6 +116,20 @@ public interface BillingSystem {
 	Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale);
 
 	/**
+	 * Get a preview invoice for the next billing cycle's invoice.
+	 * 
+	 * @param userId
+	 *        the user ID to get the invoice for
+	 * @param options
+	 *        the options
+	 * @param locale
+	 *        the desired output locale
+	 * @return the invoice, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale);
+
+	/**
 	 * Preview the next billing cycle's invoice.
 	 * 
 	 * @param userId

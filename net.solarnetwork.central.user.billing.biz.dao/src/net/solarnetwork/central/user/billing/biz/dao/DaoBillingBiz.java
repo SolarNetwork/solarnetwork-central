@@ -126,6 +126,16 @@ public class DaoBillingBiz implements BillingBiz {
 		return system.renderInvoice(userId, invoiceId, outputType, locale);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale) {
+		BillingSystem system = billingSystemForUser(userId);
+		if ( system == null ) {
+			return null;
+		}
+		return system.getPreviewInvoice(userId, options, locale);
+	}
+
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,

@@ -201,6 +201,70 @@ $(document).ready(function() {
 		$(displayCount).text(total);
 		return haveRows;
 	}
+
+	function renderPreviewInvoiceUsageTableRows(tbody, totalRow, templateRow, item) {
+		var i, len, tr, prop, cell, itemUsage, usage;
+		tbody.empty();
+		if ( !Array.isArray(item.localizedInvoiceItemUsageRecords) && item.localizedInvoiceItemUsageRecords.length > 0 ) {
+			return;
+		}
+		itemUsage = item.localizedInvoiceItemUsageRecords[0]; // only take first usage
+		if ( !Array.isArray(itemUsage.localizedUsageTiers) ) {
+			return;
+		}
+		for ( i = 0, len = itemUsage.localizedUsageTiers.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			usage = itemUsage.localizedUsageTiers[i];
+			tr.data('usage', usage);
+			for ( prop in usage ) {
+				if ( usage.hasOwnProperty(prop) ) {
+					cell = tr.children("[data-tprop='" +prop +"']");
+					cell.text(usage[prop]);
+				}
+			}
+			tbody.append(tr);
+		}
+
+		for ( prop in itemUsage ) {
+			if ( itemUsage.hasOwnProperty(prop) ) {
+				cell = totalRow.children("[data-tprop='" +prop +"']");
+				cell.text(itemUsage[prop]);
+			}
+		}
+	}
+
+	function renderPreviewInvoiceTableRows(tbody, templateRow, invoice) {
+		var i, len, tr, prop, cell, item;
+		tbody.empty();
+		if ( !invoice.id ) {
+			return;
+		}
+		for ( i = 0, len = invoice.localizedInvoiceItems.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			item = invoice.localizedInvoiceItems[i];
+			tr.data('item', item);
+			for ( prop in item ) {
+				if ( item.hasOwnProperty(prop) ) {
+					cell = tr.children("[data-tprop='" +prop +"']");
+					cell.text(item[prop]);
+				}
+			}
+			renderPreviewInvoiceUsageTableRows(tr.find('tbody'), tr.find('tfoot tr'), tr.find('tr.template'), item);		
+			tbody.append(tr);
+		}
+	}
+
+	function renderPreviewInvoiceTable(table, json) {
+		var haveRows = json && json.data && json.data.id;
+		table = $(table);
+		if ( haveRows ) {
+			var templateRow = table.children('thead').children('tr.template');
+			var tbody = table.children('tbody');
+			renderPreviewInvoiceTableRows(tbody, templateRow, json.data)
+		}
+	}
 	
 	function loadInvoicePage(pageNum) {
 		console.log('Want page %d', pageNum);
@@ -237,6 +301,11 @@ $(document).ready(function() {
 			resetInvoiceDetails(this);
 		});
 
+		// get current usage
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview?month=2021-05'), function(json) {
+			console.log('Got preview invoice: %o', json);
+			renderPreviewInvoiceTable('#upcoming-invoice-table', json);
+		});
 		
 		/*
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/systemInfo'), function(json) {

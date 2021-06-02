@@ -78,6 +78,11 @@ public class DelegatingBillingBiz implements BillingBiz {
 	}
 
 	@Override
+	public Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale) {
+		return delegate.getPreviewInvoice(userId, options, locale);
+	}
+
+	@Override
 	public Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
 			Locale locale) {
 		return delegate.previewInvoice(userId, options, outputType, locale);

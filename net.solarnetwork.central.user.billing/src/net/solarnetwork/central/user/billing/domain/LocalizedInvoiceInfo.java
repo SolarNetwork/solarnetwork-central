@@ -134,15 +134,4 @@ public interface LocalizedInvoiceInfo {
 	 */
 	List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords();
 
-	/**
-	 * Get the first available localized invoice usage record.
-	 * 
-	 * @return the first available usage record, or {@literal null}
-	 * @since 1.3
-	 */
-	default LocalizedInvoiceUsageRecordInfo getFirstLocalizedInvoiceUsageRecord() {
-		List<LocalizedInvoiceUsageRecordInfo> records = getLocalizedInvoiceUsageRecords();
-		return (records != null && !records.isEmpty() ? records.get(0) : null);
-	}
-
 }
