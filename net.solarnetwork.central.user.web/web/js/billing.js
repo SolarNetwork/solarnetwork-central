@@ -6,6 +6,8 @@ $(document).ready(function() {
 		total: 0,
 		pageSize: 10,
 	};
+
+	var latestInvoice;
 	
 	function resetInvoiceDetails(modal) {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
@@ -236,14 +238,15 @@ $(document).ready(function() {
 
 	function renderPreviewInvoiceTableRows(tbody, templateRow, invoice) {
 		var i, len, tr, prop, cell, item;
+
 		tbody.empty();
 		if ( !invoice.id ) {
 			return;
 		}
-		for ( i = 0, len = invoice.localizedInvoiceItems.length; i < len; i += 1 ) {
+		for ( i = 0, len = invoice.localizedNonTaxInvoiceItems.length; i < len; i += 1 ) {
 			tr = templateRow.clone(true);
 			tr.removeClass('template');
-			item = invoice.localizedInvoiceItems[i];
+			item = invoice.localizedNonTaxInvoiceItems[i];
 			tr.data('item', item);
 			for ( prop in item ) {
 				if ( item.hasOwnProperty(prop) ) {
@@ -256,13 +259,41 @@ $(document).ready(function() {
 		}
 	}
 
+	function renderPreviewInvoiceTaxItems(tbody, templateRow, taxItems) {
+		var i, len, tr, taxItem;
+		if ( !Array.isArray(taxItems) ) {
+			return;
+		}
+		for ( i = 0, len = taxItems.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			taxItem = taxItems[i];
+			tr.data('item', taxItem);
+			replaceTemplateProperties(tr, taxItem);
+			tbody.append(tr);
+		}
+	}
+
+	function renderPreviewInvoiceTotals(table, invoice) {
+		var foo,
+			taxItems = (invoice ? invoice.localizedTaxInvoiceItemsGroupedByDescription : null),
+			haveTaxItems = (Array.isArray(taxItems) && taxItems.length > 0),
+			totalRows = table.children('thead,tfoot').children('tr').not('.template');
+		if ( haveTaxItems ) {
+			renderPreviewInvoiceTaxItems(table.children('tbody'), table.find('tr.template'), taxItems);
+		}
+		replaceTemplateProperties(totalRows, invoice);
+	}
+
 	function renderPreviewInvoiceTable(table, json) {
 		var haveRows = json && json.data && json.data.id;
 		table = $(table);
 		if ( haveRows ) {
 			var templateRow = table.children('thead').children('tr.template');
 			var tbody = table.children('tbody');
-			renderPreviewInvoiceTableRows(tbody, templateRow, json.data)
+			var tallyTable = table.children('tfoot').find('table');
+			renderPreviewInvoiceTableRows(tbody, templateRow, json.data);
+			renderPreviewInvoiceTotals(tallyTable, json.data);
 		}
 	}
 	
@@ -302,16 +333,11 @@ $(document).ready(function() {
 		});
 
 		// get current usage
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview?month=2021-05'), function(json) {
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview'), function(json) {
 			console.log('Got preview invoice: %o', json);
 			renderPreviewInvoiceTable('#upcoming-invoice-table', json);
 		});
 		
-		/*
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/systemInfo'), function(json) {
-			console.log('Got billing info: %o', json);
-		});
-		*/
 		// get unpaid invoices
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/list?unpaid=true'), function(json) {
 			console.log('Got unpaid invoices: %o', json);
