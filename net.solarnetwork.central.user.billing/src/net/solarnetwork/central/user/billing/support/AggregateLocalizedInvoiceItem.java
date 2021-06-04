@@ -50,7 +50,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 0.2
  */
 public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
@@ -174,6 +174,11 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
 		return Collections.emptyList(); // maybe join lists into single list
+	}
+
+	@Override
+	public String getLocalizedTotalUsageAmount() {
+		return null;
 	}
 
 }

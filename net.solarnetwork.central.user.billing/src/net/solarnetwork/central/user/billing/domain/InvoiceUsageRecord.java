@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
+ * InvoiceUsageRecord.java - 23/05/2021 4:25:03 PM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,46 +22,35 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * A usage record attached to an invoice item.
+ * A usage record associted with an invoice.
  * 
+ * @param <T>
+ *        the invoice key type
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.3
  */
-public interface InvoiceItemUsageRecord {
+public interface InvoiceUsageRecord<T> {
 
 	/**
-	 * Get the usage unit type.
+	 * Get a key for the list of associated usage records.
 	 * 
-	 * @return the usage unit type
+	 * <p>
+	 * A key might be a node ID, source ID, stream ID, etc.
+	 * </p>
+	 * 
+	 * @return the usage key
 	 */
-	String getUnitType();
+	T getUsageKey();
 
 	/**
-	 * Get the usage amount.
+	 * Get the usage records associated
 	 * 
-	 * @return the amount
+	 * @return
 	 */
-	BigDecimal getAmount();
-
-	/**
-	 * Get an associated usage cost.
-	 * 
-	 * @return the cost
-	 * @since 1.1
-	 */
-	BigDecimal getCost();
-
-	/**
-	 * Get a break-down of this usage record into a list of tiers.
-	 * 
-	 * @return the usage tiers for this record, or an empty list if there are no
-	 *         tiers
-	 * @since 1.1
-	 */
-	List<NamedCost> getUsageTiers();
+	List<InvoiceItemUsageRecord> getUsageRecords();
 
 }

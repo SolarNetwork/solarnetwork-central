@@ -37,7 +37,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
  * to load messages.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.6
  */
 public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
@@ -112,23 +112,36 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	public Properties propertiesForLocale(Locale locale) {
 		final String origLocaleCode = locale.toString();
 
-		// try full version first
-		Properties props = getPropsForLocale(origLocaleCode);
+		Properties props = null;
 
-		// try lang/country
-		if ( props == null && locale.getLanguage() != null && locale.getCountry() != null ) {
-			String localeCode = locale.getLanguage() + "_" + locale.getCountry();
+		// try lang
+		if ( locale.getLanguage() != null ) {
+			String localeCode = locale.getLanguage();
 			if ( !localeCode.equals(origLocaleCode) ) {
 				props = getPropsForLocale(localeCode);
 			}
 		}
 
-		// try lang
-		if ( props == null && locale.getLanguage() != null ) {
-			String localeCode = locale.getLanguage();
+		// try lang/country
+		if ( locale.getLanguage() != null && locale.getCountry() != null
+				&& !locale.getCountry().isEmpty() ) {
+			String localeCode = locale.getLanguage() + "_" + locale.getCountry();
 			if ( !localeCode.equals(origLocaleCode) ) {
-				props = getPropsForLocale(localeCode);
+				Properties countryLangProps = getPropsForLocale(localeCode);
+				if ( props == null ) {
+					props = countryLangProps;
+				} else if ( countryLangProps != null ) {
+					props.putAll(countryLangProps);
+				}
 			}
+		}
+
+		// try full version last
+		Properties fullProps = getPropsForLocale(origLocaleCode);
+		if ( props == null ) {
+			props = fullProps;
+		} else if ( fullProps != null ) {
+			props.putAll(fullProps);
 		}
 
 		return props;

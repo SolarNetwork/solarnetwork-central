@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
+ * InvoiceGenerationOptions.java - 31/05/2021 10:51:20 AM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,46 +22,31 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.math.BigDecimal;
-import java.util.List;
+import java.time.YearMonth;
 
 /**
- * A usage record attached to an invoice item.
+ * Options to use when generating an invoice.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.3
  */
-public interface InvoiceItemUsageRecord {
+public interface InvoiceGenerationOptions {
 
 	/**
-	 * Get the usage unit type.
+	 * Get the year-month to generate the invoice for, or {@literal null} for
+	 * the "current" month.
 	 * 
-	 * @return the usage unit type
+	 * @return the year month
 	 */
-	String getUnitType();
+	YearMonth getMonth();
 
 	/**
-	 * Get the usage amount.
+	 * Get the "use account credit" flag.
 	 * 
-	 * @return the amount
+	 * @return {@literal true} to use available account credit by adding a
+	 *         credit item to the generated invoice
 	 */
-	BigDecimal getAmount();
-
-	/**
-	 * Get an associated usage cost.
-	 * 
-	 * @return the cost
-	 * @since 1.1
-	 */
-	BigDecimal getCost();
-
-	/**
-	 * Get a break-down of this usage record into a list of tiers.
-	 * 
-	 * @return the usage tiers for this record, or an empty list if there are no
-	 *         tiers
-	 * @since 1.1
-	 */
-	List<NamedCost> getUsageTiers();
+	boolean isUseAccountCredit();
 
 }

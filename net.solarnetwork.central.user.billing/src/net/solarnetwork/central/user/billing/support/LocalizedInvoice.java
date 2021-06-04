@@ -23,6 +23,11 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoField;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -36,15 +41,17 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
+import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordInfo;
 import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
  * Localized version of {@link Invoice}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -89,6 +96,23 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	}
 
 	@Override
+	public String getLocalizedInvoiceDateRange() {
+		YearMonth month = invoice.getInvoiceMonth();
+		// @formatter:off
+		java.time.format.DateTimeFormatter fmt = new DateTimeFormatterBuilder()
+				.appendText(ChronoField.MONTH_OF_YEAR, TextStyle.SHORT)
+				.appendLiteral(' ')
+				.appendValue(ChronoField.YEAR)
+				.toFormatter(locale);
+		// @formatter:on
+		String tz = getTimeZoneId();
+		if ( tz != null ) {
+			fmt = fmt.withZone(ZoneId.of(tz));
+		}
+		return fmt.format(month);
+	}
+
+	@Override
 	public String getLocalizedAmount() {
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getAmount());
@@ -118,6 +142,11 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public DateTime getCreated() {
 		return invoice.getCreated();
+	}
+
+	@Override
+	public YearMonth getInvoiceMonth() {
+		return invoice.getInvoiceMonth();
 	}
 
 	@Override
@@ -163,6 +192,11 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public BigDecimal getTaxAmount() {
 		return invoice.getTaxAmount();
+	}
+
+	@Override
+	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
+		return invoice.getNodeUsageRecords();
 	}
 
 	@Override
@@ -224,6 +258,16 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 									return agg1.addItems(agg2);
 								})))
 				.values().stream().sorted(Comparator.comparing(item -> ordering.indexOf(item.getId())))
+				.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords() {
+		List<InvoiceUsageRecord<Long>> recs = getNodeUsageRecords();
+		if ( recs == null ) {
+			return null;
+		}
+		return recs.stream().map(r -> LocalizedInvoiceUsageRecord.of(r, locale, getCurrencyCode()))
 				.collect(Collectors.toList());
 	}
 

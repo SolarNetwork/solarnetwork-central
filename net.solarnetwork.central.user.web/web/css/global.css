@@ -173,6 +173,17 @@ table.tally tfoot th {
 	border-top: 1px solid #666;
 }
 
+table.invoice table.tally td + td,
+table.invoice table.tally th + th {
+	text-align: right;
+}
+
+table.table *.borderless tr td,
+table.table *.borderless tr th {
+	border: none;
+}
+
+
 table.table-body-borderless tbody td,
 table.table-body-borderless tbody th {
 	border: none;

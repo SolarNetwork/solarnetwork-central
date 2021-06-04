@@ -34,16 +34,26 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface LocalizedInvoiceInfo {
 
 	/**
-	 * Get the invoice date, as a formatted and localized string.
+	 * Get the invoice date representing the date the invoice was generated, as
+	 * a formatted and localized string.
 	 * 
 	 * @return the invoice creation date
 	 */
 	String getLocalizedDate();
+
+	/**
+	 * Get a localized date range representing the time period covered by the
+	 * invoice, as a formatted and localized string.
+	 * 
+	 * @return the invoice date range
+	 * @since 1.3
+	 */
+	String getLocalizedInvoiceDateRange();
 
 	/**
 	 * Get the amount charged on this invoice, as a formatted and localized
@@ -115,5 +125,24 @@ public interface LocalizedInvoiceInfo {
 	 * @since 1.1
 	 */
 	List<LocalizedInvoiceItemInfo> getLocalizedTaxInvoiceItemsGroupedByDescription();
+
+	/**
+	 * Get the localized invoice usage records.
+	 * 
+	 * @return the localized usage records
+	 * @since 1.3
+	 */
+	List<LocalizedInvoiceUsageRecordInfo> getLocalizedInvoiceUsageRecords();
+
+	/**
+	 * Get the first available localized invoice usage record.
+	 * 
+	 * @return the first available usage record, or {@literal null}
+	 * @since 1.3
+	 */
+	default LocalizedInvoiceUsageRecordInfo getFirstLocalizedInvoiceUsageRecord() {
+		List<LocalizedInvoiceUsageRecordInfo> records = getLocalizedInvoiceUsageRecords();
+		return (records != null && !records.isEmpty() ? records.get(0) : null);
+	}
 
 }

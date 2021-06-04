@@ -4,6 +4,80 @@
 	<fmt:message key='billing.intro'/>
 </p>
 
+<section id="upcoming-invoice">
+	<h2>
+		<fmt:message key='billing.upcomingInvoice.header'/>
+		<a class="btn btn-info pull-right" href="<c:url value='/u/sec/billing/invoices/preview/render/pdf'/>"><fmt:message key='print.label'/></a>
+	</h2>
+	<p class="intro">
+		<fmt:message key='billing.upcomingInvoice.intro'/>
+	</p>
+	<table class="invoice table" id="upcoming-invoice-table">
+		<thead>
+			<tr class="template">
+				<th data-tprop="localizedDescription" class="col-sm-3"></th>
+				<td class="col-sm-9">
+					<table class="table table-condensed tally">
+						<thead>
+							<tr>
+								<th class="col-sm-2"><fmt:message key='billing.usage.tier'/></th>
+								<th class="col-sm-5"><fmt:message key='billing.usage.quantity'/></th>
+								<th class="col-sm-5"><fmt:message key='billing.usage.cost'/></th>
+							</tr>
+							<tr class="template">
+								<td data-tprop="localizedDescription"></td>
+								<td data-tprop="localizedQuantity"></td>
+								<td data-tprop="localizedCost"></td>
+							</tr>
+						</thead>
+						<tbody class="tiers">
+						</tbody>
+						<tfoot>
+							<tr>
+								<th></th>
+								<th data-tprop="localizedAmount"></th>
+								<th data-tprop="localizedCost"></th>
+							</tr>
+						</tfoot>
+					</table>
+				</td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td>
+					<table class="table table-condensed tally">
+						<thead class="borderless">
+							<tr class="template">
+								<th></th>
+								<th data-tprop="localizedDescription"></th>
+								<th data-tprop="localizedAmount"></th>
+							</tr>
+							<tr>
+								<th class="col-sm-9"></th>
+								<th class="col-sm-1"><fmt:message key='billing.invoice.totalBeforeTax.label'/></th>
+								<th class="col-sm-2" data-tprop="localizedNonTaxAmount"></th>
+							</tr>
+						</thead>
+						<tbody class="borderless">
+						</tbody>
+						<tfoot class="borderless">
+							<tr>
+								<th></th>
+								<th><fmt:message key='billing.invoice.totalWithTax.label'/></th>
+								<th data-tprop="localizedAmount"></th>
+							</tr>
+						</tfoot>
+					</table>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</section>
+
 <section id="outstanding-invoices" class="hidden">
 	<h2>
 		<fmt:message key='billing.outstandingInvoiceList.header'/>

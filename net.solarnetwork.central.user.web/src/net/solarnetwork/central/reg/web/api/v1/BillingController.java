@@ -23,7 +23,14 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.lang.String.format;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.YEAR;
 import static net.solarnetwork.web.domain.Response.response;
+import java.time.YearMonth;
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +51,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.domain.BasicInvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilterCommand;
@@ -59,7 +67,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for billing management.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
@@ -228,6 +236,135 @@ public class BillingController extends WebServiceControllerSupport {
 		}
 
 		return response(results);
+	}
+
+	/** A YYYY-MM date format to use for parsing a billing month. */
+	public static final DateTimeFormatter MONTH_FORMAT;
+	static {
+		// @formatter:off
+		MONTH_FORMAT = new DateTimeFormatterBuilder()
+				.parseStrict()
+                .appendValue(YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+                .appendLiteral('-')
+                .appendValue(MONTH_OF_YEAR, 2)
+                .toFormatter()
+                .withChronology(IsoChronology.INSTANCE);
+		// @formatter:on
+	}
+
+	/**
+	 * Preview the current billing cycle's invoice.
+	 * 
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 * @since 1.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
+	public Response<Invoice> previewInvoice(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		YearMonth date = null;
+		if ( month != null && !month.isEmpty() ) {
+			date = MONTH_FORMAT.parse(month, YearMonth::from);
+		}
+
+		Invoice result = biz.getPreviewInvoice(userId,
+				new BasicInvoiceGenerationOptions(date, useCredit), locale);
+
+		// localize the response
+		if ( result != null && !(result instanceof LocalizedInvoiceInfo) ) {
+			if ( locale == null ) {
+				locale = Locale.getDefault();
+			}
+			result = new LocalizedInvoice(result, locale);
+		}
+
+		return response(result);
+	}
+
+	/**
+	 * Render a preview of the current billing cycle's invoice.
+	 * 
+	 * @param accept
+	 *        an optional output type, defaults to {@literal text/html}
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 * @since 1.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/preview/render", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPreviewInvoice(
+			@RequestHeader(value = HttpHeaders.ACCEPT, defaultValue = "text/html") String accept,
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		BillingBiz biz = billingBiz();
+		if ( userId == null ) {
+			userId = SecurityUtils.getCurrentActorUserId();
+		}
+		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
+				: acceptTypes.get(0).removeQualityValue();
+		YearMonth date = null;
+		if ( month != null && !month.isEmpty() ) {
+			date = MONTH_FORMAT.parse(month, YearMonth::from);
+		}
+		Resource result = biz.previewInvoice(userId, new BasicInvoiceGenerationOptions(date, useCredit),
+				outputType, locale);
+		if ( result != null ) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(outputType);
+			if ( !outputType.isCompatibleWith(MediaType.TEXT_HTML) ) {
+				// add "attachment" header with suggested file name based on invoice
+				headers.set(HttpHeaders.CONTENT_DISPOSITION,
+						format("attachment; filename=\"%s\"", result.getFilename()));
+			}
+			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+		}
+		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	}
+
+	/**
+	 * Render a preview of the current billing cycle's invoice as a PDF.
+	 * 
+	 * @param userId
+	 *        the optional user ID to get the invoice for; if not provided the
+	 *        current actor's ID is used
+	 * @param month
+	 *        the optional month, in {@literal YYYY-MM} format; if not provided
+	 *        the current month will be used
+	 * @param locale
+	 *        the request locale
+	 * @return the rendered invoice entity
+	 * @since 1.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/invoices/preview/render/pdf", method = RequestMethod.GET)
+	public ResponseEntity<Resource> renderPreviewInvoicePdf(
+			@RequestParam(value = "userId", required = false) Long userId,
+			@RequestParam(value = "month", required = false) String month,
+			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
+		return renderPreviewInvoice("application/pdf", userId, month, useCredit, locale);
 	}
 
 }

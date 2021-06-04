@@ -143,11 +143,11 @@ public class VersionedMessageDaoMessageSourceTests {
 		final Properties props = new Properties();
 		props.put("hello", "world");
 
-		// first try full locale (miss)
-		expect(dao.findMessages(version, bundleNames, "en_US")).andReturn(null);
-
 		// next try language only (hit)
 		expect(dao.findMessages(version, bundleNames, "en")).andReturn(props);
+
+		// first try full locale (miss)
+		expect(dao.findMessages(version, bundleNames, "en_US")).andReturn(null);
 
 		// WHEN
 		replayAll();
@@ -157,6 +157,34 @@ public class VersionedMessageDaoMessageSourceTests {
 
 		// THEN
 		assertThat("Message resolved", result, equalTo("world"));
+	}
+
+	@Test
+	public void resolveMessage_fromLanguageParent_merged() {
+		// GIVEN
+		final String[] bundleNames = new String[] { "foo" };
+		final Instant version = LocalDate.of(2020, 1, 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
+
+		final Properties baseProps = new Properties();
+		baseProps.put("hello", "world");
+
+		final Properties props = new Properties();
+		props.put("hello", "USA");
+
+		// next try language only (hit)
+		expect(dao.findMessages(version, bundleNames, "en")).andReturn(baseProps);
+
+		// first try full locale (hit)
+		expect(dao.findMessages(version, bundleNames, "en_US")).andReturn(props);
+
+		// WHEN
+		replayAll();
+		VersionedMessageDaoMessageSource src = new VersionedMessageDaoMessageSource(dao, bundleNames,
+				version, null);
+		String result = src.getMessage("hello", null, Locale.US);
+
+		// THEN
+		assertThat("Message resolved", result, equalTo("USA"));
 	}
 
 }

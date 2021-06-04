@@ -1,7 +1,7 @@
 /* ==================================================================
- * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
+ * LocalizedNamedCostInfo.java - 31/05/2021 4:27:31 PM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,46 +22,47 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 /**
- * A usage record attached to an invoice item.
+ * API for named cost information that has been localized.
+ * 
+ * <p>
+ * This API does not provide a way to localize a named cost instance. Rather, it
+ * is a marker for an instance that has already been localized. This is designed
+ * to support APIs that can localize objects based on a requested locale.
+ * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.3
  */
-public interface InvoiceItemUsageRecord {
+public interface LocalizedNamedCostInfo {
 
 	/**
-	 * Get the usage unit type.
+	 * Get a localized description of the named cost.
 	 * 
-	 * @return the usage unit type
+	 * @return the description
 	 */
-	String getUnitType();
+	String getLocalizedDescription();
 
 	/**
-	 * Get the usage amount.
+	 * Get the quantity, as a formatted and localized string.
 	 * 
 	 * @return the amount
 	 */
-	BigDecimal getAmount();
+	String getLocalizedQuantity();
 
 	/**
-	 * Get an associated usage cost.
+	 * Get the cost, as a formatted and localized string.
 	 * 
-	 * @return the cost
-	 * @since 1.1
+	 * @return the localized cost
 	 */
-	BigDecimal getCost();
+	String getLocalizedCost();
 
 	/**
-	 * Get a break-down of this usage record into a list of tiers.
+	 * Get the effective rate, as a formatted and localized string.
 	 * 
-	 * @return the usage tiers for this record, or an empty list if there are no
-	 *         tiers
-	 * @since 1.1
+	 * @return the localized effective rate
 	 */
-	List<NamedCost> getUsageTiers();
+	String getLocalizedEffectiveRate();
 
 }
