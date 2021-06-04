@@ -56,7 +56,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
 @Aspect
 public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
-	final private DatumStreamMetadataDao metaDao;
+	private final DatumStreamMetadataDao metaDao;
 
 	/**
 	 * Constructor.
