@@ -19,7 +19,7 @@
 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.mqtt" rev="[2.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.16,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.1,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.11,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.in.biz" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.instructor" rev="[1.8,)"/>
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>

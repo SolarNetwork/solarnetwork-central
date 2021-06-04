@@ -62,7 +62,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -261,11 +261,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private void parseMqttMessage(ObjectMapper objectMapper, MqttMessage message, final String topic,
 			final Long nodeId, final boolean checkVersion) throws IOException {
 		JsonNode root = objectMapper.readTree(message.getPayload());
-		if ( root.isObject() ) {
+		if ( root.isObject() || root.isArray() ) {
 			int remainingTries = transientErrorTries;
 			while ( remainingTries > 0 ) {
 				try {
-					handleNode(nodeId, root, checkVersion);
+					if ( root.isObject() ) {
+						handleNode(nodeId, root, checkVersion);
+					} else {
+						// V2 datum stream array
+						handleDatumStreamNode(nodeId, root);
+					}
 					break;
 				} catch ( RepeatableTaskException | TransactionException e ) {
 					remainingTries--;
@@ -386,6 +391,11 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			InstructionState state = InstructionState.valueOf(status);
 			dao.updateNodeInstructionState(id, nodeId, state, resultParams);
 		}
+	}
+
+	private void handleDatumStreamNode(final Long nodeId, final JsonNode root) {
+		// TODO Auto-generated method stub
+
 	}
 
 	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node,

@@ -23,13 +23,7 @@
 package net.solarnetwork.central.in.web.api;
 
 import static net.solarnetwork.web.domain.Response.response;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.domain.GeneralDatumMetadata;
-import net.solarnetwork.web.domain.Response;
+import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -40,29 +34,44 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for datum metadata actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1DatumMetadataController")
 @RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })
 public class DatumMetadataController extends WebServiceControllerSupport {
 
 	private final DataCollectorBiz dataCollectorBiz;
+	private final DatumMetadataBiz datumMetadataBiz;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param dataCollectorBiz
 	 *        the DataCollectorBiz to use
+	 * @param datumMetadataBiz
+	 *        the metadata biz to use
 	 */
 	@Autowired
-	public DatumMetadataController(DataCollectorBiz dataCollectorBiz) {
+	public DatumMetadataController(DataCollectorBiz dataCollectorBiz,
+			DatumMetadataBiz datumMetadataBiz) {
 		super();
 		this.dataCollectorBiz = dataCollectorBiz;
+		this.datumMetadataBiz = datumMetadataBiz;
 	}
 
 	@InitBinder
@@ -112,6 +121,47 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	public Response<Object> addMetadataAlt(@PathVariable("nodeId") Long nodeId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return addMetadata(nodeId, sourceId, meta);
+	}
+
+	/**
+	 * Find the stream metadata for a given node and source.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the result
+	 * @since 1.1
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.POST)
+	public Response<ObjectDatumStreamMetadata> findStreamMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId) {
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setNodeId(nodeId);
+		criteria.setSourceId(sourceId);
+		Iterable<ObjectDatumStreamMetadata> result = datumMetadataBiz.findDatumStreamMetadata(criteria);
+		ObjectDatumStreamMetadata meta = StreamSupport.stream(result.spliterator(), false).findFirst()
+				.orElse(null);
+		return response(meta);
+	}
+
+	/**
+	 * Find the stream metadata for a given node and source, using a query
+	 * parameter for the source ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the result
+	 * @since 1.1
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
+	public Response<ObjectDatumStreamMetadata> findStreamMetadataAlt(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId) {
+		return findStreamMetadata(nodeId, sourceId);
 	}
 
 }
