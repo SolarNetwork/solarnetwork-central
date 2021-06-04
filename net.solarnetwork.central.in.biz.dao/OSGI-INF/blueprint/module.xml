@@ -55,6 +55,8 @@
 	
 	<reference id="datumDao" interface="net.solarnetwork.central.datum.v2.dao.DatumEntityDao"/>
 	
+	<reference id="metaDato" interface="net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao"/>
+	
 	<!-- Published Services -->
 	
 	<service ref="networkIdentityBiz" 
@@ -84,8 +86,8 @@
 
 	<bean id="datumCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
 		<argument ref="cacheManager"/>
-		<argument value="net.solarnetwork.central.datum.domain.BasePK"/>
-		<argument value="net.solarnetwork.central.domain.Entity"/>
+		<argument value="java.io.Serializable"/>
+		<argument value="java.io.Serializable"/>
 		<property name="name" value="datum-buffer"/>
 		<property name="expiryPolicy" value="Eternal"/>
 		<property name="statisticsEnabled" value="true"/>
@@ -118,6 +120,7 @@
 
 	<bean id="daoDataCollectorBiz" class="net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz">
 		<property name="datumDao" ref="datumDao"/>
+		<property name="metaDao" ref="metaDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>

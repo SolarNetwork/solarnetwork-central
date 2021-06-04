@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * Statistics for collector processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.1
  */
 public class CollectorStats {
@@ -62,7 +62,15 @@ public class CollectorStats {
 
 		LocationDatumStored(6, "location datum stored"),
 
-		LocationDatumFail(7, "location datum failed");
+		LocationDatumFail(7, "location datum failed"),
+
+		StreamDatumReceived(5, "stream datum received"),
+
+		StreamDatumStored(6, "stream datum stored"),
+
+		StreamDatumFail(7, "stream datum failed"),
+
+		;
 
 		private final int index;
 		private final String description;

@@ -55,6 +55,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
 
@@ -268,8 +269,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 					if ( root.isObject() ) {
 						handleNode(nodeId, root, checkVersion);
 					} else {
-						// V2 datum stream array
-						handleDatumStreamNode(nodeId, root);
+						// V2 stream datum array
+						handleStreamDatumNode(nodeId, root);
 					}
 					break;
 				} catch ( RepeatableTaskException | TransactionException e ) {
@@ -393,9 +394,14 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		}
 	}
 
-	private void handleDatumStreamNode(final Long nodeId, final JsonNode root) {
-		// TODO Auto-generated method stub
-
+	private void handleStreamDatumNode(final Long nodeId, final JsonNode node) {
+		try {
+			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
+			dataCollectorBiz.postStreamDatum(singleton(d));
+			getMqttStats().incrementAndGet(SolarInCountStat.StreamDatumReceived);
+		} catch ( IOException e ) {
+			log.debug("Unable to parse StreamDatum: {}", e.getMessage());
+		}
 	}
 
 	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node,

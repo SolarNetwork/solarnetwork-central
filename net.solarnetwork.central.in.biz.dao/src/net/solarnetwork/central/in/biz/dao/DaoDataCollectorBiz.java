@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
+import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +43,6 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
-import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
@@ -48,8 +50,13 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -62,6 +69,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Implementation of {@link DataCollectorBiz} using {@link DatumEntityDao} and
@@ -79,17 +87,19 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	private SolarLocationDao solarLocationDao = null;
 	private SolarNodeMetadataBiz solarNodeMetadataBiz;
 	private DatumEntityDao datumDao = null;
+	private DatumStreamMetadataDao metaDao = null;
 	private DatumMetadataBiz datumMetadataBiz = null;
 	private int filteredResultsLimit = 250;
 	private TransactionTemplate transactionTemplate;
-	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
+	private Cache<Serializable, Serializable> datumCache;
+	private Cache<UUID, StreamKind> streamKindCache;
 
 	/** A class-level logger. */
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -119,7 +129,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( authNode == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		final Cache<BasePK, Entity<? extends BasePK>> buffer = getDatumCache();
+		final Cache<Serializable, Serializable> buffer = getDatumCache();
 		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
 
 			@Override
@@ -129,8 +139,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						d.setNodeId(authNode.getNodeId());
 					} else if ( !d.getNodeId().equals(authNode.getNodeId()) ) {
 						if ( log.isWarnEnabled() ) {
-							log.warn("Illegal datum post by node " + authNode.getNodeId() + " as node "
-									+ d.getNodeId());
+							log.warn("Illegal datum post by node {} as node {}", authNode.getNodeId(),
+									d.getNodeId());
 						}
 						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 					}
@@ -164,7 +174,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( authNode == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		final Cache<BasePK, Entity<? extends BasePK>> buffer = getDatumCache();
+		final Cache<Serializable, Serializable> buffer = getDatumCache();
 		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
 
 			@Override
@@ -182,6 +192,79 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						} catch ( TransientDataAccessException e ) {
 							throw new RepeatableTaskException(
 									"Transient error storing location datum " + d.getId(), e);
+						}
+					}
+				}
+			}
+		};
+		if ( buffer == null && transactionTemplate != null ) {
+			transactionTemplate.execute(action);
+		} else {
+			action.doInTransaction(null);
+		}
+	}
+
+	@Override
+	public void postStreamDatum(Iterable<StreamDatum> datums) {
+		if ( datums == null ) {
+			return;
+		}
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		final Cache<Serializable, Serializable> buffer = getDatumCache();
+		final Cache<UUID, StreamKind> kindCache = getStreamKindCache();
+		final Instant now = Instant.now();
+		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
+
+			@Override
+			protected void doInTransactionWithoutResult(TransactionStatus status) {
+				for ( StreamDatum d : datums ) {
+					if ( d.getStreamId() == null ) {
+						throw new IllegalArgumentException(
+								"A streamId value is required for StreamDatum");
+					}
+					StreamKind kind = null;
+					if ( kindCache != null ) {
+						kind = kindCache.get(d.getStreamId());
+					}
+					if ( kind == null ) {
+						BasicDatumCriteria criteria = new BasicDatumCriteria();
+						criteria.setStreamId(d.getStreamId());
+						ObjectDatumStreamMetadata meta = metaDao.findStreamMetadata(criteria);
+						if ( meta != null ) {
+							kind = new StreamKind(meta.getObjectId(), meta.getKind());
+						}
+					}
+					if ( kind == null ) {
+						if ( log.isWarnEnabled() ) {
+							log.warn("Unknown stream datum post by node {} as stream {}",
+									authNode.getNodeId(), d.getStreamId());
+						}
+						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getStreamId());
+					}
+					if ( kind.getKind() == ObjectDatumKind.Node
+							&& !authNode.getNodeId().equals(kind.getObjectId()) ) {
+						if ( log.isWarnEnabled() ) {
+							log.warn("Illegal stream datum post by node {} as node {}",
+									authNode.getNodeId(), kind.getObjectId());
+						}
+						throw new AuthorizationException(Reason.ACCESS_DENIED, kind.getObjectId());
+					}
+					DatumProperties dp = DatumProperties.propertiesOf(
+							d.getProperties().getInstantaneous(), d.getProperties().getAccumulating(),
+							d.getProperties().getStatus(), d.getProperties().getTags());
+					DatumEntity entity = new DatumEntity(d.getStreamId(), d.getTimestamp(), now, dp);
+					if ( buffer != null ) {
+						buffer.put(entity.getId(), entity);
+					} else {
+						try {
+							datumDao.save(entity);
+						} catch ( TransientDataAccessException e ) {
+							throw new RepeatableTaskException(
+									"Transient error storing stream datum " + entity.getId(), e);
 						}
 					}
 				}
@@ -370,6 +453,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		this.datumDao = datumDao;
 	}
 
+	/**
+	 * Get the datum stream metadata DAO.
+	 * 
+	 * @return the DAO to use
+	 * @since 3.4
+	 */
+	public DatumStreamMetadataDao getMetaDao() {
+		return metaDao;
+	}
+
+	/**
+	 * Set the datum stream metadata DAO.
+	 * 
+	 * @param metaDao
+	 *        the DAO to set
+	 * @since 3.4
+	 */
+	public void setMetaDao(DatumStreamMetadataDao metaDao) {
+		this.metaDao = metaDao;
+	}
+
 	public DatumMetadataBiz getDatumMetadataBiz() {
 		return datumMetadataBiz;
 	}
@@ -405,7 +509,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 * @return the cache
 	 * @since 3.2
 	 */
-	public Cache<BasePK, Entity<? extends BasePK>> getDatumCache() {
+	public Cache<Serializable, Serializable> getDatumCache() {
 		return datumCache;
 	}
 
@@ -423,7 +527,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 *        the cache
 	 * @since 3.2
 	 */
-	public void setDatumCache(Cache<BasePK, Entity<? extends BasePK>> datumCache) {
+	public void setDatumCache(Cache<Serializable, Serializable> datumCache) {
 		this.datumCache = datumCache;
 	}
 
@@ -446,6 +550,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 */
 	public TransactionTemplate getTransactionTemplate() {
 		return transactionTemplate;
+	}
+
+	/**
+	 * Get the stream kind cache.
+	 * 
+	 * @return the cache, or {@literal null}
+	 * @since 3.3
+	 */
+	public Cache<UUID, StreamKind> getStreamKindCache() {
+		return streamKindCache;
+	}
+
+	/**
+	 * Set the stream kind cache to use.
+	 * 
+	 * @param streamKindCache
+	 *        the cache to set
+	 * @since 3.3
+	 */
+	public void setStreamKindCache(Cache<UUID, StreamKind> streamKindCache) {
+		this.streamKindCache = streamKindCache;
 	}
 
 }

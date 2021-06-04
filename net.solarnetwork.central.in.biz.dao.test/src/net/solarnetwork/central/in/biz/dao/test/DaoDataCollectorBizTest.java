@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 import javax.cache.Cache;
@@ -41,11 +42,9 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
@@ -59,7 +58,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDataCollectorBizTest {
 
@@ -70,7 +69,7 @@ public class DaoDataCollectorBizTest {
 	private DatumEntityDao datumDao;
 	private SolarLocationDao locationDao;
 	private DatumMetadataBiz datumMetadataBiz;
-	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
+	private Cache<Serializable, Serializable> datumCache;
 
 	@SuppressWarnings("unchecked")
 	@Before

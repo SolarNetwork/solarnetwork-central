@@ -29,6 +29,7 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -58,7 +59,6 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.JCacheFactoryBean;
@@ -77,7 +77,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
-	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
+	private Cache<Serializable, Serializable> datumCache;
 	private CollectorStats stats;
 
 	private AsyncDaoDatumCollector collector;
@@ -102,7 +102,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 
 		cacheManager = createCacheManager();
-		JCacheFactoryBean<BasePK, Entity<? extends BasePK>> factory = new JCacheFactoryBean(cacheManager,
+		JCacheFactoryBean<Serializable, Serializable> factory = new JCacheFactoryBean(cacheManager,
 				BasePK.class, Object.class);
 		factory.setName("Test Datum Buffer");
 		factory.setHeapMaxEntries(10);
