@@ -77,13 +77,13 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * 
  * <p>
  * This service expects all calls into {@link #postGeneralNodeDatum(Iterable)}
- * and {@link #postGeneralLocationDatum(Iterable)} to provide a
- * {@link AuthenticatedNode} via the normal Spring Security
- * {@link SecurityContextHolder} API. Any attempt to post data for a node
- * different from the currently authenticated node will result in a
- * {@link SecurityException}. If a {@link GeneralNodeDatum} is posted with a
- * <em>null</em> {@link GeneralNodeDatum#getNodeId()} value, this service will
- * set the node ID to the authenticated node ID automatically.
+ * and {@link #postGeneralLocationDatum(Iterable)} and
+ * {@link #postStreamDatum(Iterable)} to provide an {@link AuthenticatedNode}
+ * via the normal Spring Security {@link SecurityContextHolder} API. Any attempt
+ * to post data for a node different from the currently authenticated node will
+ * result in a {@link SecurityException}. If a {@link GeneralNodeDatum} is
+ * posted with a <em>null</em> {@link GeneralNodeDatum#getNodeId()} value, this
+ * service will set the node ID to the authenticated node ID automatically.
  * </p>
  * 
  * @author matt
