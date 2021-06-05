@@ -41,12 +41,14 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "sourceIdTemplate" })
 public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
+
+	private static final long serialVersionUID = 5060316663324383986L;
 
 	/** The default {@code sourceIdTemplate} value. */
 	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargerIdentifier}/{connectorId}/{location}";

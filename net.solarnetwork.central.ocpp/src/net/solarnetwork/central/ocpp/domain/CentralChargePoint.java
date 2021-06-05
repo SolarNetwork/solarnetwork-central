@@ -37,12 +37,14 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
  * A Charge Point entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "userNodeId" })
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "enabled", "registrationStatus",
 		"connectorCount", "info" })
 public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEntity<Long> {
+
+	private static final long serialVersionUID = 8776836546559666984L;
 
 	private final Long userId;
 	private final Long nodeId;

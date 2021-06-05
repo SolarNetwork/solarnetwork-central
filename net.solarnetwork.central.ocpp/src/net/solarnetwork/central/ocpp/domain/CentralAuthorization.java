@@ -34,11 +34,13 @@ import net.solarnetwork.ocpp.domain.Authorization;
  * An authorization entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "token", "enabled", "expired", "expiryDate",
 		"parentId" })
 public class CentralAuthorization extends Authorization implements UserRelatedEntity<Long> {
+
+	private static final long serialVersionUID = 806865271366703539L;
 
 	private final Long userId;
 

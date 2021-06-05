@@ -31,9 +31,11 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
  * charging cycle from authorization to end of charging.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CentralChargeSession extends ChargeSession {
+
+	private static final long serialVersionUID = -5000462916671943747L;
 
 	/**
 	 * Constructor.

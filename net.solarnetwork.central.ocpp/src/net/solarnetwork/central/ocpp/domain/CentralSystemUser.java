@@ -36,11 +36,13 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  * An OCPP charge point system user.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "allowedChargePointsArray", "allowedChargePointsValue" })
 @JsonPropertyOrder({ "id", "created", "userId", "username", "allowedChargePoints" })
 public class CentralSystemUser extends SystemUser implements UserRelatedEntity<Long> {
+
+	private static final long serialVersionUID = -2339286102398017968L;
 
 	private final Long userId;
 
