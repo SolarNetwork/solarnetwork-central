@@ -1,5 +1,5 @@
 /* ==================================================================
- * StreamKind.java - 5/06/2021 10:51:50 AM
+ * ObjectDatumStreamKind.java - 5/06/2021 10:51:50 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,18 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz.dao;
+package net.solarnetwork.central.datum.v2.domain;
 
 import java.io.Serializable;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import java.util.Objects;
 
 /**
  * Association of object ID and object kind.
  * 
  * @author matt
  * @version 1.0
+ * @since 2.12
  */
-public final class StreamKind implements Serializable {
+public final class ObjectDatumStreamKind implements Serializable {
 
 	private static final long serialVersionUID = -8728780711232724835L;
 
@@ -46,10 +47,44 @@ public final class StreamKind implements Serializable {
 	 * @param kind
 	 *        the object kind
 	 */
-	public StreamKind(Long objectId, ObjectDatumKind kind) {
+	public ObjectDatumStreamKind(Long objectId, ObjectDatumKind kind) {
 		super();
 		this.objectId = objectId;
 		this.kind = kind;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(kind, objectId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof ObjectDatumStreamKind) ) {
+			return false;
+		}
+		ObjectDatumStreamKind other = (ObjectDatumStreamKind) obj;
+		return kind == other.kind && Objects.equals(objectId, other.objectId);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ObjectDatumStreamKind{");
+		if ( kind != null ) {
+			builder.append("kind=");
+			builder.append(kind);
+			builder.append(", ");
+		}
+		if ( objectId != null ) {
+			builder.append("objectId=");
+			builder.append(objectId);
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

@@ -64,11 +64,11 @@ public class CollectorStats {
 
 		LocationDatumFail(7, "location datum failed"),
 
-		StreamDatumReceived(5, "stream datum received"),
+		StreamDatumReceived(8, "stream datum received"),
 
-		StreamDatumStored(6, "stream datum stored"),
+		StreamDatumStored(9, "stream datum stored"),
 
-		StreamDatumFail(7, "stream datum failed"),
+		StreamDatumFail(10, "stream datum failed"),
 
 		;
 

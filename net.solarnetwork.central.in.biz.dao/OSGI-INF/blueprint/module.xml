@@ -113,6 +113,7 @@
 		<property name="statisticsEnabled" value="true"/>
 		<property name="heapMaxEntries" value="${streamKindCache.heapMaxEntries}"/>
 		<property name="diskPersistent" value="false"/>
+		<property name="storeByValue" value="true"/>
 	</bean>
 	
 	<bean id="bufferingDatumCache" class="net.solarnetwork.central.support.BufferingDelegatingCache">

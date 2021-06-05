@@ -56,6 +56,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
@@ -99,7 +100,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private int filteredResultsLimit = 250;
 	private TransactionTemplate transactionTemplate;
 	private Cache<Serializable, Serializable> datumCache;
-	private Cache<UUID, StreamKind> streamKindCache;
+	private Cache<UUID, ObjectDatumStreamKind> streamKindCache;
 
 	/** A class-level logger. */
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -215,7 +216,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
 		final Cache<Serializable, Serializable> buffer = getDatumCache();
-		final Cache<UUID, StreamKind> kindCache = getStreamKindCache();
+		final Cache<UUID, ObjectDatumStreamKind> kindCache = getStreamKindCache();
 		final Instant now = Instant.now();
 		TransactionCallbackWithoutResult action = new TransactionCallbackWithoutResult() {
 
@@ -226,7 +227,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						throw new IllegalArgumentException(
 								"A streamId value is required for StreamDatum");
 					}
-					StreamKind kind = null;
+					ObjectDatumStreamKind kind = null;
 					if ( kindCache != null ) {
 						kind = kindCache.get(d.getStreamId());
 					}
@@ -235,7 +236,10 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 						criteria.setStreamId(d.getStreamId());
 						ObjectDatumStreamMetadata meta = metaDao.findStreamMetadata(criteria);
 						if ( meta != null ) {
-							kind = new StreamKind(meta.getObjectId(), meta.getKind());
+							kind = new ObjectDatumStreamKind(meta.getObjectId(), meta.getKind());
+							if ( kindCache != null ) {
+								kindCache.put(d.getStreamId(), kind);
+							}
 						}
 					}
 					if ( kind == null ) {
@@ -558,7 +562,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 * @return the cache, or {@literal null}
 	 * @since 3.3
 	 */
-	public Cache<UUID, StreamKind> getStreamKindCache() {
+	public Cache<UUID, ObjectDatumStreamKind> getStreamKindCache() {
 		return streamKindCache;
 	}
 
@@ -569,7 +573,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 *        the cache to set
 	 * @since 3.3
 	 */
-	public void setStreamKindCache(Cache<UUID, StreamKind> streamKindCache) {
+	public void setStreamKindCache(Cache<UUID, ObjectDatumStreamKind> streamKindCache) {
 		this.streamKindCache = streamKindCache;
 	}
 
