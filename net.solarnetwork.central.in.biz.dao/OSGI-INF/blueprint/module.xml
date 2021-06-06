@@ -101,7 +101,7 @@
 	<bean id="streamKindCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
 		<argument ref="cacheManager"/>
 		<argument value="java.util.UUID"/>
-		<argument value="net.solarnetwork.central.in.biz.dao.StreamKind"/>
+		<argument value="net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamKind"/>
 		<property name="name" value="stream-kind"/>
 		<property name="expiryPolicy" value="Created"/>
 		<property name="expiryDuration">
