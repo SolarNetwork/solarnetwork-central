@@ -88,6 +88,7 @@ import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.support.SearchFilter;
 import net.solarnetwork.support.SearchFilter.CompareOperator;
 import net.solarnetwork.support.SearchFilter.LogicOperator;
@@ -98,7 +99,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * General datum utility methods.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  * @since 2.8
  */
 public final class DatumUtils {
@@ -883,6 +884,57 @@ public final class DatumUtils {
 				counts.getDatumMonthlyCount());
 		c.setDate(JodaDateUtils.toJoda(counts.getTimestamp(), ZoneOffset.UTC));
 		return c;
+	}
+
+	/**
+	 * Convert an {@link ObjectDatumKind} to a
+	 * {@link net.solarnetwork.domain.datum.ObjectDatumKind}.
+	 * 
+	 * @param kind
+	 *        the kind to convert
+	 * @return the converted instance, or {@literal null} if {@code kind} is
+	 *         {@literal null}
+	 * @since 1.7
+	 */
+	public static net.solarnetwork.domain.datum.ObjectDatumKind toCommonObjectDatumKind(
+			ObjectDatumKind kind) {
+		switch (kind) {
+			case Node:
+				return net.solarnetwork.domain.datum.ObjectDatumKind.Node;
+
+			case Location:
+				return net.solarnetwork.domain.datum.ObjectDatumKind.Location;
+
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * Convert a {@link ObjectDatumStreamMetadata} to a
+	 * {@link BasicObjectDatumStreamMetadata}.
+	 * 
+	 * <p>
+	 * <b>Note</b> that the {@link ObjectDatumStreamMetadata#getMetaJson()}
+	 * value is <b>not</b> copied.
+	 * </p>
+	 * 
+	 * @param meta
+	 *        the metadata to convert
+	 * @return the converted instance, or {@literal null} if {@code meta} is
+	 *         {@literal null}
+	 * @since 1.7
+	 */
+	public static BasicObjectDatumStreamMetadata toCommonObjectDatumStreamMetadata(
+			ObjectDatumStreamMetadata meta) {
+		if ( meta == null ) {
+			return null;
+		}
+		return new BasicObjectDatumStreamMetadata(meta.getStreamId(), meta.getTimeZoneId(),
+				toCommonObjectDatumKind(meta.getKind()), meta.getObjectId(), meta.getSourceId(),
+				meta.getLocation(), meta.propertyNamesForType(GeneralDatumSamplesType.Instantaneous),
+				meta.propertyNamesForType(GeneralDatumSamplesType.Accumulating),
+				meta.propertyNamesForType(GeneralDatumSamplesType.Status), null);
 	}
 
 }

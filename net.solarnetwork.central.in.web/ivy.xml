@@ -17,9 +17,9 @@
 		<dependency org="joda-time" name="joda-time" rev="2.4"/>
 		<dependency org="commons-fileupload" name="commons-fileupload" rev="1.3.2" conf="runtime" />
 		<dependency org="commons-codec" name="commons-codec" rev="1.7"/>
-		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.52,)"/>
+		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common" rev="[1.72,)"/>
 		<dependency org="net.solarnetwork.common" name="net.solarnetwork.common.web" rev="[1.10,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.11,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.12,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.6,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.web" rev="[2.0,)"/>

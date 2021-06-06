@@ -39,6 +39,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -135,15 +136,15 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.POST)
-	public Response<ObjectDatumStreamMetadata> findStreamMetadata(@PathVariable("nodeId") Long nodeId,
-			@PathVariable("sourceId") String sourceId) {
+	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadata(
+			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		criteria.setNodeId(nodeId);
 		criteria.setSourceId(sourceId);
 		Iterable<ObjectDatumStreamMetadata> result = datumMetadataBiz.findDatumStreamMetadata(criteria);
 		ObjectDatumStreamMetadata meta = StreamSupport.stream(result.spliterator(), false).findFirst()
 				.orElse(null);
-		return response(meta);
+		return response(DatumUtils.toCommonObjectDatumStreamMetadata(meta));
 	}
 
 	/**
@@ -159,8 +160,8 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<ObjectDatumStreamMetadata> findStreamMetadataAlt(@PathVariable("nodeId") Long nodeId,
-			@PathVariable("sourceId") String sourceId) {
+	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadataAlt(
+			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId) {
 		return findStreamMetadata(nodeId, sourceId);
 	}
 
