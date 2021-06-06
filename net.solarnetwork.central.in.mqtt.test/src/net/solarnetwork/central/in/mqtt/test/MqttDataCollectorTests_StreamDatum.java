@@ -53,6 +53,8 @@ import net.solarnetwork.central.in.mqtt.CBORFactoryBean;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.codec.BasicStreamDatumArrayDeserializer;
+import net.solarnetwork.codec.BasicStreamDatumArraySerializer;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -60,8 +62,6 @@ import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.StreamDatum;
-import net.solarnetwork.util.BasicStreamDatumArrayDeserializer;
-import net.solarnetwork.util.BasicStreamDatumArraySerializer;
 import net.solarnetwork.util.ObjectMapperFactoryBean;
 import net.solarnetwork.util.StaticOptionalService;
 
