@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNet Datum Aggregate Test
 Bundle-SymbolicName: net.solarnetwork.central.datum.agg.test
-Bundle-Version: 1.10.0
+Bundle-Version: 1.10.1
 Bundle-Vendor: SolarNetwork
 Fragment-Host: net.solarnetwork.central.datum.agg;bundle-version="[1.14,2.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -18,10 +18,11 @@ Import-Package:
  net.solarnetwork.central.datum.v2.dao;version="[1.0,2.0)",
  net.solarnetwork.central.datum.v2.dao.jdbc.sql;version="[1.0,2.0)",
  net.solarnetwork.central.test;version="[2.2,3.0)",
- net.solarnetwork.common.mqtt.netty;version="1.0.0",
+ net.solarnetwork.codec;version="[1.0,2.0)",
+ net.solarnetwork.common.mqtt.netty;version="[1.0,2.0)",
  net.solarnetwork.test;version="[1.5,2.0)",
- net.solarnetwork.test.mqtt;version="1.0.0",
- net.solarnetwork.util;version="1.32.0",
+ net.solarnetwork.test.mqtt;version="[1.0,2.0)",
+ net.solarnetwork.util;version="[1.32,2.0)",
  org.apache.commons.logging;version="[1.1,2.0)",
  org.easymock;version="[3.1,4.0)",
  org.hamcrest;version="[1.3,2.0)",
