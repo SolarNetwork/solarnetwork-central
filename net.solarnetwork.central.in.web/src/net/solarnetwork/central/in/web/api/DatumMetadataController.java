@@ -160,8 +160,8 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	 * Find the stream metadata for a given node and source, using a query
 	 * parameter for the source ID.
 	 * 
-	 * @param nodeId
-	 *        the node ID
+	 * @param objectId
+	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
 	 * @return the result
@@ -170,9 +170,9 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
 	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadataAlt(
-			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
+			@PathVariable("nodeId") Long objectId, @RequestParam("sourceId") String sourceId,
 			@RequestParam(name = "kind", required = false, defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
-		return findStreamMetadata(nodeId, sourceId, kind);
+		return findStreamMetadata(objectId, sourceId, kind);
 	}
 
 }
