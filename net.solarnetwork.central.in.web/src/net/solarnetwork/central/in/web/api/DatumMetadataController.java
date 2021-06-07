@@ -38,6 +38,7 @@ import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
@@ -125,21 +126,29 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	}
 
 	/**
-	 * Find the stream metadata for a given node and source.
+	 * Find the stream metadata for a given object ID and source ID.
 	 * 
-	 * @param nodeId
-	 *        the node ID
+	 * @param objectId
+	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
 	 * @return the result
 	 * @since 1.1
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.GET, params = {
+			"!sourceId" })
 	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadata(
-			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId) {
+			@PathVariable("nodeId") Long objectId, @PathVariable("sourceId") String sourceId,
+			@RequestParam(name = "kind", required = false, defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
-		criteria.setNodeId(nodeId);
+		if ( kind == net.solarnetwork.domain.datum.ObjectDatumKind.Location ) {
+			criteria.setObjectKind(ObjectDatumKind.Location);
+			criteria.setLocationId(objectId);
+		} else {
+			criteria.setObjectKind(ObjectDatumKind.Node);
+			criteria.setNodeId(objectId);
+		}
 		criteria.setSourceId(sourceId);
 		Iterable<ObjectDatumStreamMetadata> result = datumMetadataBiz.findDatumStreamMetadata(criteria);
 		ObjectDatumStreamMetadata meta = StreamSupport.stream(result.spliterator(), false).findFirst()
@@ -161,8 +170,9 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	@ResponseBody
 	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
 	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadataAlt(
-			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId) {
-		return findStreamMetadata(nodeId, sourceId);
+			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
+			@RequestParam(name = "kind", required = false, defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
+		return findStreamMetadata(nodeId, sourceId, kind);
 	}
 
 }
