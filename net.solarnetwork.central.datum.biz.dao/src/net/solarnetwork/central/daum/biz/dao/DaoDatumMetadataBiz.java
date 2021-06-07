@@ -51,10 +51,10 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.support.MapPathMatcher;
 import net.solarnetwork.support.SearchFilter;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * DAO-based implementation of {@link DatumMetadataBiz}.

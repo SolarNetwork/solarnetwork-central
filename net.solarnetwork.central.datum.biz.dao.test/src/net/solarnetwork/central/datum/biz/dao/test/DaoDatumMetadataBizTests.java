@@ -47,8 +47,8 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.daum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumMetadata;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link DaoDatumMetadataBiz} class.
