@@ -29,8 +29,8 @@ import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.BasicIdentity;
 
 /**
  * Basic unit of a datum stream.
@@ -42,7 +42,7 @@ import net.solarnetwork.domain.BasicIdentity;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class DatumEntity extends BasicIdentity<DatumPK>
@@ -83,6 +83,17 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 	 */
 	public DatumEntity(UUID streamId, Instant timestamp, Instant received, DatumProperties properties) {
 		this(new DatumPK(streamId, timestamp), received, properties);
+	}
+
+	/**
+	 * Default constructor.
+	 * 
+	 * <p>
+	 * This method exists to adhere to {@link Serializable}.
+	 * </p>
+	 */
+	protected DatumEntity() {
+		this(null, null, null);
 	}
 
 	@Override

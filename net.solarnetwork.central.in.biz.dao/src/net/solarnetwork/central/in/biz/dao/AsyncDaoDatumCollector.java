@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
+import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -50,12 +51,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.domain.PingTest;
 import net.solarnetwork.domain.PingTestResult;
 
@@ -63,10 +64,10 @@ import net.solarnetwork.domain.PingTestResult;
  * Data collector that processes datum and location datum asynchronously.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncDaoDatumCollector
-		implements CacheEntryCreatedListener<BasePK, Entity<? extends BasePK>>, PingTest {
+		implements CacheEntryCreatedListener<Serializable, Serializable>, PingTest {
 
 	/** The {@code concurrency} property default value. */
 	public final int DEFAULT_CONCURRENCY = 2;
@@ -80,11 +81,11 @@ public class AsyncDaoDatumCollector
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
 	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
-	private final Cache<BasePK, Entity<? extends BasePK>> datumCache;
+	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumEntityDao datumDao;
 	private final TransactionTemplate transactionTemplate;
 	private final CollectorStats stats;
-	private final CacheEntryListenerConfiguration<BasePK, Entity<? extends BasePK>> listenerConfiguration;
+	private final CacheEntryListenerConfiguration<Serializable, Serializable> listenerConfiguration;
 	private final ReentrantLock queueLock = new ReentrantLock();
 
 	private UncaughtExceptionHandler exceptionHandler;
@@ -94,8 +95,8 @@ public class AsyncDaoDatumCollector
 	private int datumCacheRemovalAlertThreshold;
 
 	private volatile boolean writeEnabled = false;
-	private BlockingQueue<BasePK> queue;
-	private ConcurrentMap<BasePK, Object> scratch; // prevent duplicate processing between threads
+	private BlockingQueue<Serializable> queue;
+	private ConcurrentMap<Serializable, Object> scratch; // prevent duplicate processing between threads
 	private DatumWriterThread[] datumThreads;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -110,8 +111,8 @@ public class AsyncDaoDatumCollector
 	 * @param transactionTemplate
 	 *        the transaction template
 	 */
-	public AsyncDaoDatumCollector(Cache<BasePK, Entity<? extends BasePK>> datumCache,
-			DatumEntityDao datumDao, TransactionTemplate transactionTemplate) {
+	public AsyncDaoDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+			TransactionTemplate transactionTemplate) {
 		this(datumCache, datumDao, transactionTemplate, new CollectorStats("AsyncDaoDatum", 200));
 	}
 
@@ -129,8 +130,8 @@ public class AsyncDaoDatumCollector
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AsyncDaoDatumCollector(Cache<BasePK, Entity<? extends BasePK>> datumCache,
-			DatumEntityDao datumDao, TransactionTemplate transactionTemplate, CollectorStats stats) {
+	public AsyncDaoDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+			TransactionTemplate transactionTemplate, CollectorStats stats) {
 		super();
 		if ( datumCache == null ) {
 			throw new IllegalArgumentException("The datumCache parameter must not be null.");
@@ -151,9 +152,9 @@ public class AsyncDaoDatumCollector
 		this.concurrency = DEFAULT_CONCURRENCY;
 		this.shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
 		this.queueSize = DEFAULT_QUEUE_SIZE;
-		this.listenerConfiguration = new MutableCacheEntryListenerConfiguration<BasePK, Entity<? extends BasePK>>(
-				new SingletonFactory<CacheEntryListener<BasePK, Entity<? extends BasePK>>>(this), null,
-				false, false);
+		this.listenerConfiguration = new MutableCacheEntryListenerConfiguration<Serializable, Serializable>(
+				new SingletonFactory<CacheEntryListener<Serializable, Serializable>>(this), null, false,
+				false);
 	}
 
 	/**
@@ -268,14 +269,14 @@ public class AsyncDaoDatumCollector
 		public void run() {
 			try {
 				while ( writeEnabled ) {
-					final BasePK key = queue.take();
+					final Serializable key = queue.take();
 					if ( key == null ) {
 						continue;
 					}
 					if ( scratch.putIfAbsent(key, scratchValue) != null ) {
 						continue;
 					}
-					final Entity<? extends BasePK> entity = datumCache.get(key);
+					final Serializable entity = datumCache.get(key);
 					if ( entity == null ) {
 						scratch.remove(key, scratchValue);
 						continue;
@@ -286,7 +287,9 @@ public class AsyncDaoDatumCollector
 
 							@Override
 							protected void doInTransactionWithoutResult(TransactionStatus status) {
-								if ( entity instanceof GeneralNodeDatum ) {
+								if ( entity instanceof DatumEntity ) {
+									datumDao.save((DatumEntity) entity);
+								} else if ( entity instanceof GeneralNodeDatum ) {
 									datumDao.store((GeneralNodeDatum) entity);
 								} else if ( entity instanceof GeneralLocationDatum ) {
 									datumDao.store((GeneralLocationDatum) entity);
@@ -295,20 +298,24 @@ public class AsyncDaoDatumCollector
 						});
 						datumCache.remove(key);
 						long c = stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
-						if ( entity instanceof GeneralNodeDatum ) {
+						if ( entity instanceof DatumEntity ) {
+							stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumStored);
+						} else if ( entity instanceof GeneralNodeDatum ) {
 							stats.incrementAndGet(CollectorStats.BasicCount.DatumStored);
 						} else if ( entity instanceof GeneralLocationDatum ) {
 							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumStored);
 						}
 						if ( log.isTraceEnabled() && (stats.getLogFrequency() > 0
 								&& ((c % stats.getLogFrequency()) == 0)) ) {
-							Set<BasePK> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
-									.filter(e -> e != null).map(e -> e.getKey())
-									.collect(Collectors.toSet());
+							Set<Serializable> allKeys = StreamSupport
+									.stream(datumCache.spliterator(), false).filter(e -> e != null)
+									.map(e -> e.getKey()).collect(Collectors.toSet());
 							log.trace("Datum cache keys: {}", allKeys);
 						}
 					} catch ( Throwable t ) {
-						if ( entity instanceof GeneralNodeDatum ) {
+						if ( entity instanceof DatumEntity ) {
+							stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumFail);
+						} else if ( entity instanceof GeneralNodeDatum ) {
 							stats.incrementAndGet(CollectorStats.BasicCount.DatumFail);
 						} else if ( entity instanceof GeneralLocationDatum ) {
 							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumFail);
@@ -330,9 +337,9 @@ public class AsyncDaoDatumCollector
 					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
 						try {
 							if ( queue.size() < Math.max(1.0, queueSize * 0.1) ) {
-								for ( Iterator<Entry<BasePK, Entity<? extends BasePK>>> itr = datumCache
+								for ( Iterator<Entry<Serializable, Serializable>> itr = datumCache
 										.iterator(); itr.hasNext(); ) {
-									Entry<BasePK, Entity<? extends BasePK>> e = itr.next();
+									Entry<Serializable, Serializable> e = itr.next();
 									if ( e != null && !queue.offer(e.getKey()) ) {
 										break;
 									}
@@ -359,16 +366,17 @@ public class AsyncDaoDatumCollector
 	}
 
 	@Override
-	public void onCreated(
-			Iterable<CacheEntryEvent<? extends BasePK, ? extends Entity<? extends BasePK>>> itr)
+	public void onCreated(Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> itr)
 			throws CacheEntryListenerException {
 		queueLock.lock();
 		try {
-			for ( CacheEntryEvent<? extends BasePK, ? extends Entity<? extends BasePK>> event : itr ) {
-				BasePK key = event.getKey();
+			for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : itr ) {
+				Serializable key = event.getKey();
 				log.trace("Datum cached: {}", key);
 				stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
-				if ( key instanceof GeneralNodeDatumPK ) {
+				if ( key instanceof DatumPK ) {
+					stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
+				} else if ( key instanceof GeneralNodeDatumPK ) {
 					stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
 				} else {
 					stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
@@ -399,7 +407,7 @@ public class AsyncDaoDatumCollector
 	 * 
 	 * @return the cache
 	 */
-	public Cache<BasePK, Entity<? extends BasePK>> getDatumCache() {
+	public Cache<Serializable, Serializable> getDatumCache() {
 		return datumCache;
 	}
 

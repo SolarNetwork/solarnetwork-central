@@ -40,13 +40,15 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "userId", "created", "publishToSolarIn", "publishToSolarFlux",
 		"sourceIdTemplate" })
 public class ChargePointSettings extends BasicLongEntity
 		implements Differentiable<ChargePointSettings>, UserRelatedEntity<Long> {
+
+	private static final long serialVersionUID = 3652167896343181957L;
 
 	private final Long userId;
 	private boolean publishToSolarIn = true;

@@ -43,19 +43,21 @@ import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -143,8 +145,9 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			input = new GZIPInputStream(in);
 		}
 
-		List<GeneralNodeDatum> parsedGeneralNodeDatum = new ArrayList<GeneralNodeDatum>();
-		List<GeneralLocationDatum> parsedGeneralLocationDatum = new ArrayList<GeneralLocationDatum>();
+		List<GeneralNodeDatum> parsedGeneralNodeDatum = new ArrayList<>();
+		List<GeneralLocationDatum> parsedGeneralLocationDatum = new ArrayList<>();
+		List<StreamDatum> parsedStreamDatum = new ArrayList<>();
 		List<Object> resultDatum = new ArrayList<Object>();
 
 		try {
@@ -152,7 +155,9 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			if ( tree.isArray() ) {
 				for ( JsonNode child : tree ) {
 					Object o = handleNode(child);
-					if ( o instanceof GeneralNodeDatum ) {
+					if ( o instanceof StreamDatum ) {
+						parsedStreamDatum.add((StreamDatum) o);
+					} else if ( o instanceof GeneralNodeDatum ) {
 						parsedGeneralNodeDatum.add((GeneralNodeDatum) o);
 					} else if ( o instanceof GeneralLocationDatum ) {
 						parsedGeneralLocationDatum.add((GeneralLocationDatum) o);
@@ -168,13 +173,19 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 
 		try {
-			if ( parsedGeneralNodeDatum.size() > 0 ) {
+			if ( !parsedStreamDatum.isEmpty() ) {
+				getDataCollectorBiz().postStreamDatum(parsedStreamDatum);
+				for ( StreamDatum d : parsedStreamDatum ) {
+					resultDatum.add(new DatumPK(d.getStreamId(), d.getTimestamp()));
+				}
+			}
+			if ( !parsedGeneralNodeDatum.isEmpty() ) {
 				getDataCollectorBiz().postGeneralNodeDatum(parsedGeneralNodeDatum);
 				for ( GeneralNodeDatum d : parsedGeneralNodeDatum ) {
 					resultDatum.add(d.getId());
 				}
 			}
-			if ( parsedGeneralLocationDatum.size() > 0 ) {
+			if ( !parsedGeneralLocationDatum.isEmpty() ) {
 				getDataCollectorBiz().postGeneralLocationDatum(parsedGeneralLocationDatum);
 				for ( GeneralLocationDatum d : parsedGeneralLocationDatum ) {
 					resultDatum.add(d.getId());
@@ -209,25 +220,38 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	}
 
 	private Object handleNode(JsonNode node) {
-		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
-				|| nodeType.isEmpty() ) {
-			// if we have a location ID, this is actually a GeneralLocationDatum
-			final JsonNode locId = node.get(LOCATION_ID_FIELD);
-			if ( locId != null && locId.isNumber() ) {
-				return handleGeneralLocationDatum(node);
-			}
-			return handleGeneralNodeDatum(node);
-		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
-			return handleInstructionStatus(node);
+		if ( node.isArray() ) {
+			return handleStreamDatum(node);
 		} else {
-			return null;
+			String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
+			if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
+					|| nodeType.isEmpty() ) {
+				// if we have a location ID, this is actually a GeneralLocationDatum
+				final JsonNode locId = node.get(LOCATION_ID_FIELD);
+				if ( locId != null && locId.isNumber() ) {
+					return handleGeneralLocationDatum(node);
+				}
+				return handleGeneralNodeDatum(node);
+			} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
+				return handleInstructionStatus(node);
+			} else {
+				return null;
+			}
 		}
 	}
 
 	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
 		JsonNode child = node.get(fieldName);
 		return (child == null ? placeholder : child.asText());
+	}
+
+	private StreamDatum handleStreamDatum(JsonNode node) {
+		try {
+			return objectMapper.treeToValue(node, StreamDatum.class);
+		} catch ( IOException e ) {
+			log.debug("Unable to parse JSON into StreamDatum: {}", e.getMessage());
+		}
+		return null;
 	}
 
 	private Instruction handleInstructionStatus(JsonNode node) {

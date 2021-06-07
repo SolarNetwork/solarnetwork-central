@@ -36,12 +36,14 @@ import net.solarnetwork.dao.BasicEntity;
  * User and node specific event configuration entity.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonPropertyOrder({ "id", "userId", "created", "name", "topic", "serviceIdentifier", "nodeIds",
 		"sourceIds", "serviceProperties" })
 public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 		implements UserRelatedIdentifiableConfiguration {
+
+	private static final long serialVersionUID = 3878313156603958081L;
 
 	private Long[] nodeIds;
 	private String[] sourceIds;

@@ -28,7 +28,7 @@ import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
  * SolarIn MQTT statistic types.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.1
  */
 public enum SolarInCountStat implements MqttStat {
@@ -43,7 +43,11 @@ public enum SolarInCountStat implements MqttStat {
 
 	LegacyNodeDatumReceived(4, "Legacy node datum received"),
 
-	LegacyLocationDatumReceived(5, "Legacy location datum received");
+	LegacyLocationDatumReceived(5, "Legacy location datum received"),
+
+	StreamDatumReceived(6, "stream datum received"),
+
+	;
 
 	private final int index;
 	private final String description;

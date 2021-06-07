@@ -39,6 +39,7 @@ import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
@@ -50,7 +51,7 @@ import net.solarnetwork.central.user.support.AuthorizationSupport;
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Aspect
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
@@ -108,6 +109,10 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralLocation*(..)) && args(locationId,..)")
 	public void removeLocationMetadata(Long locationId) {
+	}
+
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findDatumStreamMetadata(..)) && args(filter,..)")
+	public void findDatumStreamMetadata(ObjectStreamCriteria filter) {
 	}
 
 	/**
@@ -202,6 +207,37 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	@Before("addLocationMetadata(locationId) || storeLocationMetadata(locationId) || removeLocationMetadata(locationId)")
 	public void updateLocationMetadataCheck(Long locationId) {
 		SecurityUtils.requireAnyRole(locaitonMetadataAdminRoles);
+	}
+
+	/**
+	 * Check access to reading datum metadata.
+	 * 
+	 * @param filter
+	 *        the filter to verify
+	 * @since 1.3
+	 */
+	@Before("findDatumStreamMetadata(filter)")
+	public void findDatumStreamMetadataCheck(ObjectStreamCriteria filter) {
+		if ( filter == null || (filter.getUserId() == null && filter.getNodeId() == null
+				&& filter.getLocationId() == null) ) {
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+		if ( filter.getLocationId() != null ) {
+			// location searches do not require any check
+			return;
+		}
+		Long[] ids = filter.getNodeIds();
+		if ( ids != null ) {
+			for ( Long nodeId : ids ) {
+				requireNodeReadAccess(nodeId);
+			}
+		}
+		ids = filter.getUserIds();
+		if ( ids != null ) {
+			for ( Long userId : ids ) {
+				requireUserReadAccess(userId);
+			}
+		}
 	}
 
 	/**

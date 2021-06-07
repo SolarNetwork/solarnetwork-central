@@ -38,6 +38,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.domain.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * API for collecting data from solar nodes.
@@ -47,7 +48,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DataCollectorBiz {
 
@@ -68,6 +69,15 @@ public interface DataCollectorBiz {
 	 * @since 1.3
 	 */
 	void postGeneralLocationDatum(Iterable<GeneralLocationDatum> datums);
+
+	/**
+	 * Post a collection of {@link StreamDatum} in a single transaction.
+	 * 
+	 * @param datums
+	 *        the collection of datums
+	 * @since 2.1
+	 */
+	void postStreamDatum(Iterable<StreamDatum> datums);
 
 	/**
 	 * Add metadata to a specific node and source. If metadata already exists

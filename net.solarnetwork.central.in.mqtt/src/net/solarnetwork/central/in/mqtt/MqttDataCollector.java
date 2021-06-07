@@ -55,6 +55,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
 
@@ -62,7 +63,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -261,11 +262,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private void parseMqttMessage(ObjectMapper objectMapper, MqttMessage message, final String topic,
 			final Long nodeId, final boolean checkVersion) throws IOException {
 		JsonNode root = objectMapper.readTree(message.getPayload());
-		if ( root.isObject() ) {
+		if ( root.isObject() || root.isArray() ) {
 			int remainingTries = transientErrorTries;
 			while ( remainingTries > 0 ) {
 				try {
-					handleNode(nodeId, root, checkVersion);
+					if ( root.isObject() ) {
+						handleNode(nodeId, root, checkVersion);
+					} else {
+						// V2 stream datum array
+						handleStreamDatumNode(nodeId, root);
+					}
 					break;
 				} catch ( RepeatableTaskException | TransactionException e ) {
 					remainingTries--;
@@ -385,6 +391,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			Long id = Long.valueOf(instructionId);
 			InstructionState state = InstructionState.valueOf(status);
 			dao.updateNodeInstructionState(id, nodeId, state, resultParams);
+		}
+	}
+
+	private void handleStreamDatumNode(final Long nodeId, final JsonNode node) {
+		try {
+			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
+			dataCollectorBiz.postStreamDatum(singleton(d));
+			getMqttStats().incrementAndGet(SolarInCountStat.StreamDatumReceived);
+		} catch ( IOException e ) {
+			log.debug("Unable to parse StreamDatum: {}", e.getMessage());
 		}
 	}
 

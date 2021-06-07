@@ -23,9 +23,9 @@
 package net.solarnetwork.central.datum.agg.test;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
-import static net.solarnetwork.util.JsonUtils.getJSONString;
-import static net.solarnetwork.util.JsonUtils.getObjectFromJSON;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
