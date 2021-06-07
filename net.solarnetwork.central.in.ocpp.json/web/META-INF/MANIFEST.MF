@@ -27,6 +27,7 @@ Import-Package:
  net.solarnetwork.central.ocpp.dao;version="[1.1,2.0)",
  net.solarnetwork.central.ocpp.domain;version="[1.0,2.0)",
  net.solarnetwork.central.ocpp.util;version="[1.0,2.0)",
+ net.solarnetwork.codec;version="[1.0,2.0)",
  net.solarnetwork.dao;version="[1.2,2.0)",
  net.solarnetwork.domain;version="[1.27,2.0)",
  net.solarnetwork.ocpp.dao;version="[1.0,2.0)",
