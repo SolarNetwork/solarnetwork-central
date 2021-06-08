@@ -261,6 +261,8 @@ public class BillingController extends WebServiceControllerSupport {
 	 * @param month
 	 *        the optional month, in {@literal YYYY-MM} format; if not provided
 	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
 	 * @param locale
 	 *        the request locale
 	 * @return the rendered invoice entity
@@ -306,6 +308,8 @@ public class BillingController extends WebServiceControllerSupport {
 	 * @param month
 	 *        the optional month, in {@literal YYYY-MM} format; if not provided
 	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
 	 * @param locale
 	 *        the request locale
 	 * @return the rendered invoice entity
@@ -353,6 +357,8 @@ public class BillingController extends WebServiceControllerSupport {
 	 * @param month
 	 *        the optional month, in {@literal YYYY-MM} format; if not provided
 	 *        the current month will be used
+	 * @param useCredit
+	 *        {@literal true} to allow using credit
 	 * @param locale
 	 *        the request locale
 	 * @return the rendered invoice entity
