@@ -32,6 +32,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -134,6 +135,15 @@ public class MqttDataCollectorTests_StreamDatum {
 		return new BasicStreamDatum(UUID.randomUUID(), Instant.now(), p);
 	}
 
+	private StreamDatum createTestDatum_large() {
+		DatumProperties p = propertiesOf(
+				decimalArray("1.2338909", "2123.3430983", "38903.190", "1.290", "4590", "239.39",
+						"34588.1199", "754.0209", "10345710.1932", "34904.1010", "9.057805",
+						"1789015.78907890", "12903.393093"),
+				decimalArray("3909939845890", "39030983093"), null, null);
+		return new BasicStreamDatum(UUID.randomUUID(), Instant.now(), p);
+	}
+
 	private byte[] getCborMessage(StreamDatum datum) {
 		try {
 			return objectMapper.writeValueAsBytes(datum);
@@ -173,6 +183,42 @@ public class MqttDataCollectorTests_StreamDatum {
 				is(arrayContaining(d.getProperties().getAccumulating())));
 		assertThat("Status", props.getStatus(), is(arrayContaining(d.getProperties().getStatus())));
 		assertThat("Tags", props.getTags(), is(arrayContaining(d.getProperties().getTags())));
+	}
+
+	@Test
+	public void processStreamDatum_lz4() throws Exception {
+		// GIVEN
+		Capture<Iterable<StreamDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postStreamDatum(capture(postDatumCaptor));
+
+		replayAll();
+
+		StreamDatum d = createTestDatum_large();
+
+		// note that in my (limited) testing LZ4 is not actually reducing the size of the StreamDatum CBOR
+		byte[] data = getCborMessage(d);
+		byte[] data_lz4 = MqttTestUtils.compressLz4(data);
+
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, data_lz4);
+		service.onMqttMessage(msg);
+
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<StreamDatum> postedDatumList = stream(postDatumCaptor.getValue().spliterator(), false)
+				.collect(toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		StreamDatum postedDatum = postedDatumList.get(0);
+
+		assertThat("Posted datum stream ID", postedDatum.getStreamId(), is(equalTo(d.getStreamId())));
+		DatumProperties props = postedDatum.getProperties();
+		assertThat("Instantaneous", props.getInstantaneous(),
+				is(arrayContaining(d.getProperties().getInstantaneous())));
+		assertThat("Accumulating", props.getAccumulating(),
+				is(arrayContaining(d.getProperties().getAccumulating())));
+		assertThat("Status", props.getStatus(), is(nullValue()));
+		assertThat("Tags", props.getTags(), is(nullValue()));
 	}
 
 }

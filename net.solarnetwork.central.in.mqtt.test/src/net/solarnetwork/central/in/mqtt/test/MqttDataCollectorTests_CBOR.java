@@ -246,6 +246,50 @@ public class MqttDataCollectorTests_CBOR {
 	}
 
 	@Test
+	public void processGeneralNodeDatum_v2_lz4() throws Exception {
+		// given
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+
+		replayAll();
+
+		// this has t:["_v2"] included, and negative typed big decimal exponents
+		byte[] data = Hex.decodeHex(
+				"A467637265617465641B0000016F0D13D080666E6F6465496419016D68736F7572636549646F2F44452F47322F474D2F47454E2F316773616D706C6573A36169A365766F6C7473C482221A0004503B657761747473C482221A0027B8B4696672657175656E6379183C6161A26977617474486F757273C482221A027F57DF7077617474486F757273526576657273651905A0617481635F7632");
+		byte[] data_lz4 = MqttTestUtils.compressLz4(data);
+
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, data_lz4);
+		service.onMqttMessage(msg);
+
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<GeneralNodeDatum> postedDatumList = StreamSupport
+				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralNodeDatum postedDatum = postedDatumList.get(0);
+
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime(1576472400000L));
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId("/DE/G2/GM/GEN/1");
+
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		GeneralNodeDatumSamples samples = postedDatum.getSamples();
+		assertThat("volts", samples.getInstantaneousSampleBigDecimal("volts"),
+				equalTo(new BigDecimal(new BigInteger("282683"), 3)));
+		assertThat("watts", samples.getInstantaneousSampleBigDecimal("watts"),
+				equalTo(new BigDecimal(new BigInteger("2603188"), 3)));
+		assertThat("frequency", samples.getInstantaneousSampleInteger("frequency"), equalTo(60));
+		assertThat("wattHours", samples.getAccumulatingSampleBigDecimal("wattHours"),
+				equalTo(new BigDecimal(new BigInteger("41899999"), 3)));
+		assertThat("wattHoursReverse", samples.getAccumulatingSampleInteger("wattHoursReverse"),
+				equalTo(1440));
+		assertThat("_v2 tag should have been removed", postedDatum.getSamples().getTags(), nullValue());
+	}
+
+	@Test
 	public void processGeneralNodeDatum_v2_otherTags() throws Exception {
 		// GIVEN
 		GeneralNodeDatumSamples s = new GeneralNodeDatumSamples();

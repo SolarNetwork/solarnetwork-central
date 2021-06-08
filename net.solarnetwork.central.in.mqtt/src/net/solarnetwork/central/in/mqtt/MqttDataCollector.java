@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.mqtt;
 
 import static java.util.Collections.singleton;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
@@ -33,7 +34,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.compress.compressors.lz4.FramedLZ4CompressorInputStream;
 import org.springframework.transaction.TransactionException;
+import org.springframework.util.StreamUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,8 +65,12 @@ import net.solarnetwork.util.OptionalServiceCollection;
 /**
  * MQTT implementation of upload service.
  * 
+ * <p>
+ * LZ4 compressed MQTT message content is supported.
+ * </p>
+ * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -261,7 +268,8 @@ public class MqttDataCollector extends BaseMqttConnectionService
 
 	private void parseMqttMessage(ObjectMapper objectMapper, MqttMessage message, final String topic,
 			final Long nodeId, final boolean checkVersion) throws IOException {
-		JsonNode root = objectMapper.readTree(message.getPayload());
+		final byte[] payload = extractPayload(message);
+		JsonNode root = objectMapper.readTree(payload);
 		if ( root.isObject() || root.isArray() ) {
 			int remainingTries = transientErrorTries;
 			while ( remainingTries > 0 ) {
@@ -285,6 +293,34 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				}
 			}
 		}
+	}
+
+	private static final byte[] LZ4_SIGNATURE = new byte[] { 4, 0x22, 0x4d, 0x18 };
+	private static final int LZ4_SIGNATURE_LENGTH = LZ4_SIGNATURE.length;
+
+	private byte[] extractPayload(MqttMessage message) {
+		final byte[] raw = message.getPayload();
+
+		// NOTE: not using FramedLZ4CompressorInputStream.matches() because it creates copy of data each call
+		if ( raw.length >= LZ4_SIGNATURE_LENGTH ) {
+			boolean match = true;
+			for ( int i = 0; match && i < LZ4_SIGNATURE_LENGTH; i++ ) {
+				if ( raw[i] != LZ4_SIGNATURE[i] ) {
+					match = false;
+				}
+			}
+			if ( match ) {
+				try (FramedLZ4CompressorInputStream in = new FramedLZ4CompressorInputStream(
+						new ByteArrayInputStream(raw))) {
+					return StreamUtils.copyToByteArray(in);
+				} catch ( IOException e ) {
+					// can't decode LZ4; return raw
+					log.debug("Error decompressing LZ4 MQTT message: {}", e.getMessage());
+					return raw;
+				}
+			}
+		}
+		return raw;
 	}
 
 	@Override
