@@ -132,6 +132,8 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
+	 * @param kind
+	 *        the stream kind
 	 * @return the result
 	 * @since 1.1
 	 */
@@ -164,6 +166,8 @@ public class DatumMetadataController extends WebServiceControllerSupport {
 	 *        the object ID
 	 * @param sourceId
 	 *        the source ID
+	 * @param kind
+	 *        the stream kind
 	 * @return the result
 	 * @since 1.1
 	 */
