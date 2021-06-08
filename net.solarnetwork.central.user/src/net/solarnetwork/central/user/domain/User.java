@@ -30,14 +30,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.util.SerializeIgnore;
 
 /**
  * A user domain object.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class User extends BaseEntity implements UserInfo {
 
