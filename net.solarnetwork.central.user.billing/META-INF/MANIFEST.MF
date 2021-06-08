@@ -16,6 +16,6 @@ Import-Package:
  net.solarnetwork.domain;version="[1.14,2.0)",
  net.solarnetwork.javax.money;version="[1.0,2.0)",
  org.joda.time;version="[2.4,3.0)",
- org.joda.time.format;version="2.9.7",
- org.springframework.core.io;version="[4.2,5.0)",
- org.springframework.util;version="[4.2,5.0)"
+ org.joda.time.format;version="[2.4,3.0)",
+ org.springframework.core.io;version="[4.3,5.0)",
+ org.springframework.util;version="[4.3,5.0)"
