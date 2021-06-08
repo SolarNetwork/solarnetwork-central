@@ -47,9 +47,9 @@ public interface InvoiceUsageRecord<T> {
 	T getUsageKey();
 
 	/**
-	 * Get the usage records associated
+	 * Get the usage records associated with the invoice.
 	 * 
-	 * @return
+	 * @return the usage records
 	 */
 	List<InvoiceItemUsageRecord> getUsageRecords();
 
