@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -60,7 +59,7 @@ public class MyBatisNodeInstructionDao
 
 	/**
 	 * Query name used by
-	 * {@link #compareAndStoreInstruction(Long, InstructionState, Instruction)}.
+	 * {@link #compareAndUpdateInstructionState(Long, Long, InstructionState, InstructionState, Map)}.
 	 * 
 	 * @since 1.2
 	 */
@@ -68,7 +67,7 @@ public class MyBatisNodeInstructionDao
 
 	/**
 	 * Query name used by
-	 * {@link #updateStaleInstructionStates(InstructionState, DateTime, InstructionState)
+	 * {@link #updateStaleInstructionsState(InstructionState, DateTime, InstructionState)}.
 	 * 
 	 * @since 1.2
 	 */
