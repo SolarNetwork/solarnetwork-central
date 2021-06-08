@@ -161,7 +161,7 @@ public interface DataCollectorBiz {
 	 * @since 1.3
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter metadataCriteria, List<SortDescriptor> sortDescriptors,
+			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max);
 
 	/**
