@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.biz.dao.test;
 
+import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -29,8 +30,10 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -56,9 +59,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.JCacheFactoryBean;
@@ -77,7 +81,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
-	private Cache<BasePK, Entity<? extends BasePK>> datumCache;
+	private Cache<Serializable, Serializable> datumCache;
 	private CollectorStats stats;
 
 	private AsyncDaoDatumCollector collector;
@@ -102,7 +106,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 
 		cacheManager = createCacheManager();
-		JCacheFactoryBean<BasePK, Entity<? extends BasePK>> factory = new JCacheFactoryBean(cacheManager,
+		JCacheFactoryBean<Serializable, Serializable> factory = new JCacheFactoryBean(cacheManager,
 				BasePK.class, Object.class);
 		factory.setName("Test Datum Buffer");
 		factory.setHeapMaxEntries(10);
@@ -164,6 +168,11 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		d.setSamples(new GeneralLocationDatumSamples());
 		d.getSamples().putInstantaneousSampleValue("bim", 1);
 		return d;
+	}
+
+	private DatumEntity createStreamDatum() {
+		DatumProperties p = DatumProperties.propertiesOf(decimalArray("1.23"), null, null, null);
+		return new DatumEntity(UUID.randomUUID(), Instant.now(), Instant.now(), p);
 	}
 
 	@Test
@@ -319,6 +328,27 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		// THEN
 		assertThat("Set re-lodaed persisted keys", loadedKeys,
 				containsInAnyOrder("1", "3", "5", "7", "9"));
+	}
+
+	@Test
+	public void addStreamDatumToCache() throws Exception {
+		// GIVEN
+		DatumEntity d = createStreamDatum();
+
+		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
+		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
+		expect(datumDao.save(d)).andReturn(d.getId());
+		txManager.commit(txStatus);
+
+		// WHEN
+		replayAll(txStatus);
+		datumCache.put(d.getId(), d);
+
+		// THEN
+		Thread.sleep(1000); // give time for cache to call listener
+		collector.shutdownAndWait();
+
+		verify(txStatus);
 	}
 
 }

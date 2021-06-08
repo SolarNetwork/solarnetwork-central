@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.domain;
 
+import java.util.List;
+
 /**
  * API for invoice item information that has been localized.
  * 
@@ -32,7 +34,7 @@ package net.solarnetwork.central.user.billing.domain;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface LocalizedInvoiceItemUsageRecordInfo {
 
@@ -49,5 +51,22 @@ public interface LocalizedInvoiceItemUsageRecordInfo {
 	 * @return the amount
 	 */
 	String getLocalizedAmount();
+
+	/**
+	 * Get the usage cost, as a formatted and localized string.
+	 * 
+	 * @return the usage cost
+	 * @since 1.1
+	 */
+	String getLocalizedCost();
+
+	/**
+	 * Get a break-down of this usage record into a list of tiers.
+	 * 
+	 * @return the localized usage tiers for this record, or an empty list if
+	 *         there are no tiers
+	 * @since 1.1
+	 */
+	List<LocalizedNamedCostInfo> getLocalizedUsageTiers();
 
 }

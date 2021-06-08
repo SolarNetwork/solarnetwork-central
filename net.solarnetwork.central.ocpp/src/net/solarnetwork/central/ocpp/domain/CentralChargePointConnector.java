@@ -39,12 +39,14 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "connectorId", "userId", "created", "info" })
 public class CentralChargePointConnector extends ChargePointConnector
 		implements UserRelatedEntity<ChargePointConnectorKey> {
+
+	private static final long serialVersionUID = 7965306118631142342L;
 
 	private final Long userId;
 

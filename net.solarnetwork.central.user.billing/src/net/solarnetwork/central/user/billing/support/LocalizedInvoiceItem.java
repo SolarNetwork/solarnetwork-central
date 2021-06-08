@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +52,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	private final String localizedDescription;
 	private final InvoiceItem item;
 	private final Locale locale;
+	private final String[] localizedUsageTierDescriptions;
 
 	/**
 	 * Convenience builder.
@@ -87,10 +90,29 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	 *        the localized description
 	 */
 	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription) {
+		this(item, locale, localizedDescription, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param item
+	 *        the item to localize
+	 * @param locale
+	 *        the locale to localize to
+	 * @param localizedDescription
+	 *        the localized description
+	 * @param localizedUsageTierDescriptions
+	 *        the localized tier usage descriptions
+	 * @since 1.1
+	 */
+	public LocalizedInvoiceItem(InvoiceItem item, Locale locale, String localizedDescription,
+			String[] localizedUsageTierDescriptions) {
 		super();
 		this.item = item;
 		this.locale = locale;
 		this.localizedDescription = localizedDescription;
+		this.localizedUsageTierDescriptions = localizedUsageTierDescriptions;
 	}
 
 	@Override
@@ -195,6 +217,11 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
+	public BigDecimal getTotalUsageAmount() {
+		return item.getTotalUsageAmount();
+	}
+
+	@Override
 	public List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedInvoiceItemUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = getItemUsageRecords();
 		if ( recs == null ) {
@@ -206,8 +233,15 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
 				return (LocalizedInvoiceItemUsageRecordInfo) record;
 			}
-			return LocalizedInvoiceItemUsageRecord.of(record, locale);
+			return LocalizedInvoiceItemUsageRecord.of(record, locale, getCurrencyCode(),
+					localizedUsageTierDescriptions);
 		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public String getLocalizedTotalUsageAmount() {
+		NumberFormat fmt = DecimalFormat.getNumberInstance(locale);
+		return fmt.format(getTotalUsageAmount());
 	}
 
 }

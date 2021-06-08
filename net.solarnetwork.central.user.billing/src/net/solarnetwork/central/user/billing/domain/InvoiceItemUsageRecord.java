@@ -23,12 +23,13 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * A usage record attached to an invoice item.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface InvoiceItemUsageRecord {
 
@@ -45,5 +46,22 @@ public interface InvoiceItemUsageRecord {
 	 * @return the amount
 	 */
 	BigDecimal getAmount();
+
+	/**
+	 * Get an associated usage cost.
+	 * 
+	 * @return the cost
+	 * @since 1.1
+	 */
+	BigDecimal getCost();
+
+	/**
+	 * Get a break-down of this usage record into a list of tiers.
+	 * 
+	 * @return the usage tiers for this record, or an empty list if there are no
+	 *         tiers
+	 * @since 1.1
+	 */
+	List<NamedCost> getUsageTiers();
 
 }

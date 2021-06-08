@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.Entity;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface InvoiceItem extends Entity<String> {
 
@@ -119,6 +119,14 @@ public interface InvoiceItem extends Entity<String> {
 	 * @return the ended date
 	 */
 	DateTime getEnded();
+
+	/**
+	 * Get the total usage amount, as a formatted and localized string.
+	 * 
+	 * @return the formatted usage amount
+	 * @since 1.1
+	 */
+	BigDecimal getTotalUsageAmount();
 
 	/**
 	 * Get any usage records associated with this invoice.

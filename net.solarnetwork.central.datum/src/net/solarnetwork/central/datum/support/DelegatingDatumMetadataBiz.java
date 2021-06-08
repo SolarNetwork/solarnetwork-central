@@ -31,6 +31,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.domain.GeneralDatumMetadata;
@@ -40,7 +42,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
  * {@link DatumMetadataBiz}. Designed for use with AOP.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DelegatingDatumMetadataBiz implements DatumMetadataBiz {
 
@@ -113,6 +115,11 @@ public class DelegatingDatumMetadataBiz implements DatumMetadataBiz {
 	public Set<LocationSourcePK> getGeneralLocationDatumMetadataFilteredSources(Long[] locationIds,
 			String metadataFilter) {
 		return delegate.getGeneralLocationDatumMetadataFilteredSources(locationIds, metadataFilter);
+	}
+
+	@Override
+	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
+		return delegate.findDatumStreamMetadata(filter);
 	}
 
 }

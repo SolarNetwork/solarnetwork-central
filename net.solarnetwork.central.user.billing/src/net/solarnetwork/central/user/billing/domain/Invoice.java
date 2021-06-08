@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
 import net.solarnetwork.central.domain.Entity;
 
@@ -30,9 +31,36 @@ import net.solarnetwork.central.domain.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface Invoice extends Entity<String> {
+
+	/**
+	 * The invoice ID used for dry-run (draft) invoice generation.
+	 * 
+	 * @since 1.2
+	 */
+	String DRAFT_INVOICE_ID = "-23108249"; // -DRAFT base 36
+
+	/**
+	 * Test if this is a dry-run (draft) invoice.
+	 * 
+	 * @return {@literal true} if this is a draft invoice
+	 */
+	default boolean isDraft() {
+		String id = getId();
+		return DRAFT_INVOICE_ID.equals(id);
+	}
+
+	/**
+	 * Get the month that represents the date range of this invoice, if the
+	 * invoice represents a month period.
+	 * 
+	 * @return the month, or {@literal null} if the invoice is not for a month
+	 *         period
+	 * @since 1.2
+	 */
+	YearMonth getInvoiceMonth();
 
 	/**
 	 * Get the time zone this invoice was created in.
@@ -88,5 +116,13 @@ public interface Invoice extends Entity<String> {
 	 * @return the invoice items
 	 */
 	List<InvoiceItem> getInvoiceItems();
+
+	/**
+	 * Get the node usage records.
+	 * 
+	 * @return the records
+	 * @since 1.2
+	 */
+	List<InvoiceUsageRecord<Long>> getNodeUsageRecords();
 
 }

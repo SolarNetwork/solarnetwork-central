@@ -30,13 +30,14 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
 /**
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface BillingBiz {
 
@@ -96,4 +97,39 @@ public interface BillingBiz {
 	 *         if {@code outputType} is not supported
 	 */
 	Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale);
+
+	/**
+	 * Get a preview invoice for the next billing cycle's invoice.
+	 * 
+	 * @param userId
+	 *        the user ID to get the invoice for
+	 * @param options
+	 *        the options
+	 * @param locale
+	 *        the desired output locale
+	 * @return the invoice, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	Invoice getPreviewInvoice(Long userId, InvoiceGenerationOptions options, Locale locale);
+
+	/**
+	 * Preview the next billing cycle's invoice.
+	 * 
+	 * @param userId
+	 *        the ID of the user to render the invoice for
+	 * @param options
+	 *        the options
+	 * @param outputType
+	 *        the desired output type, e.g. {@literal text/html}
+	 * @param locale
+	 *        the desired output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 * @since 1.1
+	 */
+	Resource previewInvoice(Long userId, InvoiceGenerationOptions options, MimeType outputType,
+			Locale locale);
+
 }

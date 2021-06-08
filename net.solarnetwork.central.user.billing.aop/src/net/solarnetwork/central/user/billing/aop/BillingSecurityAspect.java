@@ -61,11 +61,15 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 	public void renderInvoice(Long userId) {
 	}
 
+	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.previewInvoice(..)) && args(userId, ..)")
+	public void previewInvoice(Long userId) {
+	}
+
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
 	public void findFilteredInvoices(InvoiceFilter filter) {
 	}
 
-	@Before("forUserAccess(userId) || getInvoice(userId) || renderInvoice(userId)")
+	@Before("forUserAccess(userId) || getInvoice(userId) || renderInvoice(userId) || previewInvoice(userId)")
 	public void checkForUserAccess(Long userId) {
 		requireUserReadAccess(userId);
 	}

@@ -6,6 +6,8 @@ $(document).ready(function() {
 		total: 0,
 		pageSize: 10,
 	};
+
+	var latestInvoice;
 	
 	function resetInvoiceDetails(modal) {
 		$(modal).find('table.invoice-items').addClass('hidden').find('tbody').empty();
@@ -201,6 +203,99 @@ $(document).ready(function() {
 		$(displayCount).text(total);
 		return haveRows;
 	}
+
+	function renderPreviewInvoiceUsageTableRows(tbody, totalRow, templateRow, item) {
+		var i, len, tr, prop, cell, itemUsage, usage;
+		tbody.empty();
+		if ( !Array.isArray(item.localizedInvoiceItemUsageRecords) && item.localizedInvoiceItemUsageRecords.length > 0 ) {
+			return;
+		}
+		itemUsage = item.localizedInvoiceItemUsageRecords[0]; // only take first usage
+		if ( !Array.isArray(itemUsage.localizedUsageTiers) ) {
+			return;
+		}
+		for ( i = 0, len = itemUsage.localizedUsageTiers.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			usage = itemUsage.localizedUsageTiers[i];
+			tr.data('usage', usage);
+			for ( prop in usage ) {
+				if ( usage.hasOwnProperty(prop) ) {
+					cell = tr.children("[data-tprop='" +prop +"']");
+					cell.text(usage[prop]);
+				}
+			}
+			tbody.append(tr);
+		}
+
+		for ( prop in itemUsage ) {
+			if ( itemUsage.hasOwnProperty(prop) ) {
+				cell = totalRow.children("[data-tprop='" +prop +"']");
+				cell.text(itemUsage[prop]);
+			}
+		}
+	}
+
+	function renderPreviewInvoiceTableRows(tbody, templateRow, invoice) {
+		var i, len, tr, prop, cell, item;
+
+		tbody.empty();
+		if ( !invoice.id ) {
+			return;
+		}
+		for ( i = 0, len = invoice.localizedNonTaxInvoiceItems.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			item = invoice.localizedNonTaxInvoiceItems[i];
+			tr.data('item', item);
+			for ( prop in item ) {
+				if ( item.hasOwnProperty(prop) ) {
+					cell = tr.children("[data-tprop='" +prop +"']");
+					cell.text(item[prop]);
+				}
+			}
+			renderPreviewInvoiceUsageTableRows(tr.find('tbody'), tr.find('tfoot tr'), tr.find('tr.template'), item);		
+			tbody.append(tr);
+		}
+	}
+
+	function renderPreviewInvoiceTaxItems(tbody, templateRow, taxItems) {
+		var i, len, tr, taxItem;
+		if ( !Array.isArray(taxItems) ) {
+			return;
+		}
+		for ( i = 0, len = taxItems.length; i < len; i += 1 ) {
+			tr = templateRow.clone(true);
+			tr.removeClass('template');
+			taxItem = taxItems[i];
+			tr.data('item', taxItem);
+			replaceTemplateProperties(tr, taxItem);
+			tbody.append(tr);
+		}
+	}
+
+	function renderPreviewInvoiceTotals(table, invoice) {
+		var foo,
+			taxItems = (invoice ? invoice.localizedTaxInvoiceItemsGroupedByDescription : null),
+			haveTaxItems = (Array.isArray(taxItems) && taxItems.length > 0),
+			totalRows = table.children('thead,tfoot').children('tr').not('.template');
+		if ( haveTaxItems ) {
+			renderPreviewInvoiceTaxItems(table.children('tbody'), table.find('tr.template'), taxItems);
+		}
+		replaceTemplateProperties(totalRows, invoice);
+	}
+
+	function renderPreviewInvoiceTable(table, json) {
+		var haveRows = json && json.data && json.data.id;
+		table = $(table);
+		if ( haveRows ) {
+			var templateRow = table.children('thead').children('tr.template');
+			var tbody = table.children('tbody');
+			var tallyTable = table.children('tfoot').find('table');
+			renderPreviewInvoiceTableRows(tbody, templateRow, json.data);
+			renderPreviewInvoiceTotals(tallyTable, json.data);
+		}
+	}
 	
 	function loadInvoicePage(pageNum) {
 		console.log('Want page %d', pageNum);
@@ -237,12 +332,12 @@ $(document).ready(function() {
 			resetInvoiceDetails(this);
 		});
 
-		
-		/*
-		$.getJSON(SolarReg.solarUserURL('/sec/billing/systemInfo'), function(json) {
-			console.log('Got billing info: %o', json);
+		// get current usage
+		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview'), function(json) {
+			console.log('Got preview invoice: %o', json);
+			renderPreviewInvoiceTable('#upcoming-invoice-table', json);
 		});
-		*/
+		
 		// get unpaid invoices
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/list?unpaid=true'), function(json) {
 			console.log('Got unpaid invoices: %o', json);

@@ -29,13 +29,13 @@ import java.util.Map;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.central.support.MutableSortDescriptor;
-import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Filter support for user actions.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.23
  */
 public class UserFilterCommand extends FilterSupport implements UserMetadataFilter, UserFilter {

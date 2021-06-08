@@ -34,9 +34,11 @@ import net.solarnetwork.dao.BasicUuidEntity;
  * Entity for a user node event task.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelatedEntity<UUID> {
+
+	private static final long serialVersionUID = -71612276091455732L;
 
 	private Long userId;
 	private Long nodeId;
