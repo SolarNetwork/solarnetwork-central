@@ -34,8 +34,6 @@
 		<beans:prop key="datumBuffer.tempMaxEntries">200</beans:prop>
 		<beans:prop key="datumBuffer.heapMaxEntries">200</beans:prop>
 		<beans:prop key="datumBuffer.diskMaxSizeMB">2000</beans:prop>
-		<beans:prop key="streamKindCache.ttl">900</beans:prop>
-		<beans:prop key="streamKindCache.heapMaxEntries">5000</beans:prop>
 		<beans:prop key="asyncCollector.threads">2</beans:prop>
 		<beans:prop key="asyncCollector.shutdownWaitSecs">30</beans:prop>
 		<beans:prop key="asyncCollector.queueSize">200</beans:prop>
@@ -98,24 +96,6 @@
 		<property name="diskPersistent" value="true"/>
 	</bean>
 	
-	<bean id="streamKindCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
-		<argument ref="cacheManager"/>
-		<argument value="java.util.UUID"/>
-		<argument value="net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamKind"/>
-		<property name="name" value="stream-kind"/>
-		<property name="expiryPolicy" value="Created"/>
-		<property name="expiryDuration">
-			<bean class="javax.cache.expiry.Duration">
-				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
-				<argument value="${streamKindCache.ttl}"/>
-			</bean>
-		</property>
-		<property name="statisticsEnabled" value="true"/>
-		<property name="heapMaxEntries" value="${streamKindCache.heapMaxEntries}"/>
-		<property name="diskPersistent" value="false"/>
-		<property name="storeByValue" value="true"/>
-	</bean>
-	
 	<bean id="bufferingDatumCache" class="net.solarnetwork.central.support.BufferingDelegatingCache">
 		<argument ref="datumCache"/>
 		<argument value="${datumBuffer.tempMaxEntries}"/>
@@ -146,7 +126,6 @@
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
 		<property name="transactionTemplate" ref="transactionTemplate"/>
 		<property name="datumCache" ref="bufferingDatumCache"/>
-		<property name="streamKindCache" ref="streamKindCache"/>
 	</bean>
 
 	<bean id="networkIdentityBiz" class="net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz">

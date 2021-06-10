@@ -40,14 +40,18 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.CBORFactoryBean;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
@@ -72,6 +76,8 @@ import net.solarnetwork.util.StaticOptionalService;
  * @version 1.0
  */
 public class MqttDataCollectorTests_StreamDatum {
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final String TEST_CLIENT_ID = "solarnet.test";
 	private static final Long TEST_NODE_ID = 123L;
@@ -173,6 +179,33 @@ public class MqttDataCollectorTests_StreamDatum {
 				is(arrayContaining(d.getProperties().getAccumulating())));
 		assertThat("Status", props.getStatus(), is(arrayContaining(d.getProperties().getStatus())));
 		assertThat("Tags", props.getTags(), is(arrayContaining(d.getProperties().getTags())));
+	}
+
+	@Test
+	public void compareDatumSize() throws Exception {
+		// GIVEN
+		final long now = System.currentTimeMillis();
+
+		GeneralNodeDatum general = new GeneralNodeDatum();
+		general.setNodeId(TEST_NODE_ID);
+		general.setSourceId("OS Stats");
+		general.setCreated(new DateTime(now));
+		general.setSampleJson(
+				"{\"i\":{\"cpu_user\":0, \"cpu_system\":0, \"cpu_idle\":100, \"fs_size_/\":3651829760, \"fs_used_/\":855937024, \"fs_used_percent_/\":24, \"fs_size_/run\":484552704, \"fs_used_/run\":11993088, \"fs_used_percent_/run\":3, \"ram_total\":969105408, \"ram_avail\":615411712, \"ram_used_percent\":36.5, \"sys_load_1min\":0.19, \"sys_load_5min\":0.70, \"sys_load_15min\":0.48, \"net_bytes_in_eth0\":0, \"net_bytes_out_eth0\":0, \"net_packets_in_eth0\":0, \"net_packets_out_eth0\":0},\"a\":{\"sys_up\":679245.22}}");
+
+		DatumProperties p = DatumProperties.propertiesOf(decimalArray("0", "0", "100", "3651829760",
+				"855937024", "24", "484552704", "11993088", "3", "969105408", "615411712", "36.5",
+				"0.19", "0.70", "0.48", "0", "0", "0", "0"), decimalArray("679245.22"), null, null);
+		BasicStreamDatum stream = new BasicStreamDatum(UUID.randomUUID(), Instant.ofEpochMilli(now), p);
+
+		// WHEN
+		replayAll();
+		final byte[] generalData = objectMapper.writeValueAsBytes(general);
+		final byte[] streamData = objectMapper.writeValueAsBytes(stream);
+
+		// THEN
+		log.info("General datum size: {}, stream datum size: {}", generalData.length, streamData.length);
+
 	}
 
 }
