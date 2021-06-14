@@ -57,9 +57,9 @@ BEGIN
 			WHEN 'd' THEN
 				-- day data counts, including sum of hourly audit prop_count, datum_q_count
 				INSERT INTO solardatm.aud_datm_daily (stream_id, ts_start,
-					datum_daily_pres, prop_count, prop_u_count, datum_q_count, processed_io_count)
+					datum_daily_pres, prop_count, prop_u_count, datum_q_count, flux_byte_count, processed_io_count)
 				SELECT stream_id, ts_start, datum_daily_pres, prop_count, prop_u_count, datum_q_count,
-					CURRENT_TIMESTAMP AS processed_io_count
+					flux_byte_count, CURRENT_TIMESTAMP AS processed_io_count
 				FROM solardatm.calc_audit_datm_daily(
 					stale.stream_id, stale.ts_start, stale.ts_start + interval '1 day')
 				ON CONFLICT (stream_id, ts_start) DO UPDATE
@@ -67,15 +67,17 @@ BEGIN
 					prop_count = EXCLUDED.prop_count,
 					prop_u_count = EXCLUDED.prop_u_count,
 					datum_q_count = EXCLUDED.datum_q_count,
+					flux_byte_count = EXCLUDED.flux_byte_count,
 					processed_io_count = EXCLUDED.processed_io_count;
 
 			ELSE
 				-- month data counts
 				INSERT INTO solardatm.aud_datm_monthly (stream_id, ts_start,
 					datum_count, datum_hourly_count, datum_daily_count, datum_monthly_pres,
-					prop_count, prop_u_count, datum_q_count, processed)
+					prop_count, prop_u_count, datum_q_count, flux_byte_count, processed)
 				SELECT stream_id, ts_start, datum_count, datum_hourly_count, datum_daily_count,
-					datum_monthly_pres, prop_count, prop_u_count, datum_q_count, CURRENT_TIMESTAMP AS processed
+					datum_monthly_pres, prop_count, prop_u_count, datum_q_count,
+					flux_byte_count, CURRENT_TIMESTAMP AS processed
 				FROM solardatm.calc_audit_datm_monthly(
 					stale.stream_id, stale.ts_start, (stale.ts_start AT TIME ZONE tz + interval '1 month') AT TIME ZONE tz)
 				ON CONFLICT (stream_id, ts_start) DO UPDATE
@@ -86,6 +88,7 @@ BEGIN
 					prop_count = EXCLUDED.prop_count,
 					prop_u_count = EXCLUDED.prop_u_count,
 					datum_q_count = EXCLUDED.datum_q_count,
+					flux_byte_count = EXCLUDED.flux_byte_count,
 					processed = EXCLUDED.processed;
 		END CASE;
 
@@ -221,4 +224,36 @@ $$
 	WHERE s.node_id = node AND s.source_id = source
 	ON CONFLICT (stream_id, ts_start) DO UPDATE
 	SET datum_q_count = aud_datm_io.datum_q_count + EXCLUDED.datum_q_count;
+$$;
+
+
+/**
+ * Update the `solardatm.aud_datm_io` table by adding MQTT publish byte counts.
+ *
+ * @param service 	the MQTT service name; currently ignored and "solarflux" is assumed
+ * @param node 		the node ID
+ * @param src		the source ID
+ * @param ts_recv	the timestamp; will be truncated to 'hour' level
+ * @param bcount	the byte count to add
+ */
+CREATE OR REPLACE FUNCTION solardatm.audit_increment_mqtt_publish_byte_count(
+	service			TEXT,
+	node 			BIGINT,
+	src				TEXT,
+	ts_recv 		TIMESTAMP WITH TIME ZONE,
+	bcount			INTEGER
+	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+$$
+	WITH s AS (
+		SELECT stream_id
+		FROM solardatm.da_datm_meta
+		WHERE node_id = node
+			AND source_id = ANY(ARRAY[src, TRIM(leading '/' FROM src)])
+		LIMIT 1
+	)
+	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, flux_byte_count)
+	SELECT s.stream_id, date_trunc('hour', ts_recv) AS ta_start, bcount AS flux_byte_count
+	FROM s
+	ON CONFLICT (stream_id, ts_start) DO UPDATE
+	SET flux_byte_count = aud_datm_io.flux_byte_count + EXCLUDED.flux_byte_count
 $$;

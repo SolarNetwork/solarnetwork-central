@@ -240,7 +240,8 @@ CREATE TABLE solardatm.aud_datm_io (
 	prop_count 				INTEGER NOT NULL DEFAULT 0,
 	prop_u_count			INTEGER NOT NULL DEFAULT 0,
 	datum_q_count 			INTEGER NOT NULL DEFAULT 0,
-	datum_count 			INTEGER NOT NULL DEFAULT 0 -- this is a count of datum INGESTED
+	flux_byte_count 		INTEGER NOT NULL DEFAULT 0, -- message bytes published to SolarFlux
+	datum_count 			INTEGER NOT NULL DEFAULT 0  -- this is a count of datum INGESTED
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS aud_datm_io_pkey ON solardatm.aud_datm_io (stream_id, ts_start DESC);
@@ -257,6 +258,7 @@ CREATE TABLE solardatm.aud_datm_daily (
     prop_count 				BIGINT NOT NULL DEFAULT 0,
 	prop_u_count			BIGINT NOT NULL DEFAULT 0,
     datum_q_count 			BIGINT NOT NULL DEFAULT 0,
+	flux_byte_count 		BIGINT NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0, -- this is a count of datum ROWS
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
 	datum_daily_pres 		BOOLEAN NOT NULL DEFAULT FALSE,
@@ -274,6 +276,7 @@ CREATE TABLE solardatm.aud_datm_monthly (
     prop_count 				BIGINT NOT NULL DEFAULT 0,
 	prop_u_count			BIGINT NOT NULL DEFAULT 0,
     datum_q_count 			BIGINT NOT NULL DEFAULT 0,
+	flux_byte_count 		BIGINT NOT NULL DEFAULT 0,
 	datum_count 			INTEGER NOT NULL DEFAULT 0,
 	datum_hourly_count 		SMALLINT NOT NULL DEFAULT 0,
 	datum_daily_count 		SMALLINT NOT NULL DEFAULT 0,

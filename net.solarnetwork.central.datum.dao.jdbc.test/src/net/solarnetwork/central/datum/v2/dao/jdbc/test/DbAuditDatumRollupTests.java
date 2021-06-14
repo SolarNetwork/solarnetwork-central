@@ -152,8 +152,9 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		Map<String, Object> result = jdbcTemplate.queryForMap(
 				"SELECT * FROM solardatm.calc_audit_datm_daily(?::uuid,?,?)", streamId.toString(),
 				Timestamp.from(start.toInstant()), Timestamp.from(start.plusHours(24).toInstant()));
-		assertThat("Row returned with result columns", result.keySet(), containsInAnyOrder("stream_id",
-				"ts_start", "datum_daily_pres", "prop_count", "prop_u_count", "datum_q_count"));
+		assertThat("Row returned with result columns", result.keySet(),
+				containsInAnyOrder("stream_id", "ts_start", "datum_daily_pres", "prop_count",
+						"prop_u_count", "datum_q_count", "flux_byte_count"));
 		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
 		assertThat("Timestamp matches", result.get("ts_start"),
 				equalTo(Timestamp.from(start.toInstant())));
@@ -208,7 +209,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 		assertThat("Row returned with result columns", result.keySet(),
 				containsInAnyOrder("stream_id", "ts_start", "datum_count", "datum_hourly_count",
 						"datum_daily_count", "datum_monthly_pres", "prop_count", "prop_u_count",
-						"datum_q_count"));
+						"datum_q_count", "flux_byte_count"));
 		assertThat("Stream ID matches", result.get("stream_id"), equalTo(streamId));
 		assertThat("Timestamp matches", result.get("ts_start"),
 				equalTo(Timestamp.from(start.toInstant())));
