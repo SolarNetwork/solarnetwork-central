@@ -26,7 +26,7 @@ $$
 		SELECT stream_id
 		FROM solardatm.da_datm_meta
 		WHERE node_id = node
-			AND source_id = ANY(ARRAY[src, '/'||src])
+			AND source_id = ANY(ARRAY[src, TRIM(leading '/' FROM src)])
 		LIMIT 1
 	)
 	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, flux_byte_count)
