@@ -19,20 +19,21 @@ CREATE OR REPLACE FUNCTION solardatm.audit_increment_mqtt_publish_byte_count(
 	node 			BIGINT,
 	src				TEXT,
 	ts_recv 		TIMESTAMP WITH TIME ZONE,
-	bcount			INTEGER,
+	bcount			INTEGER
 	) RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
 	WITH s AS (
 		SELECT stream_id
 		FROM solardatm.da_datm_meta
 		WHERE node_id = node
-			AND soruce_id = ANY(ARRAY[src, '/'||src])
+			AND source_id = ANY(ARRAY[src, '/'||src])
 		LIMIT 1
 	)
 	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, flux_byte_count)
-	VALUES (s.stream_id, date_trunc('hour', ts_recv), bcount)
+	SELECT s.stream_id, date_trunc('hour', ts_recv) AS ta_start, bcount AS flux_byte_count
+	FROM s
 	ON CONFLICT (stream_id, ts_start) DO UPDATE
-	SET flux_byte_count = flux_byte_count.datum_count + EXCLUDED.flux_byte_count
+	SET flux_byte_count = aud_datm_io.flux_byte_count + EXCLUDED.flux_byte_count
 $$;
 
 DROP FUNCTION IF EXISTS solardatm.calc_audit_datm_daily;
