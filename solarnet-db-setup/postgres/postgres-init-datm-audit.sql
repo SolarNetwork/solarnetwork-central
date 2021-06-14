@@ -252,7 +252,7 @@ $$
 		LIMIT 1
 	)
 	INSERT INTO solardatm.aud_datm_io (stream_id, ts_start, flux_byte_count)
-	SELECT s.stream_id, date_trunc('hour', ts_recv) AS ta_start, bcount AS flux_byte_count
+	SELECT s.stream_id, date_trunc('hour', ts_recv), bcount
 	FROM s
 	ON CONFLICT (stream_id, ts_start) DO UPDATE
 	SET flux_byte_count = aud_datm_io.flux_byte_count + EXCLUDED.flux_byte_count
