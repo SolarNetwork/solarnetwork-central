@@ -17,7 +17,7 @@
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[1.11,)"/>
 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.security" rev="[1.16,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.0,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.datum" rev="[2.12,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user" rev="[2.1,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.dao.mybatis" rev="[2.0,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.expire" rev="[1.0,)"/>
