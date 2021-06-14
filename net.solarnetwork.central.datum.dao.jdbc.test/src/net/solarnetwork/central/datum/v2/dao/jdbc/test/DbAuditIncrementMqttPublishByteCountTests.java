@@ -30,6 +30,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +40,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
+import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Test cases for the {@code solardatm.audit_increment_mqtt_publish_byte_count}
@@ -56,7 +60,7 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 	private ObjectDatumStreamMetadata lastMeta;
 
 	private ObjectDatumStreamMetadata testStreamMetadata() {
-		return testStreamMetadata(1L, "a", TEST_TZ);
+		return testStreamMetadata(TEST_NODE_ID, "a", TEST_TZ);
 	}
 
 	private ObjectDatumStreamMetadata testStreamMetadata(Long nodeId, String sourceId,
@@ -71,10 +75,12 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 	@Test
 	public void insert() {
 		// GIVEN
+		setupTestNode(); // for TZ
 		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
+		Instant now = Instant.now();
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
 			@Override
@@ -84,8 +90,8 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				stmt.setString(1, "solarflux");
 				stmt.setObject(2, meta.getObjectId());
 				stmt.setString(3, meta.getSourceId());
-				stmt.setTimestamp(4, new java.sql.Timestamp(
-						Instant.now().truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
+				stmt.setTimestamp(4,
+						new java.sql.Timestamp(now.truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
 				stmt.setInt(5, 123);
 				return stmt;
 			}
@@ -104,15 +110,25 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				.queryForList("select * from solardatm.aud_datm_io");
 		assertThat("One audit row created", auditRows, hasSize(1));
 		assertThat("Audit byte count", auditRows.get(0), hasEntry("flux_byte_count", 123));
+
+		// verify stale record added for Day
+		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
+		assertThat("One stale audit row created", stale, hasSize(1));
+		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
+				new StaleAuditDatumEntity(meta.getStreamId(),
+						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
+						Aggregation.Day, null));
 	}
 
 	@Test
 	public void insert_withLeadingSlash() {
 		// GIVEN
+		setupTestNode(); // for TZ
 		ObjectDatumStreamMetadata meta = testStreamMetadata();
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// WHEN
+		Instant now = Instant.now();
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
 			@Override
@@ -122,8 +138,8 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				stmt.setString(1, "solarflux");
 				stmt.setObject(2, meta.getObjectId());
 				stmt.setString(3, "/" + meta.getSourceId());
-				stmt.setTimestamp(4, new java.sql.Timestamp(
-						Instant.now().truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
+				stmt.setTimestamp(4,
+						new java.sql.Timestamp(now.truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
 				stmt.setInt(5, 123);
 				return stmt;
 			}
@@ -142,6 +158,14 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				.queryForList("select * from solardatm.aud_datm_io");
 		assertThat("One audit row created", auditRows, hasSize(1));
 		assertThat("Audit byte count", auditRows.get(0), hasEntry("flux_byte_count", 123));
+
+		// verify stale record added for Day
+		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
+		assertThat("One stale audit row created", stale, hasSize(1));
+		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
+				new StaleAuditDatumEntity(meta.getStreamId(),
+						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
+						Aggregation.Day, null));
 	}
 
 	@Test
@@ -151,6 +175,7 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 		ObjectDatumStreamMetadata meta = lastMeta;
 
 		// WHEN
+		Instant now = Instant.now();
 		jdbcTemplate.execute(new CallableStatementCreator() {
 
 			@Override
@@ -160,8 +185,8 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				stmt.setString(1, "solarflux");
 				stmt.setObject(2, meta.getObjectId());
 				stmt.setString(3, meta.getSourceId());
-				stmt.setTimestamp(4, new java.sql.Timestamp(
-						Instant.now().truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
+				stmt.setTimestamp(4,
+						new java.sql.Timestamp(now.truncatedTo(ChronoUnit.HOURS).toEpochMilli()));
 				stmt.setInt(5, 123);
 				return stmt;
 			}
@@ -180,6 +205,14 @@ public class DbAuditIncrementMqttPublishByteCountTests extends BaseDatumJdbcTest
 				.queryForList("select * from solardatm.aud_datm_io");
 		assertThat("One audit row available", auditRows, hasSize(1));
 		assertThat("Audit byte count updated", auditRows.get(0), hasEntry("flux_byte_count", 246));
+
+		// verify still only 1 stale record for Day
+		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
+		assertThat("One stale audit row created", stale, hasSize(1));
+		DatumTestUtils.assertStaleAuditDatum("Stale", stale.get(0),
+				new StaleAuditDatumEntity(meta.getStreamId(),
+						now.atZone(ZoneId.of(TEST_TZ)).truncatedTo(ChronoUnit.DAYS).toInstant(),
+						Aggregation.Day, null));
 	}
 
 }
