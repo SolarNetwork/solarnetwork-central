@@ -80,7 +80,8 @@ CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_daily(
 		datum_daily_pres		BOOLEAN,
 		prop_count				BIGINT,
 		prop_u_count			BIGINT,
-		datum_q_count	 		BIGINT
+		datum_q_count	 		BIGINT,
+		flux_byte_count			BIGINT
 	) LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	WITH datum AS (
@@ -93,9 +94,10 @@ $$
 		sid,
 		start_ts,
 		bool_or(d.datum_daily_pres) AS datum_daily_pres,
-		sum(aud.prop_count) AS prop_count,
-		sum(aud.prop_u_count) AS prop_u_count,
-		sum(aud.datum_q_count) AS datum_q_count
+		SUM(aud.prop_count) AS prop_count,
+		SUM(aud.prop_u_count) AS prop_u_count,
+		SUM(aud.datum_q_count) AS datum_q_count,
+		SUM(aud.flux_byte_count) AS flux_byte_count
 	FROM solardatm.aud_datm_io aud
 	CROSS JOIN datum d
 	WHERE aud.stream_id = sid
@@ -128,7 +130,8 @@ CREATE OR REPLACE FUNCTION solardatm.calc_audit_datm_monthly(
 		datum_monthly_pres		BOOLEAN,
 		prop_count				BIGINT,
 		prop_u_count			BIGINT,
-		datum_q_count	 		BIGINT
+		datum_q_count	 		BIGINT,
+		flux_byte_count			BIGINT
 	) LANGUAGE SQL STABLE ROWS 1 AS
 $$
 	WITH datum AS (
@@ -140,13 +143,14 @@ $$
 	SELECT
 		sid,
 		start_ts,
-		sum(aud.datum_count)::INTEGER AS datum_count,
-		sum(aud.datum_hourly_count)::SMALLINT AS datum_hourly_count,
-		sum(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END)::SMALLINT AS datum_daily_count,
+		SUM(aud.datum_count)::INTEGER AS datum_count,
+		SUM(aud.datum_hourly_count)::SMALLINT AS datum_hourly_count,
+		SUM(CASE aud.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END)::SMALLINT AS datum_daily_count,
 		bool_or(d.datum_monthly_pres) AS datum_monthly_pres,
-		sum(aud.prop_count)::BIGINT AS prop_count,
-		sum(aud.prop_u_count)::BIGINT AS prop_u_count,
-		sum(aud.datum_q_count)::BIGINT AS datum_q_count
+		SUM(aud.prop_count)::BIGINT AS prop_count,
+		SUM(aud.prop_u_count)::BIGINT AS prop_u_count,
+		SUM(aud.datum_q_count)::BIGINT AS datum_q_count,
+		SUM(aud.flux_byte_count)::BIGINT AS flux_byte_count
 	FROM solardatm.aud_datm_daily aud
 	CROSS JOIN datum d
 	WHERE aud.stream_id = sid
