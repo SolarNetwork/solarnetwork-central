@@ -31,8 +31,8 @@ import java.time.Instant;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumSamples;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Store a {@link GeneralLocationDatum} via the
@@ -46,7 +46,7 @@ import net.solarnetwork.util.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class StoreLocationDatum implements CallableStatementCreator, SqlProvider {

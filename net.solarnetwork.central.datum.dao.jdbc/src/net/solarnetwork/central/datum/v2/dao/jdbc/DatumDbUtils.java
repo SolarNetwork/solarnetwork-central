@@ -26,7 +26,7 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
-import static net.solarnetwork.util.JsonUtils.getJSONString;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -92,10 +92,10 @@ import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvid
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumSamples;
 import net.solarnetwork.domain.GeneralDatumSamplesType;
 import net.solarnetwork.util.JodaDateUtils;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Utilities for working with datum at the database level.
@@ -105,7 +105,7 @@ import net.solarnetwork.util.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public final class DatumDbUtils {

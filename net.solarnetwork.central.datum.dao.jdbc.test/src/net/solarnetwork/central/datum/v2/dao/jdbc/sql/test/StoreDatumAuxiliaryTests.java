@@ -47,15 +47,15 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatumAuxiliary;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralDatumSamples;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link StoreDatumAuxiliary} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class StoreDatumAuxiliaryTests {
 

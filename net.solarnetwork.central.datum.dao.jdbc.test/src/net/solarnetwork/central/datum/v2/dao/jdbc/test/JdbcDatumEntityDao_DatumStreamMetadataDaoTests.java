@@ -37,8 +37,8 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDa
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
-import static net.solarnetwork.util.JsonUtils.getStringMap;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -88,18 +88,18 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.util.JodaDateUtils;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link DatumStreamMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdbcTestSupport {
 
