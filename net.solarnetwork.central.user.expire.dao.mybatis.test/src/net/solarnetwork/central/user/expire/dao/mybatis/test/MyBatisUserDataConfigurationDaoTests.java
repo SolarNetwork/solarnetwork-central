@@ -316,7 +316,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	private void insertAuditDatumMonthly(DateTime date, UUID streamId) {
 		AuditDatumEntity d = AuditDatumEntity.monthlyAuditDatum(streamId,
-				JodaDateUtils.fromJodaToInstant(date), 0L, 0L, 0, 0, 0L, 0L);
+				JodaDateUtils.fromJodaToInstant(date), 0L, 0L, 0, 0, 0L, 0L, 0L);
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(d));
 	}
 

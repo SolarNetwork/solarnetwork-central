@@ -31,14 +31,15 @@ import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Move and update a {@code da_datm_aux} record (change primary key and update
  * values) by calling the {@code solardatm.move_datum_aux} database procedure.
  * 
  * @author matt
- * @version 1.0 since 3.8
+ * @version 1.1
+ * @since 3.8
  */
 public class MoveDatumAuxiliary implements CallableStatementCreator, SqlProvider {
 

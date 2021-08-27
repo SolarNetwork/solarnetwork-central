@@ -566,7 +566,7 @@ $$
 				ELSE 1
 				END as portion
 			, (ts < end_ts AND NOT (ts <= start_ts AND rtype = 1)
-				OR (ts = end_ts AND rtype = 1)) AS rinc
+				OR (ts = end_ts AND rtype < 2)) AS rinc
 		FROM d
 		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
 		WINDOW slot AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts, d.rtype

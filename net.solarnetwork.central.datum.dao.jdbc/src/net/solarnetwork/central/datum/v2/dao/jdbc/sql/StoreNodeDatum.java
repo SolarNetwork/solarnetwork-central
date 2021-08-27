@@ -31,8 +31,8 @@ import java.time.Instant;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumSamples;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Store a {@link GeneralNodeDatum} via the {@code solardatm.store_datum} stored
@@ -46,7 +46,7 @@ import net.solarnetwork.util.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class StoreNodeDatum implements CallableStatementCreator, SqlProvider {

@@ -54,16 +54,16 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.util.ClassUtils;
-import net.solarnetwork.util.JsonUtils;
 import net.solarnetwork.util.NumberUtils;
 
 /**
  * Helper methods for datum tests.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class DatumTestUtils {
 

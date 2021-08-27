@@ -30,14 +30,15 @@ import java.sql.Types;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
-import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Insert or update a {@code da_datm_aux} record by calling the
  * {@code solardatm.store_datum_aux} database procedure.
  * 
  * @author matt
- * @version 1.0 since 3.8
+ * @version 1.0
+ * @since 3.8
  */
 public class StoreDatumAuxiliary implements CallableStatementCreator, SqlProvider {
 

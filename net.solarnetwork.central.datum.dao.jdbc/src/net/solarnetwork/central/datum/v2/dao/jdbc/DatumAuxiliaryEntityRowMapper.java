@@ -31,9 +31,9 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralDatumSamples;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * Map hourly datum audit rows into {@link DatumAuxiliaryEntity} instances.
@@ -54,7 +54,7 @@ import net.solarnetwork.util.JsonUtils;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliary> {
