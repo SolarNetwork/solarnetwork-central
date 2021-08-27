@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SORT_TYPED_DATUM_BY_TS;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
@@ -29,6 +31,8 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatu
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -54,7 +58,11 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.TypedDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
@@ -166,4 +174,32 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 		assertThat("End timestamp", results.get(3).getTimestamp(),
 				equalTo(end.minusMinutes(1).toInstant()));
 	}
+
+	@Test
+	public void calcDiffDatum_perfectHourlyData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "wattHours" }, null);
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-04.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		// 2017-07-04T09:00:00.000Z - 2017-07-04T10:00:00.000Z
+		ZonedDateTime start = ZonedDateTime.of(2017, 7, 4, 9, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		List<TypedDatumEntity> results = calcDiffDatum(meta.getStreamId(), start.toInstant(),
+				end.toInstant());
+
+		// THEN
+		assertThat("Start/end results returned", results, hasSize(2));
+		assertThat("Start timestamp", results.get(0).getTimestamp(),
+				equalTo(ISO_INSTANT.parse("2017-07-04T08:00:00.000Z", Instant::from)));
+		assertThat("End timestamp", results.get(1).getTimestamp(),
+				equalTo(ISO_INSTANT.parse("2017-07-04T09:00:00.000Z", Instant::from)));
+	}
+
 }

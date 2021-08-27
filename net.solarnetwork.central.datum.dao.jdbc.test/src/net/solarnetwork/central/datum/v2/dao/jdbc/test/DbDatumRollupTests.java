@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
@@ -72,6 +73,28 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		public void doWithStream(List<GeneralNodeDatum> datums,
 				Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 				List<AggregateDatum> results);
+	}
+
+	private static interface CsvRollupCallback {
+
+		public void doWithStream(List<Datum> datums, ObjectDatumStreamMetadata meta, UUID streamId,
+				List<AggregateDatum> results);
+	}
+
+	private void loadCsvStreamAndRollup(String resource, ObjectDatumStreamMetadata meta,
+			ZonedDateTime aggStart, ZonedDateTime aggEnd, CsvRollupCallback callback) {
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), resource, staticProvider(singleton(meta)));
+		log.debug("Got test data:\n{}", datum.stream().map(Object::toString).collect(joining("\n")));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<AggregateDatum> results = jdbcTemplate.query(
+				"select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
+				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
+				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
+
+		callback.doWithStream(datum, meta, streamId, results);
 	}
 
 	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
@@ -149,9 +172,37 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 						arrayContaining(arrayOfDecimals(new String[] { "6", "1.2", "1.7" }),
 								arrayOfDecimals(new String[] { "6", "2.1", "7.1" })));
 				assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
-						arrayContaining(arrayOfDecimals(new String[] { "20", "100", "120" })));
+						arrayContaining(arrayOfDecimals(new String[] { "25", "100", "125" })));
 			}
 		});
+	}
+
+	@Test
+	public void calcDiffDatum_perfectHourlyData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "wattHours" }, null);
+
+		ZonedDateTime start = ZonedDateTime.of(2017, 7, 4, 9, 0, 0, 0, ZoneOffset.UTC);
+		loadCsvStreamAndRollup("sample-raw-data-04.csv", meta, start, start.plusHours(1),
+				new CsvRollupCallback() {
+
+					@SuppressWarnings("unchecked")
+					@Override
+					public void doWithStream(List<Datum> datums, ObjectDatumStreamMetadata meta,
+							UUID streamId, List<AggregateDatum> results) {
+						assertThat("Agg result returned", results, hasSize(1));
+
+						AggregateDatum result = results.get(0);
+						log.debug("Got result: {}", result);
+						assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+						assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+						assertThat("Agg accumulating", result.getProperties().getAccumulating(),
+								arrayOfDecimals("37"));
+						assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+								arrayContaining(arrayOfDecimals(
+										new String[] { "37", "12476432001", "12476432038" })));
+					}
+				});
 	}
 
 	@SuppressWarnings("unchecked")

@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -37,12 +41,18 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 
 /**
@@ -338,6 +348,31 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		assertReadingDatum("Leading long before start used", result,
 				readingWith(streamId, null, start.minusMonths(4).minusMinutes(1), end.minusMinutes(1),
 						decimalArray("30", "100", "130")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectHourlyData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "wattHours" }, null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-04.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		// 2017-07-04T09:00:00.000Z - 2017-07-04T10:00:00.000Z
+		ZonedDateTime start = ZonedDateTime.of(2017, 7, 4, 9, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertReadingDatum("Hour prior used because of perfect hourly data", result,
+				readingWith(streamId, null, start.minusHours(1), end.minusHours(1),
+						decimalArray("1", "12476432000", "12476432001")));
 	}
 
 }
