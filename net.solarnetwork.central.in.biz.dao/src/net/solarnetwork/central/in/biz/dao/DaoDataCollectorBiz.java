@@ -61,6 +61,7 @@ import net.solarnetwork.central.domain.Entity;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -88,7 +89,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 3.4
+ * @version 3.5
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -276,6 +277,51 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			transactionTemplate.execute(action);
 		} else {
 			action.doInTransaction(null);
+		}
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateLocation(Long nodeId, Location location) {
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( nodeId == null ) {
+			nodeId = authNode.getNodeId();
+		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+			if ( log.isWarnEnabled() ) {
+				log.warn("Illegal location update by node " + authNode.getNodeId() + " as node "
+						+ nodeId);
+			}
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+		SolarLocation loc = solarLocationDao.getSolarLocationForNode(nodeId);
+		if ( loc == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
+		}
+
+		// only GPS coordinates of a node's location can be updated by node itself
+
+		boolean changed = false;
+		if ( location.getLatitude() != null && (loc.getLatitude() == null
+				|| location.getLatitude().compareTo(loc.getLatitude()) != 0) ) {
+			changed = true;
+			loc.setLatitude(location.getLatitude());
+		}
+		if ( location.getLongitude() != null && (loc.getLongitude() == null
+				|| location.getLongitude().compareTo(loc.getLongitude()) != 0) ) {
+			changed = true;
+			loc.setLongitude(location.getLongitude());
+		}
+		if ( location.getElevation() != null && (loc.getElevation() == null
+				|| location.getElevation().compareTo(loc.getElevation()) != 0) ) {
+			changed = true;
+			loc.setElevation(location.getElevation());
+		}
+		if ( changed ) {
+			solarLocationDao.store(loc);
 		}
 	}
 

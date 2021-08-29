@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -75,7 +76,7 @@ import net.solarnetwork.util.JodaDateUtils;
  * Test case for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoDataCollectorBizTest {
 
@@ -149,6 +150,7 @@ public class DaoDataCollectorBizTest {
 
 		// WHEN
 		replayAll();
+
 		SecurityUtils.becomeNode(nodeId);
 		biz.addGeneralNodeDatumMetadata(nodeId, TEST_SOURCE_ID, meta);
 	}
@@ -290,6 +292,134 @@ public class DaoDataCollectorBizTest {
 		assertThat("Datum s copied", entity.getSamples().getStatus(), hasEntry("c", "a"));
 
 		assertThat("Datum t copied", entity.getSamples().getTags(), containsInAnyOrder(p.getTags()));
+	}
+
+	private SolarLocation createLocation(Long id) {
+		SolarLocation curr = new SolarLocation();
+		curr.setId(id);
+		curr.setCountry("CO");
+		curr.setElevation(new BigDecimal("1.23"));
+		curr.setLatitude(new BigDecimal("2.34"));
+		curr.setLocality("locality");
+		curr.setLongitude(new BigDecimal("3.45"));
+		curr.setName("name");
+		curr.setPostalCode("postalcode");
+		curr.setRegion("region");
+		curr.setStateOrProvince("state");
+		curr.setStreet("street");
+		curr.setTimeZoneId("UTC");
+		return curr;
+	}
+
+	@Test
+	public void updateLocation_ignoreNonGpsFields() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		SolarLocation curr = createLocation(123L);
+
+		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(nodeId);
+		SolarLocation loc = new SolarLocation();
+		loc.setCountry("B");
+		loc.setElevation(curr.getElevation());
+		loc.setLatitude(curr.getLatitude());
+		loc.setLocality("B");
+		loc.setLongitude(curr.getLongitude());
+		loc.setName("B");
+		loc.setPostalCode("B");
+		loc.setRegion("B");
+		loc.setStateOrProvince("B");
+		loc.setStreet("B");
+		loc.setTimeZoneId("B");
+		biz.updateLocation(nodeId, loc);
+
+		// THEN
+		// no save as unchanged GPS data
+	}
+
+	private void assertLocationPropertiesMatch(String message, SolarLocation actual,
+			SolarLocation expected) {
+		assertThat(message + " ID", actual.getId(), is(expected.getId()));
+		assertThat(message + " country", actual.getCountry(), is(expected.getCountry()));
+		assertThat(message + " elevation", actual.getElevation(), is(expected.getElevation()));
+		assertThat(message + " latitude", actual.getLatitude(), is(expected.getLatitude()));
+		assertThat(message + " locality", actual.getLocality(), is(expected.getLocality()));
+		assertThat(message + " longitude", actual.getLongitude(), is(expected.getLongitude()));
+		assertThat(message + " name", actual.getName(), is(expected.getName()));
+		assertThat(message + " postal code", actual.getPostalCode(), is(expected.getPostalCode()));
+		assertThat(message + " region", actual.getRegion(), is(expected.getRegion()));
+		assertThat(message + " state", actual.getStateOrProvince(), is(expected.getStateOrProvince()));
+		assertThat(message + " street", actual.getStreet(), is(expected.getStreet()));
+		assertThat(message + " time zone", actual.getTimeZoneId(), is(expected.getTimeZoneId()));
+	}
+
+	@Test
+	public void updateLocation_change() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		SolarLocation curr = createLocation(123L);
+
+		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
+
+		Capture<SolarLocation> locCaptor = new Capture<>();
+		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(nodeId);
+		SolarLocation loc = new SolarLocation();
+		loc.setElevation(new BigDecimal("1.234"));
+		loc.setLatitude(new BigDecimal("2.345"));
+		loc.setLongitude(new BigDecimal("3.456"));
+		biz.updateLocation(nodeId, loc);
+
+		// THEN
+		SolarLocation update = locCaptor.getValue();
+		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		expectedUpdate.setElevation(loc.getElevation());
+		expectedUpdate.setLatitude(loc.getLatitude());
+		expectedUpdate.setLongitude(loc.getLongitude());
+		assertThat("Updated location saved", update, is(notNullValue()));
+		assertLocationPropertiesMatch("Saved location", update, expectedUpdate);
+	}
+
+	@Test
+	public void updateLocation_changeFromNull() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		SolarLocation curr = createLocation(123L);
+		curr.setElevation(null);
+		curr.setLatitude(null);
+		curr.setLongitude(null);
+
+		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
+
+		Capture<SolarLocation> locCaptor = new Capture<>();
+		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(nodeId);
+		SolarLocation loc = new SolarLocation();
+		loc.setElevation(new BigDecimal("1.234"));
+		loc.setLatitude(new BigDecimal("2.345"));
+		loc.setLongitude(new BigDecimal("3.456"));
+		biz.updateLocation(nodeId, loc);
+
+		// THEN
+		SolarLocation update = locCaptor.getValue();
+		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		expectedUpdate.setElevation(loc.getElevation());
+		expectedUpdate.setLatitude(loc.getLatitude());
+		expectedUpdate.setLongitude(loc.getLongitude());
+		assertThat("Updated location saved", update, is(notNullValue()));
+		assertLocationPropertiesMatch("Saved location", update, expectedUpdate);
 	}
 
 }
