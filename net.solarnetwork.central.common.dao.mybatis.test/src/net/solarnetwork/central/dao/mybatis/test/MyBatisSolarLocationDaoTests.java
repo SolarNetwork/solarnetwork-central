@@ -22,19 +22,22 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test cases for the {@link MyBatisSolarLocationDao} class.
@@ -225,6 +228,31 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		SolarLocation match = solarLocationDao.getSolarLocationForLocation(criteria);
 		assertNotNull(match);
 		assertEquals(criteria, match);
+	}
+
+	@Test
+	public void findForNode_noMatch() {
+		// GIVEN
+		setupTestNode();
+
+		// WHEN
+		SolarLocation loc = solarLocationDao.getSolarLocationForNode(12345L);
+
+		// THEN
+		assertThat("No location found for non-existing node", loc, is(nullValue()));
+	}
+
+	@Test
+	public void findForNode_match() {
+		// GIVEN
+		setupTestNode();
+
+		// WHEN
+		SolarLocation loc = solarLocationDao.getSolarLocationForNode(TEST_NODE_ID);
+
+		// THEN
+		SolarLocation expected = solarLocationDao.get(TEST_LOC_ID);
+		assertThat("Location found for node", loc, is(expected));
 	}
 
 }

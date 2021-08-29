@@ -215,4 +215,12 @@
 			l.id
 	</select>
 	
+	<select id="find-SolarLocation-for-node" parameterType="long" resultMap="SolarLocationFullResult">
+		SELECT
+			<include refid="fragment-SolarLocation-full-result"/>
+		FROM solarnet.sn_loc l
+		INNER JOIN solarnet.sn_node n ON n.loc_id = l.id
+		WHERE n.node_id = #{id}
+	</select>
+
 </mapper>
