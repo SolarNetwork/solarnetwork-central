@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Central In Web
 Bundle-SymbolicName: net.solarnetwork.central.in.web
-Bundle-Version: 2.1.0
+Bundle-Version: 2.2.0
 Bundle-Vendor: SolarNetwork
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: WEB-INF/classes/
@@ -32,7 +32,7 @@ Import-Package:
  net.solarnetwork.central.datum.v2.domain;version="[1.1,2.0)",
  net.solarnetwork.central.datum.v2.support;version="[1.2,2.0)",
  net.solarnetwork.central.domain;version="[2.0,3.0)",
- net.solarnetwork.central.in.biz;version="[2.0,3.0)",
+ net.solarnetwork.central.in.biz;version="[2.2,3.0)",
  net.solarnetwork.central.instructor.biz;version="[1.4,2.0)",
  net.solarnetwork.central.instructor.domain;version="[1.4,2.0)",
  net.solarnetwork.central.security;version="[1.1,2.0)",

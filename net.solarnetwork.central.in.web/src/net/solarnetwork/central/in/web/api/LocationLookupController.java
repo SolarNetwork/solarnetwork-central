@@ -28,6 +28,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.web.domain.Response;
 
@@ -45,7 +47,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
@@ -140,6 +142,27 @@ public class LocationLookupController extends WebServiceControllerSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, sourceId);
 		}
 		return response(results.getResults().iterator().next());
+	}
+
+	/**
+	 * Update a node's own location details.
+	 * 
+	 * <p>
+	 * Only authenticated nodes are allowed to call this method. This is
+	 * designed for nodes to be able to update their own GPS coordinates
+	 * primarily.
+	 * </p>
+	 * 
+	 * @param location
+	 * @return the response
+	 * @since 2.2
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/update" }, method = RequestMethod.POST)
+	public Response<Void> updateLocation(@RequestBody SolarLocation location) {
+		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		dataCollectorBiz.updateLocation(nodeId, location);
+		return response(null);
 	}
 
 }
