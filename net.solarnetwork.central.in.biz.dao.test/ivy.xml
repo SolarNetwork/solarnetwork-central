@@ -20,5 +20,6 @@
 		
 		<!-- Testing support -->
 		<dependency org="org.ehcache" name="ehcache" rev="3.4.0" />
+		<dependency org="net.solarnetwork.common.test" name="net.solarnetwork.common.test" rev="[1.16,)"/>
     </dependencies>
 </ivy-module>

@@ -47,6 +47,8 @@
 	
 	<reference id="solarLocationDao" interface="net.solarnetwork.central.dao.SolarLocationDao"/>
 		
+	<reference id="solarNodeDao" interface="net.solarnetwork.central.dao.SolarNodeDao"/>
+		
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 	
 	<reference id="datumMetadataBiz" interface="net.solarnetwork.central.datum.biz.DatumMetadataBiz" />
@@ -122,6 +124,7 @@
 		<property name="datumDao" ref="datumDao"/>
 		<property name="metaDao" ref="metaDao"/>
 		<property name="solarLocationDao" ref="solarLocationDao"/>
+		<property name="solarNodeDao" ref="solarNodeDao"/>
 		<property name="datumMetadataBiz" ref="datumMetadataBiz"/>
 		<property name="solarNodeMetadataBiz" ref="solarNodeMetadataBiz"/>
 		<property name="transactionTemplate" ref="transactionTemplate"/>

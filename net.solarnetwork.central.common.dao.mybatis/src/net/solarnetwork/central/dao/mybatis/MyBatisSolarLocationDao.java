@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * MyBatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisSolarLocationDao
 		extends BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long>
@@ -52,6 +52,13 @@ public class MyBatisSolarLocationDao
 	 * The query name used for {@link #getSolarLocationForLocation(Location)}.
 	 */
 	public static final String QUERY_FOR_EXACT_LOCATION = "find-SolarLocation-for-location";
+
+	/**
+	 * The query name used for {@link #getSolarLocationForNode(Long)}.
+	 * 
+	 * @since 1.1
+	 */
+	public static final String QUERY_FOR_NODE = "find-SolarLocation-for-node";
 
 	/**
 	 * Default constructor.
@@ -87,6 +94,12 @@ public class MyBatisSolarLocationDao
 		if ( fts.length() > 0 ) {
 			sqlProps.put("fts", fts.toString());
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public SolarLocation getSolarLocationForNode(Long nodeId) {
+		return selectFirst(QUERY_FOR_NODE, nodeId);
 	}
 
 }

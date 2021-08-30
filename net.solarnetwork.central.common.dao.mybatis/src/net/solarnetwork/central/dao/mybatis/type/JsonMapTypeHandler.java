@@ -31,7 +31,7 @@ import java.util.Map;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
-import net.solarnetwork.util.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * MyBatis {@link TypeHandler} for mapping between a {@link Map} with string
@@ -43,7 +43,7 @@ import net.solarnetwork.util.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.3
  */
 public class JsonMapTypeHandler extends BaseTypeHandler<Map<String, Object>> {

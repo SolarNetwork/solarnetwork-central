@@ -48,7 +48,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DataCollectorBiz {
 
@@ -78,6 +78,23 @@ public interface DataCollectorBiz {
 	 * @since 2.1
 	 */
 	void postStreamDatum(Iterable<StreamDatum> datums);
+
+	/**
+	 * Update a node's own location.
+	 * 
+	 * <p>
+	 * The properties allowed on the given location is implementation specific.
+	 * Typically this method is expected to support a node updating its own GPS
+	 * coordinates.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the node ID to update
+	 * @param location
+	 *        the location information to update on the node
+	 * @since 2.2
+	 */
+	void updateLocation(Long nodeId, Location location);
 
 	/**
 	 * Add metadata to a specific node and source. If metadata already exists

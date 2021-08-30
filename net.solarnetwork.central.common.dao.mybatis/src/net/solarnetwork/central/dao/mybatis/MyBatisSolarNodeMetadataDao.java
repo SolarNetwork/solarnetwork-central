@@ -36,15 +36,15 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.support.MapPathMatcher;
 import net.solarnetwork.support.SearchFilter;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link SolarNodeMetadataDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNodeMetadata, Long>
 		implements SolarNodeMetadataDao {

@@ -37,15 +37,15 @@ import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.support.MapPathMatcher;
 import net.solarnetwork.support.SearchFilter;
-import net.solarnetwork.util.JsonUtils;
 
 /**
  * MyBatis implementation of {@link SolarNodeDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisSolarNodeDao
 		extends BaseMyBatisFilterableDao<SolarNode, SolarNodeFilterMatch, SolarNodeFilter, Long>
