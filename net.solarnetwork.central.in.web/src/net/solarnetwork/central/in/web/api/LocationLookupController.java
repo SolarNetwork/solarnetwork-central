@@ -154,6 +154,7 @@ public class LocationLookupController extends WebServiceControllerSupport {
 	 * </p>
 	 * 
 	 * @param location
+	 *        the location details to save
 	 * @return the response
 	 * @since 2.2
 	 */
