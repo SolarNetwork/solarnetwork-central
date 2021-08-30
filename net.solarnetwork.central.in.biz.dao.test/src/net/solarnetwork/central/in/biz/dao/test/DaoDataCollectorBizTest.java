@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.biz.dao.test;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
@@ -46,12 +47,15 @@ import java.util.List;
 import java.util.UUID;
 import javax.cache.Cache;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -63,6 +67,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -70,6 +75,7 @@ import net.solarnetwork.domain.GeneralDatumMetadata;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.JodaDateUtils;
 
 /**
@@ -87,6 +93,7 @@ public class DaoDataCollectorBizTest {
 	private DatumEntityDao datumDao;
 	private DatumStreamMetadataDao metaDao;
 	private SolarLocationDao locationDao;
+	private SolarNodeDao nodeDao;
 	private DatumMetadataBiz datumMetadataBiz;
 	private Cache<Serializable, Serializable> datumCache;
 
@@ -97,21 +104,23 @@ public class DaoDataCollectorBizTest {
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		datumMetadataBiz = EasyMock.createMock(DatumMetadataBiz.class);
 		locationDao = EasyMock.createMock(SolarLocationDao.class);
+		nodeDao = EasyMock.createMock(SolarNodeDao.class);
 		datumCache = EasyMock.createMock(Cache.class);
 		biz = new DaoDataCollectorBiz();
 		biz.setDatumMetadataBiz(datumMetadataBiz);
 		biz.setDatumDao(datumDao);
 		biz.setMetaDao(metaDao);
 		biz.setSolarLocationDao(locationDao);
+		biz.setSolarNodeDao(nodeDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, metaDao, datumMetadataBiz, locationDao, datumCache);
+		EasyMock.verify(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao, datumCache);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, metaDao, datumMetadataBiz, locationDao, datumCache);
+		EasyMock.replay(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao, datumCache);
 	}
 
 	@Test
@@ -302,7 +311,6 @@ public class DaoDataCollectorBizTest {
 		curr.setLatitude(new BigDecimal("2.34"));
 		curr.setLocality("locality");
 		curr.setLongitude(new BigDecimal("3.45"));
-		curr.setName("name");
 		curr.setPostalCode("postalcode");
 		curr.setRegion("region");
 		curr.setStateOrProvince("state");
@@ -329,7 +337,6 @@ public class DaoDataCollectorBizTest {
 		loc.setLatitude(curr.getLatitude());
 		loc.setLocality("B");
 		loc.setLongitude(curr.getLongitude());
-		loc.setName("B");
 		loc.setPostalCode("B");
 		loc.setRegion("B");
 		loc.setStateOrProvince("B");
@@ -349,7 +356,6 @@ public class DaoDataCollectorBizTest {
 		assertThat(message + " latitude", actual.getLatitude(), is(expected.getLatitude()));
 		assertThat(message + " locality", actual.getLocality(), is(expected.getLocality()));
 		assertThat(message + " longitude", actual.getLongitude(), is(expected.getLongitude()));
-		assertThat(message + " name", actual.getName(), is(expected.getName()));
 		assertThat(message + " postal code", actual.getPostalCode(), is(expected.getPostalCode()));
 		assertThat(message + " region", actual.getRegion(), is(expected.getRegion()));
 		assertThat(message + " state", actual.getStateOrProvince(), is(expected.getStateOrProvince()));
@@ -415,6 +421,85 @@ public class DaoDataCollectorBizTest {
 		// THEN
 		SolarLocation update = locCaptor.getValue();
 		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		expectedUpdate.setElevation(loc.getElevation());
+		expectedUpdate.setLatitude(loc.getLatitude());
+		expectedUpdate.setLongitude(loc.getLongitude());
+		assertThat("Updated location saved", update, is(notNullValue()));
+		assertLocationPropertiesMatch("Saved location", update, expectedUpdate);
+	}
+
+	@Test
+	public void updateLocation_changeShared() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		SolarLocation curr = new SolarLocation();
+		curr.setId(123L);
+		curr.setCountry("CO");
+		curr.setLocality("locality");
+		curr.setPostalCode("postalcode");
+		curr.setRegion("region");
+		curr.setStateOrProvince("state");
+		curr.setTimeZoneId("UTC");
+
+		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
+
+		// save new non-shared instance
+		final Long newLocId = 234L;
+		Capture<SolarLocation> locCaptor = new Capture<>(CaptureType.ALL);
+		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
+
+		// get curr shared loc
+		expect(locationDao.get(assertWith(new Assertion<Long>() {
+
+			@Override
+			public void check(Long argument) throws Throwable {
+				assertThat("Save new location", argument, is(newLocId));
+			}
+
+		}))).andAnswer(new IAnswer<SolarLocation>() {
+
+			@Override
+			public SolarLocation answer() throws Throwable {
+				SolarLocation loc = (SolarLocation) locCaptor.getValue().clone();
+				loc.setId(newLocId);
+				return loc;
+			}
+		});
+
+		// re-assign node to new location
+		SolarNode node = new SolarNode(nodeId, curr.getId());
+		expect(nodeDao.get(nodeId)).andReturn(node);
+
+		expect(nodeDao.store(assertWith(new Assertion<SolarNode>() {
+
+			@Override
+			public void check(SolarNode argument) throws Throwable {
+				assertThat("Saving same node", argument, is(sameInstance(node)));
+				assertThat("Location ID changed to new location", argument.getLocationId(),
+						is(newLocId));
+			}
+
+		}))).andReturn(nodeId);
+
+		// re-save new non-shared instance
+		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(nodeId);
+		SolarLocation loc = new SolarLocation();
+		loc.setElevation(new BigDecimal("1.234"));
+		loc.setLatitude(new BigDecimal("2.345"));
+		loc.setLongitude(new BigDecimal("3.456"));
+		biz.updateLocation(nodeId, loc);
+
+		// THEN
+		assertThat("Saved location twice", locCaptor.getValues(), hasSize(2));
+		SolarLocation update = locCaptor.getValues().get(1);
+		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		expectedUpdate.setId(newLocId);
+		expectedUpdate.setPostalCode(curr.getPostalCode().toUpperCase());
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
