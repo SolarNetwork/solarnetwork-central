@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.support;
 
+import static net.solarnetwork.javax.money.MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -45,7 +46,6 @@ import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordInfo;
-import net.solarnetwork.javax.money.MoneyUtils;
 
 /**
  * Localized version of {@link Invoice}.
@@ -118,13 +118,12 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
 	@Override
 	public String getLocalizedAmount() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
-				getAmount());
+		return formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(), getAmount());
 	}
 
 	@Override
 	public String getLocalizedBalance() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+		return formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getBalance());
 	}
 
@@ -134,13 +133,13 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		BigDecimal total = getAmount();
 		BigDecimal credits = getCreditAmount();
 		BigDecimal nonTaxAmount = total.subtract(taxAmount).subtract(credits);
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+		return formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				nonTaxAmount);
 	}
 
 	@Override
 	public String getLocalizedTaxAmount() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+		return formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getTaxAmount());
 	}
 
@@ -156,14 +155,18 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
 	@Override
 	public String getLocalizedCreditAmount() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
-				getCreditAmount());
+		BigDecimal d = getCreditAmount();
+		return (d != null
+				? formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(), d)
+				: null);
 	}
 
 	@Override
 	public String getLocalizedRemainingCreditAmount() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
-				getRemainingCreditAmount());
+		BigDecimal d = getRemainingCreditAmount();
+		return (d != null
+				? formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(), d)
+				: null);
 	}
 
 	@Override
