@@ -51,7 +51,7 @@ import net.solarnetwork.javax.money.MoneyUtils;
  * Localized version of {@link Invoice}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -98,6 +98,10 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	@Override
 	public String getLocalizedInvoiceDateRange() {
 		YearMonth month = invoice.getInvoiceMonth();
+		if ( month == null ) {
+			// no range available
+			return null;
+		}
 		// @formatter:off
 		java.time.format.DateTimeFormatter fmt = new DateTimeFormatterBuilder()
 				.appendText(ChronoField.MONTH_OF_YEAR, TextStyle.SHORT)
@@ -128,7 +132,8 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public String getLocalizedNonTaxAmount() {
 		BigDecimal taxAmount = getTaxAmount();
 		BigDecimal total = getAmount();
-		BigDecimal nonTaxAmount = total.subtract(taxAmount);
+		BigDecimal credits = getCreditAmount();
+		BigDecimal nonTaxAmount = total.subtract(taxAmount).subtract(credits);
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				nonTaxAmount);
 	}
@@ -137,6 +142,28 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 	public String getLocalizedTaxAmount() {
 		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				getTaxAmount());
+	}
+
+	@Override
+	public BigDecimal getCreditAmount() {
+		return invoice.getCreditAmount();
+	}
+
+	@Override
+	public BigDecimal getRemainingCreditAmount() {
+		return invoice.getRemainingCreditAmount();
+	}
+
+	@Override
+	public String getLocalizedCreditAmount() {
+		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+				getCreditAmount());
+	}
+
+	@Override
+	public String getLocalizedRemainingCreditAmount() {
+		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
+				getRemainingCreditAmount());
 	}
 
 	@Override
@@ -223,7 +250,8 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		if ( items == null ) {
 			items = Collections.emptyList();
 		}
-		return items.stream().filter(item -> !InvoiceItem.TYPE_TAX.equals(item.getItemType()));
+		return items.stream().filter(item -> !InvoiceItem.TYPE_TAX.equals(item.getItemType())
+				&& !InvoiceItem.TYPE_CREDIT.equals(item.getItemType()));
 	}
 
 	private List<LocalizedInvoiceItemInfo> localizedItems(Stream<InvoiceItem> items) {

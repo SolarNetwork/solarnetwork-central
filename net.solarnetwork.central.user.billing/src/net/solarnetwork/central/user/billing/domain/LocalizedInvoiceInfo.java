@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface LocalizedInvoiceInfo {
 
@@ -92,6 +92,24 @@ public interface LocalizedInvoiceInfo {
 	 * @since 1.1
 	 */
 	String getLocalizedTaxAmount();
+
+	/**
+	 * Get the total amount of all credit invoice items, as a formatted and
+	 * localized string..
+	 * 
+	 * @return the formatted total credit amount
+	 * @since 1.3
+	 */
+	String getLocalizedCreditAmount();
+
+	/**
+	 * Get the total amount of account credit remaining, as a formatted and
+	 * localized string..
+	 * 
+	 * @return the formatted total credit amount remaining
+	 * @since 1.3
+	 */
+	String getLocalizedRemainingCreditAmount();
 
 	/**
 	 * Get the localized invoice items.

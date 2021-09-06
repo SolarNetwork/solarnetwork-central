@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.Entity;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface InvoiceItem extends Entity<String> {
 
@@ -49,6 +49,13 @@ public interface InvoiceItem extends Entity<String> {
 	 * @since 1.1
 	 */
 	public static final String TYPE_TAX = "TAX";
+
+	/**
+	 * The invoice item type for credit items.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String TYPE_CREDIT = "CREDIT";
 
 	/**
 	 * Get metadata associated with this item.
