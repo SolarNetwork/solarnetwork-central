@@ -51,7 +51,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordI
  * Localized version of {@link Invoice}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 
@@ -132,7 +132,10 @@ public class LocalizedInvoice implements Invoice, LocalizedInvoiceInfo {
 		BigDecimal taxAmount = getTaxAmount();
 		BigDecimal total = getAmount();
 		BigDecimal credits = getCreditAmount();
-		BigDecimal nonTaxAmount = total.subtract(taxAmount).subtract(credits);
+		BigDecimal nonTaxAmount = total.subtract(taxAmount);
+		if ( credits != null ) {
+			nonTaxAmount = nonTaxAmount.subtract(credits);
+		}
 		return formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, getCurrencyCode(),
 				nonTaxAmount);
 	}
