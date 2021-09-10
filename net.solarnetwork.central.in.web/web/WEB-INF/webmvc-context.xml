@@ -22,6 +22,11 @@
 	</bean>
 	
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="deserializers">
+			<list>
+				<bean class="net.solarnetwork.codec.BasicGeneralDatumDeserializer"/>
+			</list>
+		</property>
 		<property name="serializers">
 			<list>
 				<bean class="net.solarnetwork.codec.JodaDateTimeSerializer"/>

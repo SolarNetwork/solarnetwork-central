@@ -59,6 +59,7 @@ import net.solarnetwork.central.in.mqtt.CBORFactoryBean;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.codec.BasicGeneralDatumDeserializer;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -121,6 +122,7 @@ public class MqttDataCollectorTests_CBOR {
 		if ( jsonFactory != null ) {
 			factory.setJsonFactory(jsonFactory);
 		}
+		factory.setDeserializers(Arrays.asList(BasicGeneralDatumDeserializer.INSTANCE));
 		factory.setSerializers(Arrays.asList(new GeneralNodeDatumSerializer()));
 		factory.setFeaturesToDisable(Arrays.asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
 		try {

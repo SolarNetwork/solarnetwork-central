@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +67,7 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.codec.BasicGeneralDatumDeserializer;
 import net.solarnetwork.codec.JodaDateTimeSerializer;
 import net.solarnetwork.codec.JodaLocalDateSerializer;
 import net.solarnetwork.codec.JodaLocalDateTimeSerializer;
@@ -78,6 +80,7 @@ import net.solarnetwork.domain.GeneralLocationDatumSamples;
 import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
+import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.ObjectMapperFactoryBean;
 import net.solarnetwork.util.StaticOptionalService;
 
@@ -106,6 +109,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		if ( jsonFactory != null ) {
 			factory.setJsonFactory(jsonFactory);
 		}
+		factory.setDeserializers(Arrays.asList(BasicGeneralDatumDeserializer.INSTANCE));
 		factory.setSerializers(Arrays.asList(new JodaDateTimeSerializer(), new JodaLocalDateSerializer(),
 				new JodaLocalDateTimeSerializer(), new JodaLocalTimeSerializer()));
 		factory.setFeaturesToDisable(Arrays.asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
@@ -193,6 +197,41 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		service.onMqttMessage(msg);
 
 		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<GeneralNodeDatum> postedDatumList = StreamSupport
+				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralNodeDatum postedDatum = postedDatumList.get(0);
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+	}
+
+	@Test
+	public void processGeneralNodeDatum_twoOh() throws Exception {
+		// GIVEN
+		Capture<Iterable<GeneralNodeDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postGeneralNodeDatum(capture(postDatumCaptor));
+
+		replayAll();
+
+		// WHEN
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralNodeDatum datum = new GeneralNodeDatum();
+		datum.setCreated(new DateTime());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralNodeDatumSamples samples = new GeneralNodeDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":\""
+				+ DateUtils.ISO_DATE_TIME_ALT_UTC
+						.format(Instant.ofEpochMilli(datum.getCreated().getMillis()))
+				+ "\",\"sourceId\":\"" + TEST_SOURCE_ID + "\",\"i\":{\"foo\":123}}";
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
+
+		// THEN
 		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
 		List<GeneralNodeDatum> postedDatumList = StreamSupport
 				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
@@ -440,6 +479,42 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		String json = "{\"created\":" + datum.getCreated().getMillis() + ",\"sourceId\":\""
 				+ TEST_SOURCE_ID + "\",\"locationId\":" + TEST_LOC_ID
 				+ ",\"samples\":{\"i\":{\"foo\":123}}}";
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
+
+		// then
+		assertThat("Datum posted", postDatumCaptor.getValue(), notNullValue());
+		List<GeneralLocationDatum> postedDatumList = StreamSupport
+				.stream(postDatumCaptor.getValue().spliterator(), false).collect(Collectors.toList());
+		assertThat("Posted datum count", postedDatumList, hasSize(1));
+		GeneralLocationDatum postedDatum = postedDatumList.get(0);
+		assertThat("Posted datum ID", postedDatum.getId(), equalTo(datum.getId()));
+		assertThat("Posted datum samples", postedDatum.getSamples(), equalTo(datum.getSamples()));
+	}
+
+	@Test
+	public void processGeneralLocationDatum_twoOh() throws Exception {
+		// given
+		Capture<Iterable<GeneralLocationDatum>> postDatumCaptor = new Capture<>();
+		dataCollectorBiz.postGeneralLocationDatum(capture(postDatumCaptor));
+
+		replayAll();
+
+		// when
+		String topic = datumTopic(TEST_NODE_ID);
+		GeneralLocationDatum datum = new GeneralLocationDatum();
+		datum.setCreated(new DateTime());
+		datum.setLocationId(TEST_LOC_ID);
+		datum.setSourceId(TEST_SOURCE_ID);
+		GeneralLocationDatumSamples samples = new GeneralLocationDatumSamples();
+		datum.setSamples(samples);
+		samples.putInstantaneousSampleValue("foo", 123);
+		String json = "{\"created\":\""
+				+ DateUtils.ISO_DATE_TIME_ALT_UTC.format(
+						Instant.ofEpochMilli(datum.getCreated().getMillis()))
+				+ "\",\"sourceId\":\"" + TEST_SOURCE_ID + "\",\"locationId\":" + TEST_LOC_ID
+				+ ",\"i\":{\"foo\":123}}";
 		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
 				json.getBytes("UTF-8"));
 		service.onMqttMessage(msg);

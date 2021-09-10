@@ -24,6 +24,7 @@ package net.solarnetwork.central.in.mqtt;
 
 import static java.util.Collections.singleton;
 import java.io.IOException;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -55,7 +57,12 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.DatumStreamId.LocationDatumStreamId;
+import net.solarnetwork.domain.GeneralDatum;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.JodaDateUtils;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
 
@@ -63,7 +70,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class MqttDataCollector extends BaseMqttConnectionService
 		implements NodeInstructionQueueHook, MqttConnectionObserver, MqttMessageHandler {
@@ -110,6 +117,13 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 * value.
 	 */
 	public static final String LOCATION_ID_FIELD = "locationId";
+
+	/**
+	 * The JSON field name for an instruction ID on a {@link Instruction} value.
+	 * 
+	 * @since 1.8
+	 */
+	public static final String INSTRUCTION_ID_FIELD = "instructionId";
 
 	/** The default {@code publishOnly} property value. */
 	public static final boolean DEFAULT_PUBLISH_ONLY = false;
@@ -362,21 +376,16 @@ public class MqttDataCollector extends BaseMqttConnectionService
 				}
 			}
 		}
-
 	}
 
 	private void handleNode(final Long nodeId, final JsonNode node, final boolean checkVersion) {
 		String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-		if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) ) {
-			// if we have a location ID, this is actually a GeneralLocationDatum
-			final JsonNode locId = node.get(LOCATION_ID_FIELD);
-			if ( locId != null && locId.isNumber() ) {
-				handleGeneralLocationDatum(node, checkVersion);
-			} else {
-				handleGeneralNodeDatum(nodeId, node, checkVersion);
-			}
-		} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
+		JsonNode instrId = node.get(INSTRUCTION_ID_FIELD);
+		if ( (instrId != null && instrId.isNumber())
+				|| INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 			handleInstructionStatus(nodeId, node);
+		} else {
+			handleGeneralDatum(nodeId, node, checkVersion);
 		}
 	}
 
@@ -404,11 +413,11 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		}
 	}
 
-	private void handleGeneralNodeDatum(final Long nodeId, final JsonNode node,
-			final boolean checkVersion) {
+	private void handleGeneralDatum(final Long nodeId, final JsonNode node, final boolean checkVersion) {
 		try {
-			GeneralNodeDatum d = objectMapper.treeToValue(node, GeneralNodeDatum.class);
-			d.setNodeId(nodeId);
+			GeneralDatum d = (GeneralDatum) objectMapper.treeToValue(node,
+					net.solarnetwork.domain.datum.GeneralDatum.class);
+			Object gd = convertGeneralDatum(nodeId, d);
 			if ( d.getSourceId() == null ) {
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
@@ -422,42 +431,45 @@ public class MqttDataCollector extends BaseMqttConnectionService
 						d.getSamples().setTags(null);
 					}
 				}
-				dataCollectorBiz.postGeneralNodeDatum(singleton(d));
+				if ( gd instanceof GeneralLocationDatum ) {
+					dataCollectorBiz.postGeneralLocationDatum(singleton((GeneralLocationDatum) gd));
+				} else if ( gd instanceof GeneralNodeDatum ) {
+					dataCollectorBiz.postGeneralNodeDatum(singleton((GeneralNodeDatum) gd));
+				}
 			}
-			getMqttStats().incrementAndGet(checkVersion ? SolarInCountStat.NodeDatumReceived
-					: SolarInCountStat.LegacyNodeDatumReceived);
+			getMqttStats().incrementAndGet(gd instanceof GeneralLocationDatum
+					? checkVersion ? SolarInCountStat.LocationDatumReceived
+							: SolarInCountStat.LegacyLocationDatumReceived
+					: checkVersion ? SolarInCountStat.NodeDatumReceived
+							: SolarInCountStat.LegacyNodeDatumReceived);
 		} catch ( IOException e ) {
-			log.debug("Unable to parse GeneralNodeDatum: {}", e.getMessage());
+			log.debug("Unable to parse GeneralDatum: {}", e.getMessage());
 		}
 	}
 
-	private void handleGeneralLocationDatum(final JsonNode node, final boolean checkVersion) {
-		try {
-			GeneralLocationDatum d = objectMapper.treeToValue(node, GeneralLocationDatum.class);
-			if ( d.getLocationId() == null ) {
-				// ignore, both location ID is required
-				log.warn("Ignoring location datum with missing location ID: {}", node);
-			} else if ( d.getSourceId() == null ) {
-				// ignore, source ID is required
-				log.warn("Ignoring location {} datum with missing source ID: {}", d.getLocationId(),
-						node);
-			} else {
-				if ( d.getSamples() != null ) {
-					if ( checkVersion && !d.getSamples().hasTag(TAG_V2) ) {
-						throw new UseLegacyObjectMapperException();
-					}
-					d.getSamples().removeTag(TAG_V2);
-					if ( d.getSamples().getTags() != null && d.getSamples().getTags().isEmpty() ) {
-						d.getSamples().setTags(null);
-					}
-				}
-				dataCollectorBiz.postGeneralLocationDatum(singleton(d));
-			}
-			getMqttStats().incrementAndGet(checkVersion ? SolarInCountStat.LocationDatumReceived
-					: SolarInCountStat.LegacyLocationDatumReceived);
-		} catch ( IOException e ) {
-			log.debug("Unable to parse GeneralLocationDatum: {}", e.getMessage());
+	private Object convertGeneralDatum(Long nodeId, GeneralDatum gd) {
+		if ( gd.getId() instanceof LocationDatumStreamId ) {
+			GeneralLocationDatum gld = new GeneralLocationDatum();
+			gld.setCreated(JodaDateUtils.toJoda(gd.getTimestamp(), ZoneOffset.UTC));
+			gld.setSourceId(gd.getSourceId());
+			gld.setLocationId(gd.getObjectId());
+			gld.setSamples(new GeneralLocationDatumSamples());
+			gld.getSamples().setI(gd.getSamples().getI());
+			gld.getSamples().setA(gd.getSamples().getA());
+			gld.getSamples().setS(gd.getSamples().getS());
+			gld.getSamples().setTags(gd.getSamples().getTags());
+			return gld;
 		}
+		GeneralNodeDatum gnd = new GeneralNodeDatum();
+		gnd.setNodeId(nodeId);
+		gnd.setCreated(JodaDateUtils.toJoda(gd.getTimestamp(), ZoneOffset.UTC));
+		gnd.setSourceId(gd.getSourceId());
+		gnd.setSamples(new GeneralNodeDatumSamples());
+		gnd.getSamples().setI(gd.getSamples().getI());
+		gnd.getSamples().setA(gd.getSamples().getA());
+		gnd.getSamples().setS(gd.getSamples().getS());
+		gnd.getSamples().setTags(gd.getSamples().getTags());
+		return gnd;
 	}
 
 	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {

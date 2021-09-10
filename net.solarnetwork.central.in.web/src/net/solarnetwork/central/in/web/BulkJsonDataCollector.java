@@ -24,6 +24,7 @@ package net.solarnetwork.central.in.web;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,14 +51,19 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.domain.DatumStreamId.LocationDatumStreamId;
+import net.solarnetwork.domain.GeneralDatum;
+import net.solarnetwork.domain.GeneralLocationDatumSamples;
+import net.solarnetwork.domain.GeneralNodeDatumSamples;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.JodaDateUtils;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller
 @RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
@@ -77,6 +83,13 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	 * value.
 	 */
 	public static final String LOCATION_ID_FIELD = "locationId";
+
+	/**
+	 * The JSON field name for an instruction ID on a {@link Instruction} value.
+	 * 
+	 * @since 2.2
+	 */
+	public static final String INSTRUCTION_ID_FIELD = "instructionId";
 
 	private final ObjectMapper objectMapper;
 
@@ -155,6 +168,10 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			if ( tree.isArray() ) {
 				for ( JsonNode child : tree ) {
 					Object o = handleNode(child);
+					if ( o instanceof GeneralDatum ) {
+						// convert to legacy form for compatibility between node 1.0/2.0
+						o = convertGeneralDatum((GeneralDatum) o);
+					}
 					if ( o instanceof StreamDatum ) {
 						parsedStreamDatum.add((StreamDatum) o);
 					} else if ( o instanceof GeneralNodeDatum ) {
@@ -219,21 +236,42 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		return new Response<BulkUploadResult>(result);
 	}
 
+	private Object convertGeneralDatum(GeneralDatum gd) {
+		if ( gd.getId() instanceof LocationDatumStreamId ) {
+			GeneralLocationDatum gld = new GeneralLocationDatum();
+			gld.setCreated(JodaDateUtils.toJoda(gd.getTimestamp(), ZoneOffset.UTC));
+			gld.setSourceId(gd.getSourceId());
+			gld.setLocationId(gd.getObjectId());
+			gld.setSamples(new GeneralLocationDatumSamples());
+			gld.getSamples().setI(gd.getSamples().getI());
+			gld.getSamples().setA(gd.getSamples().getA());
+			gld.getSamples().setS(gd.getSamples().getS());
+			gld.getSamples().setTags(gd.getSamples().getTags());
+			return gld;
+		}
+		GeneralNodeDatum gnd = new GeneralNodeDatum();
+		gnd.setCreated(JodaDateUtils.toJoda(gd.getTimestamp(), ZoneOffset.UTC));
+		gnd.setSourceId(gd.getSourceId());
+		gnd.setSamples(new GeneralNodeDatumSamples());
+		gnd.getSamples().setI(gd.getSamples().getI());
+		gnd.getSamples().setA(gd.getSamples().getA());
+		gnd.getSamples().setS(gd.getSamples().getS());
+		gnd.getSamples().setTags(gd.getSamples().getTags());
+		return gnd;
+	}
+
 	private Object handleNode(JsonNode node) {
 		if ( node.isArray() ) {
 			return handleStreamDatum(node);
 		} else {
 			String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-			if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
-					|| nodeType.isEmpty() ) {
-				// if we have a location ID, this is actually a GeneralLocationDatum
-				final JsonNode locId = node.get(LOCATION_ID_FIELD);
-				if ( locId != null && locId.isNumber() ) {
-					return handleGeneralLocationDatum(node);
-				}
-				return handleGeneralNodeDatum(node);
-			} else if ( INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
+			JsonNode instrId = node.get(INSTRUCTION_ID_FIELD);
+			if ( (instrId != null && instrId.isNumber())
+					|| INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
 				return handleInstructionStatus(node);
+			} else if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
+					|| nodeType.isEmpty() ) {
+				return handleGeneralDatum(node);
 			} else {
 				return null;
 			}
@@ -254,41 +292,37 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		return null;
 	}
 
+	private GeneralDatum handleGeneralDatum(JsonNode node) {
+		try {
+			return (GeneralDatum) objectMapper.treeToValue(node,
+					net.solarnetwork.domain.datum.GeneralDatum.class);
+		} catch ( IOException e ) {
+			log.debug("Unable to parse JSON into GeneralDatum: {}", e.getMessage());
+			return null;
+		}
+	}
+
 	private Instruction handleInstructionStatus(JsonNode node) {
-		String instructionId = getStringFieldValue(node, "instructionId", null);
-		String status = getStringFieldValue(node, "status", null);
+		String instructionId = getStringFieldValue(node, INSTRUCTION_ID_FIELD, null);
+		String state = getStringFieldValue(node, "state", null);
+		if ( state == null ) {
+			// fall back to legacy
+			state = getStringFieldValue(node, "status", null);
+		}
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
 		Instruction result = null;
 		InstructorBiz biz = getInstructorBiz().service();
-		if ( instructionId != null && status != null && biz != null ) {
+		if ( instructionId != null && state != null && biz != null ) {
 			Long id = Long.valueOf(instructionId);
-			InstructionState state = InstructionState.valueOf(status);
-			biz.updateInstructionState(id, state, resultParams);
+			InstructionState s = InstructionState.valueOf(state);
+			biz.updateInstructionState(id, s, resultParams);
 			result = new Instruction();
 			result.setId(id);
-			result.setState(state);
+			result.setState(s);
 			result.setResultParameters(resultParams);
 			return result;
 		}
 		return result;
-	}
-
-	private GeneralNodeDatum handleGeneralNodeDatum(JsonNode node) {
-		try {
-			return objectMapper.treeToValue(node, GeneralNodeDatum.class);
-		} catch ( IOException e ) {
-			log.debug("Unable to parse JSON into GeneralNodeDatum: {}", e.getMessage());
-			return null;
-		}
-	}
-
-	private GeneralLocationDatum handleGeneralLocationDatum(JsonNode node) {
-		try {
-			return objectMapper.treeToValue(node, GeneralLocationDatum.class);
-		} catch ( IOException e ) {
-			log.debug("Unable to parse JSON into GeneralLocationDatum: {}", e.getMessage());
-			return null;
-		}
 	}
 
 }
