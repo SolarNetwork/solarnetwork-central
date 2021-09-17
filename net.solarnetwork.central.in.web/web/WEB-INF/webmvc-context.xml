@@ -22,12 +22,19 @@
 	</bean>
 	
 	<bean id="objectMapper" class="net.solarnetwork.util.ObjectMapperFactoryBean">
+		<property name="deserializers">
+			<list>
+				<bean class="net.solarnetwork.codec.BasicStreamDatumArrayDeserializer"/>
+				<bean class="net.solarnetwork.codec.BasicGeneralDatumDeserializer"/>
+			</list>
+		</property>
 		<property name="serializers">
 			<list>
 				<bean class="net.solarnetwork.codec.JodaDateTimeSerializer"/>
 				<bean class="net.solarnetwork.codec.JodaLocalDateSerializer"/>
 				<bean class="net.solarnetwork.codec.JodaLocalDateTimeSerializer"/>
 				<bean class="net.solarnetwork.codec.JodaLocalTimeSerializer"/>
+				<util:constant static-field="net.solarnetwork.codec.JsonDateUtils.InstantSerializer.INSTANCE"/>
 				<bean class="net.solarnetwork.codec.BasicObjectDatumStreamMetadataSerializer"/>
 			</list>
 		</property>

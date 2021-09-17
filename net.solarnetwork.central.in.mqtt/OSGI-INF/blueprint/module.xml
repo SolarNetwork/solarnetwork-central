@@ -45,6 +45,7 @@
 		</property>
 		<property name="deserializers">
 			<list>
+				<bean class="net.solarnetwork.codec.BasicGeneralDatumDeserializer"/>
 				<bean class="net.solarnetwork.codec.BasicStreamDatumArrayDeserializer"/>
 				<bean class="net.solarnetwork.codec.BasicObjectDatumStreamMetadataDeserializer"/>
 			</list>
@@ -61,6 +62,11 @@
 			<bean class="net.solarnetwork.central.in.mqtt.CBORFactoryBean">
 				<argument value="true"/>
 			</bean>
+		</property>
+		<property name="deserializers">
+			<list>
+				<bean class="net.solarnetwork.codec.BasicGeneralDatumDeserializer"/>
+			</list>
 		</property>
 		<property name="serializers">
 			<list>

@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.Entity;
  * API for an invoice.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface Invoice extends Entity<String> {
 
@@ -101,6 +101,22 @@ public interface Invoice extends Entity<String> {
 	 * @since 1.1
 	 */
 	BigDecimal getTaxAmount();
+
+	/**
+	 * Get the total amount of all credit invoice items.
+	 * 
+	 * @return the total credit amount, or {@literal null} if none
+	 * @since 1.3
+	 */
+	BigDecimal getCreditAmount();
+
+	/**
+	 * Get the total amount of account credit remaining.
+	 * 
+	 * @return the total credit amount remaining, or {@literal null} if none
+	 * @since 1.3
+	 */
+	BigDecimal getRemainingCreditAmount();
 
 	/**
 	 * Get the currency this invoice is in, as a string currency code like

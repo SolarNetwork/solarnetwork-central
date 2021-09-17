@@ -57,6 +57,7 @@ import net.solarnetwork.central.in.mqtt.CBORFactoryBean;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
+import net.solarnetwork.codec.BasicGeneralDatumDeserializer;
 import net.solarnetwork.codec.BasicStreamDatumArrayDeserializer;
 import net.solarnetwork.codec.BasicStreamDatumArraySerializer;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
@@ -93,7 +94,8 @@ public class MqttDataCollectorTests_StreamDatum {
 			factory.setJsonFactory(jsonFactory);
 		}
 		factory.setSerializers(Arrays.asList(BasicStreamDatumArraySerializer.INSTANCE));
-		factory.setDeserializers(Arrays.asList(BasicStreamDatumArrayDeserializer.INSTANCE));
+		factory.setDeserializers(Arrays.asList(BasicGeneralDatumDeserializer.INSTANCE,
+				BasicStreamDatumArrayDeserializer.INSTANCE));
 		factory.setFeaturesToDisable(Arrays.asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
 		try {
 			return factory.getObject();
