@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Thu Nov 13 07:30:21 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.datum.dao.mybatis.SolarNodeMetadata">
+
+	<parameterMap id="pmap-SolarNodeMetadata" type="SolarNodeMetadata">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="metaJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-SolarNodeMetadata" parameterMap="pmap-SolarNodeMetadata" statementType="CALLABLE">
+		{call solarnet.store_node_meta(?, ?, ?)}
+	</update>
+	
+	<update id="update-SolarNodeMetadata" parameterMap="pmap-SolarNodeMetadata" statementType="CALLABLE">
+		{call solarnet.store_node_meta(?, ?, ?)}
+	</update>
+	
+	<delete id="delete-SolarNodeMetadata" parameterType="long">
+		DELETE FROM solarnet.sn_node_meta
+		WHERE node_id = #{id}
+	</delete>
+	
+	<sql id="fragment-SolarNodeMetadata-full-result">
+		nmeta.node_id AS node_meta_node_id,
+		nmeta.created AS node_meta_created,
+		nmeta.updated AS node_meta_updated,
+		nmeta.jdata AS node_meta_jdata
+	</sql>
+	
+	<resultMap id="SolarNodeMetadataFullResult" type="SolarNodeMetadata">
+		<id property="nodeId" column="node_meta_node_id"/>
+		<id property="created" column="node_meta_created"/>
+		<result property="updated" column="node_meta_updated"/>
+		<result property="metaJson" column="node_meta_jdata"/>
+	</resultMap>
+	
+	<select id="get-SolarNodeMetadata-for-id" parameterType="long" resultMap="SolarNodeMetadataFullResult">
+		SELECT
+			<include refid="fragment-SolarNodeMetadata-full-result"/>
+		FROM
+			solarnet.sn_node_meta nmeta
+		WHERE
+			nmeta.node_id = #{id}
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="SolarNodeMetadataMatchResult" type="SolarNodeMetadataMatch" extends="net.solarnetwork.central.datum.dao.mybatis.SolarNodeMetadata.SolarNodeMetadataFullResult"/>
+
+	<sql id="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where">
+		<where>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND nmeta.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+	<select id="findall-SolarNodeMetadata-SolarNodeMetadataMatch" resultMap="SolarNodeMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarNodeMetadata-full-result"/>
+		FROM
+			solarnet.sn_node_meta nmeta
+		<include refid="fragment-findall-SolarNodeMetadata-SolarNodeMetadataMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">nmeta.created</if>
+					<if test="item.sortKey == &quot;updated&quot;">nmeta.updated</if>
+					<if test="item.sortKey == &quot;node&quot;">nmeta.node_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				nmeta.node_id
+			</otherwise>
+		</choose>
+	</select>
+
+</mapper>
