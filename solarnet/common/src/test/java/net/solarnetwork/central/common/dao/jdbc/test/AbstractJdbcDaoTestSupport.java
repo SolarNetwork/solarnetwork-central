@@ -1,7 +1,7 @@
 /* ==================================================================
- * BootstrapTransactionalTest.java - Jan 11, 2010 10:15:47 AM
+ * AbstractJdbcDaoTestSupport.java - 23/09/2021 10:43:25 AM
  * 
- * Copyright 2007-2010 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,34 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.test;
+package net.solarnetwork.central.common.dao.jdbc.test;
 
-import static org.junit.Assert.assertNotNull;
-import java.time.Instant;
-import org.junit.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.dao.DataAccessException;
+import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 
 /**
- * Test case to validate unit test can connect to transactional datastore.
+ * Base class for JDBC DAO support.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
+ * @since 2.0
  */
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class BootstrapTransactionalTest extends AbstractCentralTransactionalTest {
-
-	/**
-	 * Test able to connect to the configured database.
-	 */
-	@Test
-	public void testConnectToDatabase() throws DataAccessException {
-		Instant now = jdbcTemplate.queryForObject("select CURRENT_TIMESTAMP", Instant.class,
-				(Object[]) null);
-		assertNotNull(now);
-		log.debug("Got timestamp: " + now);
-	}
+public abstract class AbstractJdbcDaoTestSupport extends AbstractCentralTransactionalTest {
 
 }

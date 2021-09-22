@@ -26,6 +26,8 @@ dependencyManagement {
 
 configurations {
 	all*.exclude group: 'net.sf.supercsv'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -43,21 +45,22 @@ dependencies {
 	
 	// JCache
 	implementation 'javax.cache:cache-api'
-	implementation "org.ehcache:ehcache"
+	implementation 'org.ehcache:ehcache'
 
 	// JSON
-	implementation "com.fasterxml.jackson.core:jackson-annotations"
-	implementation "com.fasterxml.jackson.core:jackson-core"
-	implementation "com.fasterxml.jackson.core:jackson-databind"
+	implementation 'com.fasterxml.jackson.core:jackson-annotations'
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	
 	// Netty
-	implementation "io.netty:netty-buffer"
-	implementation "io.netty:netty-codec"
-	implementation "io.netty:netty-codec-stomp"
-	implementation "io.netty:netty-common"
-	implementation "io.netty:netty-handler"
-	implementation "io.netty:netty-resolver"
-	implementation "io.netty:netty-transport"
+	implementation 'io.netty:netty-buffer'
+	implementation 'io.netty:netty-codec'
+	implementation 'io.netty:netty-codec-stomp'
+	implementation 'io.netty:netty-common'
+	implementation 'io.netty:netty-handler'
+	implementation 'io.netty:netty-resolver'
+	implementation 'io.netty:netty-transport'
 
 	// Utilities
 	implementation 'com.amazonaws:aws-java-sdk-ec2:1.11.1034'

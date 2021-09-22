@@ -23,12 +23,12 @@
 package net.solarnetwork.central.dao.mybatis.support;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
-import org.joda.time.DateTime;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -136,7 +136,7 @@ import net.solarnetwork.domain.Identity;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
@@ -320,7 +320,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	protected void preprocessInsert(T datum) {
 		if ( datum.getCreated() == null ) {
 			BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(datum);
-			wrapper.setPropertyValue("created", new DateTime());
+			wrapper.setPropertyValue("created", Instant.now());
 		}
 	}
 

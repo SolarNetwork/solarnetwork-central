@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
@@ -46,7 +47,6 @@ import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
-import net.solarnetwork.central.test.AbstractCentralTest;
 
 /**
  * Test cases for the {@link BulkLoadingDaoSupport} class.
@@ -57,9 +57,9 @@ import net.solarnetwork.central.test.AbstractCentralTest;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
+public class BulkLoadingDaoSupportTests extends AbstractJdbcDaoTestSupport {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -67,6 +67,7 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 	private PlatformTransactionManager txManager;
 	private BulkLoadingDaoSupport support;
 
+	@Override
 	@Autowired
 	public void setDataSource(DataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -79,6 +80,7 @@ public class BulkLoadingDaoSupportTests extends AbstractCentralTest {
 
 	@Before
 	public void setup() {
+		TestTransaction.end();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 
 			@Override

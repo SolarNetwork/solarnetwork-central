@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,7 +47,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.easymock.EasyMock;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -571,7 +571,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 	@Test
 	public void expiredToken() throws ServletException, IOException {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withNotAfter(new DateTime(System.currentTimeMillis() - 1000)).build();
+				.withNotAfter(Instant.now().minusSeconds(1)).build();
 		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "ReadNodeData", -1L,
 				policy);
 

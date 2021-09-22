@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -30,7 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import org.joda.time.DateTime;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.domain.Aggregation;
@@ -40,7 +40,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * Basic implementation of {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
 @JsonSerialize(using = SecurityPolicySerializer.class)
@@ -70,7 +70,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		private Set<String> nodeMetadataPaths;
 		private Set<String> userMetadataPaths;
 		private Set<String> apiPaths;
-		private DateTime notAfter;
+		private Instant notAfter;
 		private Boolean refreshAllowed;
 
 		public Builder withPolicy(SecurityPolicy policy) {
@@ -307,7 +307,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			return result;
 		}
 
-		public Builder withNotAfter(DateTime date) {
+		public Builder withNotAfter(Instant date) {
 			this.notAfter = date;
 			return this;
 		}
@@ -325,6 +325,16 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
 	}
 
+	/**
+	 * Get a new builder instance.
+	 * 
+	 * @return the new builder
+	 * @since 2.0
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	private final Set<Long> nodeIds;
 	private final Set<String> sourceIds;
 	private final Set<Aggregation> aggregations;
@@ -334,7 +344,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	private final Set<String> nodeMetadataPaths;
 	private final Set<String> userMetadataPaths;
 	private final Set<String> apiPaths;
-	private final DateTime notAfter;
+	private final Instant notAfter;
 	private final Boolean refreshAllowed;
 
 	/**
@@ -406,11 +416,12 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 *        {@literal null} for no expiration.
 	 * @param refreshAllowed
 	 *        {@literal true} if the token can be refreshed
+	 * @since 2.0
 	 */
 	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
 			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
 			LocationPrecision minLocationPrecision, Set<String> nodeMetadataPaths,
-			Set<String> userMetadataPaths, DateTime notAfter, Boolean refreshAllowed) {
+			Set<String> userMetadataPaths, Instant notAfter, Boolean refreshAllowed) {
 		this(nodeIds, sourceIds, aggregations, minAggregation, locationPrecisions, minLocationPrecision,
 				nodeMetadataPaths, userMetadataPaths, null, notAfter, refreshAllowed);
 	}
@@ -448,12 +459,12 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	 *        {@literal null} for no expiration.
 	 * @param refreshAllowed
 	 *        {@literal true} if the token can be refreshed
-	 * @since 1.3
+	 * @since 2.0
 	 */
 	public BasicSecurityPolicy(Set<Long> nodeIds, Set<String> sourceIds, Set<Aggregation> aggregations,
 			Aggregation minAggregation, Set<LocationPrecision> locationPrecisions,
 			LocationPrecision minLocationPrecision, Set<String> nodeMetadataPaths,
-			Set<String> userMetadataPaths, Set<String> apiPaths, DateTime notAfter,
+			Set<String> userMetadataPaths, Set<String> apiPaths, Instant notAfter,
 			Boolean refreshAllowed) {
 		super();
 		this.nodeIds = nodeIds;
@@ -515,13 +526,13 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 	}
 
 	@Override
-	public DateTime getNotAfter() {
+	public Instant getNotAfter() {
 		return notAfter;
 	}
 
 	@Override
-	public boolean isValidAt(long timestamp) {
-		return (notAfter == null || !notAfter.isBefore(timestamp));
+	public boolean isValidAt(Instant timestamp) {
+		return (notAfter == null || !notAfter.isBefore(timestamp != null ? timestamp : Instant.now()));
 	}
 
 	@Override

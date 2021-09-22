@@ -24,6 +24,7 @@ package net.solarnetwork.central.security.web;
 
 import static net.solarnetwork.central.security.SecurityPolicy.INVERTED_PATH_MATCH_PREFIX;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -155,7 +156,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 
 		if ( user instanceof SecurityToken ) {
 			SecurityPolicy policy = ((SecurityToken) user).getPolicy();
-			if ( policy != null && !policy.isValidAt(System.currentTimeMillis()) ) {
+			if ( policy != null && !policy.isValidAt(Instant.now()) ) {
 				fail(request, response, new CredentialsExpiredException("Expired token"));
 				return;
 			}

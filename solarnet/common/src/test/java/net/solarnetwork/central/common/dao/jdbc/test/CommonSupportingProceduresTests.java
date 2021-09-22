@@ -31,15 +31,14 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 
 /**
  * Test cases for common supporting database functions.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class CommonSupportingProceduresTests extends AbstractCentralTransactionalTest {
+public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport {
 
 	private JdbcTemplate jdbcTemplate;
 

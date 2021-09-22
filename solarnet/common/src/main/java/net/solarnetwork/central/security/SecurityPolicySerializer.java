@@ -23,9 +23,9 @@
 package net.solarnetwork.central.security;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Set;
-import org.joda.time.DateTime;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.LocationPrecision;
  * JSON serializer for {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 
@@ -124,9 +124,9 @@ public class SecurityPolicySerializer extends StdSerializer<SecurityPolicy> {
 			generator.writeEndArray();
 		}
 
-		DateTime notAfter = policy.getNotAfter();
+		Instant notAfter = policy.getNotAfter();
 		if ( notAfter != null ) {
-			generator.writeNumberField("notAfter", notAfter.getMillis());
+			generator.writeNumberField("notAfter", notAfter.toEpochMilli());
 		}
 
 		Boolean refreshAllowed = policy.getRefreshAllowed();

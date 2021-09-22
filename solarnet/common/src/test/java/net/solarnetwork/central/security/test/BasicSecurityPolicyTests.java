@@ -22,39 +22,49 @@
 
 package net.solarnetwork.central.security.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.fail;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Test cases for the {@link BasicSecurityPolicy} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class BasicSecurityPolicyTests {
 
-	private static final DateTime TEST_DATE = new DateTime(2018, 5, 30, 10, 30, DateTimeZone.UTC);
+	private static final Instant TEST_DATE = LocalDateTime.of(2018, 5, 30, 10, 30, 0)
+			.toInstant(ZoneOffset.UTC);
 
 	@Test
 	public void buildNodeIdsPolicy() {
 		Set<Long> nodeIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).build();
-		Assert.assertEquals("Node ID set", nodeIds, policy.getNodeIds());
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(nodeIds).build();
+		assertThat("Node ID set", policy.getNodeIds(), is(nodeIds));
 		try {
 			policy.getNodeIds().add(-1L);
-			Assert.fail("Node ID set should be immutable");
+			fail("Node ID set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -65,12 +75,12 @@ public class BasicSecurityPolicyTests {
 		Set<Long> nodeIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L));
 		Set<Long> additionalNodeIds = new HashSet<Long>(Arrays.asList(3L, 4L, 5L));
 		Set<Long> merged = new HashSet<Long>(Arrays.asList(1L, 2L, 3L, 4L, 5L));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(nodeIds)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(nodeIds)
 				.withMergedNodeIds(additionalNodeIds).build();
-		Assert.assertEquals("Node ID set", merged, policy.getNodeIds());
+		assertThat("Node ID set", policy.getNodeIds(), is(merged));
 		try {
 			policy.getNodeIds().add(-1L);
-			Assert.fail("Node ID set should be immutable");
+			fail("Node ID set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -79,11 +89,11 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildSourceIdsPolicy() {
 		Set<String> sourceIds = new HashSet<String>(Arrays.asList("one", "two", "three"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withSourceIds(sourceIds).build();
-		Assert.assertEquals("Source ID set", sourceIds, policy.getSourceIds());
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withSourceIds(sourceIds).build();
+		assertThat("Source ID set", policy.getSourceIds(), is(sourceIds));
 		try {
 			policy.getSourceIds().add("no");
-			Assert.fail("Source ID set should be immutable");
+			fail("Source ID set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -94,12 +104,12 @@ public class BasicSecurityPolicyTests {
 		Set<String> sourceIds = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		Set<String> additionalSourceIds = new HashSet<String>(Arrays.asList("three", "four", "five"));
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withSourceIds(sourceIds)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withSourceIds(sourceIds)
 				.withMergedSourceIds(additionalSourceIds).build();
-		Assert.assertEquals("Source ID set", merged, policy.getSourceIds());
+		assertThat("Source ID set", policy.getSourceIds(), is(merged));
 		try {
 			policy.getSourceIds().add("no");
-			Assert.fail("Source ID set should be immutable");
+			fail("Source ID set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -108,12 +118,11 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildNodeMetadataPathsPolicy() {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeMetadataPaths(paths)
-				.build();
-		Assert.assertEquals("Node metadata path set", paths, policy.getNodeMetadataPaths());
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeMetadataPaths(paths).build();
+		assertThat("Node metadata path set", policy.getNodeMetadataPaths(), is(paths));
 		try {
 			policy.getNodeMetadataPaths().add("no");
-			Assert.fail("Node metadata path set should be immutable");
+			fail("Node metadata path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -124,12 +133,12 @@ public class BasicSecurityPolicyTests {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeMetadataPaths(paths)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeMetadataPaths(paths)
 				.withMergedNodeMetadataPaths(additionalPaths).build();
-		Assert.assertEquals("Node metadata path set", merged, policy.getNodeMetadataPaths());
+		assertThat("Node metadata path set", policy.getNodeMetadataPaths(), is(merged));
 		try {
 			policy.getNodeMetadataPaths().add("no");
-			Assert.fail("Node metadata path set should be immutable");
+			fail("Node metadata path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -138,12 +147,11 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildUserMetadataPathsPolicy() {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withUserMetadataPaths(paths)
-				.build();
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withUserMetadataPaths(paths).build();
 		Assert.assertEquals("User metadata path set", paths, policy.getUserMetadataPaths());
 		try {
 			policy.getUserMetadataPaths().add("no");
-			Assert.fail("User metadata path set should be immutable");
+			fail("User metadata path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -154,9 +162,9 @@ public class BasicSecurityPolicyTests {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withUserMetadataPaths(paths)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withUserMetadataPaths(paths)
 				.withMergedUserMetadataPaths(additionalPaths).build();
-		Assert.assertEquals("User metadata path set", merged, policy.getUserMetadataPaths());
+		assertThat("User metadata path set", policy.getUserMetadataPaths(), is(merged));
 		try {
 			policy.getUserMetadataPaths().add("no");
 			Assert.fail("User metadata path set should be immutable");
@@ -168,11 +176,11 @@ public class BasicSecurityPolicyTests {
 	@Test
 	public void buildApiPathsPolicy() {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(paths).build();
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withApiPaths(paths).build();
 		Assert.assertEquals("Api path set", paths, policy.getApiPaths());
 		try {
 			policy.getApiPaths().add("no");
-			Assert.fail("Api path set should be immutable");
+			fail("Api path set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -183,9 +191,9 @@ public class BasicSecurityPolicyTests {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		Set<String> additionalPaths = new HashSet<String>(Arrays.asList("three", "four", "five"));
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(paths)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withApiPaths(paths)
 				.withMergedApiPaths(additionalPaths).build();
-		Assert.assertEquals("Api path set", merged, policy.getApiPaths());
+		assertThat("Api path set", policy.getApiPaths(), is(merged));
 		try {
 			policy.getApiPaths().add("no");
 			Assert.fail("Api path set should be immutable");
@@ -196,14 +204,13 @@ public class BasicSecurityPolicyTests {
 
 	@Test
 	public void buildMinAggregationPolicy() {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withMinAggregation(Aggregation.Month).build();
-		Assert.assertEquals("Minimum aggregation set",
-				EnumSet.of(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal),
-				policy.getAggregations());
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Month)
+				.build();
+		assertThat("Minimum aggregation set", policy.getAggregations(),
+				contains(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal));
 		try {
 			policy.getAggregations().add(Aggregation.Minute);
-			Assert.fail("Aggregation set should be immutable");
+			fail("Aggregation set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -211,21 +218,20 @@ public class BasicSecurityPolicyTests {
 
 	@Test
 	public void buildMergedMinAggregationPolicy() {
-		BasicSecurityPolicy orig = new BasicSecurityPolicy.Builder()
-				.withMinAggregation(Aggregation.Month).build();
-		BasicSecurityPolicy patch = new BasicSecurityPolicy.Builder().withMinAggregation(Aggregation.Day)
+		BasicSecurityPolicy orig = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Month)
 				.build();
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withPolicy(orig)
+		BasicSecurityPolicy patch = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Day)
+				.build();
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withPolicy(orig)
 				.withMergedPolicy(patch).build();
-		Assert.assertEquals("Minimum aggregation", Aggregation.Day, policy.getMinAggregation());
-		Assert.assertEquals("Minimum aggregation set",
-				EnumSet.of(Aggregation.Day, Aggregation.DayOfWeek, Aggregation.SeasonalDayOfWeek,
+		assertThat("Minimum aggregation", policy.getMinAggregation(), is(Aggregation.Day));
+		assertThat("Minimum aggregation set", policy.getAggregations(),
+				contains(Aggregation.Day, Aggregation.DayOfWeek, Aggregation.SeasonalDayOfWeek,
 						Aggregation.Week, Aggregation.WeekOfYear, Aggregation.Month, Aggregation.Year,
-						Aggregation.RunningTotal),
-				policy.getAggregations());
+						Aggregation.RunningTotal));
 		try {
 			policy.getAggregations().add(Aggregation.Minute);
-			Assert.fail("Aggregation set should be immutable");
+			fail("Aggregation set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -233,17 +239,17 @@ public class BasicSecurityPolicyTests {
 
 	@Test
 	public void buildMinAggregationPolicyWithCache() {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
-				.withMinAggregation(Aggregation.Month).build();
-		BasicSecurityPolicy policy2 = new BasicSecurityPolicy.Builder()
-				.withMinAggregation(Aggregation.Month).build();
-		Assert.assertSame("Cached minimum aggregation set", policy.getAggregations(),
-				policy2.getAggregations());
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Month)
+				.build();
+		BasicSecurityPolicy policy2 = BasicSecurityPolicy.builder().withMinAggregation(Aggregation.Month)
+				.build();
+		assertThat("Cached minimum aggregation set", policy2.getAggregations(),
+				is(sameInstance(policy.getAggregations())));
 	}
 
 	@Test
 	public void buildMinLocationPrecisionPolicy() {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder()
 				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
 		Assert.assertEquals("Minimum location precision set",
 				EnumSet.of(LocationPrecision.PostalCode, LocationPrecision.Locality,
@@ -252,7 +258,7 @@ public class BasicSecurityPolicyTests {
 				policy.getLocationPrecisions());
 		try {
 			policy.getLocationPrecisions().add(LocationPrecision.LatLong);
-			Assert.fail("LocationPrecision set should be immutable");
+			fail("LocationPrecision set should be immutable");
 		} catch ( UnsupportedOperationException e ) {
 			// expected
 		}
@@ -260,25 +266,23 @@ public class BasicSecurityPolicyTests {
 
 	@Test
 	public void buildMinLocationPrecisionPolicyWithCache() {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder()
 				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
-		BasicSecurityPolicy policy2 = new BasicSecurityPolicy.Builder()
+		BasicSecurityPolicy policy2 = BasicSecurityPolicy.builder()
 				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
-		Assert.assertSame("Cached minimum location precision set", policy.getLocationPrecisions(),
-				policy2.getLocationPrecisions());
+		assertThat("Cached minimum location precision set", policy2.getLocationPrecisions(),
+				is(sameInstance(policy.getLocationPrecisions())));
 	}
 
 	@Test
 	public void buildExpiringPolicy() {
-		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withNotAfter(TEST_DATE)
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNotAfter(TEST_DATE)
 				.withRefreshAllowed(true).build();
-		assertThat("Not after set", TEST_DATE.isEqual(policy.getNotAfter()), equalTo(true));
+		assertThat("Not after set", TEST_DATE, equalTo(policy.getNotAfter()));
 		assertThat("Refresh allowed set", policy.getRefreshAllowed(), equalTo(true));
-		assertThat("Valid before", policy.isValidAt(TEST_DATE.plusMillis(-1).getMillis()),
-				equalTo(true));
-		assertThat("Valid at", policy.isValidAt(TEST_DATE.getMillis()), equalTo(true));
-		assertThat("Not valid after", policy.isValidAt(TEST_DATE.plusMillis(1).getMillis()),
-				equalTo(false));
+		assertThat("Valid before", policy.isValidAt(TEST_DATE.plusMillis(-1)), equalTo(true));
+		assertThat("Valid at", policy.isValidAt(TEST_DATE), equalTo(true));
+		assertThat("Not valid after", policy.isValidAt(TEST_DATE.plusMillis(1)), equalTo(false));
 	}
 
 	@Test
@@ -286,15 +290,14 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"nodeIds\":[1,2,3]}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Node ID set", new HashSet<Long>(Arrays.asList(1L, 2L, 3L)),
-				policy.getNodeIds());
+		assertThat("Node ID set", policy.getNodeIds(), contains(1L, 2L, 3L));
 	}
 
 	@Test
 	public void parseJsonEmptyNodeIdPolicy() throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"nodeIds\":[]}", BasicSecurityPolicy.class);
-		Assert.assertNull("Node ID set", policy.getNodeIds());
+		assertThat("Node ID set null instead of empty set", policy.getNodeIds(), is(nullValue()));
 	}
 
 	@Test
@@ -302,8 +305,7 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"sourceIds\":[\"one\",\"two\",\"three\"]}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Source ID set", new HashSet<String>(Arrays.asList("one", "two", "three")),
-				policy.getSourceIds());
+		assertThat("Source ID set", policy.getSourceIds(), contains("one", "two", "three"));
 	}
 
 	@Test
@@ -311,9 +313,8 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"minAggregation\":\"Month\"}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Minimum aggregation set",
-				EnumSet.of(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal),
-				policy.getAggregations());
+		assertThat("Minimum aggregation set", policy.getAggregations(),
+				containsInAnyOrder(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal));
 	}
 
 	@Test
@@ -321,8 +322,7 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"aggregations\":[\"Month\"]}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Exact aggregation set", EnumSet.of(Aggregation.Month),
-				policy.getAggregations());
+		assertThat("Exact aggregation set", policy.getAggregations(), contains(Aggregation.Month));
 	}
 
 	@Test
@@ -330,17 +330,17 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"minLocationPrecision\":\"TimeZone\"}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Minimum location precision set",
-				EnumSet.of(LocationPrecision.TimeZone, LocationPrecision.Country),
-				policy.getLocationPrecisions());
+		assertThat("Minimum location precision set", policy.getLocationPrecisions(),
+				containsInAnyOrder(LocationPrecision.TimeZone, LocationPrecision.Country));
 	}
 
 	@Test
 	public void parseJsonNotAfterPolicy() throws Exception {
-		ObjectMapper mapper = new ObjectMapper();
-		BasicSecurityPolicy policy = mapper.readValue("{\"notAfter\":" + TEST_DATE.getMillis() + "}",
+		ObjectMapper mapper = JsonUtils.newObjectMapper();
+		mapper.disable(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS);
+		BasicSecurityPolicy policy = mapper.readValue("{\"notAfter\":" + TEST_DATE.toEpochMilli() + "}",
 				BasicSecurityPolicy.class);
-		assertThat("Not after set", TEST_DATE.isEqual(policy.getNotAfter()), equalTo(true));
+		assertThat("Not after set", policy.getNotAfter(), is(equalTo(TEST_DATE)));
 	}
 
 	@Test
@@ -356,8 +356,8 @@ public class BasicSecurityPolicyTests {
 		ObjectMapper mapper = new ObjectMapper();
 		BasicSecurityPolicy policy = mapper.readValue("{\"locationPrecisions\":[\"TimeZone\"]}",
 				BasicSecurityPolicy.class);
-		Assert.assertEquals("Exact location precision set", EnumSet.of(LocationPrecision.TimeZone),
-				policy.getLocationPrecisions());
+		assertThat("Exact location precision set", policy.getLocationPrecisions(),
+				contains(LocationPrecision.TimeZone));
 	}
 
 }

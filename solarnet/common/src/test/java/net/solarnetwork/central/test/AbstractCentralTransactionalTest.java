@@ -36,17 +36,15 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.BeforeTransaction;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.security.AuthenticatedNode;
 
 /**
  * Base test class for transactional unit tests.
  * 
  * @author matt
- * @version 2.2
+ * @version 3.0
  */
 @ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
-@Transactional(transactionManager = "txManager")
 @Rollback
 public abstract class AbstractCentralTransactionalTest
 		extends AbstractTransactionalJUnit4SpringContextTests implements CentralTestConstants {
