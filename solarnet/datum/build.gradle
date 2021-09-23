@@ -17,15 +17,14 @@ description = 'SolarNet: Datum'
 version = '0.1.0'
 archivesBaseName = 'solarnet-datum'
 
-configurations {
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
+	
+	// Utils
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
