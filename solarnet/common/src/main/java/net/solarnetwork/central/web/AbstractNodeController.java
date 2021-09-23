@@ -104,11 +104,10 @@ public abstract class AbstractNodeController {
 	 * <p>
 	 * This sets up a new {@link CloningPropertyEditorRegistrar} as a request
 	 * attribute, which could be used by the view for serializing model
-	 * properties in some way. A common use for this is to serialize
-	 * {@link DateTime} objects into Strings, so this method accepts a
-	 * {@code dateFormat} and {@code node} property which, if provided, will add
-	 * a {@link JodaDateFormatEditor} to the registrar for all {@link DateTime}
-	 * objects, configured with the node's time zone.
+	 * properties in some way. A common use for this is to serialize date
+	 * objects into Strings, so this method accepts a {@code dateFormat} and
+	 * {@code node} property which, if provided, will add an editor to the
+	 * registrar for all date objects, configured with the node's time zone.
 	 * </p>
 	 * 
 	 * @param request

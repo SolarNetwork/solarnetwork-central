@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Consumer;
 import javax.mail.MessagingException;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -45,7 +45,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class DefaultMailService implements MailService {
 

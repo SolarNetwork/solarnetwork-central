@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
-import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseEntity;
@@ -39,11 +39,11 @@ import net.solarnetwork.domain.SerializeIgnore;
  */
 public class UserAlertSituation extends BaseEntity {
 
-	private static final long serialVersionUID = -8362863080058243096L;
+	private static final long serialVersionUID = -6858352050110675205L;
 
 	private UserAlert alert;
 	private UserAlertSituationStatus status;
-	private DateTime notified;
+	private Instant notified;
 	private Map<String, Object> info;
 	private String infoJson;
 
@@ -63,11 +63,11 @@ public class UserAlertSituation extends BaseEntity {
 		this.status = status;
 	}
 
-	public DateTime getNotified() {
+	public Instant getNotified() {
 		return notified;
 	}
 
-	public void setNotified(DateTime notified) {
+	public void setNotified(Instant notified) {
 		this.notified = notified;
 	}
 

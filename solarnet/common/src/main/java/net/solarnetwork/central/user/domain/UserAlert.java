@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
-import org.joda.time.DateTime;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -50,13 +50,13 @@ import net.solarnetwork.domain.SerializeIgnore;
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 
-	private static final long serialVersionUID = 1374111067444093568L;
+	private static final long serialVersionUID = -912662853889560214L;
 
 	private Long userId;
 	private UserAlertType type;
 	private UserAlertStatus status;
 	private Long nodeId;
-	private DateTime validTo;
+	private Instant validTo;
 	private Map<String, Object> options;
 	private String optionsJson;
 
@@ -133,11 +133,11 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 		this.nodeId = nodeId;
 	}
 
-	public DateTime getValidTo() {
+	public Instant getValidTo() {
 		return validTo;
 	}
 
-	public void setValidTo(DateTime validTo) {
+	public void setValidTo(Instant validTo) {
 		this.validTo = validTo;
 	}
 

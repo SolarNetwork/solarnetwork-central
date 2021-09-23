@@ -24,7 +24,7 @@ package net.solarnetwork.central.user.biz;
 
 import java.io.IOException;
 import java.io.InputStream;
-import org.joda.time.ReadablePeriod;
+import java.time.Period;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
 import net.solarnetwork.central.user.domain.PasswordEntry;
@@ -248,9 +248,9 @@ public interface RegistrationBiz {
 	 * 
 	 * @return The node certificate renewal period, or {@code null} if there is
 	 *         no limit.
-	 * @since 1.4
+	 * @since 2.0
 	 */
-	ReadablePeriod getNodeCertificateRenewalPeriod();
+	Period getNodeCertificateRenewalPeriod();
 
 	/**
 	 * Renew a certificate generated and signed by SolarUser by a previous call

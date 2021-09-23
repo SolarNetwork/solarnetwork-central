@@ -25,9 +25,10 @@ package net.solarnetwork.central.common.dao.jdbc.test;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import javax.sql.DataSource;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -51,33 +52,33 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 
 	@Test
 	public void formatRfc1123DateSmallDay() {
-		DateTime date = new DateTime(2019, 2, 4, 22, 30, DateTimeZone.UTC);
+		Instant date = LocalDateTime.of(2019, 2, 4, 22, 30).toInstant(ZoneOffset.UTC);
 		String val = jdbcTemplate.queryForObject("SELECT solarcommon.to_rfc1123_utc(?)", String.class,
-				new Timestamp(date.getMillis()));
+				Timestamp.from(date));
 		assertThat("Formatted date", val, equalTo("Mon, 04 Feb 2019 22:30:00 GMT"));
 	}
 
 	@Test
 	public void formatRfc1123DateBigDay() {
-		DateTime date = new DateTime(2019, 2, 11, 22, 30, DateTimeZone.UTC);
+		Instant date = LocalDateTime.of(2019, 2, 11, 22, 30).toInstant(ZoneOffset.UTC);
 		String val = jdbcTemplate.queryForObject("SELECT solarcommon.to_rfc1123_utc(?)", String.class,
-				new Timestamp(date.getMillis()));
+				Timestamp.from(date));
 		assertThat("Formatted date", val, equalTo("Mon, 11 Feb 2019 22:30:00 GMT"));
 	}
 
 	@Test
 	public void formatRfc1123DateSmallHourAndMinutesAndSeconds() {
-		DateTime date = new DateTime(2019, 2, 4, 2, 3, 4, DateTimeZone.UTC);
+		Instant date = LocalDateTime.of(2019, 2, 4, 2, 3, 4).toInstant(ZoneOffset.UTC);
 		String val = jdbcTemplate.queryForObject("SELECT solarcommon.to_rfc1123_utc(?)", String.class,
-				new Timestamp(date.getMillis()));
+				Timestamp.from(date));
 		assertThat("Formatted date", val, equalTo("Mon, 04 Feb 2019 02:03:04 GMT"));
 	}
 
 	@Test
 	public void formatRfc1123DateBigHourAndMinutesAndSeconds() {
-		DateTime date = new DateTime(2019, 2, 4, 22, 33, 44, DateTimeZone.UTC);
+		Instant date = LocalDateTime.of(2019, 2, 4, 22, 33, 44).toInstant(ZoneOffset.UTC);
 		String val = jdbcTemplate.queryForObject("SELECT solarcommon.to_rfc1123_utc(?)", String.class,
-				new Timestamp(date.getMillis()));
+				Timestamp.from(date));
 		assertThat("Formatted date", val, equalTo("Mon, 04 Feb 2019 22:33:44 GMT"));
 	}
 }

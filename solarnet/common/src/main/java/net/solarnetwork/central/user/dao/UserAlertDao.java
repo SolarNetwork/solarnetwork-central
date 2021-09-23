@@ -22,18 +22,18 @@
 
 package net.solarnetwork.central.user.dao;
 
+import java.time.Instant;
 import java.util.List;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 import net.solarnetwork.central.user.domain.UserAlertType;
-import org.joda.time.DateTime;
 
 /**
  * DAO API for UserAlert objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 
@@ -58,8 +58,9 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 * @param max
 	 *        An optional maximum number of result rows to return.
 	 * @return The found alerts, or an empty list if none found.
+	 * @since 2.0
 	 */
-	List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, DateTime validDate,
+	List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Instant validDate,
 			Integer max);
 
 	/**
@@ -103,9 +104,9 @@ public interface UserAlertDao extends GenericDao<UserAlert, Long> {
 	 *        The ID of the alert to update.
 	 * @param validTo
 	 *        The new value for the {@code validTo} property.
-	 * @since 1.1
+	 * @since 2.0
 	 */
-	void updateValidTo(Long alertId, DateTime validTo);
+	void updateValidTo(Long alertId, Instant validTo);
 
 	/**
 	 * Get all available active situations for a given user. The situations are

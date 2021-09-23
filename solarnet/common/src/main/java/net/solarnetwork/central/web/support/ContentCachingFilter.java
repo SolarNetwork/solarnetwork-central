@@ -264,7 +264,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 						headers.add(headerName, headerValue);
 					}
 				}
-				service.cacheResponse(key, origRequest, wrappedResponse.getStatusCode(), headers,
+				service.cacheResponse(key, origRequest, wrappedResponse.getStatus(), headers,
 						wrappedResponse.getContentInputStream());
 			}
 

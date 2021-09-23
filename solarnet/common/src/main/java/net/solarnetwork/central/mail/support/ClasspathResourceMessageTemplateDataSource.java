@@ -25,7 +25,7 @@ package net.solarnetwork.central.mail.support;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringMerger;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDataSource
 		implements MessageTemplateDataSource {

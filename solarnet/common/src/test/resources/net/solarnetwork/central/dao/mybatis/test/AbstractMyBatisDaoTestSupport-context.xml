@@ -29,10 +29,6 @@
 		</property>
 		<property name="typeHandlers">
 			<list>
-				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaDateTimeTypeHandler"/>
-				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler"/>
-				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTypeHandler"/>
-				<bean class="net.solarnetwork.central.dao.mybatis.type.JodaLocalTimeTypeHandler"/>
 			</list>
 		</property>
 		<property name="mapperLocations">

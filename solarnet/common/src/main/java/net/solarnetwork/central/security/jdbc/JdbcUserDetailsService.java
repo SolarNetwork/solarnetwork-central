@@ -65,7 +65,7 @@ import net.solarnetwork.central.security.SecurityPolicy;
  * </ol>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -112,37 +112,35 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	protected List<UserDetails> loadUsersByUsername(String username) {
-		return getJdbcTemplate().query(getUsersByUsernameQuery(), new String[] { username },
-				new RowMapper<UserDetails>() {
+		return getJdbcTemplate().query(getUsersByUsernameQuery(), new RowMapper<UserDetails>() {
 
-					@Override
-					public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-						String username = rs.getString(1);
-						String password = rs.getString(2);
-						boolean enabled = rs.getBoolean(3);
-						Long id = rs.getLong(4);
-						String name = rs.getString(5);
-						boolean authWithToken = rs.getBoolean(6);
-						if ( authWithToken ) {
-							String tokenType = rs.getString(7);
-							String policyJson = rs.getString(8);
-							SecurityPolicy policy = null;
-							if ( policyJson != null ) {
-								try {
-									policy = objectMapper.readValue(policyJson,
-											BasicSecurityPolicy.class);
-								} catch ( IOException e ) {
-									log.warn("Error deserializing SecurityPolicy from [{}]: {}",
-											policyJson, e.getMessage());
-								}
-							}
-							return new AuthenticatedToken(new User(username, password, enabled, true,
-									true, true, AuthorityUtils.NO_AUTHORITIES), tokenType, id, policy);
+			@Override
+			public UserDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+				String username = rs.getString(1);
+				String password = rs.getString(2);
+				boolean enabled = rs.getBoolean(3);
+				Long id = rs.getLong(4);
+				String name = rs.getString(5);
+				boolean authWithToken = rs.getBoolean(6);
+				if ( authWithToken ) {
+					String tokenType = rs.getString(7);
+					String policyJson = rs.getString(8);
+					SecurityPolicy policy = null;
+					if ( policyJson != null ) {
+						try {
+							policy = objectMapper.readValue(policyJson, BasicSecurityPolicy.class);
+						} catch ( IOException e ) {
+							log.warn("Error deserializing SecurityPolicy from [{}]: {}", policyJson,
+									e.getMessage());
 						}
-						return new AuthenticatedUser(new User(username, password, enabled, true, true,
-								true, AuthorityUtils.NO_AUTHORITIES), id, name, false);
 					}
-				});
+					return new AuthenticatedToken(new User(username, password, enabled, true, true, true,
+							AuthorityUtils.NO_AUTHORITIES), tokenType, id, policy);
+				}
+				return new AuthenticatedUser(new User(username, password, enabled, true, true, true,
+						AuthorityUtils.NO_AUTHORITIES), id, name, false);
+			}
+		}, username);
 	}
 
 	@Override

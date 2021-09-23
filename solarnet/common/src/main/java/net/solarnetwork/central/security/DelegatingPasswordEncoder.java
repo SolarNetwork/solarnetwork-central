@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security;
 
 import java.util.Map;
+import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * Password encoder that delegates to a configurable list of Spring Security
@@ -30,23 +31,11 @@ import java.util.Map;
  * instances, returning passwords with a prefix tag to be able to recognize what
  * encryption technique was used.
  * 
- * <p>
- * The configurable properties of this class are:
- * </p>
- * 
- * <dl class="class-properties">
- * <dt>encoders</dt>
- * <dd>An ordered Map of password prefix tag keys to associated
- * <code>PasswordEncoder</code> instances. The first entry in the map according
- * to iteration order will be used as the primary encoder. Thus a map
- * implementation like {@link java.util.LinkedHashMap} is recommended.</dd>
- * </dl>
- * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class DelegatingPasswordEncoder implements PasswordEncoder,
-		org.springframework.security.crypto.password.PasswordEncoder {
+public class DelegatingPasswordEncoder
+		implements PasswordEncoder, org.springframework.security.crypto.password.PasswordEncoder {
 
 	private Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
 
@@ -89,6 +78,19 @@ public class DelegatingPasswordEncoder implements PasswordEncoder,
 		return false;
 	}
 
+	/**
+	 * Set an ordered Map of password prefix tag keys to associated
+	 * {@code PasswordEncoder} instances.
+	 * 
+	 * <p>
+	 * The first entry in the map according to iteration order will be used as
+	 * the primary encoder. Thus a map implementation like
+	 * {@link java.util.LinkedHashMap} is recommended.
+	 * </p>
+	 * 
+	 * @param encoders
+	 *        the encoders to set
+	 */
 	public void setEncoders(
 			Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {
 		this.encoders = encoders;

@@ -24,7 +24,7 @@
 
 package net.solarnetwork.central.user.domain;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
 import net.solarnetwork.central.domain.BaseEntity;
 
 /**
@@ -33,16 +33,16 @@ import net.solarnetwork.central.domain.BaseEntity;
  * UserNode entity is created.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class UserNodeConfirmation extends BaseEntity implements UserRelatedEntity<Long> {
 
-	private static final long serialVersionUID = -598611218946751443L;
+	private static final long serialVersionUID = -3535047613550046877L;
 
 	private User user;
 	private Long nodeId;
 	private String confirmationKey;
-	private DateTime confirmationDate;
+	private Instant confirmationDate;
 	private String securityPhrase;
 	private String country;
 	private String timeZoneId;
@@ -77,11 +77,11 @@ public class UserNodeConfirmation extends BaseEntity implements UserRelatedEntit
 		this.confirmationKey = confirmationKey;
 	}
 
-	public DateTime getConfirmationDate() {
+	public Instant getConfirmationDate() {
 		return confirmationDate;
 	}
 
-	public void setConfirmationDate(DateTime confirmationDate) {
+	public void setConfirmationDate(Instant confirmationDate) {
 		this.confirmationDate = confirmationDate;
 	}
 

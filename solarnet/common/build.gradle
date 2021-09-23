@@ -64,6 +64,7 @@ dependencies {
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
 	implementation 'commons-codec:commons-codec'
 	implementation 'org.apache.commons:commons-lang3'
+	implementation 'org.apache.commons:commons-text:1.9'
 	implementation 'org.slf4j:slf4j-api'
 	
 	// OSGi Compatibility

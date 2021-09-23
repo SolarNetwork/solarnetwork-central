@@ -3,7 +3,7 @@
 <mapper namespace="net.solarnetwork.central.dao.mybatis.type.test">
 
 	<select id="test-set-local-date-time" resultType="java.sql.Timestamp">
-		SELECT #{date,typeHandler=net.solarnetwork.central.dao.mybatis.type.JodaLocalDateTimeTypeHandler,jdbcType=TIMESTAMP}::timestamp AS local_date
+		SELECT #{date,jdbcType=TIMESTAMP}::timestamp AS local_date
 	</select>
 
 	<select id="test-find-local-date-time" resultType="org.joda.time.LocalDateTime">
