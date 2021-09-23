@@ -1,28 +1,20 @@
 plugins {
-    //id 'checkstyle'
     id 'java-library'
-    id 'eclipse'
-    id 'org.springframework.boot' version '2.5.3' apply false
+	id 'org.springframework.boot' version '2.5.3' apply false
 }
 
-//apply plugin: 'checkstyle'
-apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'io.spring.dependency-management'
-
-description = 'SolarNet: Common'
-version = '0.1.0'
-archivesBaseName = 'solarnet-common'
-
-/*checkstyle {
-	toolVersion = "${checkstyleVersion}"
-	configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-}*/
 
 dependencyManagement {
 	imports {
 		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
 	}
 }
+
+description = 'SolarNet: Common'
+version = '0.1.0'
+archivesBaseName = 'solarnet-common'
 
 configurations {
 	all*.exclude group: 'net.sf.supercsv'
@@ -77,18 +69,9 @@ dependencies {
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.0.0'
 	
 	// Testing
-	testImplementation 'ch.qos.logback:logback-classic'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-	testImplementation 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.17.0'
-}
-
-eclipse {
-	project {
-		//natures 'net.sf.eclipsecs.core.CheckstyleNature'
-		//buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
-	}
+	testImplementation project(':solarnet-common-test')
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 
 jar.manifest {

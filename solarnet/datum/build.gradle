@@ -1,0 +1,37 @@
+plugins {
+    id 'java-library'
+	id 'org.springframework.boot' version '2.5.3' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Datum'
+version = '0.1.0'
+archivesBaseName = 'solarnet-datum'
+
+configurations {
+	all*.exclude group: 'net.sf.supercsv'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+
+	// Spring support
+	implementation 'org.springframework.boot:spring-boot-starter'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+	//testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	//testImplementation 'org.junit.jupiter:junit-jupiter-api'
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}

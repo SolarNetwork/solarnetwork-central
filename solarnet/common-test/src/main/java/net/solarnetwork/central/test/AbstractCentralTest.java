@@ -24,16 +24,14 @@ package net.solarnetwork.central.test;
 
 import java.util.logging.Level;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 
 /**
  * Abstract base class for central non-transactional unit tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-@ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 public abstract class AbstractCentralTest extends AbstractJUnit4SpringContextTests
 		implements CentralTestConstants {
 

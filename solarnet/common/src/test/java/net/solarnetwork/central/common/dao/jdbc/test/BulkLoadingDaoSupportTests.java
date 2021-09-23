@@ -32,8 +32,6 @@ import javax.sql.DataSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -47,6 +45,7 @@ import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
+import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
 /**
  * Test cases for the {@link BulkLoadingDaoSupport} class.
@@ -60,8 +59,6 @@ import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
  * @version 2.0
  */
 public class BulkLoadingDaoSupportTests extends AbstractJdbcDaoTestSupport {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private JdbcTemplate jdbcTemplate;
 	private PlatformTransactionManager txManager;

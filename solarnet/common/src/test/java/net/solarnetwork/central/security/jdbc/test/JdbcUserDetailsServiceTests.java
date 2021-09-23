@@ -39,11 +39,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.common.dao.jdbc.test.AbstractJdbcDaoTestSupport;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
+import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
 
 /**

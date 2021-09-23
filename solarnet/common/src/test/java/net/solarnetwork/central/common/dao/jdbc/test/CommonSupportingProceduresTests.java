@@ -23,7 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import java.sql.Timestamp;
 import javax.sql.DataSource;
 import org.joda.time.DateTime;
@@ -31,6 +31,7 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
 /**
  * Test cases for common supporting database functions.

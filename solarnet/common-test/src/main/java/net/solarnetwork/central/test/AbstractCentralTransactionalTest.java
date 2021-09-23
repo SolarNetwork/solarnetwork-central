@@ -29,14 +29,11 @@ import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.Rollback;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.BeforeTransaction;
-import net.solarnetwork.central.security.AuthenticatedNode;
 
 /**
  * Base test class for transactional unit tests.
@@ -44,7 +41,6 @@ import net.solarnetwork.central.security.AuthenticatedNode;
  * @author matt
  * @version 3.0
  */
-@ContextConfiguration(locations = { "classpath:/net/solarnetwork/central/test/test-context.xml" })
 @Rollback
 public abstract class AbstractCentralTransactionalTest
 		extends AbstractTransactionalJUnit4SpringContextTests implements CentralTestConstants {
@@ -101,22 +97,6 @@ public abstract class AbstractCentralTransactionalTest
 		int count = jdbcTemplate.queryForObject(
 				"select count(*) from solarnet.sn_node where node_id = ?", Integer.class, nodeId);
 		log.debug("Test SolarNode [" + nodeId + "] created: " + count);
-	}
-
-	/**
-	 * Set the currently authenticated user to an {@link AuthenticatedNode} with
-	 * the given ID.
-	 * 
-	 * @param nodeId
-	 *        the node ID to use
-	 * @return the AuthenticatedNode
-	 * @since 1.2
-	 */
-	protected AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
-		AuthenticatedNode node = new AuthenticatedNode(nodeId, null, false);
-		TestingAuthenticationToken auth = new TestingAuthenticationToken(node, "foobar", "ROLE_NODE");
-		setAuthenticatedUser(auth);
-		return node;
 	}
 
 	/**

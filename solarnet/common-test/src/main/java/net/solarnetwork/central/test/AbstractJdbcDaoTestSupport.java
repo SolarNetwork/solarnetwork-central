@@ -20,11 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc.test;
+package net.solarnetwork.central.test;
 
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
  * Base class for JDBC DAO support.
@@ -33,6 +33,7 @@ import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
  * @version 1.0
  * @since 2.0
  */
+@ContextConfiguration
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class AbstractJdbcDaoTestSupport extends AbstractCentralTransactionalTest {
