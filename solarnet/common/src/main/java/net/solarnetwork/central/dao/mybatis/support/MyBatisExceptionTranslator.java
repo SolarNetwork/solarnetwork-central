@@ -46,7 +46,7 @@ import org.springframework.util.MultiValueMap;
  * are returned themselves.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.2
  */
 public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExceptionTranslator {
@@ -113,7 +113,7 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 		Properties props = new Properties();
 		try {
 			props.load(getClass().getResourceAsStream("sql-error-matches.properties"));
-		} catch ( IOException e ) {
+		} catch ( IOException | NullPointerException e ) {
 			log.warn("Error loading SQL error matches properties file: {}", e.toString());
 		}
 		this.sqlStateConfigurations = loadSqlStateProperties(props);

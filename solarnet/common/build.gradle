@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'eclipse'
 	id 'org.springframework.boot' version '2.5.3' apply false
 }
 
@@ -34,6 +35,10 @@ dependencies {
 	implementation 'org.mybatis:mybatis:3.5.7'
 	implementation 'org.mybatis:mybatis-spring:2.0.6'
 	runtime "org.postgresql:postgresql:${postgresJdbcVersion}"
+	
+	// JAXB
+	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
+	implementation 'com.sun.xml.bind:jaxb-impl:2.3.5'
 	
 	// JCache
 	implementation 'javax.cache:cache-api'
@@ -78,3 +83,8 @@ jar.manifest {
     attributes('Implementation-Version': version)
 }
 
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}

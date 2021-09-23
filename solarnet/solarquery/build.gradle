@@ -64,3 +64,9 @@ bootJar {
 					'Implementation-Version': version
 	}
 }
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}

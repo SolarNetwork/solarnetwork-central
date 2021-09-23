@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'eclipse'
 	id 'org.springframework.boot' version '2.5.3' apply false
 }
 
@@ -34,4 +35,10 @@ dependencies {
 
 jar.manifest {
     attributes('Implementation-Version': version)
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
 }

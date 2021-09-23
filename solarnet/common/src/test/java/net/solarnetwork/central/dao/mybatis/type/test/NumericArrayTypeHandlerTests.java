@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.dao.mybatis.type.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import org.apache.ibatis.session.SqlSession;
 import org.junit.Test;
@@ -35,7 +35,7 @@ import net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler;
  * Test cases for the {@link NumericArrayTypeHandler} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class NumericArrayTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 

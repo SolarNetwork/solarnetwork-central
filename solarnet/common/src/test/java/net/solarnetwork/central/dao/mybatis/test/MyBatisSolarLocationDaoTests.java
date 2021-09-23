@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * Test cases for the {@link MyBatisSolarLocationDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport {
 

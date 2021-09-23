@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.dao.mybatis.support.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.junit.Test;
@@ -35,7 +35,7 @@ import net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator;
  * Test cases for the {@link MyBatisExceptionTranslator} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class MyBatisExceptionTranslatorTests {
 

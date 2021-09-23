@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.support.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import org.junit.Test;
 import net.solarnetwork.central.support.FilterSupport;
 
@@ -32,7 +32,7 @@ import net.solarnetwork.central.support.FilterSupport;
  * Test cases for the {@link FilterSupport} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class FilterSupportTests {
 

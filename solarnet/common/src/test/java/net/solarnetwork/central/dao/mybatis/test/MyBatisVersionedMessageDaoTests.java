@@ -24,9 +24,9 @@ package net.solarnetwork.central.dao.mybatis.test;
 
 import static java.time.Instant.now;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -46,7 +46,7 @@ import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
  * Test cases for the {@link MyBatisVersionedMessageDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class MyBatisVersionedMessageDaoTests extends AbstractMyBatisDaoTestSupport {
 

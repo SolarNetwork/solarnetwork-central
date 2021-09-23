@@ -129,6 +129,7 @@ public class SecurityPolicyEnforcerTests {
 			return metadata;
 		}
 
+		@SuppressWarnings("unused")
 		public void setMetadata(GeneralDatumMetadata metadata) {
 			this.metadata = metadata;
 		}

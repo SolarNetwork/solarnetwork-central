@@ -29,9 +29,9 @@ import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -57,7 +57,7 @@ import net.solarnetwork.central.web.support.SimpleCachedContent;
  * Test cases for the {@link JCacheContentCachingService} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class JCacheContentCachingServiceTests {
 

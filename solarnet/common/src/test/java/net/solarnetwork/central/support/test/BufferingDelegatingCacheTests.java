@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.support.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,7 +66,7 @@ import net.solarnetwork.central.support.JCacheFactoryBean;
  * Test cases for the {@link BufferingDelegatingCache} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<Integer, Integer> {
 
