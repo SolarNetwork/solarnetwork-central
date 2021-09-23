@@ -41,6 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.util.StringUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
@@ -54,6 +56,8 @@ import net.solarnetwork.web.security.WebConstants;
  * @version 1.1
  */
 public final class SecurityWebTestUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(SecurityWebTestUtils.class);
 
 	public static final String HTTP_HEADER_HOST = "Host";
 	public static final String TEST_HOST = "host.example.com";
@@ -248,7 +252,9 @@ public final class SecurityWebTestUtils {
 		// 6: Content SHA256
 		appendContentSHA256(request, buf);
 
-		return buf.toString();
+		String result = buf.toString();
+		log.debug("Canonical req data: \n{}", result);
+		return result;
 
 	}
 
@@ -259,8 +265,10 @@ public final class SecurityWebTestUtils {
 		*/
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+		String sigDate = sdf.format(date);
+		log.debug("Sign date: " + sigDate);
 		return computeHMACSHA256(
-				computeHMACSHA256(AuthenticationScheme.V2.getSchemeName() + secretKey, sdf.format(date)),
+				computeHMACSHA256(AuthenticationScheme.V2.getSchemeName() + secretKey, sigDate),
 				"snws2_request");
 	}
 
@@ -271,8 +279,10 @@ public final class SecurityWebTestUtils {
 		 	20170301T120000Z\n
 		 	Hex(SHA256(canonicalRequestData))
 		*/
-		return "SNWS2-HMAC-SHA256\n" + iso8601Date(date) + "\n"
+		String result = "SNWS2-HMAC-SHA256\n" + iso8601Date(date) + "\n"
 				+ Hex.encodeHexString(DigestUtils.sha256(canonicalRequestData));
+		log.debug("Signature data: \n{}", result);
+		return result;
 	}
 
 	/**

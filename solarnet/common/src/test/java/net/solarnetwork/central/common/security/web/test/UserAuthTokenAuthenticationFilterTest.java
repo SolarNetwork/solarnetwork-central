@@ -414,6 +414,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -436,6 +437,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -458,6 +460,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV1Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V1, "Content md5 digest value mismatch");
@@ -477,6 +480,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content md5 digest value mismatch");
@@ -518,6 +522,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -540,6 +545,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		filterChain.doFilter(anyObject(HttpServletRequest.class), same(response));
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
@@ -562,6 +568,7 @@ public class UserAuthTokenAuthenticationFilterTest {
 		request.addHeader("Date", now);
 		setupAuthorizationHeader(request, createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN,
 				TEST_PASSWORD, request, now, contentType));
+		request.setContent(content.getBytes("UTF-8")); // reset InputStream
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Content sha-256 digest value mismatch");
