@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.time.Instant;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -215,6 +216,6 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 */
 	public boolean isExpired() {
 		SecurityPolicy policy = getPolicy();
-		return (policy != null && !policy.isValidAt(System.currentTimeMillis()));
+		return (policy != null && !policy.isValidAt(Instant.now()));
 	}
 }
