@@ -1163,11 +1163,14 @@ public final class DatumJsonUtils {
 	 * Parse a JSON string timestamp.
 	 * 
 	 * <p>
-	 * An example JSON object supported by this method looks like this:
+	 * An example JSON object supported by this method looks like these:
 	 * </p>
 	 * 
 	 * <pre>
-	 * <code>"2020-06-01T00:00:00Z"</code>
+	 * <code>
+	 * "2020-06-01T00:00:00Z"
+	 * "2020-06-01 00:00:00Z"
+	 * </code>
 	 * </pre>
 	 * 
 	 * @param parser
@@ -1183,11 +1186,14 @@ public final class DatumJsonUtils {
 			timestamp = Instant.ofEpochMilli(parser.getLongValue());
 		} else {
 			// parse as ISO 8601 instant
+			String text = parser.getText();
+			if ( text != null ) {
+				text = text.replace(' ', 'T');
+			}
 			try {
-				timestamp = ISO_INSTANT.parse(parser.getText(), Instant::from);
+				timestamp = ISO_INSTANT.parse(text, Instant::from);
 			} catch ( DateTimeParseException e ) {
-				ZonedDateTime zdt = DateTimeFormatter.ISO_DATE_TIME.parse(parser.getText(),
-						ZonedDateTime::from);
+				ZonedDateTime zdt = DateTimeFormatter.ISO_DATE_TIME.parse(text, ZonedDateTime::from);
 				timestamp = zdt.toInstant();
 			}
 		}

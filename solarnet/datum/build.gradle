@@ -25,6 +25,7 @@ dependencies {
 	
 	// Utils
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.aspectj:aspectjweaver'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
