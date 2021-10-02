@@ -1,5 +1,5 @@
 /* ==================================================================
- * AbstractMyBatisDaoTestSupport.java - Nov 8, 2014 1:30:18 PM
+ * AbstractMyBatisUserDaoTestSupport.java - Nov 11, 2014 6:41:43 AM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -20,18 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.mybatis.test;
+package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.junit.Assert.assertNotNull;
+import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.Before;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
+import net.solarnetwork.central.user.domain.User;
 
 /**
- * Supporting class for MyBatis tests.
+ * Base class for user DAO tests.
  * 
  * @author matt
  * @version 2.0
@@ -39,7 +44,11 @@ import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralTransactionalTest {
+
+	public static final String TEST_EMAIL = "foo@localhost.localdomain";
+	public static final String TEST_NAME = "Foo Bar";
+	public static final String TEST_PASSWORD = "password";
 
 	@Autowired
 	private SqlSessionFactory sqlSessionFactory;
@@ -53,6 +62,45 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	protected SqlSessionFactory getSqlSessionFactory() {
 		return sqlSessionFactory;
+	}
+
+	protected MyBatisUserDao userDao;
+
+	@Before
+	public void setup() {
+		userDao = new MyBatisUserDao();
+		userDao.setSqlSessionFactory(sqlSessionFactory);
+	}
+
+	/**
+	 * Persist a new User and return it.
+	 * 
+	 * @param email
+	 *        the email of the new user
+	 * @return the User
+	 */
+	protected User createNewUser(String email) {
+		return userDao.get(storeNewUser(email));
+	}
+
+	/**
+	 * Persist a new User and return its primary key.
+	 * 
+	 * @param email
+	 *        the email of the new user
+	 * @return the primary key
+	 */
+	protected Long storeNewUser(String email) {
+		User newUser = new User();
+		newUser.setCreated(Instant.now());
+		newUser.setEmail(email);
+		newUser.setName(TEST_NAME);
+		newUser.setPassword(TEST_PASSWORD);
+		newUser.setEnabled(Boolean.TRUE);
+		Long id = userDao.store(newUser);
+		logger.debug("Got new user PK: " + id);
+		assertNotNull(id);
+		return id;
 	}
 
 }

@@ -76,7 +76,6 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 

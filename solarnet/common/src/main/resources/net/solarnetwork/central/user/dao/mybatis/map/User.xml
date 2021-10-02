@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:38 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.User">
+
+	<cache flushInterval="${cache.user.flush}"/>
+
+	<insert id="insert-User" parameterType="User">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.solaruser_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_user 
+			(id, created, disp_name, email, password, enabled,
+			loc_id, jdata)
+		VALUES
+			(#{id}, #{created}, #{name}, #{email}, #{password}, #{enabled},
+			#{locationId}, #{internalDataJson}::jsonb)
+	</insert>
+
+	<update id="update-User" parameterType="User">
+		UPDATE solaruser.user_user SET
+			disp_name = #{name}, 
+			email = #{email}, 
+			password = #{password},
+			enabled = #{enabled},
+			loc_id = #{locationId}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-User-full-result">
+		u.id AS user_id, 
+		u.created AS user_created,
+		u.disp_name AS user_disp_name,
+		u.email AS user_email,
+		u.password AS user_password,
+		u.enabled AS user_enabled,
+		u.loc_id AS user_loc_id,
+		u.jdata AS user_jdata
+	</sql>
+
+	<sql id="fragment-User-share-result">
+		u.id AS user_id, 
+		u.disp_name AS user_disp_name,
+		u.email AS user_email
+	</sql>
+
+	<resultMap id="UserInternalDataResult" type="User">
+		<result property="internalDataJson" column="user_jdata"/>
+	</resultMap>
+	
+	<resultMap id="UserFullResult" type="User">
+		<id property="id" column="user_id"/>
+		<result property="created" column="user_created"/>
+		<result property="name" column="user_disp_name"/>
+		<result property="email" column="user_email"/>
+		<result property="password" column="user_password"/>
+		<result property="enabled" column="user_enabled"/>
+		<result property="locationId" column="user_loc_id"/>
+		<result property="internalDataJson" column="user_jdata"/>
+	</resultMap>
+	
+	<select id="get-User-for-id" parameterType="long" resultMap="UserFullResult">
+		SELECT
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		WHERE
+			u.id = #{id}
+	</select>
+	
+	<select id="get-User-internal-data" parameterType="long" resultMap="UserInternalDataResult" useCache="false">
+		SELECT
+			u.jdata AS user_jdata
+		FROM
+			solaruser.user_user u
+		WHERE
+			u.id = #{id}
+	</select>
+	
+	<select id="get-User-for-email" resultMap="UserFullResult">
+		SELECT
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		WHERE
+			u.email = #{email}::citext
+	</select>
+	
+	<select id="find-roles-for-User" resultType="java.lang.String">
+		SELECT role_name FROM solaruser.user_role
+		WHERE user_id = #{id}
+	</select>
+	
+	<delete id="delete-roles-for-User">
+		DELETE FROM solaruser.user_role
+		WHERE user_id = #{id}
+	</delete>
+	
+	<insert id="insert-role-for-User">
+		INSERT INTO solaruser.user_role (user_id, role_name)
+		VALUES (#{userId}, #{role})
+	</insert>
+	
+	<parameterMap id="pmap-store-user-data" type="map">
+		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="dataJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="update-internal-data" parameterMap="pmap-store-user-data" statementType="CALLABLE">
+		{call solaruser.store_user_data(?, ?::jsonb)}
+	</update>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="UserMatchResult" type="UserMatch" extends="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+
+	<sql id="fragment-findall-User-UserMatch-where">
+		<where>
+			<if test="filter.email != null">
+				AND u.email = #{filter.email}::citext
+			</if>
+			<if test="filter.internalData != null and filter.internalData.size &gt; 0">
+				AND u.jdata @> #{filter.internalDataJson}::jsonb
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-User-UserMatch" resultMap="UserMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY" useCache="false">
+		SELECT
+			<include refid="fragment-User-full-result"/>
+		FROM
+			solaruser.user_user u
+		<include refid="fragment-findall-User-UserMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">u.created</if>
+					<if test="item.sortKey == &quot;email&quot;">u.email</if>
+					<if test="item.sortKey == &quot;name&quot;">u.disp_name</if>
+					<if test="item.sortKey == &quot;user&quot;">u.id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				u.id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-User-UserMatch-count" resultType="long" useCache="false">
+		SELECT count(u.created)
+		FROM
+			solaruser.user_user u
+		<include refid="fragment-findall-User-UserMatch-where"/>
+	</select>
+
+</mapper>
