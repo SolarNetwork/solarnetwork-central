@@ -25,12 +25,18 @@ dependencies {
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// Utils
+	implementation 'commons-io:commons-io:2.11.0'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.aspectj:aspectjweaver'
+	
+	// SolarNetwork
+	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
 }
 
 jar.manifest {

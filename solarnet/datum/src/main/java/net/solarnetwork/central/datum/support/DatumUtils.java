@@ -28,7 +28,7 @@ import java.util.Set;
 import org.springframework.util.PathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Utilities for Datum domain classes.

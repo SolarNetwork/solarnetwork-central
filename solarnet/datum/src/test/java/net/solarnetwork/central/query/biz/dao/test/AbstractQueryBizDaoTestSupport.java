@@ -41,7 +41,6 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -51,6 +50,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Base class for other unit tests.

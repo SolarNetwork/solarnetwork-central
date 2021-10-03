@@ -57,10 +57,10 @@ import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.support.JsonUtils;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**

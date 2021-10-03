@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**

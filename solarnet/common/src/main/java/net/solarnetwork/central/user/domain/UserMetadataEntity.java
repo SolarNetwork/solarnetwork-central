@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 

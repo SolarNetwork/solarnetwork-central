@@ -52,7 +52,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.support.JsonUtils;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
