@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisUserAuthTokenDao.java - Nov 11, 2014 6:53:48 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,6 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
@@ -38,7 +37,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * MyBatis implementation of {@link UserAuthTokenDao}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -50,7 +49,7 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 
 	/**
 	 * The query name used for
-	 * {@link #createAuthorizationV2Builder(String, DateTime)}.
+	 * {@link #createAuthorizationV2Builder(String, Instant)}.
 	 */
 	public static final String QUERY_FOR_SIGNING_KEY = "get-snws2-signingkey-for-tokenid";
 

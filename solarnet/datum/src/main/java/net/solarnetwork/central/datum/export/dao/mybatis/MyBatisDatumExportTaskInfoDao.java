@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisDatumExportTaskInfoDao.java - 19/04/2018 10:44:12 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,14 +26,13 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.joda.time.DateTime;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 
 /**
  * MyBatis implementation of {@link DatumExportTaskInfoDao}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -45,7 +44,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 
 	/**
 	 * The {@code DELETE} query name used for
-	 * {@link #purgeCompletedTasks(DateTime)}.
+	 * {@link #purgeCompletedTasks(Instant)}.
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumExportTaskInfo-completed";
 
@@ -77,7 +76,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 
 	/**
 	 * Set the query name for the {@link #claimQueuedTask()} method to use.
-	 * 
+	 *
 	 * @param queryForClaimQueuedTask
 	 *        the query name; defaults to {@link #QUERY_FOR_CLAIMING_TASK}
 	 */
@@ -88,7 +87,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	/**
 	 * Set the statement name for the {@link #purgeCompletedTasks(DateTime)}
 	 * method to use.
-	 * 
+	 *
 	 * @param updateDeleteCompletedTasks
 	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
 	 */

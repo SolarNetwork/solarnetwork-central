@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseDatumJdbcTestSupport.java - 4/11/2019 9:21:05 am
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,20 +23,20 @@
 package net.solarnetwork.central.datum.dao.jdbc.test;
 
 import static java.util.stream.Collectors.toList;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
 /**
  * Base class for datum JDBC test support.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -55,7 +55,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test user into the solaruser.user_user table.
-	 * 
+	 *
 	 * <p>
 	 * This will use {@link #TEST_USER_ID} and {@link #TEST_USERNAME} values.
 	 * </p>
@@ -66,7 +66,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test user into the solaruser.user_user table.
-	 * 
+	 *
 	 * @param id
 	 *        the user ID
 	 * @param username
@@ -81,7 +81,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 	/**
 	 * Insert a test UserNode into the solaruser.user_node table. The user and
 	 * node must already exist.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
@@ -97,7 +97,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test price source into the solarnet.sn_price_source table.
-	 * 
+	 *
 	 * @param id
 	 *        the source ID
 	 * @param name
@@ -109,7 +109,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test price location into the solarnet.sn_price_loc table.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param name
@@ -125,7 +125,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test node record into the database.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param locationId
@@ -139,7 +139,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test location record into the database.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID
 	 * @param timeZoneId
@@ -154,7 +154,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	/**
 	 * Insert a test UserNode record into the database.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -165,15 +165,14 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 				userId);
 	}
 
-	protected Date[] sqlDates(String... str) {
-		return Arrays.stream(str)
-				.map(s -> new Date(ISODateTimeFormat.localDateParser().parseLocalDate(s)
-						.toDateTimeAtStartOfDay().getMillis()))
-				.collect(Collectors.toList()).toArray(new Date[str.length]);
+	protected java.sql.Date[] sqlDates(String... str) {
+		DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE;
+		return Arrays.stream(str).map(s -> java.sql.Date.valueOf(fmt.parse(s, LocalDate::from)))
+				.collect(Collectors.toList()).toArray(new java.sql.Date[str.length]);
 	}
 
-	protected List<Date> sqlDatesFromLocalDates(List<Map<String, Object>> rows) {
-		return rows.stream().map(d -> (Date) d.get("local_date")).collect(toList());
+	protected List<java.sql.Date> sqlDatesFromLocalDates(List<Map<String, Object>> rows) {
+		return rows.stream().map(d -> (java.sql.Date) d.get("local_date")).collect(toList());
 	}
 
 }

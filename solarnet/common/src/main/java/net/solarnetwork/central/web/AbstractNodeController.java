@@ -1,23 +1,23 @@
 /* ===================================================================
  * AbstractNodeController.java
- * 
+ *
  * Created Aug 6, 2009 10:17:13 AM
- * 
+ *
  * Copyright (c) 2009 Solarnetwork.net Dev Team.
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ===================================================================
  */
@@ -27,7 +27,6 @@ package net.solarnetwork.central.web;
 import java.util.Locale;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,7 @@ import net.solarnetwork.web.support.WebUtils;
 
 /**
  * Abstract base class to support node-related controllers.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -77,7 +76,7 @@ public abstract class AbstractNodeController {
 	/**
 	 * Resolve a ModelAndView with an empty model and a view name determined by
 	 * the URL "suffix".
-	 * 
+	 *
 	 * <p>
 	 * If the {@link #getViewName()} method returns a value, that view name is
 	 * used for every request. Otherwise, this sets the view name to the value
@@ -88,7 +87,7 @@ public abstract class AbstractNodeController {
 	 * This can be handy when you want to return different data formats for the
 	 * same business logic, such as XML or JSON.
 	 * </p>
-	 * 
+	 *
 	 * @param request
 	 *        the HTTP request
 	 * @return a ModelAndView (never <em>null</em>)
@@ -100,7 +99,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Set up a {@link CloningPropertyEditorRegistrar} as a request attribute.
-	 * 
+	 *
 	 * <p>
 	 * This sets up a new {@link CloningPropertyEditorRegistrar} as a request
 	 * attribute, which could be used by the view for serializing model
@@ -109,7 +108,7 @@ public abstract class AbstractNodeController {
 	 * {@code node} property which, if provided, will add an editor to the
 	 * registrar for all date objects, configured with the node's time zone.
 	 * </p>
-	 * 
+	 *
 	 * @param request
 	 *        the HTTP request
 	 * @param dateFormat
@@ -126,17 +125,16 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Set up a {@link CloningPropertyEditorRegistrar} as a request attribute.
-	 * 
+	 *
 	 * <p>
 	 * This sets up a new {@link CloningPropertyEditorRegistrar} as a request
 	 * attribute, which could be used by the view for serializing model
 	 * properties in some way. A common use for this is to serialize
-	 * {@link DateTime} objects into Strings, so this method accepts a
+	 * date objects into Strings, so this method accepts a
 	 * {@code dateFormat} and {@code node} property which, if provided, will add
-	 * a {@link JodaDateFormatEditor} to the registrar for all {@link DateTime}
-	 * objects, configured with the node's time zone.
+	 * editors to the registrar for all date objects, configured with the node's time zone.
 	 * </p>
-	 * 
+	 *
 	 * @param request
 	 *        the HTTP request
 	 * @param dateFormat
@@ -150,8 +148,7 @@ public abstract class AbstractNodeController {
 		// set up a PropertyEditorRegistrar that can be used for serializing data into view-friendly values
 		CloningPropertyEditorRegistrar registrar = new CloningPropertyEditorRegistrar();
 		if ( dateFormat != null && timeZone != null ) {
-			// TODO implement caching of JodaDateFormatEditors based on dateFormat + time zone
-			// FIXME: Instant editor? registrar.setPropertyEditor(DateTime.class, new JodaDateFormatEditor(dateFormat, timeZone));
+			// FIXME: Instant editor? registrar.setPropertyEditor(Instant.class, new InstantFormatEditor(dateFormat, timeZone));
 			throw new UnsupportedOperationException("FIXME");
 		}
 		request.setAttribute("propertyEditorRegistrar", registrar);
@@ -161,22 +158,22 @@ public abstract class AbstractNodeController {
 	/**
 	 * Add a {@link Instant} property editor, using the
 	 * {@link #getRequestDateFormat()} pattern.
-	 * 
+	 *
 	 * <p>
 	 * This is typically called from an "init binder" method.
 	 * </p>
-	 * 
+	 *
 	 * @param binder
 	 *        the binder to add the editor to
 	 */
 	protected void initBinderDateFormatEditor(WebDataBinder binder) {
-		// FIXME: binder.registerCustomEditor(DateTime.class, new JodaDateFormatEditor(this.requestDateFormats, null));
+		// FIXME: binder.registerCustomEditor(Instant.class, new InstantFormatEditor(this.requestDateFormats, null));
 		throw new UnsupportedOperationException("FIXME");
 	}
 
 	/**
 	 * Handle an {@link AuthorizationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @return an error response object
@@ -192,7 +189,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Handle an {@link RuntimeException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @return an error response object
@@ -207,7 +204,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Handle an {@link BindException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param locale
@@ -225,7 +222,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Handle an {@link ValidationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param locale
@@ -260,7 +257,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Get the first request date format.
-	 * 
+	 *
 	 * @return the requestDateFormat
 	 */
 	public String getRequestDateFormat() {
@@ -272,7 +269,7 @@ public abstract class AbstractNodeController {
 
 	/**
 	 * Set a single request date format.
-	 * 
+	 *
 	 * @param requestDateFormat
 	 *        the requestDateFormat to set
 	 */

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ScheduleType.java - 5/03/2018 8:36:59 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,12 +26,10 @@ import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import org.joda.time.DateTime;
-import org.joda.time.DurationFieldType;
 
 /**
  * Enumeration of export job schedule options.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 1.23
@@ -56,7 +54,7 @@ public enum ScheduleType {
 
 	/**
 	 * Get the key value.
-	 * 
+	 *
 	 * @return the key value
 	 */
 	public char getKey() {
@@ -65,7 +63,7 @@ public enum ScheduleType {
 
 	/**
 	 * Get an enum for a key value.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the enum to get
 	 * @return the enum with the given key
@@ -83,15 +81,15 @@ public enum ScheduleType {
 
 	/**
 	 * Get a {@link ChronoUnit} for a given schedule.
-	 * 
+	 *
 	 * <p>
 	 * The returned property will be the appropriate property for rounding on
 	 * given this schedule type.
 	 * </p>
-	 * 
+	 *
 	 * @return the property, never {@literal null}
 	 */
-	public ChronoUnit dateTimeProperty() {
+	public ChronoUnit temporalUnit() {
 		switch (this) {
 			case Hourly:
 				return ChronoUnit.HOURS;
@@ -108,45 +106,19 @@ public enum ScheduleType {
 	}
 
 	/**
-	 * Get a {@link DurationFieldType} for this schedule.
-	 * 
-	 * @return the field type, never {@literal null}
-	 */
-	public DurationFieldType durationFieldType() {
-		DurationFieldType type;
-		switch (this) {
-			case Hourly:
-				type = DurationFieldType.hours();
-				break;
-
-			case Weekly:
-				type = DurationFieldType.weeks();
-				break;
-
-			case Monthly:
-				type = DurationFieldType.months();
-				break;
-
-			default:
-				type = DurationFieldType.days();
-		}
-		return type;
-	}
-
-	/**
 	 * Get an appropriate "export date" for a given date.
-	 * 
+	 *
 	 * <p>
 	 * The returned date can be used as the <em>starting</em> date of an export
 	 * task executing at {@code date}. It will be a copy of {@code date} that
 	 * has been rounded by flooring based on this schedule type.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note for the {@code Adhoc} type {@code date} will be returned, or the
 	 * current time if {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param date
 	 *        the date to get an export date for, or {@literal null} for the
 	 *        current date
@@ -155,7 +127,7 @@ public enum ScheduleType {
 	public ZonedDateTime exportDate(ZonedDateTime date) {
 		ZonedDateTime exportDate = (date != null ? date : ZonedDateTime.now());
 		if ( this != Adhoc ) {
-			ChronoUnit dateProperty = dateTimeProperty();
+			ChronoUnit dateProperty = temporalUnit();
 			if ( dateProperty == ChronoUnit.MONTHS ) {
 				exportDate = exportDate.with(TemporalAdjusters.firstDayOfMonth())
 						.truncatedTo(ChronoUnit.DAYS);
@@ -171,12 +143,12 @@ public enum ScheduleType {
 
 	/**
 	 * Get the "next" export date for a given date.
-	 * 
+	 *
 	 * @param date
 	 *        the date to get the "next" export date for, or {@literal null} for
 	 *        the current date
 	 * @return the "next" export date
-	 * @see #offsetExportDate(DateTime, int)
+	 * @see #offsetExportDate(ZonedDateTime, int)
 	 */
 	public ZonedDateTime nextExportDate(ZonedDateTime date) {
 		return offsetExportDate(date, 1);
@@ -184,12 +156,12 @@ public enum ScheduleType {
 
 	/**
 	 * Get the "previous" export date for a given date.
-	 * 
+	 *
 	 * @param date
 	 *        the date to get the "previous" export date for, or {@literal null}
 	 *        for the current date
 	 * @return the "previous" export date
-	 * @see #offsetExportDate(DateTime, int)
+	 * @see #offsetExportDate(ZonedDateTime, int)
 	 */
 	public ZonedDateTime previousExportDate(ZonedDateTime date) {
 		return offsetExportDate(date, -1);
@@ -197,12 +169,12 @@ public enum ScheduleType {
 
 	/**
 	 * Get an offset export date from a given date.
-	 * 
+	 *
 	 * <p>
-	 * Note for the {@code Adhoc} type {@link #exportDate(DateTime)} will be
-	 * returned, with no offset applied.
+	 * Note for the {@code Adhoc} type {@link #exportDate(ZonedDateTime)} will
+	 * be returned, with no offset applied.
 	 * </p>
-	 * 
+	 *
 	 * @param date
 	 *        the date to get the offset export date for, or {@literal null} for
 	 *        the current date
@@ -215,7 +187,7 @@ public enum ScheduleType {
 		if ( this == Adhoc ) {
 			return exportDate;
 		}
-		ChronoUnit unit = dateTimeProperty();
+		ChronoUnit unit = temporalUnit();
 		return exportDate.plus(offset, unit);
 	}
 

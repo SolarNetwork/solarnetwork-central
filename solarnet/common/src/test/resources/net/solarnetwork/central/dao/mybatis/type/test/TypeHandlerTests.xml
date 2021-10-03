@@ -6,14 +6,14 @@
 		SELECT #{date,jdbcType=TIMESTAMP}::timestamp AS local_date
 	</select>
 
-	<select id="test-find-local-date-time" resultType="org.joda.time.LocalDateTime">
+	<select id="test-find-local-date-time" resultType="java.time.LocalDateTime">
 		SELECT '2018-08-01 14:40'::timestamp AS local_date
 	</select>
 
 	<select id="test-set-json-map" parameterType="net.solarnetwork.central.dao.mybatis.type.test.JsonMapBean" resultType="String">
 		SELECT #{map,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::json::text AS json
 	</select>
-	
+
 	<resultMap type="net.solarnetwork.central.dao.mybatis.type.test.JsonMapBean" id="json-map-bean">
 		<result property="map" column="jdata" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
 	</resultMap>
@@ -21,11 +21,11 @@
 	<select id="test-get-json-map" resultMap="json-map-bean">
 		SELECT '{"foo":"bar"}'::json::text AS jdata
 	</select>
-	
+
 	<resultMap type="net.solarnetwork.central.dao.mybatis.type.test.BeanWithArrays" id="bean-with-arrays">
 		<result property="bigDecimals" column="big_decimals" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
-	
+
 	<select id="test-get-numeric-array" resultMap="bean-with-arrays">
 		SELECT ARRAY[1.234::NUMERIC, 2.345::NUMERIC, 3.456::NUMERIC] AS big_decimals
 	</select>
