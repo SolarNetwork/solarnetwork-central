@@ -23,7 +23,10 @@
 package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 
@@ -34,17 +37,22 @@ import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
  * @version 1.0
  */
 @ContextConfiguration
+@MybatisTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
 
+	@Autowired
 	private SqlSessionFactory sqlSessionFactory;
 
-	public SqlSessionFactory getSqlSessionFactory() {
-		return sqlSessionFactory;
+	@Autowired
+	private SqlSessionTemplate sqlSessionTemplate;
+
+	protected SqlSessionTemplate getSqlSessionTemplate() {
+		return sqlSessionTemplate;
 	}
 
-	@Autowired
-	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-		this.sqlSessionFactory = sqlSessionFactory;
+	protected SqlSessionFactory getSqlSessionFactory() {
+		return sqlSessionFactory;
 	}
 
 }

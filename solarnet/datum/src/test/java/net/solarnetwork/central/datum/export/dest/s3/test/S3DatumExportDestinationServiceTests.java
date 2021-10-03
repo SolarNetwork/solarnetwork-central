@@ -89,7 +89,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		Properties p = new Properties();
 		try {
 			InputStream in = S3DatumExportDestinationServiceTests.class.getClassLoader()
-					.getResourceAsStream("s3-dest.properties");
+					.getResourceAsStream("s3-export-dest.properties");
 			if ( in != null ) {
 				p.load(in);
 				in.close();

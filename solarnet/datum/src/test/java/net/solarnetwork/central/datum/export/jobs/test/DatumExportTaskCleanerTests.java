@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.export.jobs.test;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -80,25 +80,29 @@ public class DatumExportTaskCleanerTests {
 
 	@Test
 	public void executeJob() {
-		// given
-		Instant now = Instant.now();
-		expect(taskDao.purgeCompletedTasks(now.minus(EXPIRE_MINS, ChronoUnit.MINUTES))).andReturn(1L);
+		// GIVEN
+		Capture<Instant> timeCaptor = new Capture<>();
+		expect(taskDao.purgeCompletedTasks(capture(timeCaptor))).andReturn(1L);
 
 		Capture<Event> eventCaptor = new Capture<>();
 		eventAdmin.postEvent(capture(eventCaptor));
 
-		// when
+		// WHEN
 		replayAll();
+		final Instant now = Instant.now();
 		Map<String, Object> jobProps = new HashMap<>();
 		jobProps.put(SchedulerConstants.JOB_ID, JOB_ID);
 		Event event = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, jobProps);
 		job.handleEvent(event);
 
-		// then
-		assertThat("Complete event posted", eventCaptor.hasCaptured(), equalTo(true));
+		// THEN
+		assertThat("Complete event posted", eventCaptor.hasCaptured(), is(true));
 		Event completedEvent = eventCaptor.getValue();
-		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
-		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
+		assertThat(completedEvent.getTopic(), is(SchedulerConstants.TOPIC_JOB_COMPLETE));
+		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), is(JOB_ID));
+		assertThat("Purge date is about EXPIRE_MINS old",
+				(int) ChronoUnit.MINUTES.between(timeCaptor.getValue(), now.plus(1, ChronoUnit.MINUTES)),
+				is(EXPIRE_MINS));
 	}
 
 }
