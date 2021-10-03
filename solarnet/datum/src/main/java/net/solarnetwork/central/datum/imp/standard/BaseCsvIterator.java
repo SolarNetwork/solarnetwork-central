@@ -25,17 +25,23 @@ package net.solarnetwork.central.datum.imp.standard;
 import static java.util.stream.Collectors.toMap;
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.joda.time.IllegalInstantException;
 import org.supercsv.io.ICsvListReader;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,9 +76,16 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	private static final DateTimeFormatter ISO_LOCAL_DATE_OPTIONAL_TIME;
 	static {
-		ISO_LOCAL_DATE_OPTIONAL_TIME = new DateTimeFormatterBuilder().parseCaseInsensitive()
-				.append(DateTimeFormatter.ISO_LOCAL_DATE).optionalStart().appendLiteral('T')
-				.append(DateTimeFormatter.ISO_LOCAL_TIME).toFormatter();
+		// @formatter:off
+		ISO_LOCAL_DATE_OPTIONAL_TIME = new DateTimeFormatterBuilder()
+				.parseCaseInsensitive()
+				.append(DateTimeFormatter.ISO_LOCAL_DATE)
+				.optionalStart()
+				.appendLiteral('T')
+				.append(DateTimeFormatter.ISO_LOCAL_TIME)
+				.toFormatter()
+				.withChronology(IsoChronology.INSTANCE);
+		// @formatter:on
 	}
 	private final ICsvListReader reader;
 	protected final T props;
@@ -92,23 +105,24 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				reader.read();
 			}
 		}
+		ZoneId zone = props.getTimeZoneId() != null ? ZoneId.of(props.getTimeZoneId()) : ZoneOffset.UTC;
 		DateTimeFormatter formatter = null;
 		if ( props.getDateFormat() != null ) {
 			try {
-				formatter = DateTimeFormatter.ofPattern(props.getDateFormat());
-				if ( props.getTimeZoneId() != null ) {
-					formatter = formatter.withZone(ZoneId.of(props.getTimeZoneId()));
-				}
-			} catch ( IllegalArgumentException e ) {
+				// @formatter:off
+				formatter = new DateTimeFormatterBuilder().appendPattern(props.getDateFormat())
+						.parseDefaulting(ChronoField.ERA, ChronoField.ERA.range().getMaximum())
+						.toFormatter()
+						.withZone(zone)
+						.withResolverStyle(ResolverStyle.STRICT)
+						.withChronology(IsoChronology.INSTANCE);
+				// @formatter:on
+			} catch ( DateTimeException e ) {
 				// ignore
 			}
 		}
 		if ( formatter == null ) {
-			if ( props.getTimeZoneId() == null ) {
-				formatter = DateTimeFormatter.ISO_INSTANT;
-			} else {
-				formatter = ISO_LOCAL_DATE_OPTIONAL_TIME.withZone(ZoneId.of(props.getTimeZoneId()));
-			}
+			formatter = ISO_LOCAL_DATE_OPTIONAL_TIME.withZone(zone);
 		}
 		this.dateFormatter = formatter;
 
@@ -316,20 +330,34 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 		Instant date;
 		try {
-			date = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "), Instant::from);
-		} catch ( IllegalInstantException e ) {
-			List<Integer> dateCols = props.getDateColumns();
-			StringBuilder buf = new StringBuilder(
-					"Date that cannot exist because of a daylight saving time transition found on column");
-			if ( dateCols.size() > 1 ) {
-				buf.append("s");
+			// guard against invalid DST date inputs here, to avoid ambiguity associated with
+			// importing strictly invalid timestamps in a DST gap
+			LocalDateTime dt = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "),
+					LocalDateTime::from);
+			ZoneId zone = dateFormatter.getZone();
+			if ( zone == null ) {
+				zone = ZoneOffset.UTC;
 			}
-			buf.append(" ");
-			buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
-			buf.append(".");
-			throw new DatumImportValidationException(buf.toString(), e, (long) reader.getLineNumber(),
-					reader.getUntokenizedRow());
-		} catch ( IllegalArgumentException e ) {
+			if ( !zone.getRules().isFixedOffset() ) {
+				List<ZoneOffset> offsets = zone.getRules().getValidOffsets(dt);
+				if ( offsets.isEmpty() ) {
+					List<Integer> dateCols = props.getDateColumns();
+					StringBuilder buf = new StringBuilder(
+							"Date that cannot exist because of a daylight saving time transition in zone ");
+					buf.append(zone.getId());
+					buf.append(" on column");
+					if ( dateCols.size() > 1 ) {
+						buf.append("s");
+					}
+					buf.append(" ");
+					buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
+					buf.append(".");
+					throw new DatumImportValidationException(buf.toString(), null,
+							(long) reader.getLineNumber(), reader.getUntokenizedRow());
+				}
+			}
+			date = dt.atZone(zone).toInstant();
+		} catch ( DateTimeParseException e ) {
 			List<Integer> dateCols = props.getDateColumns();
 			StringBuilder buf = new StringBuilder("Error parsing date from column");
 			if ( dateCols.size() > 1 ) {

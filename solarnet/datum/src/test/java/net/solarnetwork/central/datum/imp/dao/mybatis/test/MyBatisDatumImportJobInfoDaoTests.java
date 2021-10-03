@@ -549,7 +549,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		for ( int i = 0; i < 3; i++ ) {
 			DatumImportJobInfo info = createTestInfo();
 			info.setImportState(DatumImportState.Queued);
-			info.setCreated(start.plus(1, ChronoUnit.MINUTES));
+			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
 			UserUuidPK id = dao.store(info);
 			ids.add(id);
 		}
@@ -579,7 +579,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 				info.setImportState(DatumImportState.Queued);
 			}
 			info.setGroupKey("foo");
-			info.setCreated(start.plus(1, ChronoUnit.MINUTES));
+			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
 			UserUuidPK id = dao.store(info);
 			ids.add(id);
 		}
@@ -604,7 +604,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 				info.setImportState(DatumImportState.Queued);
 			}
 			info.setGroupKey("foo");
-			info.setCreated(start.plus(1, ChronoUnit.MINUTES));
+			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
 			UserUuidPK id = dao.store(info);
 			ids.add(id);
 		}
@@ -737,7 +737,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			DatumImportJobInfo info = createTestInfo();
 			info.setImportState(DatumImportState.Queued);
 			info.setGroupKey("foo");
-			info.setCreated(start.plus(1, ChronoUnit.MINUTES));
+			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
 			UserUuidPK id = dao.store(info);
 			ids.add(id);
 		}
@@ -782,7 +782,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 				info.setImportState(DatumImportState.Queued);
 			}
 			info.setGroupKey("foo");
-			info.setCreated(start.plus(1, ChronoUnit.MINUTES));
+			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
 			UserUuidPK id = dao.store(info);
 			ids.add(id);
 		}

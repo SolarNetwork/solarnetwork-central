@@ -35,12 +35,13 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -86,8 +87,8 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-01.csv", getClass()), "text/csv;charset=utf-8");
 
-		DateTimeFormatter dateFormat = DateTimeFormat
-				.forPattern(CsvDatumImportInputProperties.DEFAULT_DATE_FORMAT);
+		DateTimeFormatter dateFormat = DateTimeFormatter
+				.ofPattern(CsvDatumImportInputProperties.DEFAULT_DATE_FORMAT).withZone(ZoneOffset.UTC);
 
 		// when
 		List<Double> progress = new ArrayList<>(8);
@@ -109,7 +110,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 				switch (count) {
 					case 1:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:30:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:30:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 11899),
 										hasEntry("irradiance", (Number) new BigDecimal("696.000"))));
@@ -119,7 +120,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 2:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:35:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:35:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 9843),
 										hasEntry("irradiance", (Number) new BigDecimal("691.668"))));
@@ -129,7 +130,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 3:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:40:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:40:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 6934),
 										hasEntry("irradiance", (Number) new BigDecimal("687.336"))));
@@ -139,7 +140,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 4:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:45:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:45:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 27314),
 										hasEntry("irradiance", (Number) new BigDecimal("683.004"))));
@@ -149,7 +150,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 5:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:50:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:50:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 13630),
 										hasEntry("irradiance", (Number) new BigDecimal("678.672"))));
@@ -159,7 +160,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 6:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:55:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:55:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 8740),
 										hasEntry("irradiance", (Number) new BigDecimal("674.340"))));
@@ -188,8 +189,8 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-02.csv", getClass()), "text/csv;charset=utf-8");
 
-		DateTimeFormatter dateFormat = DateTimeFormat
-				.forPattern(CsvDatumImportInputProperties.DEFAULT_DATE_FORMAT);
+		DateTimeFormatter dateFormat = DateTimeFormatter
+				.ofPattern(CsvDatumImportInputProperties.DEFAULT_DATE_FORMAT).withZone(ZoneOffset.UTC);
 
 		// when
 		List<Double> progress = new ArrayList<>(8);
@@ -211,7 +212,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 				switch (count) {
 					case 1:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:30:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:30:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 11899),
 										hasEntry("irradiance", (Number) new BigDecimal("696.000"))));
@@ -221,7 +222,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 					case 2:
 						assertThat("date " + count, d.getCreated(),
-								equalTo(dateFormat.parseDateTime("2017-04-17 14:35:00")));
+								equalTo(dateFormat.parse("2017-04-17 14:35:00", Instant::from)));
 						assertThat("i data " + count, d.getSamples().getInstantaneous(),
 								allOf(hasEntry("watts", (Number) 9843),
 										hasEntry("irradiance", (Number) new BigDecimal("691.668"))));
@@ -296,6 +297,38 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		config.setTimeZoneId("America/New_York");
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-05.csv", getClass()), "text/csv;charset=utf-8");
+
+		// when
+		List<Double> progress = new ArrayList<>(8);
+		try (ImportContext ctx = service.createImportContext(config, resource,
+				new ProgressListener<DatumImportService>() {
+
+					@Override
+					public void progressChanged(DatumImportService context, double amountComplete) {
+						assertThat("Context is service", context, sameInstance(service));
+						progress.add(amountComplete);
+					}
+				})) {
+			for ( @SuppressWarnings("unused")
+			GeneralNodeDatum d : ctx ) {
+				// nothing
+			}
+		}
+
+		// then
+		Assert.fail("Should have thrown DatumImportValidationException.");
+	}
+
+	@Test(expected = DatumImportValidationException.class)
+	public void badDate() throws IOException {
+		// given
+		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
+		BasicInputConfiguration config = new BasicInputConfiguration();
+		String datePattern = "yyyy-MM-dd HH:mm:ss";
+		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
+		config.setTimeZoneId("America/New_York");
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-data-06.csv", getClass()), "text/csv;charset=utf-8");
 
 		// when
 		List<Double> progress = new ArrayList<>(8);

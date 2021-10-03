@@ -37,6 +37,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.datum.dao.DatumSupportDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -83,7 +85,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	private SolarFluxDatumPublisher publisher;
 
 	private ObjectMapper createObjectMapper() {
-		return JsonUtils.newDatumObjectMapper();
+		return JsonUtils.createObjectMapper(null, JsonUtils.JAVA_TIMESTAMP_MODULE)
+				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 	}
 
 	@Before
@@ -245,8 +248,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	public void publishMonthDatum() throws Exception {
 		// GIVEN
 		ReportingGeneralNodeDatum datum = new ReportingGeneralNodeDatum();
-		datum.setCreated(
-				Instant.now().with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS));
+		datum.setCreated(ZonedDateTime.now().with(TemporalAdjusters.firstDayOfMonth())
+				.truncatedTo(ChronoUnit.DAYS).toInstant());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setSourceId(UUID.randomUUID().toString());
 		DatumSamples samples = new DatumSamples();
