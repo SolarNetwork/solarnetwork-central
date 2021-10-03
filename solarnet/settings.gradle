@@ -3,9 +3,11 @@ rootProject.name = 'solarnet'
 include "common"
 include "common-test"
 include "datum"
+include "instructor"
 include "solarquery"
 
 project(':common').name = "solarnet-common"
 project(':common-test').name = "solarnet-common-test"
 project(':datum').name = "solarnet-datum"
+project(':instructor').name = "solarnet-instructor"
 project(':solarquery').name = "solarquery"

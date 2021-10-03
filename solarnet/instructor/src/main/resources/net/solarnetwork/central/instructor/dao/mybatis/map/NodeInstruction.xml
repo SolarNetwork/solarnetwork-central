@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 12 06:34:50 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.instructor.dao.mybatis.NodeInstruction">
+
+	<insert id="insert-NodeInstruction" parameterType="NodeInstruction">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarnet.instruction_seq') AS id 
+		</selectKey>
+		INSERT INTO solarnet.sn_node_instruction 
+			(id
+			<if test="created != null">,created</if>
+			, node_id, topic, instr_date, deliver_state)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{nodeId}, #{topic}, #{instructionDate}, 
+			CAST(#{state} AS solarnet.instruction_delivery_state))
+	</insert>
+
+	<update id="update-NodeInstruction" parameterType="NodeInstruction">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			jresult_params = CAST(#{resultParametersJson} AS json)
+		WHERE
+			id = #{id}
+	</update>
+
+	<update id="update-NodeInstruction-compare-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			jresult_params = CAST(#{resultParametersJson} AS json)
+		WHERE
+			id = #{id}
+			AND node_id = #{nodeId}
+			AND deliver_state = CAST(#{expectedState} AS solarnet.instruction_delivery_state)
+	</update>
+
+	<update id="update-NodeInstruction-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			jresult_params = CAST(#{resultParametersJson} AS json)
+		WHERE
+			id = #{id}
+			AND node_id = #{nodeId}
+	</update>
+	
+	<update id="update-NodeInstruction-stale-state" parameterType="map">
+		UPDATE 
+			solarnet.sn_node_instruction
+		SET
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state)
+		WHERE
+			instr_date &lt; #{date, jdbcType=TIMESTAMP}
+			AND deliver_state = CAST(#{expectedState} AS solarnet.instruction_delivery_state)
+	</update>
+
+	<sql id="fragment-NodeInstruction-full-result">
+		ni.id AS sn_node_instruction_id,
+		ni.created AS sn_node_instruction_created,
+		ni.node_id AS sn_node_instruction_node_id,
+		ni.topic AS sn_node_instruction_topic,
+		ni.instr_date AS sn_node_instruction_instr_date,
+		ni.deliver_state AS sn_node_instruction_deliver_state,
+		ni.jresult_params AS sn_node_instruction_jresult_params
+	</sql>
+	
+	<resultMap id="NodeInstructionFullResult" type="NodeInstruction">
+		<id property="id" column="sn_node_instruction_id"/>
+		<result property="created" column="sn_node_instruction_created"/>
+		<result property="nodeId" column="sn_node_instruction_node_id"/>
+		<result property="topic" column="sn_node_instruction_topic"/>
+		<result property="instructionDate" column="sn_node_instruction_instr_date"/>
+		<result property="state" column="sn_node_instruction_deliver_state"/>
+		<result property="resultParametersJson" column="sn_node_instruction_jresult_params"/>
+		<collection property="parameters" resultMap="net.solarnetwork.central.instructor.dao.mybatis.NodeInstruction.InstructionParameterFullResult"/>
+	</resultMap>
+	
+	<sql id="fragment-InstructionParameter-full-result">
+		nip.pname AS sn_node_instruction_param_pname,
+		nip.pvalue AS sn_node_instruction_param_pvalue
+	</sql>
+	
+	<resultMap id="InstructionParameterFullResult" type="InstructionParameter">
+		<result property="name" column="sn_node_instruction_param_pname"/>
+		<result property="value" column="sn_node_instruction_param_pvalue"/>
+	</resultMap>
+
+	<select id="get-NodeInstruction-for-id" parameterType="long" resultMap="NodeInstructionFullResult">
+		SELECT
+			<include refid="fragment-NodeInstruction-full-result"/>,
+			<include refid="fragment-InstructionParameter-full-result"/>
+		FROM
+			solarnet.sn_node_instruction ni
+		LEFT OUTER JOIN 
+			solarnet.sn_node_instruction_param nip ON nip.instr_id = ni.id
+		WHERE
+			ni.id = #{id}
+	</select>
+	
+	<!--  Filter search -->
+	
+	<select id="findall-NodeInstruction-EntityMatch" parameterType="map" resultMap="NodeInstructionFullResult">
+		SELECT 
+			<include refid="fragment-NodeInstruction-full-result"/>,
+			<include refid="fragment-InstructionParameter-full-result"/>
+		FROM
+			solarnet.sn_node_instruction ni
+		LEFT OUTER JOIN 
+			solarnet.sn_node_instruction_param nip ON nip.instr_id = ni.id
+		<where>
+			<if test="filter != null">
+				<if test="filter.instructionIds != null">
+					AND ni.id IN
+					<foreach item="item" collection="filter.instructionIds" open="(" separator="," close=")">
+					       #{item,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.nodeIds != null">
+					AND ni.node_id IN
+					<foreach item="item" collection="filter.nodeIds" open="(" separator="," close=")">
+					       #{item,javaType=long,jdbcType=BIGINT}
+					</foreach>
+				</if>
+				<if test="filter.states != null">
+					AND ni.deliver_state IN
+					<foreach item="item" collection="filter.states" open="(" separator="," close=")">
+					       CAST(#{item} AS solarnet.instruction_delivery_state)
+					</foreach>
+  				</if>
+			</if>
+		</where>
+		ORDER BY ni.id
+	</select>
+	
+	<update id="delete-NodeInstruction-completed" statementType="CALLABLE" parameterType="map">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solarnet.purge_completed_instructions(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</update>
+	
+	<!-- InstructionParameter support -->
+	
+	<select id="findall-NodeInstruction-InstructionParameter" parameterType="long" resultMap="InstructionParameterFullResult">
+		SELECT 
+			<include refid="fragment-InstructionParameter-full-result"/>
+		FROM 
+			solarnet.sn_node_instruction_param nip
+		WHERE nip.instr_id = #{id}
+		ORDER BY idx
+	</select>
+	
+	<delete id="delete-NodeInstruction-InstructionParameter" parameterType="map">
+		DELETE FROM solarnet.sn_node_instruction_param
+		WHERE instr_id = #{id,javaType=long,jdbcType=BIGINT}
+		<if test="index != null">
+			AND idx = #{index,javaType=int,jdbcType=INTEGER}
+		</if>
+	</delete>
+
+	<insert id="insert-NodeInstruction-InstructionParameter" parameterType="map">
+		INSERT INTO solarnet.sn_node_instruction_param
+			(instr_id, idx, pname, pvalue)
+		VALUES
+			(#{id,javaType=long,jdbcType=BIGINT}, 
+			#{index,javaType=int,jdbcType=INTEGER}, 
+			#{obj.name,javaType=string,jdbcType=VARCHAR}, 
+			#{obj.value,javaType=string,jdbcType=VARCHAR})
+	</insert>
+
+</mapper>
