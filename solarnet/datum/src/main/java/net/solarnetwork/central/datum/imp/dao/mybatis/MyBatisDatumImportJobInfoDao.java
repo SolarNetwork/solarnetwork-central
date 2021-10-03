@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisDatumImportJobInfoDao.java - 9/11/2018 5:34:08 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
@@ -42,7 +41,7 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * MyBatis implementation of {@link DatumImportJobInfoDao}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -53,12 +52,12 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	public static final String QUERY_FOR_CLAIMING_JOB = "get-DatumImportJobInfo-for-claim";
 
 	/**
-	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
+	 * The {@code DELETE} query name used for {@link #purgeOldJobs(Instant)}.
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-DatumImportJobInfo-completed";
 
 	/**
-	 * The {@code DELETE} query name used for {@link #purgeOldJobs(DateTime)}.
+	 * The {@code DELETE} query name used for {@link #purgeOldJobs(Instant)}.
 	 */
 	public static final String UPDATE_DELETE_FOR_USER = "delete-DatumImportJobInfo-for-user";
 
@@ -197,7 +196,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	/**
 	 * Set the query name for the {@link #claimQueuedJob()} method to use.
-	 * 
+	 *
 	 * @param queryForClaimQueuedJob
 	 *        the query name; defaults to {@link #QUERY_FOR_CLAIMING_JOB}
 	 */
@@ -206,9 +205,9 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	/**
-	 * Set the statement name for the {@link #purgeOldJobs(DateTime)} method to
+	 * Set the statement name for the {@link #purgeOldJobs(Instant)} method to
 	 * use.
-	 * 
+	 *
 	 * @param updateDeleteCompletedJobs
 	 *        the statement name; defaults to {@link #UPDATE_PURGE_COMPLETED}
 	 */
@@ -219,7 +218,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	/**
 	 * Set the statement name for the
 	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)} method to use.
-	 * 
+	 *
 	 * @param updateJobState
 	 *        the statement name; defaults to {@link #UPDATE_JOB_STATE}
 	 */
@@ -230,7 +229,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	/**
 	 * Set the statement name for the {@link #findForUser(Long, Set)} method to
 	 * use.
-	 * 
+	 *
 	 * @param queryForUser
 	 *        the statement name; defaults to {@link #QUERY_FOR_USER}
 	 */
@@ -242,7 +241,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	 * Set the statement name for the
 	 * {@link #updateJobConfigurtation(UserUuidPK, net.solarnetwork.central.datum.imp.domain.Configuration)}
 	 * method to use.
-	 * 
+	 *
 	 * @param updateJobConfiguration
 	 *        the statement name; defaults to {@link #UPDATE_JOB_CONFIG}
 	 */
@@ -253,7 +252,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	/**
 	 * Set the statement name for the
 	 * {@link #updateJobProgress(UserUuidPK, double)} method to use.
-	 * 
+	 *
 	 * @param updateJobProgress
 	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}
 	 */
@@ -264,7 +263,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	/**
 	 * Set the statement name for the {@link #deleteForUser(Long, Set, Set)}
 	 * method to use.
-	 * 
+	 *
 	 * @param updateDeleteForUser
 	 *        the statement name; defaults to {@link #UPDATE_DELETE_FOR_USER}
 	 */
