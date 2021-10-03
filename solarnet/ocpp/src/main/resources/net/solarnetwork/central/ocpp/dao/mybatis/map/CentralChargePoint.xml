@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+
+	<insert id="insert-CentralChargePoint" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarev.ocpp_charge_point_seq') AS id 
+		</selectKey>
+		INSERT INTO solarev.ocpp_charge_point (
+			id
+			<if test="created != null">,created</if>
+			, user_id
+			, node_id
+			, enabled
+			<if test="registrationStatus != null">, reg_status</if>
+			, conn_count
+			, ident
+			, vendor
+			, model
+			, serial_num
+			, box_serial_num
+			, fw_vers
+			, iccid
+			, imsi
+			, meter_type
+			, meter_serial_num
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{userId}
+			, #{nodeId}
+			, #{enabled}
+			<if test="registrationStatus != null">, #{registrationStatus,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			, #{connectorCount}
+			, #{info.id}
+			, #{info.chargePointVendor}
+			, #{info.chargePointModel}
+			, #{info.chargePointSerialNumber}
+			, #{info.chargeBoxSerialNumber}
+			, #{info.firmwareVersion}
+			, #{info.iccid}
+			, #{info.imsi}
+			, #{info.meterType}
+			, #{info.meterSerialNumber}
+		)
+	</insert>
+
+	<update id="update-CentralChargePoint" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+		UPDATE 
+			solarev.ocpp_charge_point
+		SET
+			node_id = #{nodeId}
+			, enabled = #{enabled}
+			, reg_status = #{registrationStatus,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, conn_count = #{connectorCount}
+			, ident = #{info.id}
+			, vendor = #{info.chargePointVendor}
+			, model = #{info.chargePointModel}
+			, serial_num = #{info.chargePointSerialNumber}
+			, box_serial_num = #{info.chargeBoxSerialNumber}
+			, fw_vers = #{info.firmwareVersion}
+			, iccid = #{info.iccid}
+			, imsi = #{info.imsi}
+			, meter_type = #{info.meterType}
+			, meter_serial_num = #{info.meterSerialNumber}
+		WHERE
+			id = #{id}
+	</update>
+
+	<sql id="fragment-CentralChargePoint-full-result">
+		cp.id AS ocpp_charge_point_id
+		, cp.created AS ocpp_charge_point_created
+		, cp.user_id AS ocpp_charge_point_user_id
+		, cp.node_id AS ocpp_charge_point_node_id
+		, cp.enabled AS ocpp_charge_point_enabled
+		, cp.reg_status AS ocpp_charge_point_reg_status
+		, cp.conn_count AS ocpp_charge_point_conn_count
+		, cp.ident AS ocpp_charge_point_ident
+		, cp.vendor AS ocpp_charge_point_vendor
+		, cp.model AS ocpp_charge_point_model
+		, cp.serial_num AS ocpp_charge_point_serial_num
+		, cp.box_serial_num AS ocpp_charge_point_box_serial_num
+		, cp.fw_vers AS ocpp_charge_point_fw_vers
+		, cp.iccid AS ocpp_charge_point_iccid
+		, cp.imsi AS ocpp_charge_point_imsi
+		, cp.meter_type AS ocpp_charge_point_meter_type
+		, cp.meter_serial_num AS ocpp_charge_point_meter_serial_num
+	</sql>
+	
+	<resultMap id="CentralChargePoint-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+		<constructor>
+			<idArg  column="ocpp_charge_point_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_user_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_node_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="enabled" column="ocpp_charge_point_enabled"/>
+		<result property="registrationStatus" column="ocpp_charge_point_reg_status" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		<result property="connectorCount" column="ocpp_charge_point_conn_count"/>
+		<association property="info">
+			<constructor>
+				<idArg column="ocpp_charge_point_ident" javaType="string"/>
+				<arg column="ocpp_charge_point_vendor" javaType="string"/>
+				<arg column="ocpp_charge_point_model" javaType="string"/>
+			</constructor>
+			<result property="chargePointSerialNumber" column="ocpp_charge_point_serial_num"/>
+			<result property="chargeBoxSerialNumber" column="ocpp_charge_point_box_serial_num"/>
+			<result property="firmwareVersion" column="ocpp_charge_point_fw_vers"/>
+			<result property="iccid" column="ocpp_charge_point_iccid"/>
+			<result property="imsi" column="ocpp_charge_point_imsi"/>
+			<result property="meterType" column="ocpp_charge_point_meter_type"/>
+			<result property="meterSerialNumber" column="ocpp_charge_point_meter_serial_num"/>
+		</association>
+	</resultMap>
+
+	<select id="get-CentralChargePoint-for-id" parameterType="long" resultMap="CentralChargePoint-FullResult">
+		SELECT
+			<include refid="fragment-CentralChargePoint-full-result"/>
+		FROM
+			solarev.ocpp_charge_point cp
+		WHERE
+			cp.id = #{id}
+	</select>
+	
+	<sql id="fragment-findall-CentralChargePoint-where">
+		<if test="filter != null">
+			<where>
+				<if test="filter.id != null">
+					AND cp.id = #{filter.id}
+				</if>
+				<if test="filter.userId != null">
+					AND cp.user_id = #{filter.userId}
+				</if>
+				<if test="filter.nodeId != null">
+					AND cp.node_id = #{filter.nodeId}
+				</if>
+				<if test="filter.info != null and filter.info.id != null">
+					AND cp.ident = #{filter.info.id}
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralChargePoint-order">
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+				 	<choose>
+				 		<when test="&quot;created&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_created</when>
+				 		<when test="&quot;identifier&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_ident</when>
+				 		<when test="&quot;node&quot;.equalsIgnoreCase(item.sortKey)">ocpp_charge_point_node_id</when>
+				 		<otherwise>ocpp_charge_point_id</otherwise>
+				 	</choose>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				ocpp_charge_point_user_id, ocpp_charge_point_node_id, ocpp_charge_point_created, ocpp_charge_point_id
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="findall-CentralChargePoint" resultMap="CentralChargePoint-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralChargePoint-full-result"/>
+		FROM
+			solarev.ocpp_charge_point cp
+		<include refid="fragment-findall-CentralChargePoint-where"/>
+		<include refid="fragment-findall-CentralChargePoint-order"/>
+	</select>
+
+	<select id="get-CentralChargePoint-for-identity" parameterType="net.solarnetwork.ocpp.domain.ChargePointIdentity" resultMap="CentralChargePoint-FullResult">
+		SELECT
+			<include refid="fragment-CentralChargePoint-full-result"/>
+		FROM solarev.ocpp_charge_point cp
+		WHERE
+			cp.ident = #{identifier}
+			AND cp.user_id = #{userIdentifier}
+	</select>	
+
+	<delete id="delete-CentralChargePoint-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePoint">
+		DELETE FROM solarev.ocpp_charge_point
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
+
+</mapper>

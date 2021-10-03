@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.CentralChargeSession">
+
+	<update id="update-CentralChargeSession" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargeSession">
+		INSERT INTO solarev.ocpp_charge_sess (
+			id
+			<if test="created != null">,created</if>
+			, auth_id
+			, cp_id
+			, conn_id
+			<if test="transactionId &gt; 0">, tx_id</if>
+			, ended
+			<if test="endReason != null">, end_reason</if>
+			<if test="endAuthId != null">, end_auth_id</if>
+			<if test="posted != null">, posted</if>
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{authId}
+			, #{chargePointId}
+			, #{connectorId}
+			<if test="transactionId &gt; 0">, #{transactionId}</if>
+			, #{ended}
+			<if test="endReason != null">, #{endReason,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			<if test="endAuthId != null">, #{endAuthId}</if>
+			<if test="posted != null">, #{posted}</if>
+		)
+		ON CONFLICT (id) DO UPDATE
+		SET ended = EXCLUDED.ended
+			<if test="endReason != null">, end_reason = EXCLUDED.end_reason</if>
+			<if test="endAuthId != null">, end_auth_id = EXCLUDED.end_auth_id</if>
+			<if test="posted != null">, posted = EXCLUDED.posted</if>
+	</update>
+	
+	<sql id="fragment-CentralChargeSession-full-result">
+		cs.id AS ocpp_charge_sess_id
+		, cs.created AS ocpp_charge_sess_created
+		, cs.auth_id AS ocpp_charge_sess_auth_id
+		, cs.cp_id AS ocpp_charge_sess_cp_id
+		, cs.conn_id AS ocpp_charge_sess_conn_id
+		, cs.tx_id AS ocpp_charge_sess_tx_id
+		, cs.ended AS ocpp_charge_sess_ended
+		, cs.end_reason AS ocpp_charge_sess_end_reason
+		, cs.end_auth_id AS ocpp_charge_sess_end_auth_id
+		, cs.posted AS ocpp_charge_sess_posted
+	</sql>
+	
+	<resultMap id="CentralChargeSession-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralChargeSession">
+		<constructor>
+			<idArg column="ocpp_charge_sess_id" javaType="java.util.UUID"/>
+			<arg column="ocpp_charge_sess_created" javaType="java.time.Instant"/>
+			<arg column="ocpp_charge_sess_auth_id" javaType="string"/>
+			<arg column="ocpp_charge_sess_cp_id" javaType="_long"/>
+			<arg column="ocpp_charge_sess_conn_id" javaType="_int"/>
+			<arg column="ocpp_charge_sess_tx_id" javaType="_int"/>
+		</constructor>
+		<result column="ocpp_charge_sess_ended" property="ended"/>
+		<result column="ocpp_charge_sess_end_reason" property="endReason" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		<result column="ocpp_charge_sess_end_auth_id" property="endAuthId"/>
+		<result column="ocpp_charge_sess_posted" property="posted"/>
+	</resultMap>
+
+	<select id="get-CentralChargeSession-for-id" parameterType="java.util.UUID"
+			resultMap="CentralChargeSession-FullResult">
+		SELECT
+			<include refid="fragment-CentralChargeSession-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess cs
+		WHERE
+			cs.id = #{id}
+	</select>
+	
+	<sql id="fragment-findall-CentralChargeSession-where">
+		<if test="filter != null">
+			<where>
+				<include refid="fragment-findall-CentralChargeSession-where-content"/>
+			</where>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralChargeSession-where-content">
+		<if test="filter.id != null">
+			AND cs.id = #{filter.id}
+		</if>
+		<if test="filter.chargePointId &gt; 0">
+			AND cs.cp_id = #{filter.chargePointId}
+		</if>
+		<if test="filter.connectorId &gt; 0">
+			AND cs.conn_id = #{filter.connectorId}
+		</if>
+		<if test="filter.transactionId &gt; 0">
+			AND cs.tx_id = #{filter.transactionId}
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralChargeSession-order">
+		ORDER BY ocpp_charge_sess_cp_id, ocpp_charge_sess_conn_id, ocpp_charge_sess_created
+	</sql>
+
+	<select id="findall-CentralChargeSession" resultMap="CentralChargeSession-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralChargeSession-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess cs
+		<include refid="fragment-findall-CentralChargeSession-where"/>
+		<include refid="fragment-findall-CentralChargeSession-order"/>
+	</select>
+
+	<select id="findall-CentralChargeSession-incomplete" resultMap="CentralChargeSession-FullResult" fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralChargeSession-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess cs
+		<where>
+			cs.ended IS NULL
+			<include refid="fragment-findall-CentralChargeSession-where-content"/>
+		</where>
+		<include refid="fragment-findall-CentralChargeSession-order"/>
+	</select>
+	
+	<delete id="delete-CentralChargeSession-for-posted" parameterType="java.time.Instant">
+		DELETE FROM solarev.ocpp_charge_sess
+		WHERE posted IS NOT NULL AND posted &lt; #{posted}
+	</delete>
+	
+	<!-- 
+		SampledValue reading support
+	 -->
+
+	 <insert id="insert-CentralChargeSession-reading" parameterType="net.solarnetwork.ocpp.domain.SampledValue">
+		INSERT INTO solarev.ocpp_charge_sess_reading (
+			sess_id
+			, ts
+			<if test="location != null">, location</if>
+			<if test="unit != null">, unit</if>
+			<if test="context != null">, context</if>
+			<if test="measurand != null">, measurand</if>
+			<if test="phase != null">, phase</if>
+			, reading
+		) VALUES (
+			#{sessionId}
+			, #{timestamp}
+			<if test="location != null">, #{location,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			<if test="unit != null">, #{unit,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			<if test="context != null">, #{context,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			<if test="measurand != null">, #{measurand,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			<if test="phase != null">, #{phase,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
+			, #{value}
+		)
+	</insert>
+	
+	<sql id="fragment-SampledValue-full-result">
+		csr.sess_id AS ocpp_charge_sess_reading_sess_id
+		, csr.ts AS ocpp_charge_sess_reading_ts
+		, csr.location AS ocpp_charge_sess_reading_location
+		, csr.unit AS ocpp_charge_sess_reading_unit
+		, csr.context AS ocpp_charge_sess_reading_context
+		, csr.measurand AS ocpp_charge_sess_reading_measurand
+		, csr.phase AS ocpp_charge_sess_reading_phase
+		, csr.reading AS ocpp_charge_sess_reading_reading
+	</sql>
+
+	<resultMap id="SampledValue-FullResult" type="net.solarnetwork.ocpp.domain.SampledValue">
+		<constructor>
+			<arg column="ocpp_charge_sess_reading_sess_id" javaType="java.util.UUID"/>
+			<arg column="ocpp_charge_sess_reading_ts" javaType="java.time.Instant"/>
+			<arg column="ocpp_charge_sess_reading_reading" javaType="string"/>
+			<arg column="ocpp_charge_sess_reading_context" javaType="net.solarnetwork.ocpp.domain.ReadingContext" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="ocpp_charge_sess_reading_measurand" javaType="net.solarnetwork.ocpp.domain.Measurand" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="ocpp_charge_sess_reading_phase" javaType="net.solarnetwork.ocpp.domain.Phase" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="ocpp_charge_sess_reading_location" javaType="net.solarnetwork.ocpp.domain.Location" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="ocpp_charge_sess_reading_unit" javaType="net.solarnetwork.ocpp.domain.UnitOfMeasure" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		</constructor>
+	</resultMap>
+
+	 <select id="findall-SampledValue-for-session" resultMap="SampledValue-FullResult" fetchSize="100" resultSetType="FORWARD_ONLY">
+	 	SELECT
+	 		<include refid="fragment-SampledValue-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess_reading csr
+		WHERE
+			csr.sess_id = #{id}
+		ORDER BY 
+			ocpp_charge_sess_reading_ts
+			, ocpp_charge_sess_reading_context
+			, ocpp_charge_sess_reading_location
+			, ocpp_charge_sess_reading_measurand
+	 </select>
+
+</mapper>

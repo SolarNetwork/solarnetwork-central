@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+
+	<update id="update-ChargePointSettings" parameterType="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		INSERT INTO solarev.ocpp_charge_point_settings (
+			cp_id
+			<if test="created != null">,created</if>
+			, source_id_tmpl
+			, pub_in
+			, pub_flux
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{sourceIdTemplate}
+			, #{publishToSolarIn}
+			, #{publishToSolarFlux}
+		)
+		ON CONFLICT (cp_id) DO UPDATE
+		SET
+			source_id_tmpl = EXCLUDED.source_id_tmpl
+			, pub_in = EXCLUDED.pub_in
+			, pub_flux = EXCLUDED.pub_flux
+	</update>
+
+	<sql id="fragment-ChargePointSettings-full-result">
+		cps.cp_id AS ocpp_charge_point_settings_cp_id
+		, cps.created AS ocpp_charge_point_settings_created
+		, cps.pub_in AS ocpp_charge_point_settings_pub_in
+		, cps.pub_flux AS ocpp_charge_point_settings_pub_flux
+		, cps.source_id_tmpl AS ocpp_charge_point_settings_source_id_tmpl
+		, cp.user_id AS ocpp_charge_point_user_id
+	</sql>
+	
+	<resultMap id="ChargePointSettings-FullResult" type="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		<constructor>
+			<idArg  column="ocpp_charge_point_settings_cp_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_user_id" javaType="Long"/>
+			<arg column="ocpp_charge_point_settings_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="publishToSolarIn" column="ocpp_charge_point_settings_pub_in"/>
+		<result property="publishToSolarFlux" column="ocpp_charge_point_settings_pub_flux"/>
+		<result property="sourceIdTemplate" column="ocpp_charge_point_settings_source_id_tmpl"/>
+	</resultMap>
+
+	<select id="get-ChargePointSettings-for-id" parameterType="long" resultMap="ChargePointSettings-FullResult">
+		SELECT
+			<include refid="fragment-ChargePointSettings-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_settings cps
+		INNER JOIN
+			solarev.ocpp_charge_point cp ON cp.id = cps.cp_id
+		WHERE
+			cps.cp_id = #{id}
+	</select>
+	
+	<sql id="fragment-findall-ChargePointSettings-where">
+		<if test="filter != null">
+			<where>
+				<if test="filter.id != null">
+					AND cps.cp_id = #{filter.id}
+				</if>
+				<if test="filter.userId != null">
+					AND cp.user_id = #{filter.userId}
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<select id="findall-ChargePointSettings" resultMap="ChargePointSettings-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-ChargePointSettings-full-result"/>
+		FROM
+			solarev.ocpp_charge_point_settings cps
+		INNER JOIN
+			solarev.ocpp_charge_point cp ON cp.id = cps.cp_id
+		<include refid="fragment-findall-ChargePointSettings-where"/>
+		ORDER BY
+			ocpp_charge_point_settings_cp_id
+	</select>
+	
+	<select id="resolve-ChargePointSettings-for-id" parameterType="net.solarnetwork.central.ocpp.domain.ChargePointSettings" resultMap="ChargePointSettings-FullResult">
+		SELECT 
+			cp.id AS ocpp_charge_point_settings_cp_id
+			, cp.user_id AS ocpp_charge_point_user_id
+			, COALESCE(cps.created, us.created) AS ocpp_charge_point_settings_created
+			, COALESCE(cps.pub_in, TRUE) AS ocpp_charge_point_settings_pub_in
+			, COALESCE(cps.pub_flux, TRUE) AS ocpp_charge_point_settings_pub_flux
+			, COALESCE(cps.source_id_tmpl, us.source_id_tmpl) AS ocpp_charge_point_settings_source_id_tmpl
+		FROM solarev.ocpp_charge_point cp
+		LEFT OUTER JOIN solarev.ocpp_user_settings us ON us.user_id = cp.user_id
+		LEFT OUTER JOIN solarev.ocpp_charge_point_settings cps ON cps.cp_id = cp.id
+		WHERE
+			cp.id = #{id} 
+			AND cp.user_id = #{userId}
+			AND (us.created IS NOT NULL OR cps.created IS NOT NULL)
+	</select>
+
+	<delete id="delete-ChargePointSettings-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		DELETE FROM solarev.ocpp_charge_point_settings
+		USING solarev.ocpp_charge_point
+		WHERE ocpp_charge_point.id = cp_id
+			AND ocpp_charge_point.user_id = #{userId}
+			AND cp_id = #{id}
+	</delete>
+
+</mapper>
