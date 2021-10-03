@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.datum.export.jobs;
 
-import org.joda.time.DateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
@@ -32,7 +33,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to delete datum export tasks that have completed processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DatumExportTaskCleanerJob extends JobSupport {
 
@@ -60,7 +61,7 @@ public class DatumExportTaskCleanerJob extends JobSupport {
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
-		DateTime date = new DateTime().minusMinutes(minimumAgeMinutes);
+		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = taskDao.purgeCompletedTasks(date);
 		log.info("Purged {} completed datum export tasks older than {} minutes", result,
 				minimumAgeMinutes);
