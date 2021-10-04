@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumJdbcDaoConfiguration.java - 4/10/2021 9:08:03 PM
+ * VersionedMessageDaoConfig.java - 5/10/2021 8:06:46 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.config;
+package net.solarnetwork.central.dao.mybatis.config;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
 
 /**
- * Marker interface for the datum JDBC DAO configuration package.
+ * MyBatis versioned message DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@ComponentScan
-public interface DatumJdbcDaoConfiguration {
-	// nothing here
+@Configuration
+public class VersionedMessageDaoConfig {
+
+	@Autowired
+	private SqlSessionTemplate sqlSessionTemplate;
+
+	@Bean
+	public VersionedMessageDao versionedMessageDao() {
+		MyBatisVersionedMessageDao dao = new MyBatisVersionedMessageDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
 }

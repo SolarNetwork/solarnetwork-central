@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.common.config;
 
+import org.springframework.context.annotation.ComponentScan;
+
 /**
  * Marker interface for the common application configuration package.
  * 
  * @author matt
  * @version 1.0
  */
+@ComponentScan
 public interface SolarNetCommonConfiguration {
 	// nothing here
 }

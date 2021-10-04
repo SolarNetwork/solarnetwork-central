@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.daum.biz.dao;
+package net.solarnetwork.central.datum.biz.dao;
 
 import java.util.List;
 import java.util.stream.Collectors;

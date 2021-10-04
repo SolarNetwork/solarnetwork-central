@@ -41,6 +41,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.datum.biz.dao.DaoAuditDatumBiz;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
@@ -48,7 +49,6 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.daum.biz.dao.DaoAuditDatumBiz;
 import net.solarnetwork.dao.FilterResults;
 
 /**

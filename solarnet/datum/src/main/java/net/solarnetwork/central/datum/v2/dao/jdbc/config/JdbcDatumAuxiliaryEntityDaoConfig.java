@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumJdbcDaoConfiguration.java - 4/10/2021 9:08:03 PM
+ * JdbcDatumAuxiliaryEntityDaoConfig.java - 5/10/2021 9:43:52 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,30 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.config;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 
 /**
- * Marker interface for the datum JDBC DAO configuration package.
+ * JDBC datum auxiliary entity DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@ComponentScan
-public interface DatumJdbcDaoConfiguration {
-	// nothing here
+@Configuration
+public class JdbcDatumAuxiliaryEntityDaoConfig {
+
+	@Autowired
+	@Qualifier("central")
+	private JdbcOperations jdbcOperations;
+
+	@Bean
+	public DatumAuxiliaryEntityDao datumAuxiliaryDao() {
+		return new JdbcDatumAuxiliaryEntityDao(jdbcOperations);
+	}
+
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisDaoConfig.java - 4/10/2021 4:44:19 PM
+ * MyBatisSolarNodeDaoConfig.java - 5/10/2021 7:19:12 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,36 +20,50 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.dao.mybatis.config;
 
-import javax.sql.DataSource;
-import org.apache.ibatis.session.ExecutorType;
-import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator;
+import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
+import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 
 /**
- * MyBatis configuration for SolarIn.
+ * SolarNode DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class MyBatisDaoConfig {
+public class MyBatisSolarNodeDaoConfig {
 
 	@Autowired
-	public SqlSessionFactory sqlSessionFactory;
-
-	@Autowired
-	public DataSource dataSource;
+	private SqlSessionTemplate sqlSessionTemplate;
 
 	@Bean
-	public SqlSessionTemplate sqlSessionTemplate() {
-		return new SqlSessionTemplate(sqlSessionFactory, ExecutorType.SIMPLE,
-				new MyBatisExceptionTranslator(dataSource, true));
+	public SolarNodeDao solarNodeDao() {
+		MyBatisSolarNodeDao dao = new MyBatisSolarNodeDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
+	@Bean
+	public SolarLocationDao solarLocationDao() {
+		MyBatisSolarLocationDao dao = new MyBatisSolarLocationDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
+	@Bean
+	public SolarNodeMetadataDao solarNodeMetadataDao() {
+		MyBatisSolarNodeMetadataDao dao = new MyBatisSolarNodeMetadataDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
 	}
 
 }

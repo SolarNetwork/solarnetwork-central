@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumJdbcDaoConfig.java - 4/10/2021 9:07:25 PM
+ * JdbcDatumEntityDaoConfig.java - 4/10/2021 9:07:25 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -44,13 +44,13 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
- * Datum JDBC DAO configuration.
+ * JDBC datum entity DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class DatumJdbcDaoConfig {
+public class JdbcDatumEntityDaoConfig {
 
 	/**
 	 * A cache name to use for stream metadata objects.
@@ -91,12 +91,7 @@ public class DatumJdbcDaoConfig {
 	@Bean
 	@Qualifier(STREAM_METADATA_CACHE_NAME)
 	public Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache() {
-		return cacheManager.createCache(STREAM_METADATA_CACHE_NAME,
-				streamMetadataCacheConfiguration(streamMetadataCacheSettings()));
-	}
-
-	private javax.cache.configuration.Configuration<UUID, ObjectDatumStreamMetadata> streamMetadataCacheConfiguration(
-			StreamMetadataCacheSettings settings) {
+		StreamMetadataCacheSettings settings = streamMetadataCacheSettings();
 		// @formatter:off
 		CacheConfiguration<UUID, ObjectDatumStreamMetadata> conf = CacheConfigurationBuilder
 				.newCacheConfigurationBuilder(UUID.class, ObjectDatumStreamMetadata.class,
@@ -105,7 +100,8 @@ public class DatumJdbcDaoConfig {
 				.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(settings.ttl)))
 				.build();
 		// @formatter:on
-		return Eh107Configuration.fromEhcacheCacheConfiguration(conf);
+		return cacheManager.createCache(STREAM_METADATA_CACHE_NAME,
+				Eh107Configuration.fromEhcacheCacheConfiguration(conf));
 	}
 
 	@Bean

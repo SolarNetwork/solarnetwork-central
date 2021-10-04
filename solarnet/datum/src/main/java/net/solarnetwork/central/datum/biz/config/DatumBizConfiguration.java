@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumJdbcDaoConfiguration.java - 4/10/2021 9:08:03 PM
+ * DatumBizConfiguration.java - 5/10/2021 8:11:25 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,17 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.config;
+package net.solarnetwork.central.datum.biz.config;
 
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- * Marker interface for the datum JDBC DAO configuration package.
+ * Marker interface for Datum Biz DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @ComponentScan
-public interface DatumJdbcDaoConfiguration {
+public interface DatumBizConfiguration {
 	// nothing here
 }

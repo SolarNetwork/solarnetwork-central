@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumJdbcDaoConfiguration.java - 4/10/2021 9:08:03 PM
+ * SolarNetCommonMyBatisDaoConfiguration.java - 5/10/2021 7:16:18 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,18 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.config;
+package net.solarnetwork.central.dao.mybatis.config;
 
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- * Marker interface for the datum JDBC DAO configuration package.
+ * Marker interface for the common MyBatis DAO application configuration
+ * package.
  * 
  * @author matt
  * @version 1.0
  */
 @ComponentScan
-public interface DatumJdbcDaoConfiguration {
-	// nothing here
+public interface SolarNetCommonMyBatisDaoConfiguration {
+
 }

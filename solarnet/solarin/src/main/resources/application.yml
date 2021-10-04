@@ -21,6 +21,14 @@ app:
         solaruser: "http://localhost/solaruser"
         solarquery: "http://localhost/solarquery"
         solarin-mqtt: "mqtts://localhost:8883"
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    user-node-cache:
+      ttl: 60
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
 
 logging:
   level:

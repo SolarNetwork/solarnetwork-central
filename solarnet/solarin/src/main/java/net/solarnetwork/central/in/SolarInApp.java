@@ -29,7 +29,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.dao.mybatis.config.SolarNetCommonMyBatisDaoConfiguration;
+import net.solarnetwork.central.datum.biz.config.DatumBizConfiguration;
 import net.solarnetwork.central.datum.v2.dao.jdbc.config.DatumJdbcDaoConfiguration;
 import net.solarnetwork.central.in.config.SolarInConfiguration;
 import net.solarnetwork.central.in.web.config.SolarInWebConfiguration;
@@ -42,13 +45,15 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @version 1.0
  */
 // @formatter:off
-@SpringBootApplication(scanBasePackageClasses = { 
-		SolarInApp.class,
+@SpringBootApplication(scanBasePackageClasses = {SolarInApp.class})
+@Import({
 		SolarNetCommonConfiguration.class,
+		SolarNetCommonMyBatisDaoConfiguration.class,
+		DatumBizConfiguration.class,
 		DatumJdbcDaoConfiguration.class,
 		SolarInConfiguration.class,
 		SolarInWebConfiguration.class,
-	})
+})
 // @formatter:on
 public class SolarInApp {
 
