@@ -26,7 +26,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import java.net.URISyntaxException;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -54,6 +56,9 @@ import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
+import org.ehcache.core.config.DefaultConfiguration;
+import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
+import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,13 +108,14 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 
 	public static CacheManager createCacheManager() {
 		try {
-			return Caching
-					.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider",
-							BufferingDelegatingCacheTests.class.getClassLoader())
-					.getCacheManager(
-							BufferingDelegatingCacheTests.class.getResource("ehcache.xml").toURI(),
-							null);
-		} catch ( URISyntaxException e ) {
+			File path = Files.createTempDirectory("net.solarnetwork.central.common.test").toFile();
+			path.deleteOnExit();
+			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching
+					.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider");
+			DefaultConfiguration configuration = new DefaultConfiguration(
+					cachingProvider.getDefaultClassLoader(), new DefaultPersistenceConfiguration(path));
+			return cachingProvider.getCacheManager(cachingProvider.getDefaultURI(), configuration);
+		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
 	}

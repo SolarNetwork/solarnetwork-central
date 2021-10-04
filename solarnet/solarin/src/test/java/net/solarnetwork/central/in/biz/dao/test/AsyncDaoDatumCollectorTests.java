@@ -30,9 +30,11 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,9 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import org.easymock.EasyMock;
+import org.ehcache.core.config.DefaultConfiguration;
+import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
+import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,10 +93,14 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 	public static CacheManager createCacheManager() {
 		try {
-			return Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider",
-					AsyncDaoDatumCollectorTests.class.getClassLoader()).getCacheManager(
-							AsyncDaoDatumCollectorTests.class.getResource("ehcache.xml").toURI(), null);
-		} catch ( URISyntaxException e ) {
+			File path = Files.createTempDirectory("net.solarnetwork.central.in.biz.dao.test").toFile();
+			path.deleteOnExit();
+			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching
+					.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider");
+			DefaultConfiguration configuration = new DefaultConfiguration(
+					cachingProvider.getDefaultClassLoader(), new DefaultPersistenceConfiguration(path));
+			return cachingProvider.getCacheManager(cachingProvider.getDefaultURI(), configuration);
+		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
 	}

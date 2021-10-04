@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
@@ -43,7 +42,6 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @version 1.0
  */
 // @formatter:off
-@EnableCaching
 @SpringBootApplication(scanBasePackageClasses = { 
 		SolarInApp.class,
 		SolarNetCommonConfiguration.class,

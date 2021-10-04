@@ -6,6 +6,7 @@ app:
       queue-size: 200
       stat-frequency: 200
       datum-cache-removal-alert-threshold: 500
+    cache.persistence.path: "var/cache"
     datum-buffer:
       temp-max-entries: 100
       heap-max-entries: 200
