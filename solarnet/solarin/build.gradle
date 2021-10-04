@@ -1,0 +1,79 @@
+buildscript {
+	dependencies {
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.5.3"
+	}
+}
+
+plugins {
+	//id 'checkstyle'
+	id 'java'
+    id 'war'
+    id 'eclipse-wtp'
+	id 'org.springframework.boot' version '2.5.3'
+}
+
+//apply plugin: 'checkstyle'
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'SolarIn'
+version = '0.1.0'
+archivesBaseName = 'solarin'
+
+/*checkstyle {
+	toolVersion = "${checkstyleVersion}"
+	configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}*/
+
+configurations {
+	all*.exclude group: 'net.sf.supercsv'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
+	implementation project(':solarnet-ocpp')
+
+	// Spring support
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// allow WAR to be run from command line OR deployed in Tomcat
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+		
+	// SolarNetwork
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.0.0'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+}
+
+eclipse {
+	project {
+		//natures 'net.sf.eclipsecs.core.CheckstyleNature'
+		//buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
+	}
+	wtp {
+		facet {
+			facet name: 'jst.java', version: 11
+			facet name: 'jst.web', version: '3.1'
+		}
+	}
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarIn',
+					'Implementation-Version': version
+	}
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}
