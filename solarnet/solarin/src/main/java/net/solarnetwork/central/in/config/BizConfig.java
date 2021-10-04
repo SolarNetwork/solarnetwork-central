@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import org.ehcache.config.CacheConfiguration;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.units.MemoryUnit;
@@ -70,7 +71,7 @@ public class BizConfig {
 	public static final String DATUM_CACHE_NAME = "datum-buffer";
 
 	@Autowired
-	private javax.cache.CacheManager cacheManager;
+	private CacheManager cacheManager;
 
 	@Autowired
 	private DatumEntityDao datumDao;

@@ -37,13 +37,14 @@ mybatis:
   mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
 
 spring:
+  cache.jcache.config: "classpath:ehcache.xml"
   datasource:
     hikari:
       minimumIdle: 1
       connectionTimeout: 30000
       idleTimeout: 600000
       maxLifetime: 1800000
-    url: jdbc:postgresql://localhost:5412/solarnetwork
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
     username: solarnet
     password: solarnet
     platform: postgres

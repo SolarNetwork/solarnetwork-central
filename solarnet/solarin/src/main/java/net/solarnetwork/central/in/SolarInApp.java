@@ -31,6 +31,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.datum.v2.dao.jdbc.config.DatumJdbcDaoConfiguration;
 import net.solarnetwork.central.in.config.SolarInConfiguration;
 import net.solarnetwork.central.in.web.config.SolarInWebConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
@@ -46,6 +47,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 @SpringBootApplication(scanBasePackageClasses = { 
 		SolarInApp.class,
 		SolarNetCommonConfiguration.class,
+		DatumJdbcDaoConfiguration.class,
 		SolarInConfiguration.class,
 		SolarInWebConfiguration.class,
 	})
