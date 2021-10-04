@@ -37,11 +37,17 @@ dependencies {
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// allow WAR to be run from command line OR deployed in Tomcat
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	
+	// Utils
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	
 		
 	// SolarNetwork
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.0.0'
