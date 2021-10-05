@@ -221,7 +221,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 
 		// add instructions for the node
-		InstructorBiz instructorBiz = (getInstructorBiz() == null ? null : getInstructorBiz().service());
+		final InstructorBiz instructorBiz = getInstructorBiz();
 		if ( instructorBiz != null ) {
 			List<Instruction> instructions = instructorBiz
 					.getActiveInstructionsForNode(authNode.getNodeId());
@@ -307,7 +307,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
 		Instruction result = null;
-		InstructorBiz biz = getInstructorBiz().service();
+		final InstructorBiz biz = getInstructorBiz();
 		if ( instructionId != null && state != null && biz != null ) {
 			Long id = Long.valueOf(instructionId);
 			InstructionState s = InstructionState.valueOf(state);

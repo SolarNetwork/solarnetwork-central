@@ -25,8 +25,8 @@
 package net.solarnetwork.central.in.web;
 
 import java.util.List;
-import javax.annotation.Resource;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,7 +38,6 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.SecurityException;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Base class for data collector implementations.
@@ -64,8 +63,8 @@ public abstract class AbstractDataCollector {
 	private SolarNodeDao solarNodeDao;
 	private String viewName = DEFAULT_VIEW_NAME;
 
-	@Resource
-	private OptionalService<InstructorBiz> instructorBiz;
+	@Autowired(required = false)
+	private InstructorBiz instructorBiz;
 
 	/** A class-level logger. */
 	protected final org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
@@ -96,7 +95,7 @@ public abstract class AbstractDataCollector {
 	 */
 	protected void defaultHandleNodeInstructions(Long nodeId, Model model) {
 		// look for instructions to return for the given node
-		InstructorBiz biz = OptionalService.service(instructorBiz);
+		final InstructorBiz biz = getInstructorBiz();
 		if ( biz != null ) {
 			List<Instruction> instructions = biz.getActiveInstructionsForNode(nodeId);
 			if ( instructions.size() > 0 ) {
@@ -207,7 +206,7 @@ public abstract class AbstractDataCollector {
 	 * 
 	 * @return the instructorBiz
 	 */
-	public OptionalService<InstructorBiz> getInstructorBiz() {
+	public InstructorBiz getInstructorBiz() {
 		return instructorBiz;
 	}
 
@@ -217,7 +216,7 @@ public abstract class AbstractDataCollector {
 	 * @param instructorBiz
 	 *        the instructorBiz to set
 	 */
-	public void setInstructorBiz(OptionalService<InstructorBiz> instructorBiz) {
+	public void setInstructorBiz(InstructorBiz instructorBiz) {
 		this.instructorBiz = instructorBiz;
 	}
 
