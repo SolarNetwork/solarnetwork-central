@@ -36,19 +36,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractCentralTest;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Test cases for the {@link DatumMetadataSecurityAspect} class.
@@ -58,7 +58,7 @@ import net.solarnetwork.central.user.domain.UserNode;
  */
 public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao userNodeDao;
 
 	private DatumMetadataSecurityAspect getTestInstance(Set<String> locMetaAdminRoles) {
 		DatumMetadataSecurityAspect aspect = new DatumMetadataSecurityAspect(userNodeDao);
@@ -92,7 +92,7 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+				SecurityTokenType.ReadNodeData, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setUser(auth);
 		return token;
@@ -100,7 +100,7 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		userNodeDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 	}
 
 	@Test(expected = AuthorizationException.class)
@@ -142,11 +142,9 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
 				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId, "Foo bar")));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new net.solarnetwork.central.user.domain.User(userId, null),
-				new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(userNodeDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);

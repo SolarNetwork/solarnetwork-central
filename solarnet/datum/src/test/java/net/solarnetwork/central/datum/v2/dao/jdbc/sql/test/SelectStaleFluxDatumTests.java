@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.SQL_COMMENT;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.central.common.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;

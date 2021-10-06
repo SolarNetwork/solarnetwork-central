@@ -36,6 +36,7 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -46,17 +47,16 @@ import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 1.6
+ * @version 2.0
  */
 @Aspect
 public class QuerySecurityAspect extends AuthorizationSupport {
@@ -69,11 +69,11 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao
+	 * @param nodeOwnershipDao
+	 *        the ownership DAO to use
 	 */
-	public QuerySecurityAspect(UserNodeDao userNodeDao) {
-		super(userNodeDao);
+	public QuerySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+		super(nodeOwnershipDao);
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);

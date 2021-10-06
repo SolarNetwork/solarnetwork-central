@@ -90,8 +90,8 @@ import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -115,12 +115,6 @@ public final class DatumDbUtils {
 
 	/** Regex for a line starting with a {@literal #} comment character. */
 	public static final Pattern COMMENT = Pattern.compile("^\\s*#");
-
-	/**
-	 * Regex for a line starting with a {@literal --} SQL style comment
-	 * character.
-	 */
-	public static final Pattern SQL_COMMENT = Pattern.compile("^\\s*--");
 
 	/** Regex for a line containing {@literal "type":"Reset"}. */
 	public static final Pattern AUX = Pattern.compile("\"type\"\\s*:\\s*\"Reset\"");
@@ -1865,7 +1859,7 @@ public final class DatumDbUtils {
 	 *        the policy
 	 */
 	public static void insertSecurityToken(JdbcOperations jdbcTemplate, String tokenId,
-			String tokenSecret, Long userId, UserAuthTokenStatus status, UserAuthTokenType type,
+			String tokenSecret, Long userId, UserAuthTokenStatus status, SecurityTokenType type,
 			String policy) {
 		jdbcTemplate.update(
 				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"

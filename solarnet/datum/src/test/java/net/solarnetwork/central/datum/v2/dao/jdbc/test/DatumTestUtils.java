@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -56,7 +55,6 @@ import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvid
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Location;
-import net.solarnetwork.util.ClassUtils;
 import net.solarnetwork.util.NumberUtils;
 
 /**
@@ -82,42 +80,6 @@ public final class DatumTestUtils {
 	public static Matcher<BigDecimal[]> arrayOfDecimals(String... nums) {
 		BigDecimal[] vals = NumberUtils.decimalArray(nums);
 		return Matchers.arrayContaining(vals);
-	}
-
-	/**
-	 * Create a {@link Matcher} for a string that compares to the contents of a
-	 * text resource.
-	 * 
-	 * @param resource
-	 *        the name of the resource
-	 * @param clazz
-	 *        the class to load the resource from
-	 * @return the matcher
-	 * @throws RuntimeException
-	 *         if the resource cannot be loaded
-	 */
-	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz) {
-		return equalToTextResource(resource, clazz, null);
-	}
-
-	/**
-	 * Create a {@link Matcher} for a string that compares to the contents of a
-	 * text resource.
-	 * 
-	 * @param resource
-	 *        the name of the resource
-	 * @param clazz
-	 *        the class to load the resource from
-	 * @param skip
-	 *        an optional pattern that will be used to match against lines;
-	 *        matches will be left out of the string used to match
-	 * @return the matcher
-	 * @throws RuntimeException
-	 *         if the resource cannot be loaded
-	 */
-	public static Matcher<String> equalToTextResource(String resource, Class<?> clazz, Pattern skip) {
-		String txt = ClassUtils.getResourceAsString(resource, clazz, skip);
-		return Matchers.equalToCompressingWhiteSpace(txt);
 	}
 
 	/**

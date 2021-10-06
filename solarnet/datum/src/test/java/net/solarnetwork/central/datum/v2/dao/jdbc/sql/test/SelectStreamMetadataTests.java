@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;

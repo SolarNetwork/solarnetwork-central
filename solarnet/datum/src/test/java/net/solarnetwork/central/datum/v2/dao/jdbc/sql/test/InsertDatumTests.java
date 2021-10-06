@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.aryEq;

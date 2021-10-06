@@ -36,22 +36,22 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 @Aspect
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
@@ -68,11 +68,11 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param nodeOwnershipDao
+	 *        the SolarNodeOwnershipDao to use
 	 */
-	public DatumMetadataSecurityAspect(UserNodeDao userNodeDao) {
-		super(userNodeDao);
+	public DatumMetadataSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+		super(nodeOwnershipDao);
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);

@@ -32,10 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.dao.DatumSupportDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
@@ -49,7 +50,7 @@ import net.solarnetwork.domain.Identity;
  * Publish datum to SolarFlux.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SolarFluxDatumPublisher extends BaseMqttConnectionService implements DatumProcessor {
 
@@ -75,7 +76,7 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService implement
 	/** The default value for the {@code mqttUsername} property. */
 	public static final String DEFAULT_MQTT_USERNAME = "solarnet-ocpp";
 
-	private final DatumSupportDao supportDao;
+	private final SolarNodeOwnershipDao supportDao;
 	private final ObjectMapper objectMapper;
 
 	/**
@@ -83,16 +84,16 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService implement
 	 * 
 	 * @param connectionFactory
 	 *        the MQTT connection factory
-	 * @param supportDao
+	 * @param nodeOwnershipDao
 	 *        the support DAO
 	 * @param objectMapper
 	 *        the mapper for JSON
 	 */
-	public SolarFluxDatumPublisher(MqttConnectionFactory connectionFactory, DatumSupportDao supportDao,
-			ObjectMapper objectMapper) {
+	public SolarFluxDatumPublisher(MqttConnectionFactory connectionFactory,
+			SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
 		super(connectionFactory,
 				new MqttStats("OcppSolarFluxPublisher", 500, SolarFluxDatumPublishCountStat.values()));
-		this.supportDao = supportDao;
+		this.supportDao = nodeOwnershipDao;
 		this.objectMapper = objectMapper;
 		getMqttConfig().setUsername(DEFAULT_MQTT_USERNAME);
 		try {
@@ -124,13 +125,14 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService implement
 		if ( conn != null && conn.isEstablished() ) {
 			try {
 				for ( Identity<GeneralNodeDatumPK> d : datum ) {
-					Long userId = supportDao.userIdForNodeId(d.getId().getNodeId());
-					if ( userId == null ) {
+					final SolarNodeOwnership ownership = supportDao
+							.ownershipForNodeId(d.getId().getNodeId());
+					if ( ownership == null ) {
 						log.info("Not publishing datum {} to SolarFlux because user ID not available.",
 								d);
 						continue;
 					}
-					String topic = topicForDatum(userId, aggregation, d);
+					String topic = topicForDatum(ownership.getUserId(), aggregation, d);
 					if ( topic == null ) {
 						return false;
 					}

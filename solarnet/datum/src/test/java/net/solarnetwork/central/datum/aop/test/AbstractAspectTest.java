@@ -31,14 +31,14 @@ import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractCentralTest;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
 
 /**
  * Base class with support for security aspect tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public abstract class AbstractAspectTest extends AbstractCentralTest {
 
@@ -58,7 +58,7 @@ public abstract class AbstractAspectTest extends AbstractCentralTest {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+				SecurityTokenType.ReadNodeData, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setActor(auth);
 		return token;

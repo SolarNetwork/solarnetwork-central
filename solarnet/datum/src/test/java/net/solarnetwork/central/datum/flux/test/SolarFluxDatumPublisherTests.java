@@ -30,6 +30,7 @@ import static net.solarnetwork.central.domain.Aggregation.Day;
 import static net.solarnetwork.central.domain.Aggregation.Hour;
 import static net.solarnetwork.central.domain.Aggregation.Month;
 import static net.solarnetwork.central.domain.Aggregation.None;
+import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,7 +57,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.moquette.interception.messages.InterceptPublishMessage;
-import net.solarnetwork.central.datum.dao.DatumSupportDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
@@ -80,7 +81,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	private static final Long TEST_NODE_ID = -1L;
 	private static final Long TEST_USER_ID = -9L;
 
-	private DatumSupportDao datumSupportDao;
+	private SolarNodeOwnershipDao datumSupportDao;
 	private ObjectMapper objectMapper;
 	private SolarFluxDatumPublisher publisher;
 
@@ -93,7 +94,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 	public void setup() throws Exception {
 		setupMqttServer();
 
-		datumSupportDao = EasyMock.createMock(DatumSupportDao.class);
+		datumSupportDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 
 		objectMapper = createObjectMapper();
 
@@ -158,7 +159,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		samples.putAccumulatingSampleValue("bar", 234L);
 		datum.setSamples(samples);
 
-		expect(datumSupportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
+		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
+				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
@@ -190,7 +192,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		samples.putAccumulatingSampleValue("bar", 234L);
 		datum.setSamples(samples);
 
-		expect(datumSupportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
+		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
+				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
@@ -223,7 +226,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		samples.putAccumulatingSampleValue("bar", 234L);
 		datum.setSamples(samples);
 
-		expect(datumSupportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
+		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
+				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 
@@ -257,7 +261,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		samples.putAccumulatingSampleValue("bar", 234L);
 		datum.setSamples(samples);
 
-		expect(datumSupportDao.userIdForNodeId(TEST_NODE_ID)).andReturn(TEST_USER_ID);
+		expect(datumSupportDao.ownershipForNodeId(TEST_NODE_ID))
+				.andReturn(ownershipFor(TEST_NODE_ID, TEST_USER_ID));
 
 		final TestingInterceptHandler session = getTestingInterceptHandler();
 

@@ -27,23 +27,23 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
  * Security AOP support for {@link AuditDatumBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Aspect
 public class AuditDatumSecurityAspect extends AuthorizationSupport {
@@ -54,8 +54,8 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
 	 */
-	public AuditDatumSecurityAspect(UserNodeDao userNodeDao) {
-		super(userNodeDao);
+	public AuditDatumSecurityAspect(SolarNodeOwnershipDao noeOwnershipDao) {
+		super(noeOwnershipDao);
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
@@ -74,8 +74,8 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		if ( actor instanceof SecurityToken ) {
 			// require a User token
-			String tokenType = ((SecurityToken) actor).getTokenType();
-			if ( !UserAuthTokenType.User.toString().equals(tokenType) ) {
+			SecurityTokenType tokenType = ((SecurityToken) actor).getTokenType();
+			if ( !SecurityTokenType.User.equals(tokenType) ) {
 				log.warn("Access DENIED for non-user token actor: {}",
 						((SecurityToken) actor).getToken());
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);

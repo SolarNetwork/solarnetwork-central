@@ -31,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.aop.AuditDatumSecurityAspect;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.security.AuthenticatedToken;
@@ -38,8 +39,7 @@ import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
+import net.solarnetwork.central.security.SecurityTokenType;
 
 /**
  * Test cases for the {@link AuditDatumSecurityAspect} class.
@@ -49,24 +49,24 @@ import net.solarnetwork.central.user.domain.UserAuthTokenType;
  */
 public class AuditDatumSecurityAspectTests {
 
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 	}
 
 	private AuditDatumSecurityAspect getTestInstance() {
-		AuditDatumSecurityAspect aspect = new AuditDatumSecurityAspect(userNodeDao);
+		AuditDatumSecurityAspect aspect = new AuditDatumSecurityAspect(nodeOwnershipDao);
 		return aspect;
 	}
 
 	private void replayAll() {
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 	}
 
 	private void verifyAll() {
-		EasyMock.verify(userNodeDao);
+		EasyMock.verify(nodeOwnershipDao);
 	}
 
 	private void setActor(Authentication auth) {
@@ -85,7 +85,7 @@ public class AuditDatumSecurityAspectTests {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+				SecurityTokenType.ReadNodeData, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setActor(auth);
 		return token;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -47,6 +48,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -54,10 +56,11 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
@@ -67,11 +70,8 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Unit tests for the {@link QuerySecurityAspect} class.
@@ -81,19 +81,21 @@ import net.solarnetwork.central.user.domain.UserNode;
  */
 public class QuerySecurityAspectTests {
 
-	private UserNodeDao userNodeDao;
+	private static final Long TEST_USER_ID = -9999L;
+
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private QuerySecurityAspect service;
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		service = new QuerySecurityAspect(userNodeDao);
-		service.setNodeIdNotRequiredSet(new HashSet<String>(Arrays.asList("price", "weather")));
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+		service = new QuerySecurityAspect(nodeOwnershipDao);
+		service.setNodeIdNotRequiredSet(new HashSet<>(Arrays.asList("price", "weather")));
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(userNodeDao);
+		EasyMock.verify(nodeOwnershipDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
@@ -112,7 +114,7 @@ public class QuerySecurityAspectTests {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.User.toString(), userId, policy);
+				SecurityTokenType.User, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setUser(auth);
 		return token;
@@ -123,7 +125,7 @@ public class QuerySecurityAspectTests {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.ReadNodeData.toString(), userId, policy);
+				SecurityTokenType.ReadNodeData, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setUser(auth);
 		return token;
@@ -132,10 +134,10 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPublicNodeAsAuthenticatedNode() {
 		AuthenticatedNode node = setAuthenticatedNode(-1L);
-		UserNode userNode = new UserNode(new User(), new SolarNode(node.getNodeId(), null));
+		SolarNodeOwnership ownership = ownershipFor(node.getNodeId(), TEST_USER_ID);
 
-		EasyMock.expect(userNodeDao.get(node.getNodeId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(node.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -146,14 +148,14 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void datumFilterPublicNodeAsAnonymous() {
-		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+		SolarNodeOwnership ownership = ownershipFor(-1L, TEST_USER_ID);
 
-		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
-		criteria.setNodeId(userNode.getNode().getId());
+		criteria.setNodeId(ownership.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
 		Assert.assertSame(criteria, result);
 	}
@@ -161,14 +163,14 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPublicNodeAsSomeOtherNode() {
 		setAuthenticatedNode(-2L);
-		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
+		SolarNodeOwnership ownership = ownershipFor(-1L, TEST_USER_ID);
 
-		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
-		criteria.setNodeId(userNode.getNode().getId());
+		criteria.setNodeId(ownership.getNodeId());
 		Filter result = service.userNodeAccessCheck(criteria);
 		Assert.assertSame(criteria, result);
 	}
@@ -176,11 +178,11 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsAuthenticatedNode() {
 		AuthenticatedNode node = setAuthenticatedNode(-1L);
-		UserNode userNode = new UserNode(new User(), new SolarNode(node.getNodeId(), null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(node.getNodeId(), TEST_USER_ID, true,
+				false);
 
-		EasyMock.expect(userNodeDao.get(node.getNodeId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -191,15 +193,14 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void datumFilterPrivateNodeAsAnonymous() {
-		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(-1L, TEST_USER_ID, true, false);
 
-		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
-		criteria.setNodeId(userNode.getNode().getId());
+		criteria.setNodeId(ownership.getNodeId());
 		try {
 			service.userNodeAccessCheck(criteria);
 			Assert.fail("Should have thrown AuthorizationException");
@@ -211,15 +212,14 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsSomeOtherNode() {
 		setAuthenticatedNode(-2L);
-		UserNode userNode = new UserNode(new User(), new SolarNode(-1L, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(-1L, TEST_USER_ID, true, false);
 
-		EasyMock.expect(userNodeDao.get(userNode.getNode().getId())).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
-		criteria.setNodeId(userNode.getNode().getId());
+		criteria.setNodeId(ownership.getNodeId());
 		try {
 			service.userNodeAccessCheck(criteria);
 			Assert.fail("Should have thrown AuthorizationException");
@@ -235,11 +235,10 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedUserToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -255,11 +254,10 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedUserToken(-200L, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -279,11 +277,10 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -298,11 +295,10 @@ public class QuerySecurityAspectTests {
 		final Long userId = -100L;
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -319,11 +315,10 @@ public class QuerySecurityAspectTests {
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		// note the actor is not the owner of the node
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -340,11 +335,10 @@ public class QuerySecurityAspectTests {
 				.withNodeIds(Collections.singleton(-2L)).build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -364,11 +358,10 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(-200L, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, -200L, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -390,11 +383,10 @@ public class QuerySecurityAspectTests {
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.replay(userNodeDao);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -415,14 +407,13 @@ public class QuerySecurityAspectTests {
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -445,17 +436,16 @@ public class QuerySecurityAspectTests {
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
-		UserNode userNode2 = new UserNode(new User(userId, null), new SolarNode(nodeId2, null));
-		userNode2.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.expect(userNodeDao.get(nodeId2)).andReturn(userNode2);
+		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(nodeId2, userId, true, false);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
+
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
@@ -479,17 +469,16 @@ public class QuerySecurityAspectTests {
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
 				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId2, "/A/B/watts")));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
-		UserNode userNode2 = new UserNode(new User(userId, null), new SolarNode(nodeId2, null));
-		userNode2.setRequiresAuthorization(true);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		EasyMock.expect(userNodeDao.get(nodeId)).andReturn(userNode);
-		EasyMock.expect(userNodeDao.get(nodeId2)).andReturn(userNode2);
+		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(nodeId2, userId, true, false);
+		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
+
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
@@ -505,7 +494,7 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void weatherFilterAsAnonymous() {
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 
 		SolarLocation loc = new SolarLocation();
 		loc.setTimeZoneId("Pacific/Auckland");
@@ -525,8 +514,6 @@ public class QuerySecurityAspectTests {
 				.withNodeIds(Collections.singleton(nodeId)).withMinAggregation(policyMinAgg).build();
 		final ProceedingJoinPoint pjp = EasyMock.createMock(org.aspectj.lang.ProceedingJoinPoint.class);
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
 
 		final DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -534,7 +521,8 @@ public class QuerySecurityAspectTests {
 		final QueryBiz queryBiz = EasyMock.createMock(QueryBiz.class);
 		final Signature methodSig = EasyMock.createMock(Signature.class);
 
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		// setup join point conditions to mimic call to findFilteredGeneralNodeDatum()
 		expect(pjp.getTarget()).andReturn(queryBiz).anyTimes();
@@ -551,7 +539,7 @@ public class QuerySecurityAspectTests {
 				EasyMock.isNull(List.class), EasyMock.isNull(Integer.class),
 				EasyMock.isNull(Integer.class))).andReturn(filterResults);
 
-		replay(userNodeDao, pjp, methodSig, queryBiz);
+		replay(nodeOwnershipDao, pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
 		assertSame("Filtered results", filterResults, result);
@@ -560,7 +548,7 @@ public class QuerySecurityAspectTests {
 		Assert.assertEquals("Redirected filter aggregation", policyMinAgg,
 				redirectedFilter.getAggregation());
 
-		verify(userNodeDao, pjp, methodSig, queryBiz);
+		verify(nodeOwnershipDao, pjp, methodSig, queryBiz);
 	}
 
 	@Test
@@ -577,10 +565,9 @@ public class QuerySecurityAspectTests {
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-		userNode.setRequiresAuthorization(true);
 
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		final DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -604,7 +591,7 @@ public class QuerySecurityAspectTests {
 				Integer.valueOf(0), Integer.valueOf(0));
 		expect(pjp.proceed(EasyMock.capture(proceedArgsCapture))).andReturn(filterResults);
 
-		replay(userNodeDao, pjp, methodSig, queryBiz);
+		replay(nodeOwnershipDao, pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
 		assertSame("Filtered results", filterResults, result);
@@ -625,7 +612,7 @@ public class QuerySecurityAspectTests {
 		assertThat("Source ID filter start date", filterCapture.getValue().getStartDate(), nullValue());
 		assertThat("Source ID filter end date", filterCapture.getValue().getEndDate(), nullValue());
 
-		verify(userNodeDao, pjp, methodSig, queryBiz);
+		verify(nodeOwnershipDao, pjp, methodSig, queryBiz);
 	}
 
 }
