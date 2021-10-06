@@ -23,9 +23,13 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-instructor')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
+	
+	// Utilities
+	implementation 'org.javamoney:moneta:1.4.2'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * BillingSystemInfo.java - 25/08/2017 3:56:11 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2017 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
-
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+package net.solarnetwork.central.user.billing.domain;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * Information about a billing system.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+public interface BillingSystemInfo {
 
 	/**
-	 * Get a network association for a given username and confirmation key.
+	 * Get a unique system key for the accounting functions of this system.
 	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * @return a unique key
 	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	String getAccountingSystemKey();
 
 }

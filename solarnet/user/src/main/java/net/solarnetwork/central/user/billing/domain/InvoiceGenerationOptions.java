@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * InvoiceGenerationOptions.java - 31/05/2021 10:51:20 AM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,33 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
+package net.solarnetwork.central.user.billing.domain;
 
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+import java.time.YearMonth;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * Options to use when generating an invoice.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
+ * @since 1.3
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+public interface InvoiceGenerationOptions {
 
 	/**
-	 * Get a network association for a given username and confirmation key.
+	 * Get the year-month to generate the invoice for, or {@literal null} for
+	 * the "current" month.
 	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * @return the year month
 	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	YearMonth getMonth();
+
+	/**
+	 * Get the "use account credit" flag.
+	 * 
+	 * @return {@literal true} to use available account credit by adding a
+	 *         credit item to the generated invoice
+	 */
+	boolean isUseAccountCredit();
 
 }

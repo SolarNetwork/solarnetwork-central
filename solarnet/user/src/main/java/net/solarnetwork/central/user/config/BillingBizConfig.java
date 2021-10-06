@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * BillingBizConfig.java - 7/10/2021 10:54:09 AM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
+package net.solarnetwork.central.user.config;
 
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.user.billing.biz.BillingBiz;
+import net.solarnetwork.central.user.billing.biz.BillingSystem;
+import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
+import net.solarnetwork.central.user.dao.UserDao;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * Configuration for the User services.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+@Configuration
+public class BillingBizConfig {
 
-	/**
-	 * Get a network association for a given username and confirmation key.
-	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
-	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	@Autowired
+	private UserDao userDao;
+
+	@Autowired(required = false)
+	private List<BillingSystem> billingSystems;
+
+	@Bean
+	public BillingBiz billingBiz() {
+		return new DaoBillingBiz(userDao, billingSystems);
+	}
 
 }

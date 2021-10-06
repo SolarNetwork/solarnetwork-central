@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * NetworkIdentificationBiz.java - 7/10/2021 8:29:52 AM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,29 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
+package net.solarnetwork.central.biz;
 
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.NetworkIdentity;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * API for identifying SolarNetwork.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+public interface NetworkIdentificationBiz {
 
 	/**
-	 * Get a network association for a given username and confirmation key.
+	 * Get the public-facing network identity for this service.
 	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * <p>
+	 * This is the information that should be publicly available for users to
+	 * view, so they can validate this against the same info presented during
+	 * node association.
+	 * </p>
+	 * 
+	 * @return identity key
 	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	NetworkIdentity getNetworkIdentity();
 
 }

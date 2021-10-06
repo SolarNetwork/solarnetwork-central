@@ -1,8 +1,7 @@
 app:
-  node-owner-cache:
-    ttl: 60
-    heap-max-entries: 10000
-    disk-max-size-mb: 100
+  node.certificate:
+    expire-days: 720
+    signature-alg: "SHA256WithRSA"
   solarin:
     async-collector:
       threads: 2
@@ -15,6 +14,10 @@ app:
       temp-max-entries: 100
       heap-max-entries: 200
       disk-max-size-mb: 2000
+    email-throttle-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 100
     network-identity:
       network-identity-key: "replace:identity:here"
       terms-of-service: "replace:tos:here"
@@ -25,6 +28,10 @@ app:
         solaruser: "http://localhost/solaruser"
         solarquery: "http://localhost/solarquery"
         solarin-mqtt: "mqtts://localhost:8883"
+    node-ownership-cache:
+      ttl: 60
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
     stream-metadata-cache:
       ttl: 300
       heap-max-entries: 10000

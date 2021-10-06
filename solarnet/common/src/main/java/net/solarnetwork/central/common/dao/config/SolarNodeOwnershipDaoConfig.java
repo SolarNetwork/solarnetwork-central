@@ -22,18 +22,9 @@
 
 package net.solarnetwork.central.common.dao.config;
 
-import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
-import java.time.Duration;
 import javax.cache.Cache;
-import javax.cache.CacheManager;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -51,55 +42,27 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 public class SolarNodeOwnershipDaoConfig {
 
 	/**
-	 * A cache name to use for node ownership objects.
+	 * A qualifier to use for the node ownership {@link Cache}.
 	 */
-	public static final String NODE_OWNER_CACHE_NAME = "ownership-for-node";
+	public static final String NODE_OWNERSHIP_CACHE = "ownership-for-node";
+
+	/**
+	 * A qualifier to use for the {@link JdbcOperations}.
+	 */
+	public static final String CENTRAL_JDBC_OPERATIONS = "central";
 
 	@Autowired
-	@Qualifier("central")
+	@Qualifier(CENTRAL_JDBC_OPERATIONS)
 	private JdbcOperations jdbcOperations;
 
 	@Autowired
-	private CacheManager cacheManager;
-
-	public static class NodeOwnershipCacheSettings {
-
-		private long ttl = 60;
-		private int heapMaxEntries = 10000;
-		private int diskMaxSizeMb = 100;
-	}
-
-	@Bean
-	@ConfigurationProperties(prefix = "app.node-owner-cache")
-	public NodeOwnershipCacheSettings nodeOwnershipCacheSettings() {
-		return new NodeOwnershipCacheSettings();
-	}
-
-	/**
-	 * Get the datum cache.
-	 * 
-	 * @return the actor cache
-	 */
-	@Bean
-	@Qualifier(NODE_OWNER_CACHE_NAME)
-	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache() {
-		NodeOwnershipCacheSettings settings = nodeOwnershipCacheSettings();
-		// @formatter:off
-		CacheConfiguration<Long, SolarNodeOwnership> conf = CacheConfigurationBuilder
-				.newCacheConfigurationBuilder(Long.class, SolarNodeOwnership.class,
-						heap(settings.heapMaxEntries)
-						.disk(settings.diskMaxSizeMb, MemoryUnit.MB, true))
-				.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(settings.ttl)))
-				.build();
-		// @formatter:on
-		return cacheManager.createCache(NODE_OWNER_CACHE_NAME,
-				Eh107Configuration.fromEhcacheCacheConfiguration(conf));
-	}
+	@Qualifier(NODE_OWNERSHIP_CACHE)
+	private Cache<Long, SolarNodeOwnership> nodeOwnershipCache;
 
 	@Bean
 	public SolarNodeOwnershipDao nodeOwnershipDao() {
 		JdbcSolarNodeOwnershipDao dao = new JdbcSolarNodeOwnershipDao(jdbcOperations);
-		dao.setUserNodeCache(nodeOwnershipCache());
+		dao.setUserNodeCache(nodeOwnershipCache);
 		return dao;
 	}
 

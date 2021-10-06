@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:38 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserMetadataEntity">
+
+	<parameterMap id="pmap-UserMetadataEntity" type="UserMetadataEntity">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="metaJson" jdbcType="VARCHAR" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-UserMetadataEntity" parameterMap="pmap-UserMetadataEntity" statementType="CALLABLE">
+		{call solaruser.store_user_meta(?, ?, ?)}
+	</update>
+	
+	<update id="update-UserMetadataEntity" parameterMap="pmap-UserMetadataEntity" statementType="CALLABLE">
+		{call solaruser.store_user_meta(?, ?, ?)}
+	</update>
+	
+	<delete id="delete-UserMetadataEntity" parameterType="long">
+		DELETE FROM solaruser.user_meta
+		WHERE user_id = #{id}
+	</delete>
+	
+	<sql id="fragment-UserMetadataEntity-full-result">
+		umeta.user_id AS node_meta_user_id,
+		umeta.created AS node_meta_created,
+		umeta.updated AS node_meta_updated,
+		umeta.jdata AS node_meta_jdata
+	</sql>
+	
+	<resultMap id="UserMetadataEntityFullResult" type="UserMetadataEntity">
+		<id property="userId" column="node_meta_user_id"/>
+		<id property="created" column="node_meta_created"/>
+		<result property="updated" column="node_meta_updated"/>
+		<result property="metaJson" column="node_meta_jdata"/>
+	</resultMap>
+	
+	<select id="get-UserMetadataEntity-for-id" parameterType="long" resultMap="UserMetadataEntityFullResult">
+		SELECT
+			<include refid="fragment-UserMetadataEntity-full-result"/>
+		FROM
+			solaruser.user_meta umeta
+		WHERE
+			umeta.user_id = #{id}
+	</select>
+
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="UserMetadataMatchResult" type="UserMetadataMatch" extends="net.solarnetwork.central.user.dao.mybatis.UserMetadataEntity.UserMetadataEntityFullResult"/>
+
+	<sql id="fragment-findall-UserMetadataEntity-UserMetadataMatch-where">
+		<where>
+			<if test="filter.userIds != null and filter.userIds.length > 0">
+				AND umeta.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-UserMetadataEntity-UserMetadataMatch" resultMap="UserMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserMetadataEntity-full-result"/>
+		FROM
+			solaruser.user_meta umeta
+		<include refid="fragment-findall-UserMetadataEntity-UserMetadataMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">umeta.created</if>
+					<if test="item.sortKey == &quot;updated&quot;">umeta.updated</if>
+					<if test="item.sortKey == &quot;user&quot;">umeta.user_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				umeta.user_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-UserMetadataEntity-UserMetadataMatch-count" resultType="long">
+		SELECT count(umeta.created)
+		FROM
+			solaruser.user_meta umeta
+		<include refid="fragment-findall-UserMetadataEntity-UserMetadataMatch-where"/>
+	</select>
+	
+</mapper>

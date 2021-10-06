@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * InvoiceUsageRecord.java - 23/05/2021 4:25:03 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,37 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
+package net.solarnetwork.central.user.billing.domain;
 
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+import java.util.List;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * A usage record associted with an invoice.
  * 
+ * @param <T>
+ *        the invoice key type
  * @author matt
- * @version 2.0
+ * @version 1.0
+ * @since 1.3
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+public interface InvoiceUsageRecord<T> {
 
 	/**
-	 * Get a network association for a given username and confirmation key.
+	 * Get a key for the list of associated usage records.
 	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * <p>
+	 * A key might be a node ID, source ID, stream ID, etc.
+	 * </p>
+	 * 
+	 * @return the usage key
 	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	T getUsageKey();
+
+	/**
+	 * Get the usage records associated with the invoice.
+	 * 
+	 * @return the usage records
+	 */
+	List<InvoiceItemUsageRecord> getUsageRecords();
 
 }

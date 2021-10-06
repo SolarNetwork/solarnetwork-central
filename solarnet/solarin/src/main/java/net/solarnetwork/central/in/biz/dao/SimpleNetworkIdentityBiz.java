@@ -24,72 +24,54 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
-import java.util.Map;
-import net.solarnetwork.central.dao.NetworkAssociationDao;
-import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
-import net.solarnetwork.domain.BasicNetworkIdentity;
-import net.solarnetwork.domain.NetworkAssociation;
-import net.solarnetwork.domain.NetworkIdentity;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.biz.NetworkIdentificationBiz;
+import net.solarnetwork.central.dao.NetworkAssociationDao;
+import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
+import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.NetworkIdentity;
 
 /**
  * Simple implementation of {@link NetworkIdentityBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class SimpleNetworkIdentityBiz implements NetworkIdentityBiz {
 
-	private String networkIdentityKey;
-	private String termsOfService;
-	private String host;
-	private Integer port;
-	private boolean forceTLS;
-	private Map<String, String> networkServiceURLs;
+	private final NetworkIdentificationBiz networkIdentificationBiz;
+	private final NetworkAssociationDao networkAssociationDao;
 
-	private NetworkAssociationDao networkAssociationDao;
+	/**
+	 * Constructor.
+	 * 
+	 * @param networkIdentificationBiz
+	 *        the identification biz
+	 * @param networkAssociationDao
+	 *        the association DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public SimpleNetworkIdentityBiz(NetworkIdentificationBiz networkIdentificationBiz,
+			NetworkAssociationDao networkAssociationDao) {
+		super();
+		this.networkIdentificationBiz = requireNonNullArgument(networkIdentificationBiz,
+				"networkIdentificationBiz");
+		this.networkAssociationDao = requireNonNullArgument(networkAssociationDao,
+				"networkAssociationDao");
+	}
 
 	@Override
 	public NetworkIdentity getNetworkIdentity() {
-		BasicNetworkIdentity ident = new BasicNetworkIdentity(networkIdentityKey, termsOfService, host,
-				port, forceTLS);
-		ident.setNetworkServiceURLs(networkServiceURLs);
-		return ident;
+		return networkIdentificationBiz.getNetworkIdentity();
 	}
 
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public NetworkAssociation getNetworkAssociation(String username, String confirmationKey) {
 		return networkAssociationDao.getNetworkAssociationForConfirmationKey(username, confirmationKey);
-	}
-
-	public void setNetworkIdentityKey(String networkIdentityKey) {
-		this.networkIdentityKey = networkIdentityKey;
-	}
-
-	public void setTermsOfService(String termsOfService) {
-		this.termsOfService = termsOfService;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public void setPort(Integer port) {
-		this.port = port;
-	}
-
-	public void setForceTLS(boolean forceTLS) {
-		this.forceTLS = forceTLS;
-	}
-
-	public void setNetworkAssociationDao(NetworkAssociationDao networkAssociationDao) {
-		this.networkAssociationDao = networkAssociationDao;
-	}
-
-	public void setNetworkServiceURLs(Map<String, String> networkServiceURLs) {
-		this.networkServiceURLs = networkServiceURLs;
 	}
 
 }

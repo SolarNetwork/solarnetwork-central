@@ -38,10 +38,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.biz.BasicNetworkIdentificationBiz;
+import net.solarnetwork.central.biz.NetworkIdentificationBiz;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
+import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
@@ -78,6 +83,9 @@ public class SolarInBizConfig {
 
 	@Autowired
 	private DatumStreamMetadataDao metaDao;
+
+	@Autowired
+	private NetworkAssociationDao networkAssociationDao;
 
 	@Autowired
 	private SolarLocationDao solarLocationDao;
@@ -196,7 +204,8 @@ public class SolarInBizConfig {
 	public static class NetworkIdentitySettings {
 
 		private String networkIdentityKey = "replace:identity:here";
-		private String termsOfService = "replace:tos:here";
+		private Resource termsOfService = new ClassPathResource(
+				"net/solarnetwork/central/in/config/placeholder-toc.txt");
 		private String host = "localhost";
 		private int port = 8080;
 		private boolean forceTls = false;
@@ -218,16 +227,15 @@ public class SolarInBizConfig {
 	}
 
 	@Bean
-	public NetworkIdentityBiz networkIdentityBiz() {
+	public NetworkIdentificationBiz networkIdentificationBiz() {
 		NetworkIdentitySettings settings = networkIdentitySettings();
-		SimpleNetworkIdentityBiz biz = new SimpleNetworkIdentityBiz();
-		biz.setNetworkIdentityKey(settings.networkIdentityKey);
-		biz.setTermsOfService(settings.termsOfService);
-		biz.setHost(settings.host);
-		biz.setPort(settings.port);
-		biz.setForceTLS(settings.forceTls);
-		biz.setNetworkServiceURLs(settings.serviceUrls);
-		return biz;
+		return new BasicNetworkIdentificationBiz(settings.networkIdentityKey, settings.termsOfService,
+				settings.host, settings.port, settings.forceTls, settings.serviceUrls);
+	}
+
+	@Bean
+	public NetworkIdentityBiz networkIdentityBiz() {
+		return new SimpleNetworkIdentityBiz(networkIdentificationBiz(), networkAssociationDao);
 	}
 
 }

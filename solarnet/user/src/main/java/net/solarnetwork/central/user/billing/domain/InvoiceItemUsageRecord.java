@@ -1,7 +1,7 @@
 /* ==================================================================
- * NetworkIdentityBiz.java - Sep 13, 2011 7:08:59 PM
+ * InvoiceItemUsageRecord.java - 30/08/2017 3:21:31 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2017 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,48 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz;
+package net.solarnetwork.central.user.billing.domain;
 
-import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.domain.NetworkAssociation;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
- * API for identifying the SolarIn service to nodes.
+ * A usage record attached to an invoice item.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.1
  */
-public interface NetworkIdentityBiz extends NetworkIdentificationBiz {
+public interface InvoiceItemUsageRecord {
 
 	/**
-	 * Get a network association for a given username and confirmation key.
+	 * Get the usage unit type.
 	 * 
-	 * @param username
-	 *        the username
-	 * @param confirmationKey
-	 *        the confirmation key
-	 * @return the association, or <em>null</em> if not available
+	 * @return the usage unit type
 	 */
-	NetworkAssociation getNetworkAssociation(String username, String confirmationKey);
+	String getUnitType();
+
+	/**
+	 * Get the usage amount.
+	 * 
+	 * @return the amount
+	 */
+	BigDecimal getAmount();
+
+	/**
+	 * Get an associated usage cost.
+	 * 
+	 * @return the cost
+	 * @since 1.1
+	 */
+	BigDecimal getCost();
+
+	/**
+	 * Get a break-down of this usage record into a list of tiers.
+	 * 
+	 * @return the usage tiers for this record, or an empty list if there are no
+	 *         tiers
+	 * @since 1.1
+	 */
+	List<NamedCost> getUsageTiers();
 
 }

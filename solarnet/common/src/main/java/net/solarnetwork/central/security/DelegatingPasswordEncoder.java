@@ -24,6 +24,7 @@ package net.solarnetwork.central.security;
 
 import java.util.Map;
 import net.solarnetwork.service.PasswordEncoder;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Password encoder that delegates to a configurable list of Spring Security
@@ -31,13 +32,33 @@ import net.solarnetwork.service.PasswordEncoder;
  * instances, returning passwords with a prefix tag to be able to recognize what
  * encryption technique was used.
  * 
+ * <p>
+ * The first entry in the map according to iteration order will be used as the
+ * primary encoder. Thus a map implementation like
+ * {@link java.util.LinkedHashMap} is recommended.
+ * </p>
+ * 
  * @author matt
  * @version 2.0
  */
 public class DelegatingPasswordEncoder
 		implements PasswordEncoder, org.springframework.security.crypto.password.PasswordEncoder {
 
-	private Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
+	private final Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param encoders
+	 *        the encoders to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public DelegatingPasswordEncoder(
+			Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {
+		super();
+		this.encoders = ObjectUtils.requireNonNullArgument(encoders, "encoders");
+	}
 
 	@Override
 	public boolean isPasswordEncrypted(CharSequence password) {
@@ -76,24 +97,6 @@ public class DelegatingPasswordEncoder
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Set an ordered Map of password prefix tag keys to associated
-	 * {@code PasswordEncoder} instances.
-	 * 
-	 * <p>
-	 * The first entry in the map according to iteration order will be used as
-	 * the primary encoder. Thus a map implementation like
-	 * {@link java.util.LinkedHashMap} is recommended.
-	 * </p>
-	 * 
-	 * @param encoders
-	 *        the encoders to set
-	 */
-	public void setEncoders(
-			Map<String, org.springframework.security.crypto.password.PasswordEncoder> encoders) {
-		this.encoders = encoders;
 	}
 
 }
