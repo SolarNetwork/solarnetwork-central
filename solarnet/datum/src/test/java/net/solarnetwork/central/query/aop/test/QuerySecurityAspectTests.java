@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.aop.test;
 
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
+import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -56,7 +57,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -178,8 +178,7 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsAuthenticatedNode() {
 		AuthenticatedNode node = setAuthenticatedNode(-1L);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(node.getNodeId(), TEST_USER_ID, true,
-				false);
+		SolarNodeOwnership ownership = privateOwnershipFor(node.getNodeId(), TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -193,7 +192,7 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void datumFilterPrivateNodeAsAnonymous() {
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(-1L, TEST_USER_ID, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -212,7 +211,7 @@ public class QuerySecurityAspectTests {
 	@Test
 	public void datumFilterPrivateNodeAsSomeOtherNode() {
 		setAuthenticatedNode(-2L);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(-1L, TEST_USER_ID, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -235,7 +234,7 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedUserToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -254,7 +253,7 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedUserToken(-200L, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -277,7 +276,7 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -295,7 +294,7 @@ public class QuerySecurityAspectTests {
 		final Long userId = -100L;
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -315,7 +314,7 @@ public class QuerySecurityAspectTests {
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		// note the actor is not the owner of the node
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -335,7 +334,7 @@ public class QuerySecurityAspectTests {
 				.withNodeIds(Collections.singleton(-2L)).build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(-200L, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -358,7 +357,7 @@ public class QuerySecurityAspectTests {
 		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
 		// note the actor is not the owner of the node, and the token is not granted access to the node ID
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, -200L, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, -200L);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -383,7 +382,7 @@ public class QuerySecurityAspectTests {
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds)))
 				.withNodeIds(Collections.singleton(nodeId)).build();
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.replay(nodeOwnershipDao);
@@ -407,7 +406,7 @@ public class QuerySecurityAspectTests {
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
@@ -436,10 +435,10 @@ public class QuerySecurityAspectTests {
 		final Set<String> availableSourceIds = new LinkedHashSet<String>(
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(nodeId2, userId, true, false);
+		SolarNodeOwnership ownership2 = privateOwnershipFor(nodeId2, userId);
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
 
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
@@ -469,10 +468,10 @@ public class QuerySecurityAspectTests {
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
 				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId2, "/A/B/watts")));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(nodeId2, userId, true, false);
+		SolarNodeOwnership ownership2 = privateOwnershipFor(nodeId2, userId);
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
 
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
@@ -521,7 +520,7 @@ public class QuerySecurityAspectTests {
 		final QueryBiz queryBiz = EasyMock.createMock(QueryBiz.class);
 		final Signature methodSig = EasyMock.createMock(Signature.class);
 
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		// setup join point conditions to mimic call to findFilteredGeneralNodeDatum()
@@ -566,7 +565,7 @@ public class QuerySecurityAspectTests {
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
 
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		final DatumFilterCommand criteria = new DatumFilterCommand();

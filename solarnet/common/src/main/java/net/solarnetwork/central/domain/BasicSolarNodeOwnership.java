@@ -23,6 +23,8 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import net.solarnetwork.domain.Differentiable;
 
@@ -35,10 +37,12 @@ import net.solarnetwork.domain.Differentiable;
 public class BasicSolarNodeOwnership
 		implements Serializable, SolarNodeOwnership, Differentiable<SolarNodeOwnership> {
 
-	private static final long serialVersionUID = -1018957806985468904L;
+	private static final long serialVersionUID = 3442524641711956994L;
 
 	private final Long nodeId;
 	private final Long userId;
+	private final String country;
+	private final ZoneId zone;
 	private final boolean requiresAuthorization;
 	private final boolean archived;
 
@@ -46,8 +50,8 @@ public class BasicSolarNodeOwnership
 	 * Create a new ownership instance.
 	 * 
 	 * <p>
-	 * The {@code requiresAuthorization} and {@code archived} properties will be
-	 * set to {@literal false}.
+	 * The zone will be set to {@literal UTC}. The {@code requiresAuthorization}
+	 * and {@code archived} properties will be set to {@literal false}.
 	 * </p>
 	 * 
 	 * @param nodeId
@@ -59,7 +63,82 @@ public class BasicSolarNodeOwnership
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId) {
-		return new BasicSolarNodeOwnership(nodeId, userId, false, false);
+		return new BasicSolarNodeOwnership(nodeId, userId, null, ZoneOffset.UTC, false, false);
+	}
+
+	/**
+	 * Create a new private ownership instance.
+	 * 
+	 * <p>
+	 * The {@code requiresAuthorization} property will be set to
+	 * {@literal true}. The {@code archived} property will be set to
+	 * {@literal false}.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param userId
+	 *        the user ID
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @return the new ownership
+	 * @throws NullPointerException
+	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 */
+	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId, String country,
+			String timeZoneId) {
+		return new BasicSolarNodeOwnership(nodeId, userId, country,
+				(timeZoneId != null ? ZoneId.of(timeZoneId) : ZoneOffset.UTC), false, false);
+	}
+
+	/**
+	 * Create a new private ownership instance.
+	 * 
+	 * <p>
+	 * The zone will be set to {@literal UTC}. The {@code requiresAuthorization}
+	 * property will be set to {@literal true}. The {@code archived} property
+	 * will be set to {@literal false}.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param userId
+	 *        the user ID
+	 * @return the new ownership
+	 * @throws NullPointerException
+	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 */
+	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId) {
+		return new BasicSolarNodeOwnership(nodeId, userId, null, ZoneOffset.UTC, true, false);
+	}
+
+	/**
+	 * Create a new private ownership instance.
+	 * 
+	 * <p>
+	 * The {@code requiresAuthorization} property will be set to
+	 * {@literal true}. The {@code archived} property will be set to
+	 * {@literal false}.
+	 * </p>
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param userId
+	 *        the user ID
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID
+	 * @return the new ownership
+	 * @throws NullPointerException
+	 *         if {@code nodeId} or {@code userId} is {@literal null}
+	 */
+	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId, String country,
+			String timeZoneId) {
+		return new BasicSolarNodeOwnership(nodeId, userId, country,
+				(timeZoneId != null ? ZoneId.of(timeZoneId) : ZoneOffset.UTC), true, false);
 	}
 
 	/**
@@ -69,6 +148,10 @@ public class BasicSolarNodeOwnership
 	 *        the node ID
 	 * @param userId
 	 *        the owner user ID
+	 * @param country
+	 *        the country code
+	 * @param zone
+	 *        the zone, or {@literal null} to use {@literal UTC}
 	 * @param requiresAuthorization
 	 *        {@literal true} if authorization is required to access the node's
 	 *        data
@@ -77,11 +160,13 @@ public class BasicSolarNodeOwnership
 	 * @throws NullPointerException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
-	public BasicSolarNodeOwnership(Long nodeId, Long userId, boolean requiresAuthorization,
-			boolean archived) {
+	public BasicSolarNodeOwnership(Long nodeId, Long userId, String country, ZoneId zone,
+			boolean requiresAuthorization, boolean archived) {
 		super();
 		this.nodeId = Objects.requireNonNull(nodeId, "The nodeId argument must not be null.");
 		this.userId = Objects.requireNonNull(userId, "The userId argument must not be null.");
+		this.country = country;
+		this.zone = (zone != null ? zone : ZoneOffset.UTC);
 		this.requiresAuthorization = requiresAuthorization;
 		this.archived = archived;
 	}
@@ -102,6 +187,8 @@ public class BasicSolarNodeOwnership
 		// @formatter:off
 		return Objects.equals(nodeId, other.getNodeId())
 				&& Objects.equals(userId, other.getUserId())
+				&& Objects.equals(country, other.getCountry())
+				&& Objects.equals(zone, other.getZone())
 				&& Objects.equals(requiresAuthorization, other.isRequiresAuthorization())
 				&& Objects.equals(archived, other.isArchived());
 		// @formatter:on
@@ -114,24 +201,30 @@ public class BasicSolarNodeOwnership
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("SolarNodeOwnership{");
+		StringBuilder buf = new StringBuilder();
+		buf.append("SolarNodeOwnership{");
 		if ( nodeId != null ) {
-			builder.append("nodeId=");
-			builder.append(nodeId);
-			builder.append(", ");
+			buf.append("nodeId=");
+			buf.append(nodeId);
+			buf.append(", ");
 		}
 		if ( userId != null ) {
-			builder.append("userId=");
-			builder.append(userId);
-			builder.append(", ");
+			buf.append("userId=");
+			buf.append(userId);
+			buf.append(", ");
 		}
-		builder.append(requiresAuthorization ? "private" : "public");
+		if ( country != null ) {
+			buf.append("country=");
+			buf.append(country);
+			buf.append(", ");
+		}
+		buf.append("zone=").append(zone.getId()).append(", ");
+		buf.append(requiresAuthorization ? "private" : "public");
 		if ( archived ) {
-			builder.append(",archived");
+			buf.append(", archived");
 		}
-		builder.append("}");
-		return builder.toString();
+		buf.append("}");
+		return buf.toString();
 	}
 
 	@Override
@@ -168,6 +261,16 @@ public class BasicSolarNodeOwnership
 	@Override
 	public Long getUserId() {
 		return userId;
+	}
+
+	@Override
+	public String getCountry() {
+		return country;
+	}
+
+	@Override
+	public ZoneId getZone() {
+		return zone;
 	}
 
 	@Override

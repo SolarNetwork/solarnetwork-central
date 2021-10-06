@@ -30,12 +30,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,9 +53,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
@@ -83,11 +86,10 @@ import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
@@ -117,7 +119,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	private final ScheduledExecutorService scheduler;
 	private final ExecutorService executor;
-	private final UserNodeDao userNodeDao;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final DatumImportJobInfoDao jobInfoDao;
 	private final DatumEntityDao datumDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
@@ -138,7 +140,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 *        the scheduler, to perform periodic cleanup tasks with
 	 * @param executor
 	 *        the executor, to perform import operations with
-	 * @param userNodeDao
+	 * @param nodeOwnershipDao
 	 *        the user node DAO
 	 * @param jobInfoDao
 	 *        the job info DAO
@@ -146,11 +148,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 *        the datum DAO
 	 */
 	public DaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
-			UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
+			SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
+			DatumEntityDao datumDao) {
 		super();
 		this.scheduler = scheduler;
 		this.executor = executor;
-		this.userNodeDao = userNodeDao;
+		this.nodeOwnershipDao = userNodeDao;
 		this.jobInfoDao = jobInfoDao;
 		this.datumDao = datumDao;
 
@@ -527,24 +530,28 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
 			}
 
-			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
-			Map<Long, ZoneId> tzMap = new HashMap<>();
+			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(info.getUserId());
+			final Set<Long> allowedNodeIds;
+			final Map<Long, ZoneId> tzMap;
+			if ( ownerships != null ) {
+				allowedNodeIds = new HashSet<>(ownerships.length);
+				tzMap = new HashMap<>(ownerships.length);
+				for ( SolarNodeOwnership ownership : ownerships ) {
+					allowedNodeIds.add(ownership.getNodeId());
+					tzMap.put(ownership.getNodeId(), ownership.getZone());
+				}
+			} else {
+				allowedNodeIds = Collections.emptySet();
+				tzMap = Collections.emptyMap();
+			}
 
 			try (ImportContext input = createImportContext(info, this)) {
 				for ( GeneralNodeDatum d : input ) {
-					if ( !allowedNodeIds.contains(d.getNodeId()) ) {
+					if ( !tzMap.containsKey(d.getNodeId()) ) {
 						throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 					}
 					ReportingGeneralNodeDatumComponents dc = new ReportingGeneralNodeDatumComponents(d);
-					ZoneId tz = tzMap.computeIfAbsent(dc.getNodeId(), sourceId -> {
-						UserNode userNode = userNodeDao.get(dc.getNodeId());
-						ZoneId zone = ZoneOffset.UTC;
-						if ( userNode != null && userNode.getNodeLocation() != null
-								&& userNode.getNodeLocation().getTimeZoneId() != null ) {
-							zone = ZoneId.of(userNode.getNodeLocation().getTimeZoneId());
-						}
-						return zone;
-					});
+					ZoneId tz = tzMap.get(d.getNodeId());
 					dc.setLocalDateTime(d.getCreated().atZone(tz).toLocalDateTime());
 					results.add(dc);
 					if ( results.size() >= previewCount ) {
@@ -718,7 +725,10 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
 			}
 
-			Set<Long> allowedNodeIds = userNodeDao.findNodeIdsForUser(info.getUserId());
+			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(info.getUserId());
+			Set<Long> allowedNodeIds = (ownerships != null ? Arrays.stream(ownerships)
+					.map(SolarNodeOwnership::getNodeId).collect(Collectors.toSet())
+					: Collections.emptySet());
 
 			LoadingTransactionMode txMode = LoadingTransactionMode.SingleTransaction;
 			Integer batchSize = null;

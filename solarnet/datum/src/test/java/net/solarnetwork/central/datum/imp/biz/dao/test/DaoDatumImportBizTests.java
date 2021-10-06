@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +73,7 @@ import org.junit.Test;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
@@ -92,12 +94,9 @@ import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServ
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServiceImportContext;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
@@ -124,7 +123,7 @@ public class DaoDatumImportBizTests {
 
 	private ScheduledExecutorService scheduledExecutorService;
 	private ExecutorService executorSercvice;
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao userNodeDao;
 	private DatumImportJobInfoDao jobInfoDao;
 	private DatumEntityDao datumDao;
 	private ResourceStorageService resourceStorageService;
@@ -136,7 +135,8 @@ public class DaoDatumImportBizTests {
 	private class TestDaoDatumImportBiz extends DaoDatumImportBiz {
 
 		private TestDaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
-				UserNodeDao userNodeDao, DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
+				SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
+				DatumEntityDao datumDao) {
 			super(scheduler, executor, userNodeDao, jobInfoDao, datumDao);
 		}
 
@@ -154,7 +154,7 @@ public class DaoDatumImportBizTests {
 		executorSercvice = EasyMock.createMock(ExecutorService.class);
 
 		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		userNodeDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		resourceStorageService = EasyMock.createMock(ResourceStorageService.class);
 
@@ -426,14 +426,6 @@ public class DaoDatumImportBizTests {
 		return info;
 	}
 
-	private UserNode createTestUserNode(Long userId, Long nodeId, String timeZoneId) {
-		SolarLocation loc = new SolarLocation();
-		loc.setTimeZoneId("Pacific/Auckland");
-		SolarNode node = new SolarNode(TEST_NODE_ID, null);
-		node.setLocation(loc);
-		return new UserNode(new User(TEST_USER_ID, "foo@localhost"), node);
-	}
-
 	@Test
 	public void previewRequest() throws Exception {
 		// given
@@ -457,12 +449,10 @@ public class DaoDatumImportBizTests {
 		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
-				.anyTimes();
-
-		// make node time zone available
-		UserNode un = createTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Pacific/Auckland");
-		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(un);
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
 		String jobId = pk.getId().toString();
 
@@ -511,8 +501,10 @@ public class DaoDatumImportBizTests {
 		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
-				.anyTimes();
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
 		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
 		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
@@ -613,8 +605,10 @@ public class DaoDatumImportBizTests {
 		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
-				.anyTimes();
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
 		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
 		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
@@ -705,8 +699,10 @@ public class DaoDatumImportBizTests {
 		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID))
-				.anyTimes();
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
 		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
 		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
@@ -786,8 +782,10 @@ public class DaoDatumImportBizTests {
 		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
 
 		// make test node NOT owned by job's user
-		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID)).andReturn(singleton(TEST_NODE_ID_2))
-				.anyTimes();
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID_2, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
 
 		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
 		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))

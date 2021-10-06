@@ -140,7 +140,8 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
 
 		// THEN
-		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID, TEST_LOC_COUNTRY,
+				"Pacific/Auckland");
 		assertThat("Ownership found", expected.isSameAs(ownership), equalTo(true));
 	}
 
@@ -161,7 +162,8 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
 
 		// THEN
-		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID, TEST_LOC_COUNTRY,
+				"Pacific/Auckland");
 		assertThat("Ownership found", expected.isSameAs(ownership), is(true));
 
 		// DB result was added to cache
@@ -180,7 +182,8 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		dao.setUserNodeCache(cache);
 
 		// test cache first
-		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID, TEST_LOC_COUNTRY,
+				"Pacific/Auckland");
 		given(cache.get(TEST_NODE_ID)).willReturn(expected);
 
 		// WHEN
@@ -214,7 +217,8 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 
 		// THEN
 		assertThat("One match returned", ownerships, is(arrayWithSize(1)));
-		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID, TEST_LOC_COUNTRY,
+				"Pacific/Auckland");
 		assertThat("Ownership returned when single match", expected.isSameAs(ownerships[0]), is(true));
 	}
 
@@ -229,7 +233,8 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 			Long nodeId = r.nextLong();
 			setupTestNode(nodeId, TEST_LOC_ID);
 			setupTestUserNode(TEST_USER_ID, nodeId, "Test Node " + i);
-			expected.add(BasicSolarNodeOwnership.ownershipFor(nodeId, TEST_USER_ID));
+			expected.add(BasicSolarNodeOwnership.ownershipFor(nodeId, TEST_USER_ID, TEST_LOC_COUNTRY,
+					"Pacific/Auckland"));
 		}
 		// toss in some nodes for a different user, to verify they are NOT returned
 		setupTestUser(TEST_USER_ID_2, TEST_USERNAME_2);

@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import java.time.ZoneId;
+import org.springframework.lang.NonNull;
+
 /**
  * API for node ownership details.
  * 
@@ -35,6 +38,7 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return the node ID
 	 */
+	@NonNull
 	Long getNodeId();
 
 	/**
@@ -42,7 +46,23 @@ public interface SolarNodeOwnership {
 	 * 
 	 * @return the owner user ID
 	 */
+	@NonNull
 	Long getUserId();
+
+	/**
+	 * Get the ISO 3166-1 alpha-2 character country code.
+	 * 
+	 * @return 2-character country code
+	 */
+	String getCountry();
+
+	/**
+	 * Get the node's time zone.
+	 * 
+	 * @return the time zone
+	 */
+	@NonNull
+	ZoneId getZone();
 
 	/**
 	 * Flag indicating if a node's data is "public" vs "private".

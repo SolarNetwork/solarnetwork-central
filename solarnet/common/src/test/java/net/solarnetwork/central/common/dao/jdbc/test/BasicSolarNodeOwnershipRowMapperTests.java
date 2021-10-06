@@ -28,6 +28,7 @@ import static org.mockito.BDDMockito.given;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -57,18 +58,25 @@ public class BasicSolarNodeOwnershipRowMapperTests {
 		given(resultSet.getObject(1)).willReturn(expected.getNodeId());
 		given(resultSet.getObject(2)).willReturn(expected.getUserId());
 		if ( colCount >= 3 ) {
-			given(resultSet.getBoolean(3)).willReturn(expected.isRequiresAuthorization());
+			given(resultSet.getString(3)).willReturn(expected.getCountry());
 		}
 		if ( colCount >= 4 ) {
-			given(resultSet.getBoolean(4)).willReturn(expected.isArchived());
+			given(resultSet.getString(4)).willReturn(expected.getZone().getId());
+		}
+		if ( colCount >= 5 ) {
+			given(resultSet.getBoolean(5)).willReturn(expected.isRequiresAuthorization());
+		}
+		if ( colCount >= 6 ) {
+			given(resultSet.getBoolean(6)).willReturn(expected.isArchived());
 		}
 	}
 
 	@Test
 	public void fullRow() throws SQLException {
 		// GIVEN
-		final BasicSolarNodeOwnership expected = new BasicSolarNodeOwnership(123L, 321L, true, true);
-		givenRowMap(0, expected, 4);
+		final BasicSolarNodeOwnership expected = new BasicSolarNodeOwnership(123L, 321L, "NZ",
+				ZoneId.of("Pacific/Auckland"), true, true);
+		givenRowMap(0, expected, 6);
 
 		// WHEN
 		SolarNodeOwnership result = BasicSolarNodeOwnershipRowMapper.INSTANCE.mapRow(resultSet, 0);
@@ -80,7 +88,7 @@ public class BasicSolarNodeOwnershipRowMapperTests {
 	@Test
 	public void shortRow() throws SQLException {
 		// GIVEN
-		final BasicSolarNodeOwnership expected = new BasicSolarNodeOwnership(123L, 321L, false, false);
+		final BasicSolarNodeOwnership expected = BasicSolarNodeOwnership.ownershipFor(123L, 321L);
 		givenRowMap(0, expected, 2);
 
 		// WHEN

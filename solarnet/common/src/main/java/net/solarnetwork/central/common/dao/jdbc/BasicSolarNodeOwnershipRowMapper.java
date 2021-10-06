@@ -24,6 +24,9 @@ package net.solarnetwork.central.common.dao.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -38,6 +41,8 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
  * <ol>
  * <li>node_id</li>
  * <li>user_id</li>
+ * <li>country (optional)</li>
+ * <li>time zone (optional)</li>
  * <li>private (optional)</li>
  * <li>archived (optional)</li>
  * </ol>
@@ -55,15 +60,27 @@ public class BasicSolarNodeOwnershipRowMapper implements RowMapper<SolarNodeOwne
 		final int colCount = rs.getMetaData().getColumnCount();
 		Long nodeId = (Long) rs.getObject(1);
 		Long userId = (Long) rs.getObject(2);
-		boolean priv = false;
+		String country = null;
 		if ( colCount >= 3 ) {
-			priv = rs.getBoolean(3);
+			country = rs.getString(3);
+		}
+		ZoneId zone = ZoneOffset.UTC;
+		if ( colCount >= 4 ) {
+			try {
+				zone = ZoneId.of(rs.getString(4));
+			} catch ( DateTimeException e ) {
+				// ignore
+			}
+		}
+		boolean priv = false;
+		if ( colCount >= 5 ) {
+			priv = rs.getBoolean(5);
 		}
 		boolean arch = false;
-		if ( colCount >= 4 ) {
-			arch = rs.getBoolean(4);
+		if ( colCount >= 6 ) {
+			arch = rs.getBoolean(6);
 		}
-		return new BasicSolarNodeOwnership(nodeId, userId, priv, arch);
+		return new BasicSolarNodeOwnership(nodeId, userId, country, zone, priv, arch);
 	}
 
 }

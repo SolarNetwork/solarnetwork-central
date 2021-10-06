@@ -142,7 +142,7 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
 				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId, "Foo bar")));
 		setAuthenticatedReadNodeDataToken(userId, policy);
-		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, userId, true, false);
+		SolarNodeOwnership ownership = BasicSolarNodeOwnership.privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(userNodeDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);

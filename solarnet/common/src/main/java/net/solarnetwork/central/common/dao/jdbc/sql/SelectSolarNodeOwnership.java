@@ -42,6 +42,8 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
  * <ol>
  * <li>node_id (BIGINT)</li>
  * <li>user_id (BIGINT)</li>
+ * <li>country (CHAR)</li>
+ * <li>time_zone (VARCHAR)</li>
  * <li>private (BOOLEAN)</li>
  * <li>archived (BOOLEAN)</li>
  * </ol>
@@ -114,7 +116,10 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		buf.append("SELECT node_id, user_id, private, archived\nFROM solaruser.user_node");
+		buf.append("SELECT un.node_id, un.user_id, l.country, l.time_zone, un.private, un.archived\n");
+		buf.append("FROM solaruser.user_node un\n");
+		buf.append("LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = un.node_id\n");
+		buf.append("LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id");
 		sqlWhere(buf);
 	}
 
@@ -122,7 +127,7 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 		boolean haveWhere = false;
 		if ( nodeIds != null && nodeIds.length > 0 ) {
 			haveWhere = true;
-			buf.append("\nWHERE node_id = ");
+			buf.append("\nWHERE un.node_id = ");
 			if ( nodeIds.length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
@@ -136,7 +141,7 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 			} else {
 				buf.append("\nAND ");
 			}
-			buf.append("user_id = ");
+			buf.append("un.user_id = ");
 			if ( userIds.length > 1 ) {
 				buf.append("ANY(?)");
 			} else {
@@ -150,7 +155,7 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 			// at most one result, skip order
 			return;
 		}
-		buf.append("\nORDER BY node_id");
+		buf.append("\nORDER BY un.node_id");
 	}
 
 	@Override
