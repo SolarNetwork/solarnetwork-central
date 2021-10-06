@@ -29,32 +29,32 @@ import org.junit.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.aop.DatumImportSecurityAspect;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.user.dao.UserNodeDao;;
+import net.solarnetwork.central.security.AuthorizationException;;
 
 /**
  * Test cases for the {@link DatumImportSecurityAspect} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DatumImportSecurityAspectTests {
 
 	private static final Long TEST_USER_ID = -11L;
 
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private DatumImportSecurityAspect aspect;
 
 	private void replayAll() {
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 	}
 
 	private void verifyAll() {
-		EasyMock.verify(userNodeDao);
+		EasyMock.verify(nodeOwnershipDao);
 	}
 
 	private void becomeUser(String... roles) {
@@ -67,8 +67,8 @@ public class DatumImportSecurityAspectTests {
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		aspect = new DatumImportSecurityAspect(userNodeDao);
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+		aspect = new DatumImportSecurityAspect(nodeOwnershipDao);
 	}
 
 	@After

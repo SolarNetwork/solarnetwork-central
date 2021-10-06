@@ -71,6 +71,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.common.dao.jdbc.CommonDbUtils;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
@@ -87,7 +88,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SimpleLocation;
@@ -312,8 +313,8 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID)))
 				.withSourceIds(new HashSet<>(asList("/test/source/102", "/test/source/104"))).build();
-		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
-				UserAuthTokenStatus.Active, SecurityTokenType.ReadNodeData,
+		CommonDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				SecurityTokenStatus.Active, SecurityTokenType.ReadNodeData,
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN
@@ -346,8 +347,8 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID)))
 				.withSourceIds(new HashSet<>(asList("/test/source/NO"))).build();
-		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
-				UserAuthTokenStatus.Active, SecurityTokenType.ReadNodeData,
+		CommonDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				SecurityTokenStatus.Active, SecurityTokenType.ReadNodeData,
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN
@@ -379,8 +380,8 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		SecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<>(asList(TEST_NODE_ID - 1L)))
 				.withSourceIds(new HashSet<>(asList("/test/source/102", "/test/source/104"))).build();
-		DatumDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
-				UserAuthTokenStatus.Active, SecurityTokenType.ReadNodeData,
+		CommonDbUtils.insertSecurityToken(jdbcTemplate, tokenId, "pass", TEST_USER_ID,
+				SecurityTokenStatus.Active, SecurityTokenType.ReadNodeData,
 				JsonUtils.getJSONString(policy, null));
 
 		// WHEN

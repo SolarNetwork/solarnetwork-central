@@ -31,6 +31,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
@@ -42,15 +43,14 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
 
 /**
  * Security AOP support for {@link DatumAuxiliaryBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  * @since 1.5
  */
 @Aspect
@@ -61,13 +61,14 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param nodeOwnershipDao
+	 *        the ownership DAO to use
 	 * @param metaDao
 	 *        the metadata DAO to use
 	 */
-	public DatumAuxiliarySecurityAspect(UserNodeDao userNodeDao, DatumStreamMetadataDao metaDao) {
-		super(userNodeDao);
+	public DatumAuxiliarySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
+			DatumStreamMetadataDao metaDao) {
+		super(nodeOwnershipDao);
 		this.metaDao = metaDao;
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);

@@ -20,10 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import static java.util.Objects.requireNonNull;
-import static net.solarnetwork.central.common.dao.jdbc.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +34,17 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 
 /**
  * Select for {@link BasicSolarNodeOwnership} instances.
+ * 
+ * <p>
+ * The result columns in the SQL are:
+ * </p>
+ * 
+ * <ol>
+ * <li>node_id (BIGINT)</li>
+ * <li>user_id (BIGINT)</li>
+ * <li>private (BOOLEAN)</li>
+ * <li>archived (BOOLEAN)</li>
+ * </ol>
  * 
  * @author matt
  * @version 1.0
@@ -102,7 +113,7 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 		this.userIds = userIds;
 	}
 
-	private void sqlCore(StringBuilder buf, boolean ordered) {
+	private void sqlCore(StringBuilder buf) {
 		buf.append("SELECT node_id, user_id, private, archived\nFROM solaruser.user_node");
 		sqlWhere(buf);
 	}
@@ -145,7 +156,7 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, true);
+		sqlCore(buf);
 		sqlOrderBy(buf);
 		return buf.toString();
 	}

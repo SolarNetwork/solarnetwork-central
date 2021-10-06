@@ -25,6 +25,8 @@ package net.solarnetwork.central.common.dao.jdbc;
 import java.util.List;
 import javax.cache.Cache;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeOwnership;
+import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserAuthTokenNodes;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
@@ -88,6 +90,16 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 			result = results.toArray(new SolarNodeOwnership[results.size()]);
 		}
 		return result;
+	}
+
+	@Override
+	public Long[] nonArchivedNodeIdsForToken(String tokenId) {
+		if ( tokenId == null ) {
+			return new Long[0];
+		}
+		List<Long> results = getJdbcOps().query(new SelectUserAuthTokenNodes(tokenId),
+				new ColumnRowMapper<>(2, Long.class));
+		return (results != null ? results.toArray(Long[]::new) : new Long[0]);
 	}
 
 	/**

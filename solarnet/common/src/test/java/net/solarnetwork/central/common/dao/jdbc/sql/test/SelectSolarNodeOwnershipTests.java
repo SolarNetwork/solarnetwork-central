@@ -20,12 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc.test;
+package net.solarnetwork.central.common.dao.jdbc.sql.test;
 
 import static java.sql.ResultSet.CLOSE_CURSORS_AT_COMMIT;
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
-import static net.solarnetwork.central.common.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
@@ -44,7 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.common.dao.jdbc.SelectSolarNodeOwnership;
+import net.solarnetwork.central.common.dao.jdbc.sql.SelectSolarNodeOwnership;
 
 /**
  * Test cases for the {@link SelectSolarNodeOwnership} class.

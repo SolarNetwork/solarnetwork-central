@@ -42,7 +42,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
@@ -50,7 +49,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -60,6 +58,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
@@ -96,7 +95,6 @@ import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
-import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 
 /**
@@ -112,7 +110,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	private DatumEntityDao datumDao;
 	private DatumStreamMetadataDao metaDao;
 	private ReadingDatumDao readingDao;
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	private DaoQueryBiz biz;
 
@@ -121,19 +119,18 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		readingDao = EasyMock.createMock(ReadingDatumDao.class);
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		biz = new DaoQueryBiz(datumDao, metaDao, readingDao);
-		biz.setUserNodeDao(userNodeDao);
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+		biz = new DaoQueryBiz(datumDao, metaDao, readingDao, nodeOwnershipDao);
 		setupTestNode();
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, metaDao, readingDao, userNodeDao);
+		EasyMock.replay(datumDao, metaDao, readingDao, nodeOwnershipDao);
 	}
 
 	@After
 	public void tearndown() {
-		EasyMock.verify(datumDao, metaDao, readingDao, userNodeDao);
+		EasyMock.verify(datumDao, metaDao, readingDao, nodeOwnershipDao);
 	}
 
 	private static void assertConverted(String prefix, ReportableInterval result,
@@ -325,17 +322,17 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	public void findNodes_dataToken() {
 		// GIVEN
 		User user = createNewUser(TEST_USER_EMAIL);
-		Set<Long> nodeIds = new LinkedHashSet<>(Arrays.asList(1L, 2L));
 		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), null);
 
-		expect(userNodeDao.findNodeIdsForToken(actor.getToken())).andReturn(nodeIds);
+		expect(nodeOwnershipDao.nonArchivedNodeIdsForToken(actor.getToken()))
+				.andReturn(new Long[] { 1L, 2L });
 
 		// WHEN
 		replayAll();
 		Set<Long> results = biz.findAvailableNodes(actor);
 
 		// THEN
-		assertThat("Results", results, sameInstance(nodeIds));
+		assertThat("Results", results, contains(1L, 2L));
 	}
 
 	@Test

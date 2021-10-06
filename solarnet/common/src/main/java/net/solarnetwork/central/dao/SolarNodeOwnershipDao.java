@@ -50,4 +50,14 @@ public interface SolarNodeOwnershipDao {
 	 */
 	SolarNodeOwnership[] ownershipsForUserId(Long userId);
 
+	/**
+	 * Get the available non-archived node IDs associated with a security token
+	 * ID.
+	 * 
+	 * @param tokenId
+	 *        the security token ID
+	 * @return the node IDs; never {@literal null}
+	 */
+	Long[] nonArchivedNodeIdsForToken(String tokenId);
+
 }

@@ -69,7 +69,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * Constructor.
 	 * 
 	 * @param nodeOwnershipDao
-	 *        the SolarNodeOwnershipDao to use
+	 *        the ownership DAO to use
 	 */
 	public DatumMetadataSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super(nodeOwnershipDao);

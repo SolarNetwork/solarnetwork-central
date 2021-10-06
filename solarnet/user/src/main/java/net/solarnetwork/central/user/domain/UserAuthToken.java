@@ -30,6 +30,7 @@ import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -45,7 +46,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 
 	private Long userId;
 	private String authSecret;
-	private UserAuthTokenStatus status;
+	private SecurityTokenStatus status;
 	private SecurityTokenType type;
 	private BasicSecurityPolicy policy;
 	private String policyJson;
@@ -74,7 +75,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		setId(token);
 		setUserId(userId);
 		setAuthSecret(secret);
-		setStatus(UserAuthTokenStatus.Active);
+		setStatus(SecurityTokenStatus.Active);
 		setType(type);
 	}
 
@@ -120,11 +121,11 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		this.authSecret = authSecret;
 	}
 
-	public UserAuthTokenStatus getStatus() {
+	public SecurityTokenStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(UserAuthTokenStatus status) {
+	public void setStatus(SecurityTokenStatus status) {
 		this.status = status;
 	}
 

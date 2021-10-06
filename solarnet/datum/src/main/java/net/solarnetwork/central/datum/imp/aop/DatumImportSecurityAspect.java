@@ -25,17 +25,17 @@ package net.solarnetwork.central.datum.imp.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
+import net.solarnetwork.central.security.AuthorizationSupport;
 
 /**
  * Security enforcing AOP aspect for {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 @Aspect
 public class DatumImportSecurityAspect extends AuthorizationSupport {
@@ -43,11 +43,11 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao
+	 * @param nodeOwnershipDao
+	 *        the ownership DAO to use
 	 */
-	public DatumImportSecurityAspect(UserNodeDao userNodeDao) {
-		super(userNodeDao);
+	public DatumImportSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+		super(nodeOwnershipDao);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.*ForUser(..)) && args(userId,..)")

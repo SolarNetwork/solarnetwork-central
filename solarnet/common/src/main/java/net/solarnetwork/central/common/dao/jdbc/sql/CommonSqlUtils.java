@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import java.sql.Array;
 import java.sql.Connection;

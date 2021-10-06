@@ -28,29 +28,28 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.aop.DatumMaintenanceSecurityAspect;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNode;
 
 /**
  * Test cases for the {@link DatumMaintenanceSecurityAspect} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private DatumMaintenanceSecurityAspect aspect;
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		aspect = new DatumMaintenanceSecurityAspect(userNodeDao);
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+		aspect = new DatumMaintenanceSecurityAspect(nodeOwnershipDao);
 	}
 
 	@After
@@ -59,24 +58,22 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(userNodeDao);
+		EasyMock.replay(nodeOwnershipDao);
 	}
 
 	private void verifyAll() {
-		EasyMock.verify(userNodeDao);
+		EasyMock.verify(nodeOwnershipDao);
 	}
 
 	private void expectUserNode(Long userId, Long nodeId) {
-		User user = new User(userId, null);
-		SolarNode node = new SolarNode(nodeId, null);
-		UserNode un = new UserNode(user, node);
-		expect(userNodeDao.get(nodeId)).andReturn(un).anyTimes();
+		SolarNodeOwnership ownership = BasicSolarNodeOwnership.ownershipFor(nodeId, userId);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership).anyTimes();
 	}
 
 	@Test(expected = AuthorizationException.class)
 	public void markStaleCheckNoAuth() {
 		// given
-		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null).anyTimes();
+		expect(nodeOwnershipDao.ownershipForNodeId(TEST_NODE_ID)).andReturn(null).anyTimes();
 
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
@@ -119,7 +116,7 @@ public class DatumMaintenanceSecurityAspectTests extends AbstractAspectTest {
 		becomeUser(userId);
 
 		expectUserNode(userId, -1L);
-		expect(userNodeDao.get(-2L)).andReturn(null).anyTimes();
+		expect(nodeOwnershipDao.ownershipForNodeId(-2L)).andReturn(null).anyTimes();
 
 		// when
 		replayAll();

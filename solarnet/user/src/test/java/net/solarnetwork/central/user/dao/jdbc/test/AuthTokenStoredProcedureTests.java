@@ -58,8 +58,8 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
-import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -324,7 +324,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 				email, "Test User", "test.password");
 	}
 
-	private void createToken(String tokenId, String tokenSecret, Long userId, UserAuthTokenStatus status,
+	private void createToken(String tokenId, String tokenSecret, Long userId, SecurityTokenStatus status,
 			SecurityTokenType type, String policy) {
 		jdbcTemplate.update(
 				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
@@ -368,7 +368,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		final String tokenSecret = "password";
 		final Long userId = -1L;
 		createUser(userId, "test@localhost");
-		createToken(tokenId, tokenSecret, userId, UserAuthTokenStatus.Active,
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
 				SecurityTokenType.ReadNodeData, null);
 
 		// when
@@ -412,7 +412,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		final String tokenSecret = "password";
 		final Long userId = -1L;
 		createUser(userId, "test@localhost");
-		createToken(tokenId, tokenSecret, userId, UserAuthTokenStatus.Disabled,
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Disabled,
 				SecurityTokenType.ReadNodeData, null);
 
 		// WHEN
@@ -445,7 +445,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		final String tokenSecret = "password";
 		final Long userId = -1L;
 		createUser(userId, "test@localhost");
-		createToken(tokenId, tokenSecret, userId, UserAuthTokenStatus.Active,
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
 				SecurityTokenType.ReadNodeData, null);
 
 		// when
@@ -480,7 +480,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		final BasicSecurityPolicy policy = new BasicSecurityPolicy(null, null, null, null, null, null,
 				null, null, reqDate.minus(1, ChronoUnit.MINUTES), true);
 		createUser(userId, "test@localhost");
-		createToken(tokenId, tokenSecret, userId, UserAuthTokenStatus.Active,
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
 				SecurityTokenType.ReadNodeData, JsonUtils.getJSONString(policy, null));
 
 		// WHEN
@@ -515,7 +515,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 		final BasicSecurityPolicy policy = new BasicSecurityPolicy(null, null, null, null, null, null,
 				null, null, reqDate.plus(10, ChronoUnit.MINUTES), true);
 		createUser(userId, "test@localhost");
-		createToken(tokenId, tokenSecret, userId, UserAuthTokenStatus.Active,
+		createToken(tokenId, tokenSecret, userId, SecurityTokenStatus.Active,
 				SecurityTokenType.ReadNodeData, JsonUtils.getJSONString(policy, null));
 
 		// when

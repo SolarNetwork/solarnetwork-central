@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserAuthTokenStatus.java - Dec 12, 2012 1:45:59 PM
+ * ColumnRowMapper.java - 6/10/2021 3:29:45 PM
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,20 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.domain;
+package net.solarnetwork.central.common.dao.jdbc;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
- * Enum for {@link UserAuthToken} status.
+ * Row mapper for extracting a single column value.
  * 
  * @author matt
  * @version 1.0
  */
-public enum UserAuthTokenStatus {
+public class ColumnRowMapper<T> implements RowMapper<T> {
 
-	/** The token is active and valid. */
-	Active,
+	private final int colNum;
+	private final Class<? extends T> colType;
 
-	/** The token is disabled and should not be used. */
-	Disabled;
+	/**
+	 * Constructor.
+	 * 
+	 * @param colNum
+	 *        the column number
+	 * @param colType
+	 *        the output type
+	 */
+	public ColumnRowMapper(int colNum, Class<? extends T> colType) {
+		super();
+		this.colNum = colNum;
+		this.colType = colType;
+	}
+
+	@Override
+	public T mapRow(ResultSet rs, int rowNum) throws SQLException {
+		return rs.getObject(colNum, colType);
+	}
 
 }

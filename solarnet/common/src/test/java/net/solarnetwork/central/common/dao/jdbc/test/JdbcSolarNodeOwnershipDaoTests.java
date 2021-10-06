@@ -22,24 +22,49 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static net.solarnetwork.central.common.dao.jdbc.CommonDbUtils.insertSecurityToken;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
+import static net.solarnetwork.central.security.SecurityTokenStatus.Active;
+import static net.solarnetwork.central.security.SecurityTokenStatus.Disabled;
+import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
+import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.common.dao.jdbc.JdbcSolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Test cases for the {@link JdbcSolarNodeOwnershipDao} class.
@@ -47,7 +72,8 @@ import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
  * @author matt
  * @version 1.0
  */
-public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
+@ExtendWith(MockitoExtension.class)
+public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final Long TEST_USER_ID = Long.valueOf(-9999);
 	private static final String TEST_USERNAME = "unittest@localhost";
@@ -55,6 +81,12 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
 	private static final String TEST_USERNAME_2 = "unittest2@localhost";
 
 	private JdbcSolarNodeOwnershipDao dao;
+
+	@Mock
+	private Cache<Long, SolarNodeOwnership> cache;
+
+	@Captor
+	private ArgumentCaptor<SolarNodeOwnership> ownershipCaptor;
 
 	private void setupTestUser(Long id, String username) {
 		jdbcTemplate.update(
@@ -67,7 +99,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
 				userId, nodeId, name);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcSolarNodeOwnershipDao(jdbcTemplate);
 	}
@@ -75,6 +107,19 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
 	@Test
 	public void ownershipForNodeId_noMatch() {
 		// GIVEN
+
+		// WHEN
+		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
+
+		// THEN
+		assertThat("Null returned when no match", ownership, nullValue());
+	}
+
+	@Test
+	public void ownershipForNodeId_noMatch_cache() {
+		// GIVEN
+		dao.setUserNodeCache(cache);
+		given(cache.get(TEST_NODE_ID)).willReturn(null);
 
 		// WHEN
 		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
@@ -97,6 +142,52 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
 		// THEN
 		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
 		assertThat("Ownership found", expected.isSameAs(ownership), equalTo(true));
+	}
+
+	@Test
+	public void ownershipForNodeId_match_cacheMiss() {
+		// GIVEN
+		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
+
+		dao.setUserNodeCache(cache);
+
+		// test cache first
+		given(cache.get(TEST_NODE_ID)).willReturn(null);
+
+		// WHEN
+		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
+
+		// THEN
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		assertThat("Ownership found", expected.isSameAs(ownership), is(true));
+
+		// DB result was added to cache
+		verify(cache).put(eq(TEST_NODE_ID), ownershipCaptor.capture());
+		assertThat("Ownership info cached", expected.isSameAs(ownershipCaptor.getValue()), is(true));
+	}
+
+	@Test
+	public void ownershipForNodeId_match_cacheHit() {
+		// GIVEN
+		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
+
+		dao.setUserNodeCache(cache);
+
+		// test cache first
+		BasicSolarNodeOwnership expected = ownershipFor(TEST_NODE_ID, TEST_USER_ID);
+		given(cache.get(TEST_NODE_ID)).willReturn(expected);
+
+		// WHEN
+		SolarNodeOwnership ownership = dao.ownershipForNodeId(TEST_NODE_ID);
+
+		// THEN
+		assertThat("Ownership found in cache", ownership, sameInstance(expected));
 	}
 
 	@Test
@@ -158,6 +249,121 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJdbcDaoTestSupport {
 			assertThat("Ownership returned in node order for multi match",
 					expected.get(i).isSameAs(ownerships[i]), is(true));
 		}
+	}
+
+	private static String randomTokenId() {
+		return java.util.UUID.randomUUID().toString().replaceAll("-", "").substring(0, 20);
+	}
+
+	private void setupTestUserNode() {
+		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
+	}
+
+	private String setupTestToken(Long userId, SecurityTokenType type) {
+		return setupTestToken(userId, type, Active);
+	}
+
+	private String setupTestToken(Long userId, SecurityTokenType type, SecurityTokenStatus status) {
+		return setupTestToken(userId, type, status, null);
+	}
+
+	private String setupTestToken(Long userId, SecurityTokenType type, SecurityTokenStatus status,
+			SecurityPolicy policy) {
+		final String tokenId = randomTokenId();
+		String policyJson = JsonUtils.getJSONString(policy, null);
+		insertSecurityToken(jdbcTemplate, tokenId, "pw", userId, status, type, policyJson);
+		return tokenId;
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenNoNodes() {
+		// create some OTHER user with a node, to be sure
+		setupTestUserNode();
+
+		// create a new user without any nodes
+		setupTestUser(TEST_USER_ID_2, TEST_USERNAME_2);
+		final String tokenId = setupTestToken(TEST_USER_ID_2, User);
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat("No nodes returned for user with no nodes", nodeIds, arrayWithSize(0));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenSingleNode() {
+		setupTestUserNode();
+		final String tokenId = setupTestToken(TEST_USER_ID, User);
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat(nodeIds, arrayContaining(TEST_NODE_ID));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenSingleNodeTokenDisabled() {
+		setupTestUserNode();
+		final String tokenId = setupTestToken(TEST_USER_ID, User, Disabled);
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat("No nodes returned because token disabled", nodeIds, arrayWithSize(0));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenMultipleNodes() {
+		SortedSet<Long> expectedNodeIds = new TreeSet<>();
+		setupTestLocation();
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_NODE_ID - i;
+			setupTestNode(nodeId);
+			setupTestUserNode(TEST_USER_ID, nodeId, "Test Node " + i);
+			expectedNodeIds.add(nodeId);
+		}
+
+		final String tokenId = setupTestToken(TEST_USER_ID, User);
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat("All nodes for user returned in node ID order", nodeIds,
+				arrayContaining(expectedNodeIds.toArray(Long[]::new)));
+	}
+
+	@Test
+	public void findNodeIdsForUserTokenMultipleNodesFilteredByPolicy() {
+		setupTestLocation();
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_NODE_ID - i;
+			setupTestNode(nodeId);
+			setupTestUserNode(TEST_USER_ID, nodeId, "Test Node " + i);
+		}
+
+		final String tokenId = setupTestToken(TEST_USER_ID, User, Active, BasicSecurityPolicy.builder()
+				.withNodeIds(new HashSet<>(Arrays.asList(TEST_NODE_ID, TEST_NODE_ID - 1))).build());
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat("Policy filtered user nodes, in node ID order", nodeIds,
+				arrayContaining(TEST_NODE_ID - 1, TEST_NODE_ID));
+	}
+
+	@Test
+	public void findNodeIdsForReadNodeDataTokenMultipleNodesFilteredByPolicy() {
+		setupTestLocation();
+		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		for ( int i = 0; i < 3; i++ ) {
+			Long nodeId = TEST_NODE_ID - i;
+			setupTestNode(nodeId);
+			setupTestUserNode(TEST_USER_ID, nodeId, "Test Node " + i);
+		}
+
+		final String tokenId = setupTestToken(TEST_USER_ID, ReadNodeData, Active,
+				BasicSecurityPolicy.builder()
+						.withNodeIds(new HashSet<>(Arrays.asList(TEST_NODE_ID, TEST_NODE_ID - 1)))
+						.build());
+
+		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
+		assertThat("Policy filtered user nodes, in node ID order", nodeIds,
+				arrayContaining(TEST_NODE_ID - 1, TEST_NODE_ID));
 	}
 
 }

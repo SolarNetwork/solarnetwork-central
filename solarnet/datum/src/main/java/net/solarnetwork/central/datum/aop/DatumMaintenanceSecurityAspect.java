@@ -25,17 +25,17 @@ package net.solarnetwork.central.datum.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
+import net.solarnetwork.central.security.AuthorizationSupport;
 
 /**
  * Security AOP support for {@link DatumMaintenanceBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.7
  */
 @Aspect
@@ -44,11 +44,11 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param nodeOwnershipDao
+	 *        the ownership to use
 	 */
-	public DatumMaintenanceSecurityAspect(UserNodeDao userNodeDao) {
-		super(userNodeDao);
+	public DatumMaintenanceSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+		super(nodeOwnershipDao);
 	}
 
 	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.mark*(..)) && args(filter,..)")

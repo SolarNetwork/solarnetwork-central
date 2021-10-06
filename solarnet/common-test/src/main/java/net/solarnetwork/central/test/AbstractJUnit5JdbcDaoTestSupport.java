@@ -1,7 +1,7 @@
 /* ==================================================================
- * TestSqlFixtures.java - 17/11/2020 2:43:29 pm
+ * AbstractJUnit5JdbcDaoTestSupport.java - 6/10/2021 5:06:41 PM
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,14 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.jdbc.test;
+package net.solarnetwork.central.test;
+
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.test.context.ContextConfiguration;
 
 /**
- * Package interface for test SQL resources.
+ * Base class for JUnit 5 JDBC DAO support.
  * 
  * @author matt
  * @version 1.0
  */
-public interface TestSqlResources {
+@ContextConfiguration
+@JdbcTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class AbstractJUnit5JdbcDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 }

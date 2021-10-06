@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -34,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +50,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.SolarLocationDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -87,7 +90,6 @@ import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.user.dao.UserNodeDao;
 
 /**
  * Implementation of {@link QueryBiz}.
@@ -101,7 +103,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private final DatumStreamMetadataDao metaDao;
 	private final ReadingDatumDao readingDao;
 	private SolarLocationDao solarLocationDao;
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private Validator readingCriteriaValidator;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
@@ -121,24 +123,19 @@ public class DaoQueryBiz implements QueryBiz {
 	 *        the metadata DAO
 	 * @param readingDao
 	 *        the reading DAO
-	 * @throws IllegalArgumentException
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO
+	 * @throws NullPointerException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
-			ReadingDatumDao readingDao) {
+			ReadingDatumDao readingDao, SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
-		if ( datumDao == null ) {
-			throw new IllegalArgumentException("The datumDao argument must not be null.");
-		}
-		this.datumDao = datumDao;
-		if ( metaDao == null ) {
-			throw new IllegalArgumentException("The metaDao argument must not be null.");
-		}
-		this.metaDao = metaDao;
-		if ( readingDao == null ) {
-			throw new IllegalArgumentException("The readingDao argument must not be null.");
-		}
-		this.readingDao = readingDao;
+		this.datumDao = requireNonNull(datumDao, "The datumDao argument must not be null.");
+		this.metaDao = requireNonNull(metaDao, "The metaDao argument must not be null.");
+		this.readingDao = requireNonNull(readingDao, "The readingDao argument must not be null.");
+		this.nodeOwnershipDao = requireNonNull(nodeOwnershipDao,
+				"The nodeOwnershipDao argument must not be null.");
 	}
 
 	@Override
@@ -207,7 +204,8 @@ public class DaoQueryBiz implements QueryBiz {
 			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
 		} else if ( actor instanceof SecurityToken ) {
 			String tokenId = ((SecurityToken) actor).getToken();
-			nodeIds = userNodeDao.findNodeIdsForToken(tokenId);
+			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);
+			nodeIds = (ids != null ? new LinkedHashSet<>(Arrays.asList(ids)) : null);
 		}
 		if ( nodeIds == null || nodeIds.isEmpty() ) {
 			return Collections.emptySet();
@@ -546,29 +544,6 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
 		this.solarLocationDao = solarLocationDao;
-	}
-
-	/**
-	 * Set the user node DAO to use.
-	 * 
-	 * @param userNodeDao
-	 *        the DAO
-	 * @since 2.4
-	 */
-	@Autowired
-	public void setUserNodeDao(UserNodeDao userNodeDao) {
-		this.userNodeDao = userNodeDao;
-	}
-
-	/**
-	 * Set a validator to use for reading datum queries.
-	 * 
-	 * @param readingCriteriaValidator
-	 *        the validator to set
-	 * @since 3.4
-	 */
-	public void setReadingCriteriaValidator(Validator readingCriteriaValidator) {
-		this.readingCriteriaValidator = readingCriteriaValidator;
 	}
 
 }

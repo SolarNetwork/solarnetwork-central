@@ -43,12 +43,12 @@ import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
-import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeCertificateStatus;
@@ -472,7 +472,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
-		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
@@ -492,7 +492,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret("password");
 		authToken.setAuthToken(tokenId);
-		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(type);
 		return authToken;
 	}
@@ -525,7 +525,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void findNodeIdsForUserTokenSingleNodeTokenDisabled() {
 		storeNewUserNode();
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
-		authToken.setStatus(UserAuthTokenStatus.Disabled);
+		authToken.setStatus(SecurityTokenStatus.Disabled);
 		userAuthTokenDao.store(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());

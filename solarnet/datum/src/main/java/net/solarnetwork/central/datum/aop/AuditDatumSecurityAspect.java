@@ -51,8 +51,8 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param noeOwnershipDao
+	 *        the ownership DAO to use
 	 */
 	public AuditDatumSecurityAspect(SolarNodeOwnershipDao noeOwnershipDao) {
 		super(noeOwnershipDao);

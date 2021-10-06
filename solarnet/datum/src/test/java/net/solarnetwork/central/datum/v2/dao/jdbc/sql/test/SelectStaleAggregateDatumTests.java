@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
-import static net.solarnetwork.central.common.dao.jdbc.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;

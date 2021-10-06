@@ -28,9 +28,9 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
-import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
@@ -198,7 +198,7 @@ public interface UserBiz {
 	 *        the desired status
 	 * @return the updated token
 	 */
-	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, UserAuthTokenStatus newStatus);
+	UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId, SecurityTokenStatus newStatus);
 
 	/**
 	 * Update the policy of a UserAuthToken.

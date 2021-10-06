@@ -41,10 +41,10 @@ import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
-import net.solarnetwork.central.user.domain.UserAuthTokenStatus;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
@@ -94,7 +94,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
-		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.User);
 		String id = userAuthTokenDao.store(authToken);
 		assertNotNull(id);
@@ -108,7 +108,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
-		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(node.getId())).build());
@@ -126,7 +126,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setUserId(this.user.getId());
 		authToken.setAuthSecret(TEST_SECRET);
 		authToken.setAuthToken(TEST_TOKEN);
-		authToken.setStatus(UserAuthTokenStatus.Active);
+		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
@@ -170,7 +170,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	public void update() {
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
-		token.setStatus(UserAuthTokenStatus.Disabled);
+		token.setStatus(SecurityTokenStatus.Disabled);
 		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
 		validate(token, updated);
 	}
