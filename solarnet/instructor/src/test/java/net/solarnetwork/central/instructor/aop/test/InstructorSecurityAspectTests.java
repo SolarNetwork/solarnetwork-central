@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.aop.test;
 
+import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static org.easymock.EasyMock.expect;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
-import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.aop.InstructorSecurityAspect;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -44,10 +46,7 @@ import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.security.SecurityTokenType;
 
 /**
  * Test cases for the {@link InstructorSecurityAspect} class.
@@ -57,25 +56,25 @@ import net.solarnetwork.central.user.domain.UserNode;
  */
 public class InstructorSecurityAspectTests {
 
-	private UserNodeDao userNodeDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private NodeInstructionDao nodeInstructionDao;
 	private InstructorSecurityAspect service;
 
 	@Before
 	public void setup() {
-		userNodeDao = EasyMock.createMock(UserNodeDao.class);
+		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
-		service = new InstructorSecurityAspect(userNodeDao, nodeInstructionDao);
+		service = new InstructorSecurityAspect(nodeOwnershipDao, nodeInstructionDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(userNodeDao, nodeInstructionDao);
+		EasyMock.verify(nodeOwnershipDao, nodeInstructionDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(userNodeDao, nodeInstructionDao);
+		EasyMock.replay(nodeOwnershipDao, nodeInstructionDao);
 	}
 
 	private void setUser(Authentication auth) {
@@ -86,7 +85,7 @@ public class InstructorSecurityAspectTests {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,
 						true, AuthorityUtils.NO_AUTHORITIES),
-				UserAuthTokenType.User.toString(), userId, policy);
+				SecurityTokenType.User, userId, policy);
 		TestingAuthenticationToken auth = new TestingAuthenticationToken(token, "123", "ROLE_USER");
 		setUser(auth);
 		return token;
@@ -97,9 +96,9 @@ public class InstructorSecurityAspectTests {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
 		setAuthenticatedUserToken(userId, null);
-		UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
+		SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		replayAll();
 
 		service.instructionsForNodeCheck(nodeId);
@@ -110,9 +109,9 @@ public class InstructorSecurityAspectTests {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
 		setAuthenticatedUserToken(userId, null);
-		UserNode userNode = new UserNode(new User(-200L, null), new SolarNode(nodeId, null));
+		SolarNodeOwnership ownership = ownershipFor(nodeId, -200L);
 
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		replayAll();
 
 		service.instructionsForNodeCheck(nodeId);
@@ -127,8 +126,8 @@ public class InstructorSecurityAspectTests {
 		for ( int i = 0; i < 3; i++ ) {
 			long nodeId = (long) (Math.random() * 1000) + 1000L;
 			nodeIds.add(nodeId);
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		}
 
 		replayAll();
@@ -145,15 +144,15 @@ public class InstructorSecurityAspectTests {
 		for ( int i = 0; i < 3; i++ ) {
 			long nodeId = (long) (Math.random() * 1000) + 1000L;
 			nodeIds.add(nodeId);
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		}
 
 		// add one more node ID that is owned by another user
 		final Long nodeId = (long) (Math.random() * 1000) + 2000L;
 		nodeIds.add(nodeId);
-		UserNode userNode = new UserNode(new User(-3L, null), new SolarNode(nodeId, null));
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		replayAll();
 
@@ -169,8 +168,8 @@ public class InstructorSecurityAspectTests {
 		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = (long) (Math.random() * 1000) + 1000L;
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 			Long instrId = (long) (Math.random() * 1000) + 2000L;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
@@ -193,8 +192,8 @@ public class InstructorSecurityAspectTests {
 		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = (long) (Math.random() * 1000) + 1000L;
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 			Long instrId = (long) (Math.random() * 1000) + 2000L;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
@@ -205,8 +204,8 @@ public class InstructorSecurityAspectTests {
 
 		// add one more instruction that is owned by another user's ndoe
 		Long nodeId = (long) (Math.random() * 1000) - 1000L;
-		UserNode userNode = new UserNode(new User(-3L, null), new SolarNode(nodeId, null));
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		Long instrId = (long) (Math.random() * 1000) + 2000L;
 		NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
@@ -227,8 +226,8 @@ public class InstructorSecurityAspectTests {
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = (long) (Math.random() * 1000) + 1000L;
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 			Long instrId = (long) (Math.random() * 1000) + 2000L;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
@@ -250,8 +249,8 @@ public class InstructorSecurityAspectTests {
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = (long) (Math.random() * 1000) + 1000L;
-			UserNode userNode = new UserNode(new User(userId, null), new SolarNode(nodeId, null));
-			expect(userNodeDao.get(nodeId)).andReturn(userNode);
+			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 			Long instrId = (long) (Math.random() * 1000) + 2000L;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
@@ -262,8 +261,8 @@ public class InstructorSecurityAspectTests {
 
 		// add one more instruction that is owned by another user's ndoe
 		Long nodeId = (long) (Math.random() * 1000) - 1000L;
-		UserNode userNode = new UserNode(new User(-3L, null), new SolarNode(nodeId, null));
-		expect(userNodeDao.get(nodeId)).andReturn(userNode);
+		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		Long instrId = (long) (Math.random() * 1000) + 2000L;
 		NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);

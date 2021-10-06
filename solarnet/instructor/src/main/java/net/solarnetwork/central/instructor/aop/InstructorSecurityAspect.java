@@ -28,17 +28,17 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.support.AuthorizationSupport;
+import net.solarnetwork.central.security.AuthorizationSupport;
 
 /**
  * Security aspect for {@link InstructorBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @Aspect
 public class InstructorSecurityAspect extends AuthorizationSupport {
@@ -51,8 +51,9 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
 	 */
-	public InstructorSecurityAspect(UserNodeDao userNodeDao, NodeInstructionDao nodeInstructionDao) {
-		super(userNodeDao);
+	public InstructorSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
+			NodeInstructionDao nodeInstructionDao) {
+		super(nodeOwnershipDao);
 		this.nodeInstructionDao = nodeInstructionDao;
 	}
 
