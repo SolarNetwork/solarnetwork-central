@@ -24,6 +24,7 @@
 
 package net.solarnetwork.central.security;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,12 +40,14 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
  * Security helper methods.
  * 
  * @author matt
- * @version 1.4
+ * @version 2.0
  */
 public class SecurityUtils {
 
@@ -266,6 +269,74 @@ public class SecurityUtils {
 			return (SecurityNode) auth.getDetails();
 		}
 		throw new SecurityException("Node not available");
+	}
+
+	/**
+	 * Get all node IDs the current actor is authorized to access.
+	 * 
+	 * @param nodeOwnershipDao
+	 *        The DAO to use to fill in all available nodes for user-based
+	 *        actors, or {@code null} to not fill in nodes.
+	 * @return The allowed node IDs.
+	 * @throws AuthorizationException
+	 *         if no node IDs are allowed or there is no actor
+	 * @since 2.0
+	 */
+	public static Long[] authorizedNodeIdsForCurrentActor(SolarNodeOwnershipDao nodeOwnershipDao) {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			LOG.warn("Access DENIED to node {} for non-authenticated user");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+
+		if ( actor instanceof SecurityNode ) {
+			SecurityNode node = (SecurityNode) actor;
+			return new Long[] { node.getNodeId() };
+		} else if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			// default to all nodes for actor
+			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(user.getUserId());
+			if ( ownerships != null && ownerships.length > 0 ) {
+				return Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new);
+			}
+		} else if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			Long[] result = null;
+			// get full list to all nodes for actor; in future could optimize with query 
+			// that accepts policy node IDs to restrict result to
+			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(token.getUserId());
+			Long[] allNodeIds = (ownerships != null
+					? Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new)
+					: null);
+			Set<Long> restrictedToNodeIds = tokenRestrictedNodeIds(token);
+			if ( restrictedToNodeIds != null ) {
+				result = Arrays.stream(allNodeIds).filter(e -> restrictedToNodeIds.contains(e))
+						.toArray(Long[]::new);
+			} else {
+				result = allNodeIds;
+			}
+			if ( result != null && result.length > 0 ) {
+				return result;
+			}
+		}
+		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+	}
+
+	private static Set<Long> tokenRestrictedNodeIds(SecurityToken token) {
+		Set<Long> restrictedToNodeIds = null;
+		if ( SecurityTokenType.User == token.getTokenType() ) {
+			restrictedToNodeIds = (token.getPolicy() != null && token.getPolicy().getNodeIds() != null
+					? token.getPolicy().getNodeIds()
+					: null);
+		} else if ( SecurityTokenType.ReadNodeData == token.getTokenType() ) {
+			// all node IDs in token
+			restrictedToNodeIds = (token.getPolicy() != null && token.getPolicy().getNodeIds() != null
+					? token.getPolicy().getNodeIds()
+					: Collections.emptySet());
+		}
+		return restrictedToNodeIds;
 	}
 
 }

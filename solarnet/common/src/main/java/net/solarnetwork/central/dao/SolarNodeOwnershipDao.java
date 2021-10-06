@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityToken.java - Mar 22, 2013 4:02:46 PM
+ * SolarNodeOwnershipDao.java - 6/10/2021 7:21:00 AM
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,41 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.dao;
+
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
- * A token based actor.
+ * DAO for helping with node ownership information.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface SecurityToken extends SecurityActor {
+public interface SolarNodeOwnershipDao {
 
 	/**
-	 * Get a unique user ID that owns the token.
+	 * Get the ownership information of a node.
 	 * 
-	 * @return the user ID
+	 * @param nodeId
+	 *        the ID of the node to find the ownership of
+	 * @return the ownership, or {@literal null} if not available
 	 */
-	Long getUserId();
+	SolarNodeOwnership ownershipForNodeId(Long nodeId);
 
 	/**
-	 * Get the token value.
+	 * Get all available node ownership for a user ID.
 	 * 
-	 * @return the token
+	 * @param userId
+	 *        the ID of the owner to find node ownership for
+	 * @return the ownerships, or {@literal null} if none available
 	 */
-	String getToken();
+	SolarNodeOwnership[] ownershipsForUserId(Long userId);
 
-	/**
-	 * Get the type of token.
-	 * 
-	 * @return the token type
-	 */
-	SecurityTokenType getTokenType();
-
-	/**
-	 * Get an optional security policy.
-	 * 
-	 * @return optional security policy
-	 */
-	SecurityPolicy getPolicy();
 }

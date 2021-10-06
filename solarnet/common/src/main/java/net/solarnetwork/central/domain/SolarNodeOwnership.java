@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityToken.java - Mar 22, 2013 4:02:46 PM
+ * SolarNodeOwnership.java - 6/10/2021 8:48:02 AM
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,41 +20,43 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.domain;
 
 /**
- * A token based actor.
+ * API for node ownership details.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface SecurityToken extends SecurityActor {
+public interface SolarNodeOwnership {
 
 	/**
-	 * Get a unique user ID that owns the token.
+	 * Get the node ID.
 	 * 
-	 * @return the user ID
+	 * @return the node ID
+	 */
+	Long getNodeId();
+
+	/**
+	 * Get the user ID of the owner of a node.
+	 * 
+	 * @return the owner user ID
 	 */
 	Long getUserId();
 
 	/**
-	 * Get the token value.
+	 * Flag indicating if a node's data is "public" vs "private".
 	 * 
-	 * @return the token
+	 * @return {@literal true} if the node requires authorization for viewing
+	 *         its data
 	 */
-	String getToken();
+	boolean isRequiresAuthorization();
 
 	/**
-	 * Get the type of token.
+	 * Flag indicating if a node has been "archived".
 	 * 
-	 * @return the token type
+	 * @return {@literal true} if the node has been archived
 	 */
-	SecurityTokenType getTokenType();
+	boolean isArchived();
 
-	/**
-	 * Get an optional security policy.
-	 * 
-	 * @return optional security policy
-	 */
-	SecurityPolicy getPolicy();
 }

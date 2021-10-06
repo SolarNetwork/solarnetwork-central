@@ -29,13 +29,13 @@ import org.springframework.security.core.userdetails.UserDetails;
  * {@link SecurityUser} implementation for authenticated tokens.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class AuthenticatedToken extends User implements SecurityToken {
 
 	private static final long serialVersionUID = -4857188995583662187L;
 
-	private final String tokenType;
+	private final SecurityTokenType tokenType;
 	private final Long userId;
 	private final SecurityPolicy policy;
 
@@ -51,7 +51,8 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	 * @param policy
 	 *        optional policy associated with the token
 	 */
-	public AuthenticatedToken(UserDetails user, String tokenType, Long userId, SecurityPolicy policy) {
+	public AuthenticatedToken(UserDetails user, SecurityTokenType tokenType, Long userId,
+			SecurityPolicy policy) {
 		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
 				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
 		this.tokenType = tokenType;
@@ -75,7 +76,7 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	}
 
 	@Override
-	public String getTokenType() {
+	public SecurityTokenType getTokenType() {
 		return tokenType;
 	}
 

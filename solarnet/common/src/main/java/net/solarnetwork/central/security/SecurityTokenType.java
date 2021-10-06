@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityToken.java - Mar 22, 2013 4:02:46 PM
+ * SecurityTokenType.java - Dec 18, 2012 8:59:49 PM
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,38 +23,20 @@
 package net.solarnetwork.central.security;
 
 /**
- * A token based actor.
+ * Enumeration of security token types.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface SecurityToken extends SecurityActor {
+public enum SecurityTokenType {
+
+	/** A full user token, granting the bearer full access. */
+	User,
 
 	/**
-	 * Get a unique user ID that owns the token.
-	 * 
-	 * @return the user ID
+	 * A read-only token, granting the bearer access to query read node data
+	 * only.
 	 */
-	Long getUserId();
+	ReadNodeData;
 
-	/**
-	 * Get the token value.
-	 * 
-	 * @return the token
-	 */
-	String getToken();
-
-	/**
-	 * Get the type of token.
-	 * 
-	 * @return the token type
-	 */
-	SecurityTokenType getTokenType();
-
-	/**
-	 * Get an optional security policy.
-	 * 
-	 * @return optional security policy
-	 */
-	SecurityPolicy getPolicy();
 }

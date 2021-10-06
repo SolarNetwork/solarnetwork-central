@@ -42,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
@@ -136,7 +137,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		Assert.assertTrue("Is AuthenticatedToken", details instanceof SecurityToken);
 		SecurityToken authToken = (SecurityToken) details;
 		Assert.assertEquals("Token", token, authToken.getToken());
-		Assert.assertEquals("Token type", "User", authToken.getTokenType());
+		Assert.assertEquals("Token type", SecurityTokenType.User, authToken.getTokenType());
 		Assert.assertEquals("Token user ID", userId, authToken.getUserId());
 		Assert.assertNotNull("Token policy", authToken.getPolicy());
 		Assert.assertEquals("Token source IDs", policy.getSourceIds(),

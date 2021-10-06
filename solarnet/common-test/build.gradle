@@ -21,12 +21,14 @@ configurations {
 	all*.exclude group: 'io.moquette'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'net.sf.supercsv'
+	all*.exclude group: 'org.hamcrest', module: 'hamcrest-all'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
 	api 'ch.qos.logback:logback-classic'
 	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.17.0'
+	api 'org.hamcrest:hamcrest-library'
 	api 'org.junit.jupiter:junit-jupiter-api'
 	api 'org.springframework.boot:spring-boot-starter-test'
     api 'org.springframework.security:spring-security-test'

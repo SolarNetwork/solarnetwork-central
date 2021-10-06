@@ -24,10 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import java.sql.SQLException;
 import java.time.format.DateTimeParseException;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -66,22 +63,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityException;
-import net.solarnetwork.central.security.SecurityNode;
-import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.security.SecurityUser;
-import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.biz.UserBiz;
-import net.solarnetwork.central.user.domain.UserAuthTokenType;
-import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 1.20
+ * @version 2.0
  */
 public abstract class WebServiceControllerSupport {
 
@@ -720,66 +708,6 @@ public abstract class WebServiceControllerSupport {
 			buf.append(": ").append(msg);
 		}
 		return new Response<Object>(Boolean.FALSE, "422", buf.toString(), null);
-	}
-
-	/**
-	 * Get all node IDs the current actor is authorized to access.
-	 * 
-	 * @param userBiz
-	 *        The UserBiz to use to fill in all available nodes for user-based
-	 *        actors, or {@code null} to to fill in nodes.
-	 * @return The allowed node IDs.
-	 * @throws AuthorizationException
-	 *         if no node IDs are allowed or there is no actor
-	 * @since 1.5
-	 */
-	protected Long[] authorizedNodeIdsForCurrentActor(UserBiz userBiz) {
-		final SecurityActor actor;
-		try {
-			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
-			log.warn("Access DENIED to node {} for non-authenticated user");
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
-		}
-
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
-			return new Long[] { node.getNodeId() };
-		} else if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
-			// default to all nodes for actor
-			List<UserNode> nodes = userBiz.getUserNodes(user.getUserId());
-			if ( nodes != null && !nodes.isEmpty() ) {
-				Long[] result = new Long[nodes.size()];
-				for ( ListIterator<UserNode> itr = nodes.listIterator(); itr.hasNext(); ) {
-					result[itr.nextIndex()] = itr.next().getId();
-				}
-				return result;
-			}
-		} else if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
-			Long[] result = null;
-			if ( UserAuthTokenType.User.toString().equals(token.getTokenType()) ) {
-				// default to all nodes for actor
-				List<UserNode> nodes = userBiz.getUserNodes(token.getUserId());
-				if ( nodes != null && !nodes.isEmpty() ) {
-					result = new Long[nodes.size()];
-					for ( ListIterator<UserNode> itr = nodes.listIterator(); itr.hasNext(); ) {
-						result[itr.nextIndex()] = itr.next().getId();
-					}
-				}
-			} else if ( UserAuthTokenType.ReadNodeData.toString().equals(token.getTokenType()) ) {
-				// all node IDs in token
-				if ( token.getPolicy() != null && token.getPolicy().getNodeIds() != null ) {
-					Set<Long> nodeIds = token.getPolicy().getNodeIds();
-					result = nodeIds.toArray(new Long[nodeIds.size()]);
-				}
-			}
-			if ( result != null && result.length > 0 ) {
-				return result;
-			}
-		}
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 	}
 
 	/**

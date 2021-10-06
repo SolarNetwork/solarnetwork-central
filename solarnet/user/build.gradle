@@ -13,9 +13,9 @@ dependencyManagement {
 	}
 }
 
-description = 'SolarNet: OCPP'
+description = 'SolarNet: User'
 version = '0.1.0'
-archivesBaseName = 'solarnet-ocpp'
+archivesBaseName = 'solarnet-user'
 
 configurations {
 	all*.exclude group: 'net.sf.supercsv'
@@ -23,17 +23,9 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
-	implementation project(':solarnet-datum')
-	implementation project(':solarnet-instructor')
-	implementation project(':solarnet-user')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
-	
-	// SolarNetwork
-	implementation 'net.solarnetwork.external:net.solarnetwork.external.ocpp:1.1.0.SN01'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp:2.0.0'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

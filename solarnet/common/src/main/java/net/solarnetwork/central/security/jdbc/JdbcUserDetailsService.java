@@ -44,6 +44,7 @@ import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityTokenType;
 
 /**
  * Extension of {@link JdbcDaoImpl} that returns {@link AuthenticatedUser}
@@ -123,7 +124,15 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 				String name = rs.getString(5);
 				boolean authWithToken = rs.getBoolean(6);
 				if ( authWithToken ) {
-					String tokenType = rs.getString(7);
+					String tokenTypeString = rs.getString(7);
+					SecurityTokenType tokenType = null;
+					if ( tokenTypeString != null ) {
+						try {
+							tokenType = SecurityTokenType.valueOf(tokenTypeString);
+						} catch ( IllegalArgumentException e ) {
+							log.warn("Unknown token type will be ignored: {}", tokenTypeString);
+						}
+					}
 					String policyJson = rs.getString(8);
 					SecurityPolicy policy = null;
 					if ( policyJson != null ) {

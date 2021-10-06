@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityToken.java - Mar 22, 2013 4:02:46 PM
+ * VersionedMessageDaoConfig.java - 5/10/2021 8:06:46 AM
  * 
- * Copyright 2007-2013 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,41 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.common.dao.config;
+
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
 
 /**
- * A token based actor.
+ * MyBatis versioned message DAO configuration.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface SecurityToken extends SecurityActor {
+@Configuration
+public class VersionedMessageDaoConfig {
 
-	/**
-	 * Get a unique user ID that owns the token.
-	 * 
-	 * @return the user ID
-	 */
-	Long getUserId();
+	@Autowired
+	private SqlSessionTemplate sqlSessionTemplate;
 
-	/**
-	 * Get the token value.
-	 * 
-	 * @return the token
-	 */
-	String getToken();
+	@Bean
+	public VersionedMessageDao versionedMessageDao() {
+		MyBatisVersionedMessageDao dao = new MyBatisVersionedMessageDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
 
-	/**
-	 * Get the type of token.
-	 * 
-	 * @return the token type
-	 */
-	SecurityTokenType getTokenType();
-
-	/**
-	 * Get an optional security policy.
-	 * 
-	 * @return optional security policy
-	 */
-	SecurityPolicy getPolicy();
 }

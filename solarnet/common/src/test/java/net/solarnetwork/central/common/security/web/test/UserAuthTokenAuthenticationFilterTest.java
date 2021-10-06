@@ -60,6 +60,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
 import net.solarnetwork.web.security.AuthenticationScheme;
@@ -68,7 +69,7 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * Unit tests for the {@link UserAuthTokenAuthenticationFilter} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class UserAuthTokenAuthenticationFilterTest {
 
@@ -579,8 +580,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 	public void expiredToken() throws ServletException, IOException {
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withNotAfter(Instant.now().minusSeconds(1)).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "ReadNodeData", -1L,
-				policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.ReadNodeData, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		final Date now = new Date(System.currentTimeMillis() - 16L * 60L * 1000L);
@@ -599,7 +600,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(singleton("/path/**")).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		request.setPathInfo("/mock/path/here");
@@ -625,7 +627,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder().withApiPaths(singleton("/foo/**"))
 				.build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		request.setPathInfo("/mock/path/here");
@@ -649,7 +652,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(singleton("!/foo/**")).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		request.setPathInfo("/mock/path/here");
@@ -675,7 +679,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(singleton("!/path/**")).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/here");
 		request.setPathInfo("/mock/path/here");
@@ -699,7 +704,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(new LinkedHashSet<>(asList("/path/do/thing", "!/path/do/**"))).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/thing");
 		request.setPathInfo("/mock/path/do/thing");
@@ -725,7 +731,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(new LinkedHashSet<>(asList("!/path/do/**", "/path/do/thing"))).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/thing");
 		request.setPathInfo("/mock/path/do/thing");
@@ -751,7 +758,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 		// given
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withApiPaths(new LinkedHashSet<>(asList("!/path/do/**", "/path/do/thing"))).build();
-		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails, "User", -1L, policy);
+		AuthenticatedToken tokenDetails = new AuthenticatedToken(this.userDetails,
+				SecurityTokenType.User, -1L, policy);
 
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/mock/path/do/other");
 		request.setPathInfo("/mock/path/do/other");
