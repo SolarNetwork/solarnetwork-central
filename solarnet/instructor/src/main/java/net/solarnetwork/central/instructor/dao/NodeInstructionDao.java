@@ -24,9 +24,9 @@ package net.solarnetwork.central.instructor.dao;
 
 import java.time.Instant;
 import java.util.Map;
+import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.domain.EntityMatch;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;

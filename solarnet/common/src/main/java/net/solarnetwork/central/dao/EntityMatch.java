@@ -1,7 +1,7 @@
 /* ==================================================================
- * Entity.java - Dec 11, 2009 8:50:35 PM
+ * EntityMatch.java - Sep 29, 2011 12:34:50 PM
  * 
- * Copyright 2007-2009 SolarNetwork.net Dev Team
+ * Copyright 2007-2011 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,23 +22,16 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.dao;
 
-import java.time.Instant;
+import net.solarnetwork.central.domain.FilterMatch;
 
 /**
- * Base domain object API.
+ * Basic entity filter match result.
  * 
  * @author matt
- * @version 2.0
+ * @version $Revision$
  */
-public interface Entity<PK> extends net.solarnetwork.domain.Identity<PK> {
-
-	/**
-	 * Get the date this datum was created.
-	 * 
-	 * @return the created date
-	 */
-	public Instant getCreated();
+public interface EntityMatch extends FilterMatch<Long> {
 
 }

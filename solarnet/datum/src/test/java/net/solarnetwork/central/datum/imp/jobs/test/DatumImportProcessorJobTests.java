@@ -36,13 +36,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
 import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * Test cases for the {@link DatumImportProcessorJob} class.

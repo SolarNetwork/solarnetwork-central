@@ -28,7 +28,7 @@ import com.amazonaws.services.ec2.model.InstanceState;
 import com.amazonaws.services.ec2.model.Tag;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
-import net.solarnetwork.central.domain.BaseObjectEntity;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 
 /**
  * EC2 implementation of {@link VirtualMachine}.

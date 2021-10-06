@@ -10,10 +10,10 @@
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>
-		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user/solarnet-user">
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-instructor/solarnet-instructor">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>
-		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-instructor/solarnet-instructor">
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user/solarnet-user">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">

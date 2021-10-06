@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.domain;
+package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * 
  * @author matt
  * @version 1.0
- * @since 1.30
+ * @since 2.0
  */
 public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidPK> {
 

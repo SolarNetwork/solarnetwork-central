@@ -35,7 +35,7 @@ import java.util.UUID;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;

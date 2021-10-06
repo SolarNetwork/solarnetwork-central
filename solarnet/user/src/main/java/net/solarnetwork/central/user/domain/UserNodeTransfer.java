@@ -25,7 +25,8 @@ package net.solarnetwork.central.user.domain;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.domain.SerializeIgnore;
 

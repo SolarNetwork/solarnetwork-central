@@ -23,12 +23,12 @@
 package net.solarnetwork.central.datum.imp.biz;
 
 import java.time.Instant;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportRequest;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * Service API for operations related to datum import jobs.

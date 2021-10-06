@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.TimeZone;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**

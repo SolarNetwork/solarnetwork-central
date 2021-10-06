@@ -22,10 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
-import static org.junit.Assert.assertNotNull;
-import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +30,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
-import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Base class for user DAO tests.
@@ -48,8 +44,6 @@ import net.solarnetwork.central.user.domain.User;
 public abstract class AbstractMyBatisDatumImportDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	public static final String TEST_EMAIL = "foo@localhost.localdomain";
-	public static final String TEST_NAME = "Foo Bar";
-	public static final String TEST_PASSWORD = "password";
 
 	@Autowired
 	protected PlatformTransactionManager txManager;
@@ -60,31 +54,12 @@ public abstract class AbstractMyBatisDatumImportDaoTestSupport extends AbstractC
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
 
-	protected MyBatisUserDao userDao;
-
 	protected SqlSessionTemplate getSqlSessionTemplate() {
 		return sqlSessionTemplate;
 	}
 
 	protected SqlSessionFactory getSqlSessionFactory() {
 		return sqlSessionFactory;
-	}
-
-	@Before
-	public void setup() {
-		userDao = new MyBatisUserDao();
-		userDao.setSqlSessionFactory(sqlSessionFactory);
-	}
-
-	/**
-	 * Persist a new User and return it.
-	 * 
-	 * @param email
-	 *        the email of the new user
-	 * @return the User
-	 */
-	protected User createNewUser(String email) {
-		return userDao.get(storeNewUser(email));
 	}
 
 	/**
@@ -95,16 +70,7 @@ public abstract class AbstractMyBatisDatumImportDaoTestSupport extends AbstractC
 	 * @return the primary key
 	 */
 	protected Long storeNewUser(String email) {
-		User newUser = new User();
-		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
-		newUser.setName(TEST_NAME);
-		newUser.setPassword(TEST_PASSWORD);
-		newUser.setEnabled(Boolean.TRUE);
-		Long id = userDao.store(newUser);
-		logger.debug("Got new user PK: " + id);
-		assertNotNull(id);
-		return id;
+		return CommonDbTestUtils.insertUser(jdbcTemplate, email);
 	}
 
 }

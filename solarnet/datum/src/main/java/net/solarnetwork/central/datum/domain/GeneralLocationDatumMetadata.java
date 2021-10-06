@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import net.solarnetwork.central.datum.support.DatumUtils;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;

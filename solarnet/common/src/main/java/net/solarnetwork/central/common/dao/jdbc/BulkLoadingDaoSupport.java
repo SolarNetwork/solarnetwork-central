@@ -40,7 +40,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import net.solarnetwork.central.dao.BulkLoadingDao;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 
 /**
  * Helper class for {@link net.solarnetwork.central.dao.BulkLoadingDao}

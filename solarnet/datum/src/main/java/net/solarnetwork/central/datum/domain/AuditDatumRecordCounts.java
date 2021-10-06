@@ -27,7 +27,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**

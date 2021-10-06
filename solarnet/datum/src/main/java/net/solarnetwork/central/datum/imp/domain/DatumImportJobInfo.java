@@ -27,9 +27,9 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.domain.BaseClaimableJob;
-import net.solarnetwork.central.user.domain.UserRelatedEntity;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.codec.JsonUtils;
 
 /**

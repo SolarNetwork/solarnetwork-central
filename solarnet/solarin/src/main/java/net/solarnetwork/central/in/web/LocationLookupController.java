@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.web.domain.Response;

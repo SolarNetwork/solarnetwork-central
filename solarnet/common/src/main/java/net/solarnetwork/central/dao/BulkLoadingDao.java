@@ -24,7 +24,7 @@ package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.util.Map;
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 
 /**
  * API for entity batch loading DAO operations.

@@ -20,10 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.domain.BaseObjectIdentity;
+import net.solarnetwork.dao.Entity;
 
 /**
  * Base implementation of {@link Entity} using a comparable, serializable
@@ -36,16 +38,11 @@ import java.time.Instant;
 public class BaseObjectEntity<PK extends Comparable<PK> & Serializable> extends BaseObjectIdentity<PK>
 		implements Cloneable, Serializable, Entity<PK> {
 
-	private static final long serialVersionUID = 6151623706137372281L;
+	private static final long serialVersionUID = 3752078598919814010L;
 
 	private Instant created = null;
 	private Instant modified = null;
 
-	/**
-	 * Get the creation date.
-	 * 
-	 * @return the created
-	 */
 	@Override
 	public Instant getCreated() {
 		return created;

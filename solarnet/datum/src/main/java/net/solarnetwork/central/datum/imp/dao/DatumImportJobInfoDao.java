@@ -27,10 +27,10 @@ import java.util.Set;
 import java.util.UUID;
 import net.solarnetwork.central.dao.ClaimableJobDao;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * DAO API for {@link DatumImportJobInfo} entities.

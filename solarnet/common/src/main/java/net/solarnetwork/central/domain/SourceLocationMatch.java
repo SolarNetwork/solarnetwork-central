@@ -24,6 +24,8 @@
 
 package net.solarnetwork.central.domain;
 
+import net.solarnetwork.central.dao.EntityMatch;
+
 /**
  * A match for a SourceLocation filter search.
  * 

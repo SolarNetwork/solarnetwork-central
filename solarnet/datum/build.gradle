@@ -19,7 +19,6 @@ archivesBaseName = 'solarnet-datum'
 
 dependencies {
 	implementation project(':solarnet-common')
-	implementation project(':solarnet-user')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'

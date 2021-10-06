@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.time.Duration;
 import java.time.Instant;
+import net.solarnetwork.dao.Entity;
 
 /**
  * A "claimable job" entity.

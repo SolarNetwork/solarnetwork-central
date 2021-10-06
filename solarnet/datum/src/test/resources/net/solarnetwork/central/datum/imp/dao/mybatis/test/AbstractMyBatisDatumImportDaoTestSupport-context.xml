@@ -21,8 +21,6 @@
 				<value>java.util.UUID</value>
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
-				<value>net.solarnetwork.central.user.domain.User</value>
-				<value>net.solarnetwork.central.user.domain.UserMatch</value>
 			</list>
 		</property>
 		<property name="typeHandlers">
@@ -38,8 +36,6 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 
 				<value>classpath:/net/solarnetwork/central/datum/imp/dao/mybatis/map/DatumImportJobInfo.xml</value>
-
-				<value>classpath:/net/solarnetwork/central/user/dao/mybatis/map/User.xml</value>
 			</list>
 		</property>
 	</bean>

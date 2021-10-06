@@ -45,13 +45,12 @@ import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.dao.mybatis.MyBatisDatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * Test cases for the {@link MyBatisDatumImportJobInfoDao} class.
@@ -61,9 +60,11 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  */
 public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImportDaoTestSupport {
 
+	private static final String TEST_NAME = "Test Import";
+
 	private MyBatisDatumImportJobInfoDao dao;
 
-	private User user;
+	private Long userId;
 	private DatumImportJobInfo info;
 	private TransactionTemplate txTemplate;
 
@@ -72,8 +73,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		dao = new MyBatisDatumImportJobInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
 
-		this.user = createNewUser(TEST_EMAIL);
-		assertThat("Test user", this.user, notNullValue());
+		this.userId = storeNewUser(TEST_EMAIL);
 
 		info = null;
 
@@ -97,7 +97,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 	private DatumImportJobInfo createTestInfo() {
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setImportDate(Instant.now());
 		info.setConfig(createNewConfig());
 		return info;
@@ -123,7 +123,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Found by PK", info, notNullValue());
 		assertThat("PK", info.getId(), equalTo(this.info.getId()));
 		assertThat("Created assigned", info.getCreated(), notNullValue());
-		assertThat("User ID", info.getUserId(), equalTo(this.user.getId()));
+		assertThat("User ID", info.getUserId(), equalTo(this.userId));
 		assertThat("Config", info.getConfig(), notNullValue());
 		assertThat("Import date", info.getImportDate(), notNullValue());
 		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
@@ -190,7 +190,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void purgeCompleted() {
 		getByPrimaryKey();
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Completed);
@@ -210,7 +210,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		getByPrimaryKey();
 
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
@@ -230,42 +230,42 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void deleteForUserNoMatchingUser() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId() - 1, null, null);
+		int count = dao.deleteForUser(this.userId - 1, null, null);
 		assertThat("Delete count", count, equalTo(0));
 	}
 
 	@Test
 	public void deleteForUserNoMatchingId() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(UUID.randomUUID()), null);
+		int count = dao.deleteForUser(this.userId, singleton(UUID.randomUUID()), null);
 		assertThat("Delete count", count, equalTo(0));
 	}
 
 	@Test
 	public void deleteForUserNoMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), null, EnumSet.of(DatumImportState.Completed));
+		int count = dao.deleteForUser(this.userId, null, EnumSet.of(DatumImportState.Completed));
 		assertThat("Delete count", count, equalTo(0));
 	}
 
 	@Test
 	public void deleteForUserMatchingUser() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), null, null);
+		int count = dao.deleteForUser(this.userId, null, null);
 		assertThat("Delete count", count, equalTo(1));
 	}
 
 	@Test
 	public void deleteForUserMatchingId() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()), null);
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()), null);
 		assertThat("Delete count", count, equalTo(1));
 	}
 
 	@Test
 	public void deleteForUserMatchingState() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -273,7 +273,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void deleteForUserMatchingAll() {
 		storeNew();
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 	}
@@ -284,18 +284,18 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 		// add another job
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.store(info));
 
-		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
+		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
 				EnumSet.of(DatumImportState.Unknown));
 		assertThat("Delete count", count, equalTo(1));
 
-		List<DatumImportJobInfo> infos = dao.findForUser(this.user.getId(), null);
+		List<DatumImportJobInfo> infos = dao.findForUser(this.userId, null);
 		assertThat("Remaining jobs", infos, hasSize(1));
 		assertThat("Remaining job ID", infos.get(0).getId(), equalTo(info.getId()));
 	}
@@ -340,14 +340,14 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 	@Test
 	public void findForUserNotFound() {
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId, null);
 		assertThat("Empty results returned", results, hasSize(0));
 	}
 
 	@Test
 	public void findForUserNotFoundWithState() {
 		storeNew();
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				singleton(DatumImportState.Completed));
 		assertThat("Empty results returned", results, hasSize(0));
 	}
@@ -356,18 +356,18 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void findForUserFound() {
 		storeNew();
 
-		User user2 = createNewUser("user2@localhost");
+		Long userId2 = storeNewUser("user2@localhost");
 
 		// add another job that should _not_ be found
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(user2.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(userId2, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(), null);
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId, null);
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(this.info));
 	}
@@ -379,14 +379,14 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 		// add another job that _should_ be found
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				singleton(DatumImportState.Staged));
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(info));
@@ -401,7 +401,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 		// add another job that _should_ be found
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
@@ -409,7 +409,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setGroupKey(groupKey);
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				singleton(DatumImportState.Staged));
 		assertThat("Results returned", results, hasSize(1));
 		assertThat("Result matches", results.get(0), equalTo(info));
@@ -422,14 +422,14 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 
 		// add another job
 		DatumImportJobInfo info = new DatumImportJobInfo();
-		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
+		info.setId(new UserUuidPK(this.userId, UUID.randomUUID()));
 		info.setConfig(new BasicConfiguration());
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
 		info = dao.get(dao.store(info));
 
-		List<DatumImportJobInfo> results = dao.findForUser(user.getId(),
+		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				EnumSet.of(DatumImportState.Staged, DatumImportState.Unknown));
 		assertThat("Results returned", results, hasSize(2));
 
@@ -494,7 +494,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	@Test
 	public void updateProgressNotFound() {
 		storeNew();
-		UserUuidPK id = new UserUuidPK(this.user.getId(), UUID.randomUUID());
+		UserUuidPK id = new UserUuidPK(this.userId, UUID.randomUUID());
 		boolean updated = dao.updateJobProgress(id, 0.1, 2L);
 		assertThat("Update result", updated, equalTo(false));
 		DatumImportJobInfo info = dao.get(this.info.getId());

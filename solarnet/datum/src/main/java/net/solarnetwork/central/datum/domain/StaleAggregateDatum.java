@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.domain.BaseObjectEntity;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 
 /**
  * A "stale" aggregate datum record.

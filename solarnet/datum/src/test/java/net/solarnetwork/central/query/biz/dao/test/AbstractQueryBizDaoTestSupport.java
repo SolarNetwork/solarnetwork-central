@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.query.biz.dao.test;
 
-import static org.junit.Assert.assertNotNull;
-import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -41,22 +39,17 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
-import net.solarnetwork.central.user.dao.UserDao;
-import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
-import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Base class for other unit tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 @ContextConfiguration
 @MybatisTest
@@ -68,8 +61,6 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTran
 	public static final String TEST_USER_NAME = "Foobar";
 	public static final String TEST_USER_PASSWORD = "foobar";
 
-	protected UserDao userDao;
-	protected UserNodeDao userNodeDao;
 	protected SolarNodeDao solarNodeDao;
 
 	@Autowired
@@ -88,10 +79,6 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTran
 
 	@Before
 	public void setupBaseSupport() {
-		userDao = new MyBatisUserDao();
-		((MyBatisUserDao) userDao).setSqlSessionFactory(sqlSessionFactory);
-		userNodeDao = new MyBatisUserNodeDao();
-		((MyBatisUserNodeDao) userNodeDao).setSqlSessionFactory(sqlSessionFactory);
 		solarNodeDao = new MyBatisSolarNodeDao();
 		((MyBatisSolarNodeDao) solarNodeDao).setSqlSessionFactory(sqlSessionFactory);
 	}
@@ -106,17 +93,6 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTran
 	}
 
 	/**
-	 * Persist a new User and return it.
-	 * 
-	 * @param email
-	 *        the email of the new user
-	 * @return the User
-	 */
-	protected User createNewUser(String email) {
-		return userDao.get(storeNewUser(email));
-	}
-
-	/**
 	 * Persist a new User and return its primary key.
 	 * 
 	 * @param email
@@ -124,43 +100,21 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTran
 	 * @return the primary key
 	 */
 	protected Long storeNewUser(String email) {
-		User newUser = new User();
-		newUser.setCreated(Instant.now());
-		newUser.setEmail(email);
-		newUser.setName(TEST_USER_NAME);
-		newUser.setPassword(TEST_USER_PASSWORD);
-		newUser.setEnabled(Boolean.TRUE);
-		Long id = userDao.store(newUser);
-		logger.debug("Got new user PK: " + id);
-		assertNotNull(id);
-		return id;
+		return CommonDbTestUtils.insertUser(jdbcTemplate, email);
 	}
 
-	protected void storeNewUserNode(User user, SolarNode node) {
-		UserNode newUserNode = new UserNode();
-		newUserNode.setCreated(Instant.now());
-		newUserNode.setDescription("Test description");
-		newUserNode.setName("Test name");
-		newUserNode.setNode(node);
-		newUserNode.setUser(user);
-		userNodeDao.store(newUserNode);
+	protected void storeNewUserNode(Long userId, SolarNode node) {
+		CommonDbTestUtils.insertUserNode(jdbcTemplate, userId, node.getId());
 	}
 
 	protected void becomeActor(Authentication auth) {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	protected void storeNewToken(String tokenId, String tokenSecret, Long userId,
-			SecurityTokenStatus status, SecurityTokenType type, String policy) {
-		jdbcTemplate.update(
-				"INSERT INTO solaruser.user_auth_token(auth_token,auth_secret,user_id,status,token_type,jpolicy)"
-						+ " VALUES (?,?,?,?::solaruser.user_auth_token_status,?::solaruser.user_auth_token_type,?::json)",
-				tokenId, tokenSecret, userId, status.name(), type.name(), policy);
-	}
-
 	protected SecurityToken becomeAuthenticatedReadNodeDataToken(final Long userId,
 			final SecurityPolicy policy) {
-		storeNewToken("user", "pass", userId, SecurityTokenStatus.Active, SecurityTokenType.ReadNodeData,
+		CommonDbTestUtils.insertSecurityToken(jdbcTemplate, "user", "pass", userId,
+				SecurityTokenStatus.Active.name(), SecurityTokenType.ReadNodeData.name(),
 				JsonUtils.getJSONString(policy, null));
 		AuthenticatedToken token = new AuthenticatedToken(
 				new org.springframework.security.core.userdetails.User("user", "pass", true, true, true,

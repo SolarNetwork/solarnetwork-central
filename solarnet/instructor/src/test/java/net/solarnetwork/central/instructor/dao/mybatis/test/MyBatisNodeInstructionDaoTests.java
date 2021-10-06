@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;

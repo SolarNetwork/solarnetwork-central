@@ -25,6 +25,7 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
+import net.solarnetwork.central.dao.BaseEntity;
 
 /**
  * A set of capabilities.

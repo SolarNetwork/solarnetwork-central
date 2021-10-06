@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.codec.JsonUtils;
 
 /**

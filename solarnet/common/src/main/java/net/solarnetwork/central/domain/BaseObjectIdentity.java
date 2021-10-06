@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
+import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of {@link net.solarnetwork.domain.Identity} using a
@@ -33,7 +34,7 @@ import java.io.Serializable;
  * @since 1.34
  */
 public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
-		implements Cloneable, Serializable, net.solarnetwork.domain.Identity<PK> {
+		implements Cloneable, Serializable, Identity<PK> {
 
 	private static final long serialVersionUID = -2183771061512318513L;
 

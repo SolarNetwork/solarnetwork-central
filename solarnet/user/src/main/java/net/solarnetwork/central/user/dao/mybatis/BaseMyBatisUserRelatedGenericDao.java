@@ -27,9 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
-import net.solarnetwork.central.user.domain.UserRelatedEntity;
 
 /**
  * Extension of {@link BaseMyBatisGenericDao} that relies on

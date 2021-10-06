@@ -25,7 +25,8 @@
 package net.solarnetwork.central.user.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.dao.BaseEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 
 /**
  * The "pending confirmation" entity for after a user generates a node

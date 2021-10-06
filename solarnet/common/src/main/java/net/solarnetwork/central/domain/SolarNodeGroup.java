@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.dao.BaseEntity;
 
 /**
  * Domain object for a group of nodes.

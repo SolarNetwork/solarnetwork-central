@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.user.domain;
 
-import net.solarnetwork.central.domain.BaseEntity;
+import net.solarnetwork.central.dao.BaseEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 

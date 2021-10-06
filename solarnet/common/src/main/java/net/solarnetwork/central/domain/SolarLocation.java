@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**

@@ -1,7 +1,7 @@
 /* ==================================================================
- * BaseEntity.java - Feb 20, 2011 2:31:11 PM
+ * BaseStringEntity.java - Dec 12, 2012 1:34:58 PM
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,35 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.domain.BaseStringIdentity;
+import net.solarnetwork.dao.Entity;
 
 /**
- * Base class for SolarNetwork entities.
+ * Base class for SolarNetwork entities using string primary keys.
  * 
  * @author matt
  * @version 2.0
  */
-public abstract class BaseEntity extends BaseIdentity implements Entity<Long>, Cloneable, Serializable {
+public class BaseStringEntity extends BaseStringIdentity
+		implements Entity<String>, Cloneable, Serializable {
 
-	private static final long serialVersionUID = -8223419752036028667L;
+	private static final long serialVersionUID = 5907827905456392556L;
 
 	private Instant created = null;
 
-	/**
-	 * @return the created
-	 */
 	@Override
 	public Instant getCreated() {
 		return created;
 	}
 
-	/**
-	 * @param created
-	 *        the created to set
-	 */
 	public void setCreated(Instant created) {
 		this.created = created;
 	}

@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 
 /**
  * Abstract implementation support for {@link ClaimableJob}.

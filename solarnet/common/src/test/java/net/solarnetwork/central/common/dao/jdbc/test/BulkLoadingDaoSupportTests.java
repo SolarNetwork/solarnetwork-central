@@ -39,11 +39,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
+import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.central.domain.BaseEntity;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 

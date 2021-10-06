@@ -23,7 +23,7 @@
 package net.solarnetwork.central.instructor.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.EntityMatch;
+import net.solarnetwork.central.dao.EntityMatch;
 
 /**
  * Instruction for a specific node.

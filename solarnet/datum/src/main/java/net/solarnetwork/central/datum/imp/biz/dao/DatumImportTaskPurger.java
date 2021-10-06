@@ -27,8 +27,8 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * A {@link Runnable} for removing tasks that have completed and expired after a

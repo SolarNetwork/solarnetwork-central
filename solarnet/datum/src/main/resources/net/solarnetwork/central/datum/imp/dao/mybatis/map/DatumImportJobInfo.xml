@@ -96,7 +96,7 @@
 		<result property="completed" column="completed"/>
 	</resultMap>
 	
-	<select id="get-DatumImportJobInfo-for-id" parameterType="net.solarnetwork.central.user.domain.UserUuidPK" resultMap="DatumImportJobInfoFullResult">
+	<select id="get-DatumImportJobInfo-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="DatumImportJobInfoFullResult">
 		SELECT
 			<include refid="fragment-DatumImportJobInfo-full-result"/>
 		FROM

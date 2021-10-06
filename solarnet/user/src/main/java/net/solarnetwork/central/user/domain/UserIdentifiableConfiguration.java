@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**

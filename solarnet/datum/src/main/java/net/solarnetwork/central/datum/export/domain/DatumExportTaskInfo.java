@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.export.domain;
 import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.domain.BaseObjectEntity;
+import net.solarnetwork.central.dao.BaseObjectEntity;
 import net.solarnetwork.codec.JsonUtils;
 
 /**

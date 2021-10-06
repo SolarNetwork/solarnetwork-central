@@ -20,18 +20,18 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.domain;
+package net.solarnetwork.central.dao;
 
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 
 /**
- * API for an entity associated with a {@link User}.
+ * API for an entity associated with a user ID.
  * 
  * @param <PK>
  *        the primary key type
  * @author matt
  * @version 1.0
- * @since 1.28
+ * @since 2.0
  */
 public interface UserRelatedEntity<PK> extends Entity<PK> {
 

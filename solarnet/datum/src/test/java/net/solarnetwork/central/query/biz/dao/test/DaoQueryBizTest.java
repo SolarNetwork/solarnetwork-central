@@ -95,7 +95,6 @@ import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
-import net.solarnetwork.central.user.domain.User;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
@@ -321,8 +320,8 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findNodes_dataToken() {
 		// GIVEN
-		User user = createNewUser(TEST_USER_EMAIL);
-		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), null);
+		Long userId = storeNewUser(TEST_USER_EMAIL);
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(userId, null);
 
 		expect(nodeOwnershipDao.nonArchivedNodeIdsForToken(actor.getToken()))
 				.andReturn(new Long[] { 1L, 2L });
@@ -338,7 +337,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 	@Test
 	public void findSources_dataToken() {
 		// GIVEN
-		User user = createNewUser(TEST_USER_EMAIL);
+		Long userId = storeNewUser(TEST_USER_EMAIL);
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
@@ -346,7 +345,7 @@ public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
 
 		// WHEN
 		replayAll();
-		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(user.getId(), null);
+		SecurityToken actor = becomeAuthenticatedReadNodeDataToken(userId, null);
 		Set<NodeSourcePK> results = biz.findAvailableSources(actor, null);
 
 		// THEN

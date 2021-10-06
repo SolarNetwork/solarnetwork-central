@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
-import static net.solarnetwork.central.common.dao.jdbc.CommonDbUtils.insertSecurityToken;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.security.SecurityTokenStatus.Active;
 import static net.solarnetwork.central.security.SecurityTokenStatus.Disabled;
 import static net.solarnetwork.central.security.SecurityTokenType.ReadNodeData;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.arrayWithSize;
@@ -279,7 +279,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 			SecurityPolicy policy) {
 		final String tokenId = randomTokenId();
 		String policyJson = JsonUtils.getJSONString(policy, null);
-		insertSecurityToken(jdbcTemplate, tokenId, "pw", userId, status, type, policyJson);
+		insertSecurityToken(jdbcTemplate, tokenId, "pw", userId, status.name(), type.name(), policyJson);
 		return tokenId;
 	}
 

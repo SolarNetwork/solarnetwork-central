@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.cloud.domain;
 
-import net.solarnetwork.central.domain.Entity;
+import net.solarnetwork.dao.Entity;
 
 /**
  * A virtual machine.

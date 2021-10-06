@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.math.BigDecimal;
+import net.solarnetwork.central.dao.EntityMatch;
 
 /**
  * API for Location search results.
