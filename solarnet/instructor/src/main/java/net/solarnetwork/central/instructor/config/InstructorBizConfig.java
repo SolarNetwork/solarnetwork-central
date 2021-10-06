@@ -1,5 +1,5 @@
 /* ==================================================================
- * BizConfig.java - 5/10/2021 9:23:12 PM
+ * InstructorBizConfig.java - 5/10/2021 9:23:12 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -38,7 +38,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
  * @version 1.0
  */
 @Configuration
-public class BizConfig {
+public class InstructorBizConfig {
 
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;

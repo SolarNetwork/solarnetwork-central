@@ -1,5 +1,5 @@
 /* ==================================================================
- * BizConfig.java - 4/10/2021 4:50:12 PM
+ * SolarInBizConfig.java - 4/10/2021 4:50:12 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -63,7 +63,7 @@ import net.solarnetwork.central.support.BufferingDelegatingCache;
  * @version 1.0
  */
 @Configuration
-public class BizConfig {
+public class SolarInBizConfig {
 
 	/**
 	 * A cache name to use for datum objects.
