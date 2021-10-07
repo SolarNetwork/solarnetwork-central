@@ -4,6 +4,9 @@
 		<property name="context-root" value="solarquery"/>
 		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
 		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>

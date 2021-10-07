@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumBizConfiguration.java - 5/10/2021 8:11:25 AM
+ * JsonConfig.java - 5/10/2021 9:13:20 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,19 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.config;
+package net.solarnetwork.central.query.config;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
- * Marker interface for Datum Biz DAO configuration.
+ * JSON configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-@ComponentScan
-public class DatumBizConfiguration {
-	// nothing here
+public class JsonConfig {
+
+	@Bean
+	public ObjectMapper objectMapper() {
+		return JsonUtils.newDatumObjectMapper();
+	}
+
 }

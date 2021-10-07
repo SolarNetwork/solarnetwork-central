@@ -1,5 +1,30 @@
 app:
-
+  datum.query-auditor:
+    update-delay: 100
+    flush-delay: 10000
+    connection-recovery-delay: 15000
+    stat-log-update-count: 500
+  solarquery:
+    cache.persistence.path: "var/cache"
+    network-identity:
+      network-identity-key: "replace:identity:here"
+      terms-of-service: "replace:tos:here"
+      host: "localhost"
+      port: 8080
+      force-tls: false
+      service-urls:
+        solaruser: "http://localhost/solaruser"
+        solarquery: "http://localhost/solarquery"
+        solarin-mqtt: "mqtts://localhost:8883"
+    node-ownership-cache:
+      ttl: 60
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+  
 logging:
   level:
     ROOT: INFO
@@ -8,7 +33,25 @@ logging:
     console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
 
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
+
 spring:
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+    platform: postgres
+    initialize: false
 
 ---
 debugMode: true

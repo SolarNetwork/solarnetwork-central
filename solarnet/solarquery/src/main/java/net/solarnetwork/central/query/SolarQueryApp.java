@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarInApp.java - 4/10/2021 3:18:06 PM
+ * SolarQueryApp.java - 8/10/2021 9:22:28 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in;
+package net.solarnetwork.central.query;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,29 +33,25 @@ import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
-import net.solarnetwork.central.instructor.config.InstructorConfiguration;
-import net.solarnetwork.central.user.config.UserConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
- * Main entry point for the SolarIn application.
+ * Main entry point for the SolarQuery application.
  * 
  * @author matt
  * @version 1.0
  */
 // @formatter:off
-@SpringBootApplication(scanBasePackageClasses = {SolarInApp.class})
+@SpringBootApplication(scanBasePackageClasses = {SolarQueryApp.class})
 @Import({
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetDatumConfiguration.class,
-		InstructorConfiguration.class,
-		UserConfiguration.class,
 })
 // @formatter:on
-public class SolarInApp {
+public class SolarQueryApp {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SolarInApp.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SolarQueryApp.class);
 
 	/**
 	 * Command-line entry point to launching server.
@@ -64,7 +60,7 @@ public class SolarInApp {
 	 *        command line arguments
 	 */
 	public static void main(String[] args) {
-		SpringApplication.run(SolarInApp.class, args);
+		SpringApplication.run(SolarQueryApp.class, args);
 	}
 
 	/**

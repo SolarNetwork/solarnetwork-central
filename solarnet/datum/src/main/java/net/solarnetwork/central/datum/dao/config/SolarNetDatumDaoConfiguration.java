@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcAuditDatumDaoConfig.java - 5/10/2021 9:41:05 AM
+ * SolarNetDatumDaoConfiguration.java - 5/10/2021 8:11:25 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,37 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.config;
+package net.solarnetwork.central.datum.dao.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
-import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao;
 
 /**
- * JDBC audit datum DAO configuration.
+ * Marker interface for Datum configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class JdbcAuditDatumDaoConfig {
-
-	@Autowired
-	@Qualifier("central")
-	private JdbcOperations jdbcOperations;
-
-	@Autowired(required = false)
-	@Qualifier("audit")
-	private JdbcOperations auditJdbcOperations;
-
-	@Bean
-	public AuditDatumDao auditDatumDao() {
-		return new JdbcAuditDatumEntityDao(
-				auditJdbcOperations != null ? auditJdbcOperations : jdbcOperations);
-	}
-
+@ComponentScan
+public class SolarNetDatumDaoConfiguration {
+	// nothing here
 }

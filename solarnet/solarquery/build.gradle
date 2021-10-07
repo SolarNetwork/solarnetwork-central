@@ -32,6 +32,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
@@ -41,8 +42,8 @@ dependencies {
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
 	// Testing
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.junit.jupiter:junit-jupiter-api'
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 
 eclipse {
@@ -52,7 +53,7 @@ eclipse {
 	}
 	wtp {
 		facet {
-			facet name: 'jst.java', version: 1.8
+			facet name: 'jst.java', version: 11
 			facet name: 'jst.web', version: '3.1'
 		}
 	}

@@ -35,6 +35,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
@@ -59,6 +60,7 @@ import net.solarnetwork.central.security.SecurityUtils;
  * @version 2.0
  */
 @Aspect
+@Component
 public class QuerySecurityAspect extends AuthorizationSupport {
 
 	public static final String FILTER_KEY_NODE_ID = "nodeId";

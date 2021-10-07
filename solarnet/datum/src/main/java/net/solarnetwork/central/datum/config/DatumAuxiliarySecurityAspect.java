@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.aop;
+package net.solarnetwork.central.datum.config;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +30,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
@@ -54,6 +55,7 @@ import net.solarnetwork.central.security.SecurityPolicy;
  * @since 1.5
  */
 @Aspect
+@Component
 public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
 	private final DatumStreamMetadataDao metaDao;

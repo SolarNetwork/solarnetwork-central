@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.event.aop;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
@@ -36,6 +37,7 @@ import net.solarnetwork.central.user.dao.UserRelatedEntity;
  * @version 2.0
  */
 @Aspect
+@Component
 public class UserEventSecurityAspect extends AuthorizationSupport {
 
 	/**

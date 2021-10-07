@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.biz;
+package net.solarnetwork.central.datum.biz;
 
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;

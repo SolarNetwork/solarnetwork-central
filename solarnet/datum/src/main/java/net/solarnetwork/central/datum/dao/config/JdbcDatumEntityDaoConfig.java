@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.config;
+package net.solarnetwork.central.datum.dao.config;
 
 import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
 import java.time.Duration;

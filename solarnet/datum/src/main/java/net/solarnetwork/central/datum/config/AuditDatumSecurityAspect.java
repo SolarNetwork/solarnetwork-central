@@ -20,12 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.aop;
+package net.solarnetwork.central.datum.config;
 
 import java.util.Arrays;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
@@ -46,6 +47,7 @@ import net.solarnetwork.central.security.SecurityUtils;
  * @version 2.0
  */
 @Aspect
+@Component
 public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	/**

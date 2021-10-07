@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.query.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Period;
 import java.util.List;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
@@ -31,9 +33,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
-import net.solarnetwork.central.query.biz.QueryAuditor;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * {@link QueryBiz} implementation that audits query events using a
@@ -44,7 +44,7 @@ import net.solarnetwork.service.OptionalService;
  */
 public class AuditingQueryBiz extends DelegatingQueryBiz {
 
-	private final OptionalService<QueryAuditor> queryAuditor;
+	private final QueryAuditor auditor;
 
 	/**
 	 * Constructor.
@@ -53,14 +53,12 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	 *        the delegate
 	 * @param queryAuditor
 	 *        the query auditor service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public AuditingQueryBiz(QueryBiz delegate, OptionalService<QueryAuditor> queryAuditor) {
+	public AuditingQueryBiz(QueryBiz delegate, QueryAuditor queryAuditor) {
 		super(delegate);
-		this.queryAuditor = queryAuditor;
-	}
-
-	private QueryAuditor getQueryAuditor() {
-		return (queryAuditor != null ? queryAuditor.service() : null);
+		this.auditor = requireNonNullArgument(queryAuditor, "queryAuditor");
 	}
 
 	@Override
@@ -69,10 +67,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			Integer max) {
 		FilterResults<GeneralNodeDatumFilterMatch> results = super.findFilteredGeneralNodeDatum(filter,
 				sortDescriptors, offset, max);
-		QueryAuditor auditor = getQueryAuditor();
-		if ( auditor != null ) {
-			auditor.auditNodeDatumFilterResults(filter, results);
-		}
+		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
@@ -82,10 +77,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			Integer max) {
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateGeneralNodeDatum(
 				filter, sortDescriptors, offset, max);
-		QueryAuditor auditor = getQueryAuditor();
-		if ( auditor != null ) {
-			auditor.auditNodeDatumFilterResults(filter, results);
-		}
+		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
@@ -94,10 +86,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredReading(filter,
 				readingType, tolerance);
-		QueryAuditor auditor = getQueryAuditor();
-		if ( auditor != null ) {
-			auditor.auditNodeDatumFilterResults(filter, results);
-		}
+		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
@@ -107,10 +96,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateReading(
 				filter, readingType, tolerance, sortDescriptors, offset, max);
-		QueryAuditor auditor = getQueryAuditor();
-		if ( auditor != null ) {
-			auditor.auditNodeDatumFilterResults(filter, results);
-		}
+		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
