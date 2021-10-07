@@ -34,7 +34,6 @@ import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.biz.config.DatumBizConfiguration;
 import net.solarnetwork.central.datum.v2.dao.jdbc.config.DatumJdbcDaoConfiguration;
-import net.solarnetwork.central.in.config.SolarInConfiguration;
 import net.solarnetwork.central.instructor.config.InstructorConfiguration;
 import net.solarnetwork.central.user.config.UserConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
@@ -54,7 +53,6 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		DatumJdbcDaoConfiguration.class,
 		InstructorConfiguration.class,
 		UserConfiguration.class,
-		SolarInConfiguration.class,
 })
 // @formatter:on
 public class SolarInApp {

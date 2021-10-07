@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNetCommonConfiguration.java - 4/10/2021 4:20:43 PM
+ * DogtagCertRequestInfo.java - Oct 14, 2014 8:46:57 PM
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,19 +20,44 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.user.pki.dogtag;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import java.net.URL;
 
 /**
- * Marker interface for the common application configuration package.
+ * Details on a Dogtag CSR.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetCommonConfiguration {
-	// nothing here
+public class DogtagCertRequestInfo {
+
+	private String requestStatus;
+	private URL requestURL;
+	private URL certURL;
+
+	public String getRequestStatus() {
+		return requestStatus;
+	}
+
+	public void setRequestStatus(String requestStatus) {
+		this.requestStatus = requestStatus;
+	}
+
+	public URL getRequestURL() {
+		return requestURL;
+	}
+
+	public void setRequestURL(URL requestURL) {
+		this.requestURL = requestURL;
+	}
+
+	public URL getCertURL() {
+		return certURL;
+	}
+
+	public void setCertURL(URL certURL) {
+		this.certURL = certURL;
+	}
+
 }

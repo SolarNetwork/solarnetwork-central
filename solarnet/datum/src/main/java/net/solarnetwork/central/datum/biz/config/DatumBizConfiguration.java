@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.biz.config;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Marker interface for Datum Biz DAO configuration.
@@ -30,7 +31,8 @@ import org.springframework.context.annotation.ComponentScan;
  * @author matt
  * @version 1.0
  */
+@Configuration
 @ComponentScan
-public interface DatumBizConfiguration {
+public class DatumBizConfiguration {
 	// nothing here
 }

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.config;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Marker interface for the common MyBatis DAO application configuration
@@ -31,7 +32,8 @@ import org.springframework.context.annotation.ComponentScan;
  * @author matt
  * @version 1.0
  */
+@Configuration
 @ComponentScan
-public interface SolarNetCommonDaoConfiguration {
-
+public class SolarNetCommonDaoConfiguration {
+	// nothing here
 }

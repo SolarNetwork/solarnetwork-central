@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.config;
 
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,7 @@ import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
 import net.solarnetwork.central.user.dao.UserDao;
+import net.solarnetwork.service.StaticOptionalServiceCollection;
 
 /**
  * Configuration for the User services.
@@ -48,7 +50,8 @@ public class BillingBizConfig {
 
 	@Bean
 	public BillingBiz billingBiz() {
-		return new DaoBillingBiz(userDao, billingSystems);
+		return new DaoBillingBiz(userDao, new StaticOptionalServiceCollection<>(
+				billingSystems != null ? billingSystems : Collections.emptyList()));
 	}
 
 }

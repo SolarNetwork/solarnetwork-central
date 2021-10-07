@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.config;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Marker interface for the Instructor configuration package.
@@ -30,7 +31,8 @@ import org.springframework.context.annotation.ComponentScan;
  * @author matt
  * @version 1.0
  */
+@Configuration
 @ComponentScan
-public interface InstructorConfiguration {
+public class InstructorConfiguration {
 	// nothing here
 }

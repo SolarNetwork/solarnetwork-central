@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.config;
 
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Marker interface for the datum JDBC DAO configuration package.
@@ -30,7 +31,8 @@ import org.springframework.context.annotation.ComponentScan;
  * @author matt
  * @version 1.0
  */
+@Configuration
 @ComponentScan
-public interface DatumJdbcDaoConfiguration {
+public class DatumJdbcDaoConfiguration {
 	// nothing here
 }

@@ -4,4 +4,5 @@
 .gradle/
 bin/
 build/
+var/
 /*.properties

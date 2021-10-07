@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNetCommonConfiguration.java - 4/10/2021 4:20:43 PM
+ * DogtagCertificateData.java - Oct 14, 2014 9:12:30 PM
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,19 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.user.pki.dogtag;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import java.math.BigInteger;
 
 /**
- * Marker interface for the common application configuration package.
+ * Details about a certificate in Dogtag.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetCommonConfiguration {
-	// nothing here
+public class DogtagCertificateData {
+
+	private BigInteger id;
+	private String pkcs7Chain;
+
+	public BigInteger getId() {
+		return id;
+	}
+
+	public void setId(BigInteger id) {
+		this.id = id;
+	}
+
+	public String getPkcs7Chain() {
+		return pkcs7Chain;
+	}
+
+	public void setPkcs7Chain(String pkcs7Chain) {
+		this.pkcs7Chain = pkcs7Chain;
+	}
+
 }
