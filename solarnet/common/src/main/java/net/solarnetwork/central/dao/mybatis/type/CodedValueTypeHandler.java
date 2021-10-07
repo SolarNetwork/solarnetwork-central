@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao.mybatis.type;
 
 import static net.solarnetwork.domain.CodedValue.forCodeValue;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -94,10 +95,7 @@ public class CodedValueTypeHandler<E extends Enum<E> & CodedValue> extends BaseT
 	 */
 	public CodedValueTypeHandler(Class<E> type, E defaultValue) {
 		super();
-		if ( type == null ) {
-			throw new IllegalArgumentException("The type parameter must not be null.");
-		}
-		this.type = type;
+		this.type = requireNonNullArgument(type, "type");
 		this.values = type.getEnumConstants();
 		this.defaultValue = defaultValue;
 	}

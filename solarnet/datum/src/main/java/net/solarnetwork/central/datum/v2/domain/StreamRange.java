@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -56,10 +57,7 @@ public class StreamRange {
 	 */
 	public StreamRange(UUID streamId) {
 		super();
-		if ( streamId == null ) {
-			throw new IllegalArgumentException("The streamId argument must not be null.");
-		}
-		this.streamId = streamId;
+		this.streamId = requireNonNullArgument(streamId, "streamId");
 	}
 
 	/**

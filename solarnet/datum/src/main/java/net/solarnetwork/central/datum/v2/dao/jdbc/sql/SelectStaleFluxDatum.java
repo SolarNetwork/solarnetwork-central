@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -81,10 +82,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 	 */
 	public SelectStaleFluxDatum(DatumStreamCriteria filter, boolean forUpdate) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 		this.forUpdate = forUpdate;
 		this.aggregation = aggregation(filter);
 	}

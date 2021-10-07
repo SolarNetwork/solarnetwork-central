@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.biz.dao;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,14 +74,8 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 	 */
 	public DaoDatumMaintenanceBiz(DatumMaintenanceDao datumDao, DatumStreamMetadataDao metaDao) {
 		super();
-		if ( datumDao == null ) {
-			throw new IllegalArgumentException("The datumDao argument must not be null.");
-		}
-		this.datumDao = datumDao;
-		if ( metaDao == null ) {
-			throw new IllegalArgumentException("The metaDao argument must not be null.");
-		}
-		this.metaDao = metaDao;
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

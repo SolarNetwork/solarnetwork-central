@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,10 +61,7 @@ public class SelectDatumRunningTotal implements PreparedStatementCreator, SqlPro
 	 */
 	public SelectDatumRunningTotal(DatumCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 	}
 
 	private void sqlCte(StringBuilder buf) {

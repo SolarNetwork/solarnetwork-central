@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,10 +57,7 @@ public class SelectDatumAvailableTimeRange implements PreparedStatementCreator, 
 	 */
 	public SelectDatumAvailableTimeRange(ObjectStreamCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument must not be null.");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 		this.aggregation = aggregation(filter);
 		this.kind = filter.getObjectKind() != null ? filter.getObjectKind() : ObjectDatumKind.Node;
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.util.UUID;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -67,10 +68,7 @@ public class BasicDatumStreamMetadata implements DatumStreamMetadata, Serializab
 	public BasicDatumStreamMetadata(UUID streamId, String timeZoneId, String[] instantaneousProperties,
 			String[] accumulatingProperties, String[] statusProperties) {
 		super();
-		if ( streamId == null ) {
-			throw new IllegalArgumentException("The streamId argument must not be null.");
-		}
-		this.streamId = streamId;
+		this.streamId = requireNonNullArgument(streamId, "streamId");
 		this.timeZoneId = timeZoneId;
 		this.instantaneousProperties = instantaneousProperties != null
 				&& instantaneousProperties.length > 0 ? instantaneousProperties : null;

@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 
@@ -54,10 +54,12 @@ public class SelectUserAuthTokenNodes implements PreparedStatementCreator, SqlPr
 	 * 
 	 * @param tokenId
 	 *        the token ID
+	 * @throws IllegalArgumentException
+	 *         if {@code tokenId} is {@literal null}
 	 */
 	public SelectUserAuthTokenNodes(String tokenId) {
 		super();
-		this.tokenId = Objects.requireNonNull(tokenId, "The tokenId argument must not be null.");
+		this.tokenId = requireNonNullArgument(tokenId, "tokenId");
 	}
 
 	private void sqlCore(StringBuilder buf) {

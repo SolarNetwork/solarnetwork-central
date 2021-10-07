@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -91,10 +92,7 @@ public class SelectAuditDatum
 	 */
 	protected SelectAuditDatum(AuditDatumCriteria filter, Aggregation aggregation) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 		this.aggregation = aggregation;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -123,10 +124,7 @@ public abstract class BaseDatumExportOutputFormatService
 	 *         if {@code temporaryDir} is {@literal null}
 	 */
 	public void setTemporaryDir(File temporaryDir) {
-		if ( temporaryDir == null ) {
-			throw new IllegalArgumentException("The temporary directory must not be null");
-		}
-		this.temporaryDir = temporaryDir;
+		this.temporaryDir = requireNonNullArgument(temporaryDir, "temporaryDir");
 	}
 
 	/**

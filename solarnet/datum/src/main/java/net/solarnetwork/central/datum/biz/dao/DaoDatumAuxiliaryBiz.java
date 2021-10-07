@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.biz.dao;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatumAuxiliaryFilterMatch;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -78,14 +79,8 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	public DaoDatumAuxiliaryBiz(DatumAuxiliaryEntityDao datumAuxiliaryDao,
 			DatumStreamMetadataDao metaDao) {
 		super();
-		if ( datumAuxiliaryDao == null ) {
-			throw new IllegalArgumentException("The datumAuxiliaryDao argument must not be null.");
-		}
-		this.datumAuxiliaryDao = datumAuxiliaryDao;
-		if ( metaDao == null ) {
-			throw new IllegalArgumentException("The metaDao argument must not be null.");
-		}
-		this.metaDao = metaDao;
+		this.datumAuxiliaryDao = requireNonNullArgument(datumAuxiliaryDao, "datumAuxiliaryDao");
+		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
 	private ObjectDatumStreamMetadata metaForId(GeneralNodeDatumAuxiliaryPK id) {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -62,10 +63,7 @@ public class StoreNodeDatum implements CallableStatementCreator, SqlProvider {
 	 */
 	public StoreNodeDatum(GeneralNodeDatum datum) {
 		super();
-		if ( datum == null ) {
-			throw new IllegalArgumentException("The datum argument must not be null.");
-		}
-		this.datum = datum;
+		this.datum = requireNonNullArgument(datum, "datum");
 		this.timestamp = (datum.getCreated() != null ? datum.getCreated() : Instant.now());
 	}
 

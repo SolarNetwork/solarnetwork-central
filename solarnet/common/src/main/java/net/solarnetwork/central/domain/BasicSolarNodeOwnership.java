@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -59,7 +60,7 @@ public class BasicSolarNodeOwnership
 	 * @param userId
 	 *        the user ID
 	 * @return the new ownership
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId) {
@@ -84,7 +85,7 @@ public class BasicSolarNodeOwnership
 	 * @param timeZoneId
 	 *        the time zone ID
 	 * @return the new ownership
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static BasicSolarNodeOwnership ownershipFor(Long nodeId, Long userId, String country,
@@ -107,7 +108,7 @@ public class BasicSolarNodeOwnership
 	 * @param userId
 	 *        the user ID
 	 * @return the new ownership
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId) {
@@ -132,7 +133,7 @@ public class BasicSolarNodeOwnership
 	 * @param timeZoneId
 	 *        the time zone ID
 	 * @return the new ownership
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static BasicSolarNodeOwnership privateOwnershipFor(Long nodeId, Long userId, String country,
@@ -157,14 +158,14 @@ public class BasicSolarNodeOwnership
 	 *        data
 	 * @param archived
 	 *        {@literal true} if the node has been archived
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public BasicSolarNodeOwnership(Long nodeId, Long userId, String country, ZoneId zone,
 			boolean requiresAuthorization, boolean archived) {
 		super();
-		this.nodeId = Objects.requireNonNull(nodeId, "The nodeId argument must not be null.");
-		this.userId = Objects.requireNonNull(userId, "The userId argument must not be null.");
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
+		this.userId = requireNonNullArgument(userId, "userId");
 		this.country = country;
 		this.zone = (zone != null ? zone : ZoneOffset.UTC);
 		this.requiresAuthorization = requiresAuthorization;

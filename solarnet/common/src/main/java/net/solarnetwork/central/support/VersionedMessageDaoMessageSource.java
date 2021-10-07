@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.Locale;
@@ -65,14 +66,8 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	public VersionedMessageDaoMessageSource(VersionedMessageDao dao, String[] bundleNames,
 			Instant version, Cache<String, VersionedMessages> cache) {
 		super();
-		if ( dao == null ) {
-			throw new IllegalArgumentException("The dao argument must be provided.");
-		}
-		this.dao = dao;
-		if ( bundleNames == null ) {
-			throw new IllegalArgumentException("The bundleNames argument must be provided.");
-		}
-		this.bundleNames = bundleNames;
+		this.dao = requireNonNullArgument(dao, "dao");
+		this.bundleNames = requireNonNullArgument(bundleNames, "bundleNames");
 
 		this.version = (version != null ? version : Instant.now());
 		this.cache = cache;

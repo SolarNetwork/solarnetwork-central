@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz.dao;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -76,10 +77,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 */
 	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao) {
 		super();
-		if ( metaDao == null ) {
-			throw new IllegalArgumentException("The metaDao argument must not be null.");
-		}
-		this.metaDao = metaDao;
+		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
 	private static GeneralDatumMetadata extractGeneralDatumMetadata(

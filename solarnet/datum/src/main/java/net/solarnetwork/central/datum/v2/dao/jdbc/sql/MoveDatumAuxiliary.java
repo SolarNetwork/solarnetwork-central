@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -56,14 +57,8 @@ public class MoveDatumAuxiliary implements CallableStatementCreator, SqlProvider
 	 */
 	public MoveDatumAuxiliary(DatumAuxiliaryPK from, DatumAuxiliary to) {
 		super();
-		if ( from == null ) {
-			throw new IllegalArgumentException("The from argument not be null.");
-		}
-		this.from = from;
-		if ( to == null ) {
-			throw new IllegalArgumentException("The to argument not be null.");
-		}
-		this.to = to;
+		this.from = requireNonNullArgument(from, "from");
+		this.to = requireNonNullArgument(to, "to");
 	}
 
 	@Override

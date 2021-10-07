@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 import static java.lang.String.format;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.timeColumnName;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -64,10 +65,7 @@ public class SelectDatum
 	 */
 	public SelectDatum(DatumCriteria filter) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument not be null.");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 		this.aggregation = (filter.getAggregation() != null ? filter.getAggregation()
 				: Aggregation.None);
 		if ( aggregation == Aggregation.Minute ) {

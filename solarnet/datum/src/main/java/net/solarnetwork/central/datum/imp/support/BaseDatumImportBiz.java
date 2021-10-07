@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -192,10 +193,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *         if {@code workDirectory} is {@literal null}
 	 */
 	public void setWorkDirectory(File workDirectory) {
-		if ( workDirectory == null ) {
-			throw new IllegalArgumentException("The workDirectory must not be null");
-		}
-		this.workDirectory = workDirectory;
+		this.workDirectory = requireNonNullArgument(workDirectory, "workDirectory");
 	}
 
 	/**

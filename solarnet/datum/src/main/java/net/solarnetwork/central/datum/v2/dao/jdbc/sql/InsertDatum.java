@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -54,10 +55,7 @@ public class InsertDatum implements PreparedStatementCreator, SqlProvider {
 	 */
 	public InsertDatum(DatumEntity datum) {
 		super();
-		if ( datum == null ) {
-			throw new IllegalArgumentException("The datum argument must not be null.");
-		}
-		this.datum = datum;
+		this.datum = requireNonNullArgument(datum, "datum");
 	}
 
 	@Override

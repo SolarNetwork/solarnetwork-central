@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
-import static java.util.Objects.requireNonNull;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,12 +62,12 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 	 * @param nodeId
 	 *        the node ID
 	 * @return the select statement
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} is {@literal null}
 	 */
 	public static SelectSolarNodeOwnership selectForNode(Long nodeId) {
-		return new SelectSolarNodeOwnership(
-				new Long[] { requireNonNull(nodeId, "The nodeId argument must not be null.") }, null);
+		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },
+				null);
 	}
 
 	/**
@@ -76,12 +76,12 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 	 * @param userId
 	 *        the user ID
 	 * @return the select statement
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code userId} is {@literal null}
 	 */
 	public static SelectSolarNodeOwnership selectForUser(Long userId) {
 		return new SelectSolarNodeOwnership(null,
-				new Long[] { requireNonNull(userId, "The userId argument must not be null.") });
+				new Long[] { requireNonNullArgument(userId, "userId") });
 	}
 
 	/**
@@ -92,13 +92,12 @@ public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlPr
 	 * @param userId
 	 *        the user ID
 	 * @return the select statement
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if {@code nodeId} or {@code userId} is {@literal null}
 	 */
 	public static SelectSolarNodeOwnership selectForNodeUser(Long nodeId, Long userId) {
-		return new SelectSolarNodeOwnership(
-				new Long[] { requireNonNull(nodeId, "The nodeId argument must not be null.") },
-				new Long[] { requireNonNull(userId, "The userId argument must not be null.") });
+		return new SelectSolarNodeOwnership(new Long[] { requireNonNullArgument(nodeId, "nodeId") },
+				new Long[] { requireNonNullArgument(userId, "userId") });
 	}
 
 	/**

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
@@ -52,10 +53,7 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 	 */
 	public JdbcAuditDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();
-		if ( jdbcTemplate == null ) {
-			throw new IllegalArgumentException("The jdbcTemplate argument must not be null.");
-		}
-		this.jdbcTemplate = jdbcTemplate;
+		this.jdbcTemplate = requireNonNullArgument(jdbcTemplate, "jdbcTemplate");
 	}
 
 	private FilterResults<AuditDatumRollup, DatumPK> findFiltered(AuditDatumCriteria filter,

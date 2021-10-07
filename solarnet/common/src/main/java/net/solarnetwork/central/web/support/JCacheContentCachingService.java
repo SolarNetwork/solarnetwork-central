@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -331,10 +332,8 @@ public class JCacheContentCachingService implements ContentCachingService {
 	 *        compressible media types
 	 */
 	public void setCompressibleMediaTypes(Set<MediaType> compressibleMediaTypes) {
-		if ( compressibleMediaTypes == null ) {
-			throw new IllegalArgumentException("compressibleMediaTypes set must not be null");
-		}
-		this.compressibleMediaTypes = compressibleMediaTypes;
+		this.compressibleMediaTypes = requireNonNullArgument(compressibleMediaTypes,
+				"compressibleMediaTypes");
 	}
 
 	/**

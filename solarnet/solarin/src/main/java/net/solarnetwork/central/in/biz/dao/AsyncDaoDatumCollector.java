@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
@@ -133,22 +134,10 @@ public class AsyncDaoDatumCollector
 	public AsyncDaoDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
 			TransactionTemplate transactionTemplate, CollectorStats stats) {
 		super();
-		if ( datumCache == null ) {
-			throw new IllegalArgumentException("The datumCache parameter must not be null.");
-		}
-		this.datumCache = datumCache;
-		if ( datumDao == null ) {
-			throw new IllegalArgumentException("The datumDao parameter must not be null.");
-		}
-		this.datumDao = datumDao;
-		if ( transactionTemplate == null ) {
-			throw new IllegalArgumentException("The transactionTemplate parameter must not be null.");
-		}
-		this.transactionTemplate = transactionTemplate;
-		if ( stats == null ) {
-			throw new IllegalArgumentException("The stats parameter must not be null.");
-		}
-		this.stats = stats;
+		this.datumCache = requireNonNullArgument(datumCache, "datumCache");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.transactionTemplate = requireNonNullArgument(transactionTemplate, "transactionTemplate");
+		this.stats = requireNonNullArgument(stats, "stats");
 		this.concurrency = DEFAULT_CONCURRENCY;
 		this.shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
 		this.queueSize = DEFAULT_QUEUE_SIZE;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -69,10 +70,7 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 	 */
 	public GetDatum(DatumPK id, Aggregation aggregation) {
 		super();
-		if ( id == null ) {
-			throw new IllegalArgumentException("The id argument not be null.");
-		}
-		this.id = id;
+		this.id = requireNonNullArgument(id, "id");
 		this.aggregation = aggregation(aggregation);
 	}
 

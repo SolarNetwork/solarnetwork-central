@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.session;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -194,10 +195,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			ChargePointSettingsDao chargePointSettingsDao,
 			OptionalService<DatumProcessor> fluxPublisher) {
 		super();
-		if ( authService == null ) {
-			throw new IllegalArgumentException("The authService parameter must not be null.");
-		}
-		this.authService = authService;
+		this.authService = requireNonNullArgument(authService, "authService");
 		if ( chargePointDao == null ) {
 			throw new IllegalArgumentException("The chargePointDao parameter must not be null.");
 		}
@@ -206,22 +204,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 					"The chargePointDao objectType must be CentralChargePoint.");
 		}
 		this.chargePointDao = chargePointDao;
-		if ( chargeSessionDao == null ) {
-			throw new IllegalArgumentException("The chargeSessionDao parameter must not be null.");
-		}
-		this.chargeSessionDao = chargeSessionDao;
-		if ( datumDao == null ) {
-			throw new IllegalArgumentException("The datumDao parameter must not be null.");
-		}
-		this.datumDao = datumDao;
-		if ( chargePointSettingsDao == null ) {
-			throw new IllegalArgumentException("The chargePointSettingDao parameter must not be null.");
-		}
-		this.chargePointSettingsDao = chargePointSettingsDao;
-		if ( fluxPublisher == null ) {
-			throw new IllegalArgumentException("The fluxPublisher parameter must not be null.");
-		}
-		this.fluxPublisher = fluxPublisher;
+		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
+				"chargePointSettingsDao");
+		this.fluxPublisher = requireNonNullArgument(fluxPublisher, "fluxPublisher");
 	}
 
 	/**

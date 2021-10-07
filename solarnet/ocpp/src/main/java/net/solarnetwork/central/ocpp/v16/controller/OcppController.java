@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.v16.controller;
 
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.service.OptionalService.service;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -143,30 +144,12 @@ public class OcppController extends BasicIdentifiable
 			CentralAuthorizationDao authorizationDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao chargePointConnectorDao) {
 		super();
-		if ( executor == null ) {
-			throw new IllegalArgumentException("The executor parameter must not be null.");
-		}
-		this.executor = executor;
-		if ( chargePointRouter == null ) {
-			throw new IllegalArgumentException("The chargePointRouter parameter must not be null.");
-		}
-		this.chargePointRouter = chargePointRouter;
-		if ( userNodeDao == null ) {
-			throw new IllegalArgumentException("The userNodeDao parameter must not be null.");
-		}
-		this.userNodeDao = userNodeDao;
-		if ( instructionDao == null ) {
-			throw new IllegalArgumentException("The instructionDao parameter must not be null.");
-		}
-		this.instructionDao = instructionDao;
-		if ( authorizationDao == null ) {
-			throw new IllegalArgumentException("The authorizationDao parameter must not be null.");
-		}
-		this.authorizationDao = authorizationDao;
-		if ( chargePointDao == null ) {
-			throw new IllegalArgumentException("The chargePointDao parameter must not be null.");
-		}
-		this.chargePointDao = chargePointDao;
+		this.executor = requireNonNullArgument(executor, "executor");
+		this.chargePointRouter = requireNonNullArgument(chargePointRouter, "chargePointRouter");
+		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.instructionDao = requireNonNullArgument(instructionDao, "instructionDao");
+		this.authorizationDao = requireNonNullArgument(authorizationDao, "authorizationDao");
+		this.chargePointDao = requireNonNullArgument(chargePointDao, "chargePointDao");
 		if ( chargePointConnectorDao == null ) {
 			throw new IllegalArgumentException(
 					"The chargePointConnectorDao parameter must not be null.");

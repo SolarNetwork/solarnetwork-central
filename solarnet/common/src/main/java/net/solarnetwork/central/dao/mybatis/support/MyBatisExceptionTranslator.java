@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
@@ -175,14 +176,8 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 
 		private SqlStateErrorConfig(String name, String sqlState, String messagePattern, String type) {
 			super();
-			if ( name == null ) {
-				throw new IllegalArgumentException("The name argument must not be null.");
-			}
-			this.name = name;
-			if ( sqlState == null ) {
-				throw new IllegalArgumentException("The sqlState argument must not be null.");
-			}
-			this.sqlState = sqlState;
+			this.name = requireNonNullArgument(name, "name");
+			this.sqlState = requireNonNullArgument(sqlState, "sqlState");
 			if ( messagePattern == null ) {
 				throw new IllegalArgumentException("The messagePattern argument must not be null.");
 			}

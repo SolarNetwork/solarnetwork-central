@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -60,18 +61,9 @@ public final class ReportableInterval {
 	 */
 	public ReportableInterval(ZonedDateTime startDate, ZonedDateTime endDate, ZoneId zone) {
 		super();
-		if ( startDate == null ) {
-			throw new IllegalArgumentException("The startDate argument must not be null.");
-		}
-		this.startDate = startDate;
-		if ( endDate == null ) {
-			throw new IllegalArgumentException("The endDate argument must not be null.");
-		}
-		this.endDate = endDate;
-		if ( zone == null ) {
-			throw new IllegalArgumentException("The zone argument must not be null.");
-		}
-		this.zone = zone;
+		this.startDate = requireNonNullArgument(startDate, "startDate");
+		this.endDate = requireNonNullArgument(endDate, "endDate");
+		this.zone = requireNonNullArgument(zone, "zone");
 	}
 
 	/**

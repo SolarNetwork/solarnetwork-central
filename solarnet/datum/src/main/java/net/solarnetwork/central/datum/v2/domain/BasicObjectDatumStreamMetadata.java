@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.domain.BasicLocation;
@@ -177,18 +178,9 @@ public class BasicObjectDatumStreamMetadata extends BasicDatumStreamMetadata
 			Long objectId, String sourceId, Location location, String[] instantaneousProperties,
 			String[] accumulatingProperties, String[] statusProperties, String metaJson) {
 		super(streamId, timeZoneId, instantaneousProperties, accumulatingProperties, statusProperties);
-		if ( kind == null ) {
-			throw new IllegalArgumentException("The kind argument must not be null.");
-		}
-		this.kind = kind;
-		if ( objectId == null ) {
-			throw new IllegalArgumentException("The objectId argument must not be null.");
-		}
-		this.objectId = objectId;
-		if ( sourceId == null ) {
-			throw new IllegalArgumentException("The sourceId argument must not be null.");
-		}
-		this.sourceId = sourceId;
+		this.kind = requireNonNullArgument(kind, "kind");
+		this.objectId = requireNonNullArgument(objectId, "objectId");
+		this.sourceId = requireNonNullArgument(sourceId, "sourceId");
 		this.location = BasicLocation.locationValue(location);
 		this.metaJson = metaJson;
 	}

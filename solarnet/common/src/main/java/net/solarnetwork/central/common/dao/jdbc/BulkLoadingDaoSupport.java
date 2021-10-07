@@ -26,6 +26,7 @@ import static net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode
 import static net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode.NoTransaction;
 import static net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode.SingleTransaction;
 import static net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode.TransactionCheckpoints;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -125,10 +126,7 @@ public class BulkLoadingDaoSupport {
 		public BulkLoadingContext(LoadingOptions options,
 				LoadingExceptionHandler<T, PK> exceptionHandler) throws SQLException {
 			super();
-			if ( options == null ) {
-				throw new IllegalArgumentException("The LoadingOptions argument cannot be null");
-			}
-			this.options = options;
+			this.options = requireNonNullArgument(options, "options");
 			this.exceptionHandler = exceptionHandler;
 			this.numLoaded = 0;
 			if ( options.getTransactionMode() == SingleTransaction

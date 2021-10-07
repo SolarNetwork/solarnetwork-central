@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -86,10 +87,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 	public BasicDatumAppEvent(String topic, Instant created, Map<String, ?> eventProperties, Long nodeId,
 			String sourceId) {
 		super(topic, created, eventProperties);
-		if ( nodeId == null ) {
-			throw new IllegalArgumentException("The nodeId parameter must not be null.");
-		}
-		this.nodeId = nodeId;
+		this.nodeId = requireNonNullArgument(nodeId, "nodeId");
 		if ( sourceId == null || sourceId.isEmpty() ) {
 			throw new IllegalArgumentException("The sourceId parameter must not be null.");
 		}

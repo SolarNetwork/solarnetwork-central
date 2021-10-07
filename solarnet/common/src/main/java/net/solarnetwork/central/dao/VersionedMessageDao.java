@@ -1,34 +1,35 @@
 /* ==================================================================
  * VersionedMessageDao.java - 25/07/2020 9:48:13 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Properties;
 
 /**
  * DAO API for a resource bundle-like set of messages.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.6
@@ -56,7 +57,7 @@ public interface VersionedMessageDao {
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param version
 		 *        the version
 		 * @param bundleNames
@@ -71,27 +72,15 @@ public interface VersionedMessageDao {
 		public VersionedMessages(Instant version, String[] bundleNames, String locale,
 				Properties properties) {
 			super();
-			if ( version == null ) {
-				throw new IllegalArgumentException("The version argument must be provided.");
-			}
-			this.version = version;
-			if ( bundleNames == null ) {
-				throw new IllegalArgumentException("The bundleNames argument must be provided.");
-			}
-			this.bundleNames = bundleNames;
-			if ( locale == null ) {
-				throw new IllegalArgumentException("The locale argument must be provided.");
-			}
-			this.locale = locale;
-			if ( properties == null ) {
-				throw new IllegalArgumentException("The properties argument must be provided.");
-			}
-			this.properties = properties;
+			this.version = requireNonNullArgument(version, "version");
+			this.bundleNames = requireNonNullArgument(bundleNames, "bundleNames");
+			this.locale = requireNonNullArgument(locale, "locale");
+			this.properties = requireNonNullArgument(properties, "properties");
 		}
 
 		/**
 		 * Get the version of these messages.
-		 * 
+		 *
 		 * @return the version, never {@literal null}
 		 */
 		public Instant getVersion() {
@@ -100,7 +89,7 @@ public interface VersionedMessageDao {
 
 		/**
 		 * Get the bundle names associated with these messages.
-		 * 
+		 *
 		 * @return the bundle names, never {@literal null}
 		 */
 		public String[] getBundleNames() {
@@ -109,7 +98,7 @@ public interface VersionedMessageDao {
 
 		/**
 		 * Get the locale associated with these messages.
-		 * 
+		 *
 		 * @return the locale, never {@literal null}
 		 */
 		public String getLocale() {
@@ -118,7 +107,7 @@ public interface VersionedMessageDao {
 
 		/**
 		 * Get the messages.
-		 * 
+		 *
 		 * @return the messages, never {@literal null}
 		 */
 		public Properties getProperties() {
@@ -129,13 +118,13 @@ public interface VersionedMessageDao {
 
 	/**
 	 * Get all available messages for a specific version.
-	 * 
+	 *
 	 * <p>
 	 * Note that if any messages are resolved, the
 	 * {@link VersionedMessageDao#VERSION_KEY} value will be populated with the
 	 * overall version of the returned messages.
 	 * </p>
-	 * 
+	 *
 	 * @param version
 	 *        the maximum version to get messages for
 	 * @param bundleNames

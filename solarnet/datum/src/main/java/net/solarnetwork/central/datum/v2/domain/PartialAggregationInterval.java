@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import static java.util.Collections.unmodifiableList;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.truncateDate;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -64,22 +65,10 @@ public class PartialAggregationInterval {
 	public PartialAggregationInterval(Aggregation main, Aggregation partial, LocalDateTime start,
 			LocalDateTime end) {
 		super();
-		if ( main == null ) {
-			throw new IllegalArgumentException("The main argument must not be null.");
-		}
-		this.main = main;
-		if ( partial == null ) {
-			throw new IllegalArgumentException("The partial argument must not be null.");
-		}
-		this.partial = partial;
-		if ( start == null ) {
-			throw new IllegalArgumentException("The start argument must not be null.");
-		}
-		this.start = start;
-		if ( end == null ) {
-			throw new IllegalArgumentException("The end argument must not be null.");
-		}
-		this.end = end;
+		this.main = requireNonNullArgument(main, "main");
+		this.partial = requireNonNullArgument(partial, "partial");
+		this.start = requireNonNullArgument(start, "start");
+		this.end = requireNonNullArgument(end, "end");
 		if ( !(partial.compareLevel(main) < 0) ) {
 			throw new IllegalArgumentException(String.format(
 					"The partial aggregation %s is not smaller than the main aggregation %s.", partial,

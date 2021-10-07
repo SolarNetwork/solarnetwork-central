@@ -24,12 +24,12 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralLocationDatum;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -125,17 +125,16 @@ public class DaoQueryBiz implements QueryBiz {
 	 *        the reading DAO
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
-	 * @throws NullPointerException
+	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoQueryBiz(DatumEntityDao datumDao, DatumStreamMetadataDao metaDao,
 			ReadingDatumDao readingDao, SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
-		this.datumDao = requireNonNull(datumDao, "The datumDao argument must not be null.");
-		this.metaDao = requireNonNull(metaDao, "The metaDao argument must not be null.");
-		this.readingDao = requireNonNull(readingDao, "The readingDao argument must not be null.");
-		this.nodeOwnershipDao = requireNonNull(nodeOwnershipDao,
-				"The nodeOwnershipDao argument must not be null.");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
+		this.readingDao = requireNonNullArgument(readingDao, "readingDao");
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 	}
 
 	@Override

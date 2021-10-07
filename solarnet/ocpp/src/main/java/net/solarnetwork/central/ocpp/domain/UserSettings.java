@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -217,10 +218,7 @@ public class UserSettings extends BasicLongEntity
 	 *         if {@code sourceIdTemplate} is {@literal null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
-		if ( sourceIdTemplate == null ) {
-			throw new IllegalArgumentException("The sourceIdTemplate parameter must not be null.");
-		}
-		this.sourceIdTemplate = sourceIdTemplate;
+		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
 	}
 
 }

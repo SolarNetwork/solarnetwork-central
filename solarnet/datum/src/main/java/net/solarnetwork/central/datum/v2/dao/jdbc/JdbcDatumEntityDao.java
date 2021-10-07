@@ -27,6 +27,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -174,10 +175,7 @@ public class JdbcDatumEntityDao
 	 */
 	public JdbcDatumEntityDao(JdbcOperations jdbcTemplate) {
 		super();
-		if ( jdbcTemplate == null ) {
-			throw new IllegalArgumentException("The jdbcTemplate argument must not be null.");
-		}
-		this.jdbcTemplate = jdbcTemplate;
+		this.jdbcTemplate = requireNonNullArgument(jdbcTemplate, "jdbcTemplate");
 	}
 
 	@Override
