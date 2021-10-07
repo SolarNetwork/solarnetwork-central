@@ -85,7 +85,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 	}
 
 	/**
-	 * Set the statement name for the {@link #purgeCompletedTasks(DateTime)}
+	 * Set the statement name for the {@link #purgeCompletedTasks(Instant)}
 	 * method to use.
 	 *
 	 * @param updateDeleteCompletedTasks

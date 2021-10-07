@@ -27,10 +27,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Locale;
 import org.easymock.EasyMock;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +50,8 @@ public class LocalizedInvoiceMatchTests {
 	private static final String TEST_CURRENCY_CODE = "NZD";
 	private static final BigDecimal TEST_BALANCE = new BigDecimal("1.23");
 	private static final BigDecimal TEST_AMOUNT = new BigDecimal("2.34");
-	private static final DateTime TEST_DATE = new DateTime(2017, 1, 1, 0, 0,
-			DateTimeZone.forID(TEST_TIME_ZONE));
+	private static final Instant TEST_DATE = LocalDateTime.of(2017, 1, 1, 0, 0)
+			.atZone(ZoneId.of(TEST_TIME_ZONE)).toInstant();
 
 	private InvoiceMatch match;
 

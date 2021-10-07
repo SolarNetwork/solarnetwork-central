@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.event.dao.mybatis.UserNodeEventTask">
+
+	<insert id="create-user-node-event-tasks-from-event" 
+			parameterType="net.solarnetwork.central.datum.domain.DatumAppEvent" 
+			statementType="CALLABLE">
+		{call solaruser.add_user_node_event_tasks(
+			#{nodeId,jdbcType=BIGINT}
+			, #{sourceId,jdbcType=VARCHAR}
+			, #{topic,jdbcType=VARCHAR}
+			, #{eventProperties,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
+			<if test="created != null">, #{created}</if>
+			)}
+	</insert>
+	
+	<sql id="fragment-UserNodeEventTask-full-result">
+		unet.id AS node_event_task_id
+		, unet.created AS node_event_task_created
+		, unet.hook_id AS node_event_task_hook_id
+		, unet.node_id AS node_event_task_node_id
+		, unet.source_id AS node_event_task_source_id
+		, unet.jdata AS node_event_task_jdata
+	</sql>
+
+	<resultMap id="UserNodeEventTask-FullResult" type="net.solarnetwork.central.user.event.domain.UserNodeEventTask">
+		<constructor>
+			<idArg column="node_event_task_id" javaType="java.util.UUID"/>
+			<arg column="node_event_task_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="hookId" column="node_event_task_hook_id"/>
+		<result property="nodeId" column="node_event_task_node_id"/>
+		<result property="sourceId" column="node_event_task_source_id"/>
+		<result property="taskProperties" column="node_event_task_jdata" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
+	</resultMap>
+	
+	<resultMap id="UserNodeEventTask-FullResultWithConfig" type="net.solarnetwork.central.user.event.domain.UserNodeEventTask" extends="UserNodeEventTask-FullResult">
+		<result property="userId" column="node_event_hook_user_id"/>
+	</resultMap>
+	
+	<resultMap id="UserNodeEvent-FullResult" type="net.solarnetwork.central.user.event.domain.UserNodeEvent">
+		<constructor>
+			<idArg column="node_event_task_id" javaType="java.util.UUID"/>
+			<arg column="node_event_task_created" javaType="java.time.Instant"/>
+		</constructor>
+		<association property="task" resultMap="UserNodeEventTask-FullResultWithConfig"/>
+		<association property="config" resultMap="net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration.UserNodeEventHookConfiguration-FullResult"/>
+	</resultMap>
+
+	<select id="claim-queued-user-node-event-task" resultMap="UserNodeEvent-FullResult">
+		SELECT
+			<include refid="fragment-UserNodeEventTask-full-result"/>,
+			<include refid="net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration.fragment-UserNodeEventHookConfiguration-full-result"/>
+		FROM solaruser.claim_user_node_event_task() unet
+		INNER JOIN solaruser.user_node_event_hook uneh ON uneh.id = unet.hook_id
+	</select>
+	
+	<update id="complete-user-node-event-task" 
+			parameterType="net.solarnetwork.central.user.event.domain.UserNodeEventTask"
+			statementType="CALLABLE">
+		{call solaruser.add_user_node_event_task_result(
+			#{id},
+			#{success},
+			#{statusKey},
+			#{message},
+			#{completed}
+			)}
+	</update>
+
+	<delete id="purge-user-node-event-tasks" statementType="CALLABLE">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_user_node_event_tasks(#{date, javaType=java.time.Instant})}
+	</delete>
+
+</mapper>

@@ -23,10 +23,10 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import net.solarnetwork.dao.Entity;
 
 /**
@@ -125,7 +125,7 @@ public interface InvoiceItem extends Entity<String> {
 	 * 
 	 * @return the ended date
 	 */
-	DateTime getEnded();
+	Instant getEnded();
 
 	/**
 	 * Get the total usage amount, as a formatted and localized string.

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.time.DayOfWeek;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -125,7 +126,7 @@ public enum ScheduleType {
 	 * @return the export date
 	 */
 	public ZonedDateTime exportDate(ZonedDateTime date) {
-		ZonedDateTime exportDate = (date != null ? date : ZonedDateTime.now());
+		ZonedDateTime exportDate = (date != null ? date : ZonedDateTime.now(ZoneOffset.UTC));
 		if ( this != Adhoc ) {
 			ChronoUnit dateProperty = temporalUnit();
 			if ( dateProperty == ChronoUnit.MONTHS ) {

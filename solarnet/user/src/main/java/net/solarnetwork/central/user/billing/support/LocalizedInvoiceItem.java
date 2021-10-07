@@ -26,16 +26,15 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemInfo;
@@ -122,22 +121,22 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 
 	@Override
 	public String getLocalizedStartDate() {
-		DateTimeFormatter fmt = DateTimeFormat.mediumDate().withLocale(locale);
+		DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale);
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
-			fmt = fmt.withZone(DateTimeZone.forID(tz));
+			fmt = fmt.withZone(ZoneId.of(tz));
 		}
-		return fmt.print(getStartDate());
+		return fmt.format(getStartDate());
 	}
 
 	@Override
 	public String getLocalizedEndDate() {
-		DateTimeFormatter fmt = DateTimeFormat.mediumDate().withLocale(locale);
+		DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale);
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
-			fmt = fmt.withZone(DateTimeZone.forID(tz));
+			fmt = fmt.withZone(ZoneId.of(tz));
 		}
-		return fmt.print(getEndDate());
+		return fmt.format(getEndDate());
 	}
 
 	@Override
@@ -202,7 +201,7 @@ public class LocalizedInvoiceItem implements InvoiceItem, LocalizedInvoiceItemIn
 	}
 
 	@Override
-	public DateTime getEnded() {
+	public Instant getEnded() {
 		return item.getEnded();
 	}
 

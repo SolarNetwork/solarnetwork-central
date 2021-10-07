@@ -23,11 +23,11 @@
 package net.solarnetwork.central.user.billing.support;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Locale;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
 
@@ -71,12 +71,12 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 
 	@Override
 	public String getLocalizedDate() {
-		DateTimeFormatter fmt = DateTimeFormat.fullDate().withLocale(locale);
+		DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale);
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
-			fmt = fmt.withZone(DateTimeZone.forID(tz));
+			fmt = fmt.withZone(ZoneId.of(tz));
 		}
-		return fmt.print(getCreated());
+		return fmt.format(getCreated());
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 	}
 
 	@Override
-	public DateTime getCreated() {
+	public Instant getCreated() {
 		return match.getCreated();
 	}
 

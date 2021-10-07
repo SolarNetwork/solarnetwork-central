@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
+
+	<insert id="insert-UserDataConfiguration" parameterType="UserDataConfiguration">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_expire_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_expire_data_conf (
+			id, user_id, cname, sident
+			<if test="created != null">,created</if>
+			<if test="servicePropsJson != null">,sprops</if>
+			,expire_days, enabled
+			<if test="filterJson != null">,filter</if>
+			)
+		VALUES (
+			#{id}, #{userId}, #{name}, #{serviceIdentifier}
+			<if test="created != null">,#{created}</if>
+			<if test="servicePropsJson != null">,CAST(#{servicePropsJson} AS jsonb)</if>
+			,#{expireDays}, #{active}
+			<if test="filterJson != null">,CAST(#{filterJson} AS jsonb)</if>
+			)
+	</insert>
+
+	<update id="update-UserDataConfiguration" parameterType="UserDataConfiguration">
+		UPDATE
+			solaruser.user_expire_data_conf
+		SET
+			cname = #{name}
+			, sident = #{serviceIdentifier}
+			, sprops = CAST(#{servicePropsJson} AS jsonb)
+			, expire_days = #{expireDays}
+			, enabled = #{active}
+			, filter = CAST(#{filterJson} AS jsonb)
+		WHERE
+			id = #{id} AND user_id = #{userId}
+			
+	</update>
+
+	<delete id="delete-UserDataConfiguration" parameterType="UserDataConfiguration">
+		DELETE FROM solaruser.user_expire_data_conf
+		WHERE id = #{id} AND user_id = #{userId}
+	</delete>
+	
+	<sql id="fragment-UserDataConfiguration-full-result">
+		udac.id AS user_expire_data_conf_id, 
+		udac.created AS user_expire_data_conf_created,
+		udac.user_id AS user_expire_data_conf_user_id,
+		udac.cname AS user_expire_data_conf_cname,
+		udac.sident AS user_expire_data_conf_sident,
+		udac.sprops AS user_expire_data_conf_sprops,
+		udac.expire_days AS user_expire_data_conf_expire_days,
+		udac.enabled AS user_expire_data_conf_enabled,
+		udac.filter AS user_expire_data_conf_filter
+	</sql>
+
+	<resultMap id="UserDataConfigurationFullResult" type="UserDataConfiguration">
+		<id property="id" column="user_expire_data_conf_id"/>
+		<result property="created" column="user_expire_data_conf_created"/>
+		<result property="userId" column="user_expire_data_conf_user_id"/>
+		<result property="name" column="user_expire_data_conf_cname"/>
+		<result property="serviceIdentifier" column="user_expire_data_conf_sident"/>
+		<result property="servicePropsJson" column="user_expire_data_conf_sprops"/>
+		<result property="expireDays" column="user_expire_data_conf_expire_days"/>
+		<result property="active" column="user_expire_data_conf_enabled"/>
+		<result property="filterJson" column="user_expire_data_conf_filter"/>
+	</resultMap>
+	
+	<select id="findall-UserDataConfiguration" resultMap="UserDataConfigurationFullResult" fetchSize="1000" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserDataConfiguration-full-result"/>
+		FROM
+			solaruser.user_expire_data_conf udac
+		ORDER BY
+			<if test="SortDescriptors == null">
+				udac.user_id, lower(udac.cname),
+			</if>	
+			<if test="SortDescriptors != null">
+				<foreach collection="SortDescriptors" item="item" separator="," close=",">
+					<if test="item.sortKey == &quot;created&quot;">udac.created</if>
+					<if test="item.sortKey == &quot;name&quot;">lower(udac.cname)</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</if>
+			udac.id
+	</select>
+	
+	<select id="get-UserDataConfiguration-for-id" parameterType="map" resultMap="UserDataConfigurationFullResult">
+		SELECT
+			<include refid="fragment-UserDataConfiguration-full-result"/>
+		FROM
+			solaruser.user_expire_data_conf udac
+		WHERE
+			udac.id = #{id} AND udac.user_id = #{userId}
+	</select>
+	
+	<select id="find-UserDataConfiguration-for-user" parameterType="long" resultMap="UserDataConfigurationFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserDataConfiguration-full-result"/>
+		FROM
+			solaruser.user_expire_data_conf udac
+		WHERE
+			udac.user_id = #{id}
+		ORDER BY
+			lower(udac.cname), udac.id
+	</select>
+	
+	<resultMap id="DatumRecordCountsFullResult" type="net.solarnetwork.central.datum.domain.DatumRecordCounts">
+		<result property="date" column="query_date"/>
+		<result property="datumCount" column="datum_count"/>
+		<result property="datumHourlyCount" column="datum_hourly_count"/>
+		<result property="datumDailyCount" column="datum_daily_count"/>
+		<result property="datumMonthlyCount" column="datum_monthly_count"/>
+	</resultMap>
+
+	<select id="count-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultMap="DatumRecordCountsFullResult">
+		SELECT * FROM solaruser.preview_expire_datum_for_policy(
+			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
+	</select>
+	
+	<!--  Note this is called as a SELECT to a procedure that performs the delete -->
+	<select id="delete-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultType="long">
+		SELECT solaruser.expire_datum_for_policy(
+			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
+	</select>
+	
+</mapper>
