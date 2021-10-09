@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.query.web.api.test;
 
-import static java.lang.String.format;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -104,8 +104,8 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 						AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(content().json(
-					format("{\"success\":true,\"data\":{\"key\":\"%s\"}}", expectedKey)));
+			.andExpect(jsonPath("$.success", is(true)))
+			.andExpect(jsonPath("$.data.key", is(expectedKey)));
 		// @formatter:on
 	}
 }
