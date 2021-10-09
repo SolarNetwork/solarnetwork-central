@@ -24,6 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import java.sql.SQLException;
 import java.time.format.DateTimeParseException;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
@@ -59,11 +60,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -72,7 +75,8 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 2.0
  */
-public abstract class WebServiceControllerSupport {
+@RestControllerAdvice(annotations = GlobalExceptionRestController.class)
+public final class WebServiceControllerSupport {
 
 	/** The default format pattern for a date property. */
 	public static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
@@ -741,7 +745,10 @@ public abstract class WebServiceControllerSupport {
 	 */
 	@ModelAttribute
 	public void addVaryResponseHeader(HttpServletResponse response) {
-		response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT);
+		Collection<String> vary = response.getHeaders(HttpHeaders.VARY);
+		if ( vary == null || !vary.contains(HttpHeaders.ACCEPT) ) {
+			response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT);
+		}
 	}
 
 	/**
@@ -759,6 +766,7 @@ public abstract class WebServiceControllerSupport {
 	 * @param messageSource
 	 *        the message source
 	 */
+	@Autowired
 	public void setMessageSource(MessageSource messageSource) {
 		this.messageSource = messageSource;
 	}

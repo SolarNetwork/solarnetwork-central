@@ -1,5 +1,5 @@
 /* ==================================================================
- * WebConfig.java - 9/10/2021 3:20:51 PM
+ * WebConfig.java - 10/10/2021 12:56:05 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.config;
+package net.solarnetwork.central.in.config;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 
@@ -42,30 +35,6 @@ import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class })
-public class WebConfig implements WebMvcConfigurer {
-
-	/** A qualifier for the source ID path matcher. */
-	public static final String SOURCE_ID_PATH_MATCHER = "source-id";
-
-	@Override
-	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/**").allowedMethods("GET", "POST")
-				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
-				.allowCredentials(false);
-	}
-
-	@Bean
-	@Qualifier(SOURCE_ID_PATH_MATCHER)
-	public PathMatcher sourceIdPathMatcher() {
-		AntPathMatcher matcher = new AntPathMatcher();
-		matcher.setCachePatterns(true);
-		matcher.setCaseSensitive(false);
-		return matcher;
-	}
-
-	@Bean
-	public PingController pingController() {
-		return new PingController();
-	}
+public class WebConfig {
 
 }

@@ -25,6 +25,8 @@ package net.solarnetwork.central.query.web.api;
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.READING_DATUM_FILTER;
 import static net.solarnetwork.central.query.config.WebConfig.SOURCE_ID_PATH_MATCHER;
 import java.time.Period;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -46,7 +48,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -57,16 +59,19 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
-public class DatumController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class DatumController {
 
 	/** The {@code transientExceptionRetryCount} property default value. */
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
+
+	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
 
 	private final QueryBiz queryBiz;
 	private SmartValidator readingFilterValidator;
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
-	private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
+	//private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
@@ -195,7 +200,7 @@ public class DatumController extends WebServiceControllerSupport {
 	}
 
 	public void setRequestDateFormats(String[] requestDateFormats) {
-		this.requestDateFormats = requestDateFormats;
+		// FIXME: this.requestDateFormats = requestDateFormats;
 	}
 
 	/**

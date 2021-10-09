@@ -29,8 +29,6 @@ import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -47,7 +45,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.Assert;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.filter.OncePerRequestFilter;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.web.security.AuthenticationData;
@@ -71,7 +69,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * @author matt
  * @version 1.6
  */
-public class SecurityTokenAuthenticationFilter extends GenericFilterBean implements Filter {
+public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
 	/** The fixed length of the auth token. */
 	public static final int AUTH_TOKEN_LENGTH = 20;
@@ -125,11 +123,11 @@ public class SecurityTokenAuthenticationFilter extends GenericFilterBean impleme
 	}
 
 	@Override
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-			throws IOException, ServletException {
-		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(
-				(HttpServletRequest) req, maxRequestBodySize);
-		HttpServletResponse response = (HttpServletResponse) res;
+	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+			throws ServletException, IOException {
+		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(req,
+				maxRequestBodySize);
+		HttpServletResponse response = res;
 
 		AuthenticationData data;
 		try {

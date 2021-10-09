@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -43,7 +43,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1NodesController")
 @RequestMapping("/api/v1/sec/nodes")
-public class NodesController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class NodesController {
 
 	private final QueryBiz queryBiz;
 

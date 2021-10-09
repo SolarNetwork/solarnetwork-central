@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.biz.AppConfigurationBiz;
 import net.solarnetwork.central.domain.AppConfiguration;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -41,7 +41,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @RestController("v1ConfigurationController")
 @RequestMapping(value = { "/api/v1/pub/config", "/api/v1/sec/config" })
-public class ConfigurationController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class ConfigurationController {
 
 	private final AppConfigurationBiz appConfigurationBiz;
 

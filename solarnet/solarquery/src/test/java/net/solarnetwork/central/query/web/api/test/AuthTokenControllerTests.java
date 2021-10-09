@@ -46,6 +46,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import net.solarnetwork.central.query.web.api.AuthTokenController;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
@@ -53,14 +54,13 @@ import net.solarnetwork.security.AuthorizationUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
- * Test cases for the {@link AuthTokenControllerTests}.
+ * Test cases for the {@link AuthTokenController}.
  * 
  * @author matt
  * @version 1.0
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-//@WebMvcTest(AuthTokenController.class)
 public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactionalTest {
 
 	private static final String TEST_TOKEN_SECRET = "secret";

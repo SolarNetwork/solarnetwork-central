@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
@@ -50,7 +50,8 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  */
 @RestController("v1AuthTokenController")
 @RequestMapping(value = "/api/v1/sec/auth-tokens")
-public class AuthTokenController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class AuthTokenController {
 
 	private final AuthenticationTokenService tokenService;
 

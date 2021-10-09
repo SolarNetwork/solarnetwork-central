@@ -37,7 +37,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
 
@@ -50,7 +50,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
-public class NodeMetadataController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class NodeMetadataController {
 
 	private final DataCollectorBiz dataCollectorBiz;
 

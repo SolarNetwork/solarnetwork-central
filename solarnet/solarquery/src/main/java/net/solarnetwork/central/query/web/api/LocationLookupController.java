@@ -23,12 +23,6 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.web.domain.Response.response;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.LocationMatch;
-import net.solarnetwork.central.query.biz.QueryBiz;
-import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
-import net.solarnetwork.web.domain.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -36,6 +30,12 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.support.SourceLocationFilter;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for querying location data.
@@ -45,7 +45,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
-public class LocationLookupController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class LocationLookupController {
 
 	private final QueryBiz queryBiz;
 

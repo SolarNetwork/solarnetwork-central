@@ -43,7 +43,7 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
 
@@ -55,7 +55,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1DatumMetadataController")
 @RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })
-public class DatumMetadataController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class DatumMetadataController {
 
 	private final DataCollectorBiz dataCollectorBiz;
 	private final DatumMetadataBiz datumMetadataBiz;

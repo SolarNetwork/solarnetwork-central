@@ -38,7 +38,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
 
@@ -50,7 +50,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
-public class LocationMetadataController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class LocationMetadataController {
 
 	private final DatumMetadataBiz datumMetadataBiz;
 

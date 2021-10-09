@@ -40,7 +40,7 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -51,7 +51,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
-public class LocationLookupController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class LocationLookupController {
 
 	private final DataCollectorBiz dataCollectorBiz;
 

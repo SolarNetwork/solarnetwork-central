@@ -24,6 +24,8 @@ package net.solarnetwork.central.query.web.api;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -42,7 +44,7 @@ import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -58,10 +60,13 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
-public class ReportableIntervalController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class ReportableIntervalController {
 
 	/** The {@code transientExceptionRetryCount} property default value. */
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
+
+	private static final Logger log = LoggerFactory.getLogger(ReportableIntervalController.class);
 
 	private final QueryBiz queryBiz;
 	private final DatumMetadataBiz datumMetadataBiz;

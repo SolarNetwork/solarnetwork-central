@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.domain.UserMetadataFilterMatch;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -48,7 +48,8 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1UserMetadataController")
 @RequestMapping({ "/api/v1/pub/users/meta", "/api/v1/sec/users/meta" })
-public class UserMetadataController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class UserMetadataController {
 
 	private final UserMetadataBiz userMetadataBiz;
 

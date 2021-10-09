@@ -26,6 +26,8 @@ import static net.solarnetwork.central.security.SecurityUtils.authorizedNodeIdsF
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
@@ -41,7 +43,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -52,10 +54,13 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
-public class NodeMetadataController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class NodeMetadataController {
 
 	/** The {@code transientExceptionRetryCount} property default value. */
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
+
+	private static final Logger log = LoggerFactory.getLogger(NodeMetadataController.class);
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final SolarNodeMetadataBiz solarNodeMetadataBiz;

@@ -74,7 +74,7 @@ server:
   servlet.context-path: /solarquery
 
 ---
-debugMode: true
+debug: true
 
 spring:
   config.activate.on-profile: development

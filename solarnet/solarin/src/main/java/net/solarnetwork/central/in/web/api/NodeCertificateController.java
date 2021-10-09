@@ -26,6 +26,8 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -36,7 +38,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.central.web.support.WebServiceControllerSupport;
+import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -47,7 +49,10 @@ import net.solarnetwork.web.domain.Response;
  */
 @Controller("v1NodeCertificateController")
 @RequestMapping(value = "/api/v1/sec/cert")
-public class NodeCertificateController extends WebServiceControllerSupport {
+@GlobalExceptionRestController
+public class NodeCertificateController {
+
+	private static final Logger log = LoggerFactory.getLogger(NodeCertificateController.class);
 
 	private final RegistrationBiz registrationBiz;
 
