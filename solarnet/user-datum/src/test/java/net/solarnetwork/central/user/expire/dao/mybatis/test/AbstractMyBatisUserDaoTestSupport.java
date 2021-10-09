@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.expire.dao.mybatis.test;
 
 import static org.junit.Assert.assertNotNull;
-import org.apache.ibatis.session.SqlSessionFactory;
 import java.time.Instant;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
+import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
@@ -39,6 +41,8 @@ import net.solarnetwork.central.user.domain.User;
  * @version 1.0
  */
 @ContextConfiguration
+@MybatisTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	public static final String TEST_EMAIL = "foo@localhost.localdomain";

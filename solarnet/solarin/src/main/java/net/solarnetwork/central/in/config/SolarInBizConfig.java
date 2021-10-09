@@ -22,17 +22,11 @@
 
 package net.solarnetwork.central.in.config;
 
-import static org.ehcache.config.builders.ExpiryPolicyBuilder.noExpiration;
-import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -60,6 +54,7 @@ import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * Business service configuration for the SolarIn application.
@@ -114,11 +109,14 @@ public class SolarInBizConfig {
 	}
 
 	/** Settings for the datum cache. */
-	public static class DatumCacheSettings {
+	public static class DatumCacheSettings extends CacheSettings {
 
 		private int tempMaxEntries = 100;
-		private long heapMaxEntries = 200;
-		private long diskMaxSizeMb = 2000;
+
+		public DatumCacheSettings() {
+			super();
+			setDiskPersistent(true);
+		}
 	}
 
 	@Bean
@@ -135,20 +133,9 @@ public class SolarInBizConfig {
 	@Bean
 	@Qualifier(DATUM_CACHE_NAME)
 	public Cache<Serializable, Serializable> datumCache() {
-		return cacheManager.createCache(DATUM_CACHE_NAME, datumCacheConfiguration(datumCacheSettings()));
-	}
-
-	private javax.cache.configuration.Configuration<Serializable, Serializable> datumCacheConfiguration(
-			DatumCacheSettings settings) {
-		// @formatter:off
-		CacheConfiguration<Serializable, Serializable> conf = CacheConfigurationBuilder
-				.newCacheConfigurationBuilder(Serializable.class, Serializable.class,
-						heap(settings.heapMaxEntries)
-						.disk(settings.diskMaxSizeMb, MemoryUnit.MB, true))
-				.withExpiry(noExpiration())
-				.build();
-		// @formatter:on
-		return Eh107Configuration.fromEhcacheCacheConfiguration(conf);
+		DatumCacheSettings settings = datumCacheSettings();
+		return settings.createCache(cacheManager, Serializable.class, Serializable.class,
+				DATUM_CACHE_NAME);
 	}
 
 	@Bean

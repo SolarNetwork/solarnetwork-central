@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.web;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -62,7 +62,7 @@ public class PingController {
 	private List<PingTest> tests = null;
 
 	private PingResults executeTests() {
-		final Date now = new Date();
+		final Instant now = Instant.now();
 		Map<String, PingTestResultDisplay> results = null;
 		List<PingTest> allTests = new ArrayList<>();
 		if ( tests != null ) {
@@ -71,7 +71,7 @@ public class PingController {
 		if ( !allTests.isEmpty() ) {
 			results = new TreeMap<String, PingTestResultDisplay>();
 			for ( final PingTest t : allTests ) {
-				final Date start = new Date();
+				final Instant start = Instant.now();
 				PingTest.Result pingTestResult = null;
 				Future<PingTest.Result> f = null;
 				try {
@@ -123,7 +123,7 @@ public class PingController {
 	@JsonPropertyOrder({ "allGood", "date", "results" })
 	public static class PingResults {
 
-		private final Date date;
+		private final Instant date;
 		private final Map<String, PingTestResultDisplay> results;
 		private final boolean allGood;
 
@@ -135,7 +135,7 @@ public class PingController {
 		 * @param results
 		 *        The test results (or {@literal null} if none available).
 		 */
-		public PingResults(Date date, Map<String, PingTestResultDisplay> results) {
+		public PingResults(Instant date, Map<String, PingTestResultDisplay> results) {
 			super();
 			this.date = date;
 			boolean allOK = true;
@@ -168,7 +168,7 @@ public class PingController {
 		 * 
 		 * @return The date.
 		 */
-		public Date getDate() {
+		public Instant getDate() {
 			return date;
 		}
 

@@ -86,7 +86,7 @@
 		<result property="completed" column="completed"/>
 	</resultMap>
 	
-	<select id="get-DatumDeleteJobInfo-for-id" parameterType="net.solarnetwork.central.user.domain.UserUuidPK" resultMap="DatumDeleteJobInfoFullResult">
+	<select id="get-DatumDeleteJobInfo-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="DatumDeleteJobInfoFullResult">
 		SELECT
 			<include refid="fragment-DatumDeleteJobInfo-full-result"/>
 		FROM

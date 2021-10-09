@@ -22,45 +22,29 @@
 
 package net.solarnetwork.central.support;
 
-import java.util.Map;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.biz.AppConfigurationBiz;
 import net.solarnetwork.central.domain.AppConfiguration;
-import net.solarnetwork.util.StringUtils;
 
 /**
  * Basic implementation of {@link AppConfigurationBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.35
  */
 public class BasicAppConfigurationBiz implements AppConfigurationBiz {
 
-	private AppConfiguration appConfiguration = new SimpleAppConfiguration();
+	private final AppConfiguration appConfiguration;
+
+	public BasicAppConfigurationBiz(AppConfiguration appConfiguration) {
+		super();
+		this.appConfiguration = requireNonNullArgument(appConfiguration, "appConfiguration");
+	}
 
 	@Override
 	public AppConfiguration getAppConfiguration() {
 		return appConfiguration;
-	}
-
-	/**
-	 * Set the service URLs to use.
-	 * 
-	 * @param serviceUrls
-	 *        the URLs to use
-	 */
-	public void setServiceUrls(Map<String, String> serviceUrls) {
-		appConfiguration = new SimpleAppConfiguration(serviceUrls);
-	}
-
-	/**
-	 * Set the serviice URLs to use via a string map.
-	 * 
-	 * @param mapping
-	 *        the comma-delimited string mapping of service URLs
-	 */
-	public void setServiceUrlMapping(String mapping) {
-		setServiceUrls(StringUtils.commaDelimitedStringToMap(mapping));
 	}
 
 }

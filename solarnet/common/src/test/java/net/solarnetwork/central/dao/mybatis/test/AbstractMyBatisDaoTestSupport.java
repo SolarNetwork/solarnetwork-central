@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Supporting class for MyBatis tests.
@@ -53,6 +54,17 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	protected SqlSessionFactory getSqlSessionFactory() {
 		return sqlSessionFactory;
+	}
+
+	/**
+	 * Persist a new User and return its primary key.
+	 * 
+	 * @param email
+	 *        the email of the new user
+	 * @return the primary key
+	 */
+	protected Long storeNewUser(String email) {
+		return CommonDbTestUtils.insertUser(jdbcTemplate, email);
 	}
 
 }

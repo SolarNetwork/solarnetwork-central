@@ -71,7 +71,7 @@ public class LocalizedInvoiceMatch implements InvoiceMatch, LocalizedInvoiceMatc
 
 	@Override
 	public String getLocalizedDate() {
-		DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale);
+		DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale);
 		String tz = getTimeZoneId();
 		if ( tz != null ) {
 			fmt = fmt.withZone(ZoneId.of(tz));

@@ -49,6 +49,7 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import net.solarnetwork.central.web.support.ContentCacheStats.Counts;
+import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
 /**
@@ -78,10 +79,12 @@ public class JCacheContentCachingService implements ContentCachingService {
 	 * 
 	 * @param cache
 	 *        the cache to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
-		this.cache = cache;
+		this.cache = ObjectUtils.requireNonNullArgument(cache, "cache");
 		this.stats = new ContentCacheStats(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
 	}
 

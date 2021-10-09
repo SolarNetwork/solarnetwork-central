@@ -40,6 +40,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 
@@ -77,6 +78,31 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Become an authenticated token with a {@code RUN_AS_ROLE_USER} authority.
+	 * 
+	 * @param tokenId
+	 *        the token ID to use
+	 * @param type
+	 *        the token type
+	 * @param userId
+	 *        the user ID
+	 * @param policy
+	 *        the security policy to use
+	 * @since 2.0
+	 */
+	public static void becomeToken(String tokenId, SecurityTokenType type, Long userId,
+			SecurityPolicy policy) {
+		AuthenticatedToken token = new AuthenticatedToken(
+				new User(tokenId, "", true, true, true, true, AuthorityUtils.NO_AUTHORITIES), type,
+				userId, policy);
+		Collection<GrantedAuthority> authorities = Collections
+				.singleton(new SimpleGrantedAuthority("RUN_AS_ROLE_USER"));
+		PreAuthenticatedAuthenticationToken auth = new PreAuthenticatedAuthenticationToken(token, "",
+				authorities);
+		SecurityContextHolder.getContext().setAuthentication(auth);
+	}
+
+	/**
 	 * Become a user with a {@code RUN_AS_ROLE_USER} authority.
 	 * 
 	 * @param username
@@ -85,13 +111,13 @@ public class SecurityUtils {
 	 *        the name
 	 * @param userId
 	 *        the user ID
-	 * @since 1.1
+	 * @since 2.0
 	 */
 	public static void becomeUser(String username, String name, Long userId) {
 		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
 		Collection<GrantedAuthority> authorities = Collections
-				.singleton((GrantedAuthority) new SimpleGrantedAuthority("RUN_AS_ROLE_USER"));
+				.singleton(new SimpleGrantedAuthority("RUN_AS_ROLE_USER"));
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
@@ -108,7 +134,7 @@ public class SecurityUtils {
 		AuthenticatedNode node = new AuthenticatedNode(nodeId, NodeUserDetailsService.AUTHORITIES,
 				false);
 		Collection<GrantedAuthority> authorities = Collections
-				.singleton((GrantedAuthority) new SimpleGrantedAuthority("RUN_AS_ROLE_NODE"));
+				.singleton(new SimpleGrantedAuthority("RUN_AS_ROLE_NODE"));
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(node, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);

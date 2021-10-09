@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserFilter;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 
 /**

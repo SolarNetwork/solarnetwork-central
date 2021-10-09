@@ -23,20 +23,14 @@
 package net.solarnetwork.central.in.config;
 
 import static net.solarnetwork.central.user.config.RegistrationBizConfig.EMAIL_THROTTLE;
-import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
-import java.time.Duration;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * Email throttle cache configuration.
@@ -50,33 +44,17 @@ public class EmailThrottleCacheConfig {
 	@Autowired
 	private CacheManager cacheManager;
 
-	public static class EmailThrottleCacheSettings {
-
-		private long ttl = 600;
-		private int heapMaxEntries = 1000;
-		private int diskMaxSizeMb = 100;
-	}
-
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarin.email-throttle-cache")
-	public EmailThrottleCacheSettings emailThrottleCacheSettings() {
-		return new EmailThrottleCacheSettings();
+	public CacheSettings emailThrottleCacheSettings() {
+		return new CacheSettings();
 	}
 
 	@Bean
 	@Qualifier(EMAIL_THROTTLE)
 	public Cache<String, Boolean> emailThrottleCache() {
-		EmailThrottleCacheSettings settings = emailThrottleCacheSettings();
-		// @formatter:off
-		CacheConfiguration<String, Boolean> conf = CacheConfigurationBuilder
-				.newCacheConfigurationBuilder(String.class, Boolean.class,
-						heap(settings.heapMaxEntries)
-						.disk(settings.diskMaxSizeMb, MemoryUnit.MB, true))
-				.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(settings.ttl)))
-				.build();
-		// @formatter:on
-		return cacheManager.createCache(EMAIL_THROTTLE,
-				Eh107Configuration.fromEhcacheCacheConfiguration(conf));
+		CacheSettings settings = emailThrottleCacheSettings();
+		return settings.createCache(cacheManager, String.class, Boolean.class, EMAIL_THROTTLE);
 	}
 
 }

@@ -35,9 +35,9 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.domain.UserFilterCommand;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 
 /**

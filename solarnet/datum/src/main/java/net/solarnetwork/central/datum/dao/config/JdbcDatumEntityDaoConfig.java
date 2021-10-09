@@ -22,17 +22,10 @@
 
 package net.solarnetwork.central.datum.dao.config;
 
-import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
-import java.time.Duration;
 import java.util.UUID;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.sql.DataSource;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,6 +35,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * JDBC datum entity DAO configuration.
@@ -70,17 +64,10 @@ public class JdbcDatumEntityDaoConfig {
 	@Autowired
 	private CacheManager cacheManager;
 
-	public static class StreamMetadataCacheSettings {
-
-		private long ttl = 300;
-		private int heapMaxEntries = 10000;
-		private int diskMaxSizeMb = 100;
-	}
-
 	@Bean
 	@ConfigurationProperties(prefix = "app.datum.stream-metadata-cache")
-	public StreamMetadataCacheSettings streamMetadataCacheSettings() {
-		return new StreamMetadataCacheSettings();
+	public CacheSettings streamMetadataCacheSettings() {
+		return new CacheSettings();
 	}
 
 	/**
@@ -91,17 +78,9 @@ public class JdbcDatumEntityDaoConfig {
 	@Bean
 	@Qualifier(STREAM_METADATA_CACHE_NAME)
 	public Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache() {
-		StreamMetadataCacheSettings settings = streamMetadataCacheSettings();
-		// @formatter:off
-		CacheConfiguration<UUID, ObjectDatumStreamMetadata> conf = CacheConfigurationBuilder
-				.newCacheConfigurationBuilder(UUID.class, ObjectDatumStreamMetadata.class,
-						heap(settings.heapMaxEntries)
-						.disk(settings.diskMaxSizeMb, MemoryUnit.MB, true))
-				.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(settings.ttl)))
-				.build();
-		// @formatter:on
-		return cacheManager.createCache(STREAM_METADATA_CACHE_NAME,
-				Eh107Configuration.fromEhcacheCacheConfiguration(conf));
+		CacheSettings settings = streamMetadataCacheSettings();
+		return settings.createCache(cacheManager, UUID.class, ObjectDatumStreamMetadata.class,
+				STREAM_METADATA_CACHE_NAME);
 	}
 
 	@Bean

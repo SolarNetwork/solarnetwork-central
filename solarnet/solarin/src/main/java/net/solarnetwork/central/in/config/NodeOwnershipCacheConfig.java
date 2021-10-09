@@ -23,21 +23,15 @@
 package net.solarnetwork.central.in.config;
 
 import static net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig.NODE_OWNERSHIP_CACHE;
-import static org.ehcache.config.builders.ResourcePoolsBuilder.heap;
-import java.time.Duration;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
-import org.ehcache.config.CacheConfiguration;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.units.MemoryUnit;
-import org.ehcache.jsr107.Eh107Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * Configuration for the node ownership cache.
@@ -51,17 +45,10 @@ public class NodeOwnershipCacheConfig {
 	@Autowired
 	private CacheManager cacheManager;
 
-	public static class NodeOwnershipCacheSettings {
-
-		private long ttl = 60;
-		private int heapMaxEntries = 10000;
-		private int diskMaxSizeMb = 100;
-	}
-
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarin.node-ownership-cache")
-	public NodeOwnershipCacheSettings nodeOwnershipCacheSettings() {
-		return new NodeOwnershipCacheSettings();
+	public CacheSettings nodeOwnershipCacheSettings() {
+		return new CacheSettings();
 	}
 
 	/**
@@ -72,17 +59,9 @@ public class NodeOwnershipCacheConfig {
 	@Bean
 	@Qualifier(NODE_OWNERSHIP_CACHE)
 	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache() {
-		NodeOwnershipCacheSettings settings = nodeOwnershipCacheSettings();
-		// @formatter:off
-		CacheConfiguration<Long, SolarNodeOwnership> conf = CacheConfigurationBuilder
-				.newCacheConfigurationBuilder(Long.class, SolarNodeOwnership.class,
-						heap(settings.heapMaxEntries)
-						.disk(settings.diskMaxSizeMb, MemoryUnit.MB, true))
-				.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(settings.ttl)))
-				.build();
-		// @formatter:on
-		return cacheManager.createCache(NODE_OWNERSHIP_CACHE,
-				Eh107Configuration.fromEhcacheCacheConfiguration(conf));
+		CacheSettings settings = nodeOwnershipCacheSettings();
+		return settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
+				NODE_OWNERSHIP_CACHE);
 	}
 
 }

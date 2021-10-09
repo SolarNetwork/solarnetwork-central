@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.user.event.dao.mybatis.test;
 
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
+import java.time.Instant;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSessionFactory;
-import java.time.Instant;
 import org.junit.Before;
+import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
@@ -44,6 +46,8 @@ import net.solarnetwork.central.user.domain.UserNode;
  * @version 1.0
  */
 @ContextConfiguration
+@MybatisTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class AbstractMyBatisUserEventDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	private SqlSessionFactory sqlSessionFactory;

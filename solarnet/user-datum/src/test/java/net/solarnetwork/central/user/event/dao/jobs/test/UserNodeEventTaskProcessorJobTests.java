@@ -25,10 +25,13 @@ package net.solarnetwork.central.user.event.dao.jobs.test;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskProcessorJob.DEFAULT_TOPIC;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
@@ -36,9 +39,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.Caching;
 import javax.cache.expiry.Duration;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
+import org.ehcache.core.config.DefaultConfiguration;
+import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
+import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +56,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.support.JCacheFactoryBean;
-import net.solarnetwork.central.support.JCacheManagerFactoryBean;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
 import net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskProcessorJob;
@@ -103,9 +109,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		taskDao = EasyMock.createMock(UserNodeEventTaskDao.class);
 		hookService = EasyMock.createMock(UserNodeEventHookService.class);
 
-		JCacheManagerFactoryBean mgrFactory = new JCacheManagerFactoryBean();
-		mgrFactory.setCacheManagerUri(getClass().getResource("ehcache.xml").toURI());
-		cacheManager = mgrFactory.getObject();
+		cacheManager = createCacheManager();
 
 		JCacheFactoryBean<String, UserNodeEventHookService> factory = new JCacheFactoryBean<>(
 				cacheManager, String.class, UserNodeEventHookService.class);
@@ -118,6 +122,21 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		job = new TestJob(eventAdmin, new TransactionTemplate(txManager), taskDao,
 				new StaticOptionalServiceCollection<>(asList(hookService)));
+	}
+
+	public static CacheManager createCacheManager() {
+		try {
+			File path = Files.createTempDirectory("net.solarnetwork.central.user.event.dao.jobs.test")
+					.toFile();
+			path.deleteOnExit();
+			EhcacheCachingProvider cachingProvider = (EhcacheCachingProvider) Caching
+					.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider");
+			DefaultConfiguration configuration = new DefaultConfiguration(
+					cachingProvider.getDefaultClassLoader(), new DefaultPersistenceConfiguration(path));
+			return cachingProvider.getCacheManager(cachingProvider.getDefaultURI(), configuration);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void replayAll(Object... mocks) {

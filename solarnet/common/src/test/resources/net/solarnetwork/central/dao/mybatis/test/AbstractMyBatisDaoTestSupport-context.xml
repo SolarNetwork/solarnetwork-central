@@ -39,6 +39,7 @@
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarLocation.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNode.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/SolarNodeMetadata.xml</value>
+				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/UserMetadataEntity.xml</value>
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/map/VersionedMessage.xml</value>
 				
 				<value>classpath:/net/solarnetwork/central/dao/mybatis/type/test/TypeHandlerTests.xml</value>
