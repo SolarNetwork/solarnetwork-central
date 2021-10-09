@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenAuthenticationEntryPoint.java - Nov 26, 2012 4:48:36 PM
+ * SecurityTokenAuthenticationEntryPoint.java - Nov 26, 2012 4:48:36 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -29,11 +29,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.core.Ordered;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.ByteUtils;
+import net.solarnetwork.web.domain.Response;
 import net.solarnetwork.web.security.AuthenticationScheme;
 import net.solarnetwork.web.security.WebConstants;
 
@@ -49,7 +53,7 @@ import net.solarnetwork.web.security.WebConstants;
  * @author matt
  * @version 1.4
  */
-public class UserAuthTokenAuthenticationEntryPoint
+public class SecurityTokenAuthenticationEntryPoint
 		implements AuthenticationEntryPoint, Ordered, AccessDeniedHandler {
 
 	private int order = Integer.MAX_VALUE;
@@ -70,16 +74,31 @@ public class UserAuthTokenAuthenticationEntryPoint
 		return order;
 	}
 
+	private static boolean isSecurityTokenAuthenticationScheme(String authorization) {
+		if ( authorization == null ) {
+			return false;
+		}
+		int space = authorization.indexOf(' ');
+		if ( space < 0 ) {
+			return false;
+		}
+		String scheme = authorization.substring(0, space);
+		return AuthenticationScheme.V2.getSchemeName().equals(scheme)
+				|| AuthenticationScheme.V1.getSchemeName().equals(scheme);
+	}
+
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
 		final String authHeaderValue = request.getHeader("Authorization");
-		AuthenticationScheme authScheme = AuthenticationScheme.V2; // default to V2 unless a known V1 request
-		if ( authHeaderValue != null
-				&& authHeaderValue.startsWith(AuthenticationScheme.V1.getSchemeName()) ) {
-			authScheme = AuthenticationScheme.V1;
+		final boolean wasSecurityTokenScheme = isSecurityTokenAuthenticationScheme(authHeaderValue);
+		int statusCode = HttpServletResponse.SC_UNAUTHORIZED;
+		if ( !wasSecurityTokenScheme ) {
+			response.addHeader("WWW-Authenticate", AuthenticationScheme.V2.getSchemeName());
+		} else {
+			statusCode = HttpServletResponse.SC_FORBIDDEN;
 		}
-		response.addHeader("WWW-Authenticate", authScheme.getSchemeName());
+		response.setStatus(statusCode);
 		response.addHeader(WebConstants.HEADER_ERROR_MESSAGE, authException.getMessage());
 		if ( httpHeaders != null ) {
 			for ( Map.Entry<String, String> me : httpHeaders.entrySet() ) {
@@ -95,7 +114,13 @@ public class UserAuthTokenAuthenticationEntryPoint
 				throw new ServletException(e);
 			}
 		} else {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+			Response<Void> responseObj = new Response<>(Boolean.FALSE, String.valueOf(statusCode),
+					authException.getMessage(), null);
+			byte[] responseJson = JsonUtils.getJSONString(responseObj, "{\"success\":false}")
+					.getBytes(ByteUtils.UTF8);
+			response.setContentLength(responseJson.length);
+			response.getOutputStream().write(responseJson);
 		}
 	}
 

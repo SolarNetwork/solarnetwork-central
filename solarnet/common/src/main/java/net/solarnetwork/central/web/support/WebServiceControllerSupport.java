@@ -48,6 +48,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.transaction.TransactionException;
@@ -188,6 +189,23 @@ public abstract class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e) {
 		log.debug("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
+		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+	}
+
+	/**
+	 * Handle a {@link BadCredentialsException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return an error response object
+	 * @since 2.0
+	 */
+	@ExceptionHandler(BadCredentialsException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.FORBIDDEN)
+	public Response<?> handleBadCredentialsException(BadCredentialsException e) {
+		log.debug("BadCredentialsException in {} controller: {}", getClass().getSimpleName(),
+				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 

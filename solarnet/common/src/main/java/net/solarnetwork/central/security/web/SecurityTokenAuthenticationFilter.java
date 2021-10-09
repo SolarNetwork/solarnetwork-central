@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenAuthenticationFilter.java - Nov 26, 2012 11:01:46 AM
+ * SecurityTokenAuthenticationFilter.java - Nov 26, 2012 11:01:46 AM
  * 
  * Copyright 2012 SolarNetwork.net Dev Team
  * 
@@ -71,7 +71,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * @author matt
  * @version 1.6
  */
-public class UserAuthTokenAuthenticationFilter extends GenericFilterBean implements Filter {
+public class SecurityTokenAuthenticationFilter extends GenericFilterBean implements Filter {
 
 	/** The fixed length of the auth token. */
 	public static final int AUTH_TOKEN_LENGTH = 20;
@@ -84,7 +84,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	public static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 65535;
 
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
-	private UserAuthTokenAuthenticationEntryPoint authenticationEntryPoint;
+	private SecurityTokenAuthenticationEntryPoint authenticationEntryPoint;
 	private UserDetailsService userDetailsService;
 	private long maxDateSkew = 15 * 60 * 1000; // 15 minutes default
 	private int maxRequestBodySize = 65535;
@@ -96,7 +96,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	/**
 	 * Default constructor.
 	 */
-	public UserAuthTokenAuthenticationFilter() {
+	public SecurityTokenAuthenticationFilter() {
 		this(null, null);
 	}
 
@@ -112,7 +112,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	 *        before comparing paths, or {@literal null} to not strip any prefix
 	 * @since 1.5
 	 */
-	public UserAuthTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
+	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
 		super();
 		this.pathMatcher = pathMatcher;
 		this.pathMatcherPrefixStrip = pathMatcherPrefixStrip;
@@ -121,7 +121,7 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	@Override
 	public void afterPropertiesSet() {
 		Assert.notNull(userDetailsService, "A UserDetailsService is required");
-		Assert.notNull(authenticationEntryPoint, "A UserAuthTokenAuthenticationEntryPoint is required");
+		Assert.notNull(authenticationEntryPoint, "A SecurityTokenAuthenticationEntryPoint is required");
 	}
 
 	@Override
@@ -298,13 +298,13 @@ public class UserAuthTokenAuthenticationFilter extends GenericFilterBean impleme
 	}
 
 	/**
-	 * The {@link UserAuthTokenAuthenticationEntryPoint} to use as the entry
+	 * The {@link SecurityTokenAuthenticationEntryPoint} to use as the entry
 	 * point.
 	 * 
 	 * @param entryPoint
 	 *        the entry point to use
 	 */
-	public void setAuthenticationEntryPoint(UserAuthTokenAuthenticationEntryPoint entryPoint) {
+	public void setAuthenticationEntryPoint(SecurityTokenAuthenticationEntryPoint entryPoint) {
 		this.authenticationEntryPoint = entryPoint;
 	}
 

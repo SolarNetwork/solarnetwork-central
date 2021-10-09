@@ -36,8 +36,8 @@ import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
+import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
+import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
 
 /**
@@ -64,16 +64,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public UserAuthTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-		return new UserAuthTokenAuthenticationEntryPoint();
+	public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
+		return new SecurityTokenAuthenticationEntryPoint();
 	}
 
 	@Bean
-	public UserAuthTokenAuthenticationFilter tokenAuthenticationFilter() {
+	public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
 		AntPathMatcher pathMatcher = new AntPathMatcher();
 		pathMatcher.setCachePatterns(true);
 		pathMatcher.setCaseSensitive(true);
-		UserAuthTokenAuthenticationFilter filter = new UserAuthTokenAuthenticationFilter(pathMatcher,
+		SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
 				"/api/v1/sec");
 		filter.setUserDetailsService(userDetailsService());
 		filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
@@ -102,7 +102,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	      .cors().and()
 	      
 	      // can simply return 401 on auth failures
-	      .exceptionHandling().authenticationEntryPoint(unauthorizedEntryPoint()).and()
+	      .exceptionHandling()
+	      	.authenticationEntryPoint(unauthorizedEntryPoint())
+	      	.accessDeniedHandler(unauthorizedEntryPoint())
+	      	.and()
 	      
 	      // no sessions
 	      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
@@ -119,7 +122,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .antMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 	        .antMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 	        .antMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .anyRequest().authenticated();
+	        .anyRequest().authenticated();;
 	    // @formatter:on
 
 		// insert custom token preauth filter

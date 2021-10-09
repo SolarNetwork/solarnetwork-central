@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.UUID;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
@@ -78,7 +80,7 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 	}
 
 	@Test
-	public void greetingShouldReturnDefaultMessage() throws Exception {
+	public void refreshOk() throws Exception {
 		// GIVEN
 		Instant now = Instant.now();
 		LocalDate reqDate = LocalDate.of(2021, 10, 9);
@@ -108,4 +110,67 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 			.andExpect(jsonPath("$.data.key", is(expectedKey)));
 		// @formatter:on
 	}
+
+	@Test
+	public void badTokenCredentials() throws Exception {
+		// GIVEN
+		Instant now = Instant.now();
+		LocalDate reqDate = LocalDate.of(2021, 10, 9);
+		MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+		queryParams.add("date", reqDate.toString());
+
+		// @formatter:off
+		Snws2AuthorizationBuilder auth = new Snws2AuthorizationBuilder(testTokenId)
+				.host("localhost")
+				.path("/api/v1/sec/auth-tokens/refresh/v2")
+				.useSnDate(true).date(now)
+				.queryParams(queryParams.toSingleValueMap())
+				.saveSigningKey("wrong.secret");
+		String authHeader = auth.build();
+
+		// WHEN
+		mvc.perform(get("/api/v1/sec/auth-tokens/refresh/v2")
+				.queryParam("date", reqDate.toString())
+				.header(HttpHeaders.AUTHORIZATION, authHeader)
+				.header(AuthorizationUtils.SN_DATE_HEADER,
+						AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().is(HttpStatus.FORBIDDEN.value()));
+		// @formatter:on
+	}
+
+	@Test
+	public void wrongSchemeCredentials() throws Exception {
+		// GIVEN
+		LocalDate reqDate = LocalDate.of(2021, 10, 9);
+		MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+		queryParams.add("date", reqDate.toString());
+
+		// @formatter:off
+		// WHEN
+		mvc.perform(get("/api/v1/sec/auth-tokens/refresh/v2")
+				.queryParam("date", reqDate.toString())
+				.header(HttpHeaders.AUTHORIZATION, 
+						"BASIC " +Base64.getEncoder().encodeToString("foo:bar".getBytes()))
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+		// @formatter:on
+	}
+
+	@Test
+	public void noCredentials() throws Exception {
+		// GIVEN
+		LocalDate reqDate = LocalDate.of(2021, 10, 9);
+		MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+		queryParams.add("date", reqDate.toString());
+
+		// @formatter:off
+		// WHEN
+		mvc.perform(get("/api/v1/sec/auth-tokens/refresh/v2")
+				.queryParam("date", reqDate.toString())
+				.accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+		// @formatter:on
+	}
+
 }

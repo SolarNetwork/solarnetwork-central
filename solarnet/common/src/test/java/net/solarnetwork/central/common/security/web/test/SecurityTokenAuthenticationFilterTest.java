@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserAuthTokenAuthenticationFilterTest.java - Dec 13, 2012 6:08:36 AM
+ * SecurityTokenAuthenticationFilterTest.java - Dec 13, 2012 6:08:36 AM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -61,17 +61,17 @@ import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationEntryPoint;
-import net.solarnetwork.central.security.web.UserAuthTokenAuthenticationFilter;
+import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
+import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
 /**
- * Unit tests for the {@link UserAuthTokenAuthenticationFilter} class.
+ * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  * 
  * @author matt
  * @version 2.0
  */
-public class UserAuthTokenAuthenticationFilterTest {
+public class SecurityTokenAuthenticationFilterTest {
 
 	private static final String HTTP_HEADER_AUTH = "Authorization";
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
@@ -80,8 +80,8 @@ public class UserAuthTokenAuthenticationFilterTest {
 	private FilterChain filterChain;
 	private MockHttpServletResponse response;
 	private UserDetailsService userDetailsService;
-	private UserAuthTokenAuthenticationEntryPoint entryPoint;
-	private UserAuthTokenAuthenticationFilter filter;
+	private SecurityTokenAuthenticationEntryPoint entryPoint;
+	private SecurityTokenAuthenticationFilter filter;
 	private User userDetails;
 
 	private void setupAuthorizationHeader(MockHttpServletRequest request, String value) {
@@ -109,11 +109,11 @@ public class UserAuthTokenAuthenticationFilterTest {
 		filterChain = EasyMock.createMock(FilterChain.class);
 		response = new MockHttpServletResponse();
 		userDetailsService = EasyMock.createMock(UserDetailsService.class);
-		entryPoint = new UserAuthTokenAuthenticationEntryPoint();
+		entryPoint = new SecurityTokenAuthenticationEntryPoint();
 		List<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
 		roles.add(new SimpleGrantedAuthority("ROLE_TEST"));
 		userDetails = new User(TEST_AUTH_TOKEN, TEST_PASSWORD, roles);
-		filter = new UserAuthTokenAuthenticationFilter(new AntPathMatcher(), "/mock");
+		filter = new SecurityTokenAuthenticationFilter(new AntPathMatcher(), "/mock");
 		filter.setUserDetailsService(userDetailsService);
 		filter.setAuthenticationEntryPoint(entryPoint);
 	}
