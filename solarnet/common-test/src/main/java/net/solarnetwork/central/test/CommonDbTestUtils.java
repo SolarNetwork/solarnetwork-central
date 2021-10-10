@@ -188,4 +188,85 @@ public final class CommonDbTestUtils {
 				tokenId, tokenSecret, userId, status, type, policy);
 	}
 
+	/**
+	 * Insert a new location with a randomly assigned ID.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID to use
+	 * @return the assigned ID
+	 */
+	public static Long insertLocation(JdbcOperations jdbcTemplate, String country, String timeZoneId) {
+		Long newId = new SecureRandom().nextLong();
+		insertLocation(jdbcTemplate, newId, country, timeZoneId);
+		return newId;
+	}
+
+	/**
+	 * Insert a location into the {@code sn_loc} table.
+	 * 
+	 * @param id
+	 *        the location ID to use
+	 * @param country
+	 *        the country
+	 * @param timeZoneId
+	 *        the time zone ID to use
+	 */
+	public static void insertLocation(JdbcOperations jdbcTemplate, Long id, String country,
+			String timeZoneId) {
+		insertLocation(jdbcTemplate, id, country, null, null, timeZoneId);
+	}
+
+	/**
+	 * Insert a location into the {@code sn_loc} table.
+	 * 
+	 * @param id
+	 *        the location ID to use
+	 * @param country
+	 *        the country
+	 * @param region
+	 *        the region
+	 * @param postalCode
+	 *        the postal code
+	 * @param timeZoneId
+	 *        the time zone ID to use
+	 */
+	public static void insertLocation(JdbcOperations jdbcTemplate, Long id, String country,
+			String region, String postalCode, String timeZoneId) {
+		jdbcTemplate.update(
+				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
+				id, country, region, postalCode, timeZoneId);
+	}
+
+	/**
+	 * Insert a new node with a randomly assigned ID.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param locationId
+	 *        the location ID
+	 * @return the assigned ID
+	 */
+	public static Long insertNode(JdbcOperations jdbcTemplate, Long locationId) {
+		Long newId = new SecureRandom().nextLong();
+		insertNode(jdbcTemplate, newId, locationId);
+		return newId;
+	}
+
+	/**
+	 * Insert a test node into the sn_node table.
+	 * 
+	 * @param nodeId
+	 *        the ID to assign to the node
+	 * @param locationId
+	 *        the location ID
+	 */
+	public static void insertNode(JdbcOperations jdbcTemplate, Long nodeId, Long locationId) {
+		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
+				locationId);
+	}
+
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -68,7 +69,7 @@ public class DatumQueryBizConfig {
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
 
-	@Autowired
+	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
 	public static class DatumQuerySettings {
@@ -102,6 +103,7 @@ public class DatumQueryBizConfig {
 	}
 
 	@Bean
+	@ConditionalOnBean(name = "readWriteDataSource")
 	@Primary
 	public AuditingQueryBiz auditingQueryBiz() {
 		return new AuditingQueryBiz(queryBiz(), queryAuditor);

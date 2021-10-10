@@ -89,11 +89,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID
 	 */
 	protected void setupTestNode(Long nodeId, Long locationId) {
-		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
-				locationId);
-		int count = jdbcTemplate.queryForObject(
-				"select count(*) from solarnet.sn_node where node_id = ?", Integer.class, nodeId);
-		log.debug("Test SolarNode [" + nodeId + "] created: " + count);
+		CommonDbTestUtils.insertNode(jdbcTemplate, nodeId, locationId);
 	}
 
 	/**
@@ -134,9 +130,8 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the time zone ID to use
 	 */
 	protected void setupTestLocation(Long id, String timeZoneId) {
-		jdbcTemplate.update(
-				"insert into solarnet.sn_loc (id,country,region,postal_code,time_zone) values (?,?,?,?,?)",
-				id, TEST_LOC_COUNTRY, TEST_LOC_REGION, TEST_LOC_POSTAL_CODE, timeZoneId);
+		CommonDbTestUtils.insertLocation(jdbcTemplate, id, TEST_LOC_COUNTRY, TEST_LOC_REGION,
+				TEST_LOC_POSTAL_CODE, timeZoneId);
 	}
 
 }

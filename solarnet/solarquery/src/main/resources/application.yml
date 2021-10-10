@@ -12,13 +12,13 @@ app:
       connectionTimeout: 30000
       idleTimeout: 600000
       maxLifetime: 1800000
-      readOnly: true
+      readOnly: false
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
     username: solarnet
     password: solarnet
     platform: postgres
     initialize: false
-  datasource-read-write:
+  datasource-read-write-example:
     hikari:
       minimumIdle: 0
       connectionTimeout: 30000
