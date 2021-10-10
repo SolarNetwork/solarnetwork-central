@@ -25,6 +25,8 @@ package net.solarnetwork.central.datum.v2.support;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,6 +36,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.ICsvListReader;
@@ -41,18 +44,21 @@ import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.util.ByteUtils;
+import net.solarnetwork.util.CloseableIterator;
 import net.solarnetwork.util.DateUtils;
 
 /**
  * Utilities for Datum CSV processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 2.9
  */
 public final class DatumCsvUtils {
@@ -234,6 +240,83 @@ public final class DatumCsvUtils {
 						stats);
 				result.add(d);
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * Get an iterator for Datum parsed from a classpath UTF-8 CSV file.
+	 * 
+	 * @param clazz
+	 *        the class to load the UTF-8 encoded CSV resource from
+	 * @param resource
+	 *        the CSV resource to load; if not found an empty iterator will be
+	 *        returned
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @param formatter
+	 *        the formatter; if {@literal null} then a standard ISO 8601
+	 *        timestamp will be assumed
+	 * @return the iterator, never {@literal null}
+	 * @since 2.0
+	 * 
+	 */
+	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
+			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
+		try {
+			InputStream is = clazz.getResourceAsStream(resource);
+			if ( is == null ) {
+				return new CloseableIterator<Datum>() {
+
+					@Override
+					public void close() throws IOException {
+						// nothing
+					}
+
+					@Override
+					public Datum next() {
+						throw new NoSuchElementException();
+					}
+
+					@Override
+					public boolean hasNext() {
+						return false;
+					}
+				};
+			}
+			return new DatumCsvIterator(
+					new CsvListReader(new InputStreamReader(is, ByteUtils.UTF8),
+							CsvPreference.STANDARD_PREFERENCE),
+					metaProvider, formatter != null ? formatter : DateTimeFormatter.ISO_INSTANT);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Get a list of Datum parsed from a classpath CSV file.
+	 * 
+	 * @param clazz
+	 *        the class to load the CSV resource from
+	 * @param resource
+	 *        the CSV resource to load
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @return the list
+	 * @throws RuntimeException
+	 *         if any parsing error occurs
+	 * @since 2.0
+	 */
+	public static List<Datum> datumResourceList(Class<?> clazz, String resource,
+			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
+		List<Datum> result = new ArrayList<>();
+		try (CloseableIterator<Datum> itr = datumResourceIterator(clazz, resource, metaProvider,
+				formatter)) {
+			while ( itr.hasNext() ) {
+				result.add(itr.next());
+			}
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
 		}
 		return result;
 	}

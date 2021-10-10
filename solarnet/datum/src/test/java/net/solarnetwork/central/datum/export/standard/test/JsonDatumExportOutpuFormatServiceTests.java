@@ -121,7 +121,7 @@ public class JsonDatumExportOutpuFormatServiceTests {
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated JSON", csv, equalTo(
 				"[{\"created\":\"2018-04-23 11:19:00Z\",\"nodeId\":-1,\"sourceId\":\"test.source\""
-						+ ",\"localDate\":\"2018-04-23\",\"localTime\":\"11:19:00\",\"watts\":123.456}]"));
+						+ ",\"localDate\":\"2018-04-23\",\"localTime\":\"11:19\",\"watts\":123.456}]"));
 	}
 
 	@Test
@@ -189,8 +189,7 @@ public class JsonDatumExportOutpuFormatServiceTests {
 				.withZone(ZoneOffset.UTC);
 		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 				.withZone(ZoneOffset.UTC);
-		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm:ss")
-				.withZone(ZoneOffset.UTC);
+		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm").withZone(ZoneOffset.UTC);
 		for ( int i = 0; i < count; i++ ) {
 			ZonedDateTime date = start.plus(i, ChronoUnit.MINUTES);
 			if ( i > 0 ) {

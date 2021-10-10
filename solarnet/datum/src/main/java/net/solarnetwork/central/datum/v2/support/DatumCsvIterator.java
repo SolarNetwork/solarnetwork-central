@@ -20,14 +20,13 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+package net.solarnetwork.central.datum.v2.support;
 
-import java.io.Closeable;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,16 +35,40 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.util.CloseableIterator;
 
 /**
- * Base class to support parsing CSV data into objects.
+ * Iterator that parses CSV data into {@link Datum} objects.
+ * 
+ * <p>
+ * The CSV must provide the following a header row with the columns at a
+ * minimum:
+ * </p>
+ * 
+ * <ul>
+ * <li>A <em>timestamp</em> column named {@literal created}, {@literal ts}, or
+ * {@literal date}. The format is determined by the {@link DateTimeFormatter}
+ * passed to the constructor. It must support resolving {@link Instant}
+ * objects.</li>
+ * <li>An <em>object ID</em> named {@literal nodeId} or {@literal node_id} or
+ * {@literal locationId} or {@literal location_id} for a node or location
+ * type.</li>
+ * <li>A <em>source ID</em> named {@literal sourceId} or
+ * {@literal source_id}.</li>
+ * </ul>
+ * 
+ * <p>
+ * Beyond that, additional datum property columns should be named according to
+ * the {@link ObjectDatumStreamMetadata} property names resolved for each row
+ * via {@link ObjectDatumStreamMetadataProvider.metadataForObjectSource(Long,
+ * String)}.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public class DatumCsvIterator implements Iterator<Datum>, Closeable {
+public class DatumCsvIterator implements CloseableIterator<Datum> {
 
 	private final ICsvListReader reader;
 	private final DateTimeFormatter dateFormatter;
@@ -59,20 +82,54 @@ public class DatumCsvIterator implements Iterator<Datum>, Closeable {
 	private Map<String, Integer> columnMap;
 	private Datum next;
 
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * The timestamp format will be set to the ISO 8601 instant format in UTC,
+	 * such as {@literal '2011-12-03T10:15:30Z'}.
+	 * </p>
+	 * 
+	 * @param reader
+	 *        the CSV reader
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
 	public DatumCsvIterator(ICsvListReader reader, ObjectDatumStreamMetadataProvider metaProvider)
 			throws IOException {
+		this(reader, metaProvider, DateTimeFormatter.ISO_INSTANT);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param reader
+	 *        the CSV reader
+	 * @param metaProvider
+	 *        the metadata provider
+	 * @param dateFormatter
+	 *        the timestamp formatter to use for parsing timestamp values
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public DatumCsvIterator(ICsvListReader reader, ObjectDatumStreamMetadataProvider metaProvider,
+			DateTimeFormatter dateFormatter) throws IOException {
 		super();
-		this.reader = reader;
-		this.metaProvider = metaProvider;
-		this.dateFormatter = DateTimeFormatter.ISO_INSTANT;
+		this.reader = requireNonNullArgument(reader, "reader");
+		this.metaProvider = requireNonNullArgument(metaProvider, "metaProvider");
+		this.dateFormatter = requireNonNullArgument(dateFormatter, "dateFormatter");
 		this.parseTime = Instant.now();
 	}
 
 	@Override
 	public void close() throws IOException {
-		if ( reader != null ) {
-			reader.close();
-		}
+		reader.close();
 	}
 
 	private Datum getNext() {
@@ -111,9 +168,11 @@ public class DatumCsvIterator implements Iterator<Datum>, Closeable {
 					|| "date".equalsIgnoreCase(val) ) {
 				dateColumn = i;
 			} else if ( objectIdColumn < 0 && "nodeId".equalsIgnoreCase(val)
-					|| "locationId".equalsIgnoreCase(val) ) {
+					|| "node_id".equalsIgnoreCase(val) || "locationId".equalsIgnoreCase(val)
+					|| "location_id".equalsIgnoreCase(val) ) {
 				objectIdColumn = i;
-			} else if ( sourceIdColumn < 0 && "sourceId".equalsIgnoreCase(val) ) {
+			} else if ( sourceIdColumn < 0 && "sourceId".equalsIgnoreCase(val)
+					|| "source_id".equalsIgnoreCase(val) ) {
 				sourceIdColumn = i;
 			}
 		}

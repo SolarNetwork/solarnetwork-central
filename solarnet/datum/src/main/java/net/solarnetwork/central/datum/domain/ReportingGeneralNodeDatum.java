@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.domain;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.SerializeIgnore;
@@ -52,6 +53,7 @@ public class ReportingGeneralNodeDatum extends GeneralNodeDatum
 		return localDateTime.toLocalDate();
 	}
 
+	@JsonFormat(pattern = "HH:mm")
 	@Override
 	public LocalTime getLocalTime() {
 		if ( localDateTime == null ) {
