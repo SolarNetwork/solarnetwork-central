@@ -13,9 +13,9 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: solarnet
-    password: solarnet
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: solartest
+    password: solartest
     platform: postgres
     initialize: false
   datasource-read-write-example:
@@ -25,9 +25,9 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: solarnet
-    password: solarnet
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: solartest
+    password: solartest
     platform: postgres
     initialize: false
   datum.query-auditor:
@@ -65,6 +65,8 @@ logging:
   level:
     ROOT: INFO
     org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+    net.solarnetwork.central: DEBUG
+    org.springframework.test: DEBUG
   pattern:
     console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
@@ -87,8 +89,25 @@ server:
   servlet.context-path: /solarquery
 
 ---
-debug: true
-
 spring:
   config.activate.on-profile: development
   thymeleaf.cache: false
+
+debug: true
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+
+---
+spring:
+  config.activate.on-profile: production
+  thymeleaf.cache: true
+
+logging:
+  level:
+    ROOT: INFO
+    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+    net.solarnetwork.central: INFO
