@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoQueryBizTest.java - Jul 12, 2012 6:22:33 PM
+ * DaoQueryBizTests.java - Jul 12, 2012 6:22:33 PM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -102,7 +102,7 @@ import net.solarnetwork.central.support.SimpleSortDescriptor;
  * @author matt
  * @version 4.0
  */
-public class DaoQueryBizTest extends AbstractQueryBizDaoTestSupport {
+public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";
 	private final String TEST_SOURCE_ID2 = "test.source.2";

@@ -5,14 +5,12 @@ buildscript {
 }
 
 plugins {
-	//id 'checkstyle'
 	id 'java'
     id 'war'
     id 'eclipse-wtp'
 	id 'org.springframework.boot' version '2.5.3'
 }
 
-//apply plugin: 'checkstyle'
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -20,15 +18,6 @@ apply plugin: 'io.spring.dependency-management'
 description = 'SolarQuery'
 version = '0.1.0'
 archivesBaseName = 'solarquery'
-
-/*checkstyle {
-	toolVersion = "${checkstyleVersion}"
-	configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-}*/
-
-configurations {
-	all*.exclude group: 'net.sf.supercsv'
-}
 
 dependencies {
 	implementation project(':solarnet-common')
@@ -45,13 +34,11 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+    
 }
 
 eclipse {
-	project {
-		//natures 'net.sf.eclipsecs.core.CheckstyleNature'
-		//buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
-	}
 	wtp {
 		facet {
 			facet name: 'jst.java', version: 11
