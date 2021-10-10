@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Map datum rows into {@link TypedDatumEntity} instances.

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * API for an object that exists within a unique stream at a specific point in

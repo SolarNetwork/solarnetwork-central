@@ -31,7 +31,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Map datum rows into {@link DatumEntity} instances.

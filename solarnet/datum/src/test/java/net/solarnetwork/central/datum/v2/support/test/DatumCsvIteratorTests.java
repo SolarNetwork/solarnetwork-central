@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.v2.support.test;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.datum.v2.domain.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.ByteUtils.UTF8;
 import static net.solarnetwork.util.NumberUtils.decimalArray;

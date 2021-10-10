@@ -33,7 +33,7 @@ import java.util.Map;
 import org.supercsv.io.ICsvListReader;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumProperties;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.CloseableIterator;
