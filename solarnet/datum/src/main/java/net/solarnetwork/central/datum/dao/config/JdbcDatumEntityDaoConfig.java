@@ -58,7 +58,6 @@ public class JdbcDatumEntityDaoConfig {
 	private PlatformTransactionManager txManager;
 
 	@Autowired
-	@Qualifier("central")
 	private JdbcOperations jdbcOperations;
 
 	@Autowired

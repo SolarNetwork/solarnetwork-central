@@ -46,13 +46,7 @@ public class SolarNodeOwnershipDaoConfig {
 	 */
 	public static final String NODE_OWNERSHIP_CACHE = "ownership-for-node";
 
-	/**
-	 * A qualifier to use for the {@link JdbcOperations}.
-	 */
-	public static final String CENTRAL_JDBC_OPERATIONS = "central";
-
 	@Autowired
-	@Qualifier(CENTRAL_JDBC_OPERATIONS)
 	private JdbcOperations jdbcOperations;
 
 	@Autowired

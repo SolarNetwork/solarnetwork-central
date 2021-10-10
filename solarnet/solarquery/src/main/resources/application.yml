@@ -6,6 +6,30 @@ app:
       solarin-mqtt: "mqtts://localhost:8883"
       solarquery: "http://localhost/solarquery"
       solaruser: "http://localhost/solaruser"
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: true
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+    platform: postgres
+    initialize: false
+  datasource-read-write:
+    hikari:
+      minimumIdle: 0
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+    platform: postgres
+    initialize: false
   datum.query-auditor:
     update-delay: 100
     flush-delay: 10000
@@ -53,17 +77,6 @@ mybatis:
   mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
 
 spring:
-  datasource:
-    hikari:
-      minimumIdle: 1
-      connectionTimeout: 30000
-      idleTimeout: 600000
-      maxLifetime: 1800000
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: solarnet
-    password: solarnet
-    platform: postgres
-    initialize: false
   mvc.format:
     date: iso
     date-time: iso

@@ -40,7 +40,6 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 public class JdbcDatumAuxiliaryEntityDaoConfig {
 
 	@Autowired
-	@Qualifier("central")
 	private JdbcOperations jdbcOperations;
 
 	@Bean

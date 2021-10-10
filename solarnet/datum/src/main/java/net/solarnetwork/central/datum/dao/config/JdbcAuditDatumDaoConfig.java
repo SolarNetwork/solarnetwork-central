@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.dao.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -40,17 +39,11 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcAuditDatumEntityDao;
 public class JdbcAuditDatumDaoConfig {
 
 	@Autowired
-	@Qualifier("central")
 	private JdbcOperations jdbcOperations;
-
-	@Autowired(required = false)
-	@Qualifier("audit")
-	private JdbcOperations auditJdbcOperations;
 
 	@Bean
 	public AuditDatumDao auditDatumDao() {
-		return new JdbcAuditDatumEntityDao(
-				auditJdbcOperations != null ? auditJdbcOperations : jdbcOperations);
+		return new JdbcAuditDatumEntityDao(jdbcOperations);
 	}
 
 }

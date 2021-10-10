@@ -40,6 +40,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
 @Configuration
 public class JdbcQueryAuditorConfig {
 
+	/** A qualifier for audit JDBC access. */
+	public static final String AUDIT = "audit";
+
 	public static class QueryAuditorSettings {
 
 		long updateDelay = 100;
@@ -56,7 +59,7 @@ public class JdbcQueryAuditorConfig {
 	 * data source is read-only.
 	 */
 	@Autowired(required = false)
-	@Qualifier("readwrite")
+	@Qualifier(AUDIT)
 	private DataSource readWriteDataSource;
 
 	@Bean
