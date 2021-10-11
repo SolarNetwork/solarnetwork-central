@@ -29,10 +29,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
-import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
-import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
@@ -41,14 +37,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @author matt
  * @version 1.0
  */
-// @formatter:off
-@SpringBootApplication(scanBasePackageClasses = {SolarQueryApp.class})
-@Import({
-		SolarNetCommonConfiguration.class,
-		SolarNetCommonDaoConfiguration.class,
-		SolarNetDatumConfiguration.class,
-})
-// @formatter:on
+@SpringBootApplication(scanBasePackageClasses = { SolarQueryApp.class })
 public class SolarQueryApp {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SolarQueryApp.class);

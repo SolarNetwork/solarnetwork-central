@@ -27,7 +27,11 @@ import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.biz.AppConfigurationBiz;
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
+import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.support.BasicAppConfigurationBiz;
 import net.solarnetwork.central.support.SimpleAppConfiguration;
 
@@ -38,6 +42,13 @@ import net.solarnetwork.central.support.SimpleAppConfiguration;
  * @version 1.0
  */
 @Configuration
+//@formatter:off
+@Import({
+		SolarNetCommonConfiguration.class,
+		SolarNetCommonDaoConfiguration.class,
+		SolarNetDatumConfiguration.class,
+})
+//@formatter:on
 public class AppConfig {
 
 	@Bean

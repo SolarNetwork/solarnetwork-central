@@ -28,6 +28,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -54,6 +55,7 @@ import net.solarnetwork.codec.JsonUtils;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(net.solarnetwork.central.query.config.DataSourceConfig.class)
 public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTransactionalTest {
 
 	public static final Long TEST_USER_ID = -2L;
