@@ -101,7 +101,7 @@ public class UserExportTaskCleanerJobTests {
 		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
 		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
 		assertThat("Date minutes OK",
-				ChronoUnit.MINUTES.between(dateCaptor.getValue(), now.plus(1, ChronoUnit.MINUTES)),
+				(int) ChronoUnit.MINUTES.between(dateCaptor.getValue(), now.plus(1, ChronoUnit.MINUTES)),
 				equalTo(EXPIRE_MINS));
 	}
 

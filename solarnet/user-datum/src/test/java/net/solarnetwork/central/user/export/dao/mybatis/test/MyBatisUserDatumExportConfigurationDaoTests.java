@@ -337,7 +337,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		assertThat("Update count", updated, equalTo(1));
 
 		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
-		assertThat("Min date", conf.getMinimumExportDate(), equalTo(minDate));
+		assertThat("Min date", conf.getMinimumExportDate(), equalTo(minDate.toInstant()));
 	}
 
 	@Test

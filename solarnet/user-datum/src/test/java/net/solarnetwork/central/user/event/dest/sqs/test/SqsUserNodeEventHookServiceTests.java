@@ -23,11 +23,11 @@
 package net.solarnetwork.central.user.event.dest.sqs.test;
 
 import static java.time.Instant.now;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -56,9 +56,9 @@ import net.solarnetwork.central.user.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Test cases for the {@link SqsUserNodeEventHookService} class.
@@ -79,6 +79,8 @@ public class SqsUserNodeEventHookServiceTests {
 			if ( in != null ) {
 				p.load(in);
 				in.close();
+			} else {
+				throw new RuntimeException("The sqs-dest.properties classpath resource is missing.");
 			}
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);

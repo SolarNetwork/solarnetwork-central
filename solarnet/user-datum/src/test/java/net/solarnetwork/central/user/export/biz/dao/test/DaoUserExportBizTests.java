@@ -151,7 +151,7 @@ public class DaoUserExportBizTests {
 
 		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
 		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
+		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
 		assertThat("Task config available", task.getConfig(), notNullValue());
 		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
 		assertThat("Node ID populated",
@@ -201,7 +201,7 @@ public class DaoUserExportBizTests {
 
 		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
 		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
+		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
 		assertThat("Task config available", task.getConfig(), notNullValue());
 		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
 		assertThat("Node ID populated",
@@ -283,7 +283,7 @@ public class DaoUserExportBizTests {
 
 		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
 		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Hourly));
-		assertThat("Task date", task.getExportDate(), equalTo(exportDate));
+		assertThat("Task date", task.getExportDate(), equalTo(exportDate.toInstant()));
 		assertThat("Task config available", task.getConfig(), notNullValue());
 		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
 		assertThat("Node ID populated",

@@ -63,7 +63,6 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
@@ -73,6 +72,7 @@ import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Test cases for the {@link MyBatisUserDataConfigurationDao} class.
@@ -378,7 +378,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	private static final class DataToExpire {
 
 		private Instant start;
-		private Instant expire;
+		private ZonedDateTime expire;
 		private long rawCount = 0L;
 		private long expiredCount = 0L;
 		private long hourCount = 0;
@@ -392,13 +392,14 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	private DataToExpire setupDataToExpire() {
 		final ZoneId zone = ZoneId.of(TEST_TZ);
-		DataToExpire result = new DataToExpire();
-		ZonedDateTime today = ZonedDateTime.now(zone).with(firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
-		result.expire = ZonedDateTime.now(zone).minusDays(35).with(firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS).toInstant();
+		final DataToExpire result = new DataToExpire();
+		final ZonedDateTime today = ZonedDateTime.now(zone).truncatedTo(ChronoUnit.DAYS);
+		result.expire = ZonedDateTime.now(zone).minusDays(35).truncatedTo(ChronoUnit.DAYS);
 
-		ZonedDateTime start = today.minus(8, ChronoUnit.WEEKS);
+		final ZonedDateTime expireMonth = result.expire.with(firstDayOfMonth())
+				.truncatedTo(ChronoUnit.DAYS);
+
+		final ZonedDateTime start = today.minus(8, ChronoUnit.WEEKS);
 		result.start = start.toInstant();
 		ZonedDateTime month = start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 		Set<ZonedDateTime> months = new LinkedHashSet<>();
@@ -415,18 +416,17 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 			result.rawCount++;
 			result.hourCount++;
 			result.dayCount++;
-			if ( currDay.toInstant().isBefore(result.expire) ) {
+			if ( currDay.isBefore(result.expire) ) {
 				result.expiredCount++;
 				result.expiredHourCount++;
 				result.expiredDayCount++;
 			}
 			if ( result.monthCount < 1 || month.isBefore(currMonth) ) {
 				result.monthCount++;
-				if ( currMonth.isBefore(result.expire.atZone(zone).with(firstDayOfMonth())
-						.truncatedTo(ChronoUnit.DAYS)) ) {
+				if ( currMonth.isBefore(expireMonth) ) {
 					result.expiredMonthCount++;
 				}
-				if ( currMonth.toInstant().isBefore(result.expire) ) {
+				if ( currMonth.isBefore(result.expire) ) {
 					result.staleAuditMonthCount++;
 				}
 				month = currMonth;
@@ -644,13 +644,13 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount - range.expiredMonthCount));
 		assertThat("First monthly date", datum.get(0).getTimestamp(),
-				equalTo(start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.MONTHS)
+				equalTo(start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS)
 						.plusMonths(range.expiredMonthCount).toInstant()));
 
 		Period p = Period.between(
 				start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toLocalDate(),
-				range.expire.atZone(start.getZone()).with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS)
-						.plusMonths(1).toLocalDate());
+				range.expire.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).plusMonths(1)
+						.toLocalDate());
 		assertAuditDatumDailyStaleMonths(start.toInstant(), p.getMonths());
 		assertNoAggStaleDatum();
 	}

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.export.jobs.test;
 
 import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -86,7 +87,7 @@ public class UserExportTaskPopulatorJobTests {
 	public void executeHourlyJob() {
 		// given
 		Capture<Instant> dateCaptor = new Capture<>();
-		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), ScheduleType.Hourly))
+		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), eq(ScheduleType.Hourly)))
 				.andReturn(0);
 
 		Capture<Event> eventCaptor = new Capture<>();
@@ -105,7 +106,7 @@ public class UserExportTaskPopulatorJobTests {
 		Event completedEvent = eventCaptor.getValue();
 		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
 		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
-		assertThat("Date minutes OK", ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
+		assertThat("Date minutes OK", (int) ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
 				equalTo(0));
 	}
 
@@ -114,7 +115,7 @@ public class UserExportTaskPopulatorJobTests {
 		// given
 		job = jobForSchedule(ScheduleType.Daily);
 		Capture<Instant> dateCaptor = new Capture<>();
-		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), ScheduleType.Daily))
+		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), eq(ScheduleType.Daily)))
 				.andReturn(0);
 
 		Capture<Event> eventCaptor = new Capture<>();
@@ -133,7 +134,7 @@ public class UserExportTaskPopulatorJobTests {
 		Event completedEvent = eventCaptor.getValue();
 		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
 		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
-		assertThat("Date minutes OK", ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
+		assertThat("Date minutes OK", (int) ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
 				equalTo(0));
 	}
 
