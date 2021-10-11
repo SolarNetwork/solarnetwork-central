@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>solarapp-in</name>
-	<comment>SolarIn application.</comment>
+	<name>solarapp-user</name>
+	<comment>Project solaruser created by Buildship.</comment>
 	<projects>
 	</projects>
 	<buildSpec>

@@ -18,10 +18,6 @@ version = '0.1.0'
 archivesBaseName = 'solarnet-instructor'
 
 
-configurations {
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 

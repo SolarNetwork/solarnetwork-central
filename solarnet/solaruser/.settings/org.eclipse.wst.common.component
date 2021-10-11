@@ -1,12 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
     	
-    <wb-module deploy-name="solarapp-in">
+    <wb-module deploy-name="solarapp-user">
         		
         <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
         		
         <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
         		
+        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-ocpp/solarnet-user-ocpp">
+            			
+            <dependency-type>uses</dependency-type>
+            		
+        </dependent-module>
+        		
         <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-ocpp/solarnet-ocpp">
+            			
+            <dependency-type>uses</dependency-type>
+            		
+        </dependent-module>
+        		
+        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-datum/solarnet-user-datum">
             			
             <dependency-type>uses</dependency-type>
             		
@@ -35,7 +47,7 @@
             <dependency-type>uses</dependency-type>
             		
         </dependent-module>
-        <property name="context-root" value="solarapp-in"/>
+        <property name="context-root" value="solarapp-user"/>
         	
     </wb-module>
     

@@ -20,7 +20,6 @@ archivesBaseName = 'solarnet-common-test'
 configurations {
 	all*.exclude group: 'io.moquette'
 	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'org.hamcrest', module: 'hamcrest-all'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

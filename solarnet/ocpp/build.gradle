@@ -17,18 +17,15 @@ description = 'SolarNet: OCPP'
 version = '0.1.0'
 archivesBaseName = 'solarnet-ocpp'
 
-configurations {
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-user')
 
-	// Spring support
+	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// SolarNetwork
 	implementation 'net.solarnetwork.external:net.solarnetwork.external.ocpp:1.1.0.SN01'

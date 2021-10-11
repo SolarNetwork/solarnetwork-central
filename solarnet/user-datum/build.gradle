@@ -17,10 +17,6 @@ description = 'SolarNet: User Datum'
 version = '0.1.0'
 archivesBaseName = 'solarnet-user-datum'
 
-configurations {
-	all*.exclude group: 'net.sf.supercsv'
-}
-
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
@@ -28,9 +24,15 @@ dependencies {
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+
 	// Utilities
 	implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.1034'
+	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

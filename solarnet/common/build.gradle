@@ -18,7 +18,6 @@ version = '0.1.0'
 archivesBaseName = 'solarnet-common'
 
 configurations {
-	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

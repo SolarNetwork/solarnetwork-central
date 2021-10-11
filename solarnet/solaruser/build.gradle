@@ -5,46 +5,50 @@ buildscript {
 }
 
 plugins {
+	//id 'checkstyle'
 	id 'java'
     id 'war'
     id 'eclipse-wtp'
 	id 'org.springframework.boot' version '2.5.3'
 }
 
+//apply plugin: 'checkstyle'
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-description = 'SolarQuery'
+description = 'SolarUser'
 version = '0.1.0'
-archivesBaseName = 'solarquery'
+archivesBaseName = 'solaruser'
 
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-ocpp')
+	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-ocpp')
 
-	// Spring
+	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
-	
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
 	// allow WAR to be run from command line OR deployed in Tomcat
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
-	// JCache
+	// Utils
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
-
-	// Utilities
-	implementation 'org.aspectj:aspectjweaver'
-
+		
+	// SolarNetwork
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.0.0'
+	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
-    
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api'
 }
 
 eclipse {
@@ -58,7 +62,7 @@ eclipse {
 
 bootJar {
 	manifest {
-		attributes 	'Implementation-Title': 'SolarQuery',
+		attributes 	'Implementation-Title': 'SolarUser',
 					'Implementation-Version': version
 	}
 }
