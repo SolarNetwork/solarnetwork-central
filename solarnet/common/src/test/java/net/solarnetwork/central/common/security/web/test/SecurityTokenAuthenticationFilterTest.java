@@ -31,10 +31,13 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,6 +52,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -63,6 +67,7 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
 /**
@@ -96,12 +101,26 @@ public class SecurityTokenAuthenticationFilterTest {
 	}
 
 	private void validateUnauthorizedResponse(AuthenticationScheme scheme, String expectedMessage) {
-		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
-		assertEquals(scheme.getSchemeName(), response.getHeader("WWW-Authenticate"));
-		assertNotNull(response.getErrorMessage());
-		assertTrue("Error message [" + response.getErrorMessage() + "] must match [" + expectedMessage
-				+ "]", response.getErrorMessage().matches(expectedMessage));
-		assertEquals(expectedMessage, response.getErrorMessage());
+		validateResponse(scheme, HttpServletResponse.SC_UNAUTHORIZED, expectedMessage);
+	}
+
+	private void validateResponse(AuthenticationScheme scheme, int expectedStatusCode,
+			String expectedMessage) {
+		assertThat("Status code", response.getStatus(), is(expectedStatusCode));
+		if ( expectedStatusCode == HttpServletResponse.SC_UNAUTHORIZED ) {
+			assertEquals("WWW-Authenticate", scheme.getSchemeName(),
+					response.getHeader("WWW-Authenticate"));
+		}
+		assertThat("Content type is JSON", response.getContentType(),
+				is(MediaType.APPLICATION_JSON_VALUE));
+		try {
+			Map<String, Object> responseBody = JsonUtils.getStringMap(response.getContentAsString());
+			assertThat("JSON success", responseBody, hasEntry("success", false));
+			assertThat("JSON code", responseBody, hasEntry("code", String.valueOf(expectedStatusCode)));
+			assertThat("JSON message", responseBody, hasEntry("message", expectedMessage));
+		} catch ( UnsupportedEncodingException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Before

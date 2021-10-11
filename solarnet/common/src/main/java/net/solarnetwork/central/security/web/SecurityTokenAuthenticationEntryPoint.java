@@ -74,30 +74,27 @@ public class SecurityTokenAuthenticationEntryPoint
 		return order;
 	}
 
-	private static boolean isSecurityTokenAuthenticationScheme(String authorization) {
-		if ( authorization == null ) {
-			return false;
+	private static String securityTokenAuthenticationScheme(String authorization) {
+		// return V2, unless V1 was used in request
+		if ( authorization != null ) {
+			int space = authorization.indexOf(' ');
+			if ( space > 0 ) {
+				String scheme = authorization.substring(0, space);
+				if ( AuthenticationScheme.V1.getSchemeName().equals(scheme) ) {
+					return scheme;
+				}
+			}
 		}
-		int space = authorization.indexOf(' ');
-		if ( space < 0 ) {
-			return false;
-		}
-		String scheme = authorization.substring(0, space);
-		return AuthenticationScheme.V2.getSchemeName().equals(scheme)
-				|| AuthenticationScheme.V1.getSchemeName().equals(scheme);
+		return AuthenticationScheme.V2.getSchemeName();
 	}
 
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
 		final String authHeaderValue = request.getHeader("Authorization");
-		final boolean wasSecurityTokenScheme = isSecurityTokenAuthenticationScheme(authHeaderValue);
-		int statusCode = HttpServletResponse.SC_UNAUTHORIZED;
-		if ( !wasSecurityTokenScheme ) {
-			response.addHeader("WWW-Authenticate", AuthenticationScheme.V2.getSchemeName());
-		} else {
-			statusCode = HttpServletResponse.SC_FORBIDDEN;
-		}
+		final String scheme = securityTokenAuthenticationScheme(authHeaderValue);
+		final int statusCode = HttpServletResponse.SC_UNAUTHORIZED;
+		response.addHeader("WWW-Authenticate", scheme);
 		response.setStatus(statusCode);
 		response.addHeader(WebConstants.HEADER_ERROR_MESSAGE, authException.getMessage());
 		if ( httpHeaders != null ) {
