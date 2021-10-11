@@ -58,7 +58,7 @@ public class NodeInstructionCleaner extends JobSupport {
 
 	/**
 	 * Purge completed instructions by calling
-	 * {@link NodeInstructionDao#purgeCompletedInstructions(org.joda.time.Instant)}
+	 * {@link NodeInstructionDao#purgeCompletedInstructions(java.time.Instant)}
 	 * .
 	 */
 	@Override

@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.joda.time.DateTimeUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +75,6 @@ public class UserExportTaskCleanerJobTests {
 
 	@After
 	public void teardown() {
-		DateTimeUtils.setCurrentMillisSystem();
 		EasyMock.verify(eventAdmin, taskDao);
 	}
 
