@@ -34,7 +34,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -43,12 +42,14 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.biz.dao.DaoAuditDatumBiz;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -96,7 +97,7 @@ public class DaoAuditDatumBizTests {
 
 		// WHEN
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setUserId(2L);
@@ -106,10 +107,9 @@ public class DaoAuditDatumBizTests {
 		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setLocalEndDate(filter.getLocalStartDate().plusDays(1));
 
-		List<net.solarnetwork.central.domain.SortDescriptor> sortDescriptors = Arrays
-				.asList(new net.solarnetwork.central.support.SimpleSortDescriptor("foo"));
-		net.solarnetwork.central.domain.FilterResults<AuditDatumRecordCounts> results = biz
-				.findFilteredAuditRecordCounts(filter, sortDescriptors, 0, 1);
+		FilterResults<AuditDatumRollup, DatumPK> rollups = biz.findAuditDatumFiltered(filter);
+		FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> results = DatumUtils
+				.toAuditDatumRecordCountsFilterResults(rollups);
 
 		// THEN
 		AuditDatumCriteria criteria = filterCaptor.getValue();

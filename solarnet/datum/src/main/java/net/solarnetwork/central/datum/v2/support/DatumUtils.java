@@ -39,6 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.CommonFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
@@ -51,6 +54,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilterMatc
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
@@ -59,9 +63,10 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
-import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
@@ -79,10 +84,13 @@ import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.OptimizedQueryFilter;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SourceMappingFilter;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.DateUtils;
@@ -924,6 +932,35 @@ public final class DatumUtils {
 				meta.getLocation(), meta.propertyNamesForType(DatumSamplesType.Instantaneous),
 				meta.propertyNamesForType(DatumSamplesType.Accumulating),
 				meta.propertyNamesForType(DatumSamplesType.Status), null);
+	}
+
+	/**
+	 * Convert {@code AuditDatumRollup} filter results to
+	 * {@code AuditDatumRecordCounts} filter results.
+	 * 
+	 * @param results
+	 *        the results to conver
+	 * @return the converted results, or {@literal null} if {@code results} is
+	 *         {@literal null}
+	 * @since 2.0
+	 */
+	public static FilterResults<AuditDatumRecordCounts, GeneralNodeDatumPK> toAuditDatumRecordCountsFilterResults(
+			FilterResults<AuditDatumRollup, DatumPK> results) {
+		if ( results == null ) {
+			return null;
+		}
+		List<AuditDatumRecordCounts> counts = StreamSupport.stream(results.spliterator(), false)
+				.map(e -> {
+					AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
+							e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
+							e.getDatumMonthlyCount());
+					if ( e.getTimestamp() != null ) {
+						c.setCreated(e.getTimestamp());
+					}
+					return c;
+				}).collect(Collectors.toList());
+		return new BasicFilterResults<>(counts, results.getTotalResults(), results.getStartingOffset(),
+				results.getReturnedResultCount());
 	}
 
 }

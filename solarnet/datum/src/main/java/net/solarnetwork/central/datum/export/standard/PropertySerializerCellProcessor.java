@@ -64,8 +64,8 @@ public class PropertySerializerCellProcessor extends CellProcessorAdaptor implem
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Object execute(Object value, CsvContext context) {
-		return propertySerializer.serialize(context.getRowSource(),
+	public <T> T execute(Object value, CsvContext context) {
+		return (T) propertySerializer.serialize(context.getRowSource(),
 				String.valueOf(context.getColumnNumber()), value);
 	}
 

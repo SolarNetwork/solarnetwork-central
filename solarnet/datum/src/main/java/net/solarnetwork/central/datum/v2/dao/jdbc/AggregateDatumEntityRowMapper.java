@@ -32,9 +32,9 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Map rollup aggregate rows into {@link AggregateDatumEntity} instances.
@@ -132,6 +132,7 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 		switch (kind) {
 			case Hour:
 				mapper = readingMode ? READING_HOUR_INSTANCE : HOUR_INSTANCE;
+				break;
 
 			case Day:
 				mapper = readingMode ? READING_DAY_INSTANCE : DAY_INSTANCE;

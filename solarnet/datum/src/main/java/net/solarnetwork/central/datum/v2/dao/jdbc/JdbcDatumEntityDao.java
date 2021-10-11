@@ -209,10 +209,7 @@ public class JdbcDatumEntityDao
 					throws SQLException, DataAccessException {
 				cs.execute();
 				UUID streamId = uuidFromCall(cs, 1);
-				return new DatumPK(
-						(streamId instanceof UUID ? (UUID) streamId
-								: streamId != null ? UUID.fromString(streamId.toString()) : null),
-						sql.getTimestamp());
+				return new DatumPK(streamId, sql.getTimestamp());
 			}
 		});
 	}

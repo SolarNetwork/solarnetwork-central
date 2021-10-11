@@ -94,6 +94,7 @@ public abstract class BaseDatumExportOutputFormatServiceExportContext implements
 					} catch ( CompressorException e ) {
 						throw new IOException(e);
 					}
+					break;
 
 				default:
 					// nothing more

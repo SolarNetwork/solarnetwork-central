@@ -117,12 +117,15 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 		switch (aggregation) {
 			case Hour:
 				buf.append("solardatm.da_datm_hourly");
+				break;
 
 			case Day:
 				buf.append("solardatm.da_datm_daily");
+				break;
 
 			case Month:
 				buf.append("solardatm.da_datm_monthly");
+				break;
 
 			default:
 				buf.append("solardatm.da_datm");

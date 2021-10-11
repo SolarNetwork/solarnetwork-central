@@ -20,11 +20,16 @@ archivesBaseName = 'solarnet-datum'
 dependencies {
 	implementation project(':solarnet-common')
 
-	// Spring support
+	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
-	// Utils
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+
+	// Utilities
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
 	implementation 'commons-io:commons-io:2.11.0'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.aspectj:aspectjweaver'
