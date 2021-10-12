@@ -392,7 +392,11 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private void handleInstructionStatus(final Long nodeId, final JsonNode node) {
 		getMqttStats().incrementAndGet(SolarInCountStat.InstructionStatusReceived);
 		String instructionId = getStringFieldValue(node, "instructionId", null);
-		String status = getStringFieldValue(node, "status", null);
+		String status = getStringFieldValue(node, "state", null);
+		if ( status == null ) {
+			status = getStringFieldValue(node, "status", null);
+		}
+
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
 		NodeInstructionDao dao = (nodeInstructionDaoRef != null ? nodeInstructionDaoRef.service()
 				: null);
@@ -417,20 +421,20 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		try {
 			GeneralDatum d = (GeneralDatum) objectMapper.treeToValue(node,
 					net.solarnetwork.domain.datum.GeneralDatum.class);
+			if ( d.getSamples() != null ) {
+				if ( checkVersion && !d.getSamples().hasTag(TAG_V2) ) {
+					throw new UseLegacyObjectMapperException();
+				}
+				d.getSamples().removeTag(TAG_V2);
+				if ( d.getSamples().getTags() != null && d.getSamples().getTags().isEmpty() ) {
+					d.getSamples().setTags(null);
+				}
+			}
 			Object gd = convertGeneralDatum(nodeId, d);
 			if ( d.getSourceId() == null ) {
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
-				if ( d.getSamples() != null ) {
-					if ( checkVersion && !d.getSamples().hasTag(TAG_V2) ) {
-						throw new UseLegacyObjectMapperException();
-					}
-					d.getSamples().removeTag(TAG_V2);
-					if ( d.getSamples().getTags() != null && d.getSamples().getTags().isEmpty() ) {
-						d.getSamples().setTags(null);
-					}
-				}
 				if ( gd instanceof GeneralLocationDatum ) {
 					dataCollectorBiz.postGeneralLocationDatum(singleton((GeneralLocationDatum) gd));
 				} else if ( gd instanceof GeneralNodeDatum ) {
