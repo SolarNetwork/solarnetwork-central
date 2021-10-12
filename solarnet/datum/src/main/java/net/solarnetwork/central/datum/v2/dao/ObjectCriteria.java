@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Search criteria for object related data.

@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.UUID;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A date/time interval associated with an object datum ID.

@@ -36,10 +36,10 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.easymock.Capture;
@@ -83,8 +84,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
@@ -156,6 +158,39 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			ObjectDatumStreamMetadata meta = metas.get(expected.getStreamId());
 			assertDatumStreamMetadata("location meta", meta, expected);
 		}
+	}
+
+	@Test
+	public void findObjectMetadataIds_nodes() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+		final Set<ObjectDatumStreamMetadataId> ids = data.stream().map(d -> {
+			return new ObjectDatumStreamMetadataId(d.getStreamId(), d.getKind(), d.getObjectId(),
+					d.getSourceId());
+		}).collect(Collectors.toSet());
+
+		// WHEN
+		replayAll();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
+		filter.setSourceIds(new String[] { "s1", "s2", "s3" });
+		filter.setObjectKind(ObjectDatumKind.Node);
+		Iterable<ObjectDatumStreamMetadataId> results = dao.findDatumStreamMetadataIds(filter);
+
+		assertThat("Results returned", results, notNullValue());
+		Set<ObjectDatumStreamMetadataId> resultIds = StreamSupport.stream(results.spliterator(), false)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		assertThat("Stream IDs same", resultIds, equalTo(ids));
 	}
 
 	@Test

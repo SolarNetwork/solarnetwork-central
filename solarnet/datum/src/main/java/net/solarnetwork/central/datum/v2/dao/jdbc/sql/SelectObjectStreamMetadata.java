@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.orderBySorts;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,7 +32,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.util.SearchFilter;
 
@@ -49,6 +50,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	private final ObjectStreamCriteria filter;
 	private final ObjectDatumKind kind;
 	private final SearchFilter searchFilter;
+	private final MetadataSelectStyle style;
 
 	/**
 	 * Constructor.
@@ -75,26 +77,38 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	 * @param kind
 	 *        the datum kind
 	 * @throws IllegalArgumentException
-	 *         if {@code filter} is {@literal null}
+	 *         if {@code filter} or {@code kind} are {@literal null}
 	 */
 	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind) {
+		this(filter, kind, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param kind
+	 *        the datum kind
+	 * @param style
+	 *        the select style
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} or {@code kind} are {@literal null}
+	 */
+	public SelectObjectStreamMetadata(ObjectStreamCriteria filter, ObjectDatumKind kind,
+			MetadataSelectStyle style) {
 		super();
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument must not be null.");
-		}
-		if ( kind == null ) {
-			throw new IllegalArgumentException("The kind argument must not be null.");
-		}
-		this.filter = filter;
-		this.kind = kind;
+		this.filter = requireNonNullArgument(filter, "filter");
+		this.kind = requireNonNullArgument(kind, "kind");
+		this.style = (style != null ? style
+				: filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
+						: MetadataSelectStyle.Full);
 		this.searchFilter = filter.searchFilter();
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		MetadataSelectStyle style = (filter.hasLocationCriteria() ? MetadataSelectStyle.WithGeography
-				: MetadataSelectStyle.Full);
 		int idx = 0;
 		if ( kind == ObjectDatumKind.Location ) {
 			idx = DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",

@@ -22,9 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
 import static net.solarnetwork.web.domain.Response.response;
-import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.PathMatcher;
@@ -38,7 +36,6 @@ import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.web.domain.Response;
 
@@ -46,7 +43,7 @@ import net.solarnetwork.web.domain.Response;
  * Web controller for datum maintenance functions.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.39
  */
 @GlobalExceptionRestController
@@ -55,8 +52,6 @@ import net.solarnetwork.web.domain.Response;
 public class DatumMaintenanceController {
 
 	private final DatumMaintenanceBiz datumMaintenanceBiz;
-	private final QueryBiz queryBiz;
-	private final PathMatcher pathMatcher;
 
 	/*- FIXME
 	private final String[] requestDateFormats = new String[] { DEFAULT_TIMESTAMP_FORMAT,
@@ -76,12 +71,10 @@ public class DatumMaintenanceController {
 	 *        the source ID path matcher to use
 	 */
 	@Autowired
-	public DatumMaintenanceController(DatumMaintenanceBiz datumMaintenanceBiz, QueryBiz queryBiz,
+	public DatumMaintenanceController(DatumMaintenanceBiz datumMaintenanceBiz,
 			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
 		super();
 		this.datumMaintenanceBiz = datumMaintenanceBiz;
-		this.queryBiz = queryBiz;
-		this.pathMatcher = pathMatcher;
 	}
 
 	/**
@@ -94,20 +87,6 @@ public class DatumMaintenanceController {
 	public void initBinder(WebDataBinder binder) {
 		// FIXME: binder.registerCustomEditor(DateTime.class,
 		//		new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
-	}
-
-	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
-		if ( cmd == null || pathMatcher == null || queryBiz == null ) {
-			return;
-		}
-		String sourceId = cmd.getSourceId();
-		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getNodeIds() != null ) {
-			Set<String> allSources = queryBiz.getAvailableSources(cmd);
-			allSources = filterSources(allSources, pathMatcher, sourceId);
-			if ( !allSources.isEmpty() ) {
-				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
-			}
-		}
 	}
 
 	/**
@@ -133,9 +112,6 @@ public class DatumMaintenanceController {
 	@RequestMapping(value = "/agg/stale", method = RequestMethod.GET)
 	public Response<FilterResults<StaleAggregateDatum>> findStaleAggregatesDatum(
 			DatumFilterCommand criteria) {
-		// support filtering based on sourceId path pattern, by simply finding the sources that match first
-		resolveSourceIdPattern(criteria);
-
 		FilterResults<StaleAggregateDatum> results = datumMaintenanceBiz.findStaleAggregateDatum(
 				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		return response(results);
@@ -162,9 +138,6 @@ public class DatumMaintenanceController {
 	@ResponseBody
 	@RequestMapping(value = { "/agg/stale", "/agg/mark-stale" }, method = RequestMethod.POST)
 	public Response<Void> markDatumAggregatesStale(DatumFilterCommand criteria) {
-		// support filtering based on sourceId path pattern, by simply finding the sources that match first
-		resolveSourceIdPattern(criteria);
-
 		datumMaintenanceBiz.markDatumAggregatesStale(criteria);
 		return response(null);
 	}

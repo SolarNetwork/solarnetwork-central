@@ -81,6 +81,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
@@ -104,8 +105,9 @@ import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
@@ -407,6 +409,18 @@ public class JdbcDatumEntityDao
 					: ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE);
 		}
 		PreparedStatementCreator sql = new SelectObjectStreamMetadata(filter, kind);
+		return jdbcTemplate.query(sql, mapper);
+	}
+
+	@Override
+	public Iterable<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(
+			ObjectStreamCriteria filter) {
+		ObjectDatumKind kind = filter.effectiveObjectKind();
+		RowMapper<ObjectDatumStreamMetadataId> mapper = (kind == ObjectDatumKind.Location
+				? ObjectDatumStreamMetadataIdRowMapper.LOCATION_INSTANCE
+				: ObjectDatumStreamMetadataIdRowMapper.NODE_INSTANCE);
+		PreparedStatementCreator sql = new SelectObjectStreamMetadata(filter, kind,
+				MetadataSelectStyle.Minimum);
 		return jdbcTemplate.query(sql, mapper);
 	}
 

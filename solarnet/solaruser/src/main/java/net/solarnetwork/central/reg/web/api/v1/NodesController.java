@@ -30,7 +30,6 @@ import java.time.Period;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -367,8 +366,8 @@ public class NodesController {
 		 * 
 		 * @return The valid from date.
 		 */
-		public DateTime getCertificateValidFromDate() {
-			return (nodeCert != null ? new DateTime(nodeCert.getNotBefore()) : null);
+		public Instant getCertificateValidFromDate() {
+			return (nodeCert != null ? nodeCert.getNotBefore().toInstant() : null);
 		}
 
 		/**
@@ -376,8 +375,8 @@ public class NodesController {
 		 * 
 		 * @return The valid until date.
 		 */
-		public DateTime getCertificateValidUntilDate() {
-			return (nodeCert != null ? new DateTime(nodeCert.getNotAfter()) : null);
+		public Instant getCertificateValidUntilDate() {
+			return (nodeCert != null ? nodeCert.getNotAfter().toInstant() : null);
 		}
 
 		/**

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -48,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
 import net.solarnetwork.central.support.BasicFilterResults;
 
 /**

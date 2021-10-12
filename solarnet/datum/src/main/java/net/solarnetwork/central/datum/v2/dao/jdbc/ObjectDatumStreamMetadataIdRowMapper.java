@@ -22,18 +22,16 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 
 /**
- * Map object datum stream metadata rows into {@link ObjectDatumStreamMetadata}
- * instances.
+ * Map object datum stream metadata rows into
+ * {@link ObjectDatumStreamMetadataId} instances.
  * 
  * <p>
  * The expected column order in the SQL results is:
@@ -43,30 +41,24 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
  * <li>stream_id</li>
  * <li>obj_id</li>
  * <li>source_id</li>
- * <li>names_i</li>
- * <li>names_a</li>
- * <li>names_s</li>
- * <li>jdata</li>
  * <li>kind - only used if dynamic type is used</li>
- * <li>timezone</li>
  * </ol>
  *
  * @author matt
  * @version 1.0
- * @since 3.8
  */
-public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatumStreamMetadata> {
+public class ObjectDatumStreamMetadataIdRowMapper implements RowMapper<ObjectDatumStreamMetadataId> {
 
 	/** A default mapper instance using {@link MetadataKind#Dynamic}. */
-	public static final RowMapper<ObjectDatumStreamMetadata> INSTANCE = new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumStreamMetadataId> INSTANCE = new ObjectDatumStreamMetadataIdRowMapper(
 			MetadataKind.Dynamic);
 
 	/** A default mapper instance using {@link MetadataKind#Node}. */
-	public static final RowMapper<ObjectDatumStreamMetadata> NODE_INSTANCE = new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumStreamMetadataId> NODE_INSTANCE = new ObjectDatumStreamMetadataIdRowMapper(
 			MetadataKind.Node);
 
 	/** A default mapper instance using {@link MetadataKind#Location}. */
-	public static final RowMapper<ObjectDatumStreamMetadata> LOCATION_INSTANCE = new ObjectDatumStreamMetadataRowMapper(
+	public static final RowMapper<ObjectDatumStreamMetadataId> LOCATION_INSTANCE = new ObjectDatumStreamMetadataIdRowMapper(
 			MetadataKind.Location);
 
 	private final MetadataKind kind;
@@ -79,52 +71,38 @@ public class ObjectDatumStreamMetadataRowMapper implements RowMapper<ObjectDatum
 	 *        then an extra {@literal kind} row must be provided by the query
 	 *        results
 	 */
-	public ObjectDatumStreamMetadataRowMapper(MetadataKind kind) {
+	public ObjectDatumStreamMetadataIdRowMapper(MetadataKind kind) {
 		super();
 		this.kind = kind;
 	}
 
 	@Override
-	public ObjectDatumStreamMetadata mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public ObjectDatumStreamMetadataId mapRow(ResultSet rs, int rowNum) throws SQLException {
 		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
 		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 
-		String[] namesI = null;
-		String[] namesA = null;
-		String[] namesS = null;
-
-		Array a = rs.getArray(4);
-		if ( a != null ) {
-			namesI = (String[]) a.getArray();
-			a.free();
-		}
-
-		a = rs.getArray(5);
-		if ( a != null ) {
-			namesA = (String[]) a.getArray();
-			a.free();
-		}
-
-		a = rs.getArray(6);
-		if ( a != null ) {
-			namesS = (String[]) a.getArray();
-			a.free();
-		}
-
-		String jmeta = rs.getString(7);
-
 		MetadataKind k = this.kind;
 		if ( this.kind == MetadataKind.Dynamic ) {
-			String kindStr = rs.getString(8);
+			String kindStr = rs.getString(4);
 			k = ("l".equalsIgnoreCase(kindStr) ? MetadataKind.Location : MetadataKind.Node);
 		}
 
-		String timeZoneId = rs.getString(9);
+		ObjectDatumKind objKind = null;
+		switch (k) {
+			case Node:
+				objKind = ObjectDatumKind.Node;
+				break;
 
-		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId,
-				k == MetadataKind.Location ? ObjectDatumKind.Location : ObjectDatumKind.Node, objId,
-				sourceId, namesI, namesA, namesS, jmeta);
+			case Location:
+				objKind = ObjectDatumKind.Location;
+				break;
+
+			default:
+				// ignore
+		}
+
+		return new ObjectDatumStreamMetadataId(streamId, objKind, objId, sourceId);
 	}
 
 }

@@ -22,7 +22,11 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,9 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -45,8 +47,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
@@ -73,14 +76,15 @@ public class UserAlertController extends ControllerSupport {
 
 	private final UserBiz userBiz;
 	private final UserAlertBiz userAlertBiz;
-	private final QueryBiz queryBiz;
+	private final DatumMetadataBiz datumMetadataBiz;
 
 	@Autowired
-	public UserAlertController(UserBiz userBiz, UserAlertBiz userAlertBiz, QueryBiz queryBiz) {
+	public UserAlertController(UserBiz userBiz, UserAlertBiz userAlertBiz,
+			DatumMetadataBiz datumMetadataBiz) {
 		super();
-		this.userBiz = userBiz;
-		this.userAlertBiz = userAlertBiz;
-		this.queryBiz = queryBiz;
+		this.userBiz = requireNonNullArgument(userBiz, "userBiz");
+		this.userAlertBiz = requireNonNullArgument(userAlertBiz, "userAlertBiz");
+		this.datumMetadataBiz = requireNonNullArgument(datumMetadataBiz, "datumMetadataBiz");
 	}
 
 	@ModelAttribute("nodeDataAlertTypes")
@@ -134,15 +138,16 @@ public class UserAlertController extends ControllerSupport {
 	@RequestMapping(value = "/node/{nodeId}/sources", method = RequestMethod.GET)
 	@ResponseBody
 	public Response<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
-			@RequestParam(value = "start", required = false) DateTime start,
-			@RequestParam(value = "end", required = false) DateTime end) {
-		DatumFilterCommand filter = new DatumFilterCommand();
+			@RequestParam(value = "start", required = false) Instant start,
+			@RequestParam(value = "end", required = false) Instant end) {
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(nodeId);
 		filter.setStartDate(start);
 		filter.setEndDate(end);
-		Set<String> sources = queryBiz.getAvailableSources(filter);
-		List<String> sourceList = new ArrayList<String>(sources);
-		return response(sourceList);
+		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);
+		List<String> sourceIds = data.stream().map(ObjectDatumStreamMetadataId::getSourceId)
+				.collect(Collectors.toList());
+		return response(sourceIds);
 	}
 
 	/**
@@ -214,12 +219,12 @@ public class UserAlertController extends ControllerSupport {
 		alert.setId(model.getId());
 		alert.setNodeId(model.getNodeId());
 		alert.setUserId(user.getUserId());
-		alert.setCreated(new DateTime());
+		alert.setCreated(Instant.now());
 		alert.setStatus(model.getStatus() == null ? UserAlertStatus.Active : model.getStatus());
 		alert.setType(model.getType() == null ? UserAlertType.NodeStaleData : model.getType());
 
 		// reset validTo date to now, so alert re-processed
-		alert.setValidTo(new DateTime());
+		alert.setValidTo(Instant.now());
 
 		Map<String, Object> options = new HashMap<String, Object>();
 		if ( model.getOptions() != null ) {
@@ -284,14 +289,15 @@ public class UserAlertController extends ControllerSupport {
 		}
 		// to aid UI, populate some useful display properties
 		if ( alert.getSituation() != null ) {
-			DateTimeFormatter fmt = DateTimeFormat.forStyle("LS");
+			DateTimeFormatter fmt = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG,
+					FormatStyle.SHORT);
 			if ( locale != null ) {
 				fmt = fmt.withLocale(locale);
 			}
-			alert.getOptions().put("situationDate", fmt.print(alert.getSituation().getCreated()));
+			alert.getOptions().put("situationDate", fmt.format(alert.getSituation().getCreated()));
 			if ( alert.getSituation().getNotified() != null ) {
 				alert.getOptions().put("situationNotificationDate",
-						fmt.print(alert.getSituation().getNotified()));
+						fmt.format(alert.getSituation().getNotified()));
 			}
 		}
 		if ( alert.getOptions() != null ) {

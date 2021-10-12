@@ -21,10 +21,17 @@ description = 'SolarUser'
 version = '0.1.0'
 archivesBaseName = 'solaruser'
 
+configurations {
+	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
+	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet.jsp'
+}
+
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
+	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-ocpp')
 

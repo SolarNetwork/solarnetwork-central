@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumIdRowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.OptionalServiceCollection;
 
 /**

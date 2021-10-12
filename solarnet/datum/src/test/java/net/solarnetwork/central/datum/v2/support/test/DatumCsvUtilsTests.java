@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumCsvUtils;
 import net.solarnetwork.central.domain.Aggregation;

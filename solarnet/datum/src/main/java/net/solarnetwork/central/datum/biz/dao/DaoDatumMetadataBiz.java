@@ -46,8 +46,9 @@ import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -248,6 +249,17 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Override
 	public Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter) {
 		return metaDao.findDatumStreamMetadata(filter);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter) {
+		Iterable<ObjectDatumStreamMetadataId> result = metaDao.findDatumStreamMetadataIds(filter);
+		if ( result instanceof Set ) {
+			return (Set<ObjectDatumStreamMetadataId>) result;
+		}
+		return StreamSupport.stream(result.spliterator(), false)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 }

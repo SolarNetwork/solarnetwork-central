@@ -31,8 +31,9 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -208,5 +209,22 @@ public interface DatumMetadataBiz {
 	 * @since 1.3
 	 */
 	Iterable<ObjectDatumStreamMetadata> findDatumStreamMetadata(ObjectStreamCriteria filter);
+
+	/**
+	 * Find all available object datum stream metadata for a given search
+	 * filter.
+	 * 
+	 * <p>
+	 * The {@link ObjectStreamCriteria#getObjectKind()} determines the type of
+	 * metadata returned. If not specified, {@link ObjectDatumKind#Node} will be
+	 * assumed.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search filter
+	 * @return the matching results, never {@literal null}
+	 * @since 2.0
+	 */
+	Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
 
 }

@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general object datum identifier.

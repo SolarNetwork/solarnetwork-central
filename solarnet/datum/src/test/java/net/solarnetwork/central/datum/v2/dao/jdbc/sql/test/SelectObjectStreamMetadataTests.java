@@ -30,8 +30,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.sameInstance;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,8 +47,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.SimpleLocation;
 
 /**
@@ -74,6 +75,22 @@ public class SelectObjectStreamMetadataTests {
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("node-stream-meta-nodesAndSources.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_nodesAndSources_minimum() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node,
+				MetadataSelectStyle.Minimum).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-minimum-nodesAndSources.sql", TestSqlResources.class));
 	}
 
 	@Test

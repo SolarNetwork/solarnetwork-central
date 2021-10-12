@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import net.solarnetwork.domain.Location;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Object-specific (node or location) datum stream metadata.

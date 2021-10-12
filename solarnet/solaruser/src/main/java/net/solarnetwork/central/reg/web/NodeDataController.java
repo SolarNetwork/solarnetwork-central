@@ -22,23 +22,21 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.web.domain.Response.response;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.TimeZone;
-import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.util.JodaDateFormatEditor;
-import net.solarnetwork.util.JodaDateFormatEditor.ParseMode;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -52,32 +50,12 @@ import net.solarnetwork.web.domain.Response;
 @GlobalExceptionRestController
 public class NodeDataController {
 
-	private final QueryBiz queryBiz;
+	private final DatumMetadataBiz datumMetadataBiz;
 
 	@Autowired
-	public NodeDataController(QueryBiz queryBiz) {
+	public NodeDataController(DatumMetadataBiz datumMetadataBiz) {
 		super();
-		this.queryBiz = queryBiz;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * <p>
-	 * Registers a {@link LocalDate} property editor using the
-	 * {@link #DEFAULT_DATE_FORMAT} pattern.
-	 * </p>
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		binder.registerCustomEditor(LocalDate.class,
-				new JodaDateFormatEditor(DEFAULT_DATE_FORMAT, ParseMode.LocalDate));
-		binder.registerCustomEditor(DateTime.class,
-				new JodaDateFormatEditor(new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT },
-						TimeZone.getTimeZone("UTC")));
+		this.datumMetadataBiz = requireNonNullArgument(datumMetadataBiz, "datumMetadataBiz");
 	}
 
 	/**
@@ -91,10 +69,12 @@ public class NodeDataController {
 	@ResponseBody
 	@RequestMapping(value = "/{nodeId}/sources", method = RequestMethod.GET)
 	public Response<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
-		DatumFilterCommand filter = new DatumFilterCommand();
+		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(nodeId);
-		Set<String> data = queryBiz.getAvailableSources(filter);
-		return new Response<Set<String>>(data);
+		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);
+		Set<String> sourceIds = data.stream().map(ObjectDatumStreamMetadataId::getSourceId)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		return response(sourceIds);
 	}
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.io.Serializable;
 import java.util.Objects;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Association of object ID and object kind.
