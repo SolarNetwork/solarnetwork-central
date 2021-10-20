@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+	
+	<definition name="index" extends="default">
+		<put-attribute name="body" value="/WEB-INF/jsp/index.jsp" />
+	</definition>
+	
+	<definition name="login" extends="default">
+		<put-attribute name="navloc" type="string" value="login"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/login.jsp" />
+	</definition>
+	
+	<definition name="logoutSuccess" extends="default">
+		<put-attribute name="navloc" type="string" value="none"/>
+		<put-attribute name="body" value="/WEB-INF/jsp/loggedout.jsp"/>
+	</definition>
+	
+	<definition name="tzpicker-500" extends="ajaxLayout">
+		<put-attribute name="body" value="/WEB-INF/jsp/tzpicker-500.jsp"/>
+	</definition>
+	
+</tiles-definitions>

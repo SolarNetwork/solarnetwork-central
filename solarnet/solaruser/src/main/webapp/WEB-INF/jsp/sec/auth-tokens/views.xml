@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+	"-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+	"http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+	
+	<definition name="authTokensLayout" extends="default">
+		<put-attribute name="navloc" type="string" value="auth-tokens"/>
+		<put-attribute name="head" value="/WEB-INF/jsp/sec/auth-tokens/head.jsp" />
+	</definition>
+	
+	<definition name="auth-tokens/*" extends="authTokensLayout">
+		<put-attribute name="body" value="/WEB-INF/jsp/sec/auth-tokens/{1}.jsp" />
+	</definition>
+	
+</tiles-definitions>

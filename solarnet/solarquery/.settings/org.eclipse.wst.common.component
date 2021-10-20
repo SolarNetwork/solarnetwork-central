@@ -1,24 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-    	
-    <wb-module deploy-name="solarapp-query">
-        		
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
-        		
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        <property name="context-root" value="solarapp-query"/>
-        	
-    </wb-module>
-    
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="1.5.0">
+	<wb-module deploy-name="solarapp-query">
+		<property name="context-root" value="solarquery"/>
+		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
+		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+	</wb-module>
 </project-modules>

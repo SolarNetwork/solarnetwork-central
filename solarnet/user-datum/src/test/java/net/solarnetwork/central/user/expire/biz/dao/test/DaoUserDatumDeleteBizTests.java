@@ -49,6 +49,7 @@ import org.easymock.IAnswer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
@@ -85,8 +86,9 @@ public class DaoUserDatumDeleteBizTests {
 		datumDao = EasyMock.createMock(DatumMaintenanceDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		jobInfoDao = EasyMock.createMock(UserDatumDeleteJobInfoDao.class);
-		biz = new DaoUserDatumDeleteBiz(new CallingThreadExecutorService(), userNodeDao, datumDao,
-				jobInfoDao);
+
+		biz = new DaoUserDatumDeleteBiz(new TaskExecutorAdapter(new CallingThreadExecutorService()),
+				userNodeDao, datumDao, jobInfoDao);
 	}
 
 	@After

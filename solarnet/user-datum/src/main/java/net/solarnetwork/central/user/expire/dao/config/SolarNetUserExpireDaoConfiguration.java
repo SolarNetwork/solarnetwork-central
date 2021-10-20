@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserExpireConfiguration.java - 7/10/2021 3:55:57 PM
+ * SolarNetUserExpireDaoConfiguration.java - 20/10/2021 5:15:35 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,19 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.config;
+package net.solarnetwork.central.user.expire.dao.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Marker interface for the User Expire configuration package.
+ * Marker interface for user expire DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
 @ComponentScan
-public class UserExpireConfiguration {
-
+public class SolarNetUserExpireDaoConfiguration {
+	// nothing here
 }

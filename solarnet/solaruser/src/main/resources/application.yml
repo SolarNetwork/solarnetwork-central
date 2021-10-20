@@ -1,0 +1,109 @@
+app:
+  config:
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost/solarquery"
+      solaruser: "http://localhost/solaruser"
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: solartest
+    password: solartest
+    platform: postgres
+    initialize: false
+  solaruser:
+    cache.persistence.path: "var/cache"
+    datum.delete:
+      completed-task-minimum-cache-time: 14400000
+      delete-batch-days: 7
+      parallelism: 1
+    network-identity:
+      network-identity-key: "replace:identity:here"
+      terms-of-service: "replace:tos:here"
+      host: "localhost"
+      port: 8080
+      force-tls: false
+      service-urls:
+        solaruser: "http://localhost/solaruser"
+        solarquery: "http://localhost/solarquery"
+        solarin-mqtt: "mqtts://localhost:8883"
+    node-ownership-cache:
+      ttl: 60
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    query-cache:
+      ttl: 60
+      heap-max-entries: 1000
+      disk-max-size-mb: 100
+      compress-minimum-length: 512
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    task.executor:
+      thread-name-prefix: "SolarNet-"
+      core-pool-size: 1
+    task.scheduler:
+      thread-name-prefix: "SolarNet-Sched-"
+      pool-size: 1
+  
+logging:
+  level:
+    ROOT: INFO
+    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+    net.solarnetwork.central: DEBUG
+    org.springframework.test: DEBUG
+  pattern:
+    console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
+
+spring:
+  mvc.format:
+    date: iso
+    date-time: iso
+    time: iso
+  mvc.view:
+    prefix: /WEB-INF/jsp/
+    suffix: .jsp
+
+server:
+  port: 9081
+  servlet.context-path: /solaruser
+
+---
+spring:
+  config.activate.on-profile: development
+  thymeleaf.cache: false
+
+debug: true
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+
+---
+spring:
+  config.activate.on-profile: production
+  thymeleaf.cache: true
+
+logging:
+  level:
+    ROOT: INFO
+    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+    net.solarnetwork.central: INFO

@@ -1,0 +1,9 @@
+logging:
+  level:
+    net.solarnetwork.central: DEBUG
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_stage"
+    username: solarmgmnt
+    password: solarmgmnt

@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,6 +48,8 @@ import java.util.stream.Collectors;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserUuidPK;
@@ -85,12 +86,12 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private final UserNodeDao userNodeDao;
 	private final DatumMaintenanceDao datumDao;
 	private final UserDatumDeleteJobInfoDao jobInfoDao;
-	private final ExecutorService executor;
+	private final AsyncTaskExecutor executor;
 
 	private final ConcurrentMap<UserUuidPK, DatumDeleteTask> taskMap = new ConcurrentHashMap<>(16, 0.9f,
 			1);
 
-	private ScheduledExecutorService scheduler;
+	private TaskScheduler scheduler;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private OptionalService<EventAdmin> eventAdmin;
 	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
@@ -111,7 +112,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * @param jobInfoDao
 	 *        the job DAO to use
 	 */
-	public DaoUserDatumDeleteBiz(ExecutorService executor, UserNodeDao userNodeDao,
+	public DaoUserDatumDeleteBiz(AsyncTaskExecutor executor, UserNodeDao userNodeDao,
 			DatumMaintenanceDao datumDao, UserDatumDeleteJobInfoDao jobInfoDao) {
 		super();
 		this.executor = executor;
@@ -137,8 +138,8 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			ConcurrentMap<UserUuidPK, DatumDeleteJobStatus> map = (ConcurrentMap) taskMap;
 			taskPurgerTask = scheduler.scheduleWithFixedDelay(
-					new DatumDeleteTaskPurger(completedTaskMinimumCacheTime, map), 1L, 1L,
-					TimeUnit.HOURS);
+					new DatumDeleteTaskPurger(completedTaskMinimumCacheTime, map),
+					Instant.now().plus(1, ChronoUnit.HOURS), Duration.ofHours(1));
 		}
 	}
 
@@ -584,7 +585,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * @param scheduler
 	 *        the scheduler to use
 	 */
-	public void setScheduler(ScheduledExecutorService scheduler) {
+	public void setScheduler(TaskScheduler scheduler) {
 		this.scheduler = scheduler;
 	}
 
