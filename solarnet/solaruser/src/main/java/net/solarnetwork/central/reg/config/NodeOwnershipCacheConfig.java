@@ -1,5 +1,5 @@
 /* ==================================================================
- * EmailThrottleCacheConfig.java - 7/10/2021 11:11:44 AM
+ * NodeOwnershipCacheConfig.java - 7/10/2021 11:25:40 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,9 +20,9 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.reg.config;
 
-import static net.solarnetwork.central.user.config.RegistrationBizConfig.EMAIL_THROTTLE;
+import static net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig.NODE_OWNERSHIP_CACHE;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,31 +30,38 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.CacheSettings;
 
 /**
- * Email throttle cache configuration.
+ * Configuration for the node ownership cache.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class EmailThrottleCacheConfig {
+public class NodeOwnershipCacheConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
 
 	@Bean
-	@ConfigurationProperties(prefix = "app.email-throttle-cache")
-	public CacheSettings emailThrottleCacheSettings() {
+	@ConfigurationProperties(prefix = "app.node-ownership-cache")
+	public CacheSettings nodeOwnershipCacheSettings() {
 		return new CacheSettings();
 	}
 
+	/**
+	 * Get the datum cache.
+	 * 
+	 * @return the actor cache
+	 */
 	@Bean
-	@Qualifier(EMAIL_THROTTLE)
-	public Cache<String, Boolean> emailThrottleCache() {
-		CacheSettings settings = emailThrottleCacheSettings();
-		return settings.createCache(cacheManager, String.class, Boolean.class, EMAIL_THROTTLE);
+	@Qualifier(NODE_OWNERSHIP_CACHE)
+	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache() {
+		CacheSettings settings = nodeOwnershipCacheSettings();
+		return settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
+				NODE_OWNERSHIP_CACHE);
 	}
 
 }

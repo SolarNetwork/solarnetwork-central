@@ -33,8 +33,10 @@ import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
-import net.solarnetwork.central.instructor.config.InstructorConfiguration;
-import net.solarnetwork.central.user.config.UserConfiguration;
+import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
+import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
+import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
+import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
@@ -44,14 +46,18 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @author matt
  * @version 1.0
  */
-@SpringBootApplication(scanBasePackageClasses = { SolarUserApp.class })
 //@formatter:off
+@SpringBootApplication(scanBasePackageClasses = {
+		SolarUserApp.class,
+})
 @Import({
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
+		SolarNetCommonMailConfiguration.class,
+		SolarNetCommonSecurityConfiguration.class,
 		SolarNetDatumConfiguration.class,
-		InstructorConfiguration.class,
-		UserConfiguration.class,
+		SolarNetInstructorConfiguration.class,
+		SolarNetUserConfiguration.class,
 		SolarNetUserExpireConfiguration.class,
 })
 //@formatter:on

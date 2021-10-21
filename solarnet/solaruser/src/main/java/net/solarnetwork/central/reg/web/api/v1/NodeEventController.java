@@ -31,7 +31,6 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +43,6 @@ import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.web.domain.Response;
 
@@ -60,7 +58,7 @@ import net.solarnetwork.web.domain.Response;
 @RequestMapping(value = { "/sec/event", "/v1/sec/user/event" })
 public class NodeEventController {
 
-	private final OptionalService<UserEventHookBiz> eventHookBiz;
+	private final UserEventHookBiz eventHookBiz;
 	private final ConcurrentMap<String, List<SettingSpecifier>> serviceSettings;
 
 	/**
@@ -71,13 +69,8 @@ public class NodeEventController {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	@Autowired
-	public NodeEventController(
-			@Qualifier("eventHookBiz") OptionalService<UserEventHookBiz> eventHookBiz) {
+	public NodeEventController(@Autowired(required = false) UserEventHookBiz eventHookBiz) {
 		super();
-		if ( eventHookBiz == null ) {
-			throw new IllegalArgumentException("The eventHookBiz argument must not be null.");
-		}
 		this.eventHookBiz = eventHookBiz;
 		serviceSettings = new ConcurrentHashMap<>(8);
 	}
@@ -85,10 +78,9 @@ public class NodeEventController {
 	@ResponseBody
 	@RequestMapping(value = "/node/topics", method = RequestMethod.GET)
 	public Response<Iterable<LocalizedServiceInfo>> availableDatumEventHookTopics(Locale locale) {
-		final UserEventHookBiz biz = eventHookBiz.service();
 		Iterable<LocalizedServiceInfo> result = null;
-		if ( biz != null ) {
-			result = biz.availableDatumEventTopics(locale);
+		if ( eventHookBiz != null ) {
+			result = eventHookBiz.availableDatumEventTopics(locale);
 		}
 		return response(result);
 	}
@@ -96,10 +88,9 @@ public class NodeEventController {
 	@ResponseBody
 	@RequestMapping(value = "/node/hook/services", method = RequestMethod.GET)
 	public Response<List<LocalizedServiceInfo>> availableNodeEventHookServices(Locale locale) {
-		final UserEventHookBiz biz = eventHookBiz.service();
 		List<LocalizedServiceInfo> result = null;
-		if ( biz != null ) {
-			result = localizedServiceSettings(biz.availableNodeEventHookServices(), locale);
+		if ( eventHookBiz != null ) {
+			result = localizedServiceSettings(eventHookBiz.availableNodeEventHookServices(), locale);
 		}
 		return response(result);
 	}
@@ -108,13 +99,12 @@ public class NodeEventController {
 	@RequestMapping(value = "/node/hooks", method = RequestMethod.GET)
 	public Response<List<UserNodeEventHookConfiguration>> nodeHookConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		final UserEventHookBiz biz = eventHookBiz.service();
 		List<UserNodeEventHookConfiguration> configs = null;
-		if ( biz != null ) {
+		if ( eventHookBiz != null ) {
 			configs = maskConfigurations(
-					biz.configurationsForUser(userId, UserNodeEventHookConfiguration.class),
+					eventHookBiz.configurationsForUser(userId, UserNodeEventHookConfiguration.class),
 					serviceSettings, (Void) -> {
-						return biz.availableNodeEventHookServices();
+						return eventHookBiz.availableNodeEventHookServices();
 					});
 		}
 		return response(configs);
@@ -124,17 +114,16 @@ public class NodeEventController {
 	@RequestMapping(value = "/node/hooks", method = RequestMethod.POST)
 	public Response<UserNodeEventHookConfiguration> saveNodeHookConfiguration(
 			@RequestBody UserNodeEventHookConfiguration config) {
-		final UserEventHookBiz biz = eventHookBiz.service();
-		if ( biz != null ) {
+		if ( eventHookBiz != null ) {
 			if ( config.getUserId() == null ) {
 				config.setUserId(SecurityUtils.getCurrentActorUserId());
 			}
-			UserLongPK id = biz.saveConfiguration(config);
+			UserLongPK id = eventHookBiz.saveConfiguration(config);
 			if ( id != null ) {
-				config = biz.configurationForUser(id.getUserId(), UserNodeEventHookConfiguration.class,
-						id.getId());
+				config = eventHookBiz.configurationForUser(id.getUserId(),
+						UserNodeEventHookConfiguration.class, id.getId());
 				return response(maskConfiguration(config, serviceSettings, (Void) -> {
-					return biz.availableNodeEventHookServices();
+					return eventHookBiz.availableNodeEventHookServices();
 				}));
 			}
 		}
@@ -145,14 +134,13 @@ public class NodeEventController {
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.GET)
 	public Response<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
 			@PathVariable("id") Long id) {
-		final UserEventHookBiz biz = eventHookBiz.service();
 		UserNodeEventHookConfiguration result = null;
-		if ( biz != null ) {
+		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.configurationForUser(userId, UserNodeEventHookConfiguration.class, id);
+			result = eventHookBiz.configurationForUser(userId, UserNodeEventHookConfiguration.class, id);
 			if ( result != null ) {
 				result = maskConfiguration(result, serviceSettings, (Void) -> {
-					return biz.availableNodeEventHookServices();
+					return eventHookBiz.availableNodeEventHookServices();
 				});
 			}
 		}
@@ -162,13 +150,12 @@ public class NodeEventController {
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
 	public Response<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
-		final UserEventHookBiz biz = eventHookBiz.service();
-		if ( biz != null ) {
+		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			UserNodeEventHookConfiguration config = biz.configurationForUser(userId,
+			UserNodeEventHookConfiguration config = eventHookBiz.configurationForUser(userId,
 					UserNodeEventHookConfiguration.class, id);
 			if ( config != null ) {
-				biz.deleteConfiguration(config);
+				eventHookBiz.deleteConfiguration(config);
 			}
 		}
 		return response(null);

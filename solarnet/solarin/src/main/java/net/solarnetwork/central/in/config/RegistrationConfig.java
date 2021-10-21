@@ -23,19 +23,11 @@
 package net.solarnetwork.central.in.config;
 
 import static net.solarnetwork.central.user.config.RegistrationBizConfig.USER_REGISTRATION;
-import java.security.SecureRandom;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.Validator;
-import net.solarnetwork.central.security.DelegatingPasswordEncoder;
 import net.solarnetwork.central.user.biz.dao.UserValidator;
-import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
  * Registration configuration.
@@ -46,35 +38,10 @@ import net.solarnetwork.pki.bc.BCCertificateService;
 @Configuration
 public class RegistrationConfig {
 
-	@Value("${app.node.certificate.expire-days:720}")
-	public int certificateExpireDays = 720;
-
-	@Value("${app.node.certificate.signature-alg:SHA256WithRSA}")
-	public String signatureAlgorithm = "SHA256WithRSA";
-
 	@Bean
 	@Qualifier(USER_REGISTRATION)
 	public Validator userRegistrationValidator() {
 		return new UserValidator();
-	}
-
-	@Bean
-	@Qualifier(USER_REGISTRATION)
-	@SuppressWarnings("deprecation")
-	public DelegatingPasswordEncoder userRegistrationPasswordEncoder() {
-		Map<String, PasswordEncoder> encoders = new LinkedHashMap<>(2);
-		encoders.put("$2a$", new BCryptPasswordEncoder(12, new SecureRandom()));
-		encoders.put("{SHA}", new net.solarnetwork.central.security.LegacyPasswordEncoder());
-		return new DelegatingPasswordEncoder(encoders);
-	}
-
-	@Bean
-	@Qualifier(USER_REGISTRATION)
-	public BCCertificateService certificateService() {
-		BCCertificateService service = new BCCertificateService();
-		service.setCertificateExpireDays(certificateExpireDays);
-		service.setSignatureAlgorithm(signatureAlgorithm);
-		return service;
 	}
 
 }

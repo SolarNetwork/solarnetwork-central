@@ -22,18 +22,11 @@
 
 package net.solarnetwork.central.reg.config;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import net.solarnetwork.central.biz.AppConfigurationBiz;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
-import net.solarnetwork.central.support.BasicAppConfigurationBiz;
-import net.solarnetwork.central.support.SimpleAppConfiguration;
 
 /**
  * Application configuration.
@@ -50,16 +43,5 @@ import net.solarnetwork.central.support.SimpleAppConfiguration;
 })
 //@formatter:on
 public class AppConfig {
-
-	@Bean
-	@ConfigurationProperties(prefix = "app.config.service-urls")
-	public Map<String, String> serviceUrls() {
-		return new LinkedHashMap<>();
-	}
-
-	@Bean
-	public AppConfigurationBiz appConfigurationBiz() {
-		return new BasicAppConfigurationBiz(new SimpleAppConfiguration(serviceUrls()));
-	}
-
+	// nothing here
 }

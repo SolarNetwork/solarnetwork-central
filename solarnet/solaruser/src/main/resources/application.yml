@@ -1,11 +1,4 @@
 app:
-  config:
-    service-urls:
-      node-dashboard: "http://localhost/node-dashboard"
-      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
-      solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost/solarquery"
-      solaruser: "http://localhost/solaruser"
   datasource:
     hikari:
       minimumIdle: 1
@@ -18,22 +11,37 @@ app:
     password: solartest
     platform: postgres
     initialize: false
+  email-throttle-cache:
+    ttl: 600
+    heap-max-entries: 1000
+    disk-max-size-mb: 100
+  network-identity:
+    network-identity-key: "replace:identity:here"
+    terms-of-service: "replace:tos:here"
+    host: "localhost"
+    port: 8080
+    force-tls: false
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost/solarquery"
+      solaruser: "http://localhost/solaruser"
+  node.pki:
+    cs:
+      certificate-expire-days: 730
+      signature-algorithm: "SHA256WithRSA"
+    dogtag:
+      base-url: "https://ca.solarnetwork.net:8443"
+      profile-id: "SolarNode"
+      keystore-resource: "classpath:dogtag-client.jks"
+      keystore-password: "changeit"
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
   solaruser:
     cache.persistence.path: "var/cache"
-    datum.delete:
-      completed-task-minimum-cache-time: 14400000
-      delete-batch-days: 7
-      parallelism: 1
-    network-identity:
-      network-identity-key: "replace:identity:here"
-      terms-of-service: "replace:tos:here"
-      host: "localhost"
-      port: 8080
-      force-tls: false
-      service-urls:
-        solaruser: "http://localhost/solaruser"
-        solarquery: "http://localhost/solarquery"
-        solarin-mqtt: "mqtts://localhost:8883"
     node-ownership-cache:
       ttl: 60
       heap-max-entries: 10000
@@ -53,7 +61,19 @@ app:
     task.scheduler:
       thread-name-prefix: "SolarNet-Sched-"
       pool-size: 1
-  
+  user.datum:
+    delete:
+      completed-task-minimum-cache-time: 14400000
+      delete-batch-days: 7
+      parallelism: 1
+  user.reg:
+    mail.template:
+      from: "nobody@localhost.localdomain"
+  web.security:
+    token:
+      max-request-body-size: 65535
+      max-date-skew: 900000
+
 logging:
   level:
     ROOT: INFO
@@ -100,6 +120,18 @@ app:
 ---
 spring:
   config.activate.on-profile: production
+  mail:
+    host: "localhost"
+    port: 587
+    username: "mailuser"
+    password: "mailpass"
+    properties:
+      "[mail.smtp.auth]": true
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
   thymeleaf.cache: true
 
 logging:

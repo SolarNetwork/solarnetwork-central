@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * MailConfiguration.java - 21/10/2021 11:02:32 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,37 @@
 
 package net.solarnetwork.central.reg.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.DefaultMailService;
 
 /**
- * Configuration for user datum services.
+ * Mail configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+public class MailConfiguration {
 
+	@Autowired
+	private MailSender mailSender;
+
+	@ConfigurationProperties(prefix = "app.user.reg.mail.template")
+	@Bean
+	public SimpleMailMessage mailTemplate() {
+		return new SimpleMailMessage();
+	}
+
+	@Bean
+	public MailService mailService() {
+		DefaultMailService service = new DefaultMailService(mailSender);
+		service.setTemplateMessage(mailTemplate());
+		return service;
+	}
 }

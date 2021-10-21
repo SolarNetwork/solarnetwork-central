@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * SolarUserBizConfig.java - 21/10/2021 3:12:26 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,29 @@
 
 package net.solarnetwork.central.reg.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
+import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
+import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 
 /**
- * Configuration for user datum services.
+ * Business service configuration for SolarUser.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+public class SolarUserBizConfig {
+
+	@Autowired
+	private SolarNodeMetadataDao solarNodeMetadataDao;
+
+	@Bean
+	public SolarNodeMetadataBiz solarNodeMetadataBiz() {
+		DaoSolarNodeMetadataBiz biz = new DaoSolarNodeMetadataBiz(solarNodeMetadataDao);
+		return biz;
+	}
 
 }

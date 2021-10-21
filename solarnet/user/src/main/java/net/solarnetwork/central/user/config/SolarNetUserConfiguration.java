@@ -33,6 +33,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ComponentScan
-public class UserConfiguration {
+public class SolarNetUserConfiguration {
 	// nothing here
 }

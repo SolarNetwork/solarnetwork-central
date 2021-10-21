@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * UserConfig.java - 21/10/2021 10:00:06 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,26 @@
 
 package net.solarnetwork.central.reg.config;
 
+import static net.solarnetwork.central.user.config.RegistrationBizConfig.USER_REGISTRATION;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.Validator;
+import net.solarnetwork.central.user.biz.dao.UserValidator;
 
 /**
- * Configuration for user datum services.
+ * Configuration for user registration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+public class UserRegistrationConfig {
+
+	@Qualifier(USER_REGISTRATION)
+	@Bean
+	public Validator userValidator() {
+		return new UserValidator();
+	}
 
 }

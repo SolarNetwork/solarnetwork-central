@@ -46,7 +46,7 @@ public class NodeOwnershipCacheConfig {
 	private CacheManager cacheManager;
 
 	@Bean
-	@ConfigurationProperties(prefix = "app.solarin.node-ownership-cache")
+	@ConfigurationProperties(prefix = "app.node-ownership-cache")
 	public CacheSettings nodeOwnershipCacheSettings() {
 		return new CacheSettings();
 	}

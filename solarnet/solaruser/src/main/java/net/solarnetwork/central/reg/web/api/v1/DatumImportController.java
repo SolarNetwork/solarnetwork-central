@@ -41,7 +41,6 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -72,7 +71,6 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.web.domain.Response;
 import net.solarnetwork.web.support.MultipartFileResource;
 
@@ -90,7 +88,7 @@ public class DatumImportController {
 
 	private final Logger log = LoggerFactory.getLogger(DatumImportController.class);
 
-	private final OptionalService<DatumImportBiz> importBiz;
+	private final DatumImportBiz importBiz;
 
 	/**
 	 * Constructor.
@@ -98,8 +96,7 @@ public class DatumImportController {
 	 * @param importBiz
 	 *        the import biz to use
 	 */
-	@Autowired
-	public DatumImportController(@Qualifier("importBiz") OptionalService<DatumImportBiz> importBiz) {
+	public DatumImportController(@Autowired(required = false) DatumImportBiz importBiz) {
 		super();
 		this.importBiz = importBiz;
 	}
@@ -165,10 +162,9 @@ public class DatumImportController {
 	@ResponseBody
 	@RequestMapping(value = "/services/input", method = RequestMethod.GET)
 	public Response<List<LocalizedServiceInfo>> availableInputFormatServices(Locale locale) {
-		final DatumImportBiz biz = importBiz.service();
 		List<LocalizedServiceInfo> result = null;
-		if ( biz != null ) {
-			Iterable<DatumImportInputFormatService> services = biz.availableInputFormatServices();
+		if ( importBiz != null ) {
+			Iterable<DatumImportInputFormatService> services = importBiz.availableInputFormatServices();
 			result = new ArrayList<>();
 			for ( DatumImportInputFormatService s : services ) {
 				result.add(s.getLocalizedServiceInfo(locale));
@@ -196,15 +192,14 @@ public class DatumImportController {
 			"/jobs/" }, method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public Response<DatumImportReceipt> createJob(@RequestPart("config") BasicConfiguration config,
 			@RequestPart("data") MultipartFile data) {
-		final DatumImportBiz biz = importBiz.service();
 		DatumImportReceipt result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportResource resource = new BasicDatumImportResource(
 					new MultipartFileResource(data), data.getContentType());
 			BasicDatumImportRequest request = new BasicDatumImportRequest(config, userId);
 			try {
-				result = biz.submitDatumImportRequest(request, resource);
+				result = importBiz.submitDatumImportRequest(request, resource);
 			} catch ( IOException e ) {
 				throw new RuntimeException(e);
 			}
@@ -226,13 +221,12 @@ public class DatumImportController {
 	public Callable<Response<FilterResults<GeneralNodeDatumComponents>>> previewStagedImport(
 			@PathVariable("id") String jobId,
 			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
-		final DatumImportBiz biz = importBiz.service();
 		final Future<FilterResults<GeneralNodeDatumComponents>> future;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportPreviewRequest req = new BasicDatumImportPreviewRequest(userId, jobId,
 					count);
-			future = biz.previewStagedImportRequest(req);
+			future = importBiz.previewStagedImportRequest(req);
 		} else {
 			future = null;
 		}
@@ -284,9 +278,8 @@ public class DatumImportController {
 	@RequestMapping(value = "/jobs", method = RequestMethod.GET)
 	public Response<Collection<DatumImportStatus>> jobStatusesForUser(
 			@RequestParam(value = "states", required = false) DatumImportState[] states) {
-		final DatumImportBiz biz = importBiz.service();
 		Collection<DatumImportStatus> result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Set<DatumImportState> stateFilter = null;
 			if ( states != null && states.length > 0 ) {
 				stateFilter = new HashSet<>(states.length);
@@ -296,7 +289,7 @@ public class DatumImportController {
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.datumImportJobStatusesForUser(userId, stateFilter);
+			result = importBiz.datumImportJobStatusesForUser(userId, stateFilter);
 		}
 		return response(result);
 	}
@@ -316,11 +309,10 @@ public class DatumImportController {
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
 	public Response<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
-		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.datumImportJobStatusForUser(userId, id);
+			result = importBiz.datumImportJobStatusForUser(userId, id);
 		}
 		return response(result);
 	}
@@ -340,11 +332,10 @@ public class DatumImportController {
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
 	public Response<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
-		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
+			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
 					Collections.singleton(DatumImportState.Staged));
 		}
 		return response(result);
@@ -368,11 +359,10 @@ public class DatumImportController {
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.POST)
 	public Response<DatumImportStatus> updateJob(@PathVariable("id") String id,
 			@RequestBody BasicConfiguration config) {
-		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobConfigurationForUser(userId, id, config);
+			result = importBiz.updateDatumImportJobConfigurationForUser(userId, id, config);
 		}
 		return response(result);
 	}
@@ -392,14 +382,14 @@ public class DatumImportController {
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
 	public Response<DatumImportStatus> retractJob(@PathVariable("id") String id) {
-		final DatumImportBiz biz = importBiz.service();
 		DatumImportStatus result = null;
-		if ( biz != null ) {
+		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted, EnumSet
-					.of(DatumImportState.Staged, DatumImportState.Queued, DatumImportState.Claimed));
+			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Retracted,
+					EnumSet.of(DatumImportState.Staged, DatumImportState.Queued,
+							DatumImportState.Claimed));
 			if ( result != null ) {
-				biz.deleteDatumImportJobsForUser(userId, singleton(id));
+				importBiz.deleteDatumImportJobsForUser(userId, singleton(id));
 			}
 		}
 		return response(result);

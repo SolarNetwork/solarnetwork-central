@@ -34,7 +34,6 @@ import java.time.format.SignStyle;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,7 +59,6 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -74,7 +72,7 @@ import net.solarnetwork.web.domain.Response;
 @GlobalExceptionRestController
 public class BillingController {
 
-	private final OptionalService<BillingBiz> billingBiz;
+	private final BillingBiz billingBiz;
 
 	/**
 	 * Constructor.
@@ -82,8 +80,7 @@ public class BillingController {
 	 * @param billingBiz
 	 *        the billing biz to use
 	 */
-	@Autowired
-	public BillingController(@Qualifier("billingBiz") OptionalService<BillingBiz> billingBiz) {
+	public BillingController(@Autowired(required = false) BillingBiz billingBiz) {
 		super();
 		if ( billingBiz == null ) {
 			throw new IllegalArgumentException("The billingBiz parameter must not be null.");
@@ -92,11 +89,10 @@ public class BillingController {
 	}
 
 	private BillingBiz billingBiz() {
-		BillingBiz biz = billingBiz.service();
-		if ( biz == null ) {
+		if ( billingBiz == null ) {
 			throw new UnsupportedOperationException("Billing service not available.");
 		}
-		return biz;
+		return billingBiz;
 	}
 
 	/**

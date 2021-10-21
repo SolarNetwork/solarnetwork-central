@@ -1,5 +1,5 @@
 /* ==================================================================
- * InstructorConfiguration.java - 5/10/2021 9:19:27 PM
+ * SolarNetUserExpireDaoConfiguration.java - 20/10/2021 5:15:35 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,19 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.instructor.config;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+package net.solarnetwork.central.user.expire.dao.config;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * Marker interface for user expire DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class InstructorConfiguration {
+public interface UserExpireDaoConfiguration {
 	// nothing here
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarNetUserExpireDaoConfiguration.java - 20/10/2021 5:15:35 PM
+ * CertificationAuthorityConfig.java - 21/10/2021 10:14:58 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,19 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.dao.config;
+package net.solarnetwork.central.security.config;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
- * Marker interface for user expire DAO configuration.
+ * Common configuration for certification authority services.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-@ComponentScan
-public class SolarNetUserExpireDaoConfiguration {
-	// nothing here
+public class CertificationAuthorityConfig {
+
+	@ConfigurationProperties(prefix = "app.node.pki.cs")
+	@Bean
+	public BCCertificateService certificateService() {
+		return new BCCertificateService();
+	}
 }

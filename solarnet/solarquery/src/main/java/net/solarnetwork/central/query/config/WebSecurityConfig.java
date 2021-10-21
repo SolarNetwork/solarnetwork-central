@@ -24,6 +24,7 @@ package net.solarnetwork.central.query.config;
 
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -49,6 +50,12 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
+	private static String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+			Role.ROLE_NODE.toString(), Role.ROLE_READNODEDATA.toString(), };
+
+	private static String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
+			Role.ROLE_NODE.toString(), Role.ROLE_WRITENODEDATA.toString(), };
+
 	@Autowired
 	private DataSource dataSource;
 
@@ -68,6 +75,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new SecurityTokenAuthenticationEntryPoint();
 	}
 
+	@ConfigurationProperties(prefix = "app.web.security.token")
 	@Bean
 	public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
 		AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -84,12 +92,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthenticationTokenService authenticationTokenService() {
 		return new UserDetailsAuthenticationTokenService(userDetailsService());
 	}
-
-	private static String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
-			Role.ROLE_NODE.toString(), Role.ROLE_READNODEDATA.toString(), };
-
-	private static String[] WRITE_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
-			Role.ROLE_NODE.toString(), Role.ROLE_WRITENODEDATA.toString(), };
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -110,6 +112,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	      // no sessions
 	      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 	      
+	      // token auth filter
+	      .addFilterBefore(tokenAuthenticationFilter(),
+					UsernamePasswordAuthenticationFilter.class)
+	      
 	      .authorizeRequests()
 	      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 	        .antMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
@@ -122,11 +128,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .antMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 	        .antMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 	        .antMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .anyRequest().authenticated();;
+	        .anyRequest().authenticated()
+	    ;
 	    // @formatter:on
-
-		// insert custom token preauth filter
-		http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 	}
 
 }

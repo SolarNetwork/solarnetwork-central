@@ -24,8 +24,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,12 +65,9 @@ public class DatumMaintenanceController {
 	 *        the biz to use
 	 * @param queryBiz
 	 *        the query biz to use
-	 * @param pathMatcher
-	 *        the source ID path matcher to use
 	 */
 	@Autowired
-	public DatumMaintenanceController(DatumMaintenanceBiz datumMaintenanceBiz,
-			@Qualifier("sourceIdPathMatcher") PathMatcher pathMatcher) {
+	public DatumMaintenanceController(DatumMaintenanceBiz datumMaintenanceBiz) {
 		super();
 		this.datumMaintenanceBiz = datumMaintenanceBiz;
 	}

@@ -101,7 +101,6 @@ public class RegistrationBizConfig {
 	private NetworkIdentificationBiz networkIdentificationBiz;
 
 	@Autowired
-	@Qualifier(USER_REGISTRATION)
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
@@ -119,7 +118,6 @@ public class RegistrationBizConfig {
 	private InstructorBiz instructorBiz;
 
 	@Autowired
-	@Qualifier(USER_REGISTRATION)
 	private CertificateService certificateService;
 
 	@Bean

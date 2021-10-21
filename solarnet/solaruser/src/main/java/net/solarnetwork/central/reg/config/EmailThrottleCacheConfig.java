@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * EmailThrottleCacheConfig.java - 7/10/2021 11:11:44 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,39 @@
 
 package net.solarnetwork.central.reg.config;
 
+import static net.solarnetwork.central.user.config.RegistrationBizConfig.EMAIL_THROTTLE;
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
- * Configuration for user datum services.
+ * Email throttle cache configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+public class EmailThrottleCacheConfig {
+
+	@Autowired
+	private CacheManager cacheManager;
+
+	@Bean
+	@ConfigurationProperties(prefix = "app.email-throttle-cache")
+	public CacheSettings emailThrottleCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(EMAIL_THROTTLE)
+	public Cache<String, Boolean> emailThrottleCache() {
+		CacheSettings settings = emailThrottleCacheSettings();
+		return settings.createCache(cacheManager, String.class, Boolean.class, EMAIL_THROTTLE);
+	}
 
 }

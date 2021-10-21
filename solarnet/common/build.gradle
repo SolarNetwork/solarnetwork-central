@@ -72,6 +72,7 @@ dependencies {
 	
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common:2.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.0.0'
 	
 	// Testing

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * PasswordEncoderConfig.java - 21/10/2021 9:40:09 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.security.config;
 
+import java.security.SecureRandom;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import net.solarnetwork.central.security.DelegatingPasswordEncoder;
 
 /**
- * Configuration for user datum services.
+ * Password encoder configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+public class PasswordEncoderConfig {
+
+	@SuppressWarnings("deprecation")
+	@Bean
+	public DelegatingPasswordEncoder passwordEncoder() {
+		Map<String, PasswordEncoder> encoders = new LinkedHashMap<>(2);
+		encoders.put("$2a$", new BCryptPasswordEncoder(BCryptPasswordEncoder.BCryptVersion.$2A, 12,
+				new SecureRandom()));
+		encoders.put("{SHA}", new net.solarnetwork.central.security.LegacyPasswordEncoder());
+		return new DelegatingPasswordEncoder(encoders);
+	}
 
 }

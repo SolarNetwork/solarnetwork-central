@@ -22,14 +22,13 @@
 
 package net.solarnetwork.central.reg.web;
 
-import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Add global services to all MVC controllers.
@@ -65,22 +64,21 @@ public class GlobalServiceControllerAdvice {
 	 */
 	public static final String EVENT_HOOK_BIZ_ATTRIBUTE = "eventHookBiz";
 
-	@Resource(name = "expireBiz")
-	private OptionalService<UserExpireBiz> expireBiz;
+	@Autowired(required = false)
+	private UserExpireBiz expireBiz;
 
-	@Resource(name = "exportBiz")
-	private OptionalService<UserExportBiz> exportBiz;
+	@Autowired(required = false)
+	private UserExportBiz exportBiz;
 
-	@Resource(name = "importBiz")
-	private OptionalService<DatumImportBiz> importBiz;
+	@Autowired(required = false)
+	private DatumImportBiz importBiz;
 
-	@Resource(name = "eventHookBiz")
-	private OptionalService<UserEventHookBiz> eventHookBiz;
+	@Autowired(required = false)
+	private UserEventHookBiz eventHookBiz;
 
 	@ModelAttribute(value = EXPORT_BIZ_ATTRIBUTE)
 	public UserExportBiz exportBiz() {
-		final UserExportBiz biz = (exportBiz != null ? exportBiz.service() : null);
-		return biz;
+		return exportBiz;
 	}
 
 	/**
@@ -91,8 +89,7 @@ public class GlobalServiceControllerAdvice {
 	 */
 	@ModelAttribute(value = EXPIRE_BIZ_ATTRIBUTE)
 	public UserExpireBiz expireBiz() {
-		final UserExpireBiz biz = (expireBiz != null ? expireBiz.service() : null);
-		return biz;
+		return expireBiz;
 	}
 
 	/**
@@ -103,8 +100,7 @@ public class GlobalServiceControllerAdvice {
 	 */
 	@ModelAttribute(value = IMPORT_BIZ_ATTRIBUTE)
 	public DatumImportBiz importBiz() {
-		final DatumImportBiz biz = (importBiz != null ? importBiz.service() : null);
-		return biz;
+		return importBiz;
 	}
 
 	/**
@@ -115,8 +111,7 @@ public class GlobalServiceControllerAdvice {
 	 */
 	@ModelAttribute(value = EVENT_HOOK_BIZ_ATTRIBUTE)
 	public UserEventHookBiz eventHookBiz() {
-		final UserEventHookBiz biz = (eventHookBiz != null ? eventHookBiz.service() : null);
-		return biz;
+		return eventHookBiz;
 	}
 
 }

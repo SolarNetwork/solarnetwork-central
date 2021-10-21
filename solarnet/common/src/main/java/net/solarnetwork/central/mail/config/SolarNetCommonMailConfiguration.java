@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * SolarNetCommonMailConfiguration.java - 21/10/2021 10:47:03 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.mail.config;
 
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for user datum services.
+ * Common mail configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+@ComponentScan
+public class SolarNetCommonMailConfiguration {
 
 }

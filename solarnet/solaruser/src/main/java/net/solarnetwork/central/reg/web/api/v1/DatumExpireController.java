@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,7 +53,6 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -69,8 +67,8 @@ import net.solarnetwork.web.domain.Response;
 @RequestMapping(value = { "/sec/expire", "/v1/sec/user/expire" })
 public class DatumExpireController {
 
-	private final OptionalService<UserExpireBiz> expireBiz;
-	private final OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
+	private final UserExpireBiz expireBiz;
+	private final UserDatumDeleteBiz datumDeleteBiz;
 
 	// FIXME: private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT,
 	//		ALT_TIMESTAMP_FORMAT, DEFAULT_DATE_FORMAT };
@@ -83,9 +81,8 @@ public class DatumExpireController {
 	 * @param datumDeleteBiz
 	 *        the datum delete service to use
 	 */
-	@Autowired
-	public DatumExpireController(@Qualifier("expireBiz") OptionalService<UserExpireBiz> expireBiz,
-			@Qualifier("datumDeleteBiz") OptionalService<UserDatumDeleteBiz> datumDeleteBiz) {
+	public DatumExpireController(@Autowired(required = false) UserExpireBiz expireBiz,
+			@Autowired(required = false) UserDatumDeleteBiz datumDeleteBiz) {
 		super();
 		this.expireBiz = expireBiz;
 		this.datumDeleteBiz = datumDeleteBiz;
@@ -116,10 +113,9 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/services/aggregation", method = RequestMethod.GET)
 	public Response<Iterable<LocalizedServiceInfo>> availableAggregationServices(Locale locale) {
-		final UserExpireBiz biz = expireBiz.service();
 		Iterable<LocalizedServiceInfo> result = null;
-		if ( biz != null ) {
-			result = biz.availableAggregationTypes(locale);
+		if ( expireBiz != null ) {
+			result = expireBiz.availableAggregationTypes(locale);
 		}
 		return response(result);
 	}
@@ -127,12 +123,11 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Response<DatumExpireFullConfigurations> viewDataConfigurations() {
-		final UserExpireBiz biz = expireBiz.service();
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 
 		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
-		if ( biz != null ) {
-			dataConfigs = biz.configurationsForUser(userId, UserDataConfiguration.class);
+		if ( expireBiz != null ) {
+			dataConfigs = expireBiz.configurationsForUser(userId, UserDataConfiguration.class);
 		}
 
 		return response(new DatumExpireFullConfigurations(dataConfigs));
@@ -141,15 +136,14 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
 	public Response<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
-		final UserExpireBiz biz = expireBiz.service();
-		if ( biz != null ) {
+		if ( expireBiz != null ) {
 			if ( config.getUserId() == null ) {
 				config.setUserId(SecurityUtils.getCurrentActorUserId());
 			}
 			if ( config.getCreated() == null ) {
 				config.setCreated(Instant.now());
 			}
-			Long id = biz.saveConfiguration(config);
+			Long id = expireBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
 				return response(config);
@@ -161,13 +155,12 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}", method = RequestMethod.DELETE)
 	public Response<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
-		final UserExpireBiz biz = expireBiz.service();
-		if ( biz != null ) {
+		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			UserDataConfiguration config = biz.configurationForUser(userId, UserDataConfiguration.class,
-					id);
+			UserDataConfiguration config = expireBiz.configurationForUser(userId,
+					UserDataConfiguration.class, id);
 			if ( config != null ) {
-				biz.deleteConfiguration(config);
+				expireBiz.deleteConfiguration(config);
 			}
 		}
 		return response(null);
@@ -176,14 +169,13 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}/preview", method = RequestMethod.GET)
 	public Response<DatumRecordCounts> previewDataConfiguration(@PathVariable("id") Long id) {
-		final UserExpireBiz biz = expireBiz.service();
 		DatumRecordCounts counts = null;
-		if ( biz != null ) {
+		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			UserDataConfiguration config = biz.configurationForUser(userId, UserDataConfiguration.class,
-					id);
+			UserDataConfiguration config = expireBiz.configurationForUser(userId,
+					UserDataConfiguration.class, id);
 			if ( config != null ) {
-				counts = biz.countExpiredDataForConfiguration(config);
+				counts = expireBiz.countExpiredDataForConfiguration(config);
 			}
 		}
 		return response(counts);
@@ -192,12 +184,11 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete", method = RequestMethod.POST)
 	public Response<DatumRecordCounts> previewDataDelete(DatumFilterCommand filter) {
-		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
 		DatumRecordCounts counts = null;
-		if ( biz != null ) {
+		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			filter.setUserIds(new Long[] { userId });
-			counts = biz.countDatumRecords(filter);
+			counts = datumDeleteBiz.countDatumRecords(filter);
 		}
 		return response(counts);
 	}
@@ -205,12 +196,11 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/confirm", method = RequestMethod.POST)
 	public Response<DatumDeleteJobInfo> confirmDataDelete(DatumFilterCommand filter) {
-		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
 		DatumDeleteJobInfo result = null;
-		if ( biz != null ) {
+		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			filter.setUserIds(new Long[] { userId });
-			result = biz.submitDatumDeleteRequest(filter);
+			result = datumDeleteBiz.submitDatumDeleteRequest(filter);
 		}
 		return response(result);
 	}
@@ -219,9 +209,8 @@ public class DatumExpireController {
 	@RequestMapping(value = "/datum-delete/jobs", method = RequestMethod.GET)
 	public Response<Collection<DatumDeleteJobInfo>> jobsForUser(
 			@RequestParam(value = "states", required = false) DatumDeleteJobState[] states) {
-		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
 		Collection<DatumDeleteJobInfo> result = null;
-		if ( biz != null ) {
+		if ( datumDeleteBiz != null ) {
 			Set<DatumDeleteJobState> stateFilter = null;
 			if ( states != null && states.length > 0 ) {
 				stateFilter = new HashSet<>(states.length);
@@ -231,7 +220,7 @@ public class DatumExpireController {
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.datumDeleteJobsForUser(userId, stateFilter);
+			result = datumDeleteBiz.datumDeleteJobsForUser(userId, stateFilter);
 		}
 		return response(result);
 	}
@@ -239,11 +228,10 @@ public class DatumExpireController {
 	@ResponseBody
 	@RequestMapping(value = "/datum-delete/jobs/{id}", method = RequestMethod.GET)
 	public Response<DatumDeleteJobInfo> jobStatus(@PathVariable("id") String id) {
-		final UserDatumDeleteBiz biz = datumDeleteBiz.service();
 		DatumDeleteJobInfo result = null;
-		if ( biz != null ) {
+		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			result = biz.datumDeleteJobForUser(userId, id);
+			result = datumDeleteBiz.datumDeleteJobForUser(userId, id);
 		}
 		return response(result);
 	}

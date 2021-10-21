@@ -25,7 +25,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,7 +44,6 @@ import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -59,7 +57,7 @@ import net.solarnetwork.web.domain.Response;
 @RequestMapping(value = { "/sec/ocpp", "/v1/sec/user/ocpp" })
 public class UserOcppController {
 
-	private final OptionalService<UserOcppBiz> userOcppBiz;
+	private final UserOcppBiz userOcppBiz;
 
 	/**
 	 * Constructor.
@@ -67,12 +65,9 @@ public class UserOcppController {
 	 * @param userOcppBiz
 	 *        the user OCPP service
 	 */
-	@Autowired
-	public UserOcppController(@Qualifier("userOcppBiz") OptionalService<UserOcppBiz> userOcppBiz) {
+
+	public UserOcppController(@Autowired(required = false) UserOcppBiz userOcppBiz) {
 		super();
-		if ( userOcppBiz == null ) {
-			throw new IllegalArgumentException("The userOcppBiz parameter must not be null.");
-		}
 		this.userOcppBiz = userOcppBiz;
 	}
 
@@ -84,11 +79,10 @@ public class UserOcppController {
 	 *         if the service is not available
 	 */
 	private UserOcppBiz userOcppBiz() {
-		UserOcppBiz biz = userOcppBiz.service();
-		if ( biz == null ) {
+		if ( userOcppBiz == null ) {
 			throw new UnsupportedOperationException("OCPP service not available.");
 		}
-		return biz;
+		return userOcppBiz;
 	}
 
 	/**

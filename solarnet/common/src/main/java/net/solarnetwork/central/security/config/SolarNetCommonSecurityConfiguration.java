@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * SolarNetCommonSecurityConfiguration.java - 21/10/2021 9:39:33 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.security.config;
 
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for user datum services.
+ * Marker interface for common security configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
-
+@Configuration
+@ComponentScan
+public class SolarNetCommonSecurityConfiguration {
+	// nothing here
 }

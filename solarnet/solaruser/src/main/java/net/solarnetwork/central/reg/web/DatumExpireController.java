@@ -22,12 +22,11 @@
 
 package net.solarnetwork.central.reg.web;
 
-import javax.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Controller for the expire page.
@@ -45,8 +44,8 @@ public class DatumExpireController {
 	 */
 	public static final String DATUM_DELETE_BIZ_ATTRIBUTE = "datumDeleteBiz";
 
-	@Resource(name = "datumDeleteBiz")
-	private OptionalService<UserDatumDeleteBiz> datumDeleteBiz;
+	@Autowired(required = false)
+	private UserDatumDeleteBiz datumDeleteBiz;
 
 	@RequestMapping(value = "/sec/expire", method = RequestMethod.GET)
 	public String home() {
@@ -61,8 +60,7 @@ public class DatumExpireController {
 	 */
 	@ModelAttribute(value = DATUM_DELETE_BIZ_ATTRIBUTE)
 	public UserDatumDeleteBiz datumDeleteBiz() {
-		final UserDatumDeleteBiz biz = (datumDeleteBiz != null ? datumDeleteBiz.service() : null);
-		return biz;
+		return datumDeleteBiz;
 	}
 
 }

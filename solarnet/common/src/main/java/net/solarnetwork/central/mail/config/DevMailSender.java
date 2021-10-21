@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * DevMailSender.java - 21/10/2021 10:52:20 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,27 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.mail.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.mail.mock.MockMailSender;
 
 /**
- * Configuration for user datum services.
+ * Populate a development mail sender if {@code spring.mail.host} is not
+ * defined.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
+@Configuration
+@ConditionalOnProperty(name = "spring.mail.host", matchIfMissing = true, havingValue = "false")
+public class DevMailSender {
+
+	@Bean
+	public MockMailSender mailSender() {
+		return new MockMailSender();
+	}
 
 }

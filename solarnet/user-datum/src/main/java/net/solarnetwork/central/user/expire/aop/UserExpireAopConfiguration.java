@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumConfig.java - 20/10/2021 4:22:30 PM
+ * UserExpireAopConfiguration.java - 21/10/2021 9:06:16 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
-
-import org.springframework.context.annotation.Configuration;
+package net.solarnetwork.central.user.expire.aop;
 
 /**
- * Configuration for user datum services.
+ * Marker interface for user expire AOP configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class DatumConfig {
-
+public interface UserExpireAopConfiguration {
+	// nothing here
 }

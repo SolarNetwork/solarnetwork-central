@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.user.config;
 
 import static net.solarnetwork.central.user.config.RegistrationBizConfig.USER_REGISTRATION;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class PkiDogtagConfig {
 		private String disabledCiphers = DEFAULT_DISABLED_CIPHERS;
 	}
 
-	@ConfigurationProperties(prefix = "app.pki.dogtag")
+	@ConfigurationProperties(prefix = "app.node.pki.dogtag")
 	public DogtagSettings dogtagSettings() {
 		return new DogtagSettings();
 	}

@@ -20,13 +20,11 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.user.config;
 
-import static net.solarnetwork.central.user.config.RegistrationBizConfig.USER_REGISTRATION;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,16 +51,15 @@ public class PkiDevConfig {
 	public String caDn = "CN=Developer CA, O=SolarDev";
 
 	@Autowired
-	private CertificationAuthorityService caService;
+	private CertificateService certificateService;
 
 	@Autowired
-	@Qualifier(USER_REGISTRATION)
-	private CertificateService certificateService;
+	CertificationAuthorityService certificationAuthorityService;
 
 	@Bean
 	public NodePKIBiz pkiBiz() {
 		DevNodePKIBiz biz = new DevNodePKIBiz();
-		biz.setCaService(caService);
+		biz.setCaService(certificationAuthorityService);
 		biz.setCertificateService(certificateService);
 		biz.setBaseDir(baseDir.toFile());
 		biz.setCaDN(caDn);

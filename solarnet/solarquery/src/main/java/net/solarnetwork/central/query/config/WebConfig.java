@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.query.config;
 
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +35,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
+import net.solarnetwork.service.PingTest;
 
 /**
  * Web layer configuration.
@@ -46,6 +49,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 	/** A qualifier for the source ID path matcher. */
 	public static final String SOURCE_ID_PATH_MATCHER = "source-id";
+
+	@Autowired(required = false)
+	private List<PingTest> pingTests;
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
@@ -65,7 +71,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	public PingController pingController() {
-		return new PingController();
+		PingController controller = new PingController();
+		controller.setTests(pingTests);
+		return controller;
 	}
 
 }
