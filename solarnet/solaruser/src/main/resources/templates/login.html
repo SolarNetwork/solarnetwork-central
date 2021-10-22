@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<head>
+    <title th:text="#{login.title}">SolarUser Login</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../static/css/global.css">
+	<link rel="stylesheet" href="../static/css/edit-node.css">
+</head>
+<body>
+<main class="container">
+	<div class="alert alert-warning" th:if="${param.login_error}" th:text="#{login.error}">
+		Login error.
+	</div>
+
+	<p class="intro" th:utext="#{login.intro(@{/register.do},@{/u/resetPassword})}">Please log in.</p>
+
+	<form th:action="@{/login}" class="form-horizontal login-form" method="post">
+		<fieldset>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="login-username" th:text="#{user.email.label}">Email</label>
+				<div class="col-sm-4">
+					<input class="form-control" type="text" name="username" id="login-username" maxlength="240"
+						th:placeholder="#{user.email.placeholder}"
+						aria-describedby="login-username-help"
+						th:value="${param.login_error} ? ${SPRING_SECURITY_LAST_USERNAME}">
+					<span class="help-block" id="login-username-help" th:text="#{user.email.caption}"></span>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="login-password" th:text="#{user.password.label}">Password</label>
+				<div class="col-sm-4">
+					<input class="form-control" type="password" name="password" id="login-password" maxlength="255"
+						th:placeholder="#{user.password.placeholder}">
+				</div>
+			</div>
+		</fieldset>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button type="submit" class="btn btn-primary" th:text="#{action.login}">Login</button>
+			</div>
+		</div>
+		<input type="hidden" name="_csrf" value="" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+	</form>
+</main>
+</body>
+</html>

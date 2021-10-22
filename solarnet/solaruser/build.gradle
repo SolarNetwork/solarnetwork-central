@@ -43,11 +43,15 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.webflow:spring-webflow:2.5.1.RELEASE'
 
 	// allow WAR to be run from command line OR deployed in Tomcat
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
-	// JSP support
+	// Template support
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+
+	// TODO: REMOVE JSP
 	implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
 	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:1.2.6'
 	implementation 'org.springframework.security:spring-security-taglibs'

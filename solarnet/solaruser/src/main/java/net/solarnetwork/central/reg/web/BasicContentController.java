@@ -1,7 +1,7 @@
 /* ==================================================================
- * HomeController.java - Nov 22, 2012 9:58:42 AM
+ * BasicContentController.java - 21/10/2021 8:33:49 PM
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,37 +22,23 @@
 
 package net.solarnetwork.central.reg.web;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
- * Controller for the secure home page.
+ * Controller for basic content.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-@GlobalServiceController
+@Controller
 @RequestMapping(method = RequestMethod.GET)
-public class HomeController {
+public class BasicContentController {
 
-	@RequestMapping({ "/", "/index.do" })
-	public String index() {
-		return "index";
-	}
-
-	@RequestMapping("/sec/home")
-	public String home() {
-		return "sec/home";
-	}
-
-	@RequestMapping("/login.do")
-	public String login() {
-		return "login";
-	}
-
-	@RequestMapping("/logoutSuccess.do")
-	public String loggedOut() {
-		return "loggedout";
+	@RequestMapping("/tzpicker-500.html")
+	public String tzPicker500() {
+		return "tzpicker-500";
 	}
 
 }

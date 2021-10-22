@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head>
+    <title>SolarUser Navbar</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="solarUserRootURL" content="/solaruser/u">
+	<link rel="stylesheet" href="../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../static/css/global.css">
+	<link rel="stylesheet" href="../static/css/edit-node.css">
+	<script src="../static/js-lib/jquery-3.3.1.js"></script>
+	<script src="../static/js-lib/bootstrap.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-default" th:fragment="navbar" th:with="homeUrl=${#authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}" xmlns:th="http://www.thymeleaf.org">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#solaruser-navbar-collapse-1">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="/index.do" th:href="${homeUrl}">
+				<img src="../static/img/logo.svg" th:src="@{/img/logo.svg}" th:alt="#{app.name}" width="214" height="30">
+			</a>
+	    </div>
+
+	    <div class="collapse navbar-collapse" id="solaruser-navbar-collapse-1">
+			<ul class="nav navbar-nav">
+				<li th:classappend="${navloc == 'home'}?active"><a href="/index.do" th:href="${homeUrl}" th:text="#{link.home}">Home</a></li>
+				<li th:classappend="${navloc == 'login'}?active" sec:authorize="!hasRole('ROLE_USER')">
+					<a th:href="@{/login.do}" th:text="#{link.login}">Login</a>
+				</li>
+				<li th:classappend="${navloc == 'my-nodes'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a th:href="@{/u/sec/my-nodes}" th:text="#{link.my-nodes}">My Nodes</a>
+				</li>
+				<li th:classappend="${navloc == 'alerts'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a th:href="@{/u/sec/alerts}"><span th:text="#{link.alerts}" th:remove="tag">Alerts</span> <span class="label label-danger label-as-badge alert-situation-count"></span></a>
+				</li>
+				<li th:classappend="${navloc == 'auth-tokens'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a th:href="@{/u/sec/auth-tokens}" th:text="#{link.auth-tokens}">Security Tokens</a>
+				</li>
+				<li class="dropdown" th:classappend="${navloc == 'data'
+						|| navloc == 'data-insight'
+						|| navloc == 'expire'
+						|| navloc == 'export'
+						|| navloc == 'node-event'
+						}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+						<span th:text="#{nav.label.data}" th:remove="tag">My Data</span> <b class="caret"></b>
+					</a>
+					<ul class="dropdown-menu">
+						<li th:classappend="${navloc == 'data-insight'}?active">
+							<a th:href="@{/u/sec/data-insight}" th:text="#{link.dataInsight}">Data Insight</a>
+						</li>
+						<li th:classappend="${navloc == 'expire'}?active" th:if="expireBiz">
+							<a th:href="@{/u/sec/expire}" th:text="#{link.expire}">Data Expire</a>
+						</li>
+						<li th:classappend="${navloc == 'import'}?active" sec:authorize="hasRole('ROLE_IMPORT')" th:if="importBiz">
+							<a th:href="@{/u/sec/import}" th:text="#{link.import}">Data Import</a>
+						</li>
+						<li th:classappend="${navloc == 'export'}?active" sec:authorize="hasRole('ROLE_EXPORT')" th:if="exportBiz">
+							<a th:href="@{/u/sec/export}" th:text="#{link.export}">Data Export</a>
+						</li>
+						<li th:classappend="${navloc == 'node-event'}?active" sec:authorize="hasRole('ROLE_EVENT')" th:if="eventHookBiz">
+							<a th:href="@{/u/sec/event/node}" th:text="#{link.node-event}">Node Event Hooks</a>
+						</li>
+					</ul>
+				</li>
+				<li th:classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')">
+					<a th:href="@{/u/sec/billing}" th:text="#{link.billing}">Account</a>
+				</li>
+	 		</ul>
+
+			<ul class="nav navbar-nav navbar-right" sec:authorize="hasRole('ROLE_USER')">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+						<span th:replace="tag" th:text="#{nav.label.principal(${#authentication.principal.username})}">user@localhost</span>
+						<b class="caret"></b>
+					</a>
+					<ul class="dropdown-menu">
+						<li  th:classappend="${navloc == 'profile'}?active">
+							<a th:href="@{/u/sec/profile}" th:text="#{link.profile}">Profile</a>
+						</li>
+						<li><a class="logout" href="#" th:text="#{link.logout}">Logout</a></li>
+					</ul>
+				</li>
+			</ul>
+			<form id="logout-form" method="post" action="/logout" th:action="@{/logout}" sec:authorize="hasRole('ROLE_USER')">
+				<input type="hidden" name="_csrf" value="" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+			</form>
+	    </div>
+	</div>
+</nav>
+</body>
+</html>

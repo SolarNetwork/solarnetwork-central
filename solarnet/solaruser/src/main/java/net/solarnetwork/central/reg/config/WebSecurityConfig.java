@@ -100,40 +100,51 @@ public class WebSecurityConfig {
 		return new ProviderManager(authenticationProvider());
 	}
 
+	/**
+	 * Browser app security rules, with cookie-based session management and form
+	 * login.
+	 */
 	@Configuration
 	@Order(1)
-	public static class PublicWebSecurityConfig extends WebSecurityConfigurerAdapter {
+	public static class BrowserWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
 		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
 		      .authorizeRequests()
-		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .antMatchers(HttpMethod.GET, 
-		        		"/", 
-		        		"/error", 
-		        		"/*.html",
-		        		"/associate.*",
-		        		"/cert.*",
-		        		"/css/**",
-		        		"/js/**", 
-		        		"/ping", 
-		        		"/api/v1/pub/**").permitAll();
+		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
+		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
+		      	.antMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
+		      	.antMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+		        .antMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
+		        .antMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
+		        //.anyRequest().authenticated()
+		        .and()
+			      
+		      // form login
+		      .formLogin()
+		        .loginPage("/login.do")
+		        .defaultSuccessUrl("/u/sec/home")
+		        .failureUrl("/login.do?login_error=1")
+		        .and()
+		        
+		      // logout
+		      .logout()
+		        .logoutUrl("/logout")
+		        .logoutSuccessUrl("/logoutSuccess.do")
+		    ;
 		    // @formatter:on
 		}
-
 	}
 
+	/**
+	 * API security rules, for stateless REST access.
+	 */
 	@Configuration
 	@Order(2)
 	public static class ApiWebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -202,48 +213,49 @@ public class WebSecurityConfig {
 		      	.antMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		        .antMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .anyRequest().authenticated()
+		        //.anyRequest().authenticated()
 		    ;   
 		    // @formatter:on
 		}
 	}
 
+	/**
+	 * Last set of security rules, for public resources else deny all others.
+	 */
 	@Configuration
 	@Order(3)
-	public static class BrowserWebSecurityConfig extends WebSecurityConfigurerAdapter {
+	public static class PublicWebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
+		      // CSRF not needed for stateless calls
+		      .csrf().disable()
+		      
+		      // make sure CORS honored
+		      .cors().and()
+		      
 		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		      
 		      .authorizeRequests()
-		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
-		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-		      	.antMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-		      	.antMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-		        .antMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .antMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
-		        .anyRequest().authenticated()
-		        .and()
-			      
-		      // form login
-		      .formLogin()
-		        .loginPage("/login.do")
-		        .defaultSuccessUrl("/u/sec/home")
-		        .failureUrl("/login.do?login_error=1")
-		        .and()
-		        
-		      // logout
-		      .logout()
-		        .logoutUrl("/logout")
-		        .logoutSuccessUrl("/logoutSuccess.do")
-		    ;
+		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .antMatchers(HttpMethod.GET, 
+		        		"/", 
+		        		"/error", 
+		        		"/*.html",
+		        		"/associate.*",
+		        		"/cert.*",
+		        		"/css/**",
+		        		"/js/**",
+		        		"/js-lib/**",
+		        		"/ping", 
+		        		"/api/v1/pub/**").permitAll()
+		        .anyRequest().denyAll();
 		    // @formatter:on
 		}
+
 	}
 
 }
