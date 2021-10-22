@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<head>
+    <title th:text="#{app.name}">SolarUser</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/global.css">
+	<link rel="stylesheet" href="../../static/css/edit-node.css">
+</head>
+<body>
+<main class="container" th:replace="registration/form-layout :: layout(~{::intro}, ~{::form}, ~{})">
+	<p class="intro" th:text="#{user.register.review.intro}" th:fragment="intro">
+		Let's review what you entered.
+	</p>
+	<form class="form-horizontal registration-form" method="post">
+		<fieldset th:replace="user/detail-view :: fieldset">User review form content here.</fieldset>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button type="submit" class="btn btn-primary" name="_eventId_next" th:text="#{continue.label}">Continue</button>
+				<button type="submit" class="btn btn-default" name="_eventId_prev" th:text="#{back.label}">Back</button>
+			</div>
+		</div>
+		<input type="hidden" name="_csrf" value="" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+	</form>
+</main>
+</body>
+</html>
