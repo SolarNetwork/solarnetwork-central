@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SolarUser Registration Form</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/global.css">
+</head>
+<body >
+<main class="container" th:fragment="layout (intro, detail, conclusion)">
+	<div class="alert alert-warning" th:if="${rootCauseException}"
+		th:text="${rootCauseException.reason}
+			? #{registration.error.auth.${rootCauseException.reason}(${rootCauseException.email})}
+			: #{error.unexpected(${rootCauseException.message})}">
+		Error!
+	</div>
+
+	<p th:replace="${intro}">Intro here.</p>
+
+	<form class="form-horizontal registration-form" th:replace="${detail}">
+		<div>Form content here.</div>
+	</form>
+
+	<p th:replace="${conclusion}">Conclusion here.</p>
+</main>
+</body>
+</html>

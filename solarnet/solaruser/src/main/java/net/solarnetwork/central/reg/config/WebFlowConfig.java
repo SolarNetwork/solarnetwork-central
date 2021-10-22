@@ -33,6 +33,8 @@ import org.springframework.webflow.definition.registry.FlowDefinitionRegistry;
 import org.springframework.webflow.engine.builder.support.FlowBuilderServices;
 import org.springframework.webflow.executor.FlowExecutor;
 import org.springframework.webflow.mvc.builder.MvcViewFactoryCreator;
+import org.springframework.webflow.mvc.servlet.FlowHandlerAdapter;
+import org.springframework.webflow.mvc.servlet.FlowHandlerMapping;
 import org.springframework.webflow.security.SecurityFlowExecutionListener;
 
 /**
@@ -54,8 +56,8 @@ public class WebFlowConfig extends AbstractFlowConfiguration {
 	public FlowDefinitionRegistry flowRegistry() {
 		// @formatter:off
 		return getFlowDefinitionRegistryBuilder(flowBuilderServices())
-				.setBasePath("classpath*:/resources/flows")
-                .addFlowLocationPattern("/**/*.xml")
+				.setBasePath("classpath*:/flows")
+                .addFlowLocationPattern("/**/*-flow.xml")
 				.build();
 		// @formatter:on
 	}
@@ -85,6 +87,21 @@ public class WebFlowConfig extends AbstractFlowConfiguration {
 		factoryCreator.setViewResolvers(viewResolvers);
 		factoryCreator.setUseSpringBeanBinding(true);
 		return factoryCreator;
+	}
+
+	@Bean
+	public FlowHandlerMapping flowHandlerMapping() {
+		FlowHandlerMapping handlerMapping = new FlowHandlerMapping();
+		handlerMapping.setOrder(1);
+		handlerMapping.setFlowRegistry(flowRegistry());
+		return handlerMapping;
+	}
+
+	@Bean
+	public FlowHandlerAdapter flowHandlerAdapter() {
+		FlowHandlerAdapter adapter = new FlowHandlerAdapter();
+		adapter.setFlowExecutor(flowExecutor());
+		return adapter;
 	}
 
 }
