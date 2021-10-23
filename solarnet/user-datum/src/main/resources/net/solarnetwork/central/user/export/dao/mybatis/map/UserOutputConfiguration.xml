@@ -12,7 +12,7 @@
 	compression		CHARACTER(1) NOT NULL,
 -->
 
-	<insert id="insert-UserOutputConfiguration" parameterType="UserOutputConfiguration">
+	<insert id="insert-UserOutputConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserOutputConfiguration">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_export_seq') AS id 
 		</selectKey>
@@ -28,7 +28,7 @@
 			)
 	</insert>
 
-	<update id="update-UserOutputConfiguration" parameterType="UserOutputConfiguration">
+	<update id="update-UserOutputConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserOutputConfiguration">
 		UPDATE
 			solaruser.user_export_outp_conf
 		SET
@@ -40,7 +40,7 @@
 			id = #{id} AND user_id = #{userId}
 	</update>
 
-	<delete id="delete-UserOutputConfiguration" parameterType="UserOutputConfiguration">
+	<delete id="delete-UserOutputConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserOutputConfiguration">
 		DELETE FROM solaruser.user_export_outp_conf
 		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
@@ -55,7 +55,7 @@
 		uopc.compression AS user_export_outp_conf_compression
 	</sql>
 
-	<resultMap id="UserOutputConfigurationFullResult" type="UserOutputConfiguration">
+	<resultMap id="UserOutputConfigurationFullResult" type="net.solarnetwork.central.user.export.domain.UserOutputConfiguration">
 		<id property="id" column="user_export_outp_conf_id"/>
 		<result property="created" column="user_export_outp_conf_created"/>
 		<result property="userId" column="user_export_outp_conf_user_id"/>

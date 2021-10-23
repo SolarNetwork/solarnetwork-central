@@ -10,7 +10,7 @@
 	task_id			uuid NOT NULL,
  -->
  
-	<parameterMap id="pmap-UserDatumExportTaskInfo" type="UserDatumExportTaskInfo">
+	<parameterMap id="pmap-UserDatumExportTaskInfo" type="net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo">
 		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
 		<parameter property="exportDate" jdbcType="TIMESTAMP" mode="IN"/>
@@ -26,7 +26,7 @@
  		{call solaruser.store_export_task(?, ?, ?, ?, ?)}
 	</update>
 
-	<delete id="delete-UserDatumExportTaskInfo" parameterType="UserDatumExportTaskInfo">
+	<delete id="delete-UserDatumExportTaskInfo" parameterType="net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo">
 		DELETE FROM solaruser.user_export_task
 		WHERE user_id = #{userId} AND schedule = #{scheduleTypeKey} AND export_date = #{exportDate}
 	</delete>
@@ -40,7 +40,7 @@
 		uet.conf_id AS user_export_task_conf_id
 	</sql>
 
-	<resultMap id="UserDatumExportTaskInfoFullResult" type="UserDatumExportTaskInfo">
+	<resultMap id="UserDatumExportTaskInfoFullResult" type="net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo">
 		<id property="userId" column="user_export_task_user_id"/>
 		<id property="scheduleTypeKey" column="user_export_task_schedule"/>
 		<id property="exportDate" column="user_export_task_export_date"/>

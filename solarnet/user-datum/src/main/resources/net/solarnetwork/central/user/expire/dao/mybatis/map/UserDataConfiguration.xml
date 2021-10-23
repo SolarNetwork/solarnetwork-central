@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
 
-	<insert id="insert-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<insert id="insert-UserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_expire_seq') AS id 
 		</selectKey>
@@ -22,7 +22,7 @@
 			)
 	</insert>
 
-	<update id="update-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<update id="update-UserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
 		UPDATE
 			solaruser.user_expire_data_conf
 		SET
@@ -37,7 +37,7 @@
 			
 	</update>
 
-	<delete id="delete-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<delete id="delete-UserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
 		DELETE FROM solaruser.user_expire_data_conf
 		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
@@ -54,7 +54,7 @@
 		udac.filter AS user_expire_data_conf_filter
 	</sql>
 
-	<resultMap id="UserDataConfigurationFullResult" type="UserDataConfiguration">
+	<resultMap id="UserDataConfigurationFullResult" type="net.solarnetwork.central.user.expire.domain.UserDataConfiguration">
 		<id property="id" column="user_expire_data_conf_id"/>
 		<result property="created" column="user_expire_data_conf_created"/>
 		<result property="userId" column="user_expire_data_conf_user_id"/>
@@ -113,13 +113,13 @@
 		<result property="datumMonthlyCount" column="datum_monthly_count"/>
 	</resultMap>
 
-	<select id="count-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultMap="DatumRecordCountsFullResult">
+	<select id="count-expired-data-for-UserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.UserDataConfiguration" resultMap="DatumRecordCountsFullResult">
 		SELECT * FROM solaruser.preview_expire_datum_for_policy(
 			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
 	</select>
 	
 	<!--  Note this is called as a SELECT to a procedure that performs the delete -->
-	<select id="delete-expired-data-for-UserDataConfiguration" parameterType="UserDataConfiguration" resultType="long">
+	<select id="delete-expired-data-for-UserDataConfiguration" parameterType="net.solarnetwork.central.user.expire.domain.UserDataConfiguration" resultType="long">
 		SELECT solaruser.expire_datum_for_policy(
 			#{userId}, CAST(#{filterJson} AS jsonb), make_interval(days => #{expireDays}))
 	</select>

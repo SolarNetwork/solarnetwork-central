@@ -69,7 +69,7 @@
 		<result property="completed" column="completed"/>
 	</resultMap>
 	
-	<select id="get-DatumExportTaskInfo-for-id" parameterType="UUID" resultMap="DatumExportTaskInfoFullResult">
+	<select id="get-DatumExportTaskInfo-for-id" parameterType="java.util.UUID" resultMap="DatumExportTaskInfoFullResult">
 		SELECT
 			<include refid="fragment-DatumExportTaskInfo-full-result"/>
 		FROM

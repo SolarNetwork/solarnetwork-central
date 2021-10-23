@@ -12,7 +12,7 @@
 	filter			jsonb,
 -->
 
-	<insert id="insert-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<insert id="insert-UserDataConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDataConfiguration">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_export_seq') AS id 
 		</selectKey>
@@ -30,7 +30,7 @@
 			)
 	</insert>
 
-	<update id="update-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<update id="update-UserDataConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDataConfiguration">
 		UPDATE
 			solaruser.user_export_data_conf
 		SET
@@ -43,7 +43,7 @@
 			
 	</update>
 
-	<delete id="delete-UserDataConfiguration" parameterType="UserDataConfiguration">
+	<delete id="delete-UserDataConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDataConfiguration">
 		DELETE FROM solaruser.user_export_data_conf
 		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
@@ -58,7 +58,7 @@
 		udac.filter AS user_export_data_conf_filter
 	</sql>
 
-	<resultMap id="UserDataConfigurationFullResult" type="UserDataConfiguration">
+	<resultMap id="UserDataConfigurationFullResult" type="net.solarnetwork.central.user.export.domain.UserDataConfiguration">
 		<id property="id" column="user_export_data_conf_id"/>
 		<result property="created" column="user_export_data_conf_created"/>
 		<result property="userId" column="user_export_data_conf_user_id"/>

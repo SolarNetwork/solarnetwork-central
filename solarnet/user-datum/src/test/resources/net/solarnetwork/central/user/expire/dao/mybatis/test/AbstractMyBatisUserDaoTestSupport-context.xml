@@ -12,8 +12,8 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="configurationProperties">
 			<util:properties>
-				<prop key="cache.node.flush">0</prop>
-				<prop key="cache.user.flush">0</prop>
+				<prop key="node-cache-flush">0</prop>
+				<prop key="user-cache-flush">0</prop>
 			</util:properties>
 		</property>	
 		<property name="typeAliases">

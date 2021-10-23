@@ -92,7 +92,7 @@ public class ResetPasswordController extends ControllerSupport {
 			mailService.sendMail(new BasicMailAddress(null, receipt.getUsername()),
 					new ClasspathResourceMessageTemplateDataSource(locale,
 							messageSource.getMessage("user.resetpassword.mail.subject", null, locale),
-							"/net/solarnetwork/central/reg/web/reset-password.txt", mailModel));
+							"net/solarnetwork/central/reg/web/reset-password.txt", mailModel));
 		} catch ( AuthorizationException e ) {
 			// don't want to let anyone know about failures here... just pretend nothing happened
 			log.info("Ignoring password reset request for {}: {}", email, e.getReason());

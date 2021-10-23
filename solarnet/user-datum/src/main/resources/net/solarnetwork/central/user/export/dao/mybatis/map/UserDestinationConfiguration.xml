@@ -11,7 +11,7 @@
 	sprops			jsonb
 -->
 
-	<insert id="insert-UserDestinationConfiguration" parameterType="UserDestinationConfiguration">
+	<insert id="insert-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_export_seq') AS id 
 		</selectKey>
@@ -27,7 +27,7 @@
 			)
 	</insert>
 
-	<update id="update-UserDestinationConfiguration" parameterType="UserDestinationConfiguration">
+	<update id="update-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
 		UPDATE
 			solaruser.user_export_dest_conf
 		SET
@@ -38,7 +38,7 @@
 			id = #{id} AND user_id = #{userId}
 	</update>
 
-	<delete id="delete-UserDestinationConfiguration" parameterType="UserDestinationConfiguration">
+	<delete id="delete-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
 		DELETE FROM solaruser.user_export_dest_conf
 		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
@@ -52,7 +52,7 @@
 		udec.sprops AS user_export_dest_conf_sprops
 	</sql>
 
-	<resultMap id="UserDestinationConfigurationFullResult" type="UserDestinationConfiguration">
+	<resultMap id="UserDestinationConfigurationFullResult" type="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
 		<id property="id" column="user_export_dest_conf_id"/>
 		<result property="created" column="user_export_dest_conf_created"/>
 		<result property="userId" column="user_export_dest_conf_user_id"/>

@@ -22,7 +22,7 @@
 				user.name, user.email)" result="flowScope.mailAddress"/>
 			<evaluate expression="flowScope.mailHelper.createResourceDataSource(
 				resourceBundle.registrationConfirmMailSubject, 
-				'/net/solarnetwork/central/reg/web/confirm-register.txt',
+				'net/solarnetwork/central/reg/web/confirm-register.txt',
 				externalContext.locale, 
 				user,
 				receipt,

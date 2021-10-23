@@ -15,7 +15,7 @@
 	outp_conf_id	BIGINT,
  -->
  
- 	<insert id="insert-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+ 	<insert id="insert-UserDatumExportConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solaruser.user_export_seq') AS id 
 		</selectKey>
@@ -32,7 +32,7 @@
 			)
 	</insert>
 
-	<update id="update-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+	<update id="update-UserDatumExportConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
 		UPDATE
 			solaruser.user_export_datum_conf
 		SET
@@ -58,7 +58,7 @@
 			AND (min_export_date IS NULL OR min_export_date &lt; #{date})
 	</update>
 
-	<delete id="delete-UserDatumExportConfiguration" parameterType="UserDatumExportConfiguration">
+	<delete id="delete-UserDatumExportConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
 		DELETE FROM solaruser.user_export_datum_conf
 		WHERE id = #{id} AND user_id = #{userId}
 	</delete>
@@ -73,7 +73,7 @@
 		udexc.min_export_date AS user_export_datum_conf_min_export_date
 	</sql>
 
-	<resultMap id="UserDatumExportConfigurationFullResult" type="UserDatumExportConfiguration">
+	<resultMap id="UserDatumExportConfigurationFullResult" type="net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration">
 		<id property="id" column="user_export_datum_conf_id"/>
 		<result property="created" column="user_export_datum_conf_created"/>
 		<result property="userId" column="user_export_datum_conf_user_id"/>

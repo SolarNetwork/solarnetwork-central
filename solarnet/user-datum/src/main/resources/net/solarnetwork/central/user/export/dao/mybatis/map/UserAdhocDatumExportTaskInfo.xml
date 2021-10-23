@@ -10,7 +10,7 @@
 	task_id			uuid NOT NULL,
  -->
  
-	<parameterMap id="pmap-UserAdhocDatumExportTaskInfo" type="UserAdhocDatumExportTaskInfo">
+	<parameterMap id="pmap-UserAdhocDatumExportTaskInfo" type="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
 		<parameter property="id" jdbcType="OTHER" javaType="java.util.UUID" mode="OUT" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
@@ -21,7 +21,7 @@
  		{? = call solaruser.store_adhoc_export_task(?, ?, ?)}
 	</insert>
 
-	<delete id="delete-UserAdhocDatumExportTaskInfo" parameterType="UserAdhocDatumExportTaskInfo">
+	<delete id="delete-UserAdhocDatumExportTaskInfo" parameterType="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
 		DELETE FROM solaruser.user_adhoc_export_task
 		WHERE user_id = #{userId} AND task_id = #{id,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
 	</delete>
@@ -33,7 +33,7 @@
 		uaet.task_id AS user_adhoc_export_task_task_id
 	</sql>
 
-	<resultMap id="UserAdhocDatumExportTaskInfoFullResult" type="UserAdhocDatumExportTaskInfo">
+	<resultMap id="UserAdhocDatumExportTaskInfoFullResult" type="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
 		<id property="id" column="user_adhoc_export_task_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		<result property="userId" column="user_adhoc_export_task_user_id"/>
 		<result property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>

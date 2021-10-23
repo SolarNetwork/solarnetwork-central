@@ -296,7 +296,7 @@ public class MyNodesController extends ControllerSupport {
 						new ClasspathResourceMessageTemplateDataSource(locale,
 								messageSource.getMessage("my-nodes.transferOwnership.mail.subject", null,
 										locale),
-								"/net/solarnetwork/central/reg/web/transfer-ownership.txt", mailModel));
+								"net/solarnetwork/central/reg/web/transfer-ownership.txt", mailModel));
 			} catch ( RuntimeException e ) {
 				// ignore this other than log
 				log.warn("Error sending ownership transfer mail message to {}: {}", email,
@@ -327,7 +327,7 @@ public class MyNodesController extends ControllerSupport {
 									messageSource.getMessage(
 											"my-nodes.transferOwnership.mail.subject.cancelled", null,
 											locale),
-									"/net/solarnetwork/central/reg/web/transfer-ownership-cancelled.txt",
+									"net/solarnetwork/central/reg/web/transfer-ownership-cancelled.txt",
 									mailModel));
 				} catch ( RuntimeException e ) {
 					// ignore this other than log
@@ -361,7 +361,7 @@ public class MyNodesController extends ControllerSupport {
 													("my-nodes.transferOwnership.mail.subject."
 															+ (accept ? "accepted" : "declined")),
 													null, locale),
-											("/net/solarnetwork/central/reg/web/transfer-ownership-"
+											("net/solarnetwork/central/reg/web/transfer-ownership-"
 													+ (accept ? "accepted" : "declined") + ".txt"),
 											mailModel));
 				} catch ( RuntimeException e ) {

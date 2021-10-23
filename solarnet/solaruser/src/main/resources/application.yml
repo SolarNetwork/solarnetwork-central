@@ -60,7 +60,7 @@ app:
       core-pool-size: 1
     task.scheduler:
       thread-name-prefix: "SolarNet-Sched-"
-      pool-size: 1
+      pool-size: 1  
   user.datum:
     delete:
       completed-task-minimum-cache-time: 14400000
@@ -89,7 +89,17 @@ mybatis:
     map-underscore-to-camel-case: true
     default-fetch-size: 100
     default-statement-timeout: 30
-  mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: "classpath*:net/solarnetwork/central/**/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.datum.export.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
 
 spring:
   mvc.format:
