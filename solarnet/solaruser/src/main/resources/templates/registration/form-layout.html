@@ -11,7 +11,7 @@
 <main class="container" th:fragment="layout (intro, detail, conclusion)">
 	<div class="alert alert-warning" th:if="${rootCauseException}"
 		th:text="${rootCauseException.reason}
-			? #{registration.error.auth.${rootCauseException.reason}(${rootCauseException.email})}
+			? #{registration.error.auth.__${rootCauseException.reason}__(${rootCauseException.email})}
 			: #{error.unexpected(${rootCauseException.message})}">
 		Error!
 	</div>

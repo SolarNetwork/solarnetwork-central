@@ -116,6 +116,7 @@ public class WebSecurityConfig {
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
 		      .authorizeRequests()
+		        .antMatchers("/login").hasAnyAuthority(ANONYMOUS_AUTHORITY)
 		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
@@ -128,9 +129,9 @@ public class WebSecurityConfig {
 			      
 		      // form login
 		      .formLogin()
-		        .loginPage("/login.do")
+		        .loginPage("/login")
 		        .defaultSuccessUrl("/u/sec/home")
-		        .failureUrl("/login.do?login_error=1")
+		        .failureUrl("/login?login_error=1")
 		        .and()
 		        
 		      // logout

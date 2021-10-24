@@ -40,12 +40,12 @@ public class HomeController {
 		return "index";
 	}
 
-	@RequestMapping("/sec/home")
+	@RequestMapping("/u/sec/home")
 	public String home() {
 		return "sec/home";
 	}
 
-	@RequestMapping("/login.do")
+	@RequestMapping({ "/login", "/login.do" })
 	public String login() {
 		return "login";
 	}
