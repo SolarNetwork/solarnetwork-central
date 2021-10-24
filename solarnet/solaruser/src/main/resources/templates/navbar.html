@@ -85,7 +85,7 @@
 						<li  th:classappend="${navloc == 'profile'}?active">
 							<a th:href="@{/u/sec/profile}" th:text="#{link.profile}">Profile</a>
 						</li>
-						<li><a class="logout" href="#" th:text="#{link.logout}">Logout</a></li>
+						<li><a class="logout" href="#" th:text="#{link.logout}" onclick="document.getElementById('logout-form').submit();">Logout</a></li>
 					</ul>
 				</li>
 			</ul>
