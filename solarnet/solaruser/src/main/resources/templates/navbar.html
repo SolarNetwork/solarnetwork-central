@@ -90,7 +90,6 @@
 				</li>
 			</ul>
 			<form id="logout-form" method="post" action="/logout" th:action="@{/logout}" sec:authorize="hasRole('ROLE_USER')">
-				<input type="hidden" name="_csrf" value="" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 			</form>
 	    </div>
 	</div>
