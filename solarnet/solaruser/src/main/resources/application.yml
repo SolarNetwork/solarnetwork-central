@@ -101,6 +101,11 @@ mybatis:
      net.solarnetwork.central.instructor.domain
      net.solarnetwork.central.user.domain
 
+server:
+  error.whitelabel.enabled: false
+  port: 9081
+  servlet.context-path: /solaruser
+
 spring:
   mvc.format:
     date: iso
@@ -109,10 +114,6 @@ spring:
   mvc.view:
     prefix: /WEB-INF/jsp/
     suffix: .jsp
-
-server:
-  port: 9081
-  servlet.context-path: /solaruser
 
 ---
 spring:
