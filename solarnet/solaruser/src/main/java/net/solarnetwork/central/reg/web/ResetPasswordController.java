@@ -52,7 +52,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * @version 1.1
  */
 @Controller
-@RequestMapping("/resetPassword")
+@RequestMapping("/u/resetPassword")
 public class ResetPasswordController extends ControllerSupport {
 
 	@Autowired
@@ -80,7 +80,7 @@ public class ResetPasswordController extends ControllerSupport {
 			receipt = registrationBiz.generateResetPasswordReceipt(email);
 
 			// set up the confirmation URL
-			uriBuilder.pathSegment("resetPassword", "confirm");
+			uriBuilder.pathSegment("u", "resetPassword", "confirm");
 			uriBuilder.replaceQuery(null);
 			uriBuilder.queryParam("c", receipt.getConfirmationCode());
 			uriBuilder.queryParam("m", email);

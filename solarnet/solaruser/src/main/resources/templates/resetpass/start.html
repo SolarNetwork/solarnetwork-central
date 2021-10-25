@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'none')">
+<head>
+    <title data-th-text="#{user.resetpassword.title}">Reset Password</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/global.css">
+</head>
+<body>
+<main class="container">
+	<p class="intro" data-th-text="#{user.resetpassword.intro}">
+		Fill in this form to reset your password.
+	</p>
+	
+	<form class="form-horizontal" method="post" data-th-action="@{/u/resetPassword/generate}">
+	
+		<fieldset>
+			<div class="form-group">
+				<label class="col-sm-2 control-label" for="reset-pass-email" data-th-text="#{user.email.label}">Email</label>
+				<div class="col-sm-4">
+					<input class="form-control" type="text" name="email" maxlength="240" id="reset-pass-email" 
+						data-th-placeholder="#{user.email.placeholder}"
+						aria-describedby="reset-password-email-help">
+					<span class="help-block" id="reset-password-email-help" data-th-text="#{user.email.caption}">
+						A reset link will be sent to this email.
+					</span>
+				</div>
+			</div>
+		</fieldset>
+	
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<input type="submit" class="btn btn-primary" data-th-value="#{user.resetpassword.submit.label}">
+			</div>
+		</div>
+	</form>
+</main>
+</body>
+</html>
