@@ -70,7 +70,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.0
  */
 @GlobalServiceController
-@RequestMapping("/sec/my-nodes")
+@RequestMapping("/u/sec/my-nodes")
 public class MyNodesController extends ControllerSupport {
 
 	private final UserBiz userBiz;
@@ -160,7 +160,7 @@ public class MyNodesController extends ControllerSupport {
 				.getPendingUserNodeConfirmations(actor.getUserId());
 		List<UserNodeTransfer> pendingNodeOwnershipRequests = nodeOwnershipBiz
 				.pendingNodeOwnershipTransfersForEmail(actor.getEmail());
-		ModelAndView mv = new ModelAndView("my-nodes/my-nodes");
+		ModelAndView mv = new ModelAndView("sec/my-nodes/my-nodes");
 		mv.addObject("userNodesList", nodes);
 		mv.addObject("pendingUserNodeConfirmationsList", pendingConfirmationList);
 		mv.addObject("pendingUserNodeTransferList", pendingTransferNodes);
@@ -199,7 +199,7 @@ public class MyNodesController extends ControllerSupport {
 		final Locale locale = new Locale(lang, countryCode);
 		final NetworkAssociation details = registrationBiz
 				.createNodeAssociation(new NewNodeRequest(userId, securityPhrase, timeZone, locale));
-		return new ModelAndView("my-nodes/invitation", "details", details);
+		return new ModelAndView("sec/my-nodes/invitation", "details", details);
 	}
 
 	@RequestMapping("/tzpicker.html")
@@ -210,7 +210,7 @@ public class MyNodesController extends ControllerSupport {
 	@RequestMapping("/invitation")
 	public ModelAndView viewConfirmation(@RequestParam(value = "id") Long userNodeConfirmationId) {
 		NetworkAssociation details = registrationBiz.getNodeAssociation(userNodeConfirmationId);
-		return new ModelAndView("my-nodes/invitation", "details", details);
+		return new ModelAndView("sec/my-nodes/invitation", "details", details);
 	}
 
 	@RequestMapping("/cancelInvitation")
@@ -243,7 +243,7 @@ public class MyNodesController extends ControllerSupport {
 	public String editNodeView(@RequestParam("userId") Long userId, @RequestParam("nodeId") Long nodeId,
 			Model model) {
 		model.addAttribute("userNode", userBiz.getUserNode(userId, nodeId));
-		return "my-nodes/edit-node";
+		return "sec/my-nodes/edit-node";
 	}
 
 	@ResponseBody

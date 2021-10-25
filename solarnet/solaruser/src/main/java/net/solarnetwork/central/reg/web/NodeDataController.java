@@ -46,7 +46,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 1.1
  */
 @RestController("v1NodeDataController")
-@RequestMapping(value = "/sec/node-data")
+@RequestMapping(value = "/u/sec/node-data")
 @GlobalExceptionRestController
 public class NodeDataController {
 

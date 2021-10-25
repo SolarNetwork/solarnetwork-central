@@ -53,7 +53,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.0
  */
 @GlobalServiceController
-@RequestMapping("/sec/auth-tokens")
+@RequestMapping("/u/sec/auth-tokens")
 public class UserAuthTokenController extends ControllerSupport {
 
 	private final UserBiz userBiz;

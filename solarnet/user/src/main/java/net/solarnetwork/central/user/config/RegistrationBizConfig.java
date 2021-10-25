@@ -147,6 +147,7 @@ public class RegistrationBizConfig {
 		biz.setUserNodeDao(userNodeDao);
 		biz.setUserNodeCertificateDao(userNodeCertificateDao);
 		biz.setUserNodeCertificateDao(userNodeCertificateDao);
+		biz.setUserNodeConfirmationDao(userNodeConfirmationDao);
 		biz.setUserAuthTokenDao(userAuthTokenDao);
 		biz.setSolarNodeDao(solarNodeDao);
 		biz.setSolarLocationDao(solarLocationDao);

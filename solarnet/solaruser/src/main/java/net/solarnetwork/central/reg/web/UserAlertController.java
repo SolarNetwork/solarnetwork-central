@@ -69,7 +69,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.0
  */
 @GlobalServiceController
-@RequestMapping("/sec/alerts")
+@RequestMapping("/u/sec/alerts")
 public class UserAlertController extends ControllerSupport {
 
 	private static final Pattern TIME_PAT = Pattern.compile("[0-2]?\\d:[0-5]\\d");
