@@ -74,6 +74,8 @@ app:
       max-request-body-size: 65535
       max-date-skew: 900000
 
+debug: true
+
 logging:
   level:
     ROOT: INFO
@@ -119,14 +121,14 @@ spring:
 spring:
   config.activate.on-profile: development
   thymeleaf.cache: false
-
-debug: true
-
 app:
   datasource:
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
     username: solarnet
     password: solarnet
+
+
+debug: false
 
 ---
 spring:
@@ -144,6 +146,8 @@ spring:
       "[mail.smtp.timeout]": 5000
       "[mail.smtp.writetimeout]": 5000
   thymeleaf.cache: true
+
+debug: false
 
 logging:
   level:
