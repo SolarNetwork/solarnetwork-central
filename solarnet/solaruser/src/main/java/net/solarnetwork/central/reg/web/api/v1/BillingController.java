@@ -68,7 +68,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.0
  */
 @RestController("v1BillingController")
-@RequestMapping(value = { "/sec/billing", "/v1/sec/user/billing" })
+@RequestMapping(value = { "/u/sec/billing", "/v1/sec/user/billing" })
 @GlobalExceptionRestController
 public class BillingController {
 

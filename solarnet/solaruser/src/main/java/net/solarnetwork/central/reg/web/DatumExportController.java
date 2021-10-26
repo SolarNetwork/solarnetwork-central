@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @GlobalServiceController
 public class DatumExportController {
 
-	@RequestMapping(value = "/sec/export", method = RequestMethod.GET)
+	@RequestMapping(value = "/u/sec/export", method = RequestMethod.GET)
 	public String home() {
 		return "export/export";
 	}

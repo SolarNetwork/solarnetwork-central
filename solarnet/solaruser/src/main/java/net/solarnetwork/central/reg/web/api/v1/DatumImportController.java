@@ -83,7 +83,7 @@ import net.solarnetwork.web.support.MultipartFileResource;
  */
 @GlobalExceptionRestController
 @RestController("v1DatumImportController")
-@RequestMapping(value = { "/sec/import", "/v1/sec/user/import" })
+@RequestMapping(value = { "/u/sec/import", "/v1/sec/user/import" })
 public class DatumImportController {
 
 	private final Logger log = LoggerFactory.getLogger(DatumImportController.class);

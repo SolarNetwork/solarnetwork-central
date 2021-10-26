@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @GlobalServiceController
 public class BillingController {
 
-	@RequestMapping(value = "/sec/billing", method = RequestMethod.GET)
+	@RequestMapping(value = "/u/sec/billing", method = RequestMethod.GET)
 	public String home() {
 		return "billing/billing";
 	}

@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @GlobalServiceController
 public class DatumInsightController {
 
-	@RequestMapping(value = "/sec/data-insight", method = RequestMethod.GET)
+	@RequestMapping(value = "/u/sec/data-insight", method = RequestMethod.GET)
 	public String home() {
 		return "data-insight/data-insight";
 	}

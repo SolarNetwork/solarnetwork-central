@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @GlobalServiceController
 public class DatumImportController {
 
-	@RequestMapping(value = "/sec/import", method = RequestMethod.GET)
+	@RequestMapping(value = "/u/sec/import", method = RequestMethod.GET)
 	public String home() {
 		return "import/import";
 	}

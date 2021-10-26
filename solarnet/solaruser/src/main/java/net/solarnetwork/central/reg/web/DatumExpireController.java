@@ -47,7 +47,7 @@ public class DatumExpireController {
 	@Autowired(required = false)
 	private UserDatumDeleteBiz datumDeleteBiz;
 
-	@RequestMapping(value = "/sec/expire", method = RequestMethod.GET)
+	@RequestMapping(value = "/u/sec/expire", method = RequestMethod.GET)
 	public String home() {
 		return "expire/expire";
 	}

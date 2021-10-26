@@ -56,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1DatumAuxiliaryController")
-@RequestMapping(value = { "/sec/datum/auxiliary", "/v1/sec/datum/auxiliary" })
+@RequestMapping(value = { "/u/sec/datum/auxiliary", "/v1/sec/datum/auxiliary" })
 public class DatumAuxiliaryController {
 
 	private final DatumAuxiliaryBiz datumAuxiliaryBiz;

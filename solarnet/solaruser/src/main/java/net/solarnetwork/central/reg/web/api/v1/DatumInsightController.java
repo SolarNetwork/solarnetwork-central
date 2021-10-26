@@ -56,7 +56,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1DatumInsightController")
-@RequestMapping(value = { "/sec/data-insight", "/v1/sec/user/data-insight" })
+@RequestMapping(value = { "/u/sec/data-insight", "/v1/sec/user/data-insight" })
 public class DatumInsightController {
 
 	private final AuditDatumBiz auditDatumBiz;
