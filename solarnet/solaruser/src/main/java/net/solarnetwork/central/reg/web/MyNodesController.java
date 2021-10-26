@@ -284,7 +284,7 @@ public class MyNodesController extends ControllerSupport {
 			try {
 				User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
 
-				uriBuilder.pathSegment("sec", "my-nodes");
+				uriBuilder.pathSegment("u", "sec", "my-nodes");
 
 				Map<String, Object> mailModel = new HashMap<String, Object>(2);
 				mailModel.put("actor", actor);

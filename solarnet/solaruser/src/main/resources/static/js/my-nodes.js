@@ -452,7 +452,7 @@ $(document).ready(function() {
 			if ( json.success == true && json.data && Array.isArray(json.data.results) ) {
 				showLocationSearchResults(json.data.results);
 			}
-		}).fail(function(data, statusText, xhr) {
+		}).fail(function(xhr, statusText, data) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		});
 	}

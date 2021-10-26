@@ -41,6 +41,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -566,8 +567,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		if ( nodeCertificateRenewalPeriod != null ) {
-			if ( certificate.getNotAfter().toInstant().minus(nodeCertificateRenewalPeriod)
-					.isAfter(Instant.now()) ) {
+			if ( certificate.getNotAfter().toInstant().atZone(ZoneOffset.UTC)
+					.minus(nodeCertificateRenewalPeriod).toInstant().isAfter(Instant.now()) ) {
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
 		}

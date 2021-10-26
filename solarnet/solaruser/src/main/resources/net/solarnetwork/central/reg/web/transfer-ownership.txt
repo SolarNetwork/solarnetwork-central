@@ -1,6 +1,6 @@
-${actor.name} (${actor.email}) would like to transfer ownership of their SolarNetwork
-SolarNode ${nodeId} to you. You can accept or decline this request by visiting the
-My Nodes page on SolarNetwork:
+SolarNetwork user ${actor.name} (${actor.email}) would like to transfer ownership of
+their SolarNode #${nodeId} to you. You can accept or decline this request by visiting
+the My Nodes page on SolarNetwork:
 
 ${url}
 

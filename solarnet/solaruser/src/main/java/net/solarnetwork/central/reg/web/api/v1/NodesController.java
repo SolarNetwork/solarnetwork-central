@@ -27,6 +27,7 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -118,7 +119,7 @@ public class NodesController {
 	 * 
 	 * @return The list of pending node confirmations for the active user.
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/pending",
+	@RequestMapping(value = { "/u/sec/my-nodes/pending",
 			"/v1/sec/nodes/pending" }, method = RequestMethod.GET)
 	@ResponseBody
 	public Response<FilterResults<UserNodeConfirmation>> getPendingNodes() {
@@ -135,7 +136,7 @@ public class NodesController {
 	 * @return All archived nodes.
 	 * @since 1.1
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/archived",
+	@RequestMapping(value = { "/u/sec/my-nodes/archived",
 			"/v1/sec/nodes/archived" }, method = RequestMethod.GET)
 	@ResponseBody
 	public Response<List<UserNode>> getArchivedNodes() {
@@ -153,7 +154,7 @@ public class NodesController {
 	 * @return A success response.
 	 * @since 1.1
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/archived",
+	@RequestMapping(value = { "/u/sec/my-nodes/archived",
 			"/v1/sec/nodes/archived" }, method = RequestMethod.POST)
 	@ResponseBody
 	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
@@ -175,7 +176,7 @@ public class NodesController {
 	 * @return the new node details
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/create-cert",
+	@RequestMapping(value = { "/u/sec/my-nodes/create-cert",
 			"/v1/sec/nodes/create-cert" }, method = RequestMethod.POST)
 	@ResponseBody
 	public Response<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
@@ -218,7 +219,7 @@ public class NodesController {
 	 * @return the response data
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/cert/{nodeId}",
+	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}",
 			"/v1/sec/nodes/cert/{nodeId}" }, method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseEntity<byte[]> viewCert(@PathVariable("nodeId") Long nodeId) {
@@ -252,7 +253,7 @@ public class NodesController {
 	 * @return the response data
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/cert/{nodeId}",
+	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}",
 			"/v1/sec/nodes/cert/{nodeId}" }, method = RequestMethod.POST)
 	@ResponseBody
 	public UserNodeCertificate viewCert(@PathVariable("nodeId") Long nodeId,
@@ -300,7 +301,7 @@ public class NodesController {
 	 * @return the renewed certificate
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/sec/my-nodes/cert/renew/{nodeId}",
+	@RequestMapping(value = { "/u/sec/my-nodes/cert/renew/{nodeId}",
 			"/v1/sec/nodes/cert/renew/{nodeId}" }, method = RequestMethod.POST)
 	@ResponseBody
 	public UserNodeCertificate renewCert(@PathVariable("nodeId") final Long nodeId,
@@ -339,7 +340,8 @@ public class NodesController {
 			this.nodeCert = nodeCert;
 			if ( nodeCert != null ) {
 				if ( renewPeriod != null ) {
-					this.renewAfter = nodeCert.getNotAfter().toInstant().minus(renewPeriod);
+					this.renewAfter = nodeCert.getNotAfter().toInstant().atZone(ZoneOffset.UTC)
+							.minus(renewPeriod).toInstant();
 				} else {
 					this.renewAfter = null;
 				}
