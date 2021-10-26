@@ -239,13 +239,6 @@ public class MyNodesController extends ControllerSupport {
 		res.setStatus(HttpServletResponse.SC_FORBIDDEN);
 	}
 
-	@RequestMapping(value = "/editNode", method = RequestMethod.GET)
-	public String editNodeView(@RequestParam("userId") Long userId, @RequestParam("nodeId") Long nodeId,
-			Model model) {
-		model.addAttribute("userNode", userBiz.getUserNode(userId, nodeId));
-		return "sec/my-nodes/edit-node";
-	}
-
 	@ResponseBody
 	@RequestMapping(value = "/node", method = RequestMethod.GET)
 	public Response<UserNode> getUserNode(@RequestParam("userId") Long userId,
