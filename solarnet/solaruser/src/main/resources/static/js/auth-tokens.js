@@ -262,7 +262,7 @@ $(document).ready(function() {
 	});
 	
 	$('#create-data-auth-token-policy-nodeids').on('click', function(event) {
-		var target = $(event.target),
+		var target = $(event.target).closest('button'),
 			on = true,
 			nodeId = target.data('node-id');
 		event.preventDefault();

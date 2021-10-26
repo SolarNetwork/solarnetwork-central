@@ -93,7 +93,7 @@ public class UserAuthTokenController extends ControllerSupport {
 			model.addAttribute("dataAuthTokens", dataTokens);
 		}
 		model.addAttribute("userNodes", userBiz.getUserNodes(user.getUserId()));
-		return "auth-tokens/view";
+		return "sec/auth-tokens/view";
 	}
 
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)

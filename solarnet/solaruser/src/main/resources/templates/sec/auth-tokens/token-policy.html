@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title data-th-text="#{app.name}">SolarUser</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container">
+	<dl data-th-fragment="content" data-th-if="${token.policy}">
+		<dt data-th-if="${token.policy.notAfter}" data-th-text="#{auth-tokens.label.notAfter}">
+			Not After
+		</dt>
+		<dd data-th-if="${token.policy.notAfter}" data-th-text="${#temporals.format(token.policy.notAfter, 'dd MMM yyyy') + ' UTC'}">
+			1 Jan 2010
+		</dd>
+		<dt data-th-if="${token.policy.refreshAllowed}" data-th-text="#{auth-tokens.label.refreshAllowed}">
+			Refresh Allowed
+		</dt>
+		<dd data-th-if="${token.policy.refreshAllowed}" data-th-text="#{auth-tokens-policy-refreshAllowed.true.label}">
+			Yes
+		</dd>
+		<dt data-th-if="${not #sets.isEmpty(token.policy.nodeIds)}" data-th-text="#{auth-tokens.label.nodes}">
+			Node IDs
+		</dt>
+		<dd data-th-if="${not #sets.isEmpty(token.policy.nodeIds)}" data-th-text="${#strings.setJoin(token.policy.nodeIds, ', ')}">
+			123, 234
+		</dd>
+		<dt data-th-if="${not #sets.isEmpty(token.policy.sourceIds)}" data-th-text="#{auth-tokens.label.sources}">
+			Source IDs
+		</dt>
+		<dd data-th-if="${not #sets.isEmpty(token.policy.sourceIds)}" data-th-text="${#strings.setJoin(token.policy.sourceIds, ', ')}">
+			A, B
+		</dd>
+		<dt data-th-if="${token.policy.minAggregation}" data-th-text="#{auth-tokens.label.minAggregation}">
+			Minimum Aggregation
+		</dt>
+		<dd data-th-if="${token.policy.minAggregation}" data-th-text="#{aggregation.__${token.policy.minAggregation}__.label}">
+			Hourly
+		</dd>
+		<dt data-th-if="${not #sets.isEmpty(token.policy.nodeMetadataPaths)}" data-th-text="#{auth-tokens.label.nodeMetadataPaths}">
+			Node Metadata Paths
+		</dt>
+		<dd data-th-if="${not #sets.isEmpty(token.policy.nodeMetadataPaths)}" data-th-text="${#strings.setJoin(token.policy.nodeMetadataPaths, ', ')}">
+			/a/b, /c/d
+		</dd>
+		<dt data-th-if="${not #sets.isEmpty(token.policy.userMetadataPaths)}" data-th-text="#{auth-tokens.label.userMetadataPaths}">
+			User Metadata Paths
+		</dt>
+		<dd data-th-if="${not #sets.isEmpty(token.policy.userMetadataPaths)}" data-th-text="${#strings.setJoin(token.policy.userMetadataPaths, ', ')}">
+			/a/b, /c/d
+		</dd>
+		<dt data-th-if="${not #sets.isEmpty(token.policy.apiPaths)}" data-th-text="#{auth-tokens.label.apiPaths}">
+			API Paths
+		</dt>
+		<dd data-th-if="${not #sets.isEmpty(token.policy.apiPaths)}" data-th-text="${#strings.setJoin(token.policy.apiPaths, ', ')}">
+			/a/b, /c/d
+		</dd>
+	</dl>
+</div>
+</body>
+</html>
