@@ -52,15 +52,6 @@ dependencies {
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 
-	// TODO: REMOVE JSP
-	implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
-	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:1.2.6'
-	implementation 'org.springframework.security:spring-security-taglibs'
-	implementation 'org.apache.tiles:tiles-api:3.0.8'
-	implementation 'org.apache.tiles:tiles-core:3.0.8'
-	implementation 'org.apache.tiles:tiles-servlet:3.0.8'
-	implementation 'org.apache.tiles:tiles-jsp:3.0.8'
-	
 	// Utils
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
