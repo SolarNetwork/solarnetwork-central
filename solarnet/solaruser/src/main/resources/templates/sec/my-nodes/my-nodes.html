@@ -11,136 +11,136 @@
 </head>
 <body>
 <div class="container" data-th-fragment="content">
-	<a id="top"></a>
-	<section id="pending-transfer-requests" data-th-if="${not #lists.isEmpty(pendingNodeOwnershipRequests)}">
-		<h2 data-th-text="#{my-nodes.pending-transfer-requests.header}">Pending Transfer Requests</h2>
-		<p data-th-utext="#{my-nodes.pending-transfer-requests.intro(${pendingNodeOwnershipRequests.size})}">
-			You have 2 pending transfer requests.
-		</p>
-		<table class="table" id="pending-transfer-requests-table">
-			<thead>
-				<tr>
-					<th data-th-text="#{user.node.id.label}">Node ID</th>
-					<th data-th-text="#{my-nodes.transferOwnership.requester.label}">Requester</th>
-					<th data-th-text="#{my-nodes.transferOwnership.requestDate.label}">Date</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr data-th-each="transfer : ${pendingNodeOwnershipRequests}">
-					<td data-th-text="${transfer.node.id}">123</td>
-					<td data-th-text="${transfer.user.email}">example@example.com</td>
-					<td data-th-text="${#temporals.format(transfer.created, 'dd MMM yyyy')}">
-						1 Jan 2010
-					</td>
-					<td>
-						<button type="button" class="btn btn-small btn-default decide-ownership-transfer"
-							data-th-data-user-id="${transfer.user.id}"
-							data-th-data-node-id="${transfer.node.id}" 
-							data-th-data-requester="${transfer.user.email}"
-							data-th-text="#{my-nodes.transferOwnership.action.requestDecision}">
-							Accept or Decline
+<a id="top"></a>
+<section id="pending-transfer-requests" data-th-if="${not #lists.isEmpty(pendingNodeOwnershipRequests)}">
+	<h2 data-th-text="#{my-nodes.pending-transfer-requests.header}">Pending Transfer Requests</h2>
+	<p data-th-utext="#{my-nodes.pending-transfer-requests.intro(${pendingNodeOwnershipRequests.size})}">
+		You have 2 pending transfer requests.
+	</p>
+	<table class="table" id="pending-transfer-requests-table">
+		<thead>
+			<tr>
+				<th data-th-text="#{user.node.id.label}">Node ID</th>
+				<th data-th-text="#{my-nodes.transferOwnership.requester.label}">Requester</th>
+				<th data-th-text="#{my-nodes.transferOwnership.requestDate.label}">Date</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-th-each="transfer : ${pendingNodeOwnershipRequests}">
+				<td data-th-text="${transfer.node.id}">123</td>
+				<td data-th-text="${transfer.user.email}">example@example.com</td>
+				<td data-th-text="${#temporals.format(transfer.created, 'dd MMM yyyy')}">
+					1 Jan 2010
+				</td>
+				<td>
+					<button type="button" class="btn btn-small btn-default decide-ownership-transfer"
+						data-th-data-user-id="${transfer.user.id}"
+						data-th-data-node-id="${transfer.node.id}"
+						data-th-data-requester="${transfer.user.email}"
+						data-th-text="#{my-nodes.transferOwnership.action.requestDecision}">
+						Accept or Decline
+					</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<section id="pending" data-th-if="${not #lists.isEmpty(pendingUserNodeConfirmationsList)}">
+	<h2 data-th-text="#{my-nodes.pending-invite.header}">Pending Invitations</h2>
+	<p data-th-utext="#{my-nodes.pending-invite.intro(${pendingUserNodeConfirmationsList.size})}">
+		You have 2 node invitations.
+	</p>
+	<div class="alert alert-info alert-dismissible" role="alert">
+		<button type="button" class="close" data-dismiss="alert"
+		data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+		<span data-th-utext="#{my-nodes.solarnode.link.help}">
+			Your SolarNode is available at http://solarnode/.
+		</span>
+	</div>
+	<table class="table">
+		<thead>
+			<tr>
+				<th class="col-sm-2" data-th-text="#{user.nodeconf.created.label}">Created</th>
+				<th class="col-sm-10"></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-th-each="userNodeConf : ${pendingUserNodeConfirmationsList}">
+				<td data-th-text="${#temporals.format(userNodeConf.created, 'dd MMM yyyy')}">
+					1 Jan 2010
+				</td>
+				<td>
+					<div class="btn-group">
+						<a class="btn btn-default" data-th-href="@{/u/sec/my-nodes/invitation(id=${userNodeConf.id})}"
+							data-th-text="#{my-nodes.view-invitation.link}">
+							View Invitation
+						</a>
+						<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+							<span class="caret"></span>
+							<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
 						</button>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</section>
+						<ul class="dropdown-menu" role="menu">
+							<li>
+								<a class="btn btn-danger" data-th-href="@{/u/sec/my-nodes/cancelInvitation(id=${userNodeConf.id})}">
+									<i class="glyphicon glyphicon-trash"></i>
+									<span data-th-text="#{my-nodes.cancel-invitation.link}">Cancel</span>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
 
-	<section id="pending" data-th-if="${not #lists.isEmpty(pendingUserNodeConfirmationsList)}">
-		<h2 data-th-text="#{my-nodes.pending-invite.header}">Pending Invitations</h2>
-		<p data-th-utext="#{my-nodes.pending-invite.intro(${pendingUserNodeConfirmationsList.size})}">
-			You have 2 node invitations.
-		</p>
-		<div class="alert alert-info alert-dismissible" role="alert">
-			<button type="button" class="close" data-dismiss="alert"
-			data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
-			<span data-th-utext="#{my-nodes.solarnode.link.help}">
-				Your SolarNode is available at http://solarnode/.
-			</span>
-		</div>
-		<table class="table">
-			<thead>
-				<tr>
-					<th class="col-sm-2" data-th-text="#{user.nodeconf.created.label}">Created</th>
-					<th class="col-sm-10"></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr data-th-each="userNodeConf : ${pendingUserNodeConfirmationsList}">
-					<td data-th-text="${#temporals.format(userNodeConf.created, 'dd MMM yyyy')}">
-						1 Jan 2010
-					</td>
-					<td>
-						<div class="btn-group">
-							<a class="btn btn-default" data-th-href="@{/u/sec/my-nodes/invitation(id=${userNodeConf.id})}"
-								data-th-text="#{my-nodes.view-invitation.link}">
-								View Invitation
-							</a>
-							<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-								<span class="caret"></span>
-								<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
-							</button>
-							<ul class="dropdown-menu" role="menu">
-								<li>
-									<a class="btn btn-danger" data-th-href="@{/u/sec/my-nodes/cancelInvitation(id=${userNodeConf.id})}">
-										<i class="glyphicon glyphicon-trash"></i>
-										<span data-th-text="#{my-nodes.cancel-invitation.link}">Cancel</span>
-									</a>
-								</li>
-							</ul>
-						</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</section>
+<section id="pending-transfers" data-th-if="${not #lists.isEmpty(pendingUserNodeTransferList)}">
+	<h2 data-th-text="#{my-nodes.pending-transfer-ownership.header}">
+		Pending Transfers
+	</h2>
+	<p class="intro" data-th-utext="#{my-nodes.pending-transfer-ownership.intro(${pendingUserNodeTransferList.size})}">
+		You have 2 pending transfers.
+	</p>
+	<table class="table" id="pending-transfer">
+		<thead>
+			<tr>
+				<th data-th-text="#{user.node.id.label}">Node ID</th>
+				<th data-th-text="#{user.node.created.label}">Created</th>
+				<th data-th-text="#{my-nodes.transferOwnership.recipient.label}">Recipient</th>
+				<th data-th-text="#{my-nodes.transferOwnership.requestDate.label}">Request Date</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-th-each="userNode : ${pendingUserNodeTransferList}" class="node-row">
+				<td>
+					<span data-th-text="${userNode.node.id}">123</span>
+					<span data-th-if="${!#strings.isEmpty(userNode.name)}" data-th-text="${' - ' + userNode.name}"> - Home</span>
+					<span data-th-if="${!#strings.isEmpty(userNode.description)}" data-th-text="${' (' + userNode.description + ')'}"> (Home node)</span>
+				</td>
+				<td data-th-text="${#temporals.format(userNode.node.created, 'dd MMM yyyy')}">
+					1 Jan 2010
+				</td>
+				<td data-th-text="${userNode.transfer.email}">example@example.com</td>
+				<td data-th-text="${#temporals.format(userNode.transfer.created, 'dd MMM yyyy')}">
+					1 Jan 2010
+				</td>
+				<td>
+					<button type="button"
+						data-th-data-action="@{/u/sec/my-nodes/cancelNodeTransferRequest}"
+						data-th-data-user-id="${userNode.user.id}"
+						data-th-data-node-id="${userNode.node.id}"
+						data-th-title="#{my-nodes.transferOwnership.action.cancel}"
+						class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
 
-	<section id="pending-transfers" data-th-if="${not #lists.isEmpty(pendingUserNodeTransferList)}">
-		<h2 data-th-text="#{my-nodes.pending-transfer-ownership.header}">
-			Pending Transfers
-		</h2>
-		<p class="intro" data-th-utext="#{my-nodes.pending-transfer-ownership.intro(${pendingUserNodeTransferList.size})}">
-			You have 2 pending transfers.
-		</p>
-		<table class="table" id="pending-transfer">
-			<thead>
-				<tr>
-					<th data-th-text="#{user.node.id.label}">Node ID</th>
-					<th data-th-text="#{user.node.created.label}">Created</th>
-					<th data-th-text="#{my-nodes.transferOwnership.recipient.label}">Recipient</th>
-					<th data-th-text="#{my-nodes.transferOwnership.requestDate.label}">Request Date</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr data-th-each="userNode : ${pendingUserNodeTransferList}" class="node-row">
-					<td>
-						<span data-th-text="${userNode.node.id}">123</span>
-						<span data-th-if="${!#strings.isEmpty(userNode.name)}" data-th-text="${' - ' + userNode.name}"> - Home</span>
-						<span data-th-if="${!#strings.isEmpty(userNode.description)}" data-th-text="${' (' + userNode.description + ')'}"> (Home node)</span>
-					</td>
-					<td data-th-text="${#temporals.format(userNode.node.created, 'dd MMM yyyy')}">
-						1 Jan 2010
-					</td>
-					<td data-th-text="${userNode.transfer.email}">example@example.com</td>
-					<td data-th-text="${#temporals.format(userNode.transfer.created, 'dd MMM yyyy')}">
-						1 Jan 2010
-					</td>
-					<td>
-						<button type="button" 
-							data-th-data-action="@{/u/sec/my-nodes/cancelNodeTransferRequest}"
-							data-th-data-user-id="${userNode.user.id}"
-							data-th-data-node-id="${userNode.node.id}"
-							data-th-title="#{my-nodes.transferOwnership.action.cancel}"
-							class="btn btn-small btn-danger cancel-ownership-transfer"><i class="glyphicon glyphicon-remove"></i></button>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</section>
-
-<main id="nodes">
+<section id="nodes">
 	<h2>
 		<span data-th-text="#{my-nodes.nodelist.header}">My Nodes</span>
 		<button type="button" id="invite-new-node-button" class="btn btn-primary pull-right" data-target="#invite-modal" data-toggle="modal">
@@ -164,7 +164,7 @@
 		</thead>
 		<tbody>
 			<tr data-th-each="userNode : ${userNodesList}" class="node-row"
-				data-th-data-node-id="${userNode.node.id}" 
+				data-th-data-node-id="${userNode.node.id}"
 				data-th-data-user-id="${userNode.user.id}"
 				data-th-data-node-name="${userNode.name}">
 				<td data-th-text="${userNode.node.id}">123</td>
@@ -193,13 +193,13 @@
 				</td>
 				<td>
 					<div class="btn-group">
-						<button type="button" class="btn btn-small btn-default edit-node" 
+						<button type="button" class="btn btn-small btn-default edit-node"
 							data-target="#edit-node-modal"
-							data-th-data-user-id="${userNode.user.id}" 
+							data-th-data-user-id="${userNode.user.id}"
 							data-th-data-node-id="${userNode.node.id}"
 							data-th-text="#{my-nodes.action.edit}"
 							>Edit</button>
-						<button type="button" class="btn btn-small btn-default dropdown-toggle" 
+						<button type="button" class="btn btn-small btn-default dropdown-toggle"
 							data-toggle="dropdown" aria-expanded="false">
 							<span class="caret"></span>
 							<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle Dropdown</span>
@@ -227,7 +227,7 @@
 			</tr>
 		</tbody>
 	</table>
-</main>
+</section>
 
 <!--/* Modal forms */-->
 
@@ -245,7 +245,7 @@
 		 				Security Phrase
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<input type="password" class="form-control" name="phrase" 
+		 				<input type="password" class="form-control" name="phrase"
 		 					data-th-placeholder="#{my-nodes.invitation.securityPhrase.label}"
 		 					maxlength="128" required="required"/>
 			 			<span class="help-block"><small data-th-text="#{my-nodes.invitation.securityPhrase.caption}">This will be shown on the SolarNode you are inviting.</small></span>
@@ -273,7 +273,7 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" id="node-cert-create" class="btn btn-default pull-left" 
+		 		<button type="button" id="node-cert-create" class="btn btn-default pull-left"
 		 			data-th-data-confirm-title="#{my-nodes.create.reaffirm}"
 		 			data-th-text="#{my-nodes.create.link}"
 		 			>Create Invitation</button>
@@ -415,7 +415,7 @@
 				 		</div>
 						<div class="tz-picker-container"></div>
 					</fieldset>
-					<fieldset class="form-horizontal" id="edit-node-location-details" 
+					<fieldset class="form-horizontal" id="edit-node-location-details"
 						data-th-data-lookup-url="${@environment.getProperty('app.network-identity.service-urls.solarquery') + '/api/v1/pub/location'}">
 						<p data-th-utext="#{my-nodes.edit-node.choose-location.intro}">Choose a location.</p>
 						<div class="form-group">
