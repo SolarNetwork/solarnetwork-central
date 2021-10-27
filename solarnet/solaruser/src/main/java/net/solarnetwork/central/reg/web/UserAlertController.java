@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
@@ -121,7 +122,7 @@ public class UserAlertController extends ControllerSupport {
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);
 		}
 		model.addAttribute("userNodes", userBiz.getUserNodes(user.getUserId()));
-		return "alerts/view-alerts";
+		return "sec/alerts/view-alerts";
 	}
 
 	/**
@@ -294,10 +295,11 @@ public class UserAlertController extends ControllerSupport {
 			if ( locale != null ) {
 				fmt = fmt.withLocale(locale);
 			}
-			alert.getOptions().put("situationDate", fmt.format(alert.getSituation().getCreated()));
+			alert.getOptions().put("situationDate",
+					fmt.format(alert.getSituation().getCreated().atOffset(ZoneOffset.UTC)));
 			if ( alert.getSituation().getNotified() != null ) {
 				alert.getOptions().put("situationNotificationDate",
-						fmt.format(alert.getSituation().getNotified()));
+						fmt.format(alert.getSituation().getNotified().atOffset(ZoneOffset.UTC)));
 			}
 		}
 		if ( alert.getOptions() != null ) {
