@@ -58,7 +58,7 @@
 		<tr data-th-each="token : ${userAuthTokens}">
 			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
 			<td>
-				<dl data-th-replace="sec/auth-tokens/token-policy :: content">
+				<dl data-th-replace="sec/authtokens/token-policy :: content">
 					<dt>Not After</dt>
 					<dd>1 Jan 2010</dd>
 				</dl>
@@ -121,7 +121,7 @@
 		<tr data-th-each="token : ${dataAuthTokens}">
 			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
 			<td>
-				<dl data-th-replace="sec/auth-tokens/token-policy :: content">
+				<dl data-th-replace="sec/authtokens/token-policy :: content">
 					<dt>Not After</dt>
 					<dd>1 Jan 2010</dd>
 				</dl>
