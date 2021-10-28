@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'profile')">
+<head>
+    <title data-th-text="#{user.profile.details.title}">SolarUser Profile Form</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<main class="container">
+	<p data-th-utext="#{user.profile.intro}">User profile.</p>
+	<div class="row">
+		<div class="col-sm-2">
+			<strong data-th-text="#{user.profile.details.title}">User Profile</strong>
+		</div>
+		<div class="col-sm-8">
+			<span data-th-text="${user.name}">User Person</span><br/>
+			<span data-th-text="${user.email}">user@localhost</span><br/>
+		</div>
+		<div class="col-sm-2 text-right">
+			<a class="btn btn-primary" href="form.html" data-th-href="@{/u/sec/profile/edit}"
+				data-th-text="#{edit.label}">Edit</a>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -53,21 +53,21 @@ public class ProfileController {
 	public ModelAndView viewProfile() {
 		SecurityUser user = SecurityUtils.getCurrentUser();
 		User u = userBiz.getUser(user.getUserId());
-		return new ModelAndView("profile/view", "user", u);
+		return new ModelAndView("sec/profile/view", "user", u);
 	}
 
 	@RequestMapping(value = "/edit", method = RequestMethod.GET)
 	public ModelAndView editProfile() {
 		SecurityUser user = SecurityUtils.getCurrentUser();
 		User u = userBiz.getUser(user.getUserId());
-		return new ModelAndView("profile/form", "user", u);
+		return new ModelAndView("sec/profile/form", "user", u);
 	}
 
 	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	public ModelAndView saveProfile(User user) {
 		User u = registrationBiz.updateUser(user);
 		u.setPassword(RegistrationBiz.DO_NOT_CHANGE_VALUE);
-		ModelAndView mv = new ModelAndView("profile/view", "user", u);
+		ModelAndView mv = new ModelAndView("sec/profile/view", "user", u);
 		mv.addObject(WebConstants.MODEL_KEY_STATUS_MSG, "user.profile.saved");
 		return mv;
 	}
