@@ -1,0 +1,325 @@
+
+<html><head><meta charset="UTF-8">
+<title>SolarNetwork invoice INV-UM</title>
+<style type="text/css">
+	body {
+		font-family: sans-serif;
+		background-color: #FFF;
+		margin: 2rem; }
+	footer { border-top: 2px solid #F7C819; color: #666; margin-top: 2rem; }
+	body > p { font-size: 0.8rem; margin: 0.2rem 0 1rem 0; }
+	footer > p { margin-top: 4px; margin-bottom: 4px; font-size: 0.8rem; }
+	footer > p + p { border-top: 1px solid #CCC; padding-top: 2px; }
+	h1 { font-size: 1.5rem; font-weight: 200; margin: 1rem 0 0 0; clear: both; }
+	kbd { font-size: 1.1rem; font-weight: bold; }
+	body > table { clear: both; }
+	table { width: 100%; border-collapse: collapse; }
+	table + table { margin-top: 3rem; }
+	th.hr { border-top: 2px solid black; }
+	td.hr { border-bottom: 1px solid #CCC; }
+	td.space { height: 1rem; }
+	th { text-align: left; width: 225px; }
+	.addr p { margin: 0; }
+	.addr p + p { margin-top: 0.2rem; }
+	.head { font-weight: bold; }
+	.left { text-align: left; }
+	.right { text-align: right; }
+	.secondary { color: #666; }
+
+	.from {
+		float: left;
+		width: 50%; }
+	.from .logo { height: 2rem; margin: 0 0 1rem 0; }
+	.from .addr { 
+		color: #666;
+		font-size: 0.8rem; }
+	.info {
+		float: right;
+		width: 50%;
+		margin-top: 3rem; 
+		margin-bottom: 1rem; }
+	.info td,
+	.info th { vertical-align: top; padding: 0.2rem; }
+	.info td:first-child {
+		font-weight: 700;
+		text-align: right;
+		padding-right: 1rem; }
+
+	.details tbody td,
+	.details tbody th { 
+		padding-top: 2px;
+		padding-bottom: 2px;
+		vertical-align: text-bottom;
+		font-size:0.8rem; }
+	.details th + th,
+	.details td + td,
+	.details td + td {
+		padding-left: 0.5rem;
+		text-align: right; }
+		
+	.totals {
+		float: right;
+		width: auto;
+		margin-top: 1rem;
+		margin-bottom: 1rem; }
+	.totals tbody tr > * { font-size: 1rem; }
+	.totals tbody tr > *:first-child { padding-right: 1rem; }
+	.totals tbody tr:last-child > * {
+		font-weight: 700; }
+		
+	.items tbody td,
+	.items tbody th,
+	.items tfoot td,
+	.items tfoot th {
+		padding-top: 2px;
+		padding-bottom: 2px;
+		vertical-align: text-bottom;
+		font-size:0.8rem; }
+	.items th + th,
+	.items td + td {
+		padding-left: 0.5rem;
+		text-align: right; }
+	.items tbody td + td,
+	.items tfoot td + td {
+		font-size: 0.8rem;
+		padding-left: 0.5rem;
+		text-align: right; }
+	.items th { width: auto; }
+	
+	@page {
+		size: a4;
+	}
+</style></head><body>
+<div class="from">
+	<img class="logo" src="data:image/svg+xml,%3Csvg baseProfile='basic' xmlns='http://www.w3.org/2000/svg' width='386' height='56'%3E%3Cpath fill='#ADADAD' d='M48.156 18.345c9.073 0 16.777 6.625 16.777 18.217 0 11.449-7.704 18.074-16.777 18.074-9.072 0-16.777-6.625-16.777-18.074-.001-11.592 7.704-18.217 16.777-18.217z'/%3E%3Cpath fill='#F7C819' d='M48.156 17.345c9.073 0 16.777 6.625 16.777 18.217 0 11.449-7.704 18.074-16.777 18.074-9.072 0-16.777-6.625-16.777-18.074-.001-11.592 7.704-18.217 16.777-18.217z'/%3E%3Cpath fill='#ADADAD' d='M3.237 47.508C6.189 49.955 9.286 51.9 14.254 51.9c5.4 0 8.208-3.168 8.208-6.842 0-4.32-4.464-6.191-8.424-7.631-5.257-1.873-11.017-3.961-11.017-9.866 0-5.04 3.96-9.217 11.161-9.217 3.672 0 7.345 1.512 9.865 3.601l-1.729 2.232c-2.304-1.728-4.752-3.096-8.28-3.096-5.329 0-7.777 3.096-7.777 6.265 0 3.96 4.032 5.472 8.137 6.984 5.4 2.018 11.305 3.816 11.305 10.586 0 5.184-4.176 9.721-11.665 9.721-5.113 0-9.577-2.16-12.673-4.752l1.872-2.377z'/%3E%3Cpath fill='#F7C819' d='M3.237 46.508C6.189 48.955 9.286 50.9 14.254 50.9c5.4 0 8.208-3.168 8.208-6.842 0-4.32-4.464-6.191-8.424-7.631-5.257-1.873-11.017-3.961-11.017-9.866 0-5.04 3.96-9.217 11.161-9.217 3.672 0 7.345 1.512 9.865 3.601l-1.729 2.232c-2.304-1.728-4.752-3.096-8.28-3.096-5.329 0-7.777 3.096-7.777 6.265 0 3.96 4.032 5.472 8.137 6.984 5.4 2.018 11.305 3.816 11.305 10.586 0 5.184-4.176 9.721-11.665 9.721-5.113 0-9.577-2.16-12.673-4.752l1.872-2.377z'/%3E%3Cpath fill='#ADADAD' d='M73.861 2h3.168v47.596c0 1.512.648 2.232 1.512 2.232.288 0 .576 0 1.296-.145l.576 2.592c-.648.217-1.296.361-2.304.361-2.809 0-4.249-1.729-4.249-5.473V2z'/%3E%3Cpath fill='#F7C819' d='M73.861 1h3.168v47.596c0 1.512.648 2.232 1.512 2.232.288 0 .576 0 1.296-.145l.576 2.592c-.648.217-1.296.361-2.304.361-2.809 0-4.249-1.729-4.249-5.473V1z'/%3E%3Cg%3E%3Cpath fill='#ADADAD' d='M109.878 32.098c.144-5.255-1.368-10.944-8.137-10.944-4.681 0-8.713 2.304-11.017 4.032l-1.44-2.376c2.448-1.728 7.201-4.464 12.817-4.464 8.209 0 10.945 5.905 10.945 13.321v22.105h-2.664l-.36-4.463h-.144c-3.528 2.807-7.705 5.328-12.241 5.328-5.473 0-10.081-2.953-10.081-9.506 0-7.633 6.985-11.305 22.322-13.033zM98.141 51.9c3.96 0 7.489-1.945 11.737-5.617V34.547c-14.186 1.656-19.01 4.969-19.01 10.441 0 4.967 3.313 6.912 7.273 6.912z'/%3E%3Cpath fill='#F7C819' d='M109.878 31.098c.144-5.255-1.368-10.944-8.137-10.944-4.681 0-8.713 2.304-11.017 4.032l-1.44-2.376c2.448-1.728 7.201-4.464 12.817-4.464 8.209 0 10.945 5.905 10.945 13.321v22.105h-2.664l-.36-4.463h-.144c-3.528 2.807-7.705 5.328-12.241 5.328-5.473 0-10.081-2.953-10.081-9.506 0-7.633 6.985-11.305 22.322-13.033zM98.141 50.9c3.96 0 7.489-1.945 11.737-5.617V33.547c-14.186 1.656-19.01 4.969-19.01 10.441 0 4.967 3.313 6.912 7.273 6.912z'/%3E%3C/g%3E%3Cg%3E%3Cpath fill='#ADADAD' d='M124.938 19.209h2.736l.288 6.409h.216c2.304-4.249 5.688-7.273 9.793-7.273 1.296 0 2.304.144 3.456.72l-.72 2.88c-1.152-.432-1.8-.576-3.168-.576-3.096 0-6.769 2.376-9.433 8.857v23.545h-3.168V19.209z'/%3E%3Cpath fill='#F7C819' d='M124.938 18.209h2.736l.288 6.409h.216c2.304-4.249 5.688-7.273 9.793-7.273 1.296 0 2.304.144 3.456.72l-.72 2.88c-1.152-.432-1.8-.576-3.168-.576-3.096 0-6.769 2.376-9.433 8.857v23.545h-3.168V18.209z'/%3E%3C/g%3E%3Cg fill='#666'%3E%3Cpath d='M148.748 18.209h2.736l.288 5.329h.216c3.528-3.528 7.129-6.193 11.881-6.193 7.128 0 10.441 4.32 10.441 13.249v22.178h-3.168V31.025c0-7.343-2.304-10.8-7.921-10.8-4.104 0-7.057 2.16-11.305 6.48V52.77h-3.168V18.209zM199.206 17.345c8.209 0 13.25 5.833 13.25 15.985 0 .865 0 1.729-.144 2.592h-24.915c.144 8.713 5.257 14.979 13.033 14.979 3.745 0 6.697-1.225 9.289-3.096l1.296 2.447c-2.736 1.656-5.833 3.385-10.873 3.385-8.856 0-15.985-6.77-15.985-18.074s7.344-18.218 15.049-18.218zm10.225 16.13c0-8.856-3.96-13.393-10.153-13.393-5.905 0-11.161 5.112-11.881 13.393h22.034zM222.755 20.946h-5.4v-2.448l5.473-.288.432-10.009h2.736V18.21h10.009v2.736h-10.009v22.539c0 4.391 1.08 7.344 5.833 7.344 1.296 0 3.097-.504 4.32-1.08l.864 2.592c-2.016.721-4.176 1.297-5.616 1.297-6.697 0-8.641-4.248-8.641-10.441V20.946zM242.058 18.209h3.457l6.192 22.394c.864 3.168 1.656 6.121 2.376 9.217h.288c.792-3.096 1.656-6.049 2.521-9.217l6.265-22.394h3.816l6.265 22.394c.864 3.168 1.728 6.121 2.592 9.217h.288c.792-3.096 1.656-6.049 2.448-9.217l6.121-22.394h3.24l-9.937 34.562h-4.176l-6.048-21.457c-1.008-3.312-1.656-6.48-2.665-9.865h-.288c-.792 3.384-1.656 6.697-2.736 10.009L256.1 52.77h-3.816l-10.226-34.561zM308.522 17.345c8.353 0 15.553 6.625 15.553 18.217 0 11.449-7.2 18.074-15.553 18.074-8.281 0-15.481-6.625-15.481-18.074 0-11.592 7.201-18.217 15.481-18.217zm0 33.483c6.985 0 12.241-6.193 12.241-15.266 0-9.145-5.256-15.409-12.241-15.409-6.984 0-12.169 6.264-12.169 15.409.001 9.073 5.185 15.266 12.169 15.266zM334.268 18.209h2.736l.287 6.409h.217c2.305-4.249 5.689-7.273 9.793-7.273 1.297 0 2.305.144 3.457.72l-.721 2.88c-1.152-.432-1.801-.576-3.168-.576-3.096 0-6.77 2.376-9.434 8.857v23.545h-3.168V18.209zM358.078 1h3.168v38.162h.143l17.066-20.953h3.672L370.895 31.89 384 52.771h-3.529l-11.449-18.504-7.775 9.072v9.432h-3.168V1z'/%3E%3C/g%3E%3C/svg%3E">
+	<div class="addr">
+		<p>SolarNetwork Foundation</p>
+		<p>123 Main Street</p>
+		<p>Anytown 1011</p>
+		<p>New Zealand</p>
+		<p>https://solarnetwork.org.nz</p>
+		<p>GST &#x2116; 121-961-830</p>
+	</div>
+</div>
+<div class="info">
+	<table>
+		<tbody>
+			<tr>
+				<td>Date</td>
+				<td>Wednesday, 1 July 2020</td>
+			</tr>
+			<tr>
+				<td>Invoice &#x2116;</td>
+				<td>INV-E0D2</td>
+			</tr>
+			<tr>
+				<td>Account</td>
+				<td class="addr">
+					<p>Test User</p>
+					<p>123 Foo Street</p>
+					<p>Anytown, CA</p>
+					<p>USA</p>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="space"></td>
+			</tr>
+			<tr>
+				<td>Due</td>
+				<td class="head">$2.52</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<h1>Cost details</h1>
+<p>The following section shows the metered rates summarised per subscription tier:</p>
+<table class="details">
+	<thead>
+		<tr>
+			<td></td>
+			<th>Tier</th>
+			<th>Amount</th>
+			<th>Cost</th>
+		</tr>
+		<tr>
+			<td></td>
+			<th colspan="3" class="hr"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<th>Posted Metrics</th>
+			<td>1. $1.23/1M</td>
+			<td>1,000,000</td>
+			<td>$ 3.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>2. $0.97/1M</td>
+			<td>2,000,000</td>
+			<td>$ 2.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>3. $0.86/1M</td>
+			<td>5,000,000</td>
+			<td>$ 1.23</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>4. $0.76/1M</td>
+			<td>1,234,567</td>
+			<td>$ 0.67</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3" class="hr"></td>
+		</tr>
+		<tr>
+			<th colspan="2"></th>
+			<th>9,234,567</th>
+			<th>$ 7.80</th>
+		</tr>
+
+		<tr>
+			<td colspan="4" class="space"></td>
+		</tr>
+
+		<tr>
+			<th>Stored Datum</th>
+			<td>1. $1.23/1M</td>
+			<td>1,000,000</td>
+			<td>$ 3.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>2. $0.97/1M</td>
+			<td>2,000,000</td>
+			<td>$ 2.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>3. $0.86/1M</td>
+			<td>5,000,000</td>
+			<td>$ 1.23</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>4. $0.76/1M</td>
+			<td>1,234,567</td>
+			<td>$ 0.67</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3" class="hr"></td>
+		</tr>
+		<tr>
+			<th colspan="2"></th>
+			<th>9,234,567</th>
+			<th>$ 7.80</th>
+		</tr>
+
+		<tr>
+			<td colspan="4" class="space"></td>
+		</tr>
+
+		<tr>
+			<th>Queried Datum</th>
+			<td>1. $1.23/1M</td>
+			<td>1,000,000</td>
+			<td>$ 3.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>2. $0.97/1M</td>
+			<td>2,000,000</td>
+			<td>$ 2.45</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>3. $0.86/1M</td>
+			<td>5,000,000</td>
+			<td>$ 1.23</td>
+		</tr>
+		<tr>
+			<th></th>
+			<td>4. $0.76/1M</td>
+			<td>1,234,567</td>
+			<td>$ 0.67</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3" class="hr"></td>
+		</tr>
+		<tr>
+			<th colspan="2"></th>
+			<th>9,234,567</th>
+			<th>$ 7.80</th>
+		</tr>
+	</tbody>
+</table>
+<table class="details totals">
+	<tbody>
+		<tr>
+			<td>GST</td>
+			<td>$ 3.33</td>
+		</tr>
+		<tr>
+			<td>Total</td>
+			<td>$ 123.45</td>
+		</tr>
+	</tbody>
+</table>
+
+<h1>Node details</h1>
+<p>The following section shows the metered usage summarised per node:</p>
+<table class="items">
+	<thead>
+		<tr>
+			<th>Node</th>
+			<th>Posted Metrics</th>
+			<th>Stored Datum (days)</th>
+			<th>Queried Datum</th>
+		</tr>
+		<tr>
+			<th colspan="4" class="hr"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>318</td>
+			<td>162,161,588</td>
+			<td>22,475,167</td>
+			<td>3,736,985</td>
+		</tr>
+		<tr>
+			<td>319</td>
+			<td>237,329</td>
+			<td>97,874,807</td>
+			<td>717,483</td>
+		</tr>
+		<tr>
+			<td>338</td>
+			<td>3,395,704</td>
+			<td>246,249,057</td>
+			<td>4,998,572</td>
+		</tr>
+	</tbody>
+	<tfoot>
+		<tr>
+			<td colspan="4" class="hr"></td>
+		</tr>
+		<tr>
+			<th>Total</th>
+			<th>3,395,704</th>
+			<th>246,249,057</th>
+			<th>4,998,572</th>
+		</tr>
+	</tfoot>
+</table>
+
+<footer>
+	<p><b>NZD bank details</b>: SolarNetwork Foundation, <kbd>11-2222-3333333-00</kbd>, SWIFT code <kbd>12345678</kbd>.</p>
+	<p>Please put <kbd>INV-E0D2</kbd> in the reference field.</p>
+</footer></body></html>

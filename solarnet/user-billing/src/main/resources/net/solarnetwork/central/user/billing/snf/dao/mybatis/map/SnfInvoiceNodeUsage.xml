@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage">
+
+	<insert id="update-SnfInvoiceNodeUsage" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage">
+		INSERT INTO solarbill.bill_invoice_node_usage (
+			  inv_id
+			, node_id
+			<if test="created != null">,created</if>
+			, prop_count
+			, datum_q_count
+			, datum_s_count
+		) VALUES (
+			 #{invoiceId}
+			, #{nodeId}
+			<if test="created != null">,#{created}</if>
+			, #{datumPropertiesIn}
+			, #{datumOut}
+			, #{datumDaysStored}
+		)
+		ON CONFLICT (inv_id,node_id) DO NOTHING
+	</insert>
+	
+	<sql id="fragment-SnfInvoiceNodeUsage-full-result">
+		  invu.inv_id 			AS bill_invoice_node_usage_inv_id
+		, invu.node_id 			AS bill_invoice_node_usage_node_id
+		, invu.created 			AS bill_invoice_node_usage_created
+		, invu.prop_count 		AS bill_invoice_node_usage_prop_count
+		, invu.datum_q_count 	AS bill_invoice_node_usage_datum_q_count
+		, invu.datum_s_count 	AS bill_invoice_node_usage_datum_s_count
+	</sql>
+
+	<resultMap id="SnfInvoiceNodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage">
+		<constructor>
+			<idArg column="bill_invoice_node_usage_inv_id" javaType="Long"/>
+			<idArg column="bill_invoice_node_usage_node_id" javaType="Long"/>
+			<arg column="bill_invoice_node_usage_created" javaType="java.time.Instant"/>
+			<arg column="bill_invoice_node_usage_prop_count" javaType="java.math.BigInteger"/>
+			<arg column="bill_invoice_node_usage_datum_q_count" javaType="java.math.BigInteger"/>
+			<arg column="bill_invoice_node_usage_datum_s_count" javaType="java.math.BigInteger"/>
+		</constructor>
+	</resultMap>
+
+	<select id="get-SnfInvoiceNodeUsage-for-id" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceRelatedPK" resultMap="SnfInvoiceNodeUsage-FullResult">
+		SELECT
+			<include refid="fragment-SnfInvoiceNodeUsage-full-result"/>
+		FROM
+			solarbill.bill_invoice_node_usage invu
+		WHERE
+			invu.inv_id = #{invoiceId}
+			AND invu.node_id = #{id}
+	</select>
+
+</mapper>

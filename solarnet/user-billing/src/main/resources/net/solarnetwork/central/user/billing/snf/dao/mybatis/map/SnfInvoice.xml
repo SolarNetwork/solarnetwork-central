@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoice">
+
+	<insert id="insert-SnfInvoice" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
+		<selectKey keyProperty="id.id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarbill.bill_inv_seq') AS id 
+		</selectKey>
+		INSERT INTO solarbill.bill_invoice (
+			id
+			<if test="created != null">,created</if>
+			, acct_id
+			, addr_id
+			, date_start
+			, date_end
+			, currency
+		) VALUES (
+			#{id.id}
+			<if test="created != null">,#{created}</if>
+			, #{accountId}
+			, #{address.id}
+			, #{startDate}
+			, #{endDate}
+			, #{currencyCode}
+		)
+	</insert>
+	
+	<sql id="fragment-SnfInvoice-full-result">
+		  inv.id 			AS bill_invoice_id
+		, inv.created 		AS bill_invoice_created
+		, inv.acct_id 		AS bill_invoice_acct_id
+		, inv.addr_id 		AS bill_invoice_addr_id
+		, inv.date_start 	AS bill_invoice_date_start
+		, inv.date_end 		AS bill_invoice_date_end
+		, inv.currency 		AS bill_invoice_currency
+	</sql>
+
+	<resultMap id="SnfInvoice-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
+		<constructor>
+			<idArg column="bill_invoice_id" javaType="Long"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_invoice_acct_id" javaType="Long"/>
+			<arg column="bill_invoice_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="startDate" column="bill_invoice_date_start"/>
+		<result property="endDate" column="bill_invoice_date_end"/>
+		<result property="currencyCode" column="bill_invoice_currency"/>
+		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
+		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
+		<association property="usages" notNullColumn="bill_invoice_node_usage_node_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.SnfInvoiceNodeUsage-FullResult"/>
+	</resultMap>
+	
+	<select id="get-SnfInvoice-for-id" parameterType="net.solarnetwork.central.user.domain.UserLongPK" resultMap="SnfInvoice-FullResult">
+		SELECT
+			<include refid="fragment-SnfInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.fragment-SnfInvoiceNodeUsage-full-result"/>
+		FROM
+			solarbill.bill_invoice inv
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = inv.acct_id
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = inv.addr_id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
+		WHERE
+			inv.id = #{id}
+			AND acct.user_id = #{userId}
+	</select>
+	
+	<sql id="find-SnfInvoice-for-filter-body">
+		FROM
+			solarbill.bill_invoice inv
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = inv.acct_id
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = inv.addr_id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
+		<if test="unpaidOnly and (offset == null or max == null)">
+			INNER JOIN LATERAL (
+				WITH paid AS (
+					SELECT SUM(ipay1.amount) AS paid
+					FROM solarbill.bill_invoice_payment ipay1
+					WHERE ipay1.inv_id = inv.id AND ipay1.acct_id = inv.acct_id
+				)
+				, bill AS (
+					SELECT SUM(invi1.amount) AS bill
+					FROM solarbill.bill_invoice_item invi1 
+					WHERE invi1.inv_id = inv.id
+				)
+				SELECT inv.id AS inv_id
+				FROM paid, bill
+				WHERE COALESCE(paid, 0::NUMERIC) &lt; COALESCE(bill, 0::NUMERIC) 
+			) pay ON pay.inv_id = inv.id
+		</if>
+		<if test="ignoreCreditOnly and (offset == null or max == null)">
+			INNER JOIN LATERAL (
+				SELECT inv.id AS inv_id
+				FROM solarbill.bill_invoice_item invi1
+				WHERE invi1.inv_id = inv.id
+				AND NOT EXISTS(
+					SELECT invi1.inv_id
+					FROM solarbill.bill_invoice_item invi1 
+					WHERE invi1.inv_id = inv.id
+					AND invi1.item_key = 'account-credit-add'
+				)
+			) noncred ON noncred.inv_id = inv.id
+		</if>
+		<where>
+			<choose>
+				<!-- Limiting done via sub-query because we want unlimited items pulled back for our limited invoices. -->
+				<when test="offset != null and max != null">
+					AND inv.id = ANY(
+						SELECT inv1.id 
+						FROM solarbill.bill_invoice inv1
+						<if test="userId != null">
+							INNER JOIN solarbill.bill_account acct1 ON acct.id = inv1.acct_id
+						</if>
+						<if test="unpaidOnly">
+							INNER JOIN LATERAL (
+								WITH paid AS (
+									SELECT SUM(ipay1.amount) AS paid
+									FROM solarbill.bill_invoice_payment ipay1
+									WHERE ipay1.inv_id = inv.id AND ipay1.acct_id = inv.acct_id
+								)
+								, bill AS (
+									SELECT SUM(invi1.amount) AS bill
+									FROM solarbill.bill_invoice_item invi1 
+									WHERE invi1.inv_id = inv.id
+								)
+								SELECT inv.id AS inv_id
+								FROM paid, bill
+								WHERE COALESCE(paid, 0::NUMERIC) &lt; COALESCE(bill, 0::NUMERIC) 
+							) pay ON pay.inv_id = inv.id
+						</if>
+						<where>
+							<if test="userId != null">
+								AND acct1.user_id = #{userId}
+							</if>
+							<if test="accountId != null">
+								AND inv1.acct_id = #{accountId}
+							</if>
+							<if test="startDate != null">
+								AND inv1.date_start &gt;= #{startDate,javaType=java.time.LocalDate,jdbcType=DATE}
+							</if>
+							<if test="endDate != null">
+								AND inv1.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+							</if>
+							<if test="ignoreCreditOnly">
+								AND NOT EXISTS(
+									SELECT invi1.inv_id
+									FROM solarbill.bill_invoice_item invi1 
+									WHERE invi1.inv_id = inv1.id
+									AND invi1.item_key = 'account-credit-add'
+								)
+							</if>
+						</where>
+						ORDER BY
+						<choose>
+							<when test="sorts != null and sorts.size &gt; 0">
+								 <foreach collection="sorts" item="item" separator=",">
+									<if test="item.sortKey == &quot;ACCOUNT&quot;">inv1.acct_id</if>
+									<if test="item.sortKey == &quot;DATE&quot;">inv1.date_start</if>
+									<if test="item.sortKey == &quot;ID&quot;">inv1.id</if>
+									<if test="item.descending">DESC</if>
+								</foreach>
+							</when>
+							<otherwise>
+								inv1.date_start DESC, inv1.id
+							</otherwise>
+						</choose>
+						LIMIT #{max} OFFSET #{offset}
+					)
+				</when>
+				<otherwise>
+					<if test="userId != null">
+						AND acct.user_id = #{userId}
+					</if>
+					<if test="accountId != null">
+						AND inv.acct_id = #{accountId}
+					</if>
+					<if test="startDate != null">
+						AND inv.date_start &gt;= #{startDate,javaType=java.time.LocalDate,jdbcType=DATE}
+					</if>
+					<if test="endDate != null">
+						AND inv.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+					</if>
+				</otherwise>
+			</choose>
+		</where>
+	</sql>
+	
+	<select id="find-SnfInvoice-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter" 
+			resultMap="SnfInvoice-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SnfInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.fragment-SnfInvoiceNodeUsage-full-result"/>
+		<include refid="find-SnfInvoice-for-filter-body"/>
+		ORDER BY
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;ACCOUNT&quot;">bill_invoice_acct_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">bill_invoice_date_start</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_invoice_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				bill_invoice_date_start DESC, bill_invoice_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="find-SnfInvoice-for-filter-count" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter"
+			resultType="long">
+		SELECT count(DISTINCT inv.id)
+		<include refid="find-SnfInvoice-for-filter-body"/>
+	</select>
+	
+</mapper>

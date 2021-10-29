@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="typeHandlers">
+			<list>
+				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
+			</list>
+		</property>
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Address.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Account.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/AccountTask.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceItem.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceNodeUsage.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoice.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/NodeUsage.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Payment.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/TaxCode.xml</value>
+			</list>
+		</property>
+	</bean>
+	
+</beans>

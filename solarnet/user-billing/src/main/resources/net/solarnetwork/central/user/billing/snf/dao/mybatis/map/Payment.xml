@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.Payment">
+	
+	<insert id="update-Payment" parameterType="net.solarnetwork.central.user.billing.snf.domain.Payment">
+		INSERT INTO solarbill.bill_payment (
+			id
+			<if test="created != null">,created</if>
+			, acct_id
+			, pay_type
+			, amount
+			, currency
+			, ext_key
+			, ref
+		) VALUES (
+			#{id.id}
+			<if test="created != null">,#{created}</if>
+			, #{accountId}
+			, #{paymentType,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, #{amount}
+			, #{currencyCode}
+			, #{externalKey}
+			, #{reference}
+		)
+		ON CONFLICT (acct_id, id) DO UPDATE SET
+			pay_type = EXCLUDED.pay_type
+			, amount = EXCLUDED.amount
+			, currency = EXCLUDED.currency
+			, ext_key = EXCLUDED.ext_key
+			, ref = EXCLUDED.ref
+	</insert>
+	
+	<sql id="fragment-Payment-full-result">
+		  pay.id 			AS bill_payment_id
+		, pay.created 		AS bill_payment_created
+		, pay.acct_id 		AS bill_payment_acct_id
+		, pay.pay_type 		AS bill_payment_pay_type
+		, pay.amount 		AS bill_payment_amount
+		, pay.currency 		AS bill_payment_currency
+		, pay.ext_key 		AS bill_payment_ext_key
+		, pay.ref	 		AS bill_payment_ref
+	</sql>
+
+	<resultMap id="Payment-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.Payment">
+		<constructor>
+			<idArg column="bill_payment_id" javaType="java.util.UUID"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_payment_acct_id" javaType="Long"/>
+			<arg column="bill_payment_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="paymentType" column="bill_payment_pay_type" javaType="net.solarnetwork.central.user.billing.snf.domain.PaymentType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		<result property="amount" column="bill_payment_amount"/>
+		<result property="currencyCode" column="bill_payment_currency"/>
+		<result property="externalKey" column="bill_payment_ext_key"/>
+		<result property="reference" column="bill_payment_ref"/>
+	</resultMap>
+
+	<select id="get-Payment-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="Payment-FullResult">
+		SELECT
+			<include refid="fragment-Payment-full-result"/>
+			, acct.user_id AS bill_account_user_id
+		FROM
+			solarbill.bill_payment pay
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = pay.acct_id
+		WHERE
+			pay.id = #{id}
+			AND acct.user_id = #{userId}
+	</select>
+
+	<select id="find-Payment-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.PaymentFilter" 
+			resultMap="Payment-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-Payment-full-result"/>
+			, acct.user_id AS bill_account_user_id
+		FROM
+			solarbill.bill_payment pay
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = pay.acct_id
+		<if test="startDate != null or endDate != null">
+			INNER JOIN
+				solarbill.bill_address addr ON addr.id = acct.addr_id
+		</if>
+		<where>
+			<if test="userId != null">
+				AND acct.user_id = #{userId}
+			</if>
+			<if test="accountId != null">
+				AND pay.acct_id = #{accountId}
+			</if>
+			<if test="startDate != null">
+				AND pay.created &gt;= (#{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+			</if>
+			<if test="endDate != null">
+				AND pay.created &lt; (#{filter.endDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+			</if>
+		</where>
+		ORDER BY
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;ACCOUNT&quot;">bill_payment_acct_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">bill_payment_created</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_payment_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				bill_payment_created DESC, bill_payment_id
+			</otherwise>
+		</choose>
+	</select>
+
+</mapper>

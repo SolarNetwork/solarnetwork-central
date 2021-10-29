@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.NodeUsage">
+
+	<!-- Effective tier details -->
+
+	<resultMap id="EffectiveUsageTier-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.UsageTier">
+		<constructor>
+			<arg column="usage_tier_meter_key" 			javaType="java.lang.String"/>
+			<arg column="usage_tier_min" 				javaType="java.math.BigInteger"/>
+			<arg column="usage_tier_cost" 				javaType="java.math.BigDecimal"/>
+			<arg column="usage_tier_effective_date" 	javaType="java.time.LocalDate"/>
+		</constructor>
+	</resultMap>
+
+	<select id="find-EffectiveUsageTier-for-date" parameterType="java.time.LocalDate" resultMap="EffectiveUsageTier-FullResult">
+		SELECT
+			  tier.meter_key 			AS usage_tier_meter_key
+			, tier.min 					AS usage_tier_min
+			, tier.cost 				AS usage_tier_cost
+			, tier.effective_date 		AS usage_tier_effective_date
+		FROM solarbill.billing_usage_tiers(#{date,jdbcType=DATE}) tier
+	</select>
+
+	<!-- 
+		Account-level usage (with costs)
+	 -->
+
+	<sql id="fragment-Usage-counts-result">
+		  nu.prop_in 			AS node_usage_prop_in
+		, nu.datum_out 			AS node_usage_datum_out
+		, nu.datum_stored 		AS node_usage_datum_stored
+		
+		, nu.prop_in_tiers 				AS node_usage_prop_in_tiers
+		, nu.datum_out_tiers 			AS node_usage_datum_out_tiers
+		, nu.datum_stored_tiers 		AS node_usage_datum_stored_tiers
+	</sql>
+
+	<resultMap id="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
+		<result property="datumPropertiesIn" 		column="node_usage_prop_in"/>
+		<result property="datumOut"	 				column="node_usage_datum_out"/>
+		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
+
+		<result property="datumPropertiesInTiersNumeric"	column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumOutTiersNumeric"	 			column="node_usage_datum_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumDaysStoredTiersNumeric" 		column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+	</resultMap>
+
+	<sql id="fragment-Usage-full-result">
+		  <include refid="fragment-Usage-counts-result"/>
+		, nu.prop_in_cost 		AS node_usage_prop_in_cost
+		, nu.datum_out_cost 	AS node_usage_datum_out_cost
+		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
+		, nu.total_cost			AS node_usage_total_cost
+		
+		, nu.prop_in_tiers_cost 		AS node_usage_prop_in_tiers_cost
+		, nu.datum_out_tiers_cost 		AS node_usage_datum_out_tiers_cost
+		, nu.datum_stored_tiers_cost 	AS node_usage_datum_stored_tiers_cost
+	</sql>
+
+	<resultMap id="Usage-FullResult" extends="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
+		<result property="datumPropertiesInCost"	column="node_usage_prop_in_cost"/>
+		<result property="datumOutCost"				column="node_usage_datum_out_cost"/>
+		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
+		<result property="totalCost"				column="node_usage_total_cost"/>
+
+		<result property="datumPropertiesInCostTiers"		column="node_usage_prop_in_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumOutCostTiers"				column="node_usage_datum_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumDaysStoredCostTiers"			column="node_usage_datum_stored_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+	</resultMap>
+
+	<select id="find-Usage-for-account" parameterType="map" resultMap="Usage-FullResult">
+		SELECT
+			<include refid="fragment-Usage-full-result"/>
+			, CURRENT_TIMESTAMP AS node_usage_created
+		FROM
+			solarbill.billing_usage_details(
+			      #{userId,jdbcType=BIGINT}
+				, #{startDate,jdbcType=TIMESTAMP}
+				, #{endDate,jdbcType=TIMESTAMP}
+				, #{startDate,jdbcType=TIMESTAMP}) nu
+	</select>
+
+	<!-- 
+		Node-level usage (counts only)
+	 -->
+
+	<sql id="fragment-NodeUsage-full-result">
+		  nu.node_id AS node_usage_node_id
+		, <include refid="fragment-Usage-counts-result"/>
+	</sql>
+
+	<resultMap id="NodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage" extends="Usage-CountsResult">
+		<constructor>
+			<idArg column="node_usage_node_id" javaType="long"/>
+			<arg column="node_usage_created" javaType="java.time.Instant"/>
+		</constructor>
+	</resultMap>
+
+	<select id="find-NodeUsage-for-account" parameterType="map" resultMap="NodeUsage-FullResult">
+		SELECT
+			<include refid="fragment-NodeUsage-full-result"/>
+			, CURRENT_TIMESTAMP AS node_usage_created
+		FROM
+			solarbill.billing_node_details(
+			      #{userId,jdbcType=BIGINT}
+				, #{startDate,jdbcType=TIMESTAMP}
+				, #{endDate,jdbcType=TIMESTAMP}
+				, #{startDate,jdbcType=TIMESTAMP}) nu
+		ORDER BY nu.node_id
+	</select>
+
+</mapper>
