@@ -37,7 +37,7 @@ public class DatumInsightController {
 
 	@RequestMapping(value = "/u/sec/data-insight", method = RequestMethod.GET)
 	public String home() {
-		return "data-insight/data-insight";
+		return "sec/datainsight/data-insight";
 	}
 
 }
