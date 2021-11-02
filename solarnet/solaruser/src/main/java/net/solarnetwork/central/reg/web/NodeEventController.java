@@ -37,7 +37,7 @@ public class NodeEventController {
 
 	@RequestMapping(value = "/u/sec/event/node", method = RequestMethod.GET)
 	public String home() {
-		return "event/node/home";
+		return "sec/event/node/home";
 	}
 
 }
