@@ -1,5 +1,5 @@
 /* ==================================================================
- * VersionedMessageDaoConfig.java - 5/10/2021 8:06:46 AM
+ * SnfBillingConfig.java - 1/11/2021 10:35:27 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,38 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.config;
+package net.solarnetwork.central.reg.config;
 
-import javax.cache.Cache;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.dao.VersionedMessageDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
+import org.springframework.context.annotation.Profile;
+import net.solarnetwork.central.user.billing.snf.config.SolarNetUserBillingConfiguration;
 
 /**
- * MyBatis versioned message DAO configuration.
+ * SNF billing configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-public class VersionedMessageDaoConfig {
-
-	/**
-	 * A qualifier to use for the versioned messages {@link Cache}.
-	 */
-	public static final String VERSIONED_MESSAGES_CACHE = "versioned-messages";
-
-	@Autowired
-	private SqlSessionTemplate sqlSessionTemplate;
-
-	@Bean
-	public VersionedMessageDao versionedMessageDao() {
-		MyBatisVersionedMessageDao dao = new MyBatisVersionedMessageDao();
-		dao.setSqlSessionTemplate(sqlSessionTemplate);
-		return dao;
-	}
+@Configuration(proxyBeanMethods = false)
+@Profile("snf-billing")
+@ComponentScan(basePackageClasses = SolarNetUserBillingConfiguration.class)
+public class SnfBillingConfig {
 
 }

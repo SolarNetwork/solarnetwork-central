@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -58,6 +59,7 @@ public class TaskConfig implements SchedulingConfigurer {
 		return scheduler;
 	}
 
+	@Primary
 	@ConfigurationProperties(prefix = "app.solaruser.task.executor")
 	@Bean(destroyMethod = "shutdown")
 	public AsyncTaskExecutor taskExecutor() {

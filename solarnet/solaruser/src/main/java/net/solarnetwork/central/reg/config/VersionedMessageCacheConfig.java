@@ -1,5 +1,5 @@
 /* ==================================================================
- * VersionedMessageDaoConfig.java - 5/10/2021 8:06:46 AM
+ * VersionedMessageCacheConfig.java - 1/11/2021 10:49:15 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,38 +20,48 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao.config;
+package net.solarnetwork.central.reg.config;
 
+import static net.solarnetwork.central.common.dao.config.VersionedMessageDaoConfig.VERSIONED_MESSAGES_CACHE;
 import javax.cache.Cache;
-import org.mybatis.spring.SqlSessionTemplate;
+import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.dao.VersionedMessageDao;
-import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
+import net.solarnetwork.central.support.CacheSettings;
 
 /**
- * MyBatis versioned message DAO configuration.
+ * Versioned message cache configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class VersionedMessageDaoConfig {
-
-	/**
-	 * A qualifier to use for the versioned messages {@link Cache}.
-	 */
-	public static final String VERSIONED_MESSAGES_CACHE = "versioned-messages";
+public class VersionedMessageCacheConfig {
 
 	@Autowired
-	private SqlSessionTemplate sqlSessionTemplate;
+	private CacheManager cacheManager;
 
 	@Bean
-	public VersionedMessageDao versionedMessageDao() {
-		MyBatisVersionedMessageDao dao = new MyBatisVersionedMessageDao();
-		dao.setSqlSessionTemplate(sqlSessionTemplate);
-		return dao;
+	@ConfigurationProperties(prefix = "app.versioned-messages-cache")
+	public CacheSettings versionedMessagesCacheSettings() {
+		return new CacheSettings();
+	}
+
+	/**
+	 * Get the datum cache.
+	 * 
+	 * @return the actor cache
+	 */
+	@Bean
+	@Qualifier(VERSIONED_MESSAGES_CACHE)
+	public Cache<String, VersionedMessageDao.VersionedMessages> versionedMessageCache() {
+		CacheSettings settings = versionedMessagesCacheSettings();
+		return settings.createCache(cacheManager, String.class,
+				VersionedMessageDao.VersionedMessages.class, VERSIONED_MESSAGES_CACHE);
 	}
 
 }

@@ -1,4 +1,10 @@
 app:
+  billing:
+    delivery-timeout-secs: 60
+    invoice:
+      mail.from: accounts@localhost
+      html-template-cache:
+        ttl: 3600
   datasource:
     hikari:
       minimumIdle: 1
@@ -69,6 +75,8 @@ app:
   user.reg:
     mail.template:
       from: "nobody@localhost.localdomain"
+  versioned-messages-cache:
+      ttl: 600
   web.security:
     token:
       max-request-body-size: 65535
@@ -146,6 +154,10 @@ spring:
       "[mail.smtp.timeout]": 5000
       "[mail.smtp.writetimeout]": 5000
   thymeleaf.cache: true
+
+app:
+  billing:
+    invoice.mail.from: accounts@solarnetwork.net
 
 debug: false
 

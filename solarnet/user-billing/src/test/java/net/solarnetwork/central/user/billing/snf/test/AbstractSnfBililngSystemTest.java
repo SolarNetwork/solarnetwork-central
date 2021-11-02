@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
@@ -55,6 +56,7 @@ public class AbstractSnfBililngSystemTest {
 	protected TaxCodeDao taxCodeDao;
 	protected VersionedMessageDao messageDao;
 	protected ResourceBundleMessageSource messageSource;
+	protected DefaultSnfInvoicingSystem invoicingSystem;
 	protected SnfBillingSystem system;
 
 	protected Long userId;
@@ -73,8 +75,10 @@ public class AbstractSnfBililngSystemTest {
 		messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename(SnfBillingSystem.class.getName());
 
-		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao,
-				usageDao, taxCodeDao, messageDao);
+		invoicingSystem = new DefaultSnfInvoicingSystem(accountDao, invoiceDao, invoiceItemDao,
+				invoiceNodeUsageDao, usageDao, taxCodeDao, messageDao);
+
+		system = new SnfBillingSystem(invoicingSystem, accountDao, invoiceDao);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
 		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)

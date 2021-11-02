@@ -31,7 +31,6 @@ import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
 import net.solarnetwork.central.user.dao.UserDao;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 
 /**
  * Configuration for the User services.
@@ -50,8 +49,8 @@ public class BillingBizConfig {
 
 	@Bean
 	public BillingBiz billingBiz() {
-		return new DaoBillingBiz(userDao, new StaticOptionalServiceCollection<>(
-				billingSystems != null ? billingSystems : Collections.emptyList()));
+		return new DaoBillingBiz(userDao,
+				billingSystems != null ? billingSystems : Collections.emptyList());
 	}
 
 }

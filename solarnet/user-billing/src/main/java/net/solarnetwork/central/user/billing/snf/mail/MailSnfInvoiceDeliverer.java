@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.mail;
 
 import static java.lang.String.format;
 import static java.util.Collections.singleton;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.FileCopyUtils.copyToString;
 import java.io.InputStreamReader;
 import java.time.YearMonth;
@@ -78,18 +79,9 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 			Executor executor) {
 		super();
 		setId(getClass().getName());
-		if ( invoicingSystem == null ) {
-			throw new IllegalArgumentException("The invoicingSystem argument must be provided.");
-		}
-		this.invoicingSystem = invoicingSystem;
-		if ( mailService == null ) {
-			throw new IllegalArgumentException("The mailService argument must be provided.");
-		}
-		this.mailService = mailService;
-		if ( executor == null ) {
-			throw new IllegalArgumentException("The executor argument must be provided.");
-		}
-		this.executor = executor;
+		this.invoicingSystem = requireNonNullArgument(invoicingSystem, "invoicingSystem");
+		this.mailService = requireNonNullArgument(mailService, "mailService");
+		this.executor = requireNonNullArgument(executor, "executor");
 	}
 
 	@Override
@@ -103,12 +95,12 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 				try {
 					Locale locale = account.locale();
 
-					// TODO: allow output type to be specified via configuration; for now assume HTML
+					// TODO: allow output type to be specified via configuration
+					//       for now assume HTML body with PDF attachment
 					Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML,
 							locale);
 					Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
 
-					// TODO: allow rendering to attachment
 					BasicMailAddress to = new BasicMailAddress(account.getAddress().getName(),
 							account.getAddress().getEmail());
 

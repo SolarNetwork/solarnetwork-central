@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
 import java.time.YearMonth;
 import java.time.chrono.IsoChronology;
@@ -82,10 +83,7 @@ public class BillingController {
 	 */
 	public BillingController(@Autowired(required = false) BillingBiz billingBiz) {
 		super();
-		if ( billingBiz == null ) {
-			throw new IllegalArgumentException("The billingBiz parameter must not be null.");
-		}
-		this.billingBiz = billingBiz;
+		this.billingBiz = requireNonNullArgument(billingBiz, "billingBiz");
 	}
 
 	private BillingBiz billingBiz() {

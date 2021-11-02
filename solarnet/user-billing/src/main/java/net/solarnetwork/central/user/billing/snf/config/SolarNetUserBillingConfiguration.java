@@ -1,7 +1,7 @@
 /* ==================================================================
- * BillingController.java - 25/08/2017 7:34:17 AM
+ * SolarNetUserBillingConfiguration.java - 29/10/2021 2:11:42 PM
  * 
- * Copyright 2017 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,23 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.web;
-
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+package net.solarnetwork.central.user.billing.snf.config;
 
 /**
- * Controller for the billing page.
+ * Marker interface for user billing configuration package.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-@GlobalServiceController
-public class BillingController {
-
-	@RequestMapping(value = "/u/sec/billing", method = RequestMethod.GET)
-	public String home() {
-		return "sec/billing/billing";
-	}
-
+public interface SolarNetUserBillingConfiguration {
+	// nothing here
 }

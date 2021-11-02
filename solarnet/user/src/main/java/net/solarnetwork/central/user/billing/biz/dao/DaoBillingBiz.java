@@ -41,7 +41,6 @@ import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.service.OptionalServiceCollection;
 
 /**
  * DAO based implementation of {@link BillingBiz} that delegates responsibility
@@ -53,7 +52,7 @@ import net.solarnetwork.service.OptionalServiceCollection;
 public class DaoBillingBiz implements BillingBiz {
 
 	private final UserDao userDao;
-	private final OptionalServiceCollection<BillingSystem> billingSystems;
+	private final List<BillingSystem> billingSystems;
 
 	/**
 	 * Constructor.
@@ -65,7 +64,7 @@ public class DaoBillingBiz implements BillingBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoBillingBiz(UserDao userDao, OptionalServiceCollection<BillingSystem> billingSystems) {
+	public DaoBillingBiz(UserDao userDao, List<BillingSystem> billingSystems) {
 		super();
 		this.userDao = requireNonNullArgument(userDao, "userDao");
 		this.billingSystems = requireNonNullArgument(billingSystems, "billingSystems");
@@ -88,7 +87,7 @@ public class DaoBillingBiz implements BillingBiz {
 		if ( user != null ) {
 			Object systemKey = user.getInternalDataValue(BillingDataConstants.ACCOUNTING_DATA_PROP);
 			if ( systemKey != null ) {
-				for ( BillingSystem bs : billingSystems.services() ) {
+				for ( BillingSystem bs : billingSystems ) {
 					if ( bs.supportsAccountingSystemKey(systemKey.toString()) ) {
 						return bs;
 					}

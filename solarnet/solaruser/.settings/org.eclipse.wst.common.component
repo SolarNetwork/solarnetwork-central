@@ -11,6 +11,9 @@
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-ocpp/solarnet-ocpp">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-billing/solarnet-user-billing">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-datum/solarnet-user-datum">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>

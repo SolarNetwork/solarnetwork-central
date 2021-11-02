@@ -35,6 +35,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -42,7 +43,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -52,6 +52,7 @@ import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
+import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
@@ -91,7 +92,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
+		SnfInvoice invoice = invoicingSystem.findLatestInvoiceForAccount(pk);
 
 		// THEN
 		assertThat("InvoiceImpl not found.", invoice, nullValue());
@@ -112,7 +113,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
+		SnfInvoice invoice = invoicingSystem.findLatestInvoiceForAccount(pk);
 
 		// THEN
 		assertThat("InvoiceImpl returned from DAO.", invoice, sameInstance(inv));
@@ -128,7 +129,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		Account result = system.accountForUser(userId);
+		Account result = invoicingSystem.accountForUser(userId);
 
 		// THEN
 		assertThat("Account not found.", result, nullValue());
@@ -142,7 +143,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		Account result = system.accountForUser(userId);
+		Account result = invoicingSystem.accountForUser(userId);
 
 		// THEN
 		assertThat("DAO result returned.", result, sameInstance(account));
@@ -236,12 +237,13 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, dryRunOptions());
+		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, startDate, endDate,
+				dryRunOptions());
 
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, SnfBillingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage", invoice.getItems(), hasSize(3));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
@@ -315,12 +317,13 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, dryRunOptions());
+		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, startDate, endDate,
+				dryRunOptions());
 
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, SnfBillingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax", invoice.getItems(), hasSize(4));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
@@ -407,12 +410,12 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		replayAll();
 		final SnfInvoicingOptions options = dryRunOptions();
 		options.setUseAccountCredit(true);
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, options);
+		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, startDate, endDate, options);
 
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, SnfBillingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax and credit", invoice.getItems(),
 				hasSize(5));
 
@@ -507,12 +510,12 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		replayAll();
 		final SnfInvoicingOptions options = dryRunOptions();
 		options.setUseAccountCredit(true);
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, options);
+		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, startDate, endDate, options);
 
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
 		assertThat("Invoice has draft ID", invoice.getId(),
-				equalTo(new UserLongPK(userId, SnfBillingSystem.DRAFT_INVOICE_ID)));
+				equalTo(new UserLongPK(userId, DefaultSnfInvoicingSystem.DRAFT_INVOICE_ID)));
 		assertThat("Invoice items created for all usage and GST tax and credit", invoice.getItems(),
 				hasSize(5));
 

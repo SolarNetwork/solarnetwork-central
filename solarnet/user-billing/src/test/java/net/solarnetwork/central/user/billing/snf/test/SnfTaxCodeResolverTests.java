@@ -35,7 +35,6 @@ import net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
-import net.solarnetwork.service.StaticOptionalService;
 
 /**
  * Test cases for the {@link SnfBillingSystem} implementation of
@@ -59,7 +58,7 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		TaxCodeFilter filter = system.taxCodeFilterForInvoice(invoice);
+		TaxCodeFilter filter = invoicingSystem.taxCodeFilterForInvoice(invoice);
 
 		// THEN
 		assertThat("Filter created", filter, notNullValue());
@@ -81,7 +80,7 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		TaxCodeFilter filter = system.taxCodeFilterForInvoice(invoice);
+		TaxCodeFilter filter = invoicingSystem.taxCodeFilterForInvoice(invoice);
 
 		// THEN
 		assertThat("Filter created", filter, notNullValue());
@@ -94,17 +93,15 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 	public void resolveTaxCodeFilter_viaOptionalService() {
 		// GIVEN
 		final String testZone = "FOOBAR";
-		system.setTaxCodeResolver(
-				new StaticOptionalService<SnfTaxCodeResolver>(new SnfTaxCodeResolver() {
+		invoicingSystem.setTaxCodeResolver(new SnfTaxCodeResolver() {
 
-					@Override
-					public TaxCodeFilter taxCodeFilterForInvoice(SnfInvoice invoice) {
-						// TODO Auto-generated method stub
-						return filterFor(
-								invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant(),
-								testZone);
-					}
-				}));
+			@Override
+			public TaxCodeFilter taxCodeFilterForInvoice(SnfInvoice invoice) {
+				// TODO Auto-generated method stub
+				return filterFor(invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant(),
+						testZone);
+			}
+		});
 		Address addr = new Address();
 		addr.setTimeZoneId("UTC");
 		SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits(), userId, now());
@@ -114,7 +111,7 @@ public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		TaxCodeFilter filter = system.taxCodeFilterForInvoice(invoice);
+		TaxCodeFilter filter = invoicingSystem.taxCodeFilterForInvoice(invoice);
 
 		// THEN
 		assertThat("Filter created", filter, notNullValue());

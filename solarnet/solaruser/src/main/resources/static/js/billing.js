@@ -336,6 +336,7 @@ $(document).ready(function() {
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview'), function(json) {
 			console.log('Got preview invoice: %o', json);
 			renderPreviewInvoiceTable('#upcoming-invoice-table', json);
+			$('#upcoming-invoice-table').toggleClass('hidden', !!json.data);
 		});
 		
 		// get unpaid invoices
