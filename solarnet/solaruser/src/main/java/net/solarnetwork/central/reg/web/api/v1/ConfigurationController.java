@@ -41,7 +41,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1ConfigurationController")
-@RequestMapping(value = { "/config", "/v1/pub/config", "/v1/sec/config" })
+@RequestMapping(value = { "/config", "/api/v1/pub/config", "/api/v1/sec/config" })
 public class ConfigurationController {
 
 	private final AppConfigurationBiz appConfigurationBiz;

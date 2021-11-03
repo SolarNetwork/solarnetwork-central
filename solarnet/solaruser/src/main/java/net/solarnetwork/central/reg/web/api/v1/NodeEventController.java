@@ -55,7 +55,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1NodeEventController")
-@RequestMapping(value = { "/u/sec/event", "/v1/sec/user/event" })
+@RequestMapping(value = { "/u/sec/event", "/api/v1/sec/user/event" })
 public class NodeEventController {
 
 	private final UserEventHookBiz eventHookBiz;

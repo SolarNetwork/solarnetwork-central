@@ -64,7 +64,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1DatumExpireController")
-@RequestMapping(value = { "/u/sec/expire", "/v1/sec/user/expire" })
+@RequestMapping(value = { "/u/sec/expire", "/api/v1/sec/user/expire" })
 public class DatumExpireController {
 
 	private final UserExpireBiz expireBiz;

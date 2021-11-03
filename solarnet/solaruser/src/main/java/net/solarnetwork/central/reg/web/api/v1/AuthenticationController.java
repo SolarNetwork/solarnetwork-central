@@ -55,7 +55,7 @@ public class AuthenticationController {
 	 * @return a response that details who the authenticated caller is
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/v1/sec/whoami", method = RequestMethod.GET)
+	@RequestMapping(value = "/api/v1/sec/whoami", method = RequestMethod.GET)
 	public Response<Map<String, ?>> validate() {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);

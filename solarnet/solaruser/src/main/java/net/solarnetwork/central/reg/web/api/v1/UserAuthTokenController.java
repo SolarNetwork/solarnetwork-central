@@ -51,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1UserAuthTokenController")
-@RequestMapping(value = "/v1/sec/user/auth-tokens")
+@RequestMapping(value = "/api/v1/sec/user/auth-tokens")
 public class UserAuthTokenController {
 
 	private final UserBiz userBiz;

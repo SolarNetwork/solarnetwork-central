@@ -54,7 +54,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1OcppController")
-@RequestMapping(value = { "/u/sec/ocpp", "/v1/sec/user/ocpp" })
+@RequestMapping(value = { "/u/sec/ocpp", "/api/v1/sec/user/ocpp" })
 public class UserOcppController {
 
 	private final UserOcppBiz userOcppBiz;

@@ -52,7 +52,7 @@ import net.solarnetwork.web.domain.Response;
 @GlobalExceptionRestController
 
 @Controller("v1UserMetadataController")
-@RequestMapping(value = { "/v1/sec/user/meta", "/v1/sec/users/meta" })
+@RequestMapping(value = { "/api/v1/sec/user/meta", "/api/v1/sec/users/meta" })
 public class UserMetadataController {
 
 	private final UserMetadataBiz userMetadataBiz;

@@ -55,7 +55,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @Controller("v1NodeMetadataController")
-@RequestMapping(value = "/v1/sec/nodes/meta")
+@RequestMapping(value = "/api/v1/sec/nodes/meta")
 public class NodeMetadataController {
 
 	private final UserBiz userBiz;

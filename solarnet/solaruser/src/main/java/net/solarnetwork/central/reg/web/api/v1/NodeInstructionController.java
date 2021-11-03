@@ -49,7 +49,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
-@RequestMapping(value = "/v1/sec/instr")
+@RequestMapping(value = "/api/v1/sec/instr")
 public class NodeInstructionController {
 
 	@Autowired

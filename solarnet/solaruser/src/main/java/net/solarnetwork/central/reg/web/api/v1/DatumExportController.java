@@ -78,7 +78,7 @@ import net.solarnetwork.web.domain.Response;
  */
 @GlobalExceptionRestController
 @RestController("v1DatumExportController")
-@RequestMapping(value = { "/u/sec/export", "/v1/sec/user/export" })
+@RequestMapping(value = { "/u/sec/export", "/api/v1/sec/user/export" })
 public class DatumExportController {
 
 	private final UserExportBiz exportBiz;
