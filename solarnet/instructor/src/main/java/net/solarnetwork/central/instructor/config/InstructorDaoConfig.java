@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoConfig.java - 5/10/2021 9:20:18 PM
+ * InstructorDaoConfig.java - 5/10/2021 9:20:18 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -36,7 +36,7 @@ import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao
  * @version 1.0
  */
 @Configuration
-public class DaoConfig {
+public class InstructorDaoConfig {
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;

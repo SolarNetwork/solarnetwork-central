@@ -30,7 +30,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.imp.aop.DatumImportSecurityAspect;
+import net.solarnetwork.central.datum.imp.config.DatumImportSecurityAspect;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportPreviewRequest;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportRequest;
 import net.solarnetwork.central.security.AuthenticatedUser;

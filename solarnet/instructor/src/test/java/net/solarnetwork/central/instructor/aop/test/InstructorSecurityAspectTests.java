@@ -39,7 +39,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.instructor.aop.InstructorSecurityAspect;
+import net.solarnetwork.central.instructor.config.InstructorSecurityAspect;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthenticatedToken;

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.instructor.aop;
+package net.solarnetwork.central.instructor.config;
 
 import java.util.List;
 import java.util.Set;
@@ -28,6 +28,7 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -41,6 +42,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * @version 2.0
  */
 @Aspect
+@Component
 public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	private final NodeInstructionDao nodeInstructionDao;
