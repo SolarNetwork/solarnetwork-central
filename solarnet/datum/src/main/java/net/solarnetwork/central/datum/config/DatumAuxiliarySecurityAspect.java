@@ -78,23 +78,23 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.getGeneralNodeDatumAuxiliary(..)) && args(id)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.getGeneralNodeDatumAuxiliary(..)) && args(id)")
 	public void viewAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.storeGeneralNodeDatumAuxiliary(..)) && args(datum)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.storeGeneralNodeDatumAuxiliary(..)) && args(datum)")
 	public void storeAuxiliary(GeneralNodeDatumAuxiliary datum) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.moveGeneralNodeDatumAuxiliary(..)) && args(from,to)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.moveGeneralNodeDatumAuxiliary(..)) && args(from,to)")
 	public void moveAuxiliary(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.removeGeneralNodeDatumAuxiliary(..)) && args(id)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.removeGeneralNodeDatumAuxiliary(..)) && args(id)")
 	public void removeAuxiliary(GeneralNodeDatumAuxiliaryPK id) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.findGeneralNodeDatumAuxiliary(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.findGeneralNodeDatumAuxiliary(..)) && args(filter,..)")
 	public void findAuxiliary(GeneralNodeDatumAuxiliaryFilter filter) {
 	}
 

@@ -52,23 +52,23 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.*Biz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.*Biz.*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.save*(..)) && args(config,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.save*(..)) && args(config,..)")
 	public void saveConfiguration(UserRelatedEntity<?> config) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.delete*(..)) && args(config,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.delete*(..)) && args(config,..)")
 	public void deleteConfiguration(UserRelatedEntity<?> config) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.*ForConfiguration(..)) && args(config,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.UserExpireBiz.*ForConfiguration(..)) && args(config,..)")
 	public void actionForConfiguration(UserRelatedEntity<?> config) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz.*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz.*(..)) && args(filter,..)")
 	public void actionForDatumFilter(GeneralNodeDatumFilter filter) {
 
 	}

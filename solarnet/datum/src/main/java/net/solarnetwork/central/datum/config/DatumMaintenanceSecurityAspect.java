@@ -53,11 +53,11 @@ public class DatumMaintenanceSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.mark*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.mark*(..)) && args(filter,..)")
 	public void markStale(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.find*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMaintenanceBiz.find*(..)) && args(filter,..)")
 	public void findStale(GeneralNodeDatumFilter filter) {
 	}
 

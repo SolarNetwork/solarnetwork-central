@@ -56,7 +56,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.*ForUser(..)) && args(userId,..)")
 	public void readForUser(Long userId) {
 	}
 
@@ -66,7 +66,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 * @param entity
 	 *        the entity
 	 */
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
 	public void saveUserRelatedEntity(UserRelatedEntity<?> entity) {
 	}
 
@@ -76,7 +76,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 * @param entity
 	 *        the entity
 	 */
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
 	public void saveUserNodeRelatedEntity(UserNodeRelatedEntity<?> entity) {
 	}
 
@@ -86,7 +86,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.deleteUser*(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.deleteUser*(..)) && args(userId,..)")
 	public void deleteUserRelatedEntityById(Long userId) {
 	}
 

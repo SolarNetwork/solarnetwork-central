@@ -50,15 +50,15 @@ public class DatumImportSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.submitDatumImportRequest(..)) && args(request,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.submitDatumImportRequest(..)) && args(request,..)")
 	public void actionForRequest(DatumImportRequest request) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.previewStagedImportRequest(..)) && args(request,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.imp.biz.DatumImportBiz.previewStagedImportRequest(..)) && args(request,..)")
 	public void actionForPreviewRequest(DatumImportPreviewRequest request) {
 	}
 

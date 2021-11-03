@@ -82,27 +82,27 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
 	public void nodeReportableInterval(Long nodeId, String sourceId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
 	public void nodeReportableSources(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..)")
 	public void nodesReportableSources(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter)")
 	public void nodesAvailableSources(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
 	public void nodeDatumFilter(Filter filter) {
 	}
 

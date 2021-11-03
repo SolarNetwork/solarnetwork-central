@@ -52,15 +52,15 @@ public class UserExportSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.*ForUser(..)) && args(userId,..)")
 	public void actionForUser(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.save*(..)) && args(config,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.save*(..)) && args(config,..)")
 	public void saveConfiguration(UserRelatedEntity<?> config) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.delete*(..)) && args(config,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.export.biz.UserExportBiz.delete*(..)) && args(config,..)")
 	public void deleteConfiguration(UserRelatedEntity<?> config) {
 	}
 

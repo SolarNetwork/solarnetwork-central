@@ -20,11 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.aop;
+package net.solarnetwork.central.user.config;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
@@ -37,6 +38,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
  * @version 2.0
  */
 @Aspect
+@Component
 public class BillingSecurityAspect extends AuthorizationSupport {
 
 	/**
@@ -49,23 +51,23 @@ public class BillingSecurityAspect extends AuthorizationSupport {
 		super(nodeOwnershipDao);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.*ForUser(..)) && args(userId, ..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.*ForUser(..)) && args(userId, ..)")
 	public void forUserAccess(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.getInvoice(..)) && args(userId, ..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.getInvoice(..)) && args(userId, ..)")
 	public void getInvoice(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.renderInvoice(..)) && args(userId, ..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.renderInvoice(..)) && args(userId, ..)")
 	public void renderInvoice(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.previewInvoice(..)) && args(userId, ..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.previewInvoice(..)) && args(userId, ..)")
 	public void previewInvoice(Long userId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.user.billing.biz.*BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.billing.biz.BillingBiz.findFilteredInvoices(..)) && args(filter, ..)")
 	public void findFilteredInvoices(InvoiceFilter filter) {
 	}
 

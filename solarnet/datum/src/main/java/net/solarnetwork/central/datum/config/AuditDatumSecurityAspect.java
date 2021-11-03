@@ -64,11 +64,11 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.findFiltered*AuditRecordCounts(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.findFiltered*AuditRecordCounts(..)) && args(filter,..)")
 	public void findRecordCounts(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.find*AuditDatumFiltered(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.AuditDatumBiz.find*AuditDatumFiltered(..)) && args(filter,..)")
 	public void findAuditDatum(AuditDatumCriteria filter) {
 	}
 

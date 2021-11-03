@@ -63,35 +63,35 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	// base ClassLoader is somehow being used after trying to inspect the osgi:service exporting the
 	// advised bean. All very strange, and I've given up trying to figure it out, after finding tweaking
 	// the execution() expression lets the whole thing work.
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.get*ForNode(..)) && args(nodeId)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.get*ForNode(..)) && args(nodeId)")
 	public void instructionsForNode(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.get*ForNodes(..)) && args(nodeIds)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.get*ForNodes(..)) && args(nodeIds)")
 	public void instructionsForNodes(Set<Long> nodeIds) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstruction(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.queueInstruction(..)) && args(nodeId,..)")
 	public void queueInstruction(Long nodeId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.queueInstructions(..)) && args(nodeIds,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.queueInstructions(..)) && args(nodeIds,..)")
 	public void queueInstructions(Set<Long> nodeIds) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.getInstruction(..)) && args(instructionId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.getInstruction(..)) && args(instructionId,..)")
 	public void viewInstruction(Long instructionId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.getInstructions(..)) && args(instructionIds,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.getInstructions(..)) && args(instructionIds,..)")
 	public void viewInstructions(Set<Long> instructionIds) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionState(..)) && args(instructionId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionState(..)) && args(instructionId,..)")
 	public void updateInstructionState(Long instructionId) {
 	}
 
-	@Pointcut("bean(aop*) && execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionsState(..)) && args(instructionIds,..)")
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.updateInstructionsState(..)) && args(instructionIds,..)")
 	public void updateInstructionsState(Set<Long> instructionIds) {
 	}
 
