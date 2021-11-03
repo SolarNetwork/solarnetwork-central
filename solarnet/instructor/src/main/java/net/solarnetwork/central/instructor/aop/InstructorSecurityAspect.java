@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.instructor.config;
+package net.solarnetwork.central.instructor.aop;
 
 import java.util.List;
 import java.util.Set;
@@ -59,12 +59,6 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 		this.nodeInstructionDao = nodeInstructionDao;
 	}
 
-	// Hmm, can't use execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.getActiveInstructionsForNode(..))
-	// because end up with AspectJ exception "can't determine superclass of missing type 
-	// net.solarnetwork.central.instructor.aop.InstructorSecurityAspect" which is being thrown because the OSGi
-	// base ClassLoader is somehow being used after trying to inspect the osgi:service exporting the
-	// advised bean. All very strange, and I've given up trying to figure it out, after finding tweaking
-	// the execution() expression lets the whole thing work.
 	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.*.get*ForNode(..)) && args(nodeId)")
 	public void instructionsForNode(Long nodeId) {
 	}

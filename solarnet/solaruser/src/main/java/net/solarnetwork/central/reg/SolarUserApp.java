@@ -32,12 +32,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
+import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
+import net.solarnetwork.central.datum.imp.aop.SolarNetDatumImportAopConfiguration;
+import net.solarnetwork.central.instructor.aop.SolarNetInstructorAopConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
+import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
+import net.solarnetwork.central.user.event.aop.SolarNetUserEventAopConfiguration;
+import net.solarnetwork.central.user.expire.aop.SolarNetUserExpireAopConfiguration;
 import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
+import net.solarnetwork.central.user.export.aop.SolarNetUserExportAopConfiguration;
+import net.solarnetwork.central.user.ocpp.aop.SolarNetUserOcppAopConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
@@ -48,6 +56,14 @@ import net.solarnetwork.util.ApplicationContextUtils;
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
+		SolarNetDatumAopConfiguration.class,
+		SolarNetDatumImportAopConfiguration.class,
+		SolarNetInstructorAopConfiguration.class,
+		SolarNetUserBillingAopConfiguration.class,
+		SolarNetUserOcppAopConfiguration.class,
+		SolarNetUserEventAopConfiguration.class,
+		SolarNetUserExpireAopConfiguration.class,
+		SolarNetUserExportAopConfiguration.class,
 		SolarUserApp.class,
 })
 @Import({

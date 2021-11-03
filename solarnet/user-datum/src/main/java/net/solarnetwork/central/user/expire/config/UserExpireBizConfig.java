@@ -27,14 +27,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.central.user.expire.aop.UserExpireAopConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
@@ -49,7 +47,6 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@ComponentScan(basePackageClasses = { UserExpireAopConfiguration.class })
 public class UserExpireBizConfig {
 
 	@Autowired

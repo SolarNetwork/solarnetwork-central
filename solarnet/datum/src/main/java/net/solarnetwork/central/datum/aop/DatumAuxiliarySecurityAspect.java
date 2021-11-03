@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.config;
+package net.solarnetwork.central.datum.aop;
 
 import java.util.Set;
 import java.util.stream.Collectors;

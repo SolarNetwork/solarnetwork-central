@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventConfiguration.java - 7/10/2021 3:55:57 PM
+ * SolarNetUserExpireAopConfiguration.java - 21/10/2021 9:06:16 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.event.config;
+package net.solarnetwork.central.user.expire.aop;
 
 /**
- * Marker interface for the User Event configuration package.
+ * Marker interface for user expire AOP configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserEventConfiguration {
+public interface SolarNetUserExpireAopConfiguration {
 	// nothing here
 }

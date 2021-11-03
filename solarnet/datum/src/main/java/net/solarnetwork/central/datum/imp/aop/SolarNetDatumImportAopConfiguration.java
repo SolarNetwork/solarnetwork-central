@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserExpireAopConfiguration.java - 21/10/2021 9:06:16 AM
+ * SolarNetDatumImportAopConfiguration.java - 3/11/2021 5:36:24 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.aop;
+package net.solarnetwork.central.datum.imp.aop;
 
 /**
- * Marker interface for user expire AOP configuration.
+ * Marker interface for the datum import AOP configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserExpireAopConfiguration {
+public interface SolarNetDatumImportAopConfiguration {
 	// nothing here
 }

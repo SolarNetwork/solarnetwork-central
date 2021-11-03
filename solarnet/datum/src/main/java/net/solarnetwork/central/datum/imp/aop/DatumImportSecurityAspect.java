@@ -20,11 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.imp.config;
+package net.solarnetwork.central.datum.imp.aop;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * @version 2.0
  */
 @Aspect
+@Component
 public class DatumImportSecurityAspect extends AuthorizationSupport {
 
 	/**

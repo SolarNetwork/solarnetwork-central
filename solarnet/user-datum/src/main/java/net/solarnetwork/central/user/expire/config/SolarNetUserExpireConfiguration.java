@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.expire.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.user.expire.aop.UserExpireAopConfiguration;
 import net.solarnetwork.central.user.expire.dao.config.UserExpireDaoConfiguration;
 
 /**
@@ -37,7 +36,6 @@ import net.solarnetwork.central.user.expire.dao.config.UserExpireDaoConfiguratio
 //@formatter:off
 @ComponentScan(basePackageClasses = { 
 		SolarNetUserExpireConfiguration.class,
-		UserExpireAopConfiguration.class,
 		UserExpireDaoConfiguration.class,
 })
 //@formatter:on

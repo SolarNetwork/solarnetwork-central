@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventConfiguration.java - 7/10/2021 3:55:57 PM
+ * SolarNetUserEventAopConfiguration.java - 3/11/2021 5:27:09 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.event.config;
+package net.solarnetwork.central.user.event.aop;
 
 /**
- * Marker interface for the User Event configuration package.
+ * Marker interface for the user event AOP configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserEventConfiguration {
+public interface SolarNetUserEventAopConfiguration {
 	// nothing here
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventConfiguration.java - 7/10/2021 3:55:57 PM
+ * UserEventDaoConfig.java - 3/11/2021 3:33:52 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.user.event.config;
 
+import org.springframework.context.annotation.Configuration;
+
 /**
- * Marker interface for the User Event configuration package.
+ * Configuration for user event DAO.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserEventConfiguration {
-	// nothing here
+@Configuration
+public class UserEventDaoConfig {
+
 }

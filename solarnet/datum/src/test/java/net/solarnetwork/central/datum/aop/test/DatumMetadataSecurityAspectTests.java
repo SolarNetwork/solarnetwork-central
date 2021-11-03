@@ -37,7 +37,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.config.DatumMetadataSecurityAspect;
+import net.solarnetwork.central.datum.aop.DatumMetadataSecurityAspect;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeOwnership;

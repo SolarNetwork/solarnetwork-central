@@ -29,6 +29,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
@@ -37,7 +38,12 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @author matt
  * @version 1.0
  */
-@SpringBootApplication(scanBasePackageClasses = { SolarQueryApp.class })
+//@formatter:off
+@SpringBootApplication(scanBasePackageClasses = {
+		SolarNetDatumAopConfiguration.class,
+		SolarQueryApp.class,
+})
+//@formatter:on
 public class SolarQueryApp {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SolarQueryApp.class);
