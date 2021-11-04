@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<!--/*
+	The .edit-config class attached to .modal activates "modal configuration edit form" mode.
+ */-->
+<form id="edit-export-data-config-modal" class="edit-config export" data-th-classappend="'modal fade'"
+		data-th-action="@{/u/sec/export/configs/data}" method="post" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{export.dataConfig.edit.title}">Edit data configuration</h4>
+			</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p data-th-utext="#{export.dataConfig.edit.intro}">Edit the data configuration on this form.</p>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.name.label}">
+		 				Name
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<!--/*
+		 					Form field names correspond to model object property names.
+		 				 */-->
+		 				<input type="text" class="form-control" name="name"
+		 					data-th-placeholder="#{export.dataConfig.name.placeholder}"
+		 					maxlength="64" required>
+			 		</div>
+		 		</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.nodes.label}">
+						Nodes
+					</label>
+					<div class="col-sm-8">
+						<input type="text" class="form-control" name="datumFilter.nodeIds"
+							data-th-placeholder="#{export.dataConfig.nodes.placeholder}"
+							maxlength="128">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.sources.label}">
+						Sources
+					</label>
+					<div class="col-sm-8">
+						<input type="text" class="form-control" name="datumFilter.sourceIds"
+							data-th-placeholder="#{export.dataConfig.sources.placeholder}"
+							maxlength="256">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-3 control-label" data-th-text="#{export.dataConfig.aggregation.label}">
+						Aggregation
+					</label>
+					<div class="col-sm-8">
+						<select class="form-control export-data-aggregation-types" name="datumFilter.aggregationKey" required>
+						</select>
+					</div>
+				</div>
+		 	</div>
+		 	<!--/*
+		 		The .service-props-container class defines where dynamic setting form elements will be rendered.
+		 	 */-->
+		 	<div class="modal-body form-horizontal service-props-container hidden">
+		 	</div>
+		 	<!--/*
+		 		The .delete-confirm class will be shown/hidden via the .hidden class to confirm the delete action.
+		 	 */-->
+		 	<div class="modal-body delete-confirm hidden">
+		 		<p class="alert alert-danger" data-th-utext="#{export.deleteConfiguration.confirm.intro}">
+		 			Are you sure you want to delete this configuration?
+		 		</p>
+		 	</div>
+		 	<div class="modal-footer">
+			 	<!--/*
+			 		The .delete-config button defines the button used to initiate the delete action.
+			 	 */-->
+		 		<button type="button" class="btn btn-danger pull-left delete-config hidden">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<span data-th-text="#{export.deleteConfiguration.label}">Delete</span>
+		 		</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}"></button>
+				<!--/*
+					The submit button performs the create/update save action.
+				 */-->
+		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}"></button>
+		 	</div>
+		 </div>
+ 	</div>
+ 	<!--/*
+ 		The id field stores the primary key of the configuration to update, and must be cleared when
+ 		creating a new object.
+ 	 */-->
+ 	<input type="hidden" name="serviceIdentifier" value="net.solarnetwork.central.datum.export.standard.DefaultDatumExportDataFilterService">
+	<input type="hidden" name="id">
+</form>
+</body>
+</html>

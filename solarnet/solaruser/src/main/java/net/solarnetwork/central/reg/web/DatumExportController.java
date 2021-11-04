@@ -37,7 +37,7 @@ public class DatumExportController {
 
 	@RequestMapping(value = "/u/sec/export", method = RequestMethod.GET)
 	public String home() {
-		return "export/export";
+		return "sec/export/export";
 	}
 
 }
