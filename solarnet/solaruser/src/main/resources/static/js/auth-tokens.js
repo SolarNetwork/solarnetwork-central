@@ -21,38 +21,40 @@ $(document).ready(function() {
 		}
 	}
 
-	$('#create-user-auth-token').ajaxForm({
-		dataType: 'json',
-		beforeSerialize: function(form, options) {
-			var containerApiPathText = form.find('textarea[name=apiPaths]').val(),
-				containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []);
-			activePolicy.apiPaths = containerApiPaths;
-		},
-		beforeSubmit: function(array, form, options) {
-			var apiPathsIdx;
-
-			apiPathsIdx = array.findIndex(function(obj) {
-				return obj.name === 'apiPaths';
-			});
-			if ( apiPathsIdx >= 0 ) {
-				array.splice(apiPathsIdx, 1);
-			}
-
-			activePolicy.apiPaths.forEach(function(path) {
-				array.push({
-					name : 'apiPath',
-					value : path,
-					type : 'text'
+	$('#create-user-auth-token').on('hidden.bs.modal', reloadIfTokenCreated).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			beforeSerialize: function(form, options) {
+				var containerApiPathText = form.find('textarea[name=apiPaths]').val(),
+					containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []);
+				activePolicy.apiPaths = containerApiPaths;
+			},
+			beforeSubmit: function(array, form, options) {
+				var apiPathsIdx;
+	
+				apiPathsIdx = array.findIndex(function(obj) {
+					return obj.name === 'apiPaths';
 				});
-			});
-		},
-		success: function(json, status, xhr, form) {
-			handleAuthTokenCreated(json, status, xhr, form);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
-		}
-	}).on('hidden.bs.modal', reloadIfTokenCreated);
+				if ( apiPathsIdx >= 0 ) {
+					array.splice(apiPathsIdx, 1);
+				}
+	
+				activePolicy.apiPaths.forEach(function(path) {
+					array.push({
+						name : 'apiPath',
+						value : path,
+						type : 'text'
+					});
+				});
+			},
+			success: function(json, status, xhr, form) {
+				handleAuthTokenCreated(json, status, xhr, form);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-user-auth-token .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
+	});
 	
 	$('.action-user-token').find('button').on('click', function(event) {
 		//.user-token-change-status or .user-token-delete
@@ -73,15 +75,17 @@ $(document).ready(function() {
 		}
 	});
 	
-	$('#delete-user-auth-token').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			form.modal('hide');
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#delete-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-		}
+	$('#delete-user-auth-token').each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				form.modal('hide');
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#delete-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+			}
+		});
 	});
 
 	function resetToggleButtons(root) {
@@ -158,107 +162,109 @@ $(document).ready(function() {
 		}
 	}
 	
-	$('#create-data-auth-token').ajaxForm({
-		dataType: 'json',
-		beforeSerialize: function(form, options) {
-			var containerText = form.find('textarea[name=sourceIds]').val(),
-				containerSourceIds = (containerText ? containerText.split(/\s*,\s*/) : []),
-				containerNodeMetadataText = form.find('textarea[name=nodeMetadataPaths]').val(),
-				containerNodeMetadataPaths = (containerNodeMetadataText ? containerNodeMetadataText.split(/\s*,\s*/) : []),
-				containerUserMetadataText = form.find('textarea[name=userMetadataPaths]').val(),
-				containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []),
-				containerApiPathText = form.find('textarea[name=apiPaths]').val(),
-				containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []),
-				containerNotAfter = form.find('input[name=notAfter]').val(),
-				containerRefreshAllowed = form.find('input[name=refreshAllowed]:checked').val();
-			activePolicy.sourceIds = containerSourceIds;
-			activePolicy.nodeMetadataPaths = containerNodeMetadataPaths;
-			activePolicy.userMetadataPaths = containerUserMetadataPaths;
-			activePolicy.apiPaths = containerApiPaths;
-			activePolicy.refreshAllowed = (containerRefreshAllowed === 'true');
-			if ( containerNotAfter ) {
-				activePolicy.notAfter = containerNotAfter;
-			}
-		},
-		beforeSubmit: function(array, form, options) {
-			var sourceIdsIdx = array.findIndex(function(obj) {
-					return obj.name === 'sourceIds';
-				}),
-				nodeMetadataPathsIdx,
-				userMetadataPathsIdx,
-				apiPathsIdx;
-
-			if ( sourceIdsIdx >= 0 ) {
-				array.splice(sourceIdsIdx, 1);
-			}
-			nodeMetadataPathsIdx = array.findIndex(function(obj) {
-				return obj.name === 'nodeMetadataPaths';
-			});
-			if ( nodeMetadataPathsIdx >= 0 ) {
-				array.splice(nodeMetadataPathsIdx, 1);
-			}
-			userMetadataPathsIdx = array.findIndex(function(obj) {
-				return obj.name === 'userMetadataPaths';
-			});
-			if ( userMetadataPathsIdx >= 0 ) {
-				array.splice(userMetadataPathsIdx, 1);
-			}
-			apiPathsIdx = array.findIndex(function(obj) {
-				return obj.name === 'apiPaths';
-			});
-			if ( apiPathsIdx >= 0 ) {
-				array.splice(apiPathsIdx, 1);
-			}
-
-			activePolicy.sourceIds.forEach(function(sourceId) {
-				array.push({
-					name : 'sourceId',
-					value : sourceId,
-					type : 'text'
-				});
-			});
-			activePolicy.nodeIds.forEach(function(nodeId) {
-				array.push({
-					name : 'nodeId',
-					value : nodeId,
-					type : 'text'
-				});
-			});
-			activePolicy.nodeMetadataPaths.forEach(function(path) {
-				array.push({
-					name : 'nodeMetadataPath',
-					value : path,
-					type : 'text'
-				});
-			});
-			activePolicy.userMetadataPaths.forEach(function(path) {
-				array.push({
-					name : 'userMetadataPath',
-					value : path,
-					type : 'text'
-				});
-			});
-			activePolicy.apiPaths.forEach(function(path) {
-				array.push({
-					name : 'apiPath',
-					value : path,
-					type : 'text'
-				});
-			});
-		},
-		success: function(json, status, xhr, form) {
-			handleAuthTokenCreated(json, status, xhr, form);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-		}
-	}).on('hidden.bs.modal', function() {
+	$('#create-data-auth-token').on('hidden.bs.modal', function() {
 		var form = $(this);
 		updatePolicySourceIdsDisplay(form.find('textarea[name=sourceIds]'), []);
 		resetToggleButtons(form);
 		$('#create-data-auth-token .nav-pills > *:first').tab('show');
 		$('#create-data-auth-token-policy-sourceids-hint').empty();
 		reloadIfTokenCreated();
+	}).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			beforeSerialize: function(form, options) {
+				var containerText = form.find('textarea[name=sourceIds]').val(),
+					containerSourceIds = (containerText ? containerText.split(/\s*,\s*/) : []),
+					containerNodeMetadataText = form.find('textarea[name=nodeMetadataPaths]').val(),
+					containerNodeMetadataPaths = (containerNodeMetadataText ? containerNodeMetadataText.split(/\s*,\s*/) : []),
+					containerUserMetadataText = form.find('textarea[name=userMetadataPaths]').val(),
+					containerUserMetadataPaths = (containerUserMetadataText ? containerUserMetadataText.split(/\s*,\s*/) : []),
+					containerApiPathText = form.find('textarea[name=apiPaths]').val(),
+					containerApiPaths = (containerApiPathText ? containerApiPathText.split(/\s*,\s*/) : []),
+					containerNotAfter = form.find('input[name=notAfter]').val(),
+					containerRefreshAllowed = form.find('input[name=refreshAllowed]:checked').val();
+				activePolicy.sourceIds = containerSourceIds;
+				activePolicy.nodeMetadataPaths = containerNodeMetadataPaths;
+				activePolicy.userMetadataPaths = containerUserMetadataPaths;
+				activePolicy.apiPaths = containerApiPaths;
+				activePolicy.refreshAllowed = (containerRefreshAllowed === 'true');
+				if ( containerNotAfter ) {
+					activePolicy.notAfter = containerNotAfter;
+				}
+			},
+			beforeSubmit: function(array, form, options) {
+				var sourceIdsIdx = array.findIndex(function(obj) {
+						return obj.name === 'sourceIds';
+					}),
+					nodeMetadataPathsIdx,
+					userMetadataPathsIdx,
+					apiPathsIdx;
+	
+				if ( sourceIdsIdx >= 0 ) {
+					array.splice(sourceIdsIdx, 1);
+				}
+				nodeMetadataPathsIdx = array.findIndex(function(obj) {
+					return obj.name === 'nodeMetadataPaths';
+				});
+				if ( nodeMetadataPathsIdx >= 0 ) {
+					array.splice(nodeMetadataPathsIdx, 1);
+				}
+				userMetadataPathsIdx = array.findIndex(function(obj) {
+					return obj.name === 'userMetadataPaths';
+				});
+				if ( userMetadataPathsIdx >= 0 ) {
+					array.splice(userMetadataPathsIdx, 1);
+				}
+				apiPathsIdx = array.findIndex(function(obj) {
+					return obj.name === 'apiPaths';
+				});
+				if ( apiPathsIdx >= 0 ) {
+					array.splice(apiPathsIdx, 1);
+				}
+	
+				activePolicy.sourceIds.forEach(function(sourceId) {
+					array.push({
+						name : 'sourceId',
+						value : sourceId,
+						type : 'text'
+					});
+				});
+				activePolicy.nodeIds.forEach(function(nodeId) {
+					array.push({
+						name : 'nodeId',
+						value : nodeId,
+						type : 'text'
+					});
+				});
+				activePolicy.nodeMetadataPaths.forEach(function(path) {
+					array.push({
+						name : 'nodeMetadataPath',
+						value : path,
+						type : 'text'
+					});
+				});
+				activePolicy.userMetadataPaths.forEach(function(path) {
+					array.push({
+						name : 'userMetadataPath',
+						value : path,
+						type : 'text'
+					});
+				});
+				activePolicy.apiPaths.forEach(function(path) {
+					array.push({
+						name : 'apiPath',
+						value : path,
+						type : 'text'
+					});
+				});
+			},
+			success: function(json, status, xhr, form) {
+				handleAuthTokenCreated(json, status, xhr, form);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#create-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+			}
+		});
 	});
 	
 	$('#create-data-auth-token-policy-nodeids').on('click', function(event) {
@@ -321,14 +327,16 @@ $(document).ready(function() {
 		}
 	});
 	
-	$('#delete-data-auth-token').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			form.modal('hide');
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#delete-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-		}
+	$('#delete-data-auth-token').each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				form.modal('hide');
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#delete-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+			}
+		});
 	});
 });

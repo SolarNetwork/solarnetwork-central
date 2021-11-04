@@ -122,27 +122,29 @@ $(document).ready(function() {
 		}
 	}
 	
-	$('#view-cert-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			var renewAfter = moment(json.certificateRenewAfterDate);
-			
-			updateCertDisplayDetails(json);
-			
-			if ( renewAfter.isAfter() === false ) {
-				$('#modal-cert-renew').removeClass('hidden');
-			}
-			
-			$('#view-cert-modal .cert').removeClass('hidden');
-			$('#view-cert-modal .nocert').addClass('hidden');
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
-	}).on('shown.bs.modal', function() {
+	$('#view-cert-modal').on('shown.bs.modal', function() {
 		$('#view-cert-password').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
+	}).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				var renewAfter = moment(json.certificateRenewAfterDate);
+				
+				updateCertDisplayDetails(json);
+				
+				if ( renewAfter.isAfter() === false ) {
+					$('#modal-cert-renew').removeClass('hidden');
+				}
+				
+				$('#view-cert-modal .cert').removeClass('hidden');
+				$('#view-cert-modal .nocert').addClass('hidden');
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#view-cert-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	$('#modal-cert-renew').on('click', function(event) {
@@ -169,45 +171,51 @@ $(document).ready(function() {
 		});
 	});
 	
-	$('#transfer-ownership-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			$('#transfer-ownership-modal').modal('hide');
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
-	}).on('shown.bs.modal', function() {
+	$('#transfer-ownership-modal').on('shown.bs.modal', function() {
 		$('#transfer-ownership-recipient').focus();
 	}).on('hidden.bs.modal', function() {
 		document.location.reload(true);
+	}).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				$('#transfer-ownership-modal').modal('hide');
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
-	$('#decide-transfer-ownership-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			$('#decide-transfer-ownership-modal').modal('hide');
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#decide-transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
-	}).on('hidden.bs.modal', function() {
+	$('#decide-transfer-ownership-modal').on('hidden.bs.modal', function() {
 		document.location.reload(true);
 	}).find('button.submit').on('click', function(event) {
 		var btn = $(this);
 		var form = $('#decide-transfer-ownership-modal');
 		form.find('input[name="accept"]').val(btn.data('accept') ? 'true' : 'false');
 		form.submit();
+	}).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				$('#decide-transfer-ownership-modal').modal('hide');
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#decide-transfer-ownership-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
-	$('#archive-node-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#archive-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
+	$('#archive-node-modal').each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#archive-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	function setupEditUserNodeLocationDisplay(loc) {
@@ -287,18 +295,20 @@ $(document).ready(function() {
 		form.modal('show');
 	});
 	
-	$('#edit-node-modal').ajaxForm({
-		dataType: 'json',
-		success: function(json, status, xhr, form) {
-			form.modal('hide');
-			document.location.reload(true);
-		},
-		error: function(xhr, status, statusText) {
-			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
-		}
-	}).data('page', 1).on('show', function() {
+	$('#edit-node-modal').data('page', 1).on('show', function() {
 		dynamicSearchTimer = undefined;
 		$('#edit-node-location-search-results').addClass('hidden');
+	}).each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				form.modal('hide');
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
+			}
+		});
 	});
 	
 	function editNodeShowPage(form, newPage) {
