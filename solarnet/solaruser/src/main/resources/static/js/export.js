@@ -1,6 +1,6 @@
 $(document).ready(function() {
 	'use strict';
-	
+
 	var exportConfigs = [];
 	var adhocExportConfigs = [];
 	var dataServices = [{
@@ -13,16 +13,16 @@ $(document).ready(function() {
 	var aggregationTypes = [];
 
 	var settingTemplates = $('#export-setting-templates');
-	
+
 	function populateExportConfigs(configs) {
 		if ( typeof configs !== 'object' ) {
 			configs = {};
 		}
 		configs.adhocDatumExportConfigs = populateAdhocDatumExportConfigs(adhocExportConfigs || []);
-		configs.datumExportConfigs = populateDatumExportConfigs(configs.datumExportConfigs);
-		configs.dataConfigs = populateDataConfigs(configs.dataConfigs);
-		configs.destinationConfigs = populateDestinationConfigs(configs.destinationConfigs);
-		configs.outputConfigs = populateOutputConfigs(configs.outputConfigs)
+		configs.datumExportConfigs = populateDatumExportConfigs(configs.datumExportConfigs || []);
+		configs.dataConfigs = populateDataConfigs(configs.dataConfigs || []);
+		configs.destinationConfigs = populateDestinationConfigs(configs.destinationConfigs || []);
+		configs.outputConfigs = populateOutputConfigs(configs.outputConfigs || [])
 		return configs;
 	}
 
@@ -54,7 +54,7 @@ $(document).ready(function() {
 			} else {
 				model.sources = '*';
 			}
-			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes, 
+			model.aggregation = SolarReg.Templates.serviceDisplayName(aggregationTypes,
 					config.dataConfiguration.datumFilter.aggregationKey) || '';
 			model.statusClass = 'info';
 			if ( task ) {
@@ -79,7 +79,7 @@ $(document).ready(function() {
 
 		// attach actual service configuration to each link
 		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
-			var btn = $(el),			
+			var btn = $(el),
 				config = SolarReg.Templates.findContextItem(btn);
 			if ( !config ) {
 				return;
@@ -156,7 +156,7 @@ $(document).ready(function() {
 
 		// attach actual service configuration to each link
 		container.find('a.edit-link:not(*[data-config-type])').each(function(idx, el) {
-			var btn = $(el),			
+			var btn = $(el),
 				config = SolarReg.Templates.findContextItem(btn);
 			if ( !config ) {
 				return;
@@ -186,7 +186,7 @@ $(document).ready(function() {
 		SolarReg.populateListCount(container, configs);
 		return configs;
 	}
-	
+
 	function populateDataConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-data-config-list-container');
@@ -203,7 +203,7 @@ $(document).ready(function() {
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;
 	}
-	
+
 	function populateDestinationConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-destination-config-list-container');
@@ -213,7 +213,7 @@ $(document).ready(function() {
 		SolarReg.Templates.populateTemplateItems(container, items, preserve);
 		return configs;
 	}
-	
+
 	function populateOutputConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#export-output-config-list-container');
@@ -367,7 +367,7 @@ $(document).ready(function() {
 	$('#export-data-config-list-container .list-container').on('click', function(event) {
 		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
 	});
-	
+
 	// ***** Edit destination form
 	$('#edit-export-destination-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), destinationServices, settingTemplates);
@@ -443,7 +443,7 @@ $(document).ready(function() {
 			loadCountdown -= 1;
 			if ( loadCountdown === 0 ) {
 				populateExportConfigs(exportConfigs);
-				$('.datum-export-getstarted').toggleClass('hidden', 
+				$('.datum-export-getstarted').toggleClass('hidden',
 					exportConfigs.datumExportConfigs && exportConfigs.datumExportConfigs.length > 0);
 			}
 		}
@@ -465,7 +465,7 @@ $(document).ready(function() {
 			}
 			liftoff();
 		});
-		
+
 		// get available aggregation services
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/aggregation'), function(json) {
 			console.log('Got export aggregation types: %o', json);
@@ -474,7 +474,7 @@ $(document).ready(function() {
 			}
 			liftoff();
 		});
-		
+
 		// get available output services
 		$.getJSON(SolarReg.solarUserURL('/sec/export/services/output'), function(json) {
 			console.log('Got export output services: %o', json);
@@ -513,11 +513,9 @@ $(document).ready(function() {
 
 		$('#datum-export-list-container').on('click', function(event) {
 			console.log('Got click on %o export config: %o', event.target, event);
-			var target = event.target,
-				el = $(event.target),
+			var el = $(event.target),
 				configType = el.data('config-type');
 			if ( configType ) {
-				var config = SolarReg.Templates.findContextItem(el);
 				if ( configType === 'data' ) {
 					SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
 				} else if ( configType === 'destination' ) {
@@ -533,5 +531,5 @@ $(document).ready(function() {
 			event.preventDefault();
 		});
 	});
-	
+
 });
