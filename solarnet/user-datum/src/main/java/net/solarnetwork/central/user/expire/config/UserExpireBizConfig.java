@@ -32,6 +32,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
@@ -88,7 +89,7 @@ public class UserExpireBizConfig {
 		DaoUserExpireBiz biz = new DaoUserExpireBiz(userDataConfigurationDao);
 
 		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-		messageSource.setBasenames("net.solarnetwork.central.domain.Aggregation");
+		messageSource.setBasenames(Aggregation.class.getName());
 		PrefixedMessageSource prefixedMessageSource = new PrefixedMessageSource();
 		prefixedMessageSource.setDelegates(Collections.singletonMap("aggregation.", messageSource));
 		biz.setMessageSource(prefixedMessageSource);

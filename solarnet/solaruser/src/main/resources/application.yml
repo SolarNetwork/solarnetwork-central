@@ -17,6 +17,7 @@ app:
     password: solartest
     platform: postgres
     initialize: false
+  datum.export.temporaryDir: "${java.io.tmpdir}"
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000

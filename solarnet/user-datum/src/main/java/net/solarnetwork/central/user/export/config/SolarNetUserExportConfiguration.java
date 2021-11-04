@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserExportConfiguration.java - 7/10/2021 3:55:57 PM
+ * SolarNetUserExportConfiguration.java - 7/10/2021 3:55:57 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,17 +22,12 @@
 
 package net.solarnetwork.central.user.export.config;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-
 /**
  * Marker interface for the User Export configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class UserExportConfiguration {
+public interface SolarNetUserExportConfiguration {
 
 }

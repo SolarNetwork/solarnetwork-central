@@ -22,58 +22,22 @@
 
 package net.solarnetwork.central.user.event.dao.mybatis;
 
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
-import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.event.domain.UserNodeEvent;
-import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
-import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 
 /**
  * MyBatis implementation of {@link DatumAppEventAcceptor} that creates user
  * datum tasks out of datum events.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao
-		implements UserNodeEventTaskDao, DatumAppEventAcceptor {
+public class MyBatisDatumAppEventAcceptor extends BaseMyBatisDao implements DatumAppEventAcceptor {
 
 	@Override
 	public void offerDatumEvent(DatumAppEvent event) {
 		getSqlSession().insert("create-user-node-event-tasks-from-event", event);
-	}
-
-	@Override
-	public UserNodeEvent claimQueuedTask(String topic) {
-		return selectFirst("claim-queued-user-node-event-task", topic);
-	}
-
-	@Override
-	public void taskCompleted(UserNodeEventTask task) {
-		if ( task.getCompleted() == null ) {
-			task.setCompleted(Instant.now());
-		}
-		if ( task.getStatus() == null ) {
-			task.setStatus(UserNodeEventTaskState.Completed);
-		}
-		if ( task.getSuccess() == null ) {
-			task.setSuccess(true);
-		}
-		getSqlSession().update("complete-user-node-event-task", task);
-	}
-
-	@Override
-	public long purgeCompletedTasks(Instant olderThanDate) {
-		Map<String, Object> params = new HashMap<String, Object>(2);
-		params.put("date", olderThanDate);
-		getSqlSession().update("purge-user-node-event-tasks", params);
-		Object result = params.get("result");
-		return (result instanceof Long ? ((Long) result).longValue() : 0);
 	}
 
 }

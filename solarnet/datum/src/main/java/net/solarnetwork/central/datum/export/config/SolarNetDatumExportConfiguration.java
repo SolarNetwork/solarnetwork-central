@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserExpireConfiguration.java - 7/10/2021 3:55:57 PM
+ * SolarNetDatumExportConfiguration.java - 5/11/2021 9:40:47 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.config;
+package net.solarnetwork.central.datum.export.config;
 
 /**
- * Marker interface for the User Expire configuration package.
+ * Marker interface for the datum export configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-public interface SolarNetUserExpireConfiguration {
-	// nothing here
+public interface SolarNetDatumExportConfiguration {
+
 }

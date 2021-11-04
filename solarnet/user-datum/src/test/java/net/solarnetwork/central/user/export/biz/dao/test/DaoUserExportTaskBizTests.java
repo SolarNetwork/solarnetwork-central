@@ -50,22 +50,18 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
-import net.solarnetwork.central.user.export.biz.dao.DaoUserExportBiz;
+import net.solarnetwork.central.user.export.biz.dao.DaoUserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
-import net.solarnetwork.central.user.export.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
-import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
-import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.test.Assertion;
 
 /**
@@ -74,48 +70,37 @@ import net.solarnetwork.test.Assertion;
  * @author matt
  * @version 2.0
  */
-public class DaoUserExportBizTests {
+public class DaoUserExportTaskBizTests {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final Long TEST_NODE_ID = -2L;
 	private static final Long TEST_NODE_ID_2 = -3L;
 	private static final AtomicLong ID_GENERATOR = new AtomicLong(-999L);
 
-	private UserDatumExportConfigurationDao configurationDao;
-	private UserDataConfigurationDao dataConfigurationDao;
-	private UserDestinationConfigurationDao destConfigurationDao;
-	private UserOutputConfigurationDao outputConfigurationDao;
 	private UserDatumExportTaskInfoDao taskDao;
 	private UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private UserNodeDao userNodeDao;
 	private DatumStreamMetadataDao metaDao;
 
-	private DaoUserExportBiz biz;
+	private DaoUserExportTaskBiz biz;
 
 	@Before
 	public void setup() {
-		configurationDao = EasyMock.createMock(UserDatumExportConfigurationDao.class);
-		dataConfigurationDao = EasyMock.createMock(UserDataConfigurationDao.class);
-		destConfigurationDao = EasyMock.createMock(UserDestinationConfigurationDao.class);
-		outputConfigurationDao = EasyMock.createMock(UserOutputConfigurationDao.class);
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
 		adhocTaskDao = EasyMock.createMock(UserAdhocDatumExportTaskInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 
-		biz = new DaoUserExportBiz(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
+		biz = new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
+		EasyMock.replay(taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(configurationDao, dataConfigurationDao, destConfigurationDao,
-				outputConfigurationDao, taskDao, adhocTaskDao, userNodeDao, metaDao);
+		EasyMock.verify(taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {

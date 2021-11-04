@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarNetUserExpireDaoConfiguration.java - 20/10/2021 5:15:35 PM
+ * SolarNetUserEventConfiguration.java - 7/10/2021 3:55:57 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.dao.config;
+package net.solarnetwork.central.user.event.config;
 
 /**
- * Marker interface for user expire DAO configuration.
+ * Marker interface for the User Event configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserExpireDaoConfiguration {
+public interface SolarNetUserEventConfiguration {
 	// nothing here
 }

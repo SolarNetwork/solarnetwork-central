@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventConfiguration.java - 7/10/2021 3:55:57 PM
+ * DatumExportDaoConfig.java - 5/11/2021 9:41:42 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,14 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.event.config;
+package net.solarnetwork.central.datum.export.config;
+
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
+import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 
 /**
- * Marker interface for the User Event configuration package.
+ * Datum export DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserEventConfiguration {
-	// nothing here
+@Configuration
+public class DatumExportDaoConfig {
+
+	@Autowired
+	private SqlSessionTemplate sqlSessionTemplate;
+
+	@Bean
+	public DatumExportTaskInfoDao datumExportTaskInfoDao() {
+		MyBatisDatumExportTaskInfoDao dao = new MyBatisDatumExportTaskInfoDao();
+		dao.setSqlSessionTemplate(sqlSessionTemplate);
+		return dao;
+	}
+
 }
