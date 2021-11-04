@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.reg.config;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.format.datetime.standard.TemporalAccessorParser;
+import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.service.PingTest;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * Web layer configuration.
@@ -59,6 +64,14 @@ public class WebConfig implements WebMvcConfigurer {
 		PingController controller = new PingController();
 		controller.setTests(pingTests);
 		return controller;
+	}
+
+	@Override
+	public void addFormatters(FormatterRegistry registry) {
+		registry.addFormatterForFieldType(LocalDateTime.class,
+				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC),
+				new TemporalAccessorParser(LocalDateTime.class,
+						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC));
 	}
 
 }

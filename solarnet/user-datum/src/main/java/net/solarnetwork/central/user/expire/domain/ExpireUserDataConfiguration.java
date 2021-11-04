@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserDataConfiguration.java - 9/07/2018 10:10:11 AM
+ * ExpireUserDataConfiguration.java - 9/07/2018 10:10:11 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -39,7 +39,7 @@ import net.solarnetwork.codec.JsonUtils;
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps", "active",
 		"expireDays", "datumFilter" })
-public class UserDataConfiguration extends BaseExpireConfigurationEntity
+public class ExpireUserDataConfiguration extends BaseExpireConfigurationEntity
 		implements UserIdentifiableConfiguration, DataConfiguration, Serializable {
 
 	private static final long serialVersionUID = 1098542708120529779L;

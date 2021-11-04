@@ -1,21 +1,17 @@
 $(document).ready(function() {
 	'use strict';
-	
+
 	var expireConfigs = {};
 	var dataServices = [{
 		id : 'net.solarnetwork.central.user.expire.standard.DefaultUserExpireDataFilterService'
 	}];
-	var outputServices = [];
-	var destinationServices = [];
-	var compressionTypes = [];
-	var scheduleTypes = [];
 	var aggregationTypes = [];
-	
+
 	var deleteJobs = [];
 	var deleteJobsRefreshToken;
 
 	var settingTemplates = $('#expire-setting-templates');
-	
+
 	function populateExpireConfigs(configs) {
 		if ( typeof configs !== 'object' ) {
 			configs = {};
@@ -23,7 +19,7 @@ $(document).ready(function() {
 		configs.dataConfigs = populateDataConfigs(configs.dataConfigs);
 		return configs;
 	}
-	
+
 	function populateDataConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];
 		var container = $('#expire-data-config-list-container');
@@ -43,7 +39,7 @@ $(document).ready(function() {
 		container.closest('section').find('.listCount').text(configs.length);
 		return configs;
 	}
-	
+
 	function handleServiceIdentifierChange(event, services) {
 		var target = event.target;
 		console.log('change event on %o: %o', target, event);
@@ -62,7 +58,7 @@ $(document).ready(function() {
 			.button(enabled ? 'on' : 'off')
 			.val(enabled ? 'true' : 'false');
 	}
-	
+
 	// ***** Edit data policy form
 	$('#edit-expire-data-config-modal').on('show.bs.modal', function(event) {
 		var config = SolarReg.Templates.findContextItem(this),
@@ -110,7 +106,7 @@ $(document).ready(function() {
 			handleToggleButton(btn, btn.val() !== 'true');
 		});
 	});
-	
+
 	// ***** Preview data policy modal
 	$('#expire-data-config-preview-modal').on('show.bs.modal', function() {
 		var config = SolarReg.Templates.findContextItem(this);
@@ -128,13 +124,21 @@ $(document).ready(function() {
 					modal = $(me),
 					counts = json.data,
 					prop;
-				
+
 				// format numbers with commas for clarity (not i18n I know :)
 				for ( prop in counts ) {
 					if ( !isNaN(Number(counts[prop])) ) {
 						counts[prop+'Display'] = counts[prop].toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 					}
 				}
+
+				// in case not all expected properties returned by server, set to 0 now
+				modal.find('.expire-preview-counts *[data-tprop]').each(function(idx, el) {
+					if ( counts[el.dataset.tprop] === undefined ) {
+						counts[el.dataset.tprop] = "0";
+					}
+				});
+
 				if ( configNow && configNow.id === config.id ) {
 					SolarReg.Templates.replaceTemplateProperties(modal.find('.expire-preview-counts'), counts);
 					modal.find('.ready').removeClass('hidden').end()
@@ -152,7 +156,7 @@ $(document).ready(function() {
 	$('#expire-data-config-list-container .list-container').on('click', function(event) {
 		SolarReg.Settings.handleEditServiceItemAction(event, dataServices, settingTemplates);
 	});
-	
+
 	$('.expire.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
 
 	$('#expire-data-configs').first().each(function() {
@@ -162,7 +166,7 @@ $(document).ready(function() {
 			loadCountdown -= 1;
 			if ( loadCountdown === 0 ) {
 				populateExpireConfigs(expireConfigs);
-				$('.datum-expire-getstarted').toggleClass('hidden', 
+				$('.datum-expire-getstarted').toggleClass('hidden',
 					expireConfigs.dataConfigs && expireConfigs.dataConfigs.length > 0);
 			}
 		}
@@ -175,7 +179,7 @@ $(document).ready(function() {
 			}
 			liftoff();
 		});
-		
+
 		// list all configs
 		$.getJSON(SolarReg.solarUserURL('/sec/expire/configs'), function(json) {
 			console.log('Got expire configurations: %o', json);
@@ -185,7 +189,7 @@ $(document).ready(function() {
 			liftoff();
 		});
 	});
-	
+
 	function loadDatumDeleteJobs(preserve) {
 		return $.getJSON(SolarReg.solarUserURL('/sec/expire/datum-delete/jobs'), function(json) {
 			console.log('Got datum delete jobs: %o', json);
@@ -195,10 +199,10 @@ $(document).ready(function() {
 			}
 		});
 	}
-	
+
 	function handleDatumDeleteJobs(jobs, preserve) {
 		populateDatumDeleteJobs(jobs, preserve);
-		
+
 		// turn on auto-refresh if we have any pending jobs
 		var pending = jobs.find(function(job) {
 			return /^(Queued|Claimed|Executing)$/.test(job.jobState);
@@ -212,7 +216,7 @@ $(document).ready(function() {
 			}, 10000);
 		}
 	}
-	
+
 	function durationDisplay(start, end) {
 		var s = (start ? moment(start) : null);
 		var e = (end ? moment(end) : start ? moment() : null);
@@ -226,7 +230,7 @@ $(document).ready(function() {
 		jobs = Array.isArray(jobs) ? jobs : [];
 		var container = $('#datum-delete-job-list-container');
 		var items = jobs.map(function(job) {
-			var item, shortId;
+			var item;
 			job.id = job.jobId; // needed for Settings support
 			item = SolarReg.Settings.serviceConfigurationItem(job, []);
 			item.shortId = job.id.replace(/-.*/, '');
@@ -261,11 +265,11 @@ $(document).ready(function() {
 		container.closest('section').find('.listCount').text(jobs.length);
 		return jobs;
 	}
-	
+
 	$('#datum-delete-jobs').first().each(function() {
 		loadDatumDeleteJobs();
 	});
-	
+
 	$('#edit-datum-delete-job-modal').on('submit', function(event) {
 		event.preventDefault();
 		var form = event.target;
@@ -313,7 +317,7 @@ $(document).ready(function() {
 			.find('.waiting').removeClass('hidden');
 		modal.find('button.delete-config').removeClass('hidden');
 	});
-	
+
 	$('#datum-delete-preview-modal button.delete-config').on('click', function(event) {
 		var deleteBtn = event.target;
 		var modal = $(deleteBtn).closest('.modal');

@@ -36,8 +36,8 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
-import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 
 /**
  * Test cases for the {@link DaoUserExpireBiz} class.
@@ -49,13 +49,13 @@ public class DaoUserExpireBizTests {
 
 	private static final Long TEST_USER_ID = -1L;
 
-	private UserDataConfigurationDao dataConfigurationDao;
+	private ExpireUserDataConfigurationDao dataConfigurationDao;
 
 	private DaoUserExpireBiz biz;
 
 	@Before
 	public void setup() {
-		dataConfigurationDao = EasyMock.createMock(UserDataConfigurationDao.class);
+		dataConfigurationDao = EasyMock.createMock(ExpireUserDataConfigurationDao.class);
 
 		biz = new DaoUserExpireBiz(dataConfigurationDao);
 	}
@@ -72,14 +72,14 @@ public class DaoUserExpireBizTests {
 	@Test
 	public void findConfigurationsForUser() {
 		// given
-		UserDataConfiguration config = new UserDataConfiguration();
-		List<UserDataConfiguration> configs = Arrays.asList(config);
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
+		List<ExpireUserDataConfiguration> configs = Arrays.asList(config);
 		expect(dataConfigurationDao.findConfigurationsForUser(TEST_USER_ID)).andReturn(configs);
 
 		// when
 		replayAll();
-		List<UserDataConfiguration> result = biz.configurationsForUser(TEST_USER_ID,
-				UserDataConfiguration.class);
+		List<ExpireUserDataConfiguration> result = biz.configurationsForUser(TEST_USER_ID,
+				ExpireUserDataConfiguration.class);
 
 		// then
 		assertThat("Results match", result, sameInstance(configs));
@@ -89,13 +89,13 @@ public class DaoUserExpireBizTests {
 	public void getConfiguration() {
 		// given
 		Long configId = UUID.randomUUID().getMostSignificantBits();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		expect(dataConfigurationDao.get(configId, TEST_USER_ID)).andReturn(config);
 
 		// when
 		replayAll();
-		UserDataConfiguration result = biz.configurationForUser(TEST_USER_ID,
-				UserDataConfiguration.class, configId);
+		ExpireUserDataConfiguration result = biz.configurationForUser(TEST_USER_ID,
+				ExpireUserDataConfiguration.class, configId);
 
 		// then
 		assertThat("Results match", result, sameInstance(config));
@@ -105,13 +105,13 @@ public class DaoUserExpireBizTests {
 	public void countsForConfiguration() {
 		// given
 		DatumRecordCounts counts = new DatumRecordCounts();
-		Capture<UserDataConfiguration> configCaptor = new Capture<>();
+		Capture<ExpireUserDataConfiguration> configCaptor = new Capture<>();
 		expect(dataConfigurationDao.countExpiredDataForConfiguration(capture(configCaptor)))
 				.andReturn(counts);
 
 		// when
 		replayAll();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		DatumRecordCounts result = biz.countExpiredDataForConfiguration(config);
 
 		// then

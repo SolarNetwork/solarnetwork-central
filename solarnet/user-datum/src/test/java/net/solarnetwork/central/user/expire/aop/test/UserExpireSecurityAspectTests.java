@@ -37,7 +37,7 @@ import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.central.user.expire.aop.UserExpireSecurityAspect;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 
 /**
  * Test cases for the {@link UserExpireSecurityAspect} class.
@@ -105,7 +105,7 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 	@Test(expected = AuthorizationException.class)
 	public void saveConfigNoAuth() {
 		replayAll();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(TEST_USER_ID);
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
@@ -115,7 +115,7 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(-2L);
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
@@ -125,7 +125,7 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}
@@ -134,7 +134,7 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDataConfiguration config = new UserDataConfiguration();
+		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(TEST_USER_ID);
 		aspect.saveConfigurationCheck(config);
 		verifyAll();

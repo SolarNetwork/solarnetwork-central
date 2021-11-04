@@ -23,7 +23,7 @@
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
 				<value>net.solarnetwork.central.user.domain.UserMatch</value>
-				<value>net.solarnetwork.central.user.expire.domain.UserDataConfiguration</value>
+				<value>net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration</value>
 			</list>
 		</property>
 		<property name="typeHandlers">

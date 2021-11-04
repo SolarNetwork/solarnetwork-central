@@ -22,9 +22,10 @@
 
 package net.solarnetwork.central.user.export.dao;
 
-import java.util.List;
 import java.time.Instant;
+import java.util.List;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.user.dao.UserConfigurationDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 

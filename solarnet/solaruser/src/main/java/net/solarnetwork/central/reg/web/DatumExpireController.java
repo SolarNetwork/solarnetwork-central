@@ -49,7 +49,7 @@ public class DatumExpireController {
 
 	@RequestMapping(value = "/u/sec/expire", method = RequestMethod.GET)
 	public String home() {
-		return "expire/expire";
+		return "sec/expire/expire";
 	}
 
 	/**

@@ -33,8 +33,8 @@ import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
-import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
  */
 public class DaoUserExpireBiz implements UserExpireBiz {
 
-	private final UserDataConfigurationDao dataConfigDao;
+	private final ExpireUserDataConfigurationDao dataConfigDao;
 
 	private MessageSource messageSource;
 
@@ -56,7 +56,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	 * @param dataConfigDao
 	 *        the data configuration DAO to use
 	 */
-	public DaoUserExpireBiz(UserDataConfigurationDao dataConfigDao) {
+	public DaoUserExpireBiz(ExpireUserDataConfigurationDao dataConfigDao) {
 		super();
 		this.dataConfigDao = dataConfigDao;
 	}
@@ -83,7 +83,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config) {
+	public DatumRecordCounts countExpiredDataForConfiguration(ExpireUserDataConfiguration config) {
 		return dataConfigDao.countExpiredDataForConfiguration(config);
 	}
 
@@ -92,7 +92,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Override
 	public <T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
-		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
+		if ( ExpireUserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (T) dataConfigDao.get(id, userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
@@ -101,8 +101,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteConfiguration(UserIdentifiableConfiguration configuration) {
-		if ( configuration instanceof UserDataConfiguration ) {
-			dataConfigDao.delete((UserDataConfiguration) configuration);
+		if ( configuration instanceof ExpireUserDataConfiguration ) {
+			dataConfigDao.delete((ExpireUserDataConfiguration) configuration);
 		} else {
 			throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
 		}
@@ -113,7 +113,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Override
 	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass) {
-		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
+		if ( ExpireUserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (List<T>) dataConfigDao.findConfigurationsForUser(userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
@@ -122,8 +122,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserIdentifiableConfiguration configuration) {
-		if ( configuration instanceof UserDataConfiguration ) {
-			return dataConfigDao.store((UserDataConfiguration) configuration);
+		if ( configuration instanceof ExpireUserDataConfiguration ) {
+			return dataConfigDao.store((ExpireUserDataConfiguration) configuration);
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}

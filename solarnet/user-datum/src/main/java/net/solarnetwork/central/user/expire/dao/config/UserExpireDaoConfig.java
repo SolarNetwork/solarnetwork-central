@@ -26,9 +26,9 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
-import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDatumDeleteJobInfoDao;
 
 /**
@@ -44,8 +44,8 @@ public class UserExpireDaoConfig {
 	private SqlSessionTemplate sqlSessionTemplate;
 
 	@Bean
-	public UserDataConfigurationDao expireUserDataConfigurationDao() {
-		MyBatisUserDataConfigurationDao dao = new MyBatisUserDataConfigurationDao();
+	public ExpireUserDataConfigurationDao expireUserDataConfigurationDao() {
+		MyBatisExpireUserDataConfigurationDao dao = new MyBatisExpireUserDataConfigurationDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
 	}

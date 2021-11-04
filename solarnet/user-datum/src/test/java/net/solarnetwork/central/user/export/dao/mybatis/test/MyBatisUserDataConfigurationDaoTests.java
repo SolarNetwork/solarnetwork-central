@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisUserDataConfigurationDaoTests.java - 22/03/2018 7:10:36 AM
+ * MyBatisExpireUserDataConfigurationDaoTests.java - 22/03/2018 7:10:36 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 

@@ -26,8 +26,8 @@ import java.util.List;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
-import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 
 /**
  * Job to delete datum for user defined expire policies.
@@ -37,20 +37,20 @@ import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
  */
 public class ExpireDatumJob extends JobSupport {
 
-	private final UserDataConfigurationDao configDao;
+	private final ExpireUserDataConfigurationDao configDao;
 
-	public ExpireDatumJob(EventAdmin eventAdmin, UserDataConfigurationDao configDao) {
+	public ExpireDatumJob(EventAdmin eventAdmin, ExpireUserDataConfigurationDao configDao) {
 		super(eventAdmin);
 		this.configDao = configDao;
 	}
 
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
-		List<UserDataConfiguration> configs = configDao.getAll(null);
+		List<ExpireUserDataConfiguration> configs = configDao.getAll(null);
 		if ( configs == null ) {
 			return true;
 		}
-		for ( UserDataConfiguration config : configs ) {
+		for ( ExpireUserDataConfiguration config : configs ) {
 			if ( !config.isActive() ) {
 				continue;
 			}

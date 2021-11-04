@@ -50,7 +50,7 @@ import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.domain.DataConfiguration;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.web.domain.Response;
@@ -125,9 +125,9 @@ public class DatumExpireController {
 	public Response<DatumExpireFullConfigurations> viewDataConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 
-		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
+		List<ExpireUserDataConfiguration> dataConfigs = Collections.emptyList();
 		if ( expireBiz != null ) {
-			dataConfigs = expireBiz.configurationsForUser(userId, UserDataConfiguration.class);
+			dataConfigs = expireBiz.configurationsForUser(userId, ExpireUserDataConfiguration.class);
 		}
 
 		return response(new DatumExpireFullConfigurations(dataConfigs));
@@ -135,7 +135,8 @@ public class DatumExpireController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
-	public Response<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
+	public Response<DataConfiguration> saveDataConfiguration(
+			@RequestBody ExpireUserDataConfiguration config) {
 		if ( expireBiz != null ) {
 			if ( config.getUserId() == null ) {
 				config.setUserId(SecurityUtils.getCurrentActorUserId());
@@ -157,8 +158,8 @@ public class DatumExpireController {
 	public Response<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
 		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			UserDataConfiguration config = expireBiz.configurationForUser(userId,
-					UserDataConfiguration.class, id);
+			ExpireUserDataConfiguration config = expireBiz.configurationForUser(userId,
+					ExpireUserDataConfiguration.class, id);
 			if ( config != null ) {
 				expireBiz.deleteConfiguration(config);
 			}
@@ -172,8 +173,8 @@ public class DatumExpireController {
 		DatumRecordCounts counts = null;
 		if ( expireBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			UserDataConfiguration config = expireBiz.configurationForUser(userId,
-					UserDataConfiguration.class, id);
+			ExpireUserDataConfiguration config = expireBiz.configurationForUser(userId,
+					ExpireUserDataConfiguration.class, id);
 			if ( config != null ) {
 				counts = expireBiz.countExpiredDataForConfiguration(config);
 			}
@@ -187,7 +188,7 @@ public class DatumExpireController {
 		DatumRecordCounts counts = null;
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			filter.setUserIds(new Long[] { userId });
+			filter.setUserId(userId);
 			counts = datumDeleteBiz.countDatumRecords(filter);
 		}
 		return response(counts);
@@ -199,7 +200,7 @@ public class DatumExpireController {
 		DatumDeleteJobInfo result = null;
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
-			filter.setUserIds(new Long[] { userId });
+			filter.setUserId(userId);
 			result = datumDeleteBiz.submitDatumDeleteRequest(filter);
 		}
 		return response(result);

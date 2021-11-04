@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
-import net.solarnetwork.central.user.expire.dao.UserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.support.PrefixedMessageSource;
 
@@ -62,7 +62,7 @@ public class UserExpireBizConfig {
 	private UserDatumDeleteJobInfoDao jobInfoDao;
 
 	@Autowired
-	private UserDataConfigurationDao userDataConfigurationDao;
+	private ExpireUserDataConfigurationDao userDataConfigurationDao;
 
 	@Value("${app.user.datum.delete.parallelism:1}")
 	private int deleteTaskParallelism = 1;

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
@@ -100,6 +100,6 @@ public interface UserExpireBiz {
 	 *        the configuration to delete expired data for
 	 * @return the count of expired data deleted
 	 */
-	DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config);
+	DatumRecordCounts countExpiredDataForConfiguration(ExpireUserDataConfiguration config);
 
 }

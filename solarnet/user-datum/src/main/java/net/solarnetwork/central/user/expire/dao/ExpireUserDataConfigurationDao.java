@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserDataConfigurationDao.java - 9/07/2018 10:12:13 AM
+ * ExpireUserDataConfigurationDao.java - 9/07/2018 10:12:13 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -23,17 +23,19 @@
 package net.solarnetwork.central.user.expire.dao;
 
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
+import net.solarnetwork.central.user.dao.UserConfigurationDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 
 /**
- * DAO API for {@link UserDataConfiguration} entities.
+ * DAO API for {@link ExpireUserDataConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserDataConfigurationDao extends UserRelatedGenericDao<UserDataConfiguration, Long>,
-		UserConfigurationDao<UserDataConfiguration, Long> {
+public interface ExpireUserDataConfigurationDao
+		extends UserRelatedGenericDao<ExpireUserDataConfiguration, Long>,
+		UserConfigurationDao<ExpireUserDataConfiguration, Long> {
 
 	/**
 	 * Count all expired data for a given configuration.
@@ -41,14 +43,14 @@ public interface UserDataConfigurationDao extends UserRelatedGenericDao<UserData
 	 * <p>
 	 * These results show the number of records that <i>would</i> be deleted by
 	 * calling
-	 * {@link #deleteExpiredDataForConfiguration(UserDataConfiguration)}.
+	 * {@link #deleteExpiredDataForConfiguration(ExpireUserDataConfiguration)}.
 	 * </p>
 	 * 
 	 * @param config
 	 *        the configuration to delete expired data for
 	 * @return the count of expired data deleted
 	 */
-	DatumRecordCounts countExpiredDataForConfiguration(UserDataConfiguration config);
+	DatumRecordCounts countExpiredDataForConfiguration(ExpireUserDataConfiguration config);
 
 	/**
 	 * Delete all expired data for a given configuration.
@@ -57,6 +59,6 @@ public interface UserDataConfigurationDao extends UserRelatedGenericDao<UserData
 	 *        the configuration to delete expired data for
 	 * @return the count of expired data deleted
 	 */
-	long deleteExpiredDataForConfiguration(UserDataConfiguration config);
+	long deleteExpiredDataForConfiguration(ExpireUserDataConfiguration config);
 
 }

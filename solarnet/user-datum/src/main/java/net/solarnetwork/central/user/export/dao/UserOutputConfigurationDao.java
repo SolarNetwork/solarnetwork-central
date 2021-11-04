@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.dao;
 
+import net.solarnetwork.central.user.dao.UserConfigurationDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 

@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisUserDataConfigurationDaoTests.java - 9/07/2018 11:32:33 AM
+ * MyBatisExpireUserDataConfigurationDaoTests.java - 9/07/2018 11:32:33 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -70,32 +70,32 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDataConfigurationDao;
-import net.solarnetwork.central.user.expire.domain.UserDataConfiguration;
+import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
- * Test cases for the {@link MyBatisUserDataConfigurationDao} class.
+ * Test cases for the {@link MyBatisExpireUserDataConfigurationDao} class.
  * 
  * @author matt
  * @version 2.0
  */
-public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
+public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private static final String TEST_NAME = "test.name";
 	private static final String TEST_SERVICE_IDENT = "test.ident";
 	private static final int TEST_EXPIRE_DAYS = 35; // 5 weeks
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private MyBatisUserDataConfigurationDao confDao;
+	private MyBatisExpireUserDataConfigurationDao confDao;
 
 	private User user;
-	private UserDataConfiguration conf;
+	private ExpireUserDataConfiguration conf;
 	private ObjectDatumStreamMetadata streamMeta;
 
 	@Before
 	public void setUp() throws Exception {
-		confDao = new MyBatisUserDataConfigurationDao();
+		confDao = new MyBatisExpireUserDataConfigurationDao();
 		confDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
@@ -118,7 +118,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	@Test
 	public void storeNew() {
-		UserDataConfiguration conf = new UserDataConfiguration();
+		ExpireUserDataConfiguration conf = new ExpireUserDataConfiguration();
 		conf.setCreated(Instant.now());
 		conf.setUserId(this.user.getId());
 		conf.setName(TEST_NAME);
@@ -153,7 +153,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
-		UserDataConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
+		ExpireUserDataConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
 		assertThat("Found by PK", conf, notNullValue());
 		assertThat("PK", conf.getId(), equalTo(this.conf.getId()));
 		assertThat("Created", conf.getCreated().truncatedTo(ChronoUnit.SECONDS),
@@ -180,7 +180,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	@Test
 	public void update() {
 		storeNew();
-		UserDataConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
+		ExpireUserDataConfiguration conf = confDao.get(this.conf.getId(), this.user.getId());
 
 		conf.setName("new.name");
 		conf.setServiceIdentifier("new.ident");
@@ -200,7 +200,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		Long id = confDao.store(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
-		UserDataConfiguration updatedConf = confDao.get(id, this.user.getId());
+		ExpireUserDataConfiguration updatedConf = confDao.get(id, this.user.getId());
 		assertThat("Found by PK", updatedConf, notNullValue());
 		assertThat("New entity returned", updatedConf, not(sameInstance(conf)));
 		assertThat("PK", updatedConf.getId(), equalTo(conf.getId()));
@@ -232,20 +232,20 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 	@Test
 	public void findAllForUser() {
-		List<UserDataConfiguration> confs = new ArrayList<>(3);
+		List<ExpireUserDataConfiguration> confs = new ArrayList<>(3);
 		for ( int i = 0; i < 3; i++ ) {
 			storeNew();
 			confs.add(this.conf);
 		}
 
-		List<UserDataConfiguration> found = confDao.findConfigurationsForUser(this.user.getId());
+		List<ExpireUserDataConfiguration> found = confDao.findConfigurationsForUser(this.user.getId());
 		assertThat(found, not(sameInstance(confs)));
 		assertThat(found, equalTo(confs));
 	}
 
 	@Test
 	public void getAllNoData() {
-		List<UserDataConfiguration> found = confDao.getAll(null);
+		List<ExpireUserDataConfiguration> found = confDao.getAll(null);
 		assertThat(found, notNullValue());
 		assertThat(found, hasSize(0));
 	}
@@ -256,7 +256,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		User user2 = createNewUser("2nd.user@localhost");
 
-		UserDataConfiguration conf2 = new UserDataConfiguration();
+		ExpireUserDataConfiguration conf2 = new ExpireUserDataConfiguration();
 		conf2.setCreated(Instant.now());
 		conf2.setUserId(user2.getId());
 		conf2.setName(TEST_NAME);
@@ -265,9 +265,9 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 
 		conf2 = confDao.get(confDao.store(conf2), user2.getId());
 
-		List<UserDataConfiguration> expected = Arrays.asList(this.conf, conf2);
+		List<ExpireUserDataConfiguration> expected = Arrays.asList(this.conf, conf2);
 
-		List<UserDataConfiguration> found = confDao.getAll(null);
+		List<ExpireUserDataConfiguration> found = confDao.getAll(null);
 		assertThat(found, not(sameInstance(expected)));
 		assertThat(found, equalTo(expected));
 	}

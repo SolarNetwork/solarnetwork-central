@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.expire.dao;
+package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
 import java.util.List;
