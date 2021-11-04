@@ -3,7 +3,7 @@ $(document).ready(function() {
 	
 	var inputServices = [];
 	
-	var settingTemplates = $('#import-setting-templates');
+	var settingTemplates = $('#setting-templates');
 	
 	var refreshToken;
 

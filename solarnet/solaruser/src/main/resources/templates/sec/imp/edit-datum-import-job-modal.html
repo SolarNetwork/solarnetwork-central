@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<form id="edit-datum-import-job-modal" class="edit-config import" data-th-classappend="'modal fade'"
+		data-th-action="@{/u/sec/import/jobs}" method="post" tabindex="-1" role="dialog">
+	<div class="modal-dialog" style="width: 66%;" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{import.job.edit.title}">Import</h4>
+			</div>
+		 	<div class="modal-body form-horizontal before">
+		 		<p>
+		 			<span data-th-utext="#{import.job.edit.intro}">Use this form to create your import job.</span>
+		 			<span class="update" data-th-utext="#{import.job.update.intro}">Update your settings here.</span>
+		 		</p>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.name.label}">	
+		 				Name
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="text" class="form-control" name="name" 
+		 					data-th-placeholder="#{import.job.name.placeholder}"
+		 					maxlength="64" required>
+			 		</div>
+		 		</div>
+		 		<div class="form-group create">
+		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.file.label}">
+		 				File
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="file" class="form-control" name="data" required>
+		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.file.caption}">The file can be compressed.</span>
+			 		</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.timeZoneId.label}">
+		 				Time zone
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="text" class="form-control" name="timeZoneId" 
+		 					data-th-placeholder="#{import.job.timeZoneId.placeholder}"
+		 					maxlength="64">
+		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.timeZoneId.caption}">Only needed if the data does not specify a time zone.</span>
+			 		</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.batchSize.label}">
+		 				Batch size
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="number" class="form-control" name="batchSize" min="0" value="10000"
+		 					data-th-placeholder="#{import.job.batchSize.placeholder}">
+		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.batchSize.caption}">Smaller batch sizes generally process faster.</span>
+			 		</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{export.outputConfig.type.label}">
+		 				Type
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<select class="form-control" name="serviceIdentifier" required>
+		 				</select>
+		 			</div>
+		 		</div>
+		 	</div>
+		 	<div class="modal-body form-horizontal service-props-container before hidden">
+		 	</div>
+		 	<div class="modal-body upload hidden">
+		 		<p data-th-utext="#{import.job.upload.progress.intro}">Progress</p>
+				<div class="progress">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+						<span class="amount">0</span>%
+					</div>
+				</div>
+			</div>
+		 	<div class="modal-body delete-confirm hidden">
+		 		<p class="alert alert-danger" data-th-utext="#{import.job.delete.confirm.intro}">
+		 			Are you sure you want to delete?
+		 		</p>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<button type="button" class="btn btn-danger pull-left delete-config">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<span data-th-text="#{import.job.action.delete}">Delete</span>
+		 		</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+		 	</div>
+		 </div>
+ 	</div>
+ 	<input type="hidden" name="id">
+</form>
+</body>
+</html>
