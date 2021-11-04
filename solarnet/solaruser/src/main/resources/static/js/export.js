@@ -12,7 +12,7 @@ $(document).ready(function() {
 	var scheduleTypes = [];
 	var aggregationTypes = [];
 
-	var settingTemplates = $('#export-setting-templates');
+	var settingTemplates = $('#setting-templates');
 
 	function populateExportConfigs(configs) {
 		if ( typeof configs !== 'object' ) {

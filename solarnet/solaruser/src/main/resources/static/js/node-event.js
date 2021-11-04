@@ -5,7 +5,7 @@ $(document).ready(function() {
 	var hookServices = [];
 	var topicTypes = [];
 
-	var settingTemplates = $('#node-event-setting-templates');
+	var settingTemplates = $('#setting-templates');
 
 	function populateHookConfigs(configs, preserve) {
 		configs = Array.isArray(configs) ? configs : [];

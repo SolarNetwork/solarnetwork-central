@@ -62,62 +62,7 @@
 
 <!--/* Setting templates */-->
 
-<div id="node-event-setting-templates" class="hidden">
-	<!--/*
-		The setting-type data property must match a setting UID + any options as |opt1,opt2.
-
-		Supported options:
-			secureTextEntry : for password fields
-	 */-->
-	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier">
-		<label class="col-sm-3 control-label" data-tprop="name">
-			${' '}
-		</label>
-		<div class="col-sm-7">
-			<!--/*
-				The .setting-form-element class must be attached to the setting form field that will hold the value to upload.
-			 */-->
-			<input type="text" class="form-control setting-form-element" name="__unnamed" maxlength="255">
-		</div>
-		<div class="col-sm-1 form-control-static">
-			<a tabindex="-1" data-th-title="#{settings.info.label}" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
-				<span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-			</a>
-		</div>
-	</div>
-	<div class="form-group template" data-setting-type="net.solarnetwork.settings.TextFieldSettingSpecifier|secureTextEntry">
-		<label class="col-sm-3 control-label" data-tprop="name">
-			${' '}
-		</label>
-		<div class="col-sm-7">
-			<input type="password" data-th-placeholder="#{settings.secureTextEntry.placeholder}" class="form-control setting-form-element" name="__unnamed" maxlength="255">
-		</div>
-		<div class="col-sm-1 form-control-static">
-			<a tabindex="-1" data-th-title="#{settings.info.label}" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
-				<span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-			</a>
-		</div>
-	</div>
-	<div class="form-group template" data-setting-type="net.solarnetwork.settings.ToggleSettingSpecifier">
-		<label class="col-sm-3 control-label" data-tprop="name">
-			${' '}
-		</label>
-		<div class="col-sm-7">
-			<button type="button" name="__unnamed" class="form-control setting-form-element toggle btn btn-default"
-				data-toggle="setting-toggle" aria-pressed="false"
-				data-th-data-on-text="#{settings.toggle.enabled}"
-				data-th-data-off-text="#{settings.toggle.disabled}"
-				data-th-text="#{settings.toggle.disabled}">
-				Off
-			</button>
-		</div>
-		<div class="col-sm-1 form-control-static">
-			<a tabindex="-1" data-th-title="#{settings.info.label}" class="setting-help" role="button" data-toggle="popover" data-trigger="focus" data-html="true" data-container="body">
-				<span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-			</a>
-		</div>
-	</div>
-</div>
+<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
 </div>
 </body>
 </html>

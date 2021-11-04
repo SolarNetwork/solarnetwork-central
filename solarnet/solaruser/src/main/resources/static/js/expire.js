@@ -10,7 +10,7 @@ $(document).ready(function() {
 	var deleteJobs = [];
 	var deleteJobsRefreshToken;
 
-	var settingTemplates = $('#expire-setting-templates');
+	var settingTemplates = $('#setting-templates');
 
 	function populateExpireConfigs(configs) {
 		if ( typeof configs !== 'object' ) {
