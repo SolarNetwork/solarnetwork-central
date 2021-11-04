@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.dao.config;
+package net.solarnetwork.central.datum.config;
 
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;

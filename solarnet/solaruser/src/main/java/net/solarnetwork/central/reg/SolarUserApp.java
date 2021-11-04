@@ -60,9 +60,12 @@ import net.solarnetwork.util.ApplicationContextUtils;
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
 		SolarNetDatumAopConfiguration.class,
+		SolarNetDatumConfiguration.class,
 		SolarNetDatumExportConfiguration.class,
 		SolarNetDatumImportAopConfiguration.class,
 		SolarNetInstructorAopConfiguration.class,
+		SolarNetInstructorConfiguration.class,
+		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
 		SolarNetUserOcppAopConfiguration.class,
 		SolarNetUserEventAopConfiguration.class,
@@ -78,9 +81,6 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonMailConfiguration.class,
 		SolarNetCommonSecurityConfiguration.class,
-		SolarNetDatumConfiguration.class,
-		SolarNetInstructorConfiguration.class,
-		SolarNetUserConfiguration.class,
 })
 //@formatter:on
 public class SolarUserApp {

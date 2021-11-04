@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.config;
 
-import static net.solarnetwork.central.datum.dao.config.JdbcQueryAuditorConfig.AUDIT;
+import static net.solarnetwork.central.datum.config.JdbcQueryAuditorConfig.AUDIT;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

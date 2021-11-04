@@ -22,17 +22,12 @@
 
 package net.solarnetwork.central.user.config;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-
 /**
  * Marker interface for the Instructor configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetUserConfiguration {
+public interface SolarNetUserConfiguration {
 	// nothing here
 }

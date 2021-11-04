@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.dao.config;
+package net.solarnetwork.central.datum.config;
 
 import java.util.UUID;
 import javax.cache.Cache;

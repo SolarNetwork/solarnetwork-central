@@ -22,23 +22,12 @@
 
 package net.solarnetwork.central.datum.config;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.datum.dao.config.SolarNetDatumDaoConfiguration;
-
 /**
  * Marker interface for Datum configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-// @formatter:off
-@ComponentScan(basePackageClasses = { 
-		SolarNetDatumConfiguration.class,
-		SolarNetDatumDaoConfiguration.class,
-})
-// @formatter:on
-public class SolarNetDatumConfiguration {
+public interface SolarNetDatumConfiguration {
 	// nothing here
 }

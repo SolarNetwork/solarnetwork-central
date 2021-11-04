@@ -34,6 +34,7 @@ import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
+import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
@@ -44,13 +45,18 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * @version 1.0
  */
 // @formatter:off
-@SpringBootApplication(scanBasePackageClasses = {SolarInApp.class})
+@SpringBootApplication(scanBasePackageClasses = {
+		// FIXME: this needed? SolarNetDatumAopConfiguration.class,
+		SolarNetDatumConfiguration.class,
+		// FIXME: this needed? SolarNetInstructorAopConfiguration.class,
+		SolarNetInstructorConfiguration.class,
+		SolarNetUserConfiguration.class,
+		SolarInApp.class,
+})
 @Import({
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
-		SolarNetDatumConfiguration.class,
-		SolarNetInstructorConfiguration.class,
-		SolarNetUserConfiguration.class,
+		SolarNetCommonSecurityConfiguration.class,
 })
 // @formatter:on
 public class SolarInApp {

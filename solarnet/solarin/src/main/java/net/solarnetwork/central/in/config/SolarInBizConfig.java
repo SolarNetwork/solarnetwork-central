@@ -23,8 +23,6 @@
 package net.solarnetwork.central.in.config;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +30,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.biz.BasicNetworkIdentificationBiz;
 import net.solarnetwork.central.biz.NetworkIdentificationBiz;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
@@ -96,6 +91,9 @@ public class SolarInBizConfig {
 
 	@Autowired
 	private PlatformTransactionManager txManager;
+
+	@Autowired
+	private NetworkIdentificationBiz networkIdentificationBiz;
 
 	@Bean
 	public SolarNodeMetadataBiz solarNodeMetadataBiz() {
@@ -187,42 +185,9 @@ public class SolarInBizConfig {
 		return biz;
 	}
 
-	/** Settings for the NetworkIdentityBiz. */
-	public static class NetworkIdentitySettings {
-
-		private String networkIdentityKey = "replace:identity:here";
-		private Resource termsOfService = new ClassPathResource(
-				"net/solarnetwork/central/in/config/placeholder-toc.txt");
-		private String host = "localhost";
-		private int port = 8080;
-		private boolean forceTls = false;
-		private Map<String, String> serviceUrls = defaultNetworkServiceUrls();
-
-		private static Map<String, String> defaultNetworkServiceUrls() {
-			Map<String, String> map = new LinkedHashMap<>(4);
-			map.put("solaruser", "http://localhost/solaruser");
-			map.put("solarquery", "http://localhost/solarquery");
-			map.put("solarin-mqtt", "mqtts://localhost:8883");
-			return map;
-		}
-	}
-
-	@Bean
-	@ConfigurationProperties(prefix = "app.solarin.network-identity")
-	public NetworkIdentitySettings networkIdentitySettings() {
-		return new NetworkIdentitySettings();
-	}
-
-	@Bean
-	public NetworkIdentificationBiz networkIdentificationBiz() {
-		NetworkIdentitySettings settings = networkIdentitySettings();
-		return new BasicNetworkIdentificationBiz(settings.networkIdentityKey, settings.termsOfService,
-				settings.host, settings.port, settings.forceTls, settings.serviceUrls);
-	}
-
 	@Bean
 	public NetworkIdentityBiz networkIdentityBiz() {
-		return new SimpleNetworkIdentityBiz(networkIdentificationBiz(), networkAssociationDao);
+		return new SimpleNetworkIdentityBiz(networkIdentificationBiz, networkAssociationDao);
 	}
 
 }

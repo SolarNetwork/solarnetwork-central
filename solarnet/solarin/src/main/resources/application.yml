@@ -54,6 +54,11 @@ mybatis:
     default-statement-timeout: 30
   mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
 
+server:
+  error.whitelabel.enabled: false
+  port: 9083
+  servlet.context-path: /solarin
+
 spring:
   datasource:
     hikari:
