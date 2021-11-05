@@ -62,6 +62,55 @@ public class NetworkIdentityConfig {
 			map.put("solarin-mqtt", "mqtts://localhost:8883");
 			return map;
 		}
+
+		public String getNetworkIdentityKey() {
+			return networkIdentityKey;
+		}
+
+		public void setNetworkIdentityKey(String networkIdentityKey) {
+			this.networkIdentityKey = networkIdentityKey;
+		}
+
+		public Resource getTermsOfService() {
+			return termsOfService;
+		}
+
+		public void setTermsOfService(Resource termsOfService) {
+			this.termsOfService = termsOfService;
+		}
+
+		public String getHost() {
+			return host;
+		}
+
+		public void setHost(String host) {
+			this.host = host;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public void setPort(int port) {
+			this.port = port;
+		}
+
+		public boolean isForceTls() {
+			return forceTls;
+		}
+
+		public void setForceTls(boolean forceTls) {
+			this.forceTls = forceTls;
+		}
+
+		public Map<String, String> getServiceUrls() {
+			return serviceUrls;
+		}
+
+		public void setServiceUrls(Map<String, String> serviceUrls) {
+			this.serviceUrls = serviceUrls;
+		}
+
 	}
 
 	@Bean
