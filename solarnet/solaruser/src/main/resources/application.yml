@@ -17,7 +17,24 @@ app:
     password: solartest
     platform: postgres
     initialize: false
-  datum.export.temporaryDir: "${java.io.tmpdir}"
+  datum:
+    export.temporaryDir: "${java.io.tmpdir}"
+    import:
+      concurrent-tasks: 2
+      concurrent-preview-tasks: 4
+      preview-max-count: 100
+      progress-log-count: 25000
+      completed-task-minimum-cache-time: 14400000
+      workPath: "${java.io.tmpdir}"
+      resource-storage-wait-ms: 60000
+      resource-storage-uid: "Datum-Import"
+      s3-storage:
+        objectKeyPrefix: "datum-import/"
+        s3Client:
+          bucketName: snf-apps
+          regionName: us-west-2
+          accessToken: TOKEN_HERE
+          accessSecret: SECRET_HERE
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000

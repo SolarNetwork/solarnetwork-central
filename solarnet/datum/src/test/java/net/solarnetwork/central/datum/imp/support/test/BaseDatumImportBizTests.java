@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support.test;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -60,9 +60,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
 import net.solarnetwork.service.IdentifiableConfiguration;
-import net.solarnetwork.service.OptionalServiceCollection;
 import net.solarnetwork.service.ProgressListener;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
@@ -76,7 +74,7 @@ public class BaseDatumImportBizTests {
 	private class TestDatumImportBiz extends BaseDatumImportBiz {
 
 		@Override
-		public <T extends Identity<String>> T optionalService(OptionalServiceCollection<T> collection,
+		public <T extends Identity<String>> T optionalService(List<T> collection,
 				IdentifiableConfiguration config) {
 			return super.optionalService(collection, config);
 		}
@@ -153,7 +151,7 @@ public class BaseDatumImportBizTests {
 	public void availableInputServices() {
 		List<DatumImportInputFormatService> services = new ArrayList<>();
 		TestDatumImportBiz biz = new TestDatumImportBiz();
-		biz.setInputServices(new StaticOptionalServiceCollection<>(services));
+		biz.setInputServices(services);
 		assertThat("Services returned", biz.availableInputFormatServices(), sameInstance(services));
 	}
 
@@ -250,7 +248,7 @@ public class BaseDatumImportBizTests {
 	public void inputServiceForIdNullId() {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
 		DatumImportInputFormatService service = new TestInputFormatService();
-		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		biz.setInputServices(singletonList(service));
 		assertThat("No ID", biz.optionalService(biz.getInputServices(), null), nullValue());
 	}
 
@@ -258,7 +256,7 @@ public class BaseDatumImportBizTests {
 	public void inputServiceForIdNoMatch() {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
 		DatumImportInputFormatService service = new TestInputFormatService();
-		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		biz.setInputServices(singletonList(service));
 		BasicInputConfiguration conf = new BasicInputConfiguration();
 		conf.setServiceIdentifier("foo");
 		assertThat("No match", biz.optionalService(biz.getInputServices(), conf), nullValue());
@@ -268,7 +266,7 @@ public class BaseDatumImportBizTests {
 	public void inputServiceForId() {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
 		DatumImportInputFormatService service = new TestInputFormatService();
-		biz.setInputServices(new StaticOptionalServiceCollection<>(Collections.singletonList(service)));
+		biz.setInputServices(singletonList(service));
 		BasicInputConfiguration conf = new BasicInputConfiguration();
 		conf.setServiceIdentifier(service.getId());
 		assertThat("Match", biz.optionalService(biz.getInputServices(), conf), sameInstance(service));

@@ -36,6 +36,7 @@ import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.datum.export.config.SolarNetDatumExportConfiguration;
 import net.solarnetwork.central.datum.imp.aop.SolarNetDatumImportAopConfiguration;
+import net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration;
 import net.solarnetwork.central.instructor.aop.SolarNetInstructorAopConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
@@ -63,6 +64,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumConfiguration.class,
 		SolarNetDatumExportConfiguration.class,
 		SolarNetDatumImportAopConfiguration.class,
+		SolarNetDatumImportConfiguration.class,
 		SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,

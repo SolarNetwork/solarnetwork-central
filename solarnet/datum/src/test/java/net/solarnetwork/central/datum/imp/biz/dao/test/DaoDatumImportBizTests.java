@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.biz.dao.test;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.easymock.EasyMock.anyObject;
@@ -57,9 +58,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.easymock.Capture;
@@ -73,6 +72,8 @@ import org.junit.Test;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -103,8 +104,6 @@ import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
-import net.solarnetwork.service.StaticOptionalService;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.test.Assertion;
 
@@ -121,8 +120,8 @@ public class DaoDatumImportBizTests {
 	private static final Long TEST_NODE_ID_2 = -3L;
 	private static final String TEST_SOURCE_ID = "test.source";
 
-	private ScheduledExecutorService scheduledExecutorService;
-	private ExecutorService executorSercvice;
+	private TaskScheduler scheduledExecutorService;
+	private AsyncTaskExecutor executorSercvice;
 	private SolarNodeOwnershipDao userNodeDao;
 	private DatumImportJobInfoDao jobInfoDao;
 	private DatumEntityDao datumDao;
@@ -134,7 +133,7 @@ public class DaoDatumImportBizTests {
 
 	private class TestDaoDatumImportBiz extends DaoDatumImportBiz {
 
-		private TestDaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
+		private TestDaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
 				SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
 				DatumEntityDao datumDao) {
 			super(scheduler, executor, userNodeDao, jobInfoDao, datumDao);
@@ -151,7 +150,8 @@ public class DaoDatumImportBizTests {
 
 	@Before
 	public void setup() {
-		executorSercvice = EasyMock.createMock(ExecutorService.class);
+		scheduledExecutorService = EasyMock.createMock(TaskScheduler.class);
+		executorSercvice = EasyMock.createMock(AsyncTaskExecutor.class);
 
 		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
 		userNodeDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
@@ -164,14 +164,14 @@ public class DaoDatumImportBizTests {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext,
-				resourceStorageService);
+		EasyMock.replay(scheduledExecutorService, executorSercvice, userNodeDao, jobInfoDao, datumDao,
+				loadingContext, resourceStorageService);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(executorSercvice, userNodeDao, jobInfoDao, datumDao, loadingContext,
-				resourceStorageService);
+		EasyMock.verify(scheduledExecutorService, executorSercvice, userNodeDao, jobInfoDao, datumDao,
+				loadingContext, resourceStorageService);
 	}
 
 	@Test
@@ -249,8 +249,7 @@ public class DaoDatumImportBizTests {
 	@Test
 	public void submitDatumImportRequest_withResourceStorage() throws IOException {
 		// given
-		biz.setResourceStorageService(
-				new StaticOptionalService<ResourceStorageService>(resourceStorageService));
+		biz.setResourceStorageService(resourceStorageService);
 		BasicInputConfiguration inputConfiguration = new BasicInputConfiguration();
 		inputConfiguration.setName("Test CSV Input");
 		inputConfiguration.setTimeZoneId("UTC");
@@ -431,8 +430,7 @@ public class DaoDatumImportBizTests {
 		// given
 		List<GeneralNodeDatum> data = sampleData(100,
 				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.DAYS));
-		biz.setInputServices(
-				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		biz.setInputServices(singletonList(new TestInputService(data)));
 		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
 		File dataFile = biz.getImportDataFile(pk);
 		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
@@ -484,8 +482,7 @@ public class DaoDatumImportBizTests {
 		// given
 		List<GeneralNodeDatum> data = sampleData(5,
 				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
-		biz.setInputServices(
-				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		biz.setInputServices(singletonList(new TestInputService(data)));
 		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
 		File dataFile = biz.getImportDataFile(pk);
 		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
@@ -564,12 +561,10 @@ public class DaoDatumImportBizTests {
 	@Test
 	public void performImport_fetchResource() throws Exception {
 		// given
-		biz.setResourceStorageService(
-				new StaticOptionalService<ResourceStorageService>(resourceStorageService));
+		biz.setResourceStorageService(resourceStorageService);
 		List<GeneralNodeDatum> data = sampleData(5,
 				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
-		biz.setInputServices(
-				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		biz.setInputServices(singletonList(new TestInputService(data)));
 		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
 		File dataFile = biz.getImportDataFile(pk);
 		InputStream dataFileStream = getClass().getResourceAsStream("test-data-01.csv");
@@ -681,8 +676,7 @@ public class DaoDatumImportBizTests {
 		// given
 		List<GeneralNodeDatum> data = sampleData(5,
 				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
-		biz.setInputServices(
-				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		biz.setInputServices(singletonList(new TestInputService(data)));
 		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
 		File dataFile = biz.getImportDataFile(pk);
 		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
@@ -765,8 +759,7 @@ public class DaoDatumImportBizTests {
 		// given
 		List<GeneralNodeDatum> data = sampleData(5,
 				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
-		biz.setInputServices(
-				new StaticOptionalServiceCollection<>(singleton(new TestInputService(data))));
+		biz.setInputServices(singletonList(new TestInputService(data)));
 		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
 		File dataFile = biz.getImportDataFile(pk);
 		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);

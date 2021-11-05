@@ -24,10 +24,12 @@ package net.solarnetwork.central.datum.imp.biz.dao;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -49,13 +51,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
@@ -95,7 +98,6 @@ import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
 import net.solarnetwork.util.StringUtils;
@@ -117,14 +119,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	/** The default value for the {@code resourceStorageWaitMs} property. */
 	public static final long DEFAULT_RESOURCE_STORAGE_WAIT_MS = TimeUnit.MINUTES.toMillis(1);
 
-	private final ScheduledExecutorService scheduler;
-	private final ExecutorService executor;
+	private final TaskScheduler scheduler;
+	private final AsyncTaskExecutor executor;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final DatumImportJobInfoDao jobInfoDao;
 	private final DatumEntityDao datumDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-	private ExecutorService previewExecutor;
-	private OptionalService<ResourceStorageService> resourceStorageService;
+	private AsyncTaskExecutor previewExecutor;
+	private ResourceStorageService resourceStorageService;
 	private long resourceStorageWaitMs = DEFAULT_RESOURCE_STORAGE_WAIT_MS;
 	private int maxPreviewCount = DEFAULT_MAX_PREVIEW_COUNT;
 	private int progressLogCount = DEFAULT_PROGRESS_LOG_COUNT;
@@ -146,16 +148,18 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 *        the job info DAO
 	 * @param datumDao
 	 *        the datum DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DaoDatumImportBiz(ScheduledExecutorService scheduler, ExecutorService executor,
+	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
 			SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
 			DatumEntityDao datumDao) {
 		super();
-		this.scheduler = scheduler;
-		this.executor = executor;
-		this.nodeOwnershipDao = userNodeDao;
-		this.jobInfoDao = jobInfoDao;
-		this.datumDao = datumDao;
+		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
+		this.executor = requireNonNullArgument(executor, "executor");
+		this.nodeOwnershipDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 
 	}
 
@@ -176,8 +180,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			ConcurrentMap<UserUuidPK, DatumImportStatus> map = (ConcurrentMap) taskMap;
 			taskPurgerTask = scheduler.scheduleWithFixedDelay(
-					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), 1L, 1L,
-					TimeUnit.HOURS);
+					new DatumImportTaskPurger(completedTaskMinimumCacheTime, map), Instant.now(),
+					Duration.ofHours(1));
 		}
 	}
 
@@ -224,7 +228,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 		info.setGroupKey(groupKeyForRequest(request));
 
 		File f = saveToWorkDirectory(resource, id);
-		ResourceStorageService rss = resourceStorageService();
+		final ResourceStorageService rss = this.resourceStorageService;
 		if ( rss != null && rss.isConfigured() ) {
 			CompletableFuture<Boolean> saveFuture = saveToResourceStorage(f, id, rss);
 			if ( this.resourceStorageWaitMs > 0 ) {
@@ -270,11 +274,6 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 			log.debug("Saved %.1f% of datum import [%s] to resource storage [{}]", (amount * 100.0),
 					f.getName(), rss.getUid());
 		});
-	}
-
-	private ResourceStorageService resourceStorageService() {
-		OptionalService<ResourceStorageService> rss = this.resourceStorageService;
-		return (rss != null ? rss.service() : null);
 	}
 
 	@Override
@@ -435,7 +434,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	}
 
 	private boolean fetchImportResource(File dataFile) throws IOException {
-		ResourceStorageService rss = resourceStorageService();
+		final ResourceStorageService rss = this.resourceStorageService;
 		if ( rss != null && rss.isConfigured() ) {
 			try {
 				CompletableFuture<Iterable<Resource>> resourcesFuture = rss
@@ -472,7 +471,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 
 	private void cleanupAfterImportDone(File dataFile) {
 		dataFile.delete();
-		ResourceStorageService rss = resourceStorageService();
+		final ResourceStorageService rss = this.resourceStorageService;
 		if ( rss != null && rss.isConfigured() ) {
 			try {
 				CompletableFuture<Set<String>> f = rss
@@ -961,7 +960,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 * @param previewExecutor
 	 *        the executor to set
 	 */
-	public void setPreviewExecutor(ExecutorService previewExecutor) {
+	public void setPreviewExecutor(AsyncTaskExecutor previewExecutor) {
 		this.previewExecutor = previewExecutor;
 	}
 
@@ -1007,8 +1006,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 *        the storage service to use
 	 * @since 1.1
 	 */
-	public void setResourceStorageService(
-			OptionalService<ResourceStorageService> resourceStorageService) {
+	public void setResourceStorageService(ResourceStorageService resourceStorageService) {
 		this.resourceStorageService = resourceStorageService;
 	}
 

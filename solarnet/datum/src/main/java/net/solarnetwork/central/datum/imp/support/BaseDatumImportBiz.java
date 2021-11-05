@@ -26,6 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,6 @@ import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.service.OptionalService;
-import net.solarnetwork.service.OptionalServiceCollection;
 
 /**
  * Abstract class for basic {@link DatumImportBiz} support.
@@ -54,7 +55,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	private File workDirectory = defaultWorkDirectory();
-	private OptionalServiceCollection<DatumImportInputFormatService> inputServices;
+	private List<DatumImportInputFormatService> inputServices;
 	private OptionalService<EventAdmin> eventAdmin;
 
 	private static File defaultWorkDirectory() {
@@ -78,7 +79,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
 	@Override
 	public Iterable<DatumImportInputFormatService> availableInputFormatServices() {
-		return (inputServices != null ? inputServices.services() : null);
+		return (inputServices != null ? inputServices : Collections.emptyList());
 	}
 
 	/**
@@ -133,7 +134,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 *        the service configuration to find a matching service for
 	 * @return the found service, or {@literal null} if not found
 	 */
-	protected <T extends Identity<String>> T optionalService(OptionalServiceCollection<T> collection,
+	protected <T extends Identity<String>> T optionalService(List<T> collection,
 			IdentifiableConfiguration config) {
 		if ( collection == null || config == null ) {
 			return null;
@@ -142,8 +143,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 		if ( id == null ) {
 			return null;
 		}
-		Iterable<T> services = collection.services();
-		for ( T service : services ) {
+		for ( T service : collection ) {
 			if ( id.equals(service.getId()) ) {
 				return service;
 			}
@@ -227,7 +227,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * 
 	 * @return the inputServices the input services
 	 */
-	public net.solarnetwork.service.OptionalServiceCollection<DatumImportInputFormatService> getInputServices() {
+	public List<DatumImportInputFormatService> getInputServices() {
 		return inputServices;
 	}
 
@@ -237,8 +237,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * @param inputServices
 	 *        the services to set
 	 */
-	public void setInputServices(
-			OptionalServiceCollection<DatumImportInputFormatService> inputServices) {
+	public void setInputServices(List<DatumImportInputFormatService> inputServices) {
 		this.inputServices = inputServices;
 	}
 

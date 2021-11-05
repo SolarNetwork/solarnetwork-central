@@ -17,6 +17,10 @@ description = 'SolarNet: Datum'
 version = '0.1.0'
 archivesBaseName = 'solarnet-datum'
 
+configurations {
+	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
+}
+
 dependencies {
 	implementation project(':solarnet-common')
 
@@ -36,6 +40,7 @@ dependencies {
 	
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3:2.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
