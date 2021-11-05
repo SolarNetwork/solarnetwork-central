@@ -28,8 +28,8 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -58,6 +58,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -83,9 +84,7 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -95,6 +94,8 @@ import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
@@ -102,6 +103,9 @@ import net.solarnetwork.central.support.SimpleSortDescriptor;
  * @author matt
  * @version 4.0
  */
+@Import({ net.solarnetwork.central.common.config.NetworkIdentityConfig.class,
+		net.solarnetwork.central.query.config.CacheConfig.class,
+		net.solarnetwork.central.query.config.NodeOwnershipCacheConfig.class })
 public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";

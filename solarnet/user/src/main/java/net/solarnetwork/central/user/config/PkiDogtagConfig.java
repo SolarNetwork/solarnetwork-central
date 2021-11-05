@@ -63,6 +63,47 @@ public class PkiDogtagConfig {
 		private Resource keystoreResource = new ClassPathResource("dogtag-client.jks");
 		private String keystorePassword = "changeit";
 		private String disabledCiphers = DEFAULT_DISABLED_CIPHERS;
+
+		public String getBaseUrl() {
+			return baseUrl;
+		}
+
+		public void setBaseUrl(String baseUrl) {
+			this.baseUrl = baseUrl;
+		}
+
+		public String getProfileId() {
+			return profileId;
+		}
+
+		public void setProfileId(String profileId) {
+			this.profileId = profileId;
+		}
+
+		public Resource getKeystoreResource() {
+			return keystoreResource;
+		}
+
+		public void setKeystoreResource(Resource keystoreResource) {
+			this.keystoreResource = keystoreResource;
+		}
+
+		public String getKeystorePassword() {
+			return keystorePassword;
+		}
+
+		public void setKeystorePassword(String keystorePassword) {
+			this.keystorePassword = keystorePassword;
+		}
+
+		public String getDisabledCiphers() {
+			return disabledCiphers;
+		}
+
+		public void setDisabledCiphers(String disabledCiphers) {
+			this.disabledCiphers = disabledCiphers;
+		}
+
 	}
 
 	@ConfigurationProperties(prefix = "app.node.pki.dogtag")

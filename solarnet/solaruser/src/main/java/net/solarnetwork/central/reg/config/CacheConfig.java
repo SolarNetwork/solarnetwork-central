@@ -44,7 +44,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableCaching
 public class CacheConfig {
 
-	@Value("${app.solaruser.cache.persistence.path}")
+	@Value("${app.cache.persistence.path}")
 	private Path persistencePath;
 
 	@Bean

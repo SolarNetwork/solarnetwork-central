@@ -56,6 +56,15 @@ public class ContentCachingServiceConfig {
 	public static class QueryCacheSettings extends CacheSettings {
 
 		private int compressMinimumLength = 512;
+
+		public int getCompressMinimumLength() {
+			return compressMinimumLength;
+		}
+
+		public void setCompressMinimumLength(int compressMinimumLength) {
+			this.compressMinimumLength = compressMinimumLength;
+		}
+
 	}
 
 	@Bean

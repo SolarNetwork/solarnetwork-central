@@ -45,10 +45,43 @@ public class JdbcQueryAuditorConfig {
 
 	public static class QueryAuditorSettings {
 
-		long updateDelay = 100;
-		long flushDelay = 10000;
-		long connectionRecoveryDelay = 15000;
-		int statLogUpdateCount = 500;
+		private long updateDelay = 100;
+		private long flushDelay = 10000;
+		private long connectionRecoveryDelay = 15000;
+		private int statLogUpdateCount = 500;
+
+		public long getUpdateDelay() {
+			return updateDelay;
+		}
+
+		public void setUpdateDelay(long updateDelay) {
+			this.updateDelay = updateDelay;
+		}
+
+		public long getFlushDelay() {
+			return flushDelay;
+		}
+
+		public void setFlushDelay(long flushDelay) {
+			this.flushDelay = flushDelay;
+		}
+
+		public long getConnectionRecoveryDelay() {
+			return connectionRecoveryDelay;
+		}
+
+		public void setConnectionRecoveryDelay(long connectionRecoveryDelay) {
+			this.connectionRecoveryDelay = connectionRecoveryDelay;
+		}
+
+		public int getStatLogUpdateCount() {
+			return statLogUpdateCount;
+		}
+
+		public void setStatLogUpdateCount(int statLogUpdateCount) {
+			this.statLogUpdateCount = statLogUpdateCount;
+		}
+
 	}
 
 	@Autowired

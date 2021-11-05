@@ -1,4 +1,5 @@
 app:
+  cache.persistence.path: "var/cache"
   datasource:
     hikari:
       minimumIdle: 1
@@ -11,18 +12,6 @@ app:
     password: solartest
     platform: postgres
     initialize: false
-  network-identity:
-    network-identity-key: "replace:identity:here"
-    terms-of-service: "replace:tos:here"
-    host: "localhost"
-    port: 8080
-    force-tls: false
-    service-urls:
-      node-dashboard: "http://localhost/node-dashboard"
-      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
-      solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost/solarquery"
-      solaruser: "http://localhost/solaruser"
   datasource-read-write-example:
     hikari:
       minimumIdle: 0
@@ -40,12 +29,23 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+  network-identity:
+    network-identity-key: "solarquery:identity:here"
+    terms-of-service: "solarquery:tos:here"
+    host: "localhost"
+    port: 8080
+    force-tls: false
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost/solarquery"
+      solaruser: "http://localhost/solaruser"
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
   solarquery:
-    cache.persistence.path: "var/cache"
     query-cache:
       ttl: 60
       heap-max-entries: 1000

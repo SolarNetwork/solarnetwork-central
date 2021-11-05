@@ -59,9 +59,14 @@ public class NodeOwnershipCacheConfig {
 	@Bean
 	@Qualifier(NODE_OWNERSHIP_CACHE)
 	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache() {
-		CacheSettings settings = nodeOwnershipCacheSettings();
-		return settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
-				NODE_OWNERSHIP_CACHE);
+		Cache<Long, SolarNodeOwnership> cache = cacheManager.getCache(NODE_OWNERSHIP_CACHE, Long.class,
+				SolarNodeOwnership.class);
+		if ( cache == null ) {
+			CacheSettings settings = nodeOwnershipCacheSettings();
+			cache = settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
+					NODE_OWNERSHIP_CACHE);
+		}
+		return cache;
 	}
 
 }

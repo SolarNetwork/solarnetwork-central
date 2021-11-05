@@ -115,6 +115,15 @@ public class SolarInBizConfig {
 			super();
 			setDiskPersistent(true);
 		}
+
+		public int getTempMaxEntries() {
+			return tempMaxEntries;
+		}
+
+		public void setTempMaxEntries(int tempMaxEntries) {
+			this.tempMaxEntries = tempMaxEntries;
+		}
+
 	}
 
 	@Bean

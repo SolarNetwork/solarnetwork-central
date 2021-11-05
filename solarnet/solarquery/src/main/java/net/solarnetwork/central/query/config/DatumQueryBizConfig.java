@@ -74,12 +74,61 @@ public class DatumQueryBizConfig {
 
 	public static class DatumQuerySettings {
 
-		int filteredResultsLimit = 1000;
-		int maxDaysForMinuteAggregation = 7;
-		int maxDaysForHourAggregation = 31;
-		int maxDaysForDayAggregation = 730;
-		int maxDaysForDayOfWeekAggregation = 3650;
-		int maxDaysForHourOfDayAggregation = 3650;
+		private int filteredResultsLimit = 1000;
+		private int maxDaysForMinuteAggregation = 7;
+		private int maxDaysForHourAggregation = 31;
+		private int maxDaysForDayAggregation = 730;
+		private int maxDaysForDayOfWeekAggregation = 3650;
+		private int maxDaysForHourOfDayAggregation = 3650;
+
+		public int getFilteredResultsLimit() {
+			return filteredResultsLimit;
+		}
+
+		public void setFilteredResultsLimit(int filteredResultsLimit) {
+			this.filteredResultsLimit = filteredResultsLimit;
+		}
+
+		public int getMaxDaysForMinuteAggregation() {
+			return maxDaysForMinuteAggregation;
+		}
+
+		public void setMaxDaysForMinuteAggregation(int maxDaysForMinuteAggregation) {
+			this.maxDaysForMinuteAggregation = maxDaysForMinuteAggregation;
+		}
+
+		public int getMaxDaysForHourAggregation() {
+			return maxDaysForHourAggregation;
+		}
+
+		public void setMaxDaysForHourAggregation(int maxDaysForHourAggregation) {
+			this.maxDaysForHourAggregation = maxDaysForHourAggregation;
+		}
+
+		public int getMaxDaysForDayAggregation() {
+			return maxDaysForDayAggregation;
+		}
+
+		public void setMaxDaysForDayAggregation(int maxDaysForDayAggregation) {
+			this.maxDaysForDayAggregation = maxDaysForDayAggregation;
+		}
+
+		public int getMaxDaysForDayOfWeekAggregation() {
+			return maxDaysForDayOfWeekAggregation;
+		}
+
+		public void setMaxDaysForDayOfWeekAggregation(int maxDaysForDayOfWeekAggregation) {
+			this.maxDaysForDayOfWeekAggregation = maxDaysForDayOfWeekAggregation;
+		}
+
+		public int getMaxDaysForHourOfDayAggregation() {
+			return maxDaysForHourOfDayAggregation;
+		}
+
+		public void setMaxDaysForHourOfDayAggregation(int maxDaysForHourOfDayAggregation) {
+			this.maxDaysForHourOfDayAggregation = maxDaysForHourOfDayAggregation;
+		}
+
 	}
 
 	@Bean

@@ -49,7 +49,7 @@ public class TaskConfig implements SchedulingConfigurer {
 		taskRegistrar.setScheduler(taskScheduler());
 	}
 
-	@ConfigurationProperties(prefix = "app.solaruser.task.scheduler")
+	@ConfigurationProperties(prefix = "app.task.scheduler")
 	@Bean(destroyMethod = "shutdown")
 	public TaskScheduler taskScheduler() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -60,7 +60,7 @@ public class TaskConfig implements SchedulingConfigurer {
 	}
 
 	@Primary
-	@ConfigurationProperties(prefix = "app.solaruser.task.executor")
+	@ConfigurationProperties(prefix = "app.task.executor")
 	@Bean(destroyMethod = "shutdown")
 	public AsyncTaskExecutor taskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
