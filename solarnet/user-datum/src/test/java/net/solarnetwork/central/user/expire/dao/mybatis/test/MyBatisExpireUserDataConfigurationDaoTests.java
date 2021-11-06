@@ -64,7 +64,6 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
@@ -73,6 +72,7 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link MyBatisExpireUserDataConfigurationDao} class.
@@ -401,8 +401,11 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		final ZonedDateTime start = today.minus(8, ChronoUnit.WEEKS);
 		result.start = start.toInstant();
-		ZonedDateTime month = start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+		final ZonedDateTime startMonth = start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+		ZonedDateTime prevMonth = startMonth;
+		ZonedDateTime prevDay = start;
 		Set<ZonedDateTime> months = new LinkedHashSet<>();
+		Set<ZonedDateTime> auditMonths = new LinkedHashSet<>();
 		for ( int i = 0; i < 8; i++ ) {
 			ZonedDateTime currDay = start.plusWeeks(i);
 			ZonedDateTime currMonth = currDay.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
@@ -421,17 +424,20 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 				result.expiredHourCount++;
 				result.expiredDayCount++;
 			}
-			if ( result.monthCount < 1 || month.isBefore(currMonth) ) {
-				result.monthCount++;
-				if ( currMonth.isBefore(expireMonth) ) {
+			if ( !currMonth.isAfter(expireMonth) ) {
+				auditMonths.add(currMonth);
+			}
+			if ( prevMonth.isBefore(currMonth) ) {
+				if ( prevDay.isBefore(result.expire) ) {
 					result.expiredMonthCount++;
 				}
-				if ( currMonth.isBefore(result.expire) ) {
-					result.staleAuditMonthCount++;
-				}
-				month = currMonth;
+				prevMonth = currMonth;
 			}
+			prevDay = currDay;
 		}
+		result.monthCount = months.size();
+		result.staleAuditMonthCount = auditMonths.size();
+
 		for ( ZonedDateTime currMonth : months ) {
 			insertMonthlyDatum(currMonth.toInstant(), streamMeta.getStreamId());
 
@@ -449,15 +455,16 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 	private void assertAuditDatumDailyStaleMonths(Instant start, int count) {
 		List<StaleAuditDatum> datum = findAllAuditDatumDailyStale();
-		assertThat("Datum daily stale month count", datum, hasSize(count));
+		assertThat("Audit datum daily stale month count", datum, hasSize(count));
 		ZonedDateTime month = start.atZone(ZoneId.of(TEST_TZ)).with(firstDayOfMonth())
 				.truncatedTo(ChronoUnit.DAYS);
 		for ( int i = 0; i < count; i++ ) {
 			StaleAuditDatum d = datum.get(i);
-			assertThat("Monthly stale stream " + i, d.getStreamId(), equalTo(streamMeta.getStreamId()));
-			assertThat("Monthly stale date " + i, d.getTimestamp(),
+			assertThat("Audit monthly stale stream " + i, d.getStreamId(),
+					equalTo(streamMeta.getStreamId()));
+			assertThat("Audit monthly stale date " + i, d.getTimestamp(),
 					equalTo(month.plusMonths(i).toInstant()));
-			assertThat("Monhly stale kind " + i, d.getKind(), equalTo(Aggregation.Month));
+			assertThat("Audit monhly stale kind " + i, d.getKind(), equalTo(Aggregation.Month));
 		}
 	}
 
