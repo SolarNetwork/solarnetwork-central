@@ -23,12 +23,14 @@
 package net.solarnetwork.central.scheduler;
 
 import java.util.Collection;
+import java.util.concurrent.ScheduledFuture;
+import org.springframework.scheduling.Trigger;
 
 /**
  * API for management of the SolarNet scheduler.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.37
  */
 public interface SchedulerManager {
@@ -74,5 +76,37 @@ public interface SchedulerManager {
 	 *        the job ID
 	 */
 	void resumeJob(String groupId, String id);
+
+	/**
+	 * Schedule a job.
+	 * 
+	 * <p>
+	 * If a job with the same group ID and ID has previously been scheduled, it
+	 * will be re-scheduled using the given trigger.
+	 * </p>
+	 * 
+	 * @param groupId
+	 *        the job group ID
+	 * @param id
+	 *        the job ID
+	 * @param runnable
+	 *        the job task
+	 * @param trigger
+	 *        the desired trigger
+	 * @return the scheduled future
+	 */
+	ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task, Trigger trigger);
+
+	/**
+	 * Unschedule a job.
+	 * 
+	 * @param groupId
+	 *        the job group ID
+	 * @param id
+	 *        the job ID
+	 * @return {@literal true} if a job with matching group ID and ID was
+	 *         successfully unscheduled
+	 */
+	boolean unscheduleJob(String groupId, String id);
 
 }

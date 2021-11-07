@@ -23,19 +23,16 @@
 package net.solarnetwork.central.scheduler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base helper class for a scheduled job.
@@ -51,9 +48,9 @@ import org.osgi.service.event.EventAdmin;
  * 
  * 
  * @author matt
- * @version 1.8
+ * @version 2.0
  */
-public abstract class JobSupport extends EventHandlerSupport {
+public abstract class JobSupport {
 
 	/** The {@code maximumWaitMs} property default value. */
 	public static final long DEFAULT_MAX_WAIT = 15L * 60L * 1000L;
@@ -70,145 +67,16 @@ public abstract class JobSupport extends EventHandlerSupport {
 	/** The {@code jitter} property default value. */
 	public static final long DEFAULT_JITTER = 500L;
 
-	private final EventAdmin eventAdmin;
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	private long maximumWaitMs = DEFAULT_MAX_WAIT;
 	private String jobId;
-	private String jobTopic;
 	private String jobGroup;
 	private String jobCron = DEFAULT_CRON;
-	private ExecutorService executorService = Executors.newCachedThreadPool();
 	private ExecutorService parallelTaskExecutorService = null;
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param eventAdmin
-	 *        the event admin
-	 */
-	public JobSupport(EventAdmin eventAdmin) {
-		super();
-		this.eventAdmin = eventAdmin;
-	}
-
-	/**
-	 * Call once properties are configured to set up the job.
-	 * 
-	 * @since 1.6
-	 */
-	public void setup() {
-		// in case scheduler already posted Ready event, register right now
-		postJobRequestEvent();
-	}
-
-	@Override
-	protected final void handleEventInternal(final Event event) throws Exception {
-		if ( event.getTopic().equals(SchedulerConstants.TOPIC_SCHEDULER_READY) ) {
-			schedulerReady(event);
-			return;
-		}
-		if ( jobId != null && !jobId.equals(event.getProperty(SchedulerConstants.JOB_ID)) ) {
-			// same topic, wrong job
-			return;
-		}
-
-		// kick off to another thread, so we don't block the event handler thread (and possibly get blacklisted)
-		executorService.submit(new Runnable() {
-
-			@Override
-			public void run() {
-				Event ack = null;
-				Throwable thrown = null;
-				boolean complete = false;
-				if ( log.isDebugEnabled() ) {
-					final String[] eventPropNames = event.getPropertyNames();
-					final Map<String, Object> eventData = new LinkedHashMap<String, Object>(
-							eventPropNames.length);
-					for ( String propName : eventPropNames ) {
-						eventData.put(propName, event.getProperty(propName));
-					}
-					log.debug("Executing job {}.{}; props = {}", jobGroup, jobId, eventData);
-				}
-				try {
-					complete = handleJob(event);
-				} catch ( Throwable e ) {
-					log.warn("Exception in job {}", event.getTopic(), e);
-					thrown = e;
-				} finally {
-					ack = handleJobCompleteEvent(event, complete, thrown);
-					if ( ack != null ) {
-						eventAdmin.postEvent(ack);
-					}
-				}
-			}
-		});
-	}
-
-	/**
-	 * Handle the completion of a job.
-	 * 
-	 * This method is called internally by {@link #handleEventInternal(Event)}
-	 * after {@link #handleJob(Event)} returns. Extending classes may want to
-	 * customize the resulting job acknowledgement event.
-	 * 
-	 * @param jobEvent
-	 *        The original job event that initiated the job.
-	 * @param complete
-	 *        The result of {@link #handleJob(Event)}, or <em>false</em> if that
-	 *        method throws an exception.
-	 * @param thrown
-	 *        An exception thrown by {@link #handleJob(Event)}, or <em>null</em>
-	 *        if none thrown.
-	 * @return A new job acknowledgement event.
-	 * @see SchedulerUtils#createJobCompleteEvent(Event)
-	 * @see SchedulerUtils#createJobFailureEvent(Event, Throwable)
-	 * @since 1.3
-	 */
-	protected Event handleJobCompleteEvent(Event jobEvent, boolean complete, Throwable thrown) {
-		if ( log.isDebugEnabled() ) {
-			final String[] eventPropNames = jobEvent.getPropertyNames();
-			final Map<String, Object> eventData = new LinkedHashMap<String, Object>(
-					eventPropNames.length);
-			for ( String propName : eventPropNames ) {
-				eventData.put(propName, jobEvent.getProperty(propName));
-			}
-			log.debug("Completed job {}.{}; success = {}; props = {}", jobGroup, jobId, complete,
-					eventData);
-		}
-		if ( complete ) {
-			return SchedulerUtils.createJobCompleteEvent(jobEvent);
-		}
-		return SchedulerUtils.createJobFailureEvent(jobEvent, thrown);
-	}
-
-	/**
-	 * Handle the "scheduler ready" event, to give class a chance to perform
-	 * startup tasks. This implementation generates a {@code TOPIC_JOB_REQUEST}
-	 * event using the configured job properties and cron schedule on this
-	 * class.
-	 * 
-	 * @param event
-	 *        the event
-	 * @throws Exception
-	 *         if any error occurs
-	 */
-	protected void schedulerReady(Event event) throws Exception {
-		postJobRequestEvent();
-	}
-
-	private void postJobRequestEvent() {
-		Map<String, Object> props = new HashMap<String, Object>(5);
-		props.put(SchedulerConstants.JOB_ID, jobId);
-		props.put(SchedulerConstants.JOB_CRON_EXPRESSION, jobCron);
-		props.put(SchedulerConstants.JOB_GROUP, jobGroup);
-		props.put(SchedulerConstants.JOB_MAX_WAIT, maximumWaitMs);
-		props.put(SchedulerConstants.JOB_TOPIC, jobTopic);
-
-		Event e = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, props);
-		getEventAdmin().postEvent(e);
-	}
 
 	/**
 	 * Handle the job.
@@ -224,9 +92,6 @@ public abstract class JobSupport extends EventHandlerSupport {
 
 	private ExecutorService executorServiceForParallelTasks() {
 		ExecutorService s = getParallelTaskExecutorService();
-		if ( s == null ) {
-			s = getExecutorService();
-		}
 		if ( s == null ) {
 			throw new RuntimeException("No ExecutorService is configured for parallel tasks.");
 		}
@@ -378,15 +243,6 @@ public abstract class JobSupport extends EventHandlerSupport {
 	}
 
 	/**
-	 * Get the EventAdmin.
-	 * 
-	 * @return the EventAdmin
-	 */
-	protected EventAdmin getEventAdmin() {
-		return eventAdmin;
-	}
-
-	/**
 	 * Get the unique ID of the job to schedule.
 	 * 
 	 * @return the job ID
@@ -403,25 +259,6 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	public void setJobId(String jobId) {
 		this.jobId = jobId;
-	}
-
-	/**
-	 * Get the {@link Event} topic to use for this job.
-	 * 
-	 * @return the event topic
-	 */
-	public String getJobTopic() {
-		return jobTopic;
-	}
-
-	/**
-	 * Set the {@link Event} topic to use for this job.
-	 * 
-	 * @param jobTopic
-	 *        the event topic
-	 */
-	public void setJobTopic(String jobTopic) {
-		this.jobTopic = jobTopic;
 	}
 
 	/**
@@ -482,25 +319,6 @@ public abstract class JobSupport extends EventHandlerSupport {
 	 */
 	public void setJobGroup(String jobGroup) {
 		this.jobGroup = jobGroup;
-	}
-
-	/**
-	 * Get an executor to handle the job task with.
-	 * 
-	 * @return the executor; defaults to a new cached thread pool
-	 */
-	public ExecutorService getExecutorService() {
-		return executorService;
-	}
-
-	/**
-	 * Set the executor to handle the job task with.
-	 * 
-	 * @param executorService
-	 *        the executor to use
-	 */
-	public void setExecutorService(ExecutorService executorService) {
-		this.executorService = executorService;
 	}
 
 	/**
