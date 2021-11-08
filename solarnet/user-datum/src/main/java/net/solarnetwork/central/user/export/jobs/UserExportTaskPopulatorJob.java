@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.user.export.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.scheduler.JobSupport;
 
@@ -32,7 +31,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to find export tasks that need to be submitted for execution.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class UserExportTaskPopulatorJob extends JobSupport {
 
@@ -42,25 +41,23 @@ public class UserExportTaskPopulatorJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
 	 * @param scheduleType
 	 *        the schedule type
 	 * @param jobsService
 	 *        the helper
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public UserExportTaskPopulatorJob(EventAdmin eventAdmin, ScheduleType scheduleType,
-			UserExportJobsService jobsService) {
-		super(eventAdmin);
-		this.scheduleType = scheduleType;
-		this.jobsService = jobsService;
+	public UserExportTaskPopulatorJob(ScheduleType scheduleType, UserExportJobsService jobsService) {
+		super();
+		this.scheduleType = requireNonNullArgument(scheduleType, "scheduleType");
+		this.jobsService = requireNonNullArgument(jobsService, "jobsService");
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		int count = jobsService.createExportExecutionTasks(Instant.now(), scheduleType);
 		log.info("Found {} {} user export configurations for execution", count, scheduleType);
-		return true;
 	}
 
 }

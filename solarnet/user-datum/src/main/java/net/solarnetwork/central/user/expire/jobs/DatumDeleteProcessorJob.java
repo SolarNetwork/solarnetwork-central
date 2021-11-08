@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.user.expire.jobs;
 
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
@@ -35,7 +34,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
  * Job to claim datum delete jobs for processing and submit them for execution.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class DatumDeleteProcessorJob extends JobSupport {
 
@@ -46,25 +45,25 @@ public class DatumDeleteProcessorJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param datumDeleteJobBiz
 	 *        the service to use
 	 * @param jobInfoDao
 	 *        the DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DatumDeleteProcessorJob(EventAdmin eventAdmin, UserDatumDeleteJobBiz datumDeleteJobBiz,
+	public DatumDeleteProcessorJob(UserDatumDeleteJobBiz datumDeleteJobBiz,
 			UserDatumDeleteJobInfoDao jobInfoDao) {
-		super(eventAdmin);
-		this.datumDeleteJobBiz = datumDeleteJobBiz;
-		this.jobInfoDao = jobInfoDao;
+		super();
+		this.datumDeleteJobBiz = requireNonNullArgument(datumDeleteJobBiz, "datumDeleteJobBiz");
+		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
 		setGroupId("DatumImport");
 		setMaximumWaitMs(5400000L);
 		setMaximumClaimCount(1000);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		for ( int i = 0; i < maximumClaimCount; i++ ) {
 			DatumDeleteJobInfo info = jobInfoDao.claimQueuedJob();
 			if ( info == null ) {
@@ -82,7 +81,6 @@ public class DatumDeleteProcessorJob extends JobSupport {
 				jobInfoDao.store(info);
 			}
 		}
-		return true;
 	}
 
 	/**

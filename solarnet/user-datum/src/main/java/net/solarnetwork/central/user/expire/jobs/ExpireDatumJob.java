@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.user.expire.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
@@ -33,22 +32,30 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * Job to delete datum for user defined expire policies.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class ExpireDatumJob extends JobSupport {
 
 	private final ExpireUserDataConfigurationDao configDao;
 
-	public ExpireDatumJob(EventAdmin eventAdmin, ExpireUserDataConfigurationDao configDao) {
-		super(eventAdmin);
-		this.configDao = configDao;
+	/**
+	 * Constructor.
+	 * 
+	 * @param configDao
+	 *        the DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public ExpireDatumJob(ExpireUserDataConfigurationDao configDao) {
+		super();
+		this.configDao = requireNonNullArgument(configDao, "configDao");
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		List<ExpireUserDataConfiguration> configs = configDao.getAll(null);
 		if ( configs == null ) {
-			return true;
+			return;
 		}
 		for ( ExpireUserDataConfiguration config : configs ) {
 			if ( !config.isActive() ) {
@@ -62,6 +69,5 @@ public class ExpireDatumJob extends JobSupport {
 						config.getExpireDays(), config.getFilterJson());
 			}
 		}
-		return true;
 	}
 }

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.event.biz.dao.test;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -56,7 +57,6 @@ import net.solarnetwork.central.user.event.biz.dao.DaoUserEventHookBiz;
 import net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
@@ -105,7 +105,7 @@ public class DaoUserEventHookBizTests {
 	public void availableTopics() {
 		// GIVEN
 		DatumAppEventProducer producer = EasyMock.createMock(DatumAppEventProducer.class);
-		biz.setDatumEventProducers(new StaticOptionalServiceCollection<>(singleton(producer)));
+		biz.setDatumEventProducers(singletonList(producer));
 
 		Set<String> topics = Collections.singleton(AggregateUpdatedEventInfo.AGGREGATE_UPDATED_TOPIC);
 		expect(producer.getProducedDatumAppEventTopics()).andReturn(topics);
@@ -131,7 +131,7 @@ public class DaoUserEventHookBizTests {
 	public void availableTopics_localizedByService() {
 		// GIVEN
 		DatumAppEventProducer producer = EasyMock.createMock(DatumAppEventProducer.class);
-		biz.setDatumEventProducers(new StaticOptionalServiceCollection<>(singleton(producer)));
+		biz.setDatumEventProducers(singletonList(producer));
 
 		String topic = "some/topic";
 		Set<String> topics = Collections.singleton(topic);
@@ -163,7 +163,7 @@ public class DaoUserEventHookBizTests {
 		// GIVEN
 		DatumAppEventProducer producer1 = EasyMock.createMock(DatumAppEventProducer.class);
 		DatumAppEventProducer producer2 = EasyMock.createMock(DatumAppEventProducer.class);
-		biz.setDatumEventProducers(new StaticOptionalServiceCollection<>(asList(producer1, producer2)));
+		biz.setDatumEventProducers(asList(producer1, producer2));
 
 		String topic1 = "topic/1";
 		String topic2 = "topic/2";
@@ -199,7 +199,7 @@ public class DaoUserEventHookBizTests {
 		// GIVEN
 		DatumAppEventProducer producer1 = EasyMock.createMock(DatumAppEventProducer.class);
 		DatumAppEventProducer producer2 = EasyMock.createMock(DatumAppEventProducer.class);
-		biz.setDatumEventProducers(new StaticOptionalServiceCollection<>(asList(producer2, producer1)));
+		biz.setDatumEventProducers(asList(producer2, producer1));
 
 		String topic = "topic/3";
 		expect(producer2.getProducedDatumAppEventTopics()).andReturn(singleton(topic));
@@ -297,7 +297,7 @@ public class DaoUserEventHookBizTests {
 
 		// query for the hook service settings to look for secure fields
 		UserNodeEventHookService hookService = EasyMock.createMock(UserNodeEventHookService.class);
-		biz.setNodeEventHookServices(new StaticOptionalServiceCollection<>(singleton(hookService)));
+		biz.setNodeEventHookServices(singletonList(hookService));
 		expect(hookService.getSettingUid()).andReturn(serviceId);
 		expect(hookService.getSettingSpecifiers()).andReturn(
 				asList((SettingSpecifier) new BasicTextFieldSettingSpecifier("name", "", false),

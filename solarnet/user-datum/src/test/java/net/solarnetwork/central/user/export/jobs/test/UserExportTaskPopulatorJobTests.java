@@ -29,18 +29,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.export.jobs.UserExportJobsService;
 import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
 
@@ -54,33 +48,30 @@ public class UserExportTaskPopulatorJobTests {
 
 	private static final String JOB_ID = "test.job";
 
-	private EventAdmin eventAdmin;
 	private UserExportJobsService jobsService;
 
 	private UserExportTaskPopulatorJob job;
 
 	private UserExportTaskPopulatorJob jobForSchedule(ScheduleType type) {
-		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(eventAdmin, type, jobsService);
+		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(type, jobsService);
 		job.setId(JOB_ID);
-		job.setExecutorService(new CallingThreadExecutorService());
 		return job;
 	}
 
 	@Before
 	public void setup() {
-		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		jobsService = EasyMock.createMock(UserExportJobsService.class);
 
 		job = jobForSchedule(ScheduleType.Hourly);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(eventAdmin, jobsService);
+		EasyMock.replay(jobsService);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(eventAdmin, jobsService);
+		EasyMock.verify(jobsService);
 	}
 
 	@Test
@@ -90,22 +81,12 @@ public class UserExportTaskPopulatorJobTests {
 		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), eq(ScheduleType.Hourly)))
 				.andReturn(0);
 
-		Capture<Event> eventCaptor = new Capture<>();
-		eventAdmin.postEvent(EasyMock.capture(eventCaptor));
-
 		// when
 		replayAll();
-		Map<String, Object> jobProps = new HashMap<>();
-		jobProps.put(SchedulerConstants.JOB_ID, JOB_ID);
-		Event event = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, jobProps);
 		Instant now = Instant.now();
-		job.handleEvent(event);
+		job.run();
 
 		// then
-		assertThat("Complete event posted", eventCaptor.hasCaptured(), equalTo(true));
-		Event completedEvent = eventCaptor.getValue();
-		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
-		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
 		assertThat("Date minutes OK", (int) ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
 				equalTo(0));
 	}
@@ -118,22 +99,12 @@ public class UserExportTaskPopulatorJobTests {
 		expect(jobsService.createExportExecutionTasks(capture(dateCaptor), eq(ScheduleType.Daily)))
 				.andReturn(0);
 
-		Capture<Event> eventCaptor = new Capture<>();
-		eventAdmin.postEvent(capture(eventCaptor));
-
 		// when
 		replayAll();
-		Map<String, Object> jobProps = new HashMap<>();
-		jobProps.put(SchedulerConstants.JOB_ID, JOB_ID);
-		Event event = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, jobProps);
 		Instant now = Instant.now();
-		job.handleEvent(event);
+		job.run();
 
 		// then
-		assertThat("Complete event posted", eventCaptor.hasCaptured(), equalTo(true));
-		Event completedEvent = eventCaptor.getValue();
-		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
-		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
 		assertThat("Date minutes OK", (int) ChronoUnit.MINUTES.between(dateCaptor.getValue(), now),
 				equalTo(0));
 	}

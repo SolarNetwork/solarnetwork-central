@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.user.export.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 
@@ -33,7 +32,7 @@ import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
  * Job to delete user datum export tasks that have completed processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class UserExportTaskCleanerJob extends JobSupport {
 
@@ -47,24 +46,23 @@ public class UserExportTaskCleanerJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param taskDao
 	 *        the DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public UserExportTaskCleanerJob(EventAdmin eventAdmin, UserDatumExportTaskInfoDao taskDao) {
-		super(eventAdmin);
-		this.taskDao = taskDao;
+	public UserExportTaskCleanerJob(UserDatumExportTaskInfoDao taskDao) {
+		super();
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = taskDao.purgeCompletedTasks(date);
 		log.info("Purged {} completed user datum export tasks older than {} minutes", result,
 				minimumAgeMinutes);
-		return true;
 	}
 
 	/**

@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.user.expire.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
 
@@ -33,7 +32,7 @@ import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
  * Delete old job records for completed or abandoned jobs.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 
@@ -46,25 +45,24 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param datumDeleteBiz
 	 *        the service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DatumDeleteJobInfoCleanerJob(EventAdmin eventAdmin, UserDatumDeleteJobBiz datumDeleteBiz) {
-		super(eventAdmin);
-		this.datumDeleteBiz = datumDeleteBiz;
+	public DatumDeleteJobInfoCleanerJob(UserDatumDeleteJobBiz datumDeleteBiz) {
+		super();
+		this.datumDeleteBiz = requireNonNullArgument(datumDeleteBiz, "datumDeleteBiz");
 		setGroupId("UserExpire");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = datumDeleteBiz.purgeOldJobs(date);
 		log.info("Purged {} completed/abandoned datum delete tasks older than {} minutes", result,
 				minimumAgeMinutes);
-		return true;
 	}
 
 	/**

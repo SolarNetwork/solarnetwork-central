@@ -33,7 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -49,8 +49,8 @@ import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -63,14 +63,12 @@ import net.solarnetwork.central.user.event.domain.UserNodeEvent;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
-import net.solarnetwork.service.OptionalServiceCollection;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 
 /**
  * Test cases for the {@link UserNodeEventTaskProcessorJob} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class UserNodeEventTaskProcessorJobTests {
 
@@ -88,16 +86,14 @@ public class UserNodeEventTaskProcessorJobTests {
 
 	private static class TestJob extends UserNodeEventTaskProcessorJob {
 
-		public TestJob(EventAdmin eventAdmin, TransactionTemplate transactionTemplate,
-				UserNodeEventTaskDao taskDao,
-				OptionalServiceCollection<UserNodeEventHookService> hookServices) {
-			super(eventAdmin, transactionTemplate, taskDao, hookServices);
-		}
-
-		// allow tests to call this directly to simplify
-		@Override
-		public boolean handleJob(Event job) throws Exception {
-			return super.handleJob(job);
+		public TestJob(TransactionTemplate transactionTemplate, UserNodeEventTaskDao taskDao,
+				List<UserNodeEventHookService> hookServices) {
+			super(transactionTemplate, taskDao, hookServices);
+			ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+			executor.setCorePoolSize(2);
+			executor.setAllowCoreThreadTimeOut(true);
+			executor.initialize();
+			setParallelTaskExecutor(executor);
 		}
 
 	}
@@ -120,8 +116,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		factory.afterPropertiesSet();
 		serviceCache = factory.getObject();
 
-		job = new TestJob(eventAdmin, new TransactionTemplate(txManager), taskDao,
-				new StaticOptionalServiceCollection<>(asList(hookService)));
+		job = new TestJob(new TransactionTemplate(txManager), taskDao, asList(hookService));
 	}
 
 	public static CacheManager createCacheManager() {
@@ -184,11 +179,9 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		// WHEN
 		replayAll(tx);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 	}
 
 	@Test
@@ -227,11 +220,9 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 		assertTaskResult(task, true, false);
 	}
 
@@ -272,11 +263,9 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 		assertTaskResult(task, true, true);
 	}
 
@@ -325,12 +314,10 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 		latch.countDown();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 		assertTaskNotCompleted(task);
 	}
 
@@ -372,11 +359,9 @@ public class UserNodeEventTaskProcessorJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 		assertTaskNotCompleted(task);
 	}
 
