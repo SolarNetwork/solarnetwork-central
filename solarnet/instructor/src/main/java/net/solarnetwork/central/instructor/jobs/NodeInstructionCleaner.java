@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.instructor.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.scheduler.JobSupport;
 
@@ -46,27 +45,22 @@ public class NodeInstructionCleaner extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        The EventAdmin to use.
 	 * @param dao
 	 *        The NodeInstructionDao to use.
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public NodeInstructionCleaner(EventAdmin eventAdmin, NodeInstructionDao dao) {
-		super(eventAdmin);
-		this.dao = dao;
+	public NodeInstructionCleaner(NodeInstructionDao dao) {
+		super();
+		setGroupId("Instruction");
+		this.dao = requireNonNullArgument(dao, "dao");
 	}
 
-	/**
-	 * Purge completed instructions by calling
-	 * {@link NodeInstructionDao#purgeCompletedInstructions(java.time.Instant)}
-	 * .
-	 */
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(daysOlder, ChronoUnit.DAYS);
 		long result = dao.purgeCompletedInstructions(date);
 		log.info("Purged {} node instructions older than {} ({} days ago)", result, date, daysOlder);
-		return true;
 	}
 
 	/**

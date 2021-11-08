@@ -32,7 +32,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -42,7 +41,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * rows.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  * @since 1.7
  */
 public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumProcessor {
@@ -50,16 +49,15 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public TieredStoredProcedureStaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			String taskDescription) {
-		super(eventAdmin, jdbcOps, taskDescription);
+	public TieredStoredProcedureStaleDatumProcessor(JdbcOperations jdbcOps, String taskDescription) {
+		super(jdbcOps, taskDescription);
 	}
 
 	private static final Pattern CALL_RETURN_COUNT = Pattern.compile("\\?\\s=\\s*call\\s+",

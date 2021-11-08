@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.datum.agg;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -42,7 +42,6 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Tiered stale datum processor that processes all tiers of stale SolarFlux
@@ -72,27 +71,27 @@ import net.solarnetwork.service.OptionalService;
 public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 
 	private final DatumEntityDao datumDao;
-	private final OptionalService<DatumProcessor> publisher;
+	private final DatumProcessor publisher;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
 	 * @param datumDao
 	 *        the DAO to use for finding the most recent datum data to post to
 	 *        SolarFlux
 	 * @param publisher
-	 *        the processor to publish the stale solar flux data
+	 *        the processor to publish the stale SolarFlux data
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public StaleSolarFluxProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			DatumEntityDao datumDao, OptionalService<DatumProcessor> publisher) {
-		super(eventAdmin, jdbcOps, "stale SolarFlux data");
-		this.datumDao = datumDao;
-		this.publisher = publisher;
-		setJobGroup("Datum");
+	public StaleSolarFluxProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
+			DatumProcessor publisher) {
+		super(jdbcOps, "stale SolarFlux data");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.publisher = requireNonNullArgument(publisher, "publisher");
+		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 		setTierProcessType("*");
 		setJdbcCall(SelectStaleFluxDatum.ANY_ONE_FOR_UPDATE.getSql());
@@ -100,8 +99,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 
 	@Override
 	protected final int execute(AtomicInteger remainingCount) {
-		final DatumProcessor aggProcessor = publisher();
-		if ( aggProcessor == null || !aggProcessor.isConfigured() ) {
+		if ( !publisher.isConfigured() ) {
 			return 0;
 		}
 		return getJdbcOps().execute(new ConnectionCallback<Integer>() {
@@ -134,7 +132,7 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 										if ( datum != null ) {
 											GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
 													results.metadataForStreamId(datum.getStreamId()));
-											handled = aggProcessor.processDatum(gnd, stale.getKind());
+											handled = publisher.processDatum(gnd, stale.getKind());
 										}
 									} else {
 										log.warn(
@@ -166,17 +164,12 @@ public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
 		});
 	}
 
-	private DatumProcessor publisher() {
-		OptionalService<DatumProcessor> s = getPublisher();
-		return (s != null ? s.service() : null);
-	}
-
 	/**
 	 * Get the publisher.
 	 * 
 	 * @return the publisher
 	 */
-	public OptionalService<DatumProcessor> getPublisher() {
+	public DatumProcessor getPublisher() {
 		return publisher;
 	}
 

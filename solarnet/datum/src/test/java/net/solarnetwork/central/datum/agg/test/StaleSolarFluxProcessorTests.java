@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.Capture;
@@ -51,10 +50,9 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -68,15 +66,12 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.service.OptionalService;
-import net.solarnetwork.service.StaticOptionalService;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.NumberUtils;
 
@@ -102,30 +97,21 @@ public class StaleSolarFluxProcessorTests {
 	private static final class TestStaleSolarFluxDatumProcessor extends StaleSolarFluxProcessor {
 
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
+		private final ThreadPoolTaskExecutor executor;
 
-		private TestStaleSolarFluxDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-				DatumEntityDao datumDao, OptionalService<DatumProcessor> processor) {
-			super(eventAdmin, jdbcOps, datumDao, processor);
-			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
+		private TestStaleSolarFluxDatumProcessor(JdbcOperations jdbcOps, DatumEntityDao datumDao,
+				DatumProcessor processor) {
+			super(jdbcOps, datumDao, processor);
+			executor = new ThreadPoolTaskExecutor();
+			executor.setThreadFactory(new ThreadFactory() {
 
 				@Override
 				public Thread newThread(Runnable r) {
 					return new Thread(r, "StaleSolarFluxDatumTask-" + taskThreadCount.incrementAndGet());
 				}
-			}));
-		}
-
-		/**
-		 * Provide way to call {@code handleJob} directly in test cases.
-		 * 
-		 * @return {@code true} if job completed successfully
-		 * @throws Exception
-		 *         if any error occurs
-		 */
-		private boolean executeJob() throws Exception {
-			Event jobEvent = new Event(SchedulerConstants.TOPIC_JOB_REQUEST,
-					Collections.singletonMap(SchedulerConstants.JOB_ID, TEST_JOB_ID));
-			return handleJob(jobEvent);
+			});
+			executor.initialize();
+			setParallelTaskExecutor(executor);
 		}
 
 	}
@@ -136,10 +122,9 @@ public class StaleSolarFluxProcessorTests {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		processor = EasyMock.createMock(DatumProcessor.class);
 
-		job = new TestStaleSolarFluxDatumProcessor(null, jdbcTemplate, datumDao,
-				new StaticOptionalService<>(processor));
-		job.setJobGroup("Test");
-		job.setJobId(TEST_JOB_ID);
+		job = new TestStaleSolarFluxDatumProcessor(jdbcTemplate, datumDao, processor);
+		job.setGroupId("Test");
+		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setMaximumWaitMs(15 * 1000L);
 
@@ -242,10 +227,9 @@ public class StaleSolarFluxProcessorTests {
 
 		// WHEN
 		replayAll(con, stmt, resultSet1, resultSet2);
-		boolean executed = job.executeJob();
+		job.run();
 
 		// THEN
-		assertThat("Job executed", executed, equalTo(true));
 		assertThat("Job executed in one thread", job.taskThreadCount.get(), equalTo(0));
 
 		DatumCriteria filter = filterCaptor.getValue();

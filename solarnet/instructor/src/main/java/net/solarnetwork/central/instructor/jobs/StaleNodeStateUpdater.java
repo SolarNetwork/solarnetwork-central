@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.instructor.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -50,28 +49,28 @@ public class StaleNodeStateUpdater extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        The EventAdmin to use.
 	 * @param dao
 	 *        The NodeInstructionDao to use.
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public StaleNodeStateUpdater(EventAdmin eventAdmin, NodeInstructionDao dao) {
-		super(eventAdmin);
-		this.dao = dao;
+	public StaleNodeStateUpdater(NodeInstructionDao dao) {
+		super();
+		this.dao = requireNonNullArgument(dao, "dao");
+		setGroupId("Instruction");
 		setSecondsOlder(DEFAULT_SECONDS_OLDER);
 		setExpectedState(null);
 		setState(null);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minusSeconds(secondsOlder);
 		long result = dao.updateStaleInstructionsState(expectedState, date, state);
 		if ( result > 0 ) {
 			log.info("Updated {} node instructions older than {} ({} seconds ago) from {} to {}", result,
 					date, secondsOlder, expectedState, state);
 		}
-		return true;
 	}
 
 	/**

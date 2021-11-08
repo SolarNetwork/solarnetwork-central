@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.datum.imp.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.scheduler.JobSupport;
 
@@ -46,25 +45,21 @@ public class DatumImportJobInfoCleanerJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param importJobBiz
 	 *        the service to use
 	 */
-	public DatumImportJobInfoCleanerJob(EventAdmin eventAdmin, DatumImportJobBiz importJobBiz) {
-		super(eventAdmin);
-		this.importJobBiz = importJobBiz;
-		setJobGroup("DatumImport");
+	public DatumImportJobInfoCleanerJob(DatumImportJobBiz importJobBiz) {
+		this.importJobBiz = requireNonNullArgument(importJobBiz, "importJobBiz");
+		setGroupId("DatumImport");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = importJobBiz.purgeOldJobs(date);
 		log.info("Purged {} completed/abandoned datum import tasks older than {} minutes", result,
 				minimumAgeMinutes);
-		return true;
 	}
 
 	/**

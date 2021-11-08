@@ -22,13 +22,12 @@
 
 package net.solarnetwork.central.datum.imp.jobs;
 
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to claim datum import tasks for processing and submit them for execution.
@@ -49,16 +48,15 @@ public class DatumImportProcessorJob extends JobSupport {
 	 * @param importJobBiz
 	 *        the service to use
 	 */
-	public DatumImportProcessorJob(EventAdmin eventAdmin, DatumImportJobBiz importJobBiz) {
-		super(eventAdmin);
-		this.importJobBiz = importJobBiz;
-		setJobGroup("DatumImport");
+	public DatumImportProcessorJob(DatumImportJobBiz importJobBiz) {
+		this.importJobBiz = ObjectUtils.requireNonNullArgument(importJobBiz, "importJobBiz");
+		setGroupId("DatumImport");
 		setMaximumWaitMs(5400000L);
 		setMaximumClaimCount(1000);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		for ( int i = 0; i < maximumClaimCount; i++ ) {
 			DatumImportJobInfo info = importJobBiz.claimQueuedJob();
 			if ( info == null ) {
@@ -76,7 +74,6 @@ public class DatumImportProcessorJob extends JobSupport {
 				importJobBiz.saveJobInfo(info);
 			}
 		}
-		return true;
 	}
 
 	/**

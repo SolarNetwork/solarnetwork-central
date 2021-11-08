@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.scheduler;
 
+import static net.solarnetwork.central.scheduler.SchedulerUtils.extractExecutionScheduleDescription;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ScheduledFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
 import net.solarnetwork.service.PingTest;
@@ -50,6 +53,8 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 
 	/** The default {@code blockedJobMaxSeconds} property value. */
 	public static final long DEFAULT_BLOCKED_JOB_MAX_SECONDS = 1800;
+
+	private static final Logger log = LoggerFactory.getLogger(SimpleSchedulerManager.class);
 
 	private final ConcurrentNavigableMap<JobKey, ScheduledJob> jobs = new ConcurrentSkipListMap<>();
 	private final TaskScheduler taskScheduler;
@@ -105,13 +110,20 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 	@Override
 	public synchronized ScheduledFuture<?> scheduleJob(String groupId, String id, Runnable task,
 			Trigger trigger) {
-		final JobKey key = new JobKey(groupId, id);
-		unscheduleJob(key);
-		ScheduledJob job = new ScheduledJob(key, task, trigger);
-		ScheduledFuture<?> f = taskScheduler.schedule(task, trigger);
-		job.setFuture(f);
-		jobs.put(key, job);
-		return f;
+		try {
+			final JobKey key = new JobKey(groupId, id);
+			unscheduleJob(key);
+			log.info("Scheduling job {} @ {}", key.getDescription(),
+					extractExecutionScheduleDescription(trigger));
+			ScheduledJob job = new ScheduledJob(key, task, trigger);
+			ScheduledFuture<?> f = taskScheduler.schedule(task, trigger);
+			job.setFuture(f);
+			jobs.put(key, job);
+			return f;
+		} catch ( Exception e ) {
+			log.error("Error scheduling job [{}.{}]: {}", groupId, id, e.toString(), e);
+			throw e;
+		}
 	}
 
 	@Override
@@ -123,6 +135,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 	private synchronized boolean unscheduleJob(final JobKey key) {
 		ScheduledJob job = jobs.get(key);
 		if ( job != null ) {
+			log.info("Unscheduling job {}", key.getDescription());
 			job.setPaused(true);
 			ScheduledFuture<?> f = job.getFuture();
 			if ( f != null ) {

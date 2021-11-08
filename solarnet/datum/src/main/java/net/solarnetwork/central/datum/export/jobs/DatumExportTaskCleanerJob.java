@@ -22,10 +22,9 @@
 
 package net.solarnetwork.central.datum.export.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.scheduler.JobSupport;
 
@@ -47,25 +46,21 @@ public class DatumExportTaskCleanerJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param taskDao
 	 *        the DAO to use
 	 */
-	public DatumExportTaskCleanerJob(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao) {
-		super(eventAdmin);
-		this.taskDao = taskDao;
-		setJobGroup("DatumExport");
+	public DatumExportTaskCleanerJob(DatumExportTaskInfoDao taskDao) {
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		setGroupId("DatumExport");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = taskDao.purgeCompletedTasks(date);
 		log.info("Purged {} completed datum export tasks older than {} minutes", result,
 				minimumAgeMinutes);
-		return true;
 	}
 
 	/**

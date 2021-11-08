@@ -58,7 +58,7 @@ public class DatumDeleteProcessorJob extends JobSupport {
 		super(eventAdmin);
 		this.datumDeleteJobBiz = datumDeleteJobBiz;
 		this.jobInfoDao = jobInfoDao;
-		setJobGroup("DatumImport");
+		setGroupId("DatumImport");
 		setMaximumWaitMs(5400000L);
 		setMaximumClaimCount(1000);
 	}

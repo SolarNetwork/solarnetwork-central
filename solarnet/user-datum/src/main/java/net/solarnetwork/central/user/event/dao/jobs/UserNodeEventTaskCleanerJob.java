@@ -24,16 +24,15 @@ package net.solarnetwork.central.user.event.dao.jobs;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to periodically delete completed/abandoned user node event tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class UserNodeEventTaskCleanerJob extends JobSupport {
 
@@ -46,24 +45,21 @@ public class UserNodeEventTaskCleanerJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
 	 * @param taskDao
 	 *        the task DAO to use
 	 */
-	public UserNodeEventTaskCleanerJob(EventAdmin eventAdmin, UserNodeEventTaskDao taskDao) {
-		super(eventAdmin);
-		this.taskDao = taskDao;
-		setJobGroup("UserNodeEvent");
+	public UserNodeEventTaskCleanerJob(UserNodeEventTaskDao taskDao) {
+		super();
+		this.taskDao = ObjectUtils.requireNonNullArgument(taskDao, "taskDao");
+		setGroupId("UserNodeEvent");
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		Instant date = Instant.now().minus(minimumAgeMinutes, ChronoUnit.MINUTES);
 		long result = taskDao.purgeCompletedTasks(date);
 		log.info("Purged {} completed/abandoned user node event tasks older than {} minutes", result,
 				minimumAgeMinutes);
-		return true;
 	}
 
 	/**

@@ -54,7 +54,7 @@ public class DatumDeleteJobInfoCleanerJob extends JobSupport {
 	public DatumDeleteJobInfoCleanerJob(EventAdmin eventAdmin, UserDatumDeleteJobBiz datumDeleteBiz) {
 		super(eventAdmin);
 		this.datumDeleteBiz = datumDeleteBiz;
-		setJobGroup("UserExpire");
+		setGroupId("UserExpire");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 

@@ -22,12 +22,11 @@
 
 package net.solarnetwork.central.datum.agg;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
@@ -38,7 +37,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to execute a stored procedure that returns a BIGINT result.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.10
  */
 public class JdbcCallJob extends JobSupport {
@@ -49,21 +48,21 @@ public class JdbcCallJob extends JobSupport {
 	/**
 	 * Construct with properties.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public JdbcCallJob(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin);
-		this.jdbcOps = jdbcOps;
-		setJobGroup("Datum");
+	public JdbcCallJob(JdbcOperations jdbcOps) {
+		super();
+		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
+		setGroupId("Datum");
 		setMaximumWaitMs(1800000L);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		log.info("Job {} executing JDBC call {}...", getJobId(), getJdbcCall());
+	public void run() {
+		log.info("Job {} executing JDBC call {}...", getId(), getJdbcCall());
 		final Long result = jdbcOps.execute(new CallableStatementCreator() {
 
 			@Override
@@ -81,8 +80,7 @@ public class JdbcCallJob extends JobSupport {
 				return cs.getLong(1);
 			}
 		});
-		log.info("Job {} JDBC call result: {}", getJobId(), result);
-		return true;
+		log.info("Job {} JDBC call result: {}", getId(), result);
 	}
 
 	/**

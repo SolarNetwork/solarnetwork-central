@@ -42,7 +42,6 @@ import net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.service.OptionalServiceCollection;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
@@ -58,8 +57,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	private final UserNodeEventHookConfigurationDao nodeEventHookConfigurationDao;
 
-	private OptionalServiceCollection<UserNodeEventHookService> nodeEventHookServices;
-	private OptionalServiceCollection<DatumAppEventProducer> datumEventProducers;
+	private List<UserNodeEventHookService> nodeEventHookServices;
+	private List<DatumAppEventProducer> datumEventProducers;
 	private MessageSource messageSource;
 
 	/**
@@ -81,21 +80,20 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	@Override
 	public Iterable<UserNodeEventHookService> availableNodeEventHookServices() {
-		OptionalServiceCollection<UserNodeEventHookService> svcs = getNodeEventHookServices();
-		return (svcs != null ? svcs.services() : Collections.emptyList());
+		List<UserNodeEventHookService> svcs = getNodeEventHookServices();
+		return (svcs != null ? svcs : Collections.emptyList());
 	}
 
 	@Override
 	public Iterable<DatumAppEventProducer> availableDatumEventProducers() {
-		OptionalServiceCollection<DatumAppEventProducer> svcs = getDatumEventProducers();
-		return (svcs != null ? svcs.services() : Collections.emptyList());
+		List<DatumAppEventProducer> svcs = getDatumEventProducers();
+		return (svcs != null ? svcs : Collections.emptyList());
 	}
 
 	@Override
 	public Iterable<LocalizedServiceInfo> availableDatumEventTopics(Locale locale) {
-		OptionalServiceCollection<DatumAppEventProducer> svcs = getDatumEventProducers();
-		Iterable<DatumAppEventProducer> producers = (svcs != null ? svcs.services()
-				: Collections.emptyList());
+		List<DatumAppEventProducer> svcs = getDatumEventProducers();
+		Iterable<DatumAppEventProducer> producers = (svcs != null ? svcs : Collections.emptyList());
 		List<LocalizedServiceInfo> results = new ArrayList<>(10);
 		Set<String> handledTopics = new HashSet<>(10);
 		for ( DatumAppEventProducer producer : producers ) {
@@ -251,7 +249,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @return the service collection
 	 * @since 1.1
 	 */
-	public OptionalServiceCollection<UserNodeEventHookService> getNodeEventHookServices() {
+	public List<UserNodeEventHookService> getNodeEventHookServices() {
 		return nodeEventHookServices;
 	}
 
@@ -262,8 +260,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 *        the service collection to set
 	 * @since 1.1
 	 */
-	public void setNodeEventHookServices(
-			OptionalServiceCollection<UserNodeEventHookService> nodeEventHookServices) {
+	public void setNodeEventHookServices(List<UserNodeEventHookService> nodeEventHookServices) {
 		this.nodeEventHookServices = nodeEventHookServices;
 	}
 
@@ -273,7 +270,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 * @return the collection
 	 * @since 1.1
 	 */
-	public OptionalServiceCollection<DatumAppEventProducer> getDatumEventProducers() {
+	public List<DatumAppEventProducer> getDatumEventProducers() {
 		return datumEventProducers;
 	}
 
@@ -284,8 +281,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	 *        the collection to set
 	 * @since 1.1
 	 */
-	public void setDatumEventProducers(
-			OptionalServiceCollection<DatumAppEventProducer> datumEventProducers) {
+	public void setDatumEventProducers(List<DatumAppEventProducer> datumEventProducers) {
 		this.datumEventProducers = datumEventProducers;
 	}
 

@@ -24,23 +24,14 @@ package net.solarnetwork.central.datum.imp.jobs.test;
 
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportJobInfoCleanerJob;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.test.CallingThreadExecutorService;
 
 /**
  * Test cases for the {@link DatumImportJobInfoCleanerJob} class.
@@ -53,29 +44,26 @@ public class DatumImportJobInfoCleanerJobTests {
 	private static final String JOB_ID = "test.job";
 	private static final int EXPIRE_MINS = 10;
 
-	private EventAdmin eventAdmin;
 	private DatumImportJobBiz importJobBiz;
 
 	private DatumImportJobInfoCleanerJob job;
 
 	@Before
 	public void setup() {
-		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		importJobBiz = EasyMock.createMock(DatumImportJobBiz.class);
 
-		job = new DatumImportJobInfoCleanerJob(eventAdmin, importJobBiz);
-		job.setJobId(JOB_ID);
+		job = new DatumImportJobInfoCleanerJob(importJobBiz);
+		job.setId(JOB_ID);
 		job.setMinimumAgeMinutes(EXPIRE_MINS);
-		job.setExecutorService(new CallingThreadExecutorService());
 	}
 
 	private void replayAll() {
-		EasyMock.replay(eventAdmin, importJobBiz);
+		EasyMock.replay(importJobBiz);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(eventAdmin, importJobBiz);
+		EasyMock.verify(importJobBiz);
 	}
 
 	@Test
@@ -84,25 +72,11 @@ public class DatumImportJobInfoCleanerJobTests {
 		Capture<Instant> timeCaptor = new Capture<>();
 		expect(importJobBiz.purgeOldJobs(capture(timeCaptor))).andReturn(1L);
 
-		Capture<Event> eventCaptor = new Capture<>();
-		eventAdmin.postEvent(capture(eventCaptor));
-
 		// when
 		replayAll();
-		Map<String, Object> jobProps = new HashMap<>();
-		jobProps.put(SchedulerConstants.JOB_ID, JOB_ID);
-		Event event = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, jobProps);
-		Instant now = Instant.now();
-		job.handleEvent(event);
+		job.run();
 
 		// then
-		assertThat("Complete event posted", eventCaptor.hasCaptured(), is(true));
-		Event completedEvent = eventCaptor.getValue();
-		assertThat(completedEvent.getTopic(), is(SchedulerConstants.TOPIC_JOB_COMPLETE));
-		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), is(JOB_ID));
-		assertThat("Purge date",
-				(int) ChronoUnit.MINUTES.between(timeCaptor.getValue(), now.plus(1, ChronoUnit.MINUTES)),
-				is(EXPIRE_MINS));
 	}
 
 }

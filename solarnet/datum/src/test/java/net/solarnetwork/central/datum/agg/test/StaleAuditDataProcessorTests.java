@@ -31,9 +31,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.EasyMock;
@@ -41,13 +39,11 @@ import org.easymock.IAnswer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.datum.agg.StaleAuditDataProcessor;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
 import net.solarnetwork.test.Assertion;
 
 /**
@@ -64,29 +60,21 @@ public class StaleAuditDataProcessorTests {
 
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
 
-		private TestProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-			super(eventAdmin, jdbcOps);
-			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
+		private TestProcessor(JdbcOperations jdbcOps) {
+			super(jdbcOps);
+			ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+			executor.setCorePoolSize(10);
+			executor.setAllowCoreThreadTimeOut(true);
+			executor.setThreadFactory(new ThreadFactory() {
 
 				@Override
 				public Thread newThread(Runnable r) {
 					return new Thread(r,
 							"StaleAuditDataProcessorTask-" + taskThreadCount.incrementAndGet());
 				}
-			}));
-		}
-
-		/**
-		 * Provide way to call {@code handleJob} directly in test cases.
-		 * 
-		 * @return {@code true} if job completed successfully
-		 * @throws Exception
-		 *         if any error occurs
-		 */
-		private boolean executeJob() throws Exception {
-			Event jobEvent = new Event(SchedulerConstants.TOPIC_JOB_REQUEST,
-					Collections.singletonMap(SchedulerConstants.JOB_ID, TEST_JOB_ID));
-			return handleJob(jobEvent);
+			});
+			executor.initialize();
+			setParallelTaskExecutor(executor);
 		}
 
 	}
@@ -99,9 +87,9 @@ public class StaleAuditDataProcessorTests {
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
-		job = new TestProcessor(null, jdbcTemplate);
-		job.setJobGroup("Test");
-		job.setJobId(TEST_JOB_ID);
+		job = new TestProcessor(jdbcTemplate);
+		job.setGroupId("Test");
+		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setTierProcessType(Aggregation.None.getKey());
 
@@ -165,10 +153,9 @@ public class StaleAuditDataProcessorTests {
 
 		// WHEN
 		replayAll(con, stmt);
-		boolean result = job.executeJob();
+		job.run();
 
 		// THEN
-		assertThat("Completed", result, equalTo(true));
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(0));
 	}
 
@@ -219,10 +206,9 @@ public class StaleAuditDataProcessorTests {
 
 		// WHEN
 		replayAll(mocks.toArray(new Object[mocks.size()]));
-		boolean result = job.executeJob();
+		job.run();
 
 		// THEN
-		assertThat("Completed", result, equalTo(true));
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(parallelism));
 	}
 

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.agg.test;
 
-import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
@@ -40,12 +40,9 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -53,18 +50,15 @@ import org.easymock.IAnswer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.service.StaticOptionalServiceCollection;
 import net.solarnetwork.test.Assertion;
 
 /**
@@ -83,30 +77,23 @@ public class StaleDatumStreamProcessorTests {
 	private static final class TestProcessor extends StaleDatumStreamProcessor {
 
 		private final AtomicInteger taskThreadCount = new AtomicInteger(0);
+		private final ThreadPoolTaskExecutor executor;
 
-		private TestProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-			super(eventAdmin, jdbcOps);
-			setExecutorService(Executors.newCachedThreadPool(new ThreadFactory() {
+		private TestProcessor(JdbcOperations jdbcOps) {
+			super(jdbcOps);
+			executor = new ThreadPoolTaskExecutor();
+			executor.setCorePoolSize(10);
+			executor.setAllowCoreThreadTimeOut(true);
+			executor.setThreadFactory(new ThreadFactory() {
 
 				@Override
 				public Thread newThread(Runnable r) {
 					return new Thread(r,
 							"StaleDatumStreamProcessorTask-" + taskThreadCount.incrementAndGet());
 				}
-			}));
-		}
-
-		/**
-		 * Provide way to call {@code handleJob} directly in test cases.
-		 * 
-		 * @return {@code true} if job completed successfully
-		 * @throws Exception
-		 *         if any error occurs
-		 */
-		private boolean executeJob() throws Exception {
-			Event jobEvent = new Event(SchedulerConstants.TOPIC_JOB_REQUEST,
-					Collections.singletonMap(SchedulerConstants.JOB_ID, TEST_JOB_ID));
-			return handleJob(jobEvent);
+			});
+			executor.initialize();
+			setParallelTaskExecutor(executor);
 		}
 
 	}
@@ -119,9 +106,9 @@ public class StaleDatumStreamProcessorTests {
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
-		job = new TestProcessor(null, jdbcTemplate);
-		job.setJobGroup("Test");
-		job.setJobId(TEST_JOB_ID);
+		job = new TestProcessor(jdbcTemplate);
+		job.setGroupId("Test");
+		job.setId(TEST_JOB_ID);
 		job.setMaximumIterations(10);
 		job.setAggregateProcessType("h");
 
@@ -194,10 +181,9 @@ public class StaleDatumStreamProcessorTests {
 
 		// WHEN
 		replayAll(con, stmt, resultSet1, resultSet2);
-		boolean result = job.executeJob();
+		job.run();
 
 		// THEN
-		assertThat("Completed", result, equalTo(true));
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(0));
 	}
 
@@ -261,10 +247,9 @@ public class StaleDatumStreamProcessorTests {
 
 		// WHEN
 		replayAll(mocks.toArray(new Object[mocks.size()]));
-		boolean result = job.executeJob();
+		job.run();
 
 		// THEN
-		assertThat("Completed", result, equalTo(true));
 		assertThat("Thread count", job.taskThreadCount.get(), equalTo(parallelism));
 	}
 
@@ -272,7 +257,7 @@ public class StaleDatumStreamProcessorTests {
 	public void emaitDatumAppEvent() throws Exception {
 		// GIVEN
 		DatumAppEventAcceptor acceptor = EasyMock.createMock(DatumAppEventAcceptor.class);
-		job.setDatumAppEventAcceptors(new StaticOptionalServiceCollection<>(singleton(acceptor)));
+		job.setDatumAppEventAcceptors(singletonList(acceptor));
 
 		Connection con = EasyMock.createMock(Connection.class);
 		CallableStatement stmt = EasyMock.createMock(CallableStatement.class);
@@ -333,13 +318,11 @@ public class StaleDatumStreamProcessorTests {
 
 		// WHEN
 		replayAll(acceptor, con, stmt, resultSet1, resultSet2);
-		boolean result = job.executeJob();
-		job.getExecutorService().shutdown();
-		job.getExecutorService().awaitTermination(10, TimeUnit.SECONDS);
+		job.run();
+		job.executor.setAwaitTerminationSeconds(10);
+		job.executor.shutdown();
 
 		// THEN
-		assertThat("Completed", result, equalTo(true));
-
 		ZonedDateTime date = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 		DatumAppEvent event = eventCaptor.getValue();
 		assertThat("DatumAppEvent published", event, notNullValue());

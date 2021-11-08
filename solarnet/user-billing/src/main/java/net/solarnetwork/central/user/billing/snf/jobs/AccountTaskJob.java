@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -38,7 +37,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
  * Job to process {@link AccountTaskType} tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class AccountTaskJob extends JobSupport {
 
@@ -50,8 +49,6 @@ public class AccountTaskJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
 	 * @param transactionTemplate
 	 *        the transaction template to use, or {@literal null}
 	 * @param taskDao
@@ -64,35 +61,26 @@ public class AccountTaskJob extends JobSupport {
 	 *         if {@code taskDao} or {@code generateInvoiceTaskHandler} is
 	 *         {@literal null}
 	 */
-	public AccountTaskJob(EventAdmin eventAdmin, TransactionTemplate transactionTemplate,
-			AccountTaskDao taskDao, AccountTaskHandler generateInvoiceTaskHandler,
+	public AccountTaskJob(TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
+			AccountTaskHandler generateInvoiceTaskHandler,
 			AccountTaskHandler deliverInvoiceTaskHandler) {
-		super(eventAdmin);
+		super();
 		this.transactionTemplate = transactionTemplate;
-		if ( taskDao == null ) {
-			throw new IllegalArgumentException("The taskDao argument must not be null.");
-		}
-		this.taskDao = taskDao;
-		if ( generateInvoiceTaskHandler == null ) {
-			throw new IllegalArgumentException(
-					"The generateInvoiceTaskHandler argument must not be null.");
-		}
-		this.generateInvoiceTaskHandler = generateInvoiceTaskHandler;
-		if ( deliverInvoiceTaskHandler == null ) {
-			throw new IllegalArgumentException(
-					"The deliverInvoiceTaskHandler argument must not be null.");
-		}
-		this.deliverInvoiceTaskHandler = deliverInvoiceTaskHandler;
-		setJobGroup("Billing");
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.generateInvoiceTaskHandler = requireNonNullArgument(generateInvoiceTaskHandler,
+				"generateInvoiceTaskHandler");
+		this.deliverInvoiceTaskHandler = requireNonNullArgument(deliverInvoiceTaskHandler,
+				"deliverInvoiceTaskHandler");
+		setGroupId("Billing");
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		return executeParallelJob(job, "account task");
+	public void run() {
+		executeParallelJob("account task");
 	}
 
 	@Override
-	protected int executeJobTask(Event job, AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		int processedCount = 0;
 		boolean processed = false;
 		do {

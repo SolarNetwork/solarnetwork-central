@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.agg;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -52,7 +52,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  * @since 1.6
  */
 public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
@@ -64,17 +64,16 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
 	 * @param taskDescription
 	 *        a description of the task to use in log statements
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public TieredStaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps,
-			String taskDescription) {
-		super(eventAdmin, jdbcOps);
-		this.taskDescription = taskDescription;
+	public TieredStaleDatumProcessor(JdbcOperations jdbcOps, String taskDescription) {
+		super(jdbcOps);
+		this.taskDescription = requireNonNullArgument(taskDescription, "taskDescription");
 		setMaximumIterations(1);
 		setParallelism(1);
 	}
@@ -89,7 +88,7 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	protected abstract int execute(final AtomicInteger remainingCount);
 
 	@Override
-	protected int executeJobTask(Event job, AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		try {
 			return execute(remainingIterataions);
 		} catch ( DeadlockLoserDataAccessException e ) {
@@ -100,8 +99,8 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		return executeParallelJob(job, String.format("%s tier '%s'", taskDescription, tierProcessType));
+	public void run() {
+		executeParallelJob(String.format("%s tier '%s'", taskDescription, tierProcessType));
 	}
 
 	/**
@@ -153,30 +152,4 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 		this.tierProcessMax = tierProcessMax;
 	}
 
-	/**
-	 * Get the maximum number of parallel tasks to allow.
-	 * 
-	 * @return the numJobs the maximum task count
-	 * @deprecated since 1.2
-	 * @see #getParallelism()
-	 */
-	@Deprecated
-	public int getTaskCount() {
-		return getParallelism();
-	}
-
-	/**
-	 * Set the maximum number of parallel tasks to allow.
-	 * 
-	 * Any value less than 1 will be treated as 1.
-	 * 
-	 * @param taskCount
-	 *        the maximum number of tasks to allow
-	 * @deprecated since 1.2
-	 * @see #setParallelism(int)
-	 */
-	@Deprecated
-	public void setTaskCount(int taskCount) {
-		setParallelism(taskCount);
-	}
 }

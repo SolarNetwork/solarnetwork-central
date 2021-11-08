@@ -22,8 +22,7 @@
 
 package net.solarnetwork.central.datum.export.jobs;
 
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.datum.export.biz.DatumExportBiz;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
@@ -35,7 +34,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to claim datum export tasks for processing and submit them for execution.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DatumExportProcessorJob extends JobSupport {
 
@@ -46,25 +45,21 @@ public class DatumExportProcessorJob extends JobSupport {
 	/**
 	 * Construct with properties.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param taskDao
 	 *        the DAO to use
 	 * @param datumExportBiz
 	 *        the export service to use
 	 */
-	public DatumExportProcessorJob(EventAdmin eventAdmin, DatumExportTaskInfoDao taskDao,
-			DatumExportBiz datumExportBiz) {
-		super(eventAdmin);
-		this.taskDao = taskDao;
-		this.datumExportBiz = datumExportBiz;
-		setJobGroup("DatumExport");
+	public DatumExportProcessorJob(DatumExportTaskInfoDao taskDao, DatumExportBiz datumExportBiz) {
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.datumExportBiz = requireNonNullArgument(datumExportBiz, "datumExportBiz");
+		setGroupId("DatumExport");
 		setMaximumWaitMs(1800000L);
 		setMaximumClaimCount(1000);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		for ( int i = 0; i < maximumClaimCount; i++ ) {
 			DatumExportTaskInfo task = taskDao.claimQueuedTask();
 			if ( task == null ) {
@@ -82,7 +77,6 @@ public class DatumExportProcessorJob extends JobSupport {
 				taskDao.store(task);
 			}
 		}
-		return true;
 	}
 
 	/**

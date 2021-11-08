@@ -61,7 +61,7 @@ public class UserExportTaskPopulatorJobTests {
 
 	private UserExportTaskPopulatorJob jobForSchedule(ScheduleType type) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(eventAdmin, type, jobsService);
-		job.setJobId(JOB_ID);
+		job.setId(JOB_ID);
 		job.setExecutorService(new CallingThreadExecutorService());
 		return job;
 	}

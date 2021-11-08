@@ -24,9 +24,8 @@ package net.solarnetwork.central.datum.agg;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.concurrent.ExecutorService;
-import org.osgi.service.event.EventAdmin;
+import java.util.List;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -37,7 +36,6 @@ import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ObjectDatumIdRowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.service.OptionalServiceCollection;
 
 /**
  * Job to process "stale" datum stream aggregate data.
@@ -54,7 +52,7 @@ import net.solarnetwork.service.OptionalServiceCollection;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  * @since 1.14
  */
 public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumProcessor {
@@ -62,39 +60,37 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumPr
 	/** The default {@code jdbcCall} value. */
 	public static final String DEFAULT_SQL = "{call solardatm.process_one_agg_stale_datm(?)}";
 
-	private OptionalServiceCollection<DatumAppEventAcceptor> datumAppEventAcceptors;
+	private List<DatumAppEventAcceptor> datumAppEventAcceptors;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public StaleDatumStreamProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin, jdbcOps, "stale datum");
+	public StaleDatumStreamProcessor(JdbcOperations jdbcOps) {
+		super(jdbcOps, "stale datum");
 		setJdbcCall(DEFAULT_SQL);
 	}
 
 	@Override
 	protected void processResultRow(final ResultSet rs) throws SQLException {
-		final OptionalServiceCollection<DatumAppEventAcceptor> services = getDatumAppEventAcceptors();
-		if ( services == null ) {
+		final List<DatumAppEventAcceptor> services = getDatumAppEventAcceptors();
+		if ( services == null || services.isEmpty() ) {
 			return;
 		}
 		final BasicDatumAppEvent event = extractAppEvent(rs);
 		if ( event == null ) {
 			return;
 		}
-		final ExecutorService executor = getExecutorService();
+		final AsyncTaskExecutor executor = getParallelTaskExecutor();
 		Runnable task = new Runnable() {
 
 			@Override
 			public void run() {
-				final Iterable<DatumAppEventAcceptor> acceptors = (services != null ? services.services()
-						: Collections.emptySet());
-				for ( DatumAppEventAcceptor acceptor : acceptors ) {
+				for ( DatumAppEventAcceptor acceptor : services ) {
 					try {
 						acceptor.offerDatumEvent(event);
 					} catch ( CannotCreateTransactionException | TransientDataAccessException
@@ -195,7 +191,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumPr
 	 * @return the services
 	 * @since 1.4
 	 */
-	public OptionalServiceCollection<DatumAppEventAcceptor> getDatumAppEventAcceptors() {
+	public List<DatumAppEventAcceptor> getDatumAppEventAcceptors() {
 		return datumAppEventAcceptors;
 	}
 
@@ -207,8 +203,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumPr
 	 *        the services to set
 	 * @since 1.4
 	 */
-	public void setDatumAppEventAcceptors(
-			OptionalServiceCollection<DatumAppEventAcceptor> datumAppEventAcceptors) {
+	public void setDatumAppEventAcceptors(List<DatumAppEventAcceptor> datumAppEventAcceptors) {
 		this.datumAppEventAcceptors = datumAppEventAcceptors;
 	}
 

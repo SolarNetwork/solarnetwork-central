@@ -26,16 +26,14 @@ import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.cache.Cache;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -47,7 +45,6 @@ import net.solarnetwork.central.user.event.domain.UserNodeEvent;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
-import net.solarnetwork.service.OptionalServiceCollection;
 
 /**
  * Job to process queued {@link UserNodeEventTask} entities by passing them to
@@ -71,16 +68,13 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	private final TransactionTemplate transactionTemplate;
 	private final UserNodeEventTaskDao taskDao;
-	private final OptionalServiceCollection<UserNodeEventHookService> hookServices;
+	private final List<UserNodeEventHookService> hookServices;
 	private String topic = DEFAULT_TOPIC;
 	private long serviceTimeout = DEFAULT_SERVICE_TIMEOUT;
-	private Cache<String, UserNodeEventHookService> serviceCache;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
 	 * @param transactionTemplate
 	 *        the transaction template to use, or {@literal null}
 	 * @param taskDao
@@ -91,29 +85,22 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	 *         if {@code eventAdmin} or {@code taskDao} or {@code hookServices}
 	 *         are {@literal null}
 	 */
-	public UserNodeEventTaskProcessorJob(EventAdmin eventAdmin, TransactionTemplate transactionTemplate,
-			UserNodeEventTaskDao taskDao,
-			OptionalServiceCollection<UserNodeEventHookService> hookServices) {
-		super(eventAdmin);
+	public UserNodeEventTaskProcessorJob(TransactionTemplate transactionTemplate,
+			UserNodeEventTaskDao taskDao, List<UserNodeEventHookService> hookServices) {
+		super();
 		this.transactionTemplate = transactionTemplate;
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.hookServices = requireNonNullArgument(hookServices, "hookServices");
-		setJobGroup("UserNodeEvent");
+		setGroupId("UserNodeEvent");
 	}
 
 	private UserNodeEventHookService resolveService(String serviceId) {
 		UserNodeEventHookService result = null;
 		if ( serviceId != null ) {
-			final Cache<String, UserNodeEventHookService> cache = getServiceCache();
-			if ( cache != null ) {
-				result = cache.get(serviceId);
-			}
-			if ( result == null ) {
-				for ( UserNodeEventHookService service : hookServices.services() ) {
-					if ( serviceId.equals(service.getId()) ) {
-						result = service;
-						break;
-					}
+			for ( UserNodeEventHookService service : hookServices ) {
+				if ( serviceId.equals(service.getId()) ) {
+					result = service;
+					break;
 				}
 			}
 		}
@@ -121,12 +108,12 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
-		return executeParallelJob(job, "hook task");
+	public void run() {
+		executeParallelJob("hook task");
 	}
 
 	@Override
-	protected int executeJobTask(Event job, AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		int processedCount = 0;
 		boolean processed = false;
 		do {
@@ -188,7 +175,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 						format("Service %s is not available", serviceId));
 			}
 			if ( service != null ) {
-				final ExecutorService executor = getExecutorService();
+				final AsyncTaskExecutor executor = getParallelTaskExecutor();
 				if ( executor != null ) {
 					Future<Boolean> future = executor.submit(new Callable<Boolean>() {
 
@@ -262,25 +249,6 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 			serviceTimeout = 0;
 		}
 		this.serviceTimeout = serviceTimeout;
-	}
-
-	/**
-	 * Get an optional cache for resolved services.
-	 * 
-	 * @return the cache to use
-	 */
-	public Cache<String, UserNodeEventHookService> getServiceCache() {
-		return serviceCache;
-	}
-
-	/**
-	 * Set an optional cache for resolved services.
-	 * 
-	 * @param serviceCache
-	 *        the cache to set
-	 */
-	public void setServiceCache(Cache<String, UserNodeEventHookService> serviceCache) {
-		this.serviceCache = serviceCache;
 	}
 
 }

@@ -25,14 +25,13 @@ package net.solarnetwork.central.scheduler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.osgi.service.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.AsyncTaskExecutor;
 
 /**
  * Base helper class for a scheduled job.
@@ -50,12 +49,12 @@ import org.slf4j.LoggerFactory;
  * @author matt
  * @version 2.0
  */
-public abstract class JobSupport {
+public abstract class JobSupport implements ManagedJob {
 
 	/** The {@code maximumWaitMs} property default value. */
 	public static final long DEFAULT_MAX_WAIT = 15L * 60L * 1000L;
 
-	/** The {@code jobCron} property default value. */
+	/** The {@code schedule} property default value. */
 	public static final String DEFAULT_CRON = "0 0/1 * * * ?";
 
 	/** The {@code maximumIterations} property default value. */
@@ -67,33 +66,22 @@ public abstract class JobSupport {
 	/** The {@code jitter} property default value. */
 	public static final long DEFAULT_JITTER = 500L;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	/** A class-level logger. */
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	private long maximumWaitMs = DEFAULT_MAX_WAIT;
-	private String jobId;
-	private String jobGroup;
-	private String jobCron = DEFAULT_CRON;
-	private ExecutorService parallelTaskExecutorService = null;
+	private String id;
+	private String groupId;
+	private String schedule = DEFAULT_CRON;
+	private AsyncTaskExecutor parallelTaskExecutor = null;
 	private int maximumIterations = DEFAULT_MAX_ITERATIONS;
 	private int parallelism = 1;
 	private long jitter = DEFAULT_JITTER;
 
-	/**
-	 * Handle the job.
-	 * 
-	 * @param job
-	 *        the job details
-	 * @return {@literal true} if job completed successfully, {@literal false}
-	 *         otherwise
-	 * @throws Exception
-	 *         if any error occurs
-	 */
-	protected abstract boolean handleJob(Event job) throws Exception;
-
-	private ExecutorService executorServiceForParallelTasks() {
-		ExecutorService s = getParallelTaskExecutorService();
+	private AsyncTaskExecutor taskExecutorForParallelTasks() {
+		AsyncTaskExecutor s = getParallelTaskExecutor();
 		if ( s == null ) {
-			throw new RuntimeException("No ExecutorService is configured for parallel tasks.");
+			throw new RuntimeException("No AsyncTaskExecutor is configured for parallel tasks.");
 		}
 		return s;
 	}
@@ -102,17 +90,16 @@ public abstract class JobSupport {
 	 * Execute the job in parallel via multiple threads.
 	 * 
 	 * <p>
-	 * This method can be invoked by extending classes from their
-	 * {@link #handleJob(Event)} method. When invoked, this method will create
-	 * {@code parallelism} tasks and submit them to the configured
-	 * {@code executorService}. Each task will call the
-	 * {@link #executeJobTask(Event, AtomicInteger)} methdod, passing a shared
-	 * {@link AtomicInteger} initially set to {@code maximumIterations}, which
-	 * serves as a hint as to the number of <b>overall</b> iterations <b>all</b>
-	 * tasks are trying to perform. The tasks thus compete for iterations and
-	 * should decrement the {@code AtomicInteger} by the number of iterations
-	 * they process, and stop processing iterations when the count reaches
-	 * {@literal 0} or less.
+	 * This method can be invoked by extending classes from their {@link #run()}
+	 * method. When invoked, this method will create {@code parallelism} tasks
+	 * and submit them to the configured {@code parallelTaskExecutor}. Each task
+	 * will call the {@link #executeJobTask(AtomicInteger)} method, passing a
+	 * shared {@link AtomicInteger} initially set to {@code maximumIterations},
+	 * which serves as a hint as to the number of <b>overall</b> iterations
+	 * <b>all</b> tasks are trying to perform. The tasks thus compete for
+	 * iterations and should decrement the {@code AtomicInteger} by the number
+	 * of iterations they process, and stop processing iterations when the count
+	 * reaches {@literal 0} or less.
 	 * </p>
 	 * 
 	 * <p>
@@ -123,8 +110,8 @@ public abstract class JobSupport {
 	 * 
 	 * <p>
 	 * If {@code parallelism} is {@literal 1} then the
-	 * {@link #executeJobTask(Event, AtomicInteger)} method is called directly
-	 * from this method, without submitting the task to the configured
+	 * {@link #executeJobTask(AtomicInteger)} method is called directly from
+	 * this method, without submitting the task to the configured
 	 * {@code executorService}.
 	 * </p>
 	 * 
@@ -132,20 +119,19 @@ public abstract class JobSupport {
 	 *        the job event
 	 * @param taskName
 	 *        a descriptive name for the job task, to use in logging
-	 * @return the number of iterations processed, used for logging information
-	 *         only
+	 * @return the {@literal true} if all tasks were completed
 	 * @throws Exception
 	 *         if any error occurs
 	 * @since 1.7
 	 */
-	protected final boolean executeParallelJob(final Event job, final String taskName) throws Exception {
+	protected final boolean executeParallelJob(final String taskName) {
 		final int tCount = getParallelism();
 		final int tIterations = getMaximumIterations();
 		log.debug("Processing at most {} {} iterations using {} threads", tIterations, taskName, tCount);
 		final AtomicInteger remainingCount = new AtomicInteger(tIterations);
 		boolean allDone = false;
 		if ( tCount > 1 ) {
-			final ExecutorService executorService = executorServiceForParallelTasks();
+			final AsyncTaskExecutor executorService = taskExecutorForParallelTasks();
 			final CountDownLatch latch = new CountDownLatch(tCount);
 			final long tJitter = getJitter();
 			final List<Future<?>> futures = new ArrayList<>();
@@ -171,7 +157,7 @@ public abstract class JobSupport {
 							log.debug("Thread {} processing at most {} {} iterations",
 									Thread.currentThread().getName(), tIterations, taskName);
 							try {
-								int processedCount = executeJobTask(job, remainingCount);
+								int processedCount = executeJobTask(remainingCount);
 								log.debug("Thread {} processed {} {} iterations",
 										Thread.currentThread().getName(), processedCount, taskName);
 							} catch ( Exception e ) {
@@ -191,7 +177,11 @@ public abstract class JobSupport {
 					log.warn("Unable to process {}: queue full", taskName);
 				}
 			}
-			allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
+			try {
+				allDone = latch.await(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
+			} catch ( InterruptedException e1 ) {
+				// ignore this one
+			}
 			if ( !allDone ) {
 				log.warn("Timeout processing {} iterations; {}/{} tasks completed", taskName,
 						(tCount - latch.getCount()), tCount);
@@ -206,7 +196,15 @@ public abstract class JobSupport {
 				}
 			}
 		} else {
-			executeJobTask(job, remainingCount);
+			try {
+				executeJobTask(remainingCount);
+			} catch ( Exception e ) {
+				Throwable root = e;
+				while ( root.getCause() != null ) {
+					root = root.getCause();
+				}
+				log.error("Error processing {} iteration: {}", taskName, e.toString(), root);
+			}
 			allDone = true;
 		}
 		return allDone;
@@ -216,8 +214,8 @@ public abstract class JobSupport {
 	 * Execute a parallel job task.
 	 * 
 	 * <p>
-	 * This method is called from the {@link #executeParallelJob(Event, String)}
-	 * method by each thread. This method is supposed to execute up to
+	 * This method is called from the {@link #executeParallelJob(String)} method
+	 * by each thread. This method is supposed to execute up to
 	 * {@code remainingIterataions} of the job's task, updating
 	 * {@code remainingIterataions} as each iteration is processed. Keep in mind
 	 * that each job task thread will be mutating (competing for)
@@ -229,8 +227,6 @@ public abstract class JobSupport {
 	 * overridden by extending classes.
 	 * </p>
 	 * 
-	 * @param job
-	 *        the job event
 	 * @param remainingIterataions
 	 *        the number of iterations left to perform
 	 * @return the number of iterations performed
@@ -238,7 +234,7 @@ public abstract class JobSupport {
 	 *         if any error occurs
 	 * @since 1.7
 	 */
-	protected int executeJobTask(Event job, AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		throw new UnsupportedOperationException("Extending class must implement.");
 	}
 
@@ -247,18 +243,19 @@ public abstract class JobSupport {
 	 * 
 	 * @return the job ID
 	 */
-	public String getJobId() {
-		return jobId;
+	@Override
+	public String getId() {
+		return id;
 	}
 
 	/**
 	 * Set the unique ID of the job to schedule.
 	 * 
-	 * @param jobId
+	 * @param id
 	 *        the job ID
 	 */
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
+	public void setId(String jobId) {
+		this.id = jobId;
 	}
 
 	/**
@@ -288,18 +285,19 @@ public abstract class JobSupport {
 	 * @return the cron expression; defaults to {@literal 0 0/1 * * * ?} (once
 	 *         per minute)
 	 */
-	public String getJobCron() {
-		return jobCron;
+	@Override
+	public String getSchedule() {
+		return schedule;
 	}
 
 	/**
 	 * Set the job cron expression to use for scheduling this job.
 	 * 
-	 * @param jobCron
+	 * @param schedule
 	 *        the cron expression
 	 */
-	public void setJobCron(String jobCron) {
-		this.jobCron = jobCron;
+	public void setSchedule(String jobCron) {
+		this.schedule = jobCron;
 	}
 
 	/**
@@ -307,18 +305,19 @@ public abstract class JobSupport {
 	 * 
 	 * @return the job group
 	 */
-	public String getJobGroup() {
-		return jobGroup;
+	@Override
+	public String getGroupId() {
+		return groupId;
 	}
 
 	/**
 	 * Set the job group to use.
 	 * 
-	 * @param jobGroup
+	 * @param groupId
 	 *        the job group
 	 */
-	public void setJobGroup(String jobGroup) {
-		this.jobGroup = jobGroup;
+	public void setGroupId(String jobGroup) {
+		this.groupId = jobGroup;
 	}
 
 	/**
@@ -329,21 +328,19 @@ public abstract class JobSupport {
 	 * </p>
 	 * 
 	 * @return the service
-	 * @since 1.8
 	 */
-	public ExecutorService getParallelTaskExecutorService() {
-		return parallelTaskExecutorService;
+	public AsyncTaskExecutor getParallelTaskExecutor() {
+		return parallelTaskExecutor;
 	}
 
 	/**
 	 * Set the executor to handle parallel job tasks with.
 	 * 
-	 * @param parallelTaskExecutorService
+	 * @param parallelTaskExecutor
 	 *        the service to set
-	 * @since 1.8
 	 */
-	public void setParallelTaskExecutorService(ExecutorService parallelTaskExecutorService) {
-		this.parallelTaskExecutorService = parallelTaskExecutorService;
+	public void setParallelTaskExecutor(AsyncTaskExecutor parallelTaskExecutorService) {
+		this.parallelTaskExecutor = parallelTaskExecutorService;
 	}
 
 	/**
@@ -411,7 +408,7 @@ public abstract class JobSupport {
 	 * 
 	 * <p>
 	 * This time is added to tasks started by the
-	 * {@link #executeParallelJob(Event, String)} method, and only when
+	 * {@link #executeParallelJob(String)} method, and only when
 	 * {@link #getParallelism()} is greater than {@literal 1}. Set to
 	 * {@literal 0} to disable adding any random jitter to the start of tasks.
 	 * </p>

@@ -1,7 +1,7 @@
 /* ==================================================================
- * StaleAuditDataProcessor.java - 3/07/2018 9:46:25 AM
+ * ManagedJob.java - 8/11/2021 8:58:30 AM
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2021 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,34 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
-
-import org.springframework.jdbc.core.JdbcOperations;
+package net.solarnetwork.central.scheduler;
 
 /**
- * Job to process "stale" audit datum reporting data.
+ * A managed job.
  * 
  * @author matt
- * @version 2.0
- * @since 1.6
+ * @version 1.0
  */
-public class StaleAuditDataProcessor extends TieredStoredProcedureStaleDatumProcessor {
-
-	/** The default {@code jdbcCall} value. */
-	public static final String DEFAULT_SQL = "{? = call solardatm.process_one_aud_stale_datm(?)}";
+public interface ManagedJob extends Runnable {
 
 	/**
-	 * Construct with properties.
+	 * Get the group this job belongs to.
 	 * 
-	 * @param jdbcOps
-	 *        the JdbcOperations to use
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 * @return the group ID
 	 */
-	public StaleAuditDataProcessor(JdbcOperations jdbcOps) {
-		super(jdbcOps, "stale audit data");
-		setJdbcCall(DEFAULT_SQL);
-		setTierProcessMax(null);
-	}
+	String getGroupId();
+
+	/**
+	 * Get the ID of this job, unique to the job's group.
+	 * 
+	 * @return the job ID
+	 */
+	String getId();
+
+	/**
+	 * Get the job schedule, either as a cron expression or millisecond period.
+	 * 
+	 * @return the job schedule
+	 */
+	String getSchedule();
 
 }

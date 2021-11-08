@@ -26,8 +26,6 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.CallableStatementCreator;
@@ -43,25 +41,25 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 2.0
  */
 public class StaleDatumProcessor extends JdbcCallJob {
 
 	/**
 	 * Construct with properties.
 	 * 
-	 * @param eventAdmin
-	 *        the EventAdmin
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public StaleDatumProcessor(EventAdmin eventAdmin, JdbcOperations jdbcOps) {
-		super(eventAdmin, jdbcOps);
+	public StaleDatumProcessor(JdbcOperations jdbcOps) {
+		super(jdbcOps);
 		setMaximumIterations(5);
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		final int maximumRowCount = getMaximumIterations();
 		int i = 0;
 		int resultCount = 0;
@@ -85,34 +83,6 @@ public class StaleDatumProcessor extends JdbcCallJob {
 			});
 			i += resultCount;
 		} while ( i < maximumRowCount && resultCount > 0 );
-		return true;
-	}
-
-	/**
-	 * Get the maximum number of rows to process, as returned by the stored
-	 * procedure.
-	 * 
-	 * @return the maximum row count; defaults to {@literal 5}
-	 * @deprecated since 1.3
-	 * @see #getMaximumIterations()
-	 */
-	@Deprecated
-	public int getMaximumRowCount() {
-		return getMaximumIterations();
-	}
-
-	/**
-	 * Set the maximum number of rows to process, as returned by the stored
-	 * procedure.
-	 * 
-	 * @param maximumRowCount
-	 *        the maximum row count
-	 * @deprecated since 1.3
-	 * @see #setMaximumIterations(int)
-	 */
-	@Deprecated
-	public void setMaximumRowCount(int maximumRowCount) {
-		setMaximumIterations(maximumRowCount);
 	}
 
 }

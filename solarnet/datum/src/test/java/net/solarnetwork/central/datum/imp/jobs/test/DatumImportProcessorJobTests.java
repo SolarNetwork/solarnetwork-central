@@ -22,27 +22,17 @@
 
 package net.solarnetwork.central.datum.imp.jobs.test;
 
-import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
-import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportJobBiz;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.jobs.DatumImportProcessorJob;
-import net.solarnetwork.central.scheduler.SchedulerConstants;
-import net.solarnetwork.central.test.CallingThreadExecutorService;
 
 /**
  * Test cases for the {@link DatumImportProcessorJob} class.
@@ -55,29 +45,26 @@ public class DatumImportProcessorJobTests {
 	private static final String JOB_ID = "test.job";
 	private static final Long TEST_USER_ID = 123L;
 
-	private EventAdmin eventAdmin;
 	private DatumImportJobBiz importJobBiz;
 
 	private DatumImportProcessorJob job;
 
 	@Before
 	public void setup() {
-		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		importJobBiz = EasyMock.createMock(DatumImportJobBiz.class);
 
-		job = new DatumImportProcessorJob(eventAdmin, importJobBiz);
-		job.setJobId(JOB_ID);
+		job = new DatumImportProcessorJob(importJobBiz);
+		job.setId(JOB_ID);
 		job.setMaximumClaimCount(2);
-		job.setExecutorService(new CallingThreadExecutorService());
 	}
 
 	private void replayAll() {
-		EasyMock.replay(eventAdmin, importJobBiz);
+		EasyMock.replay(importJobBiz);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(eventAdmin, importJobBiz);
+		EasyMock.verify(importJobBiz);
 	}
 
 	@Test
@@ -94,21 +81,11 @@ public class DatumImportProcessorJobTests {
 		DatumImportStatus status2 = EasyMock.createNiceMock(DatumImportStatus.class);
 		expect(importJobBiz.performImport(info2.getId())).andReturn(status2);
 
-		Capture<Event> eventCaptor = new Capture<>();
-		eventAdmin.postEvent(capture(eventCaptor));
-
 		// when
 		replayAll();
-		Map<String, Object> jobProps = new HashMap<>();
-		jobProps.put(SchedulerConstants.JOB_ID, JOB_ID);
-		Event event = new Event(SchedulerConstants.TOPIC_JOB_REQUEST, jobProps);
-		job.handleEvent(event);
+		job.run();
 
 		// then
-		assertThat("Complete event posted", eventCaptor.hasCaptured(), equalTo(true));
-		Event completedEvent = eventCaptor.getValue();
-		assertThat(completedEvent.getTopic(), equalTo(SchedulerConstants.TOPIC_JOB_COMPLETE));
-		assertThat(completedEvent.getProperty(SchedulerConstants.JOB_ID), equalTo(JOB_ID));
 	}
 
 }

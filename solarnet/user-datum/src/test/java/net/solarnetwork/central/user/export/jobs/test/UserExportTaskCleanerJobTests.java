@@ -64,7 +64,7 @@ public class UserExportTaskCleanerJobTests {
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
 
 		job = new UserExportTaskCleanerJob(eventAdmin, taskDao);
-		job.setJobId(JOB_ID);
+		job.setId(JOB_ID);
 		job.setMinimumAgeMinutes(EXPIRE_MINS);
 		job.setExecutorService(new CallingThreadExecutorService());
 	}

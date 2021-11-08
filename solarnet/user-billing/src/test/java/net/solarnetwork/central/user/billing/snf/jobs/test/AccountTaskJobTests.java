@@ -23,18 +23,13 @@
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static org.easymock.EasyMock.expect;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.UUID;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -52,7 +47,6 @@ import net.solarnetwork.central.user.billing.snf.jobs.AccountTaskJob;
  */
 public class AccountTaskJobTests {
 
-	private EventAdmin eventAdmin;
 	private PlatformTransactionManager txManager;
 	private AccountTaskDao taskDao;
 	private AccountTaskHandler genInvoiceTaskHandler;
@@ -61,23 +55,16 @@ public class AccountTaskJobTests {
 
 	private static class TestJob extends AccountTaskJob {
 
-		public TestJob(EventAdmin eventAdmin, TransactionTemplate transactionTemplate,
-				AccountTaskDao taskDao, AccountTaskHandler generateInvoiceTaskHandler,
+		public TestJob(TransactionTemplate transactionTemplate, AccountTaskDao taskDao,
+				AccountTaskHandler generateInvoiceTaskHandler,
 				AccountTaskHandler deliverInvoiceTaskHandler) {
-			super(eventAdmin, transactionTemplate, taskDao, generateInvoiceTaskHandler,
-					deliverInvoiceTaskHandler);
-		}
-
-		// allow tests to call this directly to simplify
-		@Override
-		public boolean handleJob(Event job) throws Exception {
-			return super.handleJob(job);
+			super(transactionTemplate, taskDao, generateInvoiceTaskHandler, deliverInvoiceTaskHandler);
 		}
 
 	}
 
 	private void replayAll(Object... mocks) {
-		EasyMock.replay(eventAdmin, txManager, taskDao, genInvoiceTaskHandler, delInvoiceTaskHandler);
+		EasyMock.replay(txManager, taskDao, genInvoiceTaskHandler, delInvoiceTaskHandler);
 		if ( mocks != null ) {
 			EasyMock.replay(mocks);
 		}
@@ -85,18 +72,17 @@ public class AccountTaskJobTests {
 
 	@After
 	public void teardown() {
-		EasyMock.verify(eventAdmin, txManager, taskDao, genInvoiceTaskHandler, delInvoiceTaskHandler);
+		EasyMock.verify(txManager, taskDao, genInvoiceTaskHandler, delInvoiceTaskHandler);
 	}
 
 	@Before
 	public void setup() {
-		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 		taskDao = EasyMock.createMock(AccountTaskDao.class);
 		genInvoiceTaskHandler = EasyMock.createMock(AccountTaskHandler.class);
 		delInvoiceTaskHandler = EasyMock.createMock(AccountTaskHandler.class);
 
-		job = new TestJob(eventAdmin, new TransactionTemplate(txManager), taskDao, genInvoiceTaskHandler,
+		job = new TestJob(new TransactionTemplate(txManager), taskDao, genInvoiceTaskHandler,
 				delInvoiceTaskHandler);
 	}
 
@@ -113,11 +99,9 @@ public class AccountTaskJobTests {
 
 		// WHEN
 		replayAll(tx);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 	}
 
 	@Test
@@ -151,11 +135,9 @@ public class AccountTaskJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 	}
 
 	@Test
@@ -189,10 +171,8 @@ public class AccountTaskJobTests {
 
 		// WHEN
 		replayAll(tx, tx2);
-		Event jobEvent = new Event("test", Collections.emptyMap());
-		boolean result = job.handleJob(jobEvent);
+		job.run();
 
 		// THEN
-		assertThat("Job handled successfully", result, equalTo(true));
 	}
 }

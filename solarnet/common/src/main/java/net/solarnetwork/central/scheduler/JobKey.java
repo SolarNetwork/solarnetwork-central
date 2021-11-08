@@ -52,6 +52,15 @@ public final class JobKey implements Comparable<JobKey> {
 		this.id = requireNonNullArgument(id, "id");
 	}
 
+	/**
+	 * Get a description of this key.
+	 * 
+	 * @return the description.
+	 */
+	public String getDescription() {
+		return groupId + "." + id;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

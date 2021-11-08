@@ -22,16 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to create {@link AccountTaskType#GenerateInvoice} task entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 
@@ -40,21 +39,20 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param eventAdmin
-	 *        the event admin
 	 * @param creator
 	 *        the creator
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public InvoiceGenerationTaskCreatorJob(EventAdmin eventAdmin, InvoiceGenerationTaskCreator creator) {
-		super(eventAdmin);
-		this.creator = creator;
-		setJobGroup("Billing");
+	public InvoiceGenerationTaskCreatorJob(InvoiceGenerationTaskCreator creator) {
+		super();
+		this.creator = ObjectUtils.requireNonNullArgument(creator, "creator");
+		setGroupId("Billing");
 	}
 
 	@Override
-	protected boolean handleJob(Event job) throws Exception {
+	public void run() {
 		creator.createTasks();
-		return true;
 	}
 
 }
