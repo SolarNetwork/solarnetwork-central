@@ -27,13 +27,13 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import net.solarnetwork.central.domain.BasicAppEvent;
+import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * Basic immutable implementation of {@link DatumAppEvent}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 2.6
  */
 @JsonDeserialize(builder = BasicDatumAppEvent.Builder.class)

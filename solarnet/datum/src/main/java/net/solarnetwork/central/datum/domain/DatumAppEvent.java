@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.AppEvent;
+import net.solarnetwork.event.AppEvent;
 
 /**
  * A datum-specific event.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 2.6
  */
 public interface DatumAppEvent extends AppEvent {
