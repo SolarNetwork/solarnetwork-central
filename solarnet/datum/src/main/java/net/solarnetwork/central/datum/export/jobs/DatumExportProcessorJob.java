@@ -40,7 +40,6 @@ public class DatumExportProcessorJob extends JobSupport {
 
 	private final DatumExportTaskInfoDao taskDao;
 	private final DatumExportBiz datumExportBiz;
-	private int maximumClaimCount = 1000;
 
 	/**
 	 * Construct with properties.
@@ -55,12 +54,12 @@ public class DatumExportProcessorJob extends JobSupport {
 		this.datumExportBiz = requireNonNullArgument(datumExportBiz, "datumExportBiz");
 		setGroupId("DatumExport");
 		setMaximumWaitMs(1800000L);
-		setMaximumClaimCount(1000);
 	}
 
 	@Override
 	public void run() {
-		for ( int i = 0; i < maximumClaimCount; i++ ) {
+		final int max = getMaximumIterations();
+		for ( int i = 0; i < max; i++ ) {
 			DatumExportTaskInfo task = taskDao.claimQueuedTask();
 			if ( task == null ) {
 				// nothing left to claim
@@ -77,16 +76,6 @@ public class DatumExportProcessorJob extends JobSupport {
 				taskDao.store(task);
 			}
 		}
-	}
-
-	/**
-	 * Set the maximum number of claims to acquire per execution of this job.
-	 * 
-	 * @param maximumClaimCount
-	 *        the maximum count; defaults to {@literal 1000}
-	 */
-	public void setMaximumClaimCount(int maximumClaimCount) {
-		this.maximumClaimCount = maximumClaimCount;
 	}
 
 }

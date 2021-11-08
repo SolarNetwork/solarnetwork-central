@@ -96,7 +96,18 @@ app:
         schedule: "0 0 1 ? * SUN"
       stale-queuing:
         seconds-older: 30
-        scheduler: "6/10 * * * * *"
+        schedule: "6/10 * * * * *"
+    user-datum-expire:
+      cleaner:
+        minimum-age-minutes: 720
+        schedule: "0 47 * * * *"
+      delete:
+        maximum-iterations: 1
+        maximum-wait-ms: 5400000
+        schedule: "0 1/10 * * * *"
+      expire:
+        maximum-wait-ms: 21600000
+        schedule: "0 15 1/8 * * *"
     user-event:
       cleaner:
         minimum-age-minutes: 60

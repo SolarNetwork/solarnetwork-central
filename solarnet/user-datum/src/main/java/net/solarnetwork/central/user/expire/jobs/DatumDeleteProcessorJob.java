@@ -40,7 +40,6 @@ public class DatumDeleteProcessorJob extends JobSupport {
 
 	private final UserDatumDeleteJobBiz datumDeleteJobBiz;
 	private final UserDatumDeleteJobInfoDao jobInfoDao;
-	private int maximumClaimCount = 1;
 
 	/**
 	 * Constructor.
@@ -57,14 +56,15 @@ public class DatumDeleteProcessorJob extends JobSupport {
 		super();
 		this.datumDeleteJobBiz = requireNonNullArgument(datumDeleteJobBiz, "datumDeleteJobBiz");
 		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
-		setGroupId("DatumImport");
+		setGroupId("UserExpire");
 		setMaximumWaitMs(5400000L);
-		setMaximumClaimCount(1000);
+		setMaximumIterations(1);
 	}
 
 	@Override
 	public void run() {
-		for ( int i = 0; i < maximumClaimCount; i++ ) {
+		final int max = getMaximumIterations();
+		for ( int i = 0; i < max; i++ ) {
 			DatumDeleteJobInfo info = jobInfoDao.claimQueuedJob();
 			if ( info == null ) {
 				// nothing left to claim
@@ -83,13 +83,4 @@ public class DatumDeleteProcessorJob extends JobSupport {
 		}
 	}
 
-	/**
-	 * Set the maximum number of claims to acquire per execution of this job.
-	 * 
-	 * @param maximumClaimCount
-	 *        the maximum count; defaults to {@literal 1000}
-	 */
-	public void setMaximumClaimCount(int maximumClaimCount) {
-		this.maximumClaimCount = maximumClaimCount;
-	}
 }

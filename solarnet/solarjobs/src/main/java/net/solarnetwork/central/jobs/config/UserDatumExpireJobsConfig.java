@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventJobsConfig.java - 8/11/2021 4:28:25 PM
+ * UserDatumExpireJobsConfig.java - 9/11/2021 8:02:36 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,55 +22,64 @@
 
 package net.solarnetwork.central.jobs.config;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.scheduler.ManagedJob;
-import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
-import net.solarnetwork.central.user.event.dao.UserNodeEventTaskDao;
-import net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskCleanerJob;
-import net.solarnetwork.central.user.event.dao.jobs.UserNodeEventTaskProcessorJob;
+import net.solarnetwork.central.user.expire.biz.UserDatumDeleteJobBiz;
+import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
+import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.central.user.expire.jobs.DatumDeleteJobInfoCleanerJob;
+import net.solarnetwork.central.user.expire.jobs.DatumDeleteProcessorJob;
+import net.solarnetwork.central.user.expire.jobs.ExpireDatumJob;
 
 /**
- * User event jobs configuration.
+ * Datum expire jobs configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class UserEventJobsConfig {
+public class UserDatumExpireJobsConfig {
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
 
 	@Autowired
-	public UserNodeEventTaskDao userNodeEventTaskDao;
+	private ExpireUserDataConfigurationDao expireUserDataConfigurationDao;
 
 	@Autowired
-	private TransactionTemplate transactionTemplate;
+	private UserDatumDeleteJobBiz userDatumDeleteJobBiz;
 
 	@Autowired
-	private List<UserNodeEventHookService> userNodeEventHookServices;
+	private UserDatumDeleteJobInfoDao userDatumDeleteJobInfoDao;
 
-	@ConfigurationProperties(prefix = "app.job.user-event.processor")
+	@ConfigurationProperties(prefix = "app.job.user-datum-expire.cleaner")
 	@Bean
-	public ManagedJob userNodeEventTaskProcessorJob() {
-		UserNodeEventTaskProcessorJob job = new UserNodeEventTaskProcessorJob(transactionTemplate,
-				userNodeEventTaskDao, userNodeEventHookServices);
-		job.setId("UserNodeEventTaskProcessor");
+	public ManagedJob datumDeleteJobInfoCleanerJob() {
+		DatumDeleteJobInfoCleanerJob job = new DatumDeleteJobInfoCleanerJob(userDatumDeleteJobBiz);
+		job.setId("DatumDeleteJobInfoCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
 
-	@ConfigurationProperties(prefix = "app.job.user-event.cleaner")
+	@ConfigurationProperties(prefix = "app.job.user-datum-expire.delete")
 	@Bean
-	public ManagedJob userNodeEventTaskCleanerJob() {
-		UserNodeEventTaskCleanerJob job = new UserNodeEventTaskCleanerJob(userNodeEventTaskDao);
-		job.setId("UserNodeEventTaskCleaner");
+	public ManagedJob datumDeleteProcessorJob() {
+		DatumDeleteProcessorJob job = new DatumDeleteProcessorJob(userDatumDeleteJobBiz,
+				userDatumDeleteJobInfoDao);
+		job.setId("DatumDeleteProcessor");
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	@ConfigurationProperties(prefix = "app.job.user-datum-expire.expire")
+	@Bean
+	public ManagedJob expireDatumJob() {
+		ExpireDatumJob job = new ExpireDatumJob(expireUserDataConfigurationDao);
+		job.setId("ExpireDatum");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
