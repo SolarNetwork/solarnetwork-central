@@ -34,8 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -66,6 +64,8 @@ import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.event.AppEvent;
+import net.solarnetwork.event.AppEventHandler;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
@@ -77,7 +77,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 2.0
  */
-public class DaoUserExportBiz implements UserExportBiz, EventHandler {
+public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	private final UserDatumExportConfigurationDao datumExportConfigDao;
 	private final UserDataConfigurationDao dataConfigDao;
@@ -363,7 +363,7 @@ public class DaoUserExportBiz implements UserExportBiz, EventHandler {
 	}
 
 	@Override
-	public void handleEvent(Event event) {
+	public void handleEvent(AppEvent event) {
 		if ( event == null
 				|| !DatumExportStatus.EVENT_TOPIC_JOB_STATUS_CHANGED.equals(event.getTopic()) ) {
 			return;

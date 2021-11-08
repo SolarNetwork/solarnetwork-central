@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.osgi.service.event.Event;
+import net.solarnetwork.event.AppEvent;
+import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * The status of a datum export job.
@@ -37,7 +39,7 @@ import org.osgi.service.event.Event;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.23
  */
 public interface DatumExportStatus extends Future<DatumExportResult> {
@@ -91,7 +93,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumExportStatus)
 	 */
-	default Event asJobStatusChagnedEvent() {
+	default AppEvent asJobStatusChagnedEvent() {
 		return createJobStatusChagnedEvent(this);
 	}
 
@@ -103,7 +105,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumExportStatus, DatumExportResult)
 	 */
-	default Event asJobStatusChagnedEvent(DatumExportResult result) {
+	default AppEvent asJobStatusChagnedEvent(DatumExportResult result) {
 		return createJobStatusChagnedEvent(this, result);
 	}
 
@@ -119,7 +121,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumExportStatus status) {
+	static AppEvent createJobStatusChagnedEvent(DatumExportStatus status) {
 		DatumExportResult result = null;
 		if ( status.isDone() ) {
 			try {
@@ -143,8 +145,8 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumExportStatus status, DatumExportResult result) {
-		Map<String, Object> props = new HashMap<String, Object>(4);
+	static AppEvent createJobStatusChagnedEvent(DatumExportStatus status, DatumExportResult result) {
+		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
 			props.put(EVENT_PROP_JOB_STATE, status.getJobState() != null ? status.getJobState().getKey()
@@ -156,7 +158,13 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 				props.put(EVENT_PROP_MESSAGE, result.getMessage());
 			}
 		}
-		return new Event(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
+		// @formatter:off
+		return BasicAppEvent.builder()
+				.withTopic(EVENT_TOPIC_JOB_STATUS_CHANGED)
+				.withCreated(Instant.now())
+				.withEventProperties(props)
+				.build();
+		// @formatter:on
 	}
 
 }

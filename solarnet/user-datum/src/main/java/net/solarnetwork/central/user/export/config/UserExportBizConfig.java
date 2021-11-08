@@ -33,6 +33,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.dao.UserOutputConfigurationDao;
+import net.solarnetwork.event.AppEventHandlerRegistrar;
 import net.solarnetwork.support.PrefixedMessageSource;
 
 /**
@@ -82,6 +84,9 @@ public class UserExportBizConfig {
 
 	@Autowired
 	private DatumStreamMetadataDao metaDao;
+
+	@Autowired
+	private AppEventHandlerRegistrar appEventHandlerRegistrar;
 
 	@Autowired
 	private List<DatumExportOutputFormatService> datumExportOutputFormatServices;
@@ -126,6 +131,9 @@ public class UserExportBizConfig {
 		PrefixedMessageSource msgSrc = new PrefixedMessageSource();
 		msgSrc.setDelegates(msgSources);
 		biz.setMessageSource(msgSrc);
+
+		appEventHandlerRegistrar.registerEventHandler(biz,
+				DatumExportStatus.EVENT_TOPIC_JOB_STATUS_CHANGED);
 
 		return biz;
 	}

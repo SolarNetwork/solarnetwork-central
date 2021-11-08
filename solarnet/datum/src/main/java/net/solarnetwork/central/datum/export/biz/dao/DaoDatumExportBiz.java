@@ -24,28 +24,30 @@ package net.solarnetwork.central.datum.export.biz.dao;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -76,9 +78,8 @@ import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.service.IdentifiableConfiguration;
-import net.solarnetwork.service.OptionalService;
-import net.solarnetwork.service.OptionalServiceCollection;
 import net.solarnetwork.service.ProgressListener;
 
 /**
@@ -95,31 +96,47 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	/** The default query page size. */
 	public static final int DEFAULT_QUERY_PAGE_SIZE = 1000;
 
-	private OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices;
-	private OptionalServiceCollection<DatumExportDestinationService> destinationServices;
-	private OptionalService<EventAdmin> eventAdmin;
-	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-
 	private final ConcurrentMap<String, DatumExportTask> taskMap = new ConcurrentHashMap<>(16);
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final DatumExportTaskInfoDao taskDao;
 	private final DatumEntityDao datumDao;
-	private final ScheduledExecutorService scheduler;
-	private final ExecutorService executor;
+	private final TaskScheduler scheduler;
+	private final AsyncTaskExecutor executor;
 	private final TransactionTemplate transactionTemplate;
-	private ScheduledFuture<?> taskPurgerTask;
-	private OptionalService<QueryAuditor> queryAuditor;
+	private List<DatumExportOutputFormatService> outputFormatServices;
+	private List<DatumExportDestinationService> destinationServices;
+	private AppEventPublisher eventPublisher;
+	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 
+	private ScheduledFuture<?> taskPurgerTask;
+	private QueryAuditor queryAuditor;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param taskDao
+	 *        the task DAO
+	 * @param datumDao
+	 *        the datum DAO
+	 * @param scheduler
+	 *        the scheduler
+	 * @param executor
+	 *        the executor
+	 * @param transactionTemplate
+	 *        the transaction template
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
-			ScheduledExecutorService scheduler, ExecutorService executor,
+			TaskScheduler scheduler, AsyncTaskExecutor executor,
 			TransactionTemplate transactionTemplate) {
 		super();
-		this.taskDao = taskDao;
-		this.datumDao = datumDao;
-		this.scheduler = scheduler;
-		this.executor = executor;
-		this.transactionTemplate = transactionTemplate;
+		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
+		this.executor = requireNonNullArgument(executor, "executor");
+		this.transactionTemplate = requireNonNullArgument(transactionTemplate, "transactionTemplate");
 	}
 
 	/**
@@ -138,8 +155,8 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		}
 		if ( scheduler != null ) {
 			// purge completed tasks every hour
-			this.taskPurgerTask = scheduler.scheduleWithFixedDelay(new TaskPurger(), 1L, 1L,
-					TimeUnit.HOURS);
+			this.taskPurgerTask = scheduler.scheduleWithFixedDelay(new TaskPurger(),
+					Instant.now().plus(1, ChronoUnit.HOURS), Duration.ofHours(1));
 		}
 	}
 
@@ -325,7 +342,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 				BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
 						singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
 
-				QueryAuditor auditor = (queryAuditor != null ? queryAuditor.service() : null);
+				final QueryAuditor auditor = queryAuditor;
 				if ( auditor != null ) {
 					auditor.resetCurrentAuditResults();
 				}
@@ -480,7 +497,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		if ( task == null ) {
 			return;
 		}
-		EventAdmin ea = (this.eventAdmin != null ? this.eventAdmin.service() : null);
+		final AppEventPublisher ea = this.eventPublisher;
 		if ( ea == null ) {
 			return;
 		}
@@ -503,7 +520,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		}
 	}
 
-	private <T extends Identity<String>> T optionalService(OptionalServiceCollection<T> collection,
+	private <T extends Identity<String>> T optionalService(List<T> collection,
 			IdentifiableConfiguration config) {
 		if ( collection == null || config == null ) {
 			return null;
@@ -512,8 +529,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 		if ( id == null ) {
 			return null;
 		}
-		Iterable<T> services = collection.services();
-		for ( T service : services ) {
+		for ( T service : collection ) {
 			if ( id.equals(service.getId()) ) {
 				return service;
 			}
@@ -527,8 +543,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 * @param outputFormatServices
 	 *        the optional services
 	 */
-	public void setOutputFormatServices(
-			OptionalServiceCollection<DatumExportOutputFormatService> outputFormatServices) {
+	public void setOutputFormatServices(List<DatumExportOutputFormatService> outputFormatServices) {
 		this.outputFormatServices = outputFormatServices;
 	}
 
@@ -538,8 +553,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 * @param destinationServices
 	 *        the optional services
 	 */
-	public void setDestinationServices(
-			OptionalServiceCollection<DatumExportDestinationService> destinationServices) {
+	public void setDestinationServices(List<DatumExportDestinationService> destinationServices) {
 		this.destinationServices = destinationServices;
 	}
 
@@ -555,13 +569,13 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	}
 
 	/**
-	 * Configure an {@link EventAdmin} service for posting status events.
+	 * Configure a service for posting status events.
 	 * 
-	 * @param eventAdmin
+	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventAdmin(OptionalService<EventAdmin> eventAdmin) {
-		this.eventAdmin = eventAdmin;
+	public void setEventPublisher(AppEventPublisher eventAdmin) {
+		this.eventPublisher = eventAdmin;
 	}
 
 	/**
@@ -571,7 +585,7 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 *        the auditor
 	 * @since 1.2
 	 */
-	public void setQueryAuditor(OptionalService<QueryAuditor> queryAuditor) {
+	public void setQueryAuditor(QueryAuditor queryAuditor) {
 		this.queryAuditor = queryAuditor;
 	}
 

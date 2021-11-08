@@ -19,7 +19,9 @@ app:
     platform: postgres
     initialize: false
   datum:
-    export.temporaryDir: "${java.io.tmpdir}"
+    export:
+      completed-task-minimum-cache-time: 14400000
+      temporary-dir: "${java.io.tmpdir}"
     import:
       concurrent-tasks: 2
       concurrent-preview-tasks: 4
@@ -90,6 +92,22 @@ app:
           schedule: "40 10/20 * * * *"
         missing:
           schedule: "45 15 2/8 * * *"
+      export:
+        cleaner:
+          minimum-age-minutes: 720
+          schedule: "0 47 * * * *"
+        processor:
+          maximum-iterations: 1000
+          maximum-wait-ms: 300000
+          schedule: "0 1/10 * * * *"
+      import:
+        cleaner:
+          minimum-age-minutes: 720
+          schedule: "0 53 * * * *"
+        processor:
+          maximum-iterations: 2
+          maximum-wait-ms: 5400000
+          schedule: "0 3/10 * * * ?"
     instr:
       cleaner:
         days-older: 30

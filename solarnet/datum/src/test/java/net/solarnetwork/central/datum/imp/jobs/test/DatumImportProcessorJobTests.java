@@ -55,7 +55,7 @@ public class DatumImportProcessorJobTests {
 
 		job = new DatumImportProcessorJob(importJobBiz);
 		job.setId(JOB_ID);
-		job.setMaximumClaimCount(2);
+		job.setMaximumIterations(2);
 	}
 
 	private void replayAll() {

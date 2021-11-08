@@ -33,12 +33,11 @@ import net.solarnetwork.util.ObjectUtils;
  * Job to claim datum import tasks for processing and submit them for execution.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class DatumImportProcessorJob extends JobSupport {
 
 	private final DatumImportJobBiz importJobBiz;
-	private int maximumClaimCount = 1000;
 
 	/**
 	 * Constructor.
@@ -52,12 +51,12 @@ public class DatumImportProcessorJob extends JobSupport {
 		this.importJobBiz = ObjectUtils.requireNonNullArgument(importJobBiz, "importJobBiz");
 		setGroupId("DatumImport");
 		setMaximumWaitMs(5400000L);
-		setMaximumClaimCount(1000);
 	}
 
 	@Override
 	public void run() {
-		for ( int i = 0; i < maximumClaimCount; i++ ) {
+		final int max = getMaximumIterations();
+		for ( int i = 0; i < max; i++ ) {
 			DatumImportJobInfo info = importJobBiz.claimQueuedJob();
 			if ( info == null ) {
 				// nothing left to claim
@@ -76,13 +75,4 @@ public class DatumImportProcessorJob extends JobSupport {
 		}
 	}
 
-	/**
-	 * Set the maximum number of claims to acquire per execution of this job.
-	 * 
-	 * @param maximumClaimCount
-	 *        the maximum count; defaults to {@literal 1000}
-	 */
-	public void setMaximumClaimCount(int maximumClaimCount) {
-		this.maximumClaimCount = maximumClaimCount;
-	}
 }

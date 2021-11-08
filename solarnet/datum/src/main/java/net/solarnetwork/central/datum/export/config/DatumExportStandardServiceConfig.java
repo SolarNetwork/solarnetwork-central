@@ -43,7 +43,7 @@ import net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputForma
 @Configuration
 public class DatumExportStandardServiceConfig {
 
-	@Value("${app.datum.export.temporaryDir}")
+	@Value("${app.datum.export.temporary-dir}")
 	private String temporaryDir;
 
 	@Bean

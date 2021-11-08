@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -151,7 +150,7 @@ public class DatumImportBizConfig {
 	}
 
 	@Bean
-	public DatumImportBiz datumImportBiz() {
+	public DaoDatumImportBiz datumImportBiz() {
 		DatumImportSettings settings = datumImportSettings();
 
 		SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor("Datum-Import-");

@@ -31,7 +31,6 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.agg.StaleDatumStreamProcessor;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
-import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.ManagedJob;
 
@@ -49,9 +48,6 @@ public class DatumAggJobsConfig {
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
-
-	@Autowired
-	private List<DatumAppEventProducer> datumAppEventProducers;
 
 	@Autowired
 	private List<DatumAppEventAcceptor> datumAppEventAcceptors;
