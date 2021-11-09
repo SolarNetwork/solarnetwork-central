@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A scheduled task.
@@ -127,6 +128,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * 
 	 * @return the job key
 	 */
+	@JsonIgnore
 	public JobKey getKey() {
 		return key;
 	}
@@ -173,6 +175,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	 * 
 	 * @return the job future
 	 */
+	@JsonIgnore
 	public ScheduledFuture<?> getFuture() {
 		return future;
 	}

@@ -16,6 +16,11 @@
 			font-weight: normal;
 		}
 		
+		.pass {
+			color: #090;
+			background-color: inherit;
+		}
+		
 		.fail {
 			color: #c00;
 			background-color: inherit;
@@ -80,8 +85,8 @@
 						<span th:text="${result.value.pingTestName}">Test 1</span><br />
 						<div class="caption" th:text="${result.key}">test.1</div>
 					</th>
-					<td th:classappend="${result.value.success}?fail"
-						th:text="${result.value.success} ? 'PASS' : 'FAIL'">PASS</td>
+					<td th:classappend="${result.value.success}? pass : fail"
+						th:text="${result.value.success} ? PASS : FAIL">PASS</td>
 					<td th:text="${result.value.duration.toMillis()}">23</td>
 					<td th:text="${result.value.message}">Passed with flying colors.</td>
 				</tr>

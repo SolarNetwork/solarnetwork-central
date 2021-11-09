@@ -25,6 +25,7 @@ package net.solarnetwork.central.scheduler;
 import static net.solarnetwork.central.scheduler.SchedulerUtils.extractExecutionScheduleDescription;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -37,6 +38,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.Trigger;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Implementation of {@link SchedulerManager} using a {@link TaskScheduler}.
@@ -44,7 +46,7 @@ import net.solarnetwork.service.PingTestResult;
  * @author matt
  * @version 1.0
  */
-public class SimpleSchedulerManager implements SchedulerManager, PingTest {
+public class SimpleSchedulerManager implements SchedulerManager, PingTest, ServiceLifecycleObserver {
 
 	/**
 	 * The default {@code pingTestMaximumExecutionMilliseconds} property value.
@@ -74,6 +76,16 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 	public SimpleSchedulerManager(TaskScheduler taskScheduler) {
 		super();
 		this.taskScheduler = requireNonNullArgument(taskScheduler, "taskScheduler");
+	}
+
+	@Override
+	public void serviceDidStartup() {
+		status = SchedulerStatus.Running;
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		status = SchedulerStatus.Destroyed;
 	}
 
 	@Override
@@ -116,7 +128,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 			log.info("Scheduling job {} @ {}", key.getDescription(),
 					extractExecutionScheduleDescription(trigger));
 			ScheduledJob job = new ScheduledJob(key, task, trigger);
-			ScheduledFuture<?> f = taskScheduler.schedule(task, trigger);
+			ScheduledFuture<?> f = taskScheduler.schedule(job, trigger);
 			job.setFuture(f);
 			jobs.put(key, job);
 			return f;
@@ -172,21 +184,22 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest {
 		}
 
 		int triggerCount = 0;
-		final String stateErrorTemplate = "Trigger %s.%s is in the %s state, since %tc";
+		final String stateErrorTemplate = "Trigger %s.%s is in the %s state, since %s.";
 		for ( Entry<JobKey, ScheduledJob> entry : jobs.entrySet() ) {
 			JobKey key = entry.getKey();
 			ScheduledJob job = entry.getValue();
 			triggerCount += 1;
 			JobStatus triggerState = job.getJobStatus();
 			Instant lastFireTime = job.getPreviousExecutionTime();
-			;
+			String sinceTime = (lastFireTime != null ? DateTimeFormatter.ISO_INSTANT.format(lastFireTime)
+					: "");
 			if ( triggerState == JobStatus.Error ) {
 				return new PingTestResult(false, String.format(stateErrorTemplate, key.getGroupId(),
-						key.getId(), "ERROR", lastFireTime));
+						key.getId(), "ERROR", sinceTime));
 			} else if ( job.isExecuting() && (System.currentTimeMillis()
 					- lastFireTime.toEpochMilli()) > (blockedJobMaxSeconds * 1000L) ) {
 				return new PingTestResult(false, String.format(stateErrorTemplate, key.getGroupId(),
-						key.getId(), "BLOCKED", lastFireTime));
+						key.getId(), "BLOCKED", sinceTime));
 			}
 		}
 

@@ -38,4 +38,6 @@ public enum Role {
 
 	ROLE_WRITENODEDATA,
 
+	ROLE_OPS,
+
 }

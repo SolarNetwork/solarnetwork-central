@@ -50,7 +50,7 @@ public class SchedulerConfig {
 	private List<ManagedJob> managedJobs;
 
 	@ConfigurationProperties(prefix = "app.scheduler-manager")
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public SimpleSchedulerManager schedulerManager() {
 		SimpleSchedulerManager manager = new SimpleSchedulerManager(taskScheduler);
 		for ( ManagedJob job : managedJobs ) {
