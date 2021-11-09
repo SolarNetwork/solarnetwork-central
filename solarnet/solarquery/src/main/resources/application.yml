@@ -12,18 +12,20 @@ app:
     password: solartest
     platform: postgres
     initialize: false
-  datasource-read-write-example:
+    ping-query: "SELECT CURRENT_TIMESTAMP"
+  datasource-read-write:
     hikari:
       minimumIdle: 0
       connectionTimeout: 30000
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    url-example: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
     username: solartest
     password: solartest
     platform: postgres
     initialize: false
+    ping-query: "SELECT CURRENT_TIMESTAMP"
   datum.query-auditor:
     update-delay: 100
     flush-delay: 10000
