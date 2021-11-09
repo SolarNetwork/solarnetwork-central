@@ -106,8 +106,6 @@ logging:
   level:
     ROOT: INFO
     org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
-    net.solarnetwork.central: DEBUG
-    org.springframework.test: DEBUG
   pattern:
     console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
@@ -175,9 +173,4 @@ app:
     invoice.mail.from: accounts@solarnetwork.net
 
 debug: false
-
-logging:
-  level:
-    ROOT: INFO
-    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
-    net.solarnetwork.central: INFO
+ 
