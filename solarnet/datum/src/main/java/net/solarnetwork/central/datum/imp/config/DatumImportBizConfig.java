@@ -36,6 +36,7 @@ import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.service.ResourceStorageService;
 
 /**
@@ -62,6 +63,9 @@ public class DatumImportBizConfig {
 	@Autowired(required = false)
 	@Qualifier(DATUM_IMPORT)
 	private ResourceStorageService resourceStorageService;
+
+	@Autowired
+	private AppEventPublisher eventPublisher;
 
 	@Autowired
 	private List<DatumImportInputFormatService> datumImportInputFormatServices;
@@ -170,6 +174,8 @@ public class DatumImportBizConfig {
 				"Datum-Import-Preview-");
 		previewTaskExecutor.setConcurrencyLimit(settings.concurrentPreviewTasks);
 		biz.setPreviewExecutor(previewTaskExecutor);
+
+		biz.setEventPublisher(eventPublisher);
 
 		return biz;
 	}

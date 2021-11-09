@@ -39,6 +39,7 @@ import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.support.PrefixedMessageSource;
 
 /**
@@ -65,6 +66,9 @@ public class UserExpireBizConfig {
 	@Autowired
 	private ExpireUserDataConfigurationDao userDataConfigurationDao;
 
+	@Autowired
+	private AppEventPublisher eventPublisher;
+
 	@Value("${app.user.datum.delete.parallelism:1}")
 	private int deleteTaskParallelism = 1;
 
@@ -80,7 +84,7 @@ public class UserExpireBizConfig {
 		DaoUserDatumDeleteBiz biz = new DaoUserDatumDeleteBiz(taskExecutor, userNodeDao, datumDao,
 				jobInfoDao);
 		biz.setScheduler(taskScheduler);
-		// TODO biz.setEventAdmin(null);
+		biz.setEventPublisher(eventPublisher);
 		return biz;
 	}
 

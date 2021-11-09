@@ -26,8 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.osgi.service.event.Event;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.event.AppEvent;
+import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * The status of a datum delete job.
@@ -161,7 +162,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumDeleteJobStatus)
 	 */
-	default Event asJobStatusChagnedEvent() {
+	default AppEvent asJobStatusChagnedEvent() {
 		return createJobStatusChagnedEvent(this);
 	}
 
@@ -174,7 +175,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 * @see #createJobStatusChagnedEvent(DatumDeleteJobStatus,
 	 *      DatumDeleteJobInfo)
 	 */
-	default Event asJobStatusChagnedEvent(DatumDeleteJobInfo result) {
+	default AppEvent asJobStatusChagnedEvent(DatumDeleteJobInfo result) {
 		return createJobStatusChagnedEvent(this, result);
 	}
 
@@ -190,7 +191,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumDeleteJobStatus status) {
+	static AppEvent createJobStatusChagnedEvent(DatumDeleteJobStatus status) {
 		DatumDeleteJobInfo result = null;
 		if ( status.isDone() ) {
 			try {
@@ -216,7 +217,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the delete result
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
+	static AppEvent createJobStatusChagnedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
 		Map<String, Object> props = new HashMap<String, Object>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
@@ -229,7 +230,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 				props.put(EVENT_PROP_MESSAGE, result.getMessage());
 			}
 		}
-		return new Event(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
+		return new BasicAppEvent(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
 	}
 
 }

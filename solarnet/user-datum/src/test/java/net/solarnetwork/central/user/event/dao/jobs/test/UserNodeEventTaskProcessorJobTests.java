@@ -49,7 +49,6 @@ import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.EventAdmin;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -76,7 +75,6 @@ public class UserNodeEventTaskProcessorJobTests {
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_SERVICE_ID = "test.service";
 
-	private EventAdmin eventAdmin;
 	private PlatformTransactionManager txManager;
 	private UserNodeEventTaskDao taskDao;
 	private UserNodeEventHookService hookService;
@@ -100,7 +98,6 @@ public class UserNodeEventTaskProcessorJobTests {
 
 	@Before
 	public void setup() throws Exception {
-		eventAdmin = EasyMock.createMock(EventAdmin.class);
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 		taskDao = EasyMock.createMock(UserNodeEventTaskDao.class);
 		hookService = EasyMock.createMock(UserNodeEventHookService.class);
@@ -135,7 +132,7 @@ public class UserNodeEventTaskProcessorJobTests {
 	}
 
 	private void replayAll(Object... mocks) {
-		EasyMock.replay(eventAdmin, txManager, taskDao, hookService);
+		EasyMock.replay(txManager, taskDao, hookService);
 		if ( mocks != null ) {
 			EasyMock.replay(mocks);
 		}
@@ -147,7 +144,7 @@ public class UserNodeEventTaskProcessorJobTests {
 			serviceCache.close();
 		}
 		cacheManager.destroyCache(TEST_SERVICE_CACHE_NAME);
-		EasyMock.verify(eventAdmin, txManager, taskDao, hookService);
+		EasyMock.verify(txManager, taskDao, hookService);
 	}
 
 	private void assertTaskNotCompleted(UserNodeEventTask task) {

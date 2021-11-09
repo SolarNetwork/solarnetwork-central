@@ -67,7 +67,7 @@ import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
-import net.solarnetwork.service.OptionalService;
+import net.solarnetwork.event.AppEventPublisher;
 
 /**
  * DAO implementation of {@link UserDatumDeleteBiz}.
@@ -93,7 +93,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	private TaskScheduler scheduler;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
-	private OptionalService<EventAdmin> eventAdmin;
+	private AppEventPublisher eventPublisher;
 	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
@@ -272,7 +272,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		if ( status == null ) {
 			return;
 		}
-		EventAdmin ea = (this.eventAdmin != null ? this.eventAdmin.service() : null);
+		final AppEventPublisher ea = getEventPublisher();
 		if ( ea == null ) {
 			return;
 		}
@@ -565,18 +565,18 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 * 
 	 * @return the service
 	 */
-	public OptionalService<EventAdmin> getEventAdmin() {
-		return eventAdmin;
+	public AppEventPublisher getEventPublisher() {
+		return eventPublisher;
 	}
 
 	/**
 	 * Configure an {@link EventAdmin} service for posting status events.
 	 * 
-	 * @param eventAdmin
+	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventAdmin(OptionalService<EventAdmin> eventAdmin) {
-		this.eventAdmin = eventAdmin;
+	public void setEventPublisher(AppEventPublisher eventAdmin) {
+		this.eventPublisher = eventAdmin;
 	}
 
 	/**

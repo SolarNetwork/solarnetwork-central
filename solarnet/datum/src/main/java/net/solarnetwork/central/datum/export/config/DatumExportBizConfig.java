@@ -60,7 +60,7 @@ public class DatumExportBizConfig {
 	private AsyncTaskExecutor taskExecutor;
 
 	@Autowired
-	private AppEventPublisher appEventPublisher;
+	private AppEventPublisher eventPublisher;
 
 	@Autowired
 	private DatumExportTaskInfoDao datumExportTaskInfoDao;
@@ -85,7 +85,7 @@ public class DatumExportBizConfig {
 		biz.setCompletedTaskMinimumCacheTime(completedTaskMinimumCacheTime);
 		biz.setDestinationServices(datumExportDestinationServices);
 		biz.setOutputFormatServices(datumExportOutputFormatServices);
-		biz.setEventPublisher(appEventPublisher);
+		biz.setEventPublisher(eventPublisher);
 		return biz;
 	}
 

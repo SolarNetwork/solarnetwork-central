@@ -39,9 +39,9 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportResource;
 import net.solarnetwork.central.datum.imp.domain.DatumImportResult;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.io.TransferrableResource;
 import net.solarnetwork.service.IdentifiableConfiguration;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Abstract class for basic {@link DatumImportBiz} support.
@@ -56,7 +56,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 
 	private File workDirectory = defaultWorkDirectory();
 	private List<DatumImportInputFormatService> inputServices;
-	private OptionalService<EventAdmin> eventAdmin;
+	private AppEventPublisher eventPublisher;
 
 	private static File defaultWorkDirectory() {
 		String path = System.getProperty("java.io.tmpdir");
@@ -163,7 +163,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 		if ( status == null ) {
 			return;
 		}
-		EventAdmin ea = (this.eventAdmin != null ? this.eventAdmin.service() : null);
+		final AppEventPublisher ea = getEventPublisher();
 		if ( ea == null ) {
 			return;
 		}
@@ -246,17 +246,17 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 * 
 	 * @return the service
 	 */
-	public OptionalService<EventAdmin> getEventAdmin() {
-		return eventAdmin;
+	public AppEventPublisher getEventPublisher() {
+		return eventPublisher;
 	}
 
 	/**
 	 * Configure an {@link EventAdmin} service for posting status events.
 	 * 
-	 * @param eventAdmin
+	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventAdmin(OptionalService<EventAdmin> eventAdmin) {
-		this.eventAdmin = eventAdmin;
+	public void setEventPublisher(AppEventPublisher eventAdmin) {
+		this.eventPublisher = eventAdmin;
 	}
 }

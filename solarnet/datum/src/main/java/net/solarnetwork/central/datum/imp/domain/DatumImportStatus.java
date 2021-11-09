@@ -26,7 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.osgi.service.event.Event;
+import net.solarnetwork.event.AppEvent;
+import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * The status of a datum import job.
@@ -153,7 +154,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumImportStatus)
 	 */
-	default Event asJobStatusChagnedEvent() {
+	default AppEvent asJobStatusChagnedEvent() {
 		return createJobStatusChagnedEvent(this);
 	}
 
@@ -165,7 +166,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 * @return the event, never {@literal null}
 	 * @see #createJobStatusChagnedEvent(DatumImportStatus, DatumImportResult)
 	 */
-	default Event asJobStatusChagnedEvent(DatumImportResult result) {
+	default AppEvent asJobStatusChagnedEvent(DatumImportResult result) {
 		return createJobStatusChagnedEvent(this, result);
 	}
 
@@ -181,7 +182,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumImportStatus status) {
+	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status) {
 		DatumImportResult result = null;
 		if ( status.isDone() ) {
 			try {
@@ -207,7 +208,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *        the import result
 	 * @return the event, never {@literal null}
 	 */
-	static Event createJobStatusChagnedEvent(DatumImportStatus status, DatumImportResult result) {
+	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status, DatumImportResult result) {
 		Map<String, Object> props = new HashMap<String, Object>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
@@ -220,7 +221,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 				props.put(EVENT_PROP_MESSAGE, result.getMessage());
 			}
 		}
-		return new Event(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
+		return new BasicAppEvent(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
 	}
 
 }

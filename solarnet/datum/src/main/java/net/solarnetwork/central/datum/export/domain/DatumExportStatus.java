@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.export.domain;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -158,13 +157,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 				props.put(EVENT_PROP_MESSAGE, result.getMessage());
 			}
 		}
-		// @formatter:off
-		return BasicAppEvent.builder()
-				.withTopic(EVENT_TOPIC_JOB_STATUS_CHANGED)
-				.withCreated(Instant.now())
-				.withEventProperties(props)
-				.build();
-		// @formatter:on
+		return new BasicAppEvent(EVENT_TOPIC_JOB_STATUS_CHANGED, props);
 	}
 
 }
