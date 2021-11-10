@@ -38,6 +38,15 @@ app:
           regionName: us-west-2
           accessToken: TOKEN_HERE
           accessSecret: SECRET_HERE
+    solarflux-publish:
+      uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
+      publish-qos-level: 0
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solarjobs-@@SOLAR_FLUX_PUB_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
@@ -69,6 +78,11 @@ app:
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "45 0/20 * * * *"
+        flux:
+          maximum-iterations: 1000
+          maximum-wait-ms: 59000
+          parallelism: 4
+          schedule: "45 0/1 * * * *"
       audit:
         raw:
           maximum-iterations: 1000
@@ -142,6 +156,9 @@ app:
         maximum-wait-ms: 240000
         parallelism: 4
         schedule: "0/10 * * * * *"
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
   network-identity:
     network-identity-key: "replace:identity:here"
     terms-of-service: "replace:tos:here"

@@ -42,6 +42,9 @@ dependencies {
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
 
+	// SolarNetwork
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"

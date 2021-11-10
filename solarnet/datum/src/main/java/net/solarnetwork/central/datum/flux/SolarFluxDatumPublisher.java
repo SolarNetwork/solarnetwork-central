@@ -45,6 +45,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Publish datum to SolarFlux.
@@ -52,7 +53,8 @@ import net.solarnetwork.domain.Identity;
  * @author matt
  * @version 2.0
  */
-public class SolarFluxDatumPublisher extends BaseMqttConnectionService implements DatumProcessor {
+public class SolarFluxDatumPublisher extends BaseMqttConnectionService
+		implements DatumProcessor, ServiceLifecycleObserver {
 
 	/**
 	 * The MQTT topic template for node data publication.
@@ -101,6 +103,16 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService implement
 		} catch ( URISyntaxException e ) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public void serviceDidStartup() {
+		init();
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		shutdown();
 	}
 
 	@Override

@@ -3,6 +3,9 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
   network-identity:
     network-identity-key: "replace:identity:here"
     terms-of-service: "replace:tos:here"

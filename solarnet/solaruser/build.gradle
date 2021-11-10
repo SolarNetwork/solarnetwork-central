@@ -59,6 +59,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 		
 	// SolarNetwork
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.0.0'
 	
