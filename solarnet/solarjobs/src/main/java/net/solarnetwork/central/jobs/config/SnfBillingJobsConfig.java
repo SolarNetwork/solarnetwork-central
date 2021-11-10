@@ -78,7 +78,7 @@ public class SnfBillingJobsConfig {
 		return new InvoiceDeliverer(snfInvoicingSystem);
 	}
 
-	@ConfigurationProperties(prefix = "app.job.datum.billing.account-task")
+	@ConfigurationProperties(prefix = "app.job.billing.account-task")
 	@Bean
 	public ManagedJob accountTaskProcessorJob() {
 		AccountTaskJob job = new AccountTaskJob(transactionTemplate, accountTaskDao, invoiceGenerator(),
@@ -93,7 +93,7 @@ public class SnfBillingJobsConfig {
 		return new InvoiceGenerationTaskCreator(userDao, snfInvoicingSystem, accountTaskDao);
 	}
 
-	@ConfigurationProperties(prefix = "app.job.datum.billing.invoice-gen")
+	@ConfigurationProperties(prefix = "app.job.billing.invoice-gen")
 	@Bean
 	public ManagedJob invoiceGenerationTaskCreatorJob() {
 		InvoiceGenerationTaskCreatorJob job = new InvoiceGenerationTaskCreatorJob(
