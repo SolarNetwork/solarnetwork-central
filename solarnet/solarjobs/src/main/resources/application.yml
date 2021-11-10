@@ -147,6 +147,22 @@ app:
       expire:
         maximum-wait-ms: 21600000
         schedule: "0 15 1/8 * * *"
+    user-datum-export:
+      cleaner:
+        minimum-age-minutes: 360
+        schedule:  "0 37 * * * *"
+      hourly:
+        maximum-wait-ms: 600000
+        schedule: "0 10/30 * * * ?"
+      daily:
+        maximum-wait-ms: 600000
+        schedule: "0 10/30 1/8 * * *"
+      weekly:
+        maximum-wait-ms: 600000
+        schedule: "0 15 1/12 ? * MON-TUE"
+      monthly:
+        maximum-wait-ms: 600000
+        schedule: "0 45 2 1/2 * ?"
     user-event:
       cleaner:
         minimum-age-minutes: 60

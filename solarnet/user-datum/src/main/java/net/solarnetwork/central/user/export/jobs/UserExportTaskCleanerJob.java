@@ -54,6 +54,7 @@ public class UserExportTaskCleanerJob extends JobSupport {
 	public UserExportTaskCleanerJob(UserDatumExportTaskInfoDao taskDao) {
 		super();
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
+		setGroupId("UserExport");
 		setMinimumAgeMinutes(DEFAULT_MINIMUM_AGE_MINUTES);
 	}
 

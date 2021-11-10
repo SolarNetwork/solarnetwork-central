@@ -52,6 +52,7 @@ public class UserExportTaskPopulatorJob extends JobSupport {
 		super();
 		this.scheduleType = requireNonNullArgument(scheduleType, "scheduleType");
 		this.jobsService = requireNonNullArgument(jobsService, "jobsService");
+		setGroupId("UserExport");
 	}
 
 	@Override
