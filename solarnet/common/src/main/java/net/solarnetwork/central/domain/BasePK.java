@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.domain;
 
 import java.io.Serializable;
 import org.apache.commons.codec.digest.DigestUtils;

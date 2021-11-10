@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
@@ -330,7 +331,7 @@ public class SelectAuditDatum
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffset(filter, buf);
+		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

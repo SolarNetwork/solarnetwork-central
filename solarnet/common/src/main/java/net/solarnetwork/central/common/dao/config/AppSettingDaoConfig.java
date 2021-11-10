@@ -1,5 +1,5 @@
 /* ==================================================================
- * MailConfiguration.java - 21/10/2021 11:02:32 AM
+ * AppSettingDaoConfig.java - 10/11/2021 11:35:43 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,41 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.common.dao.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
-import net.solarnetwork.central.mail.MailService;
-import net.solarnetwork.central.mail.support.DefaultMailService;
+import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.jdbc.JdbcAppSettingDao;
+import net.solarnetwork.central.dao.AppSettingDao;
 
 /**
- * Mail configuration.
+ * App setting DAO configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class MailConfiguration {
+public class AppSettingDaoConfig {
 
 	@Autowired
-	private MailSender mailSender;
-
-	@ConfigurationProperties(prefix = "app.user.reg.mail.template")
-	@Bean
-	public SimpleMailMessage mailTemplate() {
-		return new SimpleMailMessage();
-	}
+	private JdbcOperations jdbcOperations;
 
 	@Bean
-	@Primary
-	public MailService mailService() {
-		DefaultMailService service = new DefaultMailService(mailSender);
-		service.setTemplateMessage(mailTemplate());
-		return service;
+	public AppSettingDao appSettingDao() {
+		return new JdbcAppSettingDao(jdbcOperations);
 	}
+
 }

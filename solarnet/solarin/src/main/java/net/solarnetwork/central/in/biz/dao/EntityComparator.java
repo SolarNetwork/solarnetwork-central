@@ -24,9 +24,9 @@ package net.solarnetwork.central.in.biz.dao;
 
 import java.time.Instant;
 import java.util.Comparator;
-import net.solarnetwork.central.datum.domain.BasePK;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Compare entities by date, key, source.

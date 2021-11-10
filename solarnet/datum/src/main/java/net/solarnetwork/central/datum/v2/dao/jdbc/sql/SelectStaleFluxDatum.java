@@ -26,10 +26,10 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.order
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregationCriteria;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -153,9 +153,9 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffsetLiteral(filter, buf);
+		CommonSqlUtils.limitOffsetLiteral(filter, buf);
 		if ( forUpdate ) {
-			DatumSqlUtils.forUpdate(true, buf);
+			CommonSqlUtils.forUpdate(true, buf);
 		}
 		return buf.toString();
 	}
@@ -170,14 +170,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt;
-		if ( forUpdate ) {
-			stmt = con.prepareStatement(getSql(), ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_UPDATABLE);
-		} else {
-			stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
-					ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		}
+		PreparedStatement stmt = CommonSqlUtils.createPreparedStatement(con, getSql(), forUpdate);
 		prepareCore(con, stmt, 0);
 		return stmt;
 	}

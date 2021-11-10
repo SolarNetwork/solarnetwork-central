@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.domain.Aggregation;
@@ -135,7 +136,7 @@ public class SelectDatumAuxiliary
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffset(filter, buf);
+		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

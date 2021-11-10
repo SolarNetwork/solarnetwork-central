@@ -33,6 +33,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -162,7 +163,7 @@ public class SelectDatumRunningTotal implements PreparedStatementCreator, SqlPro
 			buf.append("INNER JOIN s ON s.stream_id = datum.stream_id\n");
 		}
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffset(filter, buf);
+		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

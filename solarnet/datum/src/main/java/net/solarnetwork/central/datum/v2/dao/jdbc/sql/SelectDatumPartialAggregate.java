@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
@@ -322,7 +323,7 @@ public class SelectDatumPartialAggregate
 		sqlCore(buf);
 		sqlOrderByJoins(buf);
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffset(filter, buf);
+		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

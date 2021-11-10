@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -112,7 +113,7 @@ public class SelectStaleAuditDatum implements PreparedStatementCreator, SqlProvi
 		StringBuilder buf = new StringBuilder();
 		sqlCore(buf);
 		sqlOrderBy(buf);
-		DatumSqlUtils.limitOffset(filter, buf);
+		CommonSqlUtils.limitOffset(filter, buf);
 		return buf.toString();
 	}
 

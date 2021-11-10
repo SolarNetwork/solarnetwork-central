@@ -45,6 +45,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -1295,72 +1296,6 @@ public final class DatumSqlUtils {
 	}
 
 	/**
-	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination.
-	 * 
-	 * <p>
-	 * The buffer is populated with a pattern of {@literal \nLIMIT ? OFFSET ?}.
-	 * </p>
-	 * 
-	 * @param filter
-	 *        the search criteria
-	 * @param buf
-	 *        the buffer to append the SQL to
-	 * @return the number of JDBC query parameters generated
-	 */
-	public static int limitOffset(PaginationCriteria filter, StringBuilder buf) {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				buf.append("\nLIMIT ? OFFSET ?");
-				return 2;
-			}
-		}
-		return 0;
-	}
-
-	/**
-	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination
-	 * where the limit and offset are generated as literal values.
-	 * 
-	 * <p>
-	 * The buffer is populated with a pattern of {@literal \nLIMIT x OFFSET y}.
-	 * </p>
-	 * 
-	 * @param filter
-	 *        the search criteria
-	 * @param buf
-	 *        the buffer to append the SQL to
-	 */
-	public static void limitOffsetLiteral(PaginationCriteria filter, StringBuilder buf) {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				buf.append("\nLIMIT ").append(max);
-			}
-			Integer offset = filter.getOffset();
-			if ( offset != null ) {
-				buf.append(" OFFSET ").append(offset);
-			}
-		}
-	}
-
-	/**
-	 * Generate SQL {@literal FOR UPDATE SKIP LOCKED} criteria to support
-	 * locking.
-	 * 
-	 * @param skipLocked
-	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
-	 * @param buf
-	 *        the buffer to append the SQL to
-	 */
-	public static void forUpdate(boolean skipLocked, StringBuilder buf) {
-		buf.append("\nFOR UPDATE");
-		if ( skipLocked ) {
-			buf.append(" SKIP LOCKED");
-		}
-	}
-
-	/**
 	 * A standardized SQL clause for casting a local date to a stream's time
 	 * zone.
 	 * 
@@ -1668,7 +1603,7 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see #limitOffset(PaginationCriteria, StringBuilder)
+	 * @see CommonSqlUtils#limitOffset(PaginationCriteria, StringBuilder)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {

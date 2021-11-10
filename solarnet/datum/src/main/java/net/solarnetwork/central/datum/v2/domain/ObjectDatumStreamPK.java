@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
-import net.solarnetwork.central.datum.domain.BasePK;
+import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Primary key for a datum based on object/source/timestamp values.

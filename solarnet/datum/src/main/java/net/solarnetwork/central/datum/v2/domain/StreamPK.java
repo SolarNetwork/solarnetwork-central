@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import net.solarnetwork.central.datum.domain.BasePK;
+import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Primary key for a time-based stream.

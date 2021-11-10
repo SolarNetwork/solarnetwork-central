@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.users.alerts.test;
+package net.solarnetwork.central.user.alert.jobs.test;
 
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
@@ -44,8 +44,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,7 +60,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
@@ -70,7 +67,7 @@ import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.mock.MockMailSender;
 import net.solarnetwork.central.mail.support.DefaultMailService;
 import net.solarnetwork.central.test.AbstractCentralTest;
-import net.solarnetwork.central.user.alerts.EmailNodeStaleDataAlertProcessor;
+import net.solarnetwork.central.user.alert.jobs.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -83,6 +80,7 @@ import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
@@ -117,7 +115,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	private static class TestEmailNodeStaleDataAlertProcessor extends EmailNodeStaleDataAlertProcessor {
 
-		private DateTime systemTime = null;
+		private Instant systemTime = null;
 
 		public TestEmailNodeStaleDataAlertProcessor(SolarNodeDao solarNodeDao, UserDao userDao,
 				UserNodeDao userNodeDao, UserAlertDao userAlertDao,
@@ -129,14 +127,14 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		}
 
 		@Override
-		public long getCurrentTime() {
+		public Instant getCurrentTime() {
 			if ( systemTime != null ) {
-				return systemTime.getMillis();
+				return systemTime;
 			}
 			return super.getCurrentTime();
 		}
 
-		public void setSystemTime(DateTime systemTime) {
+		public void setSystemTime(Instant systemTime) {
 			this.systemTime = systemTime;
 		}
 
@@ -190,7 +188,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	private UserAlert newUserAlertInstance() {
 		UserAlert alert = new UserAlert();
-		alert.setCreated(new DateTime());
+		alert.setCreated(Instant.now());
 		alert.setValidTo(alert.getCreated());
 		alert.setUserId(TEST_USER_ID);
 		alert.setNodeId(TEST_NODE_ID);
@@ -234,7 +232,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	@Test
 	public void processNoAlerts() {
 		List<UserAlert> pendingAlerts = Collections.emptyList();
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
 				service.getBatchSize())).andReturn(pendingAlerts);
 		replayAll();
@@ -245,13 +243,13 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertTrigger() {
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 
 		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeIds(new Long[] { TEST_NODE_ID });
 		filter.setMostRecent(true);
-		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
 
 		final UUID streamId = UUID.randomUUID();
 		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
@@ -289,9 +287,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date",
-				sentMail.getText().contains("since " + service.getTimestampFormat().print(
-						new DateTime(nodeDataResults.iterator().next().getTimestamp().toEpochMilli()))));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
+				.getTimestampFormat().format(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -302,7 +299,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertTriggerSuppressed() {
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 
 		final UserAlert pendingAlert = newUserAlertInstance();
 		pendingAlert.setStatus(UserAlertStatus.Suppressed);
@@ -310,7 +307,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeIds(new Long[] { TEST_NODE_ID });
 		filter.setMostRecent(true);
-		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
 
 		final UUID streamId = UUID.randomUUID();
 		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
@@ -350,7 +347,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertTriggerForUser() {
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 
 		final UserAlert pendingAlert = newUserAlertInstance();
 		pendingAlert.setNodeId(null); // change to "all nodes for user"
@@ -358,7 +355,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserIds(new Long[] { TEST_USER_ID });
 		filter.setMostRecent(true);
-		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
 
 		final UUID streamId_1 = UUID.randomUUID();
 		final UUID streamId_2 = UUID.randomUUID();
@@ -408,9 +405,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date",
-				sentMail.getText().contains("since " + service.getTimestampFormat().print(
-						new DateTime(nodeDataResults.iterator().next().getTimestamp().toEpochMilli()))));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
+				.getTimestampFormat().format(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -429,8 +425,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertTriggerForUserOutsideTimeWindow() {
-		final DateTimeZone nodeTZ = DateTimeZone.forTimeZone(testNode.getTimeZone());
-		final DateTime batchTime = new DateTime(2016, 4, 1, 8, 59, 56, nodeTZ);
+		final ZoneId nodeTZ = testNode.getTimeZone().toZoneId();
+		final Instant batchTime = ZonedDateTime.of(2016, 4, 1, 8, 59, 56, 0, nodeTZ).toInstant();
 		service.setSystemTime(batchTime);
 
 		final UserAlert pendingAlert = newUserAlertInstance();
@@ -449,8 +445,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		filter.setUserIds(new Long[] { TEST_USER_ID });
 		filter.setMostRecent(true);
 
-		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
-				ZoneId.of(nodeTZ.getID()));
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0, nodeTZ);
 		final UUID streamId = UUID.randomUUID();
 		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
 				dataTimestamp, streamId);
@@ -474,7 +469,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// and finally save the alert valid date
 		userAlertDao.updateValidTo(EasyMock.eq(pendingAlerts.get(0).getId()),
-				EasyMock.<DateTime> anyObject());
+				EasyMock.<Instant> anyObject());
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
@@ -485,8 +480,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertTriggerForUserWithinTimeWindow() {
-		final DateTimeZone nodeTZ = DateTimeZone.forTimeZone(testNode.getTimeZone());
-		final DateTime batchTime = new DateTime(2016, 4, 1, 9, 0, 1, nodeTZ);
+		final ZoneId nodeTZ = testNode.getTimeZone().toZoneId();
+		final Instant batchTime = ZonedDateTime.of(2016, 4, 1, 9, 0, 1, 0, nodeTZ).toInstant();
 		service.setSystemTime(batchTime);
 
 		final UserAlert pendingAlert = newUserAlertInstance();
@@ -504,10 +499,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserIds(new Long[] { TEST_USER_ID });
 		filter.setMostRecent(true);
-		final DateTime pendingAlertValidTo = pendingAlert.getValidTo();
+		final Instant pendingAlertValidTo = pendingAlert.getValidTo();
 
-		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0,
-				ZoneId.of(nodeTZ.getID()));
+		ZonedDateTime dataTimestamp = ZonedDateTime.of(2016, 4, 1, 8, 59, 50, 0, nodeTZ);
 		final UUID streamId = UUID.randomUUID();
 		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
 				dataTimestamp, streamId);
@@ -547,8 +541,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
-				.getTimestampFormat().print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
+				.contains("since " + service.getTimestampFormat().format(dataTimestamp)));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -566,7 +560,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processBatchAlertsTrigger() {
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 
 		// add 10 alerts, so we can test batching
 		List<UserAlert> pendingAlerts = new ArrayList<>();
@@ -680,9 +674,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 							sentMail.getSubject());
 					Assert.assertTrue("Mail has source ID",
 							sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-					Assert.assertTrue("Mail has formatted datum date",
-							sentMail.getText().contains("since " + service.getTimestampFormat()
-									.print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
+					Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
+							.contains("since " + service.getTimestampFormat().format(dataTimestamp)));
 				}
 			}
 			MailSender.getSent().clear();
@@ -691,13 +684,13 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@Test
 	public void processOneAlertResolved() {
-		final DateTime batchTime = new DateTime();
+		final Instant batchTime = Instant.now();
 
 		List<UserAlert> pendingAlerts = Arrays.asList(newUserAlertInstance());
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeIds(new Long[] { TEST_NODE_ID });
 		filter.setMostRecent(true);
-		final DateTime pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
 
 		ZonedDateTime dataTimestamp = ZonedDateTime.now(ZoneId.of(TEST_TZ));
 		final UUID streamId = UUID.randomUUID();
@@ -717,7 +710,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		// then query for active situation
 		final UserAlertSituation activeSituation = new UserAlertSituation();
 		activeSituation.setId(AlertIdCounter.getAndIncrement());
-		activeSituation.setCreated(new DateTime());
+		activeSituation.setCreated(Instant.now());
 		activeSituation.setAlert(pendingAlerts.get(0));
 		activeSituation.setStatus(UserAlertSituationStatus.Active);
 		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
@@ -743,8 +736,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				sentMail.getSubject());
 		Assert.assertTrue("Mail has source ID",
 				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("on " + service
-				.getTimestampFormat().print(new DateTime(dataTimestamp.toInstant().toEpochMilli()))));
+		Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
+				.contains("on " + service.getTimestampFormat().format(dataTimestamp.toInstant())));
 		Assert.assertEquals(UserAlertSituationStatus.Resolved, activeSituation.getStatus());
 		Assert.assertNotNull(activeSituation.getNotified());
 		Assert.assertTrue("Saved alert validTo increased",

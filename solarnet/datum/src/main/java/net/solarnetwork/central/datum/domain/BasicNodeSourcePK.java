@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
 import java.util.Objects;
+import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Basic primary key composed of a node ID and source ID.
