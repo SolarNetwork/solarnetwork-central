@@ -61,7 +61,10 @@ public class SnfInvoiceRendererResolverConfig {
 	@Bean
 	@ConfigurationProperties(prefix = "app.billing.invoice.html-template-cache")
 	public CacheSettings snfInvoiceHtmlTemplateCacheSettings() {
-		return new CacheSettings();
+		CacheSettings settings = new CacheSettings();
+		settings.setDiskMaxSizeMb(0);
+		settings.setDiskPersistent(false);
+		return settings;
 	}
 
 	@Bean
