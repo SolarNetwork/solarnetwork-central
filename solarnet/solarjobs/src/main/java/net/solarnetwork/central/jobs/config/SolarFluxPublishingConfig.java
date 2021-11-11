@@ -48,7 +48,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionFactory;
  * @version 1.0
  */
 @Configuration
-@Profile("solarflux-publish")
+@Profile("mqtt")
 public class SolarFluxPublishingConfig {
 
 	/** A qualifier for SolarFlux. */

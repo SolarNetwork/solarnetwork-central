@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.jobs.config;
+package net.solarnetwork.central.in.config;
 
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;

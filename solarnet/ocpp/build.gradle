@@ -17,6 +17,11 @@ description = 'SolarNet: OCPP'
 version = '0.1.0'
 archivesBaseName = 'solarnet-ocpp'
 
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')

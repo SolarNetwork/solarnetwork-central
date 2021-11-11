@@ -22,6 +22,8 @@ archivesBaseName = 'solarin'
 configurations {
 	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
 	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet.jsp'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {
@@ -55,6 +57,8 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
 }
 
 eclipse {

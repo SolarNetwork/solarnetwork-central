@@ -40,6 +40,15 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
+  instr.publish:
+    uid: "SolarInstr-@@SOLAR_INSTR_PUB_ID@@"
+    publish-qos-level: 0
+    mqtt-stats.log-frequency: 200
+    mqtt-config:
+      server-uri: "mqtt://queue.solarnetwork:1883"
+      client-id: "solaruser-@@SOLAR_INSTR_PUB_ID@@"
+      username: "USERNAME_HERE"
+      password: "PASSWORD_HERE"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
@@ -84,10 +93,11 @@ app:
       disk-max-size-mb: 100
   task.executor:
     thread-name-prefix: "SolarNet-"
-    core-pool-size: 1
+    core-pool-size: 10
+    allow-core-thread-time-out: false
   task.scheduler:
     thread-name-prefix: "SolarNet-Sched-"
-    pool-size: 1  
+    pool-size: 5  
   user.datum:
     delete:
       completed-task-minimum-cache-time: 14400000

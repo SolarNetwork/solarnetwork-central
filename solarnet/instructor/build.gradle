@@ -17,6 +17,10 @@ description = 'SolarNet: Instructor'
 version = '0.1.0'
 archivesBaseName = 'solarnet-instructor'
 
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
 
 dependencies {
 	implementation project(':solarnet-common')
@@ -31,9 +35,14 @@ dependencies {
 	// Utilities
 	implementation 'org.aspectj:aspectjweaver'
 	
+	// SolarNetwork
+	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
+
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
 }
 
 jar.manifest {

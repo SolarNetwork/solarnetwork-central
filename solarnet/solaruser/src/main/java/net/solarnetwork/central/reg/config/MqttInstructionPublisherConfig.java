@@ -1,5 +1,5 @@
 /* ==================================================================
- * MqttConnectionFactoryConfig.java - 11/11/2021 7:01:51 AM
+ * MqttInstructionPublisherConfig.java - 11/11/2021 4:10:24 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.jobs.config;
+package net.solarnetwork.central.reg.config;
 
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,29 +28,38 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.TaskScheduler;
-import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
+import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 
 /**
- * Configuration for the MQTT connection factory.
+ * MQTT instruction publishing configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
 @Profile("mqtt")
-public class MqttConnectionFactoryConfig {
+public class MqttInstructionPublisherConfig {
+
+	@Autowired
+	private MqttConnectionFactory connectionFactory;
 
 	@Autowired
 	private Executor executor;
 
 	@Autowired
-	private TaskScheduler taskScheduler;
+	private NodeInstructionDao nodeInstructionDao;
 
-	@ConfigurationProperties(prefix = "app.mqtt.client")
-	@Bean
-	public NettyMqttConnectionFactory mqttConnectionFactory() {
-		return new NettyMqttConnectionFactory(executor, taskScheduler);
+	@ConfigurationProperties(prefix = "app.instr.publish")
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
+		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
+		return new MqttNodeInstructionQueueHook(connectionFactory, objectMapper, executor,
+				nodeInstructionDao);
 	}
 
 }

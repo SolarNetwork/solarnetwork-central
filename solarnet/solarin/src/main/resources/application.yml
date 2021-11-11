@@ -41,6 +41,24 @@ app:
       ttl: 300
       heap-max-entries: 10000
       disk-max-size-mb: 100
+    mqtt-collector:
+      uid: "SolarIn-Datum-Collector-@@SOLAR_IN_ID@@"
+      publish-qos-level: 0
+      subscribe-qos-level: 1
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solarin-@@SOLAR_IN_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: false
+  task.executor:
+    thread-name-prefix: "SolarNet-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarNet-Sched-"
+    pool-size: 2  
 
 logging:
   level:
