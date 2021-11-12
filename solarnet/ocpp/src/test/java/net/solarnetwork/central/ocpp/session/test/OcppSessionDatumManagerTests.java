@@ -92,7 +92,6 @@ import net.solarnetwork.ocpp.domain.SampledValue;
 import net.solarnetwork.ocpp.domain.UnitOfMeasure;
 import net.solarnetwork.ocpp.service.AuthorizationException;
 import net.solarnetwork.ocpp.service.AuthorizationService;
-import net.solarnetwork.service.StaticOptionalService;
 
 /**
  * Test cases for the {@link OcppSessionDatumManager} class.
@@ -124,7 +123,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointDao.getObjectType()).andReturn((Class) CentralChargePoint.class);
 		EasyMock.replay(chargePointDao);
 		manager = new OcppSessionDatumManager(authService, chargePointDao, chargeSessionDao, datumDao,
-				chargePointSettingsDao, new StaticOptionalService<DatumProcessor>(fluxPublisher));
+				chargePointSettingsDao);
+		manager.setFluxPublisher(fluxPublisher);
 		EasyMock.verify(chargePointDao);
 		EasyMock.reset(chargePointDao);
 		manager.setTaskScheduler(taskScheduler);
@@ -165,7 +165,7 @@ public class OcppSessionDatumManagerTests {
 		// when
 		replayAll(startupTaskFuture, purgePostedTaskFuture);
 
-		manager.startup();
+		manager.serviceDidStartup();
 
 		Runnable startupTask = startupTaskCaptor.getValue();
 		startupTask.run();

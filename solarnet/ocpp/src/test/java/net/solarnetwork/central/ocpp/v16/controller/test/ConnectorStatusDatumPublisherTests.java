@@ -57,7 +57,6 @@ import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
-import net.solarnetwork.service.StaticOptionalService;
 
 /**
  * Test cases for the {@link ConnectorStatusDatumPublisher} class.
@@ -82,7 +81,8 @@ public class ConnectorStatusDatumPublisherTests {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		fluxPublisher = EasyMock.createMock(DatumProcessor.class);
 		publisher = new ConnectorStatusDatumPublisher(chargePointSettingsDao, chargePointConnectorDao,
-				chargeSessionDao, datumDao, new StaticOptionalService<>(fluxPublisher));
+				chargeSessionDao, datumDao);
+		publisher.setFluxPublisher(fluxPublisher);
 	}
 
 	@After

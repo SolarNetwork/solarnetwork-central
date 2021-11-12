@@ -50,6 +50,7 @@ import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
 import net.solarnetwork.ocpp.web.json.OcppWebSocketHandler;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeResolver;
 import ocpp.json.ActionPayloadDecoder;
@@ -62,7 +63,7 @@ import ocpp.json.ActionPayloadDecoder;
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
-		extends OcppWebSocketHandler<C, S> {
+		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver {
 
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
@@ -116,6 +117,16 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
 				pendingMessageQueue, centralServiceActionPayloadDecoder,
 				chargePointActionPayloadDecoder);
+	}
+
+	@Override
+	public void serviceDidStartup() {
+		super.startup();
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		super.shutdown();
 	}
 
 	@Override

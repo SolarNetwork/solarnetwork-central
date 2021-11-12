@@ -1,4 +1,14 @@
 app:
+  datum:
+    solarflux-publish:
+      uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
+      publish-qos-level: 0
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solarin-datumpub-@@SOLAR_FLUX_PUB_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
@@ -25,6 +35,14 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
+  ocpp.v16:
+    cs:
+      boot-notification:
+        heartbeat-interval-seconds: 300
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OCPP_v16"
+      mqtt-timeout: 30
+      publish-only: true
   solarin:
     async-collector:
       threads: 2

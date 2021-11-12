@@ -79,7 +79,7 @@ import net.solarnetwork.ocpp.domain.UnitOfMeasure;
 import net.solarnetwork.ocpp.service.AuthorizationException;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
-import net.solarnetwork.service.OptionalService;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.service.support.BasicIdentifiable;
 import net.solarnetwork.settings.SettingsChangeObserver;
 import net.solarnetwork.util.NumberUtils;
@@ -93,7 +93,7 @@ import net.solarnetwork.util.StringUtils;
  * @version 2.0
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
-		implements ChargeSessionManager, SettingsChangeObserver {
+		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
 
 	/**
 	 * Datum property name enumeration.
@@ -162,7 +162,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private final ChargeSessionDao chargeSessionDao;
 	private final DatumEntityDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
-	private final OptionalService<DatumProcessor> fluxPublisher;
+	private DatumProcessor fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private int maxTemperatureScale = DEFAULT_MAX_TEMPERATURE_SCALE;
 	private TaskScheduler taskScheduler;
@@ -185,15 +185,12 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *        the DAO for saving Datum
 	 * @param chargePointSettingsDao
 	 *        the charge point settings DAO
-	 * @param fluxPublisher
-	 *        processor to publish datum to SolarFlux
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppSessionDatumManager(AuthorizationService authService, ChargePointDao chargePointDao,
 			ChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
-			ChargePointSettingsDao chargePointSettingsDao,
-			OptionalService<DatumProcessor> fluxPublisher) {
+			ChargePointSettingsDao chargePointSettingsDao) {
 		super();
 		this.authService = requireNonNullArgument(authService, "authService");
 		if ( chargePointDao == null ) {
@@ -208,20 +205,16 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
 				"chargePointSettingsDao");
-		this.fluxPublisher = requireNonNullArgument(fluxPublisher, "fluxPublisher");
 	}
 
-	/**
-	 * Initialize after properties configured.
-	 */
-	public void startup() {
+	@Override
+	public void serviceDidStartup() {
 		reconfigure();
+
 	}
 
-	/**
-	 * Free resources after no longer needed.
-	 */
-	public void shutdown() {
+	@Override
+	public void serviceDidShutdown() {
 		stopTasks();
 	}
 
@@ -350,7 +343,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				datumDao.store(d);
 			}
 			if ( d.settings.isPublishToSolarFlux() ) {
-				DatumProcessor publisher = fluxPublisher.service();
+				final DatumProcessor publisher = getFluxPublisher();
 				if ( publisher != null && publisher.isConfigured() ) {
 					publisher.processDatum(d);
 				}
@@ -817,6 +810,25 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			default:
 				return null;
 		}
+	}
+
+	/**
+	 * Get the SolarFlux publisher.
+	 * 
+	 * @return the publisher, or {@literal null}
+	 */
+	public DatumProcessor getFluxPublisher() {
+		return fluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 * 
+	 * @param fluxPublisher
+	 *        the publisher to set
+	 */
+	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+		this.fluxPublisher = fluxPublisher;
 	}
 
 	/**

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.v16.controller;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.time.Instant;
 import java.util.Collection;
@@ -43,7 +44,6 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.StatusNotification;
-import net.solarnetwork.service.OptionalService;
 
 /**
  * Publish status notification updates as datum.
@@ -59,7 +59,7 @@ public class ConnectorStatusDatumPublisher {
 	private final CentralChargePointConnectorDao chargePointConnectorDao;
 	private final ChargeSessionDao chargeSessionDao;
 	private final DatumEntityDao datumDao;
-	private final OptionalService<DatumProcessor> fluxPublisher;
+	private DatumProcessor fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private String sourceIdSuffix = DEFAULT_SOURCE_ID_SUFFIX;
 
@@ -74,18 +74,17 @@ public class ConnectorStatusDatumPublisher {
 	 *        charge session DAO to use
 	 * @param datumDao
 	 *        the datum DAO to use
-	 * @param fluxPublisher
-	 *        the optional SolarFlux publisher to use
 	 */
 	public ConnectorStatusDatumPublisher(ChargePointSettingsDao chargePointSettingsDao,
 			CentralChargePointConnectorDao chargePointConnectorDao, ChargeSessionDao chargeSessionDao,
-			DatumEntityDao datumDao, OptionalService<DatumProcessor> fluxPublisher) {
+			DatumEntityDao datumDao) {
 		super();
-		this.chargePointSettingsDao = chargePointSettingsDao;
-		this.chargePointConnectorDao = chargePointConnectorDao;
-		this.chargeSessionDao = chargeSessionDao;
-		this.datumDao = datumDao;
-		this.fluxPublisher = fluxPublisher;
+		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
+				"chargePointSettingsDao");
+		this.chargePointConnectorDao = requireNonNullArgument(chargePointConnectorDao,
+				"chargePointConnectorDao");
+		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 	}
 
 	/**
@@ -211,7 +210,7 @@ public class ConnectorStatusDatumPublisher {
 			datumDao.store(d);
 		}
 		if ( cps.isPublishToSolarFlux() ) {
-			DatumProcessor publisher = fluxPublisher.service();
+			final DatumProcessor publisher = getFluxPublisher();
 			if ( publisher != null && publisher.isConfigured() ) {
 				publisher.processDatum(d);
 			}
@@ -243,6 +242,25 @@ public class ConnectorStatusDatumPublisher {
 			template = template + suffix;
 		}
 		return UserSettings.removeEmptySourceIdSegments(expandTemplateString(template, params));
+	}
+
+	/**
+	 * Get the SolarFlux publisher.
+	 * 
+	 * @return the publisher, or {@literal null}
+	 */
+	public DatumProcessor getFluxPublisher() {
+		return fluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 * 
+	 * @param fluxPublisher
+	 *        the publisher to set
+	 */
+	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+		this.fluxPublisher = fluxPublisher;
 	}
 
 	/**
