@@ -57,7 +57,7 @@ app:
         maximum-iterations: 1000
         maximum-wait-ms: 2400000
         parallelism: 2
-        schedule: "0 20 5,21 * * *"
+        schedule: "20 2/5 * * * *"
       invoice-gen:
         maximum-wait-ms: 240000
         schedule: "0 20 4,20 5,10,15,20 * *"
@@ -109,19 +109,19 @@ app:
       export:
         cleaner:
           minimum-age-minutes: 720
-          schedule: "0 47 * * * *"
+          schedule: "33 47 * * * *"
         processor:
           maximum-iterations: 1000
           maximum-wait-ms: 300000
-          schedule: "0 1/10 * * * *"
+          schedule: "8 1/10 * * * *"
       import:
         cleaner:
           minimum-age-minutes: 720
-          schedule: "0 53 * * * *"
+          schedule: "40 53 * * * *"
         processor:
           maximum-iterations: 2
           maximum-wait-ms: 5400000
-          schedule: "0 3/10 * * * ?"
+          schedule: "52 3/5 * * * ?"
     instr:
       cleaner:
         days-older: 30
@@ -139,14 +139,14 @@ app:
     user-datum-expire:
       cleaner:
         minimum-age-minutes: 720
-        schedule: "0 47 * * * *"
+        schedule: "22 47 * * * *"
       delete:
         maximum-iterations: 1
         maximum-wait-ms: 5400000
-        schedule: "0 1/10 * * * *"
+        schedule: "17 1/10 * * * *"
       expire:
         maximum-wait-ms: 21600000
-        schedule: "0 15 1/8 * * *"
+        schedule: "0 25 3 * * *"
     user-datum-export:
       cleaner:
         minimum-age-minutes: 360
@@ -166,7 +166,7 @@ app:
     user-event:
       cleaner:
         minimum-age-minutes: 60
-        schedule:  "0 47 * * * *"
+        schedule:  "43 47 * * * *"
       processor:
         maximum-iterations: 1000
         maximum-wait-ms: 240000
