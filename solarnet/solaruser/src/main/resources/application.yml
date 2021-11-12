@@ -188,7 +188,9 @@ spring:
 
 app:
   billing:
-    invoice.mail.from: accounts@solarnetwork.net
+    invoice.mail.from: "accounts@solarnetwork.net"
+  user.reg:
+    mail.template.from: "system@solarnetwork.net"
 
 debug: false
  
