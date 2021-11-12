@@ -43,7 +43,7 @@ public class InstructionJobsConfig {
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
 
-	@ConfigurationProperties(prefix = "app.job.datum.instr.cleaner")
+	@ConfigurationProperties(prefix = "app.job.instr.cleaner")
 	@Bean
 	public ManagedJob completedNodeInstructionCleaner() {
 		NodeInstructionCleaner job = new NodeInstructionCleaner(nodeInstructionDao);
@@ -51,7 +51,7 @@ public class InstructionJobsConfig {
 		return job;
 	}
 
-	@ConfigurationProperties(prefix = "app.job.datum.instr.stale-queuing")
+	@ConfigurationProperties(prefix = "app.job.instr.stale-queuing")
 	@Bean
 	public ManagedJob queuingStaleNodeStateUpdator() {
 		StaleNodeStateUpdater job = new StaleNodeStateUpdater(nodeInstructionDao);
