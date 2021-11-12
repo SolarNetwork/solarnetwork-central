@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_INSTRUCTION;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;

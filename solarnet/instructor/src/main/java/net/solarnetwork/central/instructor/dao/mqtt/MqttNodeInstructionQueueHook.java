@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.dao.mqtt;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -38,6 +39,7 @@ import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
+import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
@@ -54,7 +56,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @version 1.0
  */
 public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
-		implements NodeInstructionQueueHook, ServiceLifecycleObserver {
+		implements MqttConnectionObserver, NodeInstructionQueueHook, ServiceLifecycleObserver {
 
 	/**
 	 * The default MQTT topic template for node instruction publication.
@@ -69,6 +71,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
 	private final Executor executor;
 	private final NodeInstructionDao nodeInstructionDao;
 	private String nodeInstructionTopicTemplate = DEFAULT_NODE_INSTRUCTION_TOPIC_TEMPLATE;
+	private final List<MqttConnectionObserver> connectionObservers;
 
 	/**
 	 * Constructor.
@@ -87,12 +90,14 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
 	 *         if any argument is {@literal null}
 	 */
 	public MqttNodeInstructionQueueHook(MqttConnectionFactory connectionFactory,
-			ObjectMapper objectMapper, Executor executor, NodeInstructionDao nodeInstructionDao) {
+			ObjectMapper objectMapper, Executor executor, NodeInstructionDao nodeInstructionDao,
+			List<MqttConnectionObserver> connectionObservers) {
 		super(connectionFactory, new MqttStats("MqttNodeInstructionQueueHook", 500,
 				NodeInstructionQueueHookStat.values()));
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
+		this.connectionObservers = requireNonNullArgument(connectionObservers, "connectionObservers");
 	}
 
 	@Override
@@ -108,6 +113,45 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
 	@Override
 	public String getPingTestName() {
 		return "NodeInstructionQueueHook MQTT";
+	}
+
+	@Override
+	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
+			Throwable cause) {
+		if ( connectionObservers != null ) {
+			for ( MqttConnectionObserver o : connectionObservers ) {
+				try {
+					o.onMqttServerConnectionLost(connection, willReconnect, cause);
+				} catch ( Throwable t ) {
+					// naughty!
+					Throwable root = t;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
+					}
+					log.error("Unhandled error in MQTT connection {} lost observer {}: {}",
+							getMqttConfig().getServerUri(), o, root.getMessage(), root);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
+		if ( connectionObservers != null ) {
+			for ( MqttConnectionObserver o : connectionObservers ) {
+				try {
+					o.onMqttServerConnectionEstablished(connection, reconnected);
+				} catch ( Throwable t ) {
+					// naughty!
+					Throwable root = t;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
+					}
+					log.error("Unhandled error in MQTT connection {} established observer {}: {}",
+							getMqttConfig().getServerUri(), o, root.getMessage(), root);
+				}
+			}
+		}
 	}
 
 	@Override

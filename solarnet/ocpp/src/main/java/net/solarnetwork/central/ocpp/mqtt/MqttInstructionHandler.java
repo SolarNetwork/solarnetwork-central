@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.ocpp.mqtt;
+package net.solarnetwork.central.ocpp.mqtt;
 
 import static java.util.Collections.singletonMap;
 import java.io.IOException;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.config;
 
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_INSTRUCTION;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.support.TransactionTemplate;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -106,6 +108,10 @@ public class OcppV16ControllerConfig {
 	@Qualifier("solarflux")
 	private DatumProcessor fluxPublisher;
 
+	@Autowired(required = false)
+	@Qualifier(OCPP_INSTRUCTION)
+	private ActionMessageProcessor<JsonNode, Void> ocppInstructionHandler;
+
 	@Bean
 	@Qualifier(OCPP_V16)
 	public OcppController ocppController_v16() {
@@ -120,6 +126,8 @@ public class OcppV16ControllerConfig {
 				datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 		controller.setDatumPublisher(publisher);
+
+		controller.setInstructionHandler(ocppInstructionHandler);
 
 		return controller;
 	}

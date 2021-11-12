@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.reg.config;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -34,6 +36,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
+import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 
 /**
  * MQTT instruction publishing configuration.
@@ -54,12 +57,16 @@ public class MqttInstructionPublisherConfig {
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
 
+	@Autowired(required = false)
+	private List<MqttConnectionObserver> mqttConnectionObservers;
+
 	@ConfigurationProperties(prefix = "app.instr.publish")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
 		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
 		return new MqttNodeInstructionQueueHook(connectionFactory, objectMapper, executor,
-				nodeInstructionDao);
+				nodeInstructionDao,
+				mqttConnectionObservers != null ? mqttConnectionObservers : Collections.emptyList());
 	}
 
 }

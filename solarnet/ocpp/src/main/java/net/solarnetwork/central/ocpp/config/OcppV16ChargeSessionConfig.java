@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16_CHARGE_SESSION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,7 +47,7 @@ import ocpp.v16.cs.StopTransactionResponse;
  * @version 1.0
  */
 @Configuration
-@Profile(OCPP_V16)
+@Profile(OCPP_V16_CHARGE_SESSION)
 public class OcppV16ChargeSessionConfig {
 
 	@Autowired

@@ -31,6 +31,15 @@ package net.solarnetwork.central.ocpp.config;
 public interface SolarNetOcppConfiguration {
 
 	/** A qualifier for OCPP v1.6 support. */
-	String OCPP_V16 = "ocpp_v16";
+	String OCPP_V16 = "ocpp-v16";
+
+	/** A qualifier for OCPP charge session support. */
+	String OCPP_CHARGE_SESSION = "ocpp-charge-session";
+
+	/** A qualifier for OCPP v1.6 support and charge session support. */
+	String OCPP_V16_CHARGE_SESSION = OCPP_V16 + " & " + OCPP_CHARGE_SESSION;
+
+	/** A qualifier for OCPP instruction support. */
+	String OCPP_INSTRUCTION = "instr";
 
 }

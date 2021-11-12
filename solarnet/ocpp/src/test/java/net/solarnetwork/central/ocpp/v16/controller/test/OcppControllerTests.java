@@ -68,7 +68,6 @@ import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.service.StaticOptionalService;
 import ocpp.v16.ChargePointAction;
 import ocpp.v16.cp.AvailabilityStatus;
 import ocpp.v16.cp.AvailabilityType;
@@ -310,7 +309,7 @@ public class OcppControllerTests {
 	@Test
 	public void handleInstruction_toggleConnectorAvailability_withInstructionHandler() throws Exception {
 		// GIVEN
-		controller.setInstructionHandler(new StaticOptionalService<>(instructionHandler));
+		controller.setInstructionHandler(instructionHandler);
 		Long nodeId = randomUUID().getMostSignificantBits();
 		NodeInstruction instruction = new NodeInstruction(OCPP_V16_TOPIC, Instant.now(), nodeId);
 		String chargerIdentity = randomUUID().toString();

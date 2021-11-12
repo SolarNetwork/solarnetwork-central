@@ -42,7 +42,7 @@ app:
     mqtt.instr-handler:
       mqtt-topic: "instr/OCPP_v16"
       mqtt-timeout: 30
-      publish-only: true
+      publish-only: false
   solarin:
     async-collector:
       threads: 2

@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.ocpp.config;
 
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16_CHARGE_SESSION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -44,6 +46,7 @@ import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
  * @version 1.0
  */
 @Configuration
+@Profile(OCPP_V16_CHARGE_SESSION)
 public class OcppChargeSessionManagerConfig {
 
 	@Autowired

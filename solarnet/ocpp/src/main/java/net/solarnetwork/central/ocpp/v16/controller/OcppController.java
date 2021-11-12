@@ -23,7 +23,6 @@
 package net.solarnetwork.central.ocpp.v16.controller;
 
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.service.OptionalService.service;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
@@ -79,7 +78,6 @@ import net.solarnetwork.ocpp.service.cs.ChargePointManager;
 import net.solarnetwork.ocpp.v16.cp.ChargePointActionMessage;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
-import net.solarnetwork.service.OptionalService;
 import net.solarnetwork.service.support.BasicIdentifiable;
 import ocpp.domain.Action;
 import ocpp.domain.ErrorCodeException;
@@ -115,7 +113,7 @@ public class OcppController extends BasicIdentifiable
 	private ActionPayloadDecoder chargePointActionPayloadDecoder;
 	private ObjectMapper objectMapper;
 	private ConnectorStatusDatumPublisher datumPublisher;
-	private OptionalService<ActionMessageProcessor<JsonNode, Void>> instructionHandler;
+	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -368,7 +366,7 @@ public class OcppController extends BasicIdentifiable
 		}
 		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
 
-		ActionMessageProcessor<JsonNode, Void> handler = service(instructionHandler);
+		final ActionMessageProcessor<JsonNode, Void> handler = getInstructionHandler();
 		if ( handler != null ) {
 			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
@@ -594,7 +592,7 @@ public class OcppController extends BasicIdentifiable
 	 * 
 	 * @return the action processor
 	 */
-	public OptionalService<ActionMessageProcessor<JsonNode, Void>> getInstructionHandler() {
+	public ActionMessageProcessor<JsonNode, Void> getInstructionHandler() {
 		return instructionHandler;
 	}
 
@@ -609,8 +607,7 @@ public class OcppController extends BasicIdentifiable
 	 * @param instructionHandler
 	 *        the handler
 	 */
-	public void setInstructionHandler(
-			OptionalService<ActionMessageProcessor<JsonNode, Void>> instructionHandler) {
+	public void setInstructionHandler(ActionMessageProcessor<JsonNode, Void> instructionHandler) {
 		this.instructionHandler = instructionHandler;
 	}
 

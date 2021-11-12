@@ -77,6 +77,11 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
+  ocpp.v16:
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OCPP_v16"
+      mqtt-timeout: 30
+      publish-only: true
   solaruser:
     node-ownership-cache:
       ttl: 60

@@ -70,6 +70,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
 		SolarNetUserOcppAopConfiguration.class,
+		SolarNetUserOcppAopConfiguration.class,
 		SolarNetUserEventAopConfiguration.class,
 		SolarNetUserEventConfiguration.class,
 		SolarNetUserExpireAopConfiguration.class,

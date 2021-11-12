@@ -34,7 +34,6 @@ import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
-import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
@@ -51,7 +50,6 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumConfiguration.class,
 		// FIXME: this needed? SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
-		SolarNetOcppConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarInApp.class,
 })
