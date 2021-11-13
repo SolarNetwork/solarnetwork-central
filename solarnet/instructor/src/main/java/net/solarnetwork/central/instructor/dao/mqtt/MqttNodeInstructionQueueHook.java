@@ -118,6 +118,8 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
 	@Override
 	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
 			Throwable cause) {
+		log.info("MQTT connection lost for publishing instructions to {}: {}",
+				nodeInstructionTopicTemplate, (cause != null ? cause.getMessage() : "unknown reason"));
 		if ( connectionObservers != null ) {
 			for ( MqttConnectionObserver o : connectionObservers ) {
 				try {
@@ -137,6 +139,8 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionService
 
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
+		log.info("MQTT connection established for publishing instructions to {}",
+				nodeInstructionTopicTemplate);
 		if ( connectionObservers != null ) {
 			for ( MqttConnectionObserver o : connectionObservers ) {
 				try {
