@@ -52,10 +52,15 @@ public class NodeUserDetailsService implements UserDetailsService {
 	}
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException,
-			DataAccessException {
-		Long id = Long.valueOf(username);
-		return new AuthenticatedNode(id, AUTHORITIES, false);
+	public UserDetails loadUserByUsername(String username)
+			throws UsernameNotFoundException, DataAccessException {
+		try {
+			Long id = Long.valueOf(username);
+			return new AuthenticatedNode(id, AUTHORITIES, false);
+		} catch ( NumberFormatException e ) {
+			// not a node
+			throw new UsernameNotFoundException("Username [" + username + "] is not a valid ndoe ID.");
+		}
 	}
 
 }

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, '403')">
+<head>
+    <title data-th-text="#{error.page.403.title}">Not allowed</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
+</head>
+<body>
+<main>
+	<h1 data-th-text="#{error.page.403.header}">Hold your horses!</h1>
+	<p data-th-text="#{error.page.403.message}">You are not supposed to be here.</p>
+</main>
+</body>
+</html>
