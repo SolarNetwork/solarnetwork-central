@@ -109,8 +109,8 @@ public class PkiDogtagConfig {
 		return new DogtagSettings();
 	}
 
-	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public DogtagPKIBiz pkiBiz() {
+	@Bean
+	public SSLContextFactory sslContextFactory() {
 		DogtagSettings settings = dogtagSettings();
 
 		SSLContextFactory sslFactory = new SSLContextFactory();
@@ -118,6 +118,14 @@ public class PkiDogtagConfig {
 		sslFactory.setKeystorePassword(settings.keystorePassword);
 		sslFactory.setDisabledCipherSuites(
 				StringUtils.commaDelimitedListToStringArray(settings.disabledCiphers));
+		return sslFactory;
+	}
+
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public DogtagPKIBiz pkiBiz() {
+		DogtagSettings settings = dogtagSettings();
+
+		SSLContextFactory sslFactory = sslContextFactory();
 
 		DogtagPKIBiz biz = new DogtagPKIBiz();
 		biz.setBaseUrl(settings.baseUrl);
