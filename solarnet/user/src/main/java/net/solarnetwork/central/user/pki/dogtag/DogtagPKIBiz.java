@@ -57,6 +57,8 @@ import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
+import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.settings.SettingsChangeObserver;
 import net.solarnetwork.support.XmlSupport;
 import net.solarnetwork.util.CachedResult;
 
@@ -74,7 +76,7 @@ import net.solarnetwork.util.CachedResult;
  * @version 3.0
  */
 public class DogtagPKIBiz
-		implements NodePKIBiz, PingTest, net.solarnetwork.settings.SettingsChangeObserver {
+		implements NodePKIBiz, PingTest, SettingsChangeObserver, ServiceLifecycleObserver {
 
 	public static final String DOGTAG_10_PROFILE_SUBMIT_PATH = "/ca/ee/ca/profileSubmit";
 
@@ -131,8 +133,14 @@ public class DogtagPKIBiz
 	 * 
 	 * @since 2.1
 	 */
-	public void setup() {
+	@Override
+	public void serviceDidStartup() {
 		configurationChanged(null);
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		// nothing to do
 	}
 
 	@Override

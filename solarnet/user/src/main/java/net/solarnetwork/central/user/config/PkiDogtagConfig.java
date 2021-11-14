@@ -104,11 +104,12 @@ public class PkiDogtagConfig {
 	}
 
 	@ConfigurationProperties(prefix = "app.node.pki.dogtag")
+	@Bean
 	public DogtagSettings dogtagSettings() {
 		return new DogtagSettings();
 	}
 
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DogtagPKIBiz pkiBiz() {
 		DogtagSettings settings = dogtagSettings();
 
