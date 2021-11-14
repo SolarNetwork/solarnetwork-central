@@ -112,6 +112,14 @@ public class WebSecurityConfig {
 		protected void configure(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
+		      // limit this configuration to specific paths
+		      .requestMatchers()
+		        .antMatchers("/login")
+		        .antMatchers("/logout")
+		        .antMatchers("/*.do")
+		        .antMatchers("/u/**")
+		        .and()
+		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
@@ -124,7 +132,7 @@ public class WebSecurityConfig {
 		      	.antMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		        .antMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .antMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
-		        //.anyRequest().authenticated()
+		        .anyRequest().denyAll()
 		        .and()
 			      
 		      // form login
@@ -189,6 +197,11 @@ public class WebSecurityConfig {
 		protected void configure(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
+		      // limit this configuration to specific paths
+		      .requestMatchers()
+		        .antMatchers("/api/**")
+		        .and()
+
 		      // CSRF not needed for stateless calls
 		      .csrf().disable()
 		      
@@ -209,12 +222,14 @@ public class WebSecurityConfig {
 						UsernamePasswordAuthenticationFilter.class)
 		      
 		      .authorizeRequests()
+		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 		      	.antMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		        .antMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        //.anyRequest().authenticated()
+		        .antMatchers("/api/v1/pub/**").permitAll()
+		        .anyRequest().denyAll()
 		    ;   
 		    // @formatter:on
 		}
@@ -249,6 +264,7 @@ public class WebSecurityConfig {
 		        		"/associate.*",
 		        		"/cert.*",
 		        		"/css/**",
+		        		"/img/**",
 		        		"/js/**",
 		        		"/js-lib/**",
 		        		"/ping", 
