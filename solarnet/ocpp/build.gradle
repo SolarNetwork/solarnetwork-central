@@ -33,7 +33,7 @@ dependencies {
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// SolarNetwork
-	implementation 'net.solarnetwork.external:net.solarnetwork.external.ocpp:1.1.0.SN01'
+	implementation 'net.solarnetwork.external:net.solarnetwork.external.ocpp:1.1.0.SN02'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.0'
 	
