@@ -22,9 +22,7 @@
 
 package net.solarnetwork.central.user.config;
 
-import static net.solarnetwork.central.user.config.RegistrationBizConfig.USER_REGISTRATION;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +45,6 @@ import net.solarnetwork.service.CertificateService;
 public class PkiDogtagConfig {
 
 	@Autowired
-	@Qualifier(USER_REGISTRATION)
 	public CertificateService certificateService;
 
 	public static final String DEFAULT_DISABLED_CIPHERS = "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384"
