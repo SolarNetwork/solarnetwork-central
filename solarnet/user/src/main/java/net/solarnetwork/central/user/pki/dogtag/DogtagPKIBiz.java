@@ -47,6 +47,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.w3c.dom.Node;
 import net.solarnetwork.central.security.SecurityException;
@@ -509,6 +510,9 @@ public class DogtagPKIBiz
 		} catch ( HttpClientErrorException e ) {
 			log.info("Unable to detect Dogtag server version via {}: {}", DOGTAG_10_PKI_INFO,
 					e.getMessage());
+		} catch ( RestClientException e ) {
+			log.error("Error detecting Dogtag server version via {}: {}", DOGTAG_10_PKI_INFO,
+					e.toString());
 		}
 	}
 
