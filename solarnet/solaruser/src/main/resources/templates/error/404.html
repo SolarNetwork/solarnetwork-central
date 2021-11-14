@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout-error :: layout(~{::title}, ~{::main}, '404')">
+<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, '404')">
 <head>
-    <title th:text="#{error.page.404.title}">Not found</title>
+    <title data-th-text="#{error.page.404.title}">Not found</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
@@ -9,8 +9,8 @@
 </head>
 <body>
 <main>
-	<h1 th:text="#{error.page.404.header}">Error</h1>
-	<p th:text="#{error.page.404.message}">That was not found.</p>
+	<h1 data-th-text="#{error.page.404.header}">Error</h1>
+	<p data-th-text="#{error.page.404.message}">That was not found.</p>
 </main>
 </body>
 </html>
