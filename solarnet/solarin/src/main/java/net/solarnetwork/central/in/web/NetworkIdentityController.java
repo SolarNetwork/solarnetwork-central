@@ -22,16 +22,17 @@
 
 package net.solarnetwork.central.in.web;
 
-import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
-import net.solarnetwork.domain.NetworkAssociation;
-import net.solarnetwork.domain.NetworkAssociationDetails;
-import net.solarnetwork.domain.NetworkIdentity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
+import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.NetworkAssociationDetails;
+import net.solarnetwork.domain.NetworkIdentity;
 
 /**
  * Controller for {@link NetworkIdentityBiz} requests.
@@ -78,7 +79,7 @@ public class NetworkIdentityController {
 	 *        the optional network association confirmation key
 	 * @return the view name
 	 */
-	@RequestMapping(value = "/identity.do", method = RequestMethod.GET)
+	@RequestMapping(value = "/identity.do", method = RequestMethod.GET, produces = MediaType.TEXT_XML_VALUE)
 	public String getNetworkIdentityKey(Model model,
 			@RequestParam(value = "username", required = false) String username,
 			@RequestParam(value = "key", required = false) String confirmationKey) {
