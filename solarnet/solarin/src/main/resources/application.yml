@@ -80,8 +80,8 @@ app:
 
 logging:
   level:
-    ROOT: INFO
-    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+    ROOT: "INFO"
+    org.mybatis.spring.mapper.ClassPathMapperScanner: "OFF"
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
@@ -96,7 +96,7 @@ mybatis:
 server:
   error.whitelabel.enabled: false
   port: 9083
-  servlet.context-path: /solarin
+  servlet.context-path: "/solarin"
 
 spring:
   datasource:
@@ -106,18 +106,26 @@ spring:
       idleTimeout: 600000
       maxLifetime: 1800000
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: solarnet
-    password: solarnet
-    platform: postgres
+    username: "solarnet"
+    password: "solarnet"
+    platform: "postgres"
     initialize: false
   mvc.format:
-    date: iso
-    date-time: iso
-    time: iso
+    date: "iso"
+    date-time: "iso"
+    time: "iso"
 
 ---
+spring:
+  config.activate.on-profile: "development"
+  thymeleaf.cache: false
+
 debug: true
 
+---
 spring:
-  config.activate.on-profile: development
-  thymeleaf.cache: false
+  config.activate.on-profile: "production"
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
