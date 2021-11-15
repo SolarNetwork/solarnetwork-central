@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.common.dao.config;
 
 import java.util.UUID;
 import org.apache.ibatis.type.TypeHandler;
@@ -35,7 +35,7 @@ import net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class MyBatisConfig {
+public class MyBatisCommonConfig {
 
 	@Bean
 	public TypeHandler<UUID> uuidTypeHandler() {
