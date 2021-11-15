@@ -31,6 +31,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import net.solarnetwork.central.security.NodeUserDetailsService;
 import net.solarnetwork.central.security.Role;
 
@@ -103,6 +104,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .anyRequest().authenticated()
 	    ;
 	    // @formatter:on
+	}
+
+	@Bean
+	public StrictHttpFirewall httpFirewall() {
+		StrictHttpFirewall firewall = new StrictHttpFirewall();
+
+		// this following is disabled to allow for the SSL_CLIENT_CERT header value
+		// which is a full PEM encoded certificate with newline characters
+		firewall.setAllowedHeaderValues((header) -> true);
+
+		return firewall;
 	}
 
 }

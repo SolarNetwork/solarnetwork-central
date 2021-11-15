@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.config;
 
 import org.apache.catalina.connector.Connector;
+import org.apache.catalina.valves.SSLValve;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
@@ -37,17 +38,26 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty("server.http.port")
 public class TomcatConfig {
 
-	@Value("${server.http.port}")
-	private int httpPort;
-
+	@ConditionalOnProperty("server.http.port")
 	@Bean
-	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> sslConnectorCustomizer() {
+	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> connectorCustomizerWithSsl(
+			@Value("${server.http.port}") int httpPort) {
 		Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
 		connector.setPort(httpPort);
-		return (tomcat) -> tomcat.addAdditionalTomcatConnectors(connector);
+		return (tomcat) -> {
+			tomcat.addAdditionalTomcatConnectors(connector);
+			tomcat.addEngineValves(new SSLValve());
+		};
+	}
+
+	@ConditionalOnProperty(name = "server.forward-headers-strategy", havingValue = "NATIVE")
+	@Bean
+	public WebServerFactoryCustomizer<TomcatServletWebServerFactory> connectorCustomizerProxySsl() {
+		return (tomcat) -> {
+			tomcat.addEngineValves(new SSLValve());
+		};
 	}
 
 }
