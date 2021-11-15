@@ -48,7 +48,7 @@ public class S3ResourceStorageConfig {
 
 	@ConfigurationProperties(prefix = "app.datum.import.s3-storage")
 	@Qualifier(DATUM_IMPORT)
-	@Bean
+	@Bean(initMethod = "startup")
 	public ResourceStorageService datumImportResourceStorageService() {
 		return new S3ResourceStorageService("Datum-Import", executor);
 	}
