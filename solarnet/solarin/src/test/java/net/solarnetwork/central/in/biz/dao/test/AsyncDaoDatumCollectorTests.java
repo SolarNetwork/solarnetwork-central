@@ -66,10 +66,10 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.JCacheFactoryBean;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 
 /**
@@ -130,7 +130,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		collector.setQueueSize(5);
 		collector.setExceptionHandler(this);
 		collector.setShutdownWaitSecs(3600);
-		collector.startup();
+		collector.serviceDidStartup();
 	}
 
 	@After

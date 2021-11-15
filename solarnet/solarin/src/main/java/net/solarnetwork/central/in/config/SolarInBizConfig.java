@@ -167,7 +167,7 @@ public class SolarInBizConfig {
 		return new AsyncDatumCollectorSettings();
 	}
 
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public AsyncDaoDatumCollector asyncDaoDatumCollector() {
 		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
 		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.statFrequency);

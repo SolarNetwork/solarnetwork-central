@@ -60,6 +60,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Data collector that processes datum and location datum asynchronously.
@@ -67,8 +68,8 @@ import net.solarnetwork.service.PingTestResult;
  * @author matt
  * @version 2.0
  */
-public class AsyncDaoDatumCollector
-		implements CacheEntryCreatedListener<Serializable, Serializable>, PingTest {
+public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
+		PingTest, ServiceLifecycleObserver {
 
 	/** The {@code concurrency} property default value. */
 	public final int DEFAULT_CONCURRENCY = 2;
@@ -149,11 +150,12 @@ public class AsyncDaoDatumCollector
 	/**
 	 * Call after configured to start up processing.
 	 */
-	public synchronized void startup() {
+	@Override
+	public synchronized void serviceDidStartup() {
 		final int threadCount = getConcurrency();
 		final UncaughtExceptionHandler exHandler = getExceptionHandler();
 		if ( datumThreads != null ) {
-			shutdown();
+			serviceDidShutdown();
 		}
 		writeEnabled = true;
 		this.queue = new ArrayBlockingQueue<>(queueSize);
@@ -172,7 +174,8 @@ public class AsyncDaoDatumCollector
 	/**
 	 * Call when no longer needed.
 	 */
-	public synchronized void shutdown() {
+	@Override
+	public synchronized void serviceDidShutdown() {
 		doShutdown();
 		datumThreads = null;
 	}
