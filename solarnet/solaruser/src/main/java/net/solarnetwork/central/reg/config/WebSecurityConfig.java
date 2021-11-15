@@ -264,6 +264,7 @@ public class WebSecurityConfig {
 		        		"/associate.*",
 		        		"/cert.*",
 		        		"/css/**",
+		        		"/fonts/**",
 		        		"/img/**",
 		        		"/js/**",
 		        		"/js-lib/**",
