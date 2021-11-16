@@ -100,6 +100,7 @@ import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -108,7 +109,8 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 2.0
  */
-public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImportJobBiz {
+public class DaoDatumImportBiz extends BaseDatumImportBiz
+		implements DatumImportJobBiz, ServiceLifecycleObserver {
 
 	/** The default value for the {@code maxPreviewCount} property. */
 	public static final int DEFAULT_MAX_PREVIEW_COUNT = 200;
@@ -171,7 +173,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	 * instance.
 	 * </p>
 	 */
-	public synchronized void init() {
+	@Override
+	public synchronized void serviceDidStartup() {
 		if ( taskPurgerTask != null ) {
 			return;
 		}
@@ -188,7 +191,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	/**
 	 * Shutdown after the service is no longer needed.
 	 */
-	public synchronized void shutdown() {
+	@Override
+	public synchronized void serviceDidShutdown() {
 		if ( taskPurgerTask != null ) {
 			taskPurgerTask.cancel(true);
 		}

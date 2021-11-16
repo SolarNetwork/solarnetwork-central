@@ -49,6 +49,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * {@link QueryAuditor} implementation that uses JDBC statements to update audit
@@ -77,7 +78,7 @@ import net.solarnetwork.central.domain.FilterResults;
  * @author matt
  * @version 2.0
  */
-public class JdbcQueryAuditor implements QueryAuditor {
+public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver {
 
 	/** The default value for the {@code updateDelay} property. */
 	public static final long DEFAULT_UPDATE_DELAY = 100;
@@ -169,6 +170,17 @@ public class JdbcQueryAuditor implements QueryAuditor {
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
 		setNodeSourceIncrementSql(DEFAULT_NODE_SOURCE_INCREMENT_SQL);
 		setStatLogUpdateCount(DEFAULT_STAT_LOG_UPDATE_COUNT);
+	}
+
+	@Override
+	public void serviceDidStartup() {
+		enableWriting();
+
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		disableWriting();
 	}
 
 	@Override

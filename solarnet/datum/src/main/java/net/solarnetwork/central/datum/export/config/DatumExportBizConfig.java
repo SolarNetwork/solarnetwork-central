@@ -68,7 +68,7 @@ public class DatumExportBizConfig {
 	@Autowired
 	private DatumEntityDao datumEntityDao;
 
-	@Autowired
+	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
 	@Autowired
@@ -77,7 +77,7 @@ public class DatumExportBizConfig {
 	@Autowired
 	private List<DatumExportOutputFormatService> datumExportOutputFormatServices;
 
-	@Bean(initMethod = "init", destroyMethod = "shutdown")
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumExportBiz datumExportBiz() {
 		DaoDatumExportBiz biz = new DaoDatumExportBiz(datumExportTaskInfoDao, datumEntityDao,
 				taskScheduler, taskExecutor, transactionTemplate);

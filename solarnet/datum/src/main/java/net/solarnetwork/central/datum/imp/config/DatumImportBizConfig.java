@@ -153,7 +153,7 @@ public class DatumImportBizConfig {
 		return new DatumImportSettings();
 	}
 
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumImportBiz datumImportBiz() {
 		DatumImportSettings settings = datumImportSettings();
 

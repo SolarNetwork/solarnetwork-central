@@ -31,9 +31,6 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.user.pki.dev.DevNodePKIBiz;
-import net.solarnetwork.pki.bc.BCCertificateService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +38,9 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.security.AuthenticatedUser;
+import net.solarnetwork.central.user.pki.dev.DevNodePKIBiz;
+import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
  * Test cases for the {@link DevNodePKIBiz} class.
@@ -101,7 +101,7 @@ public class DevNodePKIBizTests {
 
 	@Test
 	public void initCA() throws Exception {
-		biz.init();
+		biz.serviceDidStartup();
 
 		File webserverKeyStoreFile = new File(biz.getBaseDir(), "central.jks");
 		Assert.assertTrue("Webserver KeyStore exists", webserverKeyStoreFile.canRead());

@@ -53,6 +53,7 @@ import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
 import net.solarnetwork.service.CertificationAuthorityService;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Developer implementation of {@link NodePKIBiz}.
@@ -60,7 +61,7 @@ import net.solarnetwork.service.CertificationAuthorityService;
  * @author matt
  * @version 2.0
  */
-public class DevNodePKIBiz implements NodePKIBiz {
+public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
 	private static final String WEBSERVER_KEYSTORE_PASSWORD = "dev123";
 	private static final String CA_ALIAS = "ca";
@@ -96,7 +97,8 @@ public class DevNodePKIBiz implements NodePKIBiz {
 	 * service.
 	 * </p>
 	 */
-	public void init() {
+	@Override
+	public void serviceDidStartup() {
 		// make sure CA cert created
 		final KeyStore keyStore = loadKeyStore();
 		X509Certificate caCert = getCertificate(keyStore, CA_ALIAS);
@@ -210,6 +212,11 @@ public class DevNodePKIBiz implements NodePKIBiz {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void serviceDidShutdown() {
+		// nothing to do
 	}
 
 	@Override

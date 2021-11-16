@@ -81,6 +81,7 @@ import net.solarnetwork.domain.Identity;
 import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.service.ProgressListener;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * DAO-based implementation of {@link DatumExportBiz}.
@@ -88,7 +89,7 @@ import net.solarnetwork.service.ProgressListener;
  * @author matt
  * @version 2.0
  */
-public class DaoDatumExportBiz implements DatumExportBiz {
+public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
 
 	/** The datum export task name. */
 	public static final String DATUM_EXPORT_NAME = "datum-export";
@@ -147,9 +148,10 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 * instance.
 	 * </p>
 	 * 
-	 * @since 1.1
+	 * @since 2.0
 	 */
-	public void init() {
+	@Override
+	public void serviceDidStartup() {
 		if ( taskPurgerTask != null ) {
 			return;
 		}
@@ -165,7 +167,8 @@ public class DaoDatumExportBiz implements DatumExportBiz {
 	 * 
 	 * @since 1.1
 	 */
-	public void shutdown() {
+	@Override
+	public void serviceDidShutdown() {
 		if ( taskPurgerTask != null ) {
 			taskPurgerTask.cancel(true);
 		}

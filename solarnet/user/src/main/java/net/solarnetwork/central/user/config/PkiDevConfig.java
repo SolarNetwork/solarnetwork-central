@@ -56,7 +56,7 @@ public class PkiDevConfig {
 	@Autowired
 	CertificationAuthorityService certificationAuthorityService;
 
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public NodePKIBiz pkiBiz() {
 		DevNodePKIBiz biz = new DevNodePKIBiz();
 		biz.setCaService(certificationAuthorityService);

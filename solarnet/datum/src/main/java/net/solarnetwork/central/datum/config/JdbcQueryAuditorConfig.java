@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
 
@@ -38,6 +39,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
  * @version 1.0
  */
 @Configuration
+@Profile("query-auditor")
 public class JdbcQueryAuditorConfig {
 
 	/** A qualifier for audit JDBC access. */
@@ -101,7 +103,7 @@ public class JdbcQueryAuditorConfig {
 		return new QueryAuditorSettings();
 	}
 
-	@Bean
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public QueryAuditor queryAuditor() {
 		QueryAuditorSettings settings = queryAuditorSettings();
 		DataSource ds = (readWriteDataSource != null ? readWriteDataSource : dataSource);
