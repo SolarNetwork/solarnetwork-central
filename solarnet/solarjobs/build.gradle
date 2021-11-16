@@ -36,6 +36,8 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-security';
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
@@ -44,6 +46,7 @@ dependencies {
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
 	// Utils
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
 	implementation 'org.tukaani:xz:1.9'

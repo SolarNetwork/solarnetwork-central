@@ -57,6 +57,7 @@ dependencies {
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 
 	// Utils
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
 	implementation 'org.tukaani:xz:1.9'
