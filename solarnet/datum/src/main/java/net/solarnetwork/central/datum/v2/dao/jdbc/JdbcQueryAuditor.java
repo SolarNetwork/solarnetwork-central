@@ -33,12 +33,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
@@ -49,7 +49,10 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.StatCounter;
 
 /**
  * {@link QueryAuditor} implementation that uses JDBC statements to update audit
@@ -78,7 +81,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 2.0
  */
-public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver {
+public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
 	/** The default value for the {@code updateDelay} property. */
 	public static final long DEFAULT_UPDATE_DELAY = 100;
@@ -105,19 +108,18 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 	private static final ThreadLocal<Map<GeneralNodeDatumPK, Integer>> auditResultMap = ThreadLocal
 			.withInitial(() -> new HashMap<>());
 
+	private static final Logger log = LoggerFactory.getLogger(JdbcQueryAuditor.class);
+
 	private final Clock clock;
-	private final AtomicLong updateCount;
 	private final DataSource dataSource;
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	private final StatCounter statCounter;
 
 	private WriterThread writerThread;
 	private long updateDelay;
 	private long flushDelay;
 	private long connectionRecoveryDelay;
 	private String nodeSourceIncrementSql;
-	private int statLogUpdateCount;
 
 	/**
 	 * Constructor.
@@ -141,7 +143,8 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 	 */
 	public JdbcQueryAuditor(DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
-		this(Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), dataSource, nodeSourceCounters);
+		this(Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), dataSource, nodeSourceCounters,
+				new StatCounter("QueryAuditor", "", log, 1000, JdbcQueryAuditorCount.values()));
 	}
 
 	/**
@@ -159,12 +162,13 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 	 * @since 2.0
 	 */
 	public JdbcQueryAuditor(Clock clock, DataSource dataSource,
-			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
+			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters,
+			StatCounter statCounter) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.nodeSourceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
-		this.updateCount = new AtomicLong(0);
+		this.statCounter = requireNonNullArgument(statCounter, "statCounter");
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setFlushDelay(DEFAULT_FLUSH_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
@@ -255,9 +259,11 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
 		nodeSourceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+		statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsAdded);
 	}
 
 	private void flushNodeSourceData(PreparedStatement stmt) throws SQLException, InterruptedException {
+		statCounter.incrementAndGet(JdbcQueryAuditorCount.CountsFlushed);
 		for ( Iterator<Map.Entry<GeneralNodeDatumPK, AtomicInteger>> itr = nodeSourceCounters.entrySet()
 				.iterator(); itr.hasNext(); ) {
 			Map.Entry<GeneralNodeDatumPK, AtomicInteger> me = itr.next();
@@ -267,6 +273,7 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 			if ( count < 1 ) {
 				// clean out stale 0 valued counter
 				itr.remove();
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.ZeroCountsCleared);
 				continue;
 			}
 			try {
@@ -275,18 +282,19 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 				stmt.setTimestamp(3, Timestamp.from(key.getCreated()));
 				stmt.setInt(4, count);
 				stmt.execute();
-				long currUpdateCount = updateCount.incrementAndGet();
-				if ( statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0 ) {
-					log.info("Updated {} node source query count records", currUpdateCount);
-				}
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesExecuted);
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
 				}
 			} catch ( SQLException | InterruptedException e ) {
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesFailed);
 				addNodeSourceCount(key, count);
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsReadded);
 				throw e;
 			} catch ( Exception e ) {
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesFailed);
 				addNodeSourceCount(key, count);
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsReadded);
 				RuntimeException re;
 				if ( e instanceof RuntimeException ) {
 					re = (RuntimeException) e;
@@ -328,30 +336,36 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 
 		@Override
 		public void run() {
-			while ( keepGoing.get() ) {
-				keepGoingWithConnection.set(true);
-				synchronized ( this ) {
-					started = true;
-					this.notifyAll();
-				}
-				try {
-					keepGoing.compareAndSet(true, execute());
-				} catch ( SQLException | RuntimeException e ) {
-					log.warn("Exception with query auditing", e);
-					// sleep, then try again
+			statCounter.incrementAndGet(JdbcQueryAuditorCount.WriterThreadsStarted);
+			try {
+				while ( keepGoing.get() ) {
+					keepGoingWithConnection.set(true);
+					synchronized ( this ) {
+						started = true;
+						this.notifyAll();
+					}
 					try {
-						Thread.sleep(connectionRecoveryDelay);
-					} catch ( InterruptedException e2 ) {
-						log.info("Writer thread interrupted: exiting now.");
-						keepGoing.set(false);
+						keepGoing.compareAndSet(true, execute());
+					} catch ( SQLException | RuntimeException e ) {
+						log.warn("Exception with query auditing", e);
+						// sleep, then try again
+						try {
+							Thread.sleep(connectionRecoveryDelay);
+						} catch ( InterruptedException e2 ) {
+							log.info("Writer thread interrupted: exiting now.");
+							keepGoing.set(false);
+						}
 					}
 				}
+			} finally {
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.WriterThreadsEnded);
 			}
 		}
 
 		private Boolean execute() throws SQLException {
 			final DataSource ds = dataSource;
 			try (Connection conn = ds.getConnection()) {
+				statCounter.incrementAndGet(JdbcQueryAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
 						? conn.prepareCall(nodeSourceIncrementSql)
@@ -411,6 +425,36 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 		if ( writerThread != null ) {
 			writerThread.exit();
 		}
+	}
+
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "JDBC Query Auditor";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		final WriterThread t = this.writerThread;
+		boolean writerRunning = t != null && t.isAlive();
+		Map<String, Long> statMap = new LinkedHashMap<>(JdbcQueryAuditorCount.values().length);
+		for ( JdbcQueryAuditorCount s : JdbcQueryAuditorCount.values() ) {
+			statMap.put(s.toString(), statCounter.get(s));
+		}
+		if ( !writerRunning ) {
+			return new PingTestResult(false,
+					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+		}
+		return new PingTestResult(true, "Writer thread alive.", statMap);
 	}
 
 	/**
@@ -505,7 +549,7 @@ public class JdbcQueryAuditor implements QueryAuditor, ServiceLifecycleObserver 
 	 * @since 1.1
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
-		this.statLogUpdateCount = statLogUpdateCount;
+		statCounter.setLogFrequency(statLogUpdateCount);
 	}
 
 }

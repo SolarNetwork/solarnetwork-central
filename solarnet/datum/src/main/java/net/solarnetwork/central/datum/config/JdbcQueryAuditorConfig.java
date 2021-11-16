@@ -29,7 +29,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
 
 /**
@@ -50,7 +49,7 @@ public class JdbcQueryAuditorConfig {
 		private long updateDelay = 100;
 		private long flushDelay = 10000;
 		private long connectionRecoveryDelay = 15000;
-		private int statLogUpdateCount = 500;
+		private int statLogUpdateCount = 1000;
 
 		public long getUpdateDelay() {
 			return updateDelay;
@@ -104,7 +103,7 @@ public class JdbcQueryAuditorConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public QueryAuditor queryAuditor() {
+	public JdbcQueryAuditor queryAuditor() {
 		QueryAuditorSettings settings = queryAuditorSettings();
 		DataSource ds = (readWriteDataSource != null ? readWriteDataSource : dataSource);
 		JdbcQueryAuditor auditor = new JdbcQueryAuditor(ds);
