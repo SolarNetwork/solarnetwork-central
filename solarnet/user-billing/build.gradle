@@ -64,9 +64,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	implementation 'net.solarnetwork.common:net.solarnetwork.common:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.tmpl.st4:2.0.0'
-	
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

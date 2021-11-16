@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -105,7 +106,6 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				reader.read();
 			}
 		}
-		ZoneId zone = props.getTimeZoneId() != null ? ZoneId.of(props.getTimeZoneId()) : ZoneOffset.UTC;
 		DateTimeFormatter formatter = null;
 		if ( props.getDateFormat() != null ) {
 			try {
@@ -113,7 +113,6 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				formatter = new DateTimeFormatterBuilder().appendPattern(props.getDateFormat())
 						.parseDefaulting(ChronoField.ERA, ChronoField.ERA.range().getMaximum())
 						.toFormatter()
-						.withZone(zone)
 						.withResolverStyle(ResolverStyle.STRICT)
 						.withChronology(IsoChronology.INSTANCE);
 				// @formatter:on
@@ -122,7 +121,10 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 			}
 		}
 		if ( formatter == null ) {
-			formatter = ISO_LOCAL_DATE_OPTIONAL_TIME.withZone(zone);
+			formatter = ISO_LOCAL_DATE_OPTIONAL_TIME;
+		}
+		if ( props.getTimeZoneId() != null && !props.getTimeZoneId().isEmpty() ) {
+			formatter = formatter.withZone(ZoneId.of(props.getTimeZoneId()));
 		}
 		this.dateFormatter = formatter;
 
@@ -330,33 +332,40 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 		Instant date;
 		try {
-			// guard against invalid DST date inputs here, to avoid ambiguity associated with
-			// importing strictly invalid timestamps in a DST gap
-			LocalDateTime dt = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "),
-					LocalDateTime::from);
-			ZoneId zone = dateFormatter.getZone();
-			if ( zone == null ) {
-				zone = ZoneOffset.UTC;
-			}
-			if ( !zone.getRules().isFixedOffset() ) {
-				List<ZoneOffset> offsets = zone.getRules().getValidOffsets(dt);
-				if ( offsets.isEmpty() ) {
-					List<Integer> dateCols = props.getDateColumns();
-					StringBuilder buf = new StringBuilder(
-							"Date that cannot exist because of a daylight saving time transition in zone ");
-					buf.append(zone.getId());
-					buf.append(" on column");
-					if ( dateCols.size() > 1 ) {
-						buf.append("s");
-					}
-					buf.append(" ");
-					buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
-					buf.append(".");
-					throw new DatumImportValidationException(buf.toString(), null,
-							(long) reader.getLineNumber(), reader.getUntokenizedRow());
+			if ( dateFormatter.getZone() != null ) {
+				// guard against invalid DST date inputs here, to avoid ambiguity associated with
+				// importing strictly invalid timestamps in a DST gap
+				LocalDateTime dt = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "),
+						LocalDateTime::from);
+				ZoneId zone = dateFormatter.getZone();
+				if ( zone == null ) {
+					zone = ZoneOffset.UTC;
 				}
+				if ( !zone.getRules().isFixedOffset() ) {
+					List<ZoneOffset> offsets = zone.getRules().getValidOffsets(dt);
+					if ( offsets.isEmpty() ) {
+						List<Integer> dateCols = props.getDateColumns();
+						StringBuilder buf = new StringBuilder(
+								"Date that cannot exist because of a daylight saving time transition in zone ");
+						buf.append(zone.getId());
+						buf.append(" on column");
+						if ( dateCols.size() > 1 ) {
+							buf.append("s");
+						}
+						buf.append(" ");
+						buf.append(StringUtils.commaDelimitedStringFromCollection(dateCols));
+						buf.append(".");
+						throw new DatumImportValidationException(buf.toString(), null,
+								(long) reader.getLineNumber(), reader.getUntokenizedRow());
+					}
+				}
+				date = dt.atZone(zone).toInstant();
+			} else {
+				// assume date format includes zone
+				ZonedDateTime dt = dateFormatter.parse(getColumnsValue(row, props.getDateColumns(), " "),
+						ZonedDateTime::from);
+				date = dt.toInstant();
 			}
-			date = dt.atZone(zone).toInstant();
 		} catch ( DateTimeParseException e ) {
 			List<Integer> dateCols = props.getDateColumns();
 			StringBuilder buf = new StringBuilder("Error parsing date from column");

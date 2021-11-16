@@ -36,6 +36,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
+import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.DateUtils;
 
@@ -46,7 +47,8 @@ import net.solarnetwork.util.DateUtils;
  * @version 1.0
  */
 @Configuration
-@Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class })
+@Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
+		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)

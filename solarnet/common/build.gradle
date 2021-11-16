@@ -73,7 +73,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common:2.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common:2.1.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.0.0'
 	

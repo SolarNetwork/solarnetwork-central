@@ -23,6 +23,7 @@
 package net.solarnetwork.central.web.support;
 
 import java.sql.SQLException;
+import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Locale;
@@ -142,7 +143,7 @@ public final class WebServiceControllerSupport {
 	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
 	/** A class-level logger. */
-	protected final Logger log = LoggerFactory.getLogger(getClass());
+	private static final Logger log = LoggerFactory.getLogger(WebServiceControllerSupport.class);
 
 	@Autowired
 	private MessageSource messageSource;
@@ -318,8 +319,7 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
-	 * input.
+	 * Handle a {@link DateTimeParseException}, from malformed date input.
 	 * 
 	 * @param e
 	 *        the exception
@@ -333,6 +333,22 @@ public final class WebServiceControllerSupport {
 		log.debug("DateTimeParseException in {} controller", getClass().getSimpleName(), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed date string: " + e.getMessage(),
 				null);
+	}
+
+	/**
+	 * Handle a general {@Link DateTimeException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @return the error response object
+	 * @since 2.0
+	 */
+	@ExceptionHandler(DateTimeException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Response<?> handleDateTimeException(DateTimeException e) {
+		log.debug("DateTimeException in {} controller", getClass().getSimpleName(), e);
+		return new Response<Object>(Boolean.FALSE, null, "Date exception: " + e.getMessage(), null);
 	}
 
 	/**

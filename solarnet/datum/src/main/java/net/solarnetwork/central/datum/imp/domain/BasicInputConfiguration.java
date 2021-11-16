@@ -38,6 +38,8 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 
 	private static final long serialVersionUID = 4114494359629338909L;
 
+	private String timeZoneId;
+
 	/**
 	 * Default constructor.
 	 */
@@ -55,8 +57,6 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 		super(other);
 		setTimeZoneId(other.getTimeZoneId());
 	}
-
-	private String timeZoneId;
 
 	@Override
 	public String getTimeZoneId() {

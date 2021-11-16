@@ -149,12 +149,20 @@ server:
   error.whitelabel.enabled: false
   port: 9081
   servlet.context-path: /solaruser
+  tomcat:
+#    max-http-form-post-size: "2MB"
+    max-swallow-size: -1
 
 spring:
   mvc.format:
     date: iso
     date-time: iso
     time: iso
+  servlet.multipart:
+    max-file-size: "250MB"
+    max-request-size: "256MB"
+    location: ""
+    file-size-threshold: "1MB"
 
 ---
 spring:

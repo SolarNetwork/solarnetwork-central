@@ -329,7 +329,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	 * Get the configured time zone.
 	 * 
 	 * @return the configured time zone, defaulting to {@literal UTC} if a
-	 *         specific time zone ID is configured
+	 *         specific time zone ID is not configured
 	 * @since 2.0
 	 */
 	@NonNull

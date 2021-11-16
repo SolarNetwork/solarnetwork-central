@@ -38,6 +38,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
+import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 import net.solarnetwork.codec.BindingResultSerializer;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
@@ -53,7 +54,8 @@ import net.solarnetwork.web.support.SimpleXmlView;
  * @version 1.0
  */
 @Configuration
-@Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class })
+@Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
+		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)

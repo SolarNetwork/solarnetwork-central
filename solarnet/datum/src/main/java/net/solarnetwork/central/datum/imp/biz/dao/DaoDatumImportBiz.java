@@ -271,8 +271,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz implements DatumImport
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
 			ResourceStorageService rss) {
 		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (r, amount) -> {
-			log.debug("Saved %.1f% of datum import [%s] to resource storage [{}]", (amount * 100.0),
-					f.getName(), rss.getUid());
+			String msg = String.format("Saved %.1f%% of datum import [%s] to resource storage [%s]",
+					(amount * 100.0), f.getName(), rss.getUid());
+			log.info(msg);
 		});
 	}
 

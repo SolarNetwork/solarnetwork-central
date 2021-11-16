@@ -50,7 +50,9 @@ public class S3ResourceStorageConfig {
 	@Qualifier(DATUM_IMPORT)
 	@Bean(initMethod = "startup")
 	public ResourceStorageService datumImportResourceStorageService() {
-		return new S3ResourceStorageService("Datum-Import", executor);
+		S3ResourceStorageService service = new S3ResourceStorageService(executor);
+		service.setUid("Datum-Import");
+		return service;
 	}
 
 }

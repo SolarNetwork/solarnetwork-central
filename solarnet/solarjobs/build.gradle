@@ -43,9 +43,10 @@ dependencies {
 	// allow WAR to be run from command line OR deployed in Tomcat
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
-	// JCache
+	// Utils
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
+	implementation 'org.tukaani:xz:1.9'
 
 	// SolarNetwork
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'

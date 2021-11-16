@@ -84,6 +84,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		// given
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration();
+		config.setTimeZoneId("UTC");
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-01.csv", getClass()), "text/csv;charset=utf-8");
 
@@ -184,6 +185,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		// given
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration();
+		config.setTimeZoneId("UTC");
 		String datePattern = "MM/dd/yyyy HH:mm:ss";
 		config.setServiceProps(Collections.singletonMap("dateFormat", datePattern));
 		BasicDatumImportResource resource = new BasicDatumImportResource(
@@ -269,6 +271,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		// given
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 		BasicInputConfiguration config = new BasicInputConfiguration();
+		config.setTimeZoneId("UTC");
 		config.setServiceProps(Collections.singletonMap("instantaneousDataColumn", "0"));
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new ClassPathResource("test-data-04.csv", getClass()), "text/csv;charset=utf-8");
