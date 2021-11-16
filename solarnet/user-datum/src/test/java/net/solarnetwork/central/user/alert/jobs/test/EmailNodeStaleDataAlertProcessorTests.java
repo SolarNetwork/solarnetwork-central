@@ -30,6 +30,9 @@ import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -38,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -98,6 +102,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	private static final Long TEST_NODE_ID_2 = -2L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final Long TEST_USER_ALERT_ID = -999L;
+	private static final String TEST_TIME_ZONE_ID = "Pacific/Auckland";
 
 	private static final AtomicLong AlertIdCounter = new AtomicLong(TEST_USER_ALERT_ID);
 
@@ -142,7 +147,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		MessageSource.setBasename("net.solarnetwork.central.user.alerts.messages");
+		MessageSource.setBasename(EmailNodeStaleDataAlertProcessor.class.getName());
 	}
 
 	@Before
@@ -170,7 +175,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		SolarLocation testLoc = new SolarLocation();
 		testLoc.setId(TEST_LOC_ID);
-		testLoc.setTimeZoneId("Pacific/Auckland");
+		testLoc.setTimeZoneId(TEST_TIME_ZONE_ID);
 		testNode = new SolarNode(TEST_NODE_ID, testLoc.getId());
 		testNode.setLocation(testLoc);
 	}
@@ -279,16 +284,16 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlerts.get(0).getId(),
-				startingId);
-		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale",
-				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID",
-				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
-				.getTimestampFormat().format(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -345,6 +350,11 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				pendingAlert.getValidTo().equals(pendingAlertValidTo));
 	}
 
+	private String mailFormattedDate(Instant ts) {
+		return service.getTimestampFormat().withLocale(Locale.US)
+				.format(ts.atZone(ZoneId.of(TEST_TIME_ZONE_ID)));
+	}
+
 	@Test
 	public void processOneAlertTriggerForUser() {
 		final Instant batchTime = Instant.now();
@@ -397,16 +407,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlert.getId(),
-				startingId);
-		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
+		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID_2 + " data is stale",
-				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID",
-				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText().contains("since " + service
-				.getTimestampFormat().format(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID_2 + " data is stale"));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -533,16 +542,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlert.getId(),
-				startingId);
-		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
+		assertThat("Next staring ID is last processed alert ID", startingId, is(pendingAlert.getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		Assert.assertEquals("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale",
-				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID",
-				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
-				.contains("since " + service.getTimestampFormat().format(dataTimestamp)));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertTrue("Situation created", newSituation.hasCaptured());
 		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
 		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
@@ -669,13 +677,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				Assert.assertEquals("Mail sent", batchSize, MailSender.getSent().size());
 				for ( MailMessage sent : MailSender.getSent() ) {
 					SimpleMailMessage sentMail = (SimpleMailMessage) sent;
-					Assert.assertEquals(
-							"SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale",
-							sentMail.getSubject());
-					Assert.assertTrue("Mail has source ID",
-							sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-					Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
-							.contains("since " + service.getTimestampFormat().format(dataTimestamp)));
+					assertThat("Mail subject", sentMail.getSubject(),
+							is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
+					assertThat("Mail has source ID", sentMail.getText(),
+							containsString("source \"" + TEST_SOURCE_ID));
+					assertThat("Mail has formatted datum date", sentMail.getText(),
+							containsString("since " + mailFormattedDate(dataTimestamp.toInstant())));
 				}
 			}
 			MailSender.getSent().clear();
@@ -727,17 +734,16 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlerts.get(0).getId(),
-				startingId);
-		Assert.assertEquals("Mail sent", 1, MailSender.getSent().size());
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
-		Assert.assertEquals(
-				"SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID + " data is no longer stale",
-				sentMail.getSubject());
-		Assert.assertTrue("Mail has source ID",
-				sentMail.getText().contains("source \"" + TEST_SOURCE_ID));
-		Assert.assertTrue("Mail has formatted datum date", sentMail.getText()
-				.contains("on " + service.getTimestampFormat().format(dataTimestamp.toInstant())));
+		assertThat("Mail subject", sentMail.getSubject(), is(
+				"SolarNetwork alert resolved: SolarNode " + TEST_NODE_ID + " data is no longer stale"));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"on " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
 		Assert.assertEquals(UserAlertSituationStatus.Resolved, activeSituation.getStatus());
 		Assert.assertNotNull(activeSituation.getNotified());
 		Assert.assertTrue("Saved alert validTo increased",
