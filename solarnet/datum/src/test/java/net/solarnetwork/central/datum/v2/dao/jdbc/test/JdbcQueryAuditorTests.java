@@ -45,11 +45,15 @@ import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditorCount;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.util.StatCounter;
 
 /**
  * Test cases for the {@link JdbcQueryAuditor} class.
@@ -58,6 +62,8 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * @version 2.0
  */
 public class JdbcQueryAuditorTests {
+
+	private static final Logger log = LoggerFactory.getLogger(JdbcQueryAuditorTests.class);
 
 	private static final long FLUSH_DELAY = 300;
 	private static final long UPDATE_DELAY = 0;
@@ -80,7 +86,8 @@ public class JdbcQueryAuditorTests {
 		jdbcConnection = EasyMock.createMock(Connection.class);
 		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
-		auditor = new JdbcQueryAuditor(testClock, dataSource, datumCountMap);
+		auditor = new JdbcQueryAuditor(testClock, dataSource, datumCountMap,
+				new StatCounter("QueryAuditor", "", log, 20, JdbcQueryAuditorCount.values()));
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
