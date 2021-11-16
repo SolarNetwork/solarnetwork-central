@@ -209,6 +209,11 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveDatumExportConfiguration(UserDatumExportConfiguration configuration) {
+		if ( configuration.getMinimumExportDate() == null && configuration.getSchedule() != null ) {
+			ZonedDateTime ts = Instant.now().atZone(configuration.zone());
+			ts = configuration.getSchedule().exportDate(ts);
+			configuration.setMinimumExportDate(ts.toInstant());
+		}
 		return datumExportConfigDao.store(configuration);
 	}
 
