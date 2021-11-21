@@ -29,10 +29,12 @@ import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoAuditDatumBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumMaintenanceBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumMetadataBiz;
+import net.solarnetwork.central.datum.biz.dao.DaoDatumStreamMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
@@ -77,6 +79,11 @@ public class DatumBizDaoConfig {
 	@Bean
 	public AuditDatumBiz auditDatumBiz() {
 		return new DaoAuditDatumBiz(auditDatumDao);
+	}
+
+	@Bean
+	public DatumStreamMetadataBiz datumStreamMetadataBiz() {
+		return new DaoDatumStreamMetadataBiz(datumStreamMetadataDao);
 	}
 
 }
