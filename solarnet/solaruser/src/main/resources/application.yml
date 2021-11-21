@@ -146,6 +146,10 @@ mybatis:
      net.solarnetwork.central.user.domain
 
 server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
   error.whitelabel.enabled: false
   port: 9081
   servlet.context-path: /solaruser
