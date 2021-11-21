@@ -172,6 +172,17 @@ RETURNS bigint[] LANGUAGE sql IMMUTABLE AS $$
     SELECT array_agg(x)::bigint[] || ARRAY[]::bigint[] FROM jsonb_array_elements_text($1) t(x);
 $$;
 
+/**
+ * Table for dynamic application settings.
+ */
+CREATE TABLE solarcommon.app_setting (
+	created		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified	TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	skey		VARCHAR(255) NOT NULL,
+	stype		VARCHAR(255) NOT NULL,
+	svalue		VARCHAR(4096) NOT NULL,
+	CONSTRAINT app_settings_pk PRIMARY KEY (skey, stype)
+);
 
 /**
  * Table for verioned localized messages.
