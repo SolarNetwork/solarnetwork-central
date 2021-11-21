@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.datum.biz;
 
+import java.util.List;
 import java.util.UUID;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -50,9 +54,52 @@ public interface DatumStreamMetadataBiz {
 	 * @throws IllegalArgumentException
 	 *         if either {@code kind} or {@code streamId} is {@literal null} or
 	 *         both {@code objectId} and {@code sourceId} are {@literal null}
-	 * @since 2.1
 	 */
 	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId);
+
+	/**
+	 * Find all available object datum stream metadata for a given search
+	 * filter.
+	 * 
+	 * <p>
+	 * The {@link ObjectStreamCriteria#getObjectKind()} determines the type of
+	 * metadata returned. If not specified, {@link ObjectDatumKind#Node} will be
+	 * assumed.
+	 * </p>
+	 * 
+	 * @param actor
+	 *        the actor to find metadata for
+	 * @param criteria
+	 *        the search criteria
+	 * @return the matching results, never {@literal null}
+	 */
+	List<ObjectDatumStreamMetadata> findDatumStreamMetadata(SecurityActor actor,
+			ObjectStreamCriteria criteria);
+
+	/**
+	 * FInd all available object datum stream metadata IDs for a given search
+	 * filter.
+	 * 
+	 * <p>
+	 * The {@link ObjectStreamCriteria#getObjectKind()} determines the type of
+	 * metadata returned. If not specified, {@link ObjectDatumKind#Node} will be
+	 * assumed.
+	 * </p>
+	 * 
+	 * <p>
+	 * This can be more efficient than
+	 * {@link #findDatumStreamMetadata(ObjectStreamCriteria)} when all you need
+	 * are the IDs.
+	 * </p>
+	 * 
+	 * @param actor
+	 *        the actor to find metadata for
+	 * @param criteria
+	 *        the search criteria
+	 * @return the matching results, never {@literal null}
+	 */
+	List<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(SecurityActor actor,
+			ObjectStreamCriteria criteria);
 
 }

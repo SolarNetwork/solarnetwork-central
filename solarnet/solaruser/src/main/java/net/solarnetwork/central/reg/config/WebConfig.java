@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.config;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
@@ -77,6 +79,8 @@ public class WebConfig implements WebMvcConfigurer {
 				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC),
 				new TemporalAccessorParser(LocalDateTime.class,
 						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC));
+		registry.addFormatterForFieldType(Instant.class,
+				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
 	}
 
 	@Override

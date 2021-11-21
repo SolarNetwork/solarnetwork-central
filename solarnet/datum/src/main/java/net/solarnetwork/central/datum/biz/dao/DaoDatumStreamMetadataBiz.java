@@ -23,12 +23,23 @@
 package net.solarnetwork.central.datum.biz.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.central.security.SecurityNode;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -60,6 +71,54 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 	public ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
 			Long objectId, String sourceId) {
 		return metaDao.updateIdAttributes(kind, streamId, objectId, sourceId);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public List<ObjectDatumStreamMetadata> findDatumStreamMetadata(SecurityActor actor,
+			ObjectStreamCriteria criteria) {
+		BasicDatumCriteria c = DatumUtils.toBasicDatumCriteria(criteria);
+		if ( c == null ) {
+			c = new BasicDatumCriteria();
+		}
+		c.setObjectKind(ObjectDatumKind.Node);
+		restrictCriteriaToActor(actor, c);
+		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
+		return toList(results);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public List<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(SecurityActor actor,
+			ObjectStreamCriteria criteria) {
+		BasicDatumCriteria c = DatumUtils.toBasicDatumCriteria(criteria);
+		if ( c == null ) {
+			c = new BasicDatumCriteria();
+		}
+		c.setObjectKind(ObjectDatumKind.Node);
+		restrictCriteriaToActor(actor, c);
+		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
+		return toList(results);
+	}
+
+	private static <T> List<T> toList(Iterable<T> iterable) {
+		if ( iterable instanceof List ) {
+			return (List<T>) iterable;
+		}
+		return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+	}
+
+	private void restrictCriteriaToActor(SecurityActor actor, BasicDatumCriteria c) {
+		if ( actor instanceof SecurityNode ) {
+			SecurityNode node = (SecurityNode) actor;
+			c.setNodeId(node.getNodeId());
+		} else if ( actor instanceof SecurityUser ) {
+			SecurityUser user = (SecurityUser) actor;
+			c.setUserId(user.getUserId());
+		} else if ( actor instanceof SecurityToken ) {
+			SecurityToken token = (SecurityToken) actor;
+			c.setTokenId(token.getToken());
+		}
 	}
 
 }

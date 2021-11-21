@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.support;
 
 import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -70,7 +71,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
@@ -93,6 +93,7 @@ import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.DateUtils;
 import net.solarnetwork.util.SearchFilter;
 import net.solarnetwork.util.SearchFilter.CompareOperator;
@@ -102,7 +103,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.8
  */
 public final class DatumUtils {
@@ -300,16 +301,39 @@ public final class DatumUtils {
 	 * @return the new criteria
 	 */
 	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
-		ObjectStreamCriteria result = null;
+		requireNonNullArgument(criteria, "criteria");
+		BasicDatumCriteria result = null;
 		if ( criteria instanceof BasicDatumCriteria ) {
-			BasicDatumCriteria clone = ((BasicDatumCriteria) criteria).clone();
-			clone.setStartDate(null);
-			clone.setEndDate(null);
-			clone.setLocalStartDate(null);
-			clone.setLocalEndDate(null);
-			result = clone;
+			result = ((BasicDatumCriteria) criteria).clone();
 		} else {
-			BasicDatumCriteria c = new BasicDatumCriteria();
+			result = toBasicDatumCriteria(criteria);
+		}
+		result.setStartDate(null);
+		result.setEndDate(null);
+		result.setLocalStartDate(null);
+		result.setLocalEndDate(null);
+		return result;
+	}
+
+	/**
+	 * Get a {@link BasicDatumCriteria} instance from a
+	 * {@link ObjectStreamCriteria} instance.
+	 * 
+	 * @param criteria
+	 *        the criteria to convert
+	 * @return the basic datum criteria, or {@literal null} if {@code criteria}
+	 *         is {@literal null}; if {@code criteria} is already a
+	 *         {@link BasicDatumCriteria} instance it will be returned directly
+	 * @since 2.1
+	 */
+	public static BasicDatumCriteria toBasicDatumCriteria(ObjectStreamCriteria criteria) {
+		BasicDatumCriteria c;
+		if ( criteria == null ) {
+			return null;
+		} else if ( criteria instanceof BasicDatumCriteria ) {
+			c = (BasicDatumCriteria) criteria;
+		} else {
+			c = new BasicDatumCriteria();
 			c.setAggregation(criteria.getAggregation());
 			c.setLocationIds(criteria.getLocationIds());
 			c.setLocation(SimpleLocation.locationValue(criteria.getLocation()));
@@ -326,9 +350,12 @@ public final class DatumUtils {
 			c.setCombiningType(criteria.getCombiningType());
 			c.setObjectIdMappings(criteria.getObjectIdMappings());
 			c.setSourceIdMappings(criteria.getSourceIdMappings());
-			result = c;
+			c.setStartDate(criteria.getStartDate());
+			c.setEndDate(criteria.getEndDate());
+			c.setLocalStartDate(criteria.getLocalStartDate());
+			c.setLocalEndDate(criteria.getLocalEndDate());
 		}
-		return result;
+		return c;
 	}
 
 	/**
