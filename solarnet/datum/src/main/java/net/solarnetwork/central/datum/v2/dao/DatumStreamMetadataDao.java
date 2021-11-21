@@ -22,16 +22,17 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.util.UUID;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * DAO API for datum stream metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.8
  */
 public interface DatumStreamMetadataDao {
@@ -93,5 +94,25 @@ public interface DatumStreamMetadataDao {
 	 *        the new JSON, or {@literal null} to remove
 	 */
 	void replaceJsonMeta(ObjectSourcePK id, String json);
+
+	/**
+	 * Update the object and/or source IDs associated with a stream.
+	 * 
+	 * @param kind
+	 *        the stream kind
+	 * @param streamId
+	 *        the ID of the stream metadata to update
+	 * @param objectId
+	 *        the object ID to set, or {@literal null} to keep unchanged
+	 * @param sourceId
+	 *        the source ID to set, or {@literal null} to keep unchanged
+	 * @return the updated stream metadata ID
+	 * @throws IllegalArgumentException
+	 *         if either {@code kind} or {@code streamId} is {@literal null} or
+	 *         both {@code objectId} and {@code sourceId} are {@literal null}
+	 * @since 2.1
+	 */
+	ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
+			String sourceId);
 
 }

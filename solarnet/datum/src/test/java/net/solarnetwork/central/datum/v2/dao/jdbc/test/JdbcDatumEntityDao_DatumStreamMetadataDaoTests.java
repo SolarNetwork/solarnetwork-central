@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -84,7 +85,6 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
@@ -95,6 +95,7 @@ import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -915,6 +916,126 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		// THEN
 		ObjectDatumStreamMetadata meta = DatumDbUtils.listNodeMetadata(jdbcTemplate).get(0);
 		assertThat("JSON persisted", getStringMap(meta.getMetaJson()), equalTo(getStringMap(json)));
+	}
+
+	@Test
+	public void updateIdAttributes_node_object() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
+		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
+				newNodeId, null);
+
+		// THEN
+		assertThat("Final ID returned", id, is(notNullValue()));
+		assertThat("Returned kind matches", id.getKind(), is(meta.getKind()));
+		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
+		assertThat("Returned object ID new value", id.getObjectId(), is(newNodeId));
+		assertThat("Returned source ID unchanged", id.getSourceId(), is(meta.getSourceId()));
+	}
+
+	@Test
+	public void updateIdAttributes_node_object_clearsCache() {
+		// GIVEN
+		dao.setStreamMetadataCache(cache);
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		expect(cache.remove(meta.getStreamId())).andReturn(true);
+
+		// WHEN
+		replayAll();
+		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
+		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
+				newNodeId, null);
+
+		// THEN
+		assertThat("Final ID returned", id, is(notNullValue()));
+		assertThat("Returned kind matches", id.getKind(), is(meta.getKind()));
+		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
+		assertThat("Returned object ID new value", id.getObjectId(), is(newNodeId));
+		assertThat("Returned source ID unchanged", id.getSourceId(), is(meta.getSourceId()));
+	}
+
+	@Test
+	public void updateIdAttributes_node_objectAndSource() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
+		String newSourceId = UUID.randomUUID().toString();
+		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
+				newNodeId, newSourceId);
+
+		// THEN
+		assertThat("Final ID returned", id, is(notNullValue()));
+		assertThat("Returned kind matches", id.getKind(), is(meta.getKind()));
+		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
+		assertThat("Returned object ID new value", id.getObjectId(), is(newNodeId));
+		assertThat("Returned source ID new value", id.getSourceId(), is(newSourceId));
+	}
+
+	@Test
+	public void updateIdAttributes_loc_object() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, TEST_PRICE_LOC_ID, TEST_SOURCE_ID,
+				new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newLocId = UUID.randomUUID().getLeastSignificantBits();
+		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
+				newLocId, null);
+
+		// THEN
+		assertThat("Final ID returned", id, is(notNullValue()));
+		assertThat("Returned kind matches", id.getKind(), is(meta.getKind()));
+		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
+		assertThat("Returned object ID new value", id.getObjectId(), is(newLocId));
+		assertThat("Returned source ID unchanged", id.getSourceId(), is(meta.getSourceId()));
+	}
+
+	@Test
+	public void updateIdAttributes_loc_objectAndSource() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Location, TEST_PRICE_LOC_ID, TEST_SOURCE_ID,
+				new String[] { "a", "b", "c" }, new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newLocId = UUID.randomUUID().getLeastSignificantBits();
+		String newSourceId = UUID.randomUUID().toString();
+		ObjectDatumStreamMetadataId id = dao.updateIdAttributes(meta.getKind(), meta.getStreamId(),
+				newLocId, newSourceId);
+
+		// THEN
+		assertThat("Final ID returned", id, is(notNullValue()));
+		assertThat("Returned kind matches", id.getKind(), is(meta.getKind()));
+		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
+		assertThat("Returned object ID new value", id.getObjectId(), is(newLocId));
+		assertThat("Returned source ID new value", id.getSourceId(), is(newSourceId));
 	}
 
 }

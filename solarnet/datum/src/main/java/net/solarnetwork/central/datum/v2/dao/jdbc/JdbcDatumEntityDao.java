@@ -52,6 +52,7 @@ import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
@@ -98,6 +99,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataIdAttributes;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -105,7 +107,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.v2.domain.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -123,12 +124,13 @@ import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -437,6 +439,44 @@ public class JdbcDatumEntityDao
 		}
 		jdbcTemplate.update(new UpdateObjectStreamMetadataJson(filter, json));
 
+	}
+
+	@Override
+	public ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
+			Long objectId, String sourceId) {
+		UpdateObjectStreamMetadataIdAttributes sql = new UpdateObjectStreamMetadataIdAttributes(kind,
+				streamId, objectId, sourceId);
+		ObjectDatumStreamMetadataId result = jdbcTemplate.execute(sql,
+				new PreparedStatementCallback<ObjectDatumStreamMetadataId>() {
+
+					@Override
+					public ObjectDatumStreamMetadataId doInPreparedStatement(PreparedStatement ps)
+							throws SQLException, DataAccessException {
+						RowMapper<ObjectDatumStreamMetadataId> rowMapper;
+						if ( kind == ObjectDatumKind.Location ) {
+							rowMapper = ObjectDatumStreamMetadataIdRowMapper.LOCATION_INSTANCE;
+						} else {
+							rowMapper = ObjectDatumStreamMetadataIdRowMapper.NODE_INSTANCE;
+						}
+
+						if ( ps.execute() ) {
+							try (ResultSet rs = ps.getResultSet()) {
+								if ( rs.next() ) {
+									return rowMapper.mapRow(rs, 1);
+								}
+							}
+						}
+						return null;
+					}
+				});
+		if ( result != null ) {
+			// remove from cache
+			final Cache<UUID, ObjectDatumStreamMetadata> cache = getStreamMetadataCache();
+			if ( cache != null ) {
+				cache.remove(streamId);
+			}
+		}
+		return result;
 	}
 
 	@Override
