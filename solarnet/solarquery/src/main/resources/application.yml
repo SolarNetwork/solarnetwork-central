@@ -88,6 +88,7 @@ mybatis:
      net.solarnetwork.central.user.domain
 
 spring:
+  jmx.enabled: false
   mvc.format:
     date: iso
     date-time: iso

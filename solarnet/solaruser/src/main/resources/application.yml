@@ -154,6 +154,7 @@ server:
     max-swallow-size: -1
 
 spring:
+  jmx.enabled: false
   mvc.format:
     date: iso
     date-time: iso

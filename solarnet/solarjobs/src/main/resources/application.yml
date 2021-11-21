@@ -268,6 +268,7 @@ server:
   servlet.context-path: /solarjobs
 
 spring:
+  jmx.enabled: false
   mvc.format:
     date: iso
     date-time: iso

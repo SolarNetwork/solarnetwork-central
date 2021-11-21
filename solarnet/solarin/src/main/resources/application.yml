@@ -120,6 +120,7 @@ spring:
     password: "solarnet"
     platform: "postgres"
     initialize: false
+  jmx.enabled: false
   mvc.format:
     date: "iso"
     date-time: "iso"
