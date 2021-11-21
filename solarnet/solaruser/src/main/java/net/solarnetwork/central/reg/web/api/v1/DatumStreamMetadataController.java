@@ -65,6 +65,25 @@ public class DatumStreamMetadataController {
 				"datumStreamMetadataBiz");
 	}
 
+	/**
+	 * Update the ID attributes of a datum stream.
+	 * 
+	 * <p>
+	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
+	 * either is {@literal null} that ID will remain unchanged.
+	 * </p>
+	 * 
+	 * @param streamId
+	 *        the ID of the stream to update
+	 * @param nodeId
+	 *        the new node ID to associate with the stream
+	 * @param sourceId
+	 *        the new source ID to associate with the stream
+	 * @return the updated stream metadata ID
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} is {@literal null} or both {@code nodeId} and
+	 *         {@code sourceId} are {@literal null}
+	 */
 	@RequestMapping(method = RequestMethod.PATCH, path = "/node")
 	@ResponseBody
 	public Response<ObjectDatumStreamMetadataId> updateNodeDatumStreamMetadataIdAttributes(
@@ -79,6 +98,25 @@ public class DatumStreamMetadataController {
 		return response(result);
 	}
 
+	/**
+	 * Update the ID attributes of a datum stream.
+	 * 
+	 * <p>
+	 * One or both of {@code nodeId} and {@code sourceId} must be provided. If
+	 * either is {@literal null} that ID will remain unchanged.
+	 * </p>
+	 * 
+	 * @param streamId
+	 *        the ID of the stream to update
+	 * @param nodeId
+	 *        the new node ID to associate with the stream
+	 * @param sourceId
+	 *        the new source ID to associate with the stream
+	 * @return the updated stream metadata ID
+	 * @throws IllegalArgumentException
+	 *         if {@code streamId} is {@literal null} or both {@code nodeId} and
+	 *         {@code sourceId} are {@literal null}
+	 */
 	@RequestMapping(method = RequestMethod.PATCH, path = "/node/{streamId}")
 	@ResponseBody
 	public Response<ObjectDatumStreamMetadataId> updateNodeDatumStreamMetadataIdAttributesViaPath(
