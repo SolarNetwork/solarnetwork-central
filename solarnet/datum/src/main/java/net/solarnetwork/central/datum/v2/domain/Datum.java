@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * API for an object that exists within a unique stream at a specific point in
@@ -35,7 +36,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * @version 1.0
  * @since 2.8
  */
-public interface Datum extends Identity<DatumPK> {
+public interface Datum extends Identity<DatumPK>, StreamDatum {
 
 	/**
 	 * Get the unique ID of the stream this datum is a part of.
@@ -46,6 +47,7 @@ public interface Datum extends Identity<DatumPK> {
 	 * 
 	 * @return the stream ID
 	 */
+	@Override
 	UUID getStreamId();
 
 	/**
@@ -62,6 +64,7 @@ public interface Datum extends Identity<DatumPK> {
 	 * 
 	 * @return the timestamp for this datum
 	 */
+	@Override
 	Instant getTimestamp();
 
 	/**
@@ -69,6 +72,7 @@ public interface Datum extends Identity<DatumPK> {
 	 * 
 	 * @return the properties
 	 */
+	@Override
 	DatumProperties getProperties();
 
 }
