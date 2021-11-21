@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -52,10 +53,12 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * @param userNodeDao
 	 *        the UserNodeDao to use
+	 * @throws IllegalArgumentException
+	 *         if any argumnet is {@literal null}
 	 */
 	public AuthorizationSupport(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
-		this.nodeOwnershipDao = nodeOwnershipDao;
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 	}
 
 	/**
