@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.config;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
+import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -74,6 +77,18 @@ public class WebConfig implements WebMvcConfigurer {
 				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC),
 				new TemporalAccessorParser(LocalDateTime.class,
 						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC));
+	}
+
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		// enable client caching of static resources
+		// @formatter:off
+		for ( String dir : new String[] {"css", "fonts", "img", "js", "js-lib"} ) {
+			registry.addResourceHandler(String.format("/**/%s/*", dir))
+					.addResourceLocations("classpath:/static/")
+					.setCacheControl(CacheControl.maxAge(1, TimeUnit.DAYS));
+		}
+		// @formatter:on
 	}
 
 }
