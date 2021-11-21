@@ -4,7 +4,6 @@
 		<property name="context-root" value="solaruser"/>
 		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
 		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
-		<wb-resource deploy-path="/" source-path="src/main/webapp"/>
 		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-ocpp/solarnet-user-ocpp">
 			<dependency-type>uses</dependency-type>
 		</dependent-module>
