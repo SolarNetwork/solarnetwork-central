@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import java.util.UUID;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
 
 /**
  * API for a collection of {@link Datum} grouped by a single unique identifier.

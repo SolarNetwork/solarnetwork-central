@@ -56,7 +56,7 @@ import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.datum.DatumSamples;

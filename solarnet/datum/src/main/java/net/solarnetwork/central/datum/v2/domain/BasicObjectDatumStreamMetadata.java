@@ -28,6 +28,7 @@ import java.util.UUID;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Basic implementation of {@link ObjectDatumStreamMetadata}.

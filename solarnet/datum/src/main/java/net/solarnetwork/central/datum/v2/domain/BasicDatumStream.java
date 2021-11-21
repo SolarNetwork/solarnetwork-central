@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.v2.domain;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.UUID;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
 
 /**
  * Basic implementation of {@link DatumStream}.

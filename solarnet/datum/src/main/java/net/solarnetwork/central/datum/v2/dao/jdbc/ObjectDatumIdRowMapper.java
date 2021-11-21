@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
-import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
