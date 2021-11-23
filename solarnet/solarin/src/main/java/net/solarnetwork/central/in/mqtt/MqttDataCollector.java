@@ -280,11 +280,22 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	private void handleInstructionStatus(final Long nodeId, final JsonNode node) {
 		getMqttStats().incrementAndGet(SolarInCountStat.InstructionStatusReceived);
 		String instructionId = getStringFieldValue(node, "instructionId", null);
-		String status = getStringFieldValue(node, "status", null);
+		String instructionState = getStringFieldValue(node, "state", null);
+		if ( instructionState == null ) {
+			// fall back to legacy form
+			instructionState = getStringFieldValue(node, "status", null);
+		}
 		Map<String, Object> resultParams = JsonUtils.getStringMapFromTree(node.get("resultParameters"));
-		if ( instructionId != null && nodeId != null && status != null ) {
+		if ( instructionId != null && nodeId != null && instructionState != null ) {
 			Long id = Long.valueOf(instructionId);
-			InstructionState state = InstructionState.valueOf(status);
+			InstructionState state;
+			try {
+				state = InstructionState.valueOf(instructionState);
+			} catch ( Exception e ) {
+				log.warn("Ignoring instruction datum {} invalid instruction state value [{}]: {}",
+						instructionId, instructionState, e.toString());
+				return;
+			}
 			nodeInstructionDao.updateNodeInstructionState(id, nodeId, state, resultParams);
 		}
 	}
