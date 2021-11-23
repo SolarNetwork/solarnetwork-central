@@ -26,8 +26,8 @@ app:
       node-dashboard: "http://localhost/node-dashboard"
       node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
       solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost/solarquery"
-      solaruser: "http://localhost/solaruser"
+      solarquery: "http://localhost:9082/solarquery"
+      solaruser: "http://localhost:9081/solaruser"
   node.pki.cs:
     certificate-expire-days: 730
     signature-algorithm: "SHA256WithRSA"
