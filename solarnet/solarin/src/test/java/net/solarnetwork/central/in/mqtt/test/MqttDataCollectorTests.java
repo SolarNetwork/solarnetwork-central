@@ -63,6 +63,7 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
+import net.solarnetwork.domain.BasicInstructionStatus;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
@@ -90,21 +91,6 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 	private ObjectMapper createObjectMapper(JsonFactory jsonFactory) {
 		return JsonUtils.newDatumObjectMapper(jsonFactory);
-		/*-
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		if ( jsonFactory != null ) {
-			factory.setJsonFactory(jsonFactory);
-		}
-		factory.setDeserializers(Arrays.asList(BasicGeneralDatumDeserializer.INSTANCE));
-		factory.setSerializers(Arrays.asList(new JodaDateTimeSerializer(), new JodaLocalDateSerializer(),
-				new JodaLocalDateTimeSerializer(), new JodaLocalTimeSerializer()));
-		factory.setFeaturesToDisable(Arrays.asList(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
-		try {
-			return factory.getObject();
-		} catch ( Exception e ) {
-			throw new RuntimeException(e);
-		}
-		*/
 	}
 
 	@Before
@@ -528,13 +514,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		GeneralLocationDatum datum = new GeneralLocationDatum();
-		datum.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
-		datum.setLocationId(TEST_LOC_ID);
-		datum.setSourceId(TEST_SOURCE_ID);
-		DatumSamples samples = new DatumSamples();
-		datum.setSamples(samples);
-		samples.putInstantaneousSampleValue("foo", 123);
+
 		String json = "{\"__type__\":\"InstructionStatus\",\"id\":" + nodeInstructionId
 				+ ",\"instructionId\":" + instructionId + ",\"topic\":\"" + TEST_INSTRUCTION_TOPIC
 				+ "\",\"status\":\"Completed\",\"resultParameters\":{\"foo\":\"bar\"}}";
@@ -543,5 +523,30 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		service.onMqttMessage(msg);
 
 		// then
+	}
+
+	@Test
+	public void processInstructionStatus_twoOh() throws Exception {
+		// GIVEN
+		final Long instructionId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
+		final Map<String, Object> resultParams = Collections.singletonMap("foo", "bar");
+		expect(nodeInstructionDao.updateNodeInstructionState(instructionId, TEST_NODE_ID,
+				InstructionState.Completed, resultParams)).andReturn(true);
+
+		replayAll();
+
+		// WHEN 
+		String topic = datumTopic(TEST_NODE_ID);
+
+		BasicInstructionStatus status = new BasicInstructionStatus(instructionId,
+				net.solarnetwork.domain.InstructionStatus.InstructionState.Completed, Instant.now(),
+				resultParams);
+		String json = objectMapper.writeValueAsString(status);
+
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				json.getBytes("UTF-8"));
+		service.onMqttMessage(msg);
+
+		// THEN
 	}
 }
