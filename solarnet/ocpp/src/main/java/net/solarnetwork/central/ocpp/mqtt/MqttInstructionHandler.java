@@ -156,8 +156,9 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
 		log.info("MQTT connection established for {} instructions.", mqttTopic);
+		MqttConnection oldConnection = mqttConnection.getAndSet(connection);
 		mqttConnection.set(connection);
-		if ( publishOnly ) {
+		if ( publishOnly | oldConnection == connection ) {
 			return;
 		}
 		try {
