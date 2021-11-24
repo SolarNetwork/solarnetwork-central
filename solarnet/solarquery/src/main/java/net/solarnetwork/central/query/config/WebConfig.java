@@ -35,7 +35,6 @@ import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
@@ -61,13 +60,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)
 	private List<PingTest> pingTests;
-
-	@Override
-	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/**").allowedMethods("GET", "POST")
-				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
-				.allowCredentials(false);
-	}
 
 	@Bean
 	@Qualifier(SOURCE_ID_PATH_MATCHER)

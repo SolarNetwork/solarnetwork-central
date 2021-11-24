@@ -34,7 +34,6 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.CacheControl;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -59,13 +58,6 @@ public class WebConfig implements WebMvcConfigurer {
 	@Autowired(required = false)
 	private List<PingTest> pingTests;
 
-	@Override
-	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/**").allowedMethods("GET", "POST")
-				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
-				.allowCredentials(false);
-	}
-
 	@Bean
 	public PingController pingController() {
 		PingController controller = new PingController();
@@ -88,7 +80,7 @@ public class WebConfig implements WebMvcConfigurer {
 		// enable client caching of static resources
 		// @formatter:off
 		for ( String dir : new String[] {"css", "fonts", "img", "js", "js-lib"} ) {
-			registry.addResourceHandler(String.format("/**/%s/*", dir))
+			registry.addResourceHandler(String.format("/*/%s/", dir))
 					.addResourceLocations("classpath:/static/")
 					.setCacheControl(CacheControl.maxAge(1, TimeUnit.DAYS));
 		}

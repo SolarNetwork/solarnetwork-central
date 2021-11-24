@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
@@ -60,13 +59,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)
 	private List<PingTest> pingTests;
-
-	@Override
-	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/**").allowedMethods("GET", "POST")
-				// setting allowCredentials to false to Spring returns Access-Control-Allow-Origin: *
-				.allowCredentials(false);
-	}
 
 	@Bean
 	public PingController pingController() {
