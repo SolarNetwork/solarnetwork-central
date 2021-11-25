@@ -26,7 +26,10 @@ import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.
 import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.QUERY_CACHING_SERVICE;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -38,9 +41,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
@@ -48,8 +53,14 @@ import net.solarnetwork.central.web.support.ContentCachingService;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
+import net.solarnetwork.codec.BindingResultSerializer;
+import net.solarnetwork.codec.PropertySerializer;
+import net.solarnetwork.codec.PropertySerializerRegistrar;
+import net.solarnetwork.codec.TimeZonePropertySerializer;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.DateUtils;
+import net.solarnetwork.web.support.SimpleCsvHttpMessageConverter;
+import net.solarnetwork.web.support.SimpleXmlHttpMessageConverter;
 
 /**
  * Web layer configuration.
@@ -96,6 +107,69 @@ public class WebConfig implements WebMvcConfigurer {
 						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
 		registry.addFormatterForFieldType(Instant.class,
 				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
+	}
+
+	@Bean
+	public GeneralNodeDatumMapPropertySerializer datumMapPropertySerializer() {
+		return new GeneralNodeDatumMapPropertySerializer();
+	}
+
+	@Bean
+	public TimeZonePropertySerializer timeZonePropertySerializer() {
+		return new TimeZonePropertySerializer();
+	}
+
+	@Bean
+	public BindingResultSerializer bindingResultSerializer() {
+		return new BindingResultSerializer();
+	}
+
+	@Bean
+	public PropertySerializerRegistrar propertySerializerRegistrar() {
+		PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
+
+		GeneralNodeDatumMapPropertySerializer datumMapSerializer = new GeneralNodeDatumMapPropertySerializer();
+
+		Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
+		classSerializers.put("sun.util.calendar.ZoneInfo", timeZonePropertySerializer());
+		classSerializers.put("org.springframework.validation.BeanPropertyBindingResult",
+				bindingResultSerializer());
+		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatum",
+				datumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.domain.GeneralNodeDatumMatch",
+				datumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum",
+				datumMapSerializer);
+		classSerializers.put("net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading",
+				datumMapSerializer);
+		reg.setClassSerializers(classSerializers);
+
+		return reg;
+	}
+
+	@Bean(autowireCandidate = false)
+	public PropertySerializerRegistrar xmlPropertySerializerRegistrar() {
+		PropertySerializerRegistrar reg = new PropertySerializerRegistrar();
+
+		Map<String, PropertySerializer> classSerializers = new LinkedHashMap<>(4);
+		classSerializers.put("sun.util.calendar.ZoneInfo", timeZonePropertySerializer());
+		classSerializers.put("org.springframework.validation.BeanPropertyBindingResult",
+				bindingResultSerializer());
+		reg.setClassSerializers(classSerializers);
+
+		return reg;
+	}
+
+	@Override
+	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
+		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
+		converters.add(csv);
+
+		SimpleXmlHttpMessageConverter xml = new SimpleXmlHttpMessageConverter();
+		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		xml.setPropertySerializerRegistrar(xmlPropertySerializerRegistrar());
+		converters.add(xml);
 	}
 
 	@Bean(autowireCandidate = false, initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
