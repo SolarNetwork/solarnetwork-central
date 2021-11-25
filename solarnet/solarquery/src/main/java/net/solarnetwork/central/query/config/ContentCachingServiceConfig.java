@@ -26,6 +26,7 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,10 +43,14 @@ import net.solarnetwork.central.web.support.ContentCachingService;
  * @version 1.0
  */
 @Configuration
+@ConditionalOnProperty("app.query-cache.enabled")
 public class ContentCachingServiceConfig {
 
 	/** The cache for query results. */
 	public static final String QUERY_CACHE = "query-cache";
+
+	/** The bean name for the query cache service. */
+	public static final String QUERY_CACHING_SERVICE = "queryCachingService";
 
 	@Autowired
 	private CacheManager cacheManager;
@@ -68,7 +73,7 @@ public class ContentCachingServiceConfig {
 	}
 
 	@Bean
-	@ConfigurationProperties(prefix = "app.solarquery.query-cache")
+	@ConfigurationProperties(prefix = "app.query-cache.cache")
 	public QueryCacheSettings queryCacheSettings() {
 		return new QueryCacheSettings();
 	}
@@ -85,7 +90,7 @@ public class ContentCachingServiceConfig {
 		return settings.createCache(cacheManager, String.class, CachedContent.class, QUERY_CACHE);
 	}
 
-	@Bean
+	@Bean(QUERY_CACHING_SERVICE)
 	@Qualifier(QUERY_CACHE)
 	public ContentCachingService queryCachingService() {
 		QueryCacheSettings settings = queryCacheSettings();

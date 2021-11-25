@@ -40,7 +40,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -48,36 +47,31 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.context.support.SpringBeanAutowiringSupport;
-import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.ContentCachingResponseWrapper;
-import net.solarnetwork.service.OptionalService;
+import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Filter for caching HTTP responses, returning cached data when possible.
  * 
  * <p>
- * This filter delegates most behavior to a {@link ContentCachingService}. If a
- * service is not available, caching will be disabled and HTTP request
- * processing will proceed without any further processing by this filter.
+ * This filter delegates most behavior to a {@link ContentCachingService}.
  * </p>
  * 
  * @author matt
  * @version 2.0
  * @since 1.16
  */
-public class ContentCachingFilter extends GenericFilterBean implements Filter {
+public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 
 	private static final long EPOCH = 1514764800000L; // 1 Jan 2018 GMT
 
 	private final AtomicLong requestCounter = new AtomicLong(System.currentTimeMillis() - EPOCH / 1000);
 
-	private OptionalService<ContentCachingService> contentCachingService;
+	private final ContentCachingService contentCachingService;
 	private Set<String> methodsToCache = Collections.singleton("GET");
 	private BlockingQueue<LockAndCount> lockPool;
 	private int lockPoolCapacity = 128;
@@ -144,18 +138,22 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 	}
 
-	@Override
-	protected void initFilterBean() throws ServletException {
-		FilterConfig config = getFilterConfig();
-		if ( config != null ) {
-			SpringBeanAutowiringSupport.processInjectionBasedOnServletContext(this,
-					config.getServletContext());
-		}
-		afterPropertiesSet();
+	/**
+	 * Constructor.
+	 * 
+	 * @param contentCachingService
+	 *        the caching service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public ContentCachingFilter(ContentCachingService contentCachingService) {
+		super();
+		this.contentCachingService = ObjectUtils.requireNonNullArgument(contentCachingService,
+				"contentCachingService");
 	}
 
 	@Override
-	public void afterPropertiesSet() {
+	public void serviceDidStartup() {
 		List<LockAndCount> locks = new ArrayList<>(lockPoolCapacity);
 		for ( int i = 0; i < lockPoolCapacity; i++ ) {
 			locks.add(new LockAndCount(i, new ReentrantLock()));
@@ -164,16 +162,13 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 	}
 
 	@Override
+	public void serviceDidShutdown() {
+		// nothing
+	}
+
+	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-		final ContentCachingService service = (contentCachingService != null
-				? contentCachingService.service()
-				: null);
-		if ( service == null ) {
-			log.debug("ContentCachingService not available; caching disabled");
-			chain.doFilter(request, response);
-			return;
-		}
 		if ( !(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse) ) {
 			log.debug("Not HTTP request; caching disabled");
 			chain.doFilter(request, response);
@@ -194,7 +189,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 		}
 
 		// get cache key for this request
-		final String key = service.keyForRequest(origRequest);
+		final String key = contentCachingService.keyForRequest(origRequest);
 		if ( key == null ) {
 			log.debug("[{}] HTTP request not cachable", requestUri);
 			chain.doFilter(request, response);
@@ -239,7 +234,7 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 
 		// process request
 		try {
-			if ( service.sendCachedResponse(key, origRequest, origResponse) != null ) {
+			if ( contentCachingService.sendCachedResponse(key, origRequest, origResponse) != null ) {
 				log.debug("{} [{}] Sent cached response", requestId, requestUri);
 				return;
 			}
@@ -264,8 +259,8 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 						headers.add(headerName, headerValue);
 					}
 				}
-				service.cacheResponse(key, origRequest, wrappedResponse.getStatus(), headers,
-						wrappedResponse.getContentInputStream());
+				contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
+						headers, wrappedResponse.getContentInputStream());
 			}
 
 			// send the response body
@@ -290,18 +285,6 @@ public class ContentCachingFilter extends GenericFilterBean implements Filter {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Set the caching service to use.
-	 * 
-	 * @param contentCachingService
-	 *        the caching service
-	 */
-	@Autowired
-	@Qualifier("content-caching-service")
-	public void setContentCachingService(OptionalService<ContentCachingService> contentCachingService) {
-		this.contentCachingService = contentCachingService;
 	}
 
 	/**

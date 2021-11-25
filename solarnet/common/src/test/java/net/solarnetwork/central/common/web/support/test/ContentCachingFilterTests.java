@@ -48,7 +48,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
 import net.solarnetwork.central.web.support.ContentCachingService;
 import net.solarnetwork.central.web.support.SimpleCachedContent;
-import net.solarnetwork.service.StaticOptionalService;
 import net.solarnetwork.test.Assertion;
 
 /**
@@ -72,11 +71,10 @@ public class ContentCachingFilterTests {
 		chain = EasyMock.createMock(FilterChain.class);
 		service = EasyMock.createMock(ContentCachingService.class);
 
-		filter = new ContentCachingFilter();
-		filter.setContentCachingService(new StaticOptionalService<>(service));
+		filter = new ContentCachingFilter(service);
 		filter.setLockPoolCapacity(TEST_LOCK_POOL_CAPACITY);
 		filter.setRequestLockTimeout(60000);
-		filter.afterPropertiesSet();
+		filter.serviceDidStartup();
 
 		response = new MockHttpServletResponse();
 	}
@@ -88,22 +86,6 @@ public class ContentCachingFilterTests {
 	@After
 	public void teardown() {
 		EasyMock.verify(chain, service);
-	}
-
-	@Test
-	public void noContentCachingService() throws ServletException, IOException {
-		// given
-		filter.setContentCachingService(null);
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somewhere");
-
-		chain.doFilter(same(request), same(response));
-
-		// when
-		replayAll();
-
-		filter.doFilter(request, response, chain);
-
-		// then
 	}
 
 	@Test

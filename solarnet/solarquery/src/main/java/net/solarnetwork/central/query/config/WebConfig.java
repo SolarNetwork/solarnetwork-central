@@ -22,11 +22,16 @@
 
 package net.solarnetwork.central.query.config;
 
+import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.QUERY_CACHE;
+import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.QUERY_CACHING_SERVICE;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -38,6 +43,8 @@ import org.springframework.util.PathMatcher;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
+import net.solarnetwork.central.web.support.ContentCachingFilter;
+import net.solarnetwork.central.web.support.ContentCachingService;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
@@ -60,6 +67,10 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)
 	private List<PingTest> pingTests;
+
+	@Autowired(required = false)
+	@Qualifier(QUERY_CACHE)
+	private ContentCachingService contentCachingService;
 
 	@Bean
 	@Qualifier(SOURCE_ID_PATH_MATCHER)
@@ -85,6 +96,31 @@ public class WebConfig implements WebMvcConfigurer {
 						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
 		registry.addFormatterForFieldType(Instant.class,
 				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
+	}
+
+	@Bean(autowireCandidate = false, initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	@ConfigurationProperties(prefix = "app.query-cache.filter")
+	public ContentCachingFilter contentCachingFilter() {
+		return new ContentCachingFilter(contentCachingService);
+	}
+
+	@Bean
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	public FilterRegistrationBean<ContentCachingFilter> contentCachingFilterRegistration() {
+		FilterRegistrationBean<ContentCachingFilter> reg = new FilterRegistrationBean<>();
+		reg.setFilter(contentCachingFilter());
+		// @formatter:off
+		reg.addUrlPatterns(
+				"/api/v1/pub/datum/*",
+				"/api/v1/sec/datum/*",
+				"/api/v1/pub/location/datum/*",
+				"/api/v1/sec/location/datum/*",
+				"/api/v1/pub/range/*",
+				"/api/v1/sec/range/*"
+				);
+		// @formatter:on
+		return reg;
 	}
 
 }
