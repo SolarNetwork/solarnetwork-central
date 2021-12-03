@@ -226,6 +226,8 @@ public class ConnectorStatusDatumPublisherTests {
 				equalTo(info.getVendorErrorCode()));
 		assertThat("Published session ID", s.getStatusSampleString("sessionId"),
 				equalTo(session.getId().toString()));
+		assertThat("Published transaction ID", s.getStatusSampleString("transactionId"),
+				equalTo(String.valueOf(session.getTransactionId())));
 
 		assertThat("Published same datum to SolarFlux", fluxDatumCaptor.getValue(), sameInstance(d));
 	}

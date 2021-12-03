@@ -71,15 +71,32 @@
 			cs.id = #{id}
 	</select>
 	
+	<select id="get-CentralChargeSession-for-user-and-id" parameterType="map" resultMap="CentralChargeSession-FullResult">
+		SELECT
+			<include refid="fragment-CentralChargeSession-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess cs
+		INNER JOIN
+			solarev.ocpp_charge_point cp ON cs.cp_id = cp.id
+		WHERE
+			cs.id = #{id}
+			AND cp.user_id = #{userId}
+	</select>
+	
 	<sql id="fragment-findall-CentralChargeSession-where">
-		<if test="filter != null">
+		<if test="filter != null || userId != null">
 			<where>
-				<include refid="fragment-findall-CentralChargeSession-where-content"/>
+				<if test="filter != null">
+					<include refid="fragment-findall-CentralChargeSession-where-content"/>
+				</if>
 			</where>
 		</if>
 	</sql>
 
 	<sql id="fragment-findall-CentralChargeSession-where-content">
+		<if test="userId != null">
+			AND cp.user_id = #{userId}
+		</if>
 		<if test="filter.id != null">
 			AND cs.id = #{filter.id}
 		</if>
@@ -112,6 +129,9 @@
 			<include refid="fragment-CentralChargeSession-full-result"/>
 		FROM
 			solarev.ocpp_charge_sess cs
+		<if test="userId != null">
+		INNER JOIN solarev.ocpp_charge_point cp ON cs.cp_id = cp.id
+		</if>
 		<where>
 			cs.ended IS NULL
 			<include refid="fragment-findall-CentralChargeSession-where-content"/>

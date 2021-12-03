@@ -27,11 +27,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.UUID;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
@@ -43,6 +45,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
@@ -57,6 +60,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final CentralChargePointDao chargePointDao;
 	private final CentralChargePointConnectorDao connectorDao;
 	private final CentralAuthorizationDao authorizationDao;
+	private final CentralChargeSessionDao chargeSessionDao;
 	private final UserSettingsDao userSettingsDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final PasswordEncoder passwordEncoder;
@@ -72,6 +76,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the connector DAO
 	 * @param authorizationDao
 	 *        the authorization DAO
+	 * @param chargeSessionDao
+	 *        the session DAO
 	 * @param userSettingsDao
 	 *        the user settings DAo
 	 * @param chargePointSettingsDao
@@ -83,13 +89,14 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
-			UserSettingsDao userSettingsDao, ChargePointSettingsDao chargePointSettingsDao,
-			PasswordEncoder passwordEncoder) {
+			CentralChargeSessionDao chargeSessionDao, UserSettingsDao userSettingsDao,
+			ChargePointSettingsDao chargePointSettingsDao, PasswordEncoder passwordEncoder) {
 		super();
 		this.systemUserDao = requireNonNullArgument(systemUserDao, "systemUserDao");
 		this.chargePointDao = requireNonNullArgument(chargePointDao, "chargePointDao");
 		this.connectorDao = requireNonNullArgument(connectorDao, "connectorDao");
 		this.authorizationDao = requireNonNullArgument(authorizationDao, "authorizationDao");
+		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
 		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
 				"chargePointSettingsDao");
@@ -270,6 +277,19 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public UserSettings saveSettings(UserSettings settings) {
 		return userSettingsDao.get(userSettingsDao.save(settings));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public ChargeSession chargeSessionForUser(Long userId, UUID sessionId) {
+		return chargeSessionDao.get(sessionId, userId);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId,
+			Long chargePointId) {
+		return chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId);
 	}
 
 }

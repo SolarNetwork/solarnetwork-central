@@ -108,7 +108,12 @@ public class ConnectorStatusDatumPublisher {
 		VendorErrorCode("vendorErrorCode", DatumSamplesType.Status),
 
 		/** A charging session ID. */
-		SessionId("sessionId", DatumSamplesType.Status);
+		SessionId("sessionId", DatumSamplesType.Status),
+
+		/** The charging session transaction ID. */
+		TransactionId("transactionId", DatumSamplesType.Status),
+
+		;
 
 		private final String propertyName;
 		private final DatumSamplesType classification;
@@ -196,6 +201,9 @@ public class ConnectorStatusDatumPublisher {
 		if ( cs != null && !cs.getCreated().isAfter(info.getTimestamp()) ) {
 			s.putSampleValue(DatumProperty.SessionId.getClassification(),
 					DatumProperty.SessionId.getPropertyName(), cs.getId().toString());
+			s.putSampleValue(DatumProperty.TransactionId.getClassification(),
+					DatumProperty.TransactionId.getPropertyName(),
+					String.valueOf(cs.getTransactionId()));
 		}
 
 		GeneralNodeDatum d = new GeneralNodeDatum();

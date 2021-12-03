@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import java.util.Collection;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,7 @@ import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -427,6 +429,36 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserSettings(userId);
 		return response(null);
+	}
+
+	/**
+	 * View a specific charge session.
+	 * 
+	 * @param sessionId
+	 *        the ID of the charge session to view
+	 * @return the session
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/sessions/{id}")
+	public Response<ChargeSession> viewSession(@PathVariable("id") UUID sessionId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ChargeSession sess = userOcppBiz().chargeSessionForUser(userId, sessionId);
+		return response(sess);
+	}
+
+	/**
+	 * Get all incomplete charge sessions for the current user and charge point.
+	 * 
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @return the charge points
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/sessions/incomplete/{chargePointId}")
+	public Response<Collection<ChargeSession>> incompleteSessionsForChargePoint(
+			@PathVariable("chargePointId") long chargePointId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<ChargeSession> list = userOcppBiz().incompleteChargeSessionsForChargePoint(userId,
+				chargePointId);
+		return response(list);
 	}
 
 }

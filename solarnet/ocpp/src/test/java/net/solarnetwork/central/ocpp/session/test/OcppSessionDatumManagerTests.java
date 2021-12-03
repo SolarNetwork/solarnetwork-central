@@ -306,6 +306,10 @@ public class OcppSessionDatumManagerTests {
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.SessionId.getPropertyName()),
 				equalTo(sess.getId().toString()));
+		assertThat("Datum prop transaction ID",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.TransactionId.getPropertyName()),
+				equalTo(String.valueOf(sess.getTransactionId())));
 		assertThat("Datum prop auth token",
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.AuthorizationToken.getPropertyName()),
@@ -492,6 +496,10 @@ public class OcppSessionDatumManagerTests {
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.SessionId.getPropertyName()),
 				equalTo(sess.getId().toString()));
+		assertThat("Datum prop transaction ID",
+				datum.getSamples().getStatusSampleString(
+						OcppSessionDatumManager.DatumProperty.TransactionId.getPropertyName()),
+				equalTo(String.valueOf(sess.getTransactionId())));
 		assertThat("Datum prop auth token",
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.AuthorizationToken.getPropertyName()),

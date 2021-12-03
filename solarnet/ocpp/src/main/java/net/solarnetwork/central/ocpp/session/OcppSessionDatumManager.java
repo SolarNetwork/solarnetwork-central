@@ -122,7 +122,12 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		SessionEndDate("endDate", DatumSamplesType.Status),
 
 		/** The session end reason. */
-		SessionEndReason("endReason", DatumSamplesType.Status);
+		SessionEndReason("endReason", DatumSamplesType.Status),
+
+		/** The charging session transaction ID. */
+		TransactionId("transactionId", DatumSamplesType.Status),
+
+		;
 
 		private final String propertyName;
 		private final DatumSamplesType classification;
@@ -457,6 +462,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
 			d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
 					DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
+			d.getSamples().putSampleValue(DatumProperty.TransactionId.getClassification(),
+					DatumProperty.TransactionId.getPropertyName(),
+					String.valueOf(sess.getTransactionId()));
 			if ( sess.getEnded() != null ) {
 				d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
 						DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded().toEpochMilli());

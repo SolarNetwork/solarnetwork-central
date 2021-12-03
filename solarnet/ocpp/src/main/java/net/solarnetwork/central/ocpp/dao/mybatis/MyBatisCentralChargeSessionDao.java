@@ -25,7 +25,9 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 import static java.util.Collections.singletonMap;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
@@ -57,8 +59,13 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 		/** Find all sampled value readings for a charge session ID. */
 		FindReadingBySession("findall-SampledValue-for-session"),
 
+		/** Get a charge session for a given user ID and session ID. */
+		GetForUserAndId("get-CentralChargeSession-for-user-and-id"),
+
 		/** Insert a sampled value reading. */
-		InsertReading("insert-CentralChargeSession-reading");
+		InsertReading("insert-CentralChargeSession-reading"),
+
+		;
 
 		private final String queryName;
 
@@ -106,6 +113,23 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	@Override
 	public Collection<ChargeSession> getIncompleteChargeSessions() {
 		return selectList(QueryName.FindByIncomplete.getQueryName(), null, null, null);
+	}
+
+	@Override
+	public Collection<ChargeSession> getIncompleteChargeSessionsForUserForChargePoint(long userId,
+			long chargePointId) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("userId", userId);
+		params.put(FILTER_PROPERTY, CentralChargeSession.forChargePoint(chargePointId));
+		return selectList(QueryName.FindByIncomplete.getQueryName(), params, null, null);
+	}
+
+	@Override
+	public ChargeSession get(UUID id, Long userId) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("userId", userId);
+		params.put("id", id);
+		return selectFirst(QueryName.GetForUserAndId.getQueryName(), params);
 	}
 
 	@Override

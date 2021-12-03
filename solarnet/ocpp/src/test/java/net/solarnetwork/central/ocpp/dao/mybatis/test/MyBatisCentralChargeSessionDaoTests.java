@@ -134,6 +134,26 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	}
 
 	@Test
+	public void getByUserAndId() {
+		insert();
+		ChargeSession entity = dao.get(last.getId(), userId);
+
+		assertThat("ID", entity.getId(), equalTo(last.getId()));
+		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("Auth ID", entity.getAuthId(), equalTo(last.getAuthId()));
+		assertThat("Conn ID", entity.getConnectorId(), equalTo(last.getConnectorId()));
+		assertThat("Transaction ID generated", entity.getTransactionId(), greaterThan(0));
+	}
+
+	@Test
+	public void getByUserAndId_userIdNoMatch() {
+		insert();
+		ChargeSession entity = dao.get(last.getId(), -1L);
+
+		assertThat("Entity not found for mis-matched userId", entity, nullValue());
+	}
+
+	@Test
 	public void update() {
 		insert();
 		ChargeSession sess = dao.get(last.getId());
@@ -244,6 +264,36 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		Collection<ChargeSession> sess = dao
 				.getIncompleteChargeSessionsForChargePoint(s.getChargePointId());
 		assertThat("Incomplete session found", sess, contains(s, two));
+	}
+
+	@Test
+	public void findIncomplete_user_chargePoint() {
+		insert();
+
+		// add another for same charge point, also incomplete
+		ChargeSession s = dao.get(last.getId());
+		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated().plusSeconds(1),
+				s.getAuthId(), s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+		dao.save(two);
+
+		Collection<ChargeSession> sess = dao.getIncompleteChargeSessionsForUserForChargePoint(userId,
+				s.getChargePointId());
+		assertThat("Incomplete sessions found", sess, contains(s, two));
+	}
+
+	@Test
+	public void findIncomplete_user_chargePoint_userNoMatch() {
+		insert();
+
+		// add another for same charge point, also incomplete
+		ChargeSession s = dao.get(last.getId());
+		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated().plusSeconds(1),
+				s.getAuthId(), s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+		dao.save(two);
+
+		Collection<ChargeSession> sess = dao.getIncompleteChargeSessionsForUserForChargePoint(-1L,
+				s.getChargePointId());
+		assertThat("No incomplete sessions found because user mis-match", sess, hasSize(0));
 	}
 
 	private List<SampledValue> createTestReadings() {

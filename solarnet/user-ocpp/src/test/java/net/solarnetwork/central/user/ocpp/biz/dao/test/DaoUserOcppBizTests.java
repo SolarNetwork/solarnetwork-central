@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.ocpp.biz.dao.test;
 
+import static java.util.Collections.singleton;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.time.Instant;
@@ -33,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -41,17 +44,20 @@ import org.junit.Test;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
@@ -66,6 +72,7 @@ public class DaoUserOcppBizTests {
 	private CentralChargePointDao chargePointDao;
 	private CentralChargePointConnectorDao connectorDao;
 	private CentralSystemUserDao systemUserDao;
+	private CentralChargeSessionDao chargeSessionDao;
 	private UserSettingsDao userSettingsDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private PasswordEncoder passwordEncoder;
@@ -77,23 +84,24 @@ public class DaoUserOcppBizTests {
 		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		connectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
+		chargeSessionDao = EasyMock.createMock(CentralChargeSessionDao.class);
 		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
 		userSettingsDao = EasyMock.createMock(UserSettingsDao.class);
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
 		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao, authorizationDao,
-				userSettingsDao, chargePointSettingsDao, passwordEncoder);
+				chargeSessionDao, userSettingsDao, chargePointSettingsDao, passwordEncoder);
 	}
 
 	@After
 	public void teardown() {
 		EasyMock.verify(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
-				passwordEncoder, systemUserDao, userSettingsDao);
+				chargeSessionDao, passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	private void replayAll() {
 		EasyMock.replay(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
-				passwordEncoder, systemUserDao, userSettingsDao);
+				chargeSessionDao, passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	@Test
@@ -389,4 +397,39 @@ public class DaoUserOcppBizTests {
 
 		// THEN
 	}
+
+	@Test
+	public void chargeSessionForUser() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		UUID sessionId = UUID.randomUUID();
+		CentralChargeSession entity = CentralChargeSession.forChargePoint(1);
+		expect(chargeSessionDao.get(sessionId, userId)).andReturn(entity);
+
+		// WHEN
+		replayAll();
+		ChargeSession result = biz.chargeSessionForUser(userId, sessionId);
+		assertThat("DAO session returned", result, sameInstance(entity));
+	}
+
+	@Test
+	public void incompleteChargeSessionsForChargePoint() {
+		// GIVEN
+		Long userId = UUID.randomUUID().getMostSignificantBits();
+		Long chargePointId = UUID.randomUUID().getLeastSignificantBits();
+		CentralChargeSession entity = CentralChargeSession.forChargePoint(1);
+		expect(chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId))
+				.andReturn(singleton(entity));
+
+		// WHEN
+		replayAll();
+		Collection<ChargeSession> result = biz.incompleteChargeSessionsForChargePoint(userId,
+				chargePointId);
+		List<ChargeSession> resultList = result.stream().collect(Collectors.toList());
+
+		// THEN
+		assertThat("Result returned", resultList, hasSize(1));
+		assertThat("DAO session returned", resultList.get(0), sameInstance(entity));
+	}
+
 }

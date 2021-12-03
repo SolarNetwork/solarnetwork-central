@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import java.util.Collection;
+import java.util.UUID;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 
 /**
  * Extension to {@link CentralChargeSessionDao} to support SolarNet.
@@ -34,8 +37,36 @@ import net.solarnetwork.ocpp.dao.ChargeSessionDao;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CentralChargeSessionDao extends ChargeSessionDao {
+
+	/**
+	 * Get all <em>incomplete</em> charge session for a given user ID and charge
+	 * point ID. An <em>incomplete</em> session is one that has no {@code ended}
+	 * date.
+	 * 
+	 * @param userId
+	 *        the charge point owner ID to look for
+	 * @param chargePointId
+	 *        the charge point ID to look for
+	 * @return all available incomplete charge session for the given charge
+	 *         point, never {@literal null}
+	 * @since 1.1
+	 */
+	Collection<ChargeSession> getIncompleteChargeSessionsForUserForChargePoint(long userId,
+			long chargePointId);
+
+	/**
+	 * Get a persisted domain object by its primary key and the owner's user ID.
+	 * 
+	 * @param id
+	 *        the primary key to retrieve
+	 * @param userId
+	 *        the ID of the owner
+	 * @return the domain object
+	 * @since 1.1
+	 */
+	ChargeSession get(UUID id, Long userId);
 
 }

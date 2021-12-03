@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.ocpp.biz;
 
 import java.util.Collection;
+import java.util.UUID;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -30,6 +31,7 @@ import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import net.solarnetwork.ocpp.domain.ChargeSession;
 
 /**
  * Service API for SolarUser OCPP support.
@@ -301,5 +303,27 @@ public interface UserOcppBiz {
 	 *         assigned if creating a new entity
 	 */
 	UserSettings saveSettings(UserSettings settings);
+
+	/**
+	 * Get a charge session for a given user.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to get charge session for
+	 * @param sessionId
+	 *        the charge session ID to get
+	 * @return the session entity, or {@literal null} if not available
+	 */
+	ChargeSession chargeSessionForUser(Long userId, UUID sessionId);
+
+	/**
+	 * Get all incomplete charge sessions for a given charge point.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the charge point settings for
+	 * @param chargePointId
+	 *        the charge point ID to get the sessions for
+	 * @return all matching incomplete sessions; never {@literal null}
+	 */
+	Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId, Long chargePointId);
 
 }
