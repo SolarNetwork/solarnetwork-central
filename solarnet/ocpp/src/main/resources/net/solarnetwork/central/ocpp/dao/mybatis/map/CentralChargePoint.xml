@@ -65,6 +65,7 @@
 			, meter_serial_num = #{info.meterSerialNumber}
 		WHERE
 			id = #{id}
+			AND user_id = #{userId}
 	</update>
 
 	<sql id="fragment-CentralChargePoint-full-result">

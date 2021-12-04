@@ -35,6 +35,7 @@
 			, parent_id = #{parentId}
 		WHERE
 			id = #{id}
+			AND user_id = #{userId}
 	</update>
 
 	<sql id="fragment-CentralAuthorization-full-result">

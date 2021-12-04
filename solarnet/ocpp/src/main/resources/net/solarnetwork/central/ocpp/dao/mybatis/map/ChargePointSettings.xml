@@ -3,22 +3,27 @@
 <mapper namespace="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
 
 	<update id="update-ChargePointSettings" parameterType="net.solarnetwork.central.ocpp.domain.ChargePointSettings">
+		WITH cp AS (
+			SELECT user_id
+			FROM solarev.ocpp_charge_point
+			WHERE id = #{id}
+		)
 		INSERT INTO solarev.ocpp_charge_point_settings (
 			cp_id
 			<if test="created != null">,created</if>
 			, source_id_tmpl
 			, pub_in
 			, pub_flux
-		) VALUES (
-			#{id}
-			<if test="created != null">,#{created}</if>
-			, #{sourceIdTemplate}
-			, #{publishToSolarIn}
-			, #{publishToSolarFlux}
 		)
+		SELECT #{id} AS cp_id
+			<if test="created != null">, #{created} AS created</if>
+			, #{sourceIdTemplate} AS source_id_tmpl
+			, #{publishToSolarIn} AS pub_in
+			, #{publishToSolarFlux} AS pub_flux
+		FROM cp
+		WHERE cp.user_id = #{userId}
 		ON CONFLICT (cp_id) DO UPDATE
-		SET
-			source_id_tmpl = EXCLUDED.source_id_tmpl
+		SET source_id_tmpl = EXCLUDED.source_id_tmpl
 			, pub_in = EXCLUDED.pub_in
 			, pub_flux = EXCLUDED.pub_flux
 	</update>

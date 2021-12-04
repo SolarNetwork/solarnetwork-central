@@ -122,6 +122,24 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 	}
 
 	@Test
+	public void update_wrongUser() {
+		insert();
+		CentralAuthorization obj = (CentralAuthorization) dao.get(last.getId());
+
+		// change user ID and try to save
+		CentralAuthorization bad = new CentralAuthorization(obj.getId(), -1L, obj.getCreated());
+		bad.setToken("new-username");
+		bad.setEnabled(false);
+		bad.setExpiryDate(obj.getExpiryDate().plusSeconds(60));
+		bad.setParentId(null);
+		Long pk = dao.save(bad);
+		assertThat("PK unchanged", pk, equalTo(bad.getId()));
+
+		Authorization entity = dao.get(pk);
+		assertThat("Entity was NOT updated from user ID mis-match", entity.isSameAs(obj), equalTo(true));
+	}
+
+	@Test
 	public void findAll() {
 		Authorization obj1 = createTestAuthorization();
 		obj1 = dao.get(dao.save(obj1));

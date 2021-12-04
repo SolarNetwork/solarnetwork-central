@@ -43,6 +43,9 @@ import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -125,9 +128,41 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
 	}
 
+	/**
+	 * Validate a result user-related entity has the same owner as an input
+	 * entity.
+	 * 
+	 * <p>
+	 * The DAO update methods might only update a matching user ID, and then
+	 * return the (unchanged) record without having actually updated anything.
+	 * </p>
+	 * 
+	 * @param in
+	 *        the entity that was passed in
+	 * @param out
+	 *        the entity that will be retuned
+	 * @throws AuthorizationException
+	 *         if {@code in} has no user ID, or its user ID does not match that
+	 *         in {@code out}
+	 */
+	private static void verifyUserRelatedEntityResult(UserRelatedEntity<?> in,
+			UserRelatedEntity<?> out) {
+		if ( in == null || out == null ) {
+			return;
+		} else if ( in.getUserId() == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		if ( !in.getUserId().equals(out.getUserId()) ) {
+			throw new AuthorizationException(in.getUserId().toString(), Reason.ACCESS_DENIED);
+		}
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
+		if ( systemUser == null ) {
+			return null;
+		}
 		String generatedPassword = null;
 		if ( systemUser.getPassword() == null && systemUser.getId() == null ) {
 			// generate new password
@@ -139,6 +174,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			systemUser.setPassword(passwordEncoder.encode(systemUser.getPassword()));
 		}
 		CentralSystemUser result = (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
+		verifyUserRelatedEntityResult(systemUser, result);
 		if ( generatedPassword != null ) {
 			// return password to caller
 			result.setPassword(generatedPassword);
@@ -185,7 +221,13 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
-		return (CentralAuthorization) authorizationDao.get(authorizationDao.save(authorization));
+		if ( authorization == null ) {
+			return null;
+		}
+		CentralAuthorization result = (CentralAuthorization) authorizationDao
+				.get(authorizationDao.save(authorization));
+		verifyUserRelatedEntityResult(authorization, result);
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -197,7 +239,13 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePoint saveChargePoint(CentralChargePoint chargePoint) {
-		return (CentralChargePoint) chargePointDao.get(chargePointDao.save(chargePoint));
+		if ( chargePoint == null ) {
+			return null;
+		}
+		CentralChargePoint result = (CentralChargePoint) chargePointDao
+				.get(chargePointDao.save(chargePoint));
+		verifyUserRelatedEntityResult(chargePoint, result);
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -258,7 +306,9 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
-		return chargePointSettingsDao.get(chargePointSettingsDao.save(settings));
+		ChargePointSettings result = chargePointSettingsDao.get(chargePointSettingsDao.save(settings));
+		verifyUserRelatedEntityResult(settings, result);
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

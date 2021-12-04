@@ -32,6 +32,7 @@
 			, allowed_cp = #{allowedChargePointsArray,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 		WHERE
 			id = #{id}
+			AND user_id = #{userId}
 	</update>
 
 	<sql id="fragment-CentralSystemUser-view-result">

@@ -93,6 +93,14 @@ public class MyBatisChargePointSettingsDao extends
 	}
 
 	@Override
+	protected Long saveWithAssignedPrimaryKey(ChargePointSettings entity) {
+		// we override because we have no INSERT statement; if the update returns 0
+		// that means we have an invalid user ID and we just ignore
+		getSqlSession().update(getUpdate(), entity);
+		return entity.getId();
+	}
+
+	@Override
 	public void delete(Long userId, Long id) {
 		int count = getLastUpdateCount(getSqlSession().delete(
 				QueryName.DeleteForUserAndId.getQueryName(), new CentralAuthorization(id, userId)));

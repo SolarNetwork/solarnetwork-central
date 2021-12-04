@@ -104,7 +104,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		return cp;
 	}
 
-	private ChargePointSettings createTestChargePointSettings(Long chargePointId) {
+	private ChargePointSettings createTestChargePointSettings(Long chargePointId, Long userId) {
 		ChargePointSettings s = new ChargePointSettings(chargePointId, userId,
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		s.setPublishToSolarIn(false);
@@ -115,7 +115,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	@Test
 	public void insert() {
 		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
-		ChargePointSettings entity = createTestChargePointSettings(cp.getId());
+		ChargePointSettings entity = createTestChargePointSettings(cp.getId(), userId);
 		Long pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
 		last = entity;
@@ -124,7 +124,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	@Test
 	public void insert_duplicate() {
 		insert();
-		ChargePointSettings entity = createTestChargePointSettings(last.getId());
+		ChargePointSettings entity = createTestChargePointSettings(last.getId(), userId);
 		dao.save(entity);
 		getSqlSessionTemplate().flushStatements();
 	}
@@ -154,6 +154,22 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	@Test
+	public void update_wrongUser() {
+		insert();
+		ChargePointSettings obj = dao.get(last.getId());
+
+		ChargePointSettings bad = new ChargePointSettings(obj.getChargePointId(), -1L, obj.getCreated());
+		bad.setPublishToSolarFlux(false);
+		bad.setPublishToSolarIn(true);
+		bad.setSourceIdTemplate("new-template");
+		Long pk = dao.save(bad);
+		assertThat("PK unchanged", pk, equalTo(obj.getId()));
+
+		ChargePointSettings entity = dao.get(pk);
+		assertThat("Entity NOT updated from mis-matched user ID", entity.isSameAs(obj), equalTo(true));
+	}
+
+	@Test
 	public void findAll() {
 		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar");
 		ChargePoint cp2 = createAndSaveTestChargePoint("bim", "bam");
@@ -162,7 +178,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestNode(nodeId2);
 		setupTestUserNode(userId, nodeId2);
 
-		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId());
+		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId(), userId);
 		obj1 = dao.get(dao.save(obj1));
 		ChargePointSettings obj2 = new ChargePointSettings(cp2.getId(), userId,
 				obj1.getCreated().minusSeconds(60));
@@ -189,7 +205,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestNode(nodeId2);
 		setupTestUserNode(userId, nodeId2);
 
-		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId());
+		ChargePointSettings obj1 = createTestChargePointSettings(cp1.getId(), userId);
 		obj1 = dao.get(dao.save(obj1));
 		ChargePointSettings obj2 = new ChargePointSettings(cp2.getId(), userId,
 				obj1.getCreated().minusSeconds(60));
@@ -201,7 +217,7 @@ public class MyBatisChargePointSettingsDaoTests extends AbstractMyBatisDaoTestSu
 		setupTestNode(nodeId3);
 		setupTestUserNode(userId2, nodeId3);
 		ChargePoint cp3 = createAndSaveTestChargePoint("foo", "bar", userId2, nodeId3);
-		ChargePointSettings obj3 = createTestChargePointSettings(cp3.getId());
+		ChargePointSettings obj3 = createTestChargePointSettings(cp3.getId(), userId2);
 		obj3 = dao.get(dao.save(obj3));
 
 		Collection<ChargePointSettings> results = dao.findAllForOwner(userId);
