@@ -184,6 +184,13 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	}
 
 	@Test
+	public void findIncomplete_tx_noMatchingTxId() {
+		insert();
+		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(last.getChargePointId(), 123);
+		assertThat("No incomplete session found", sess, nullValue());
+	}
+
+	@Test
 	public void findIncomplete_tx_onlyComplete() {
 		insert();
 
@@ -205,6 +212,16 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(s.getChargePointId(),
 				s.getTransactionId());
 		assertThat("Incomplete session found", sess, equalTo(last));
+	}
+
+	@Test
+	public void findIncomplete_tx_wildcardTxId() {
+		insert();
+
+		ChargeSession s = dao.get(last.getId());
+
+		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(s.getChargePointId(), -1);
+		assertThat("Incomplete session found using wildcard tx ID", sess, equalTo(last));
 	}
 
 	@Test
