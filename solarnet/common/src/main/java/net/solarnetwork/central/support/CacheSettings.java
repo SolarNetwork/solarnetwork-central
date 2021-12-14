@@ -94,11 +94,11 @@ public class CacheSettings {
 		}
 		cacheConfigBuilder = cacheConfigBuilder.withResourcePools(poolsBuilder);
 		if ( tti > 0 ) {
-			cacheConfigBuilder
+			cacheConfigBuilder = cacheConfigBuilder
 					.withExpiry(ExpiryPolicyBuilder.timeToIdleExpiration(Duration.ofSeconds(tti)));
 		}
 		if ( ttl > 0 ) {
-			cacheConfigBuilder
+			cacheConfigBuilder = cacheConfigBuilder
 					.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(ttl)));
 		}
 		return cacheManager.createCache(name,
