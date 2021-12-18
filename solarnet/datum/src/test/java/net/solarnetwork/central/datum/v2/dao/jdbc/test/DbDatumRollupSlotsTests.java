@@ -27,13 +27,13 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatu
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -52,8 +52,8 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Tests for the database slot rollup stored procedures.
@@ -155,12 +155,12 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("6", "2.1", "2.6") }));
 						assertAgg("10min slot 2", results.get(1),
 								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										decimalArray("1.5", "2.5"), decimalArray("28.035714285714285"),
 										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
 												decimalArray("5", "2.0", "2.9") }));
 						assertAgg("10min slot 3", results.get(2),
 								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
-										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714285715"),
 										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
 												decimalArray("6", "2.2", "2.7") }));
 						assertAgg("10min slot 4", results.get(3),
@@ -175,7 +175,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("8", "2.0", "2.9") }));
 						assertAgg("10min slot 6", results.get(5),
 								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("43.882352941"),
+										decimalArray("1.5", "2.5"), decimalArray("43.88235294117647"),
 										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
 												decimalArray("9", "2.1", "2.9") }));
 					}
@@ -201,12 +201,12 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("6", "2.1", "2.6") }));
 						assertAgg("10min slot 2", results.get(1),
 								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										decimalArray("1.5", "2.5"), decimalArray("28.035714285714285"),
 										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
 												decimalArray("5", "2.0", "2.9") }));
 						assertAgg("10min slot 3", results.get(2),
 								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
-										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714285715"),
 										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
 												decimalArray("6", "2.2", "2.7") }));
 						assertAgg("10min slot 4", results.get(3),
@@ -221,7 +221,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("8", "2.0", "2.9") }));
 						assertAgg("10min slot 6", results.get(5),
 								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("438.823529412"),
+										decimalArray("1.5", "2.5"), decimalArray("438.8235294117647"),
 										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
 												decimalArray("9", "2.1", "2.9") }));
 					}
@@ -247,12 +247,12 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("6", "2.1", "2.6") }));
 						assertAgg("10min slot 2", results.get(1),
 								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										decimalArray("1.5", "2.5"), decimalArray("28.035714285714285"),
 										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
 												decimalArray("5", "2.0", "2.9") }));
 						assertAgg("10min slot 3", results.get(2),
 								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
-										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714285715"),
 										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
 												decimalArray("6", "2.2", "2.7") }));
 						assertAgg("10min slot 4", results.get(3),
@@ -267,7 +267,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("8", "2.0", "2.9") }));
 						assertAgg("10min slot 6", results.get(5),
 								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("438.823529412"),
+										decimalArray("1.5", "2.5"), decimalArray("438.8235294117647"),
 										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
 												decimalArray("9", "2.1", "2.9") }));
 					}
@@ -293,12 +293,12 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("6", "2.1", "2.6") }));
 						assertAgg("10min slot 2", results.get(1),
 								agg(streamId, start.plusSeconds(600 * 1), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("28.035714286"),
+										decimalArray("1.5", "2.5"), decimalArray("28.035714285714285"),
 										new BigDecimal[][] { decimalArray("5", "1.0", "1.9"),
 												decimalArray("5", "2.0", "2.9") }));
 						assertAgg("10min slot 3", results.get(2),
 								agg(streamId, start.plusSeconds(600 * 2), Aggregation.TenMinute,
-										decimalArray("1.45", "2.45"), decimalArray("28.214285714"),
+										decimalArray("1.45", "2.45"), decimalArray("28.214285714285715"),
 										new BigDecimal[][] { decimalArray("6", "1.2", "1.7"),
 												decimalArray("6", "2.2", "2.7") }));
 						assertAgg("10min slot 4", results.get(3),
@@ -313,7 +313,7 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 												decimalArray("8", "2.0", "2.9") }));
 						assertAgg("10min slot 6", results.get(5),
 								agg(streamId, start.plusSeconds(600 * 5), Aggregation.TenMinute,
-										decimalArray("1.5", "2.5"), decimalArray("43.882352941"),
+										decimalArray("1.5", "2.5"), decimalArray("43.88235294117647"),
 										new BigDecimal[][] { decimalArray("9", "1.1", "1.9"),
 												decimalArray("9", "2.1", "2.9") }));
 					}

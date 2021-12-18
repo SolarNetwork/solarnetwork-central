@@ -35,19 +35,19 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.remapStream;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -83,14 +83,14 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class implementation of
@@ -1244,8 +1244,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_5min_5minData_nodeSource_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// populate 12 5 minute, 10 Wh segments, for a total of 110 Wh in 55 minutes
@@ -1290,8 +1290,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_5min_10minData_nodeSource_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// populate 7 10 minute, 10 Wh segments, for a total of 120 Wh in 60 minutes
@@ -1334,8 +1334,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_10min_1minData_nodeSource_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
@@ -1379,8 +1379,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_5min_paginated_withTotalResultCount() {
 		// GIVEN
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
@@ -1426,8 +1426,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void find_15min_1minData_nodeSource_absoluteDates_sortNodeSourceTime() {
 		// GIVEN
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(),
-				"UTC", ObjectDatumKind.Node, 1L, "a");
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "w" }, new String[] { "wh" }, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
 		// populate 61 1-minute, 2 Wh segments, for a total of 120 Wh in 60 minutes
