@@ -60,6 +60,10 @@ $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;'
 $ psql -U postgres -d solarnetwork \
 	-c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;'
+$ psql -U postgres -d solarnetwork \
+	-c 'CREATE EXTENSION IF NOT EXISTS timescaledb WITH SCHEMA public;'
+$ psql -U postgres -d solarnetwork \
+	-c 'CREATE EXTENSION IF NOT EXISTS aggs_for_vecs WITH SCHEMA public;'
 ```
 
 ## Setup database

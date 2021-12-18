@@ -255,3 +255,18 @@ BEGIN
 	RETURN NULL;
 END
 $$;
+
+/**
+ * Transpose a two-dimensional array (swap x,y order).
+ *
+ * @param arr the array to transpose (must have 2 dimensions)
+ */
+CREATE OR REPLACE FUNCTION solarcommon.array_transpose2d(arr anyarray)
+	RETURNS anyarray LANGUAGE SQL IMMUTABLE AS
+$$
+    SELECT array_agg(
+		(SELECT array_agg(arr[i][j] ORDER BY i) FROM generate_subscripts(arr, 1) AS i)
+		ORDER BY j
+	)
+    FROM generate_subscripts(arr, 2) as j
+$$;
