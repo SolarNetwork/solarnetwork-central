@@ -1094,7 +1094,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Result list size matches", datumList, hasSize(1));
 		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
 				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
-						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
+						propertiesOf(decimalArray("1.31046979865771812081"), decimalArray("945"), null,
+								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
 								new BigDecimal[][] { decimalArray("936", "100", "1036") })));
 	}
@@ -1127,7 +1128,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Result list size matches", datumList, hasSize(1));
 		DatumTestUtils.assertAggregateDatum("Running total", datumList.get(0),
 				new AggregateDatumEntity(streamId, null, Aggregation.RunningTotal,
-						propertiesOf(decimalArray("1.203891051"), decimalArray("202"), null, null),
+						propertiesOf(decimalArray("1.2038910505836576"), decimalArray("202"), null,
+								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("4626", "1.1", "3.3") },
 								new BigDecimal[][] { decimalArray("201", "100", "403") })));
 	}
@@ -1165,14 +1167,16 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		AggregateDatum d = datumList.get(0);
 		DatumTestUtils.assertAggregateDatum("Running total", d,
 				new AggregateDatumEntity(meta_1.getStreamId(), null, Aggregation.RunningTotal,
-						propertiesOf(decimalArray("1.310469799"), decimalArray("945"), null, null),
+						propertiesOf(decimalArray("1.31046979865771812081"), decimalArray("945"), null,
+								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "1.1", "3.3") },
 								new BigDecimal[][] { decimalArray("936", "100", "1036") })));
 		// stream 2
 		d = datumList.get(1);
 		DatumTestUtils.assertAggregateDatum("Running total", d,
 				new AggregateDatumEntity(meta_2.getStreamId(), null, Aggregation.RunningTotal,
-						propertiesOf(decimalArray("10.314496644"), decimalArray("9450"), null, null),
+						propertiesOf(decimalArray("10.314496644295302"), decimalArray("9450"), null,
+								null),
 						statisticsOf(new BigDecimal[][] { decimalArray("13410", "10.1", "30.3") },
 								new BigDecimal[][] { decimalArray("9360", "1000", "10360") })));
 	}

@@ -24,12 +24,12 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -44,9 +44,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Tests for the database aggregate rollup stored procedures.
@@ -246,7 +246,7 @@ public class DbAggDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 						AggregateDatum expected = new AggregateDatumEntity(streamId, start.toInstant(),
 								Aggregation.Hour,
-								propertiesOf(decimalArray("1.5", "5.266666667", "60.1"),
+								propertiesOf(decimalArray("1.5", "5.2666666666666667", "60.1"),
 										decimalArray("2700", "2400"), null, new String[] { "Ok" }),
 								statisticsOf(
 										new BigDecimal[][] { decimalArray("42", "1.1", "3.7"),
