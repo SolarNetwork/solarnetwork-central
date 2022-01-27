@@ -43,7 +43,6 @@ $$
 		WHERE d.inc
 	)
 	-- calculate clock accumulation for data_a values per property
-	-- calculate clock accumulation for data_a values per property
 	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
 	, wa AS (
 		SELECT
