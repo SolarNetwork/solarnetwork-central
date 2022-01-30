@@ -17,8 +17,8 @@ $$
 		SELECT
 			  stream_id
 			, ts
-			, data_i
-			, data_a
+			, pad_vec(data_i, len_i) AS data_i
+			, pad_vec(data_a, len_a) AS data_a
 			, data_s
 			, data_t
 			, rtype
