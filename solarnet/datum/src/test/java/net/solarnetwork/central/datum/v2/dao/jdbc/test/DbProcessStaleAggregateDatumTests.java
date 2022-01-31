@@ -36,15 +36,15 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleF
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider.staticProvider;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -79,14 +79,14 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for DB stored procedures that process stale aggregate datum.
@@ -318,8 +318,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		ZonedDateTime hour = now.truncatedTo(ChronoUnit.HOURS);
 		DatumEntity d = new DatumEntity(UUID.randomUUID(), now.toInstant(), Instant.now(),
 				DatumProperties.propertiesOf(decimalArray("1.1"), decimalArray("2.1"), null, null));
-		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(d.getStreamId(), "UTC",
-				ObjectDatumKind.Node, 1L, "a");
+		BasicObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(d.getStreamId(), "UTC",
+				ObjectDatumKind.Node, 1L, "a", new String[] { "i1" }, new String[] { "a1" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		DatumDbUtils.insertDatum(log, jdbcTemplate, Collections.singleton(d));
 		insertStaleAggregateDatum(log, jdbcTemplate,
