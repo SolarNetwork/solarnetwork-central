@@ -494,45 +494,41 @@ CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 		tolerance_read 	INTERVAL DEFAULT interval '3 months'
 	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
 $$
+	WITH m AS (
+		SELECT COALESCE(array_length(names_i, 1), 0) AS len_i
+			 , COALESCE(array_length(names_a, 1), 0) AS len_a
+		FROM solardatm.da_datm_meta
+		WHERE stream_id = sid
+	)
 	-- grab raw data + reset records, constrained by stream/date range
-	WITH d AS (
-		SELECT *, (ts >= start_ts AND ts < end_ts) AS inc
-		FROM solardatm.find_datm_for_time_span_with_aux(
+	, d AS (
+		SELECT
+			  stream_id
+			, ts
+			, pad_vec(data_i, len_i) AS data_i
+			, pad_vec(data_a, len_a) AS data_a
+			, data_s
+			, data_t
+			, rtype
+			, (ts >= start_ts AND ts < end_ts) AS inc
+		FROM m, solardatm.find_datm_for_time_span_with_aux(
 			sid,
 			start_ts,
 			end_ts,
-			tolerance_read
+			tolerance_clock
 		)
 	)
-	-- calculate instantaneous values per property
-	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
-	, wi AS (
-		SELECT
-			  p.idx
-			, d.data_i[p.idx] AS val
-		FROM d
-		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
-		WHERE d.inc
-	)
-	-- calculate instantaneous statistics
-	, di AS (
-		SELECT
-			w.idx
-			, to_char(avg(w.val), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
-			, count(w.val) AS cnt
-			, min(val) AS val_min
-			, max(val) AS val_max
-		FROM wi w
-		GROUP BY w.idx
-	)
-	-- join data_i and stat_i property values back into arrays
+	-- calculate instantaneous statistis per property
 	, di_ary AS (
 		SELECT
-			  array_agg(d.val ORDER BY d.idx) AS data_i
-			, array_agg(
-				ARRAY[d.cnt, d.val_min, d.val_max] ORDER BY d.idx
-			) AS stat_i
-		FROM di d
+			  vec_trim_scale(vec_agg_mean(d.data_i)) AS data_i
+			, solarcommon.array_transpose2d(ARRAY[
+				  vec_agg_count(d.data_i)::numeric[]
+				, vec_agg_min(d.data_i)
+				, vec_agg_max(d.data_i)
+			  ]) AS stat_i
+		FROM d
+		WHERE d.inc
 	)
 	-- calculate clock accumulation for data_a values per property
 	-- NOTE "unnest() WITH ORDINALITY" not used because of possible sparse array slice
@@ -576,8 +572,8 @@ $$
 	, da AS (
 		SELECT
 			  idx
-			, to_char(sum(diff * portion), 'FM999999999999999999999999999999999999990.999999999')::numeric AS cdiff
-			, to_char(sum(diff) FILTER (WHERE rinc), 'FM999999999999999999999999999999999999990.999999999')::numeric AS rdiff
+			, sum(diff * portion::numeric) AS cdiff
+			, sum(diff) FILTER (WHERE rinc) AS rdiff
 			, solarcommon.first(val ORDER BY ts, rtype) FILTER (WHERE rinc) AS rstart
 			, solarcommon.first(val ORDER BY ts DESC, rtype DESC) FILTER (WHERE rinc) AS rend
 		FROM wa
@@ -586,7 +582,7 @@ $$
 	-- join accumulating property values back into arrays
 	, da_ary AS (
 		SELECT
-			  array_agg(cdiff ORDER BY idx) AS data_a
+			  vec_trim_scale(array_agg(cdiff ORDER BY idx)) AS data_a
 			, array_agg(
 				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
@@ -600,7 +596,7 @@ $$
 			, d.data_s[p.idx] AS val
 		FROM d
 		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
-		WHERE d.inc
+		WHERE d.data_s IS NOT NULL AND d.inc
 	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
@@ -876,16 +872,14 @@ $$
 			, d.stat_i[p.idx][1] AS cnt
 			, d.stat_i[p.idx][2] AS min
 			, d.stat_i[p.idx][3] AS max
-			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
 		FROM d
 		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
-		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 	)
 	-- calculate instantaneous statistics
 	, di AS (
 		SELECT
 			idx
-			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, sum(val * cnt) AS val
 			, sum(cnt) AS cnt
 			, min(min) AS val_min
 			, max(max) AS val_max
@@ -895,7 +889,7 @@ $$
 	-- join data_i and stat_i property values back into arrays
 	, di_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_i
+			  vec_trim_scale(array_agg(val / cnt ORDER BY idx)) AS data_i
 			, array_agg(
 				ARRAY[cnt, val_min, val_max] ORDER BY idx
 			) AS stat_i
@@ -920,7 +914,7 @@ $$
 	, da AS (
 		SELECT
 			idx
-			, to_char(sum(val), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, sum(val) AS val
 			, sum(rdiff) AS rdiff
 			, min(rstart) AS rstart
 			, min(rend) AS rend
@@ -930,7 +924,7 @@ $$
 	-- join data_a and read_a property values back into arrays
 	, da_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_a
+			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_a
 			, array_agg(
 				ARRAY[rdiff, rstart, rend] ORDER BY idx
 			) AS read_a
@@ -943,140 +937,7 @@ $$
 			  d.data_s[p.idx] AS val
 		FROM d
 		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
-	)
-	-- calculate status statistics, as most-frequent status values
-	, ds AS (
-		SELECT
-			  ws.idx
-			, mode() WITHIN GROUP (ORDER BY ws.val) AS val
-		FROM ws
-		GROUP BY ws.idx
-	)
-	-- join data_s property values back into arrays
-	, ds_ary AS (
-		SELECT
-			  array_agg(val ORDER BY idx) AS data_s
-		FROM ds
-	)
-	-- join data_t property values into mega array
-	, dt_ary AS (
-		SELECT
-			  array_agg(DISTINCT p.val) AS data_t
-		FROM d
-		INNER JOIN unnest(d.data_t) AS p(val) ON TRUE
-		WHERE d.data_t IS NOT NULL
-	)
-	SELECT
-		sid AS stream_id,
-		start_ts AS ts_start
-		, di_ary.data_i
-		, da_ary.data_a
-		, ds_ary.data_s
-		, dt_ary.data_t
-		, di_ary.stat_i
-		, da_ary.read_a
-	FROM di_ary, da_ary, ds_ary, dt_ary
-	WHERE data_i IS NOT NULL OR data_a IS NOT NULL OR data_s IS NOT NULL OR data_t IS NOT NULL
-$$;
-
-
-/**
- * Compute a higher-level rollup datm record of lower=level aggregate datum records over a time range.
- *
- * @param sid 				the stream ID to find datm for
- * @param start_ts			the minimum date (inclusive)
- * @param end_ts 			the maximum date (exclusive)
- * @param kind 				the aggregate kind: 'h', 'd', or 'M' for daily, hourly, monthly
- * @see solardatm.find_agg_datm_for_time_span()
- */
-CREATE OR REPLACE FUNCTION solardatm.combine_agg_data_for_time_span(
-		sid 			UUID,
-		start_ts 		TIMESTAMP WITH TIME ZONE,
-		end_ts 			TIMESTAMP WITH TIME ZONE,
-		kind 			CHARACTER
-	) RETURNS SETOF solardatm.agg_datm LANGUAGE SQL STABLE ROWS 500 AS
-$$
-	WITH d AS (
-		SELECT * FROM solardatm.find_agg_datm_for_time_span(
-			sid,
-			start_ts,
-			end_ts,
-			kind
-		)
-	)
-	-- calculate instantaneous values per property
-	, wi AS (
-		SELECT
-			  p.idx
-			, d.data_i[p.idx] AS val
-			, d.stat_i[p.idx][1] AS cnt
-			, d.stat_i[p.idx][2] AS min
-			, d.stat_i[p.idx][3] AS max
-			, sum(d.stat_i[p.idx][1]) OVER slot AS tot_cnt
-		FROM d
-		INNER JOIN generate_series(1, array_upper(d.data_i, 1)) AS p(idx) ON TRUE
-		WINDOW slot AS (PARTITION BY p.idx RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-	)
-	-- calculate instantaneous statistics
-	, di AS (
-		SELECT
-			idx
-			, to_char(sum(val * cnt / tot_cnt), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
-			, sum(cnt) AS cnt
-			, min(min) AS val_min
-			, max(max) AS val_max
-		FROM wi
-		GROUP BY idx
-	)
-	-- join data_i and stat_i property values back into arrays
-	, di_ary AS (
-		SELECT
-			  array_agg(val ORDER BY idx) AS data_i
-			, array_agg(
-				ARRAY[cnt, val_min, val_max] ORDER BY idx
-			) AS stat_i
-		FROM di
-	)
-	-- calculate accumulating values per property
-	, wa AS (
-		SELECT
-			  p.idx
-			, d.data_a[p.idx] AS val
-			, d.read_a[p.idx][1] AS rdiff
-			, first_value(d.read_a[p.idx][2]) OVER slot AS rstart
-			, last_value(d.read_a[p.idx][3]) OVER slot AS rend
-		FROM d
-		INNER JOIN generate_series(1, array_upper(d.data_a, 1)) AS p(idx) ON TRUE
-		WINDOW slot AS (PARTITION BY p.idx ORDER BY CASE WHEN d.data_a[p.idx] IS NULL THEN 1 ELSE 0 END, d.ts_start
-			RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-	)
-	-- calculate accumulating statistics
-	, da AS (
-		SELECT
-			idx
-			, to_char(sum(val), 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
-			, min(rstart) AS rstart
-			, min(rend) AS rend
-			, sum(rdiff) AS rdiff
-		FROM wa
-		GROUP BY idx
-	)
-	-- join data_a and read_a property values back into arrays
-	, da_ary AS (
-		SELECT
-			  array_agg(val ORDER BY idx) AS data_a
-			, array_agg(
-				ARRAY[rdiff, rstart, rend] ORDER BY idx
-			) AS read_a
-		FROM da
-	)
-	-- calculate status for data_s values per property
-	, ws AS (
-		SELECT
-			  p.idx AS idx,
-			  d.data_s[p.idx] AS val
-		FROM d
-		INNER JOIN generate_series(1, array_upper(d.data_s, 1)) AS p(idx) ON TRUE
+		WHERE d.data_s IS NOT NULL
 	)
 	-- calculate status statistics, as most-frequent status values
 	, ds AS (
