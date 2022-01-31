@@ -38,11 +38,11 @@ public class ContentCacheStats {
 	/** Counted fields. */
 	public enum Counts {
 
-	Hit(0, "cache hits"),
+		Hit(0, "cache hits"),
 
-	Miss(1, "cache misses"),
+		Miss(1, "cache misses"),
 
-	Stored(2, "cache puts");
+		Stored(2, "cache puts");
 
 		private final int index;
 		private final String description;
@@ -126,6 +126,7 @@ public class ContentCacheStats {
 				case Miss:
 					hits = get(Counts.Hit);
 					total = hits + c;
+					break;
 
 				default:
 					hits = get(Counts.Hit);

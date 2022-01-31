@@ -169,6 +169,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 					case Touched:
 						configuration
 								.setExpiryPolicyFactory(TouchedExpiryPolicy.factoryOf(expiryDuration));
+						break;
 
 					case Eternal:
 						configuration.setExpiryPolicyFactory(EternalExpiryPolicy.factoryOf());
