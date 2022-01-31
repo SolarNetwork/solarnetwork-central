@@ -515,7 +515,7 @@ $$
 			sid,
 			start_ts,
 			end_ts,
-			tolerance_clock
+			tolerance_read
 		)
 	)
 	-- calculate instantaneous statistis per property
