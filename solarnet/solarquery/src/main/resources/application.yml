@@ -48,7 +48,7 @@ app:
     heap-max-entries: 10000
     disk-max-size-mb: 100
   query-cache:
-    enabled: true
+    enabled: false
     cache:  
       ttl: 60
       heap-max-entries: 1000
@@ -119,9 +119,14 @@ app:
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
     username: solarnet
     password: solarnet
+  query-cache:
+    enabled: true
 
 ---
 spring:
   config.activate.on-profile: production
   thymeleaf.cache: true
-    
+
+app:
+  query-cache:
+    enabled: true
