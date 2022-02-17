@@ -36,8 +36,7 @@ $$
 	WITH m AS (
 		SELECT COALESCE(array_length(names_i, 1), 0) AS len_i
 			 , COALESCE(array_length(names_a, 1), 0) AS len_a
-		FROM solardatm.da_datm_meta
-		WHERE stream_id = sid
+		FROM solardatm.find_metadata_for_stream(sid)
 	)
 	-- grab raw data + reset records, constrained by stream/date range
 	, d AS (
