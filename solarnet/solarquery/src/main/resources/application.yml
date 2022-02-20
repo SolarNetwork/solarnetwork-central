@@ -61,6 +61,7 @@ app:
       heap-max-entries: 1000
       disk-max-size-mb: 100
       compress-minimum-length: 512
+      stat-log-access-count: 10000
     filter:
       lock-pool-capacity: 128
       request-lock-timeout: 180000

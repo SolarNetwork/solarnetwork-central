@@ -61,6 +61,7 @@ public class ContentCachingServiceConfig {
 	public static class QueryCacheSettings extends CacheSettings {
 
 		private int compressMinimumLength = 512;
+		private int statLogAccessCount = 500;
 
 		public int getCompressMinimumLength() {
 			return compressMinimumLength;
@@ -68,6 +69,14 @@ public class ContentCachingServiceConfig {
 
 		public void setCompressMinimumLength(int compressMinimumLength) {
 			this.compressMinimumLength = compressMinimumLength;
+		}
+
+		public int getStatLogAccessCount() {
+			return statLogAccessCount;
+		}
+
+		public void setStatLogAccessCount(int statLogAccessCount) {
+			this.statLogAccessCount = statLogAccessCount;
 		}
 
 	}
@@ -97,6 +106,7 @@ public class ContentCachingServiceConfig {
 		AuditingJCacheContentCachingService service = new AuditingJCacheContentCachingService(
 				queryCache(), queryAuditor);
 		service.setCompressMinimumLength(settings.compressMinimumLength);
+		service.setStatLogAccessCount(settings.statLogAccessCount);
 		return service;
 	}
 
