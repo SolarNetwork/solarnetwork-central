@@ -37,7 +37,7 @@ app:
     update-delay: 100
     flush-delay: 10000
     connection-recovery-delay: 15000
-    stat-log-update-count: 500
+    stat-log-update-count: 10000
   network-identity:
     network-identity-key: "solarquery:identity:here"
     terms-of-service: "solarquery:tos:here"
@@ -133,6 +133,10 @@ app:
 spring:
   config.activate.on-profile: production
   thymeleaf.cache: true
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: false
 
 app:
   query-cache:
