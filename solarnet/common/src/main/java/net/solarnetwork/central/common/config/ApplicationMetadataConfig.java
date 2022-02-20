@@ -1,5 +1,5 @@
 /* ==================================================================
- * ContainerMetadata.java - 21/02/2022 9:42:04 AM
+ * ApplicationMetadataConfig.java - 21/02/2022 10:23:30 AM
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,49 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.cloud.domain;
+package net.solarnetwork.central.common.config;
 
-import net.solarnetwork.util.ObjectUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.ApplicationMetadata;
 
 /**
- * General metadata about a container application.
+ * Application metadata configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public class ContainerMetadata {
+@Configuration
+public class ApplicationMetadataConfig {
 
-	private final String containerId;
+	@Value("${app.meta.name:}")
+	private String appName;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param containerId
-	 *        the unique container ID
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public ContainerMetadata(String containerId) {
-		super();
-		this.containerId = ObjectUtils.requireNonNullArgument(containerId, "containerId");
-	}
+	@Value("${app.meta.version:}")
+	private String appVersion;
 
-	/**
-	 * Get the unique container ID.
-	 * 
-	 * @return the container ID, never {@literal null}
-	 */
-	public String getContainerId() {
-		return containerId;
-	}
+	@Value("${app.meta.instance-id:}")
+	private String appInstanceId;
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("ContainerMetadata{");
-		builder.append("containerId=").append(containerId);
-		builder.append("}");
-		return builder.toString();
+	@Bean
+	public ApplicationMetadata applicationMetadata() {
+		return new ApplicationMetadata(appName, appVersion, appInstanceId);
 	}
 
 }
