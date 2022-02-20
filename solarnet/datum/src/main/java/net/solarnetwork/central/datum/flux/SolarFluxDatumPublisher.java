@@ -94,7 +94,7 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService
 	public SolarFluxDatumPublisher(MqttConnectionFactory connectionFactory,
 			SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
 		super(connectionFactory,
-				new MqttStats("OcppSolarFluxPublisher", 500, SolarFluxDatumPublishCountStat.values()));
+				new MqttStats("SolarFluxPublisher", 500, SolarFluxDatumPublishCountStat.values()));
 		this.supportDao = nodeOwnershipDao;
 		this.objectMapper = objectMapper;
 		getMqttConfig().setUsername(DEFAULT_MQTT_USERNAME);
