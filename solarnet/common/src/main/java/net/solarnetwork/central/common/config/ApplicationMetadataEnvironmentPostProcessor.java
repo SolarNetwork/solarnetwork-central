@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.config;
 
 import static java.lang.String.format;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
@@ -37,12 +38,14 @@ import org.springframework.core.env.CommandLinePropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.util.StreamUtils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.cloud.domain.ContainerMetadata;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.ByteUtils;
 
 /**
  * Load up application metadata into the environment.
@@ -102,6 +105,19 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 				appInstanceId = meta.getContainerId();
 			}
 		}
+		if ( appInstanceId == null ) {
+			// try using hostname, first from environment
+			Object hostname = sysEnv.get("HOSTNAME");
+			if ( hostname != null && !hostname.toString().isBlank() ) {
+				appInstanceId = hostname.toString();
+			} else {
+				// next from `hostname` commmand
+				hostname = exec("hostname");
+				if ( hostname != null && !hostname.toString().isBlank() ) {
+					appInstanceId = hostname.toString();
+				}
+			}
+		}
 		addWithPrefix(appProps, "instance-id",
 				appInstanceId != null ? appInstanceId : UUID.randomUUID().toString());
 
@@ -118,6 +134,15 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 
 	private void addWithPrefix(Properties props, String key, Object value) {
 		props.put(APP_PROP_PREFIX + key, value);
+	}
+
+	private String exec(String command) {
+		try (InputStream in = Runtime.getRuntime().exec(command).getInputStream()) {
+			return StreamUtils.copyToString(in, ByteUtils.UTF8).trim();
+		} catch ( Exception e ) {
+			logger.warn(format("Error executing [%s]", command), e);
+			return null;
+		}
 	}
 
 	public ContainerMetadata ecsContainerMetadataV4(String uri) {
