@@ -91,10 +91,14 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		Properties appProps = new Properties();
 
 		String appName = environment.getProperty("application.title", "");
-		addWithPrefix(appProps, "name", appName);
+		if ( !appName.isBlank() ) {
+			addWithPrefix(appProps, "name", appName);
+		}
 
 		String appVersion = environment.getProperty("application.version", "");
-		addWithPrefix(appProps, "version", appVersion);
+		if ( !appVersion.isBlank() ) {
+			addWithPrefix(appProps, "version", appVersion);
+		}
 
 		String appInstanceId = null;
 		Map<String, Object> sysEnv = environment.getSystemEnvironment();
@@ -121,7 +125,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		addWithPrefix(appProps, "instance-id",
 				appInstanceId != null ? appInstanceId : UUID.randomUUID().toString());
 
-		logger.info("App metadata: " + appProps);
+		logger.info("Environment app metadata: " + appProps);
 
 		MutablePropertySources propertySources = environment.getPropertySources();
 		if ( propertySources.contains(CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME) ) {

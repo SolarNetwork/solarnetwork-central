@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.common.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +38,8 @@ import net.solarnetwork.central.ApplicationMetadata;
 @Configuration
 public class ApplicationMetadataConfig {
 
+	private final Logger log = LoggerFactory.getLogger(ApplicationMetadataConfig.class);
+
 	@Value("${app.meta.name:}")
 	private String appName;
 
@@ -47,7 +51,9 @@ public class ApplicationMetadataConfig {
 
 	@Bean
 	public ApplicationMetadata applicationMetadata() {
-		return new ApplicationMetadata(appName, appVersion, appInstanceId);
+		ApplicationMetadata meta = new ApplicationMetadata(appName, appVersion, appInstanceId);
+		log.info("App meta: {}", meta);
+		return meta;
 	}
 
 }
