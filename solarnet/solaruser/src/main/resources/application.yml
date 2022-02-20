@@ -1,4 +1,5 @@
 app:
+  meta.name: SolarUser
   billing:
     delivery-timeout-secs: 60
     invoice:

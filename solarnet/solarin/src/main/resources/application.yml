@@ -1,4 +1,5 @@
 app:
+  meta.name: SolarIn
   datum:
     solarflux-publish:
       uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
