@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
@@ -85,7 +86,6 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
@@ -96,6 +96,7 @@ import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Unit test for the {@link DaoQueryBiz} class.
@@ -423,6 +424,44 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("a1", props.getAccumulating()[0])
 		));
 		// @formatter:on
+	}
+
+	@Test
+	public void findFiltered_criteria_HourOfDay() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "i1", "i2" },
+				new String[] { "a1" }, null, null);
+		DatumProperties props = testProps();
+		DatumEntity d = new DatumEntity(meta.getStreamId(), Instant.now(), Instant.now(), props);
+		BasicObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
+				singletonMap(meta.getStreamId(), meta), singleton(d));
+
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
+		expect(datumDao.findFiltered(capture(filterCaptor))).andReturn(daoResults);
+
+		// WHEN
+		replayAll();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeId(1L);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setAggregate(Aggregation.HourOfDay);
+		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
+		biz.findFilteredGeneralNodeDatum(filter, sortDescriptors, 1, 2);
+
+		// THEN
+		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
+				equalTo(ObjectDatumKind.Node));
+		assertThat("Query node IDs", filterCaptor.getValue().getNodeIds(),
+				arrayContaining(filter.getNodeIds()));
+		assertThat("Query start date", filterCaptor.getValue().getStartDate(), is(nullValue()));
+		assertThat("Query end date", filterCaptor.getValue().getEndDate(), is(nullValue()));
+		assertThat("Query aggregation", filterCaptor.getValue().getAggregation(),
+				equalTo(filter.getAggregation()));
+		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
+				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 	}
 
 	@Test

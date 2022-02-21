@@ -72,8 +72,6 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
@@ -90,6 +88,8 @@ import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Implementation of {@link QueryBiz}.
@@ -276,7 +276,7 @@ public class DaoQueryBiz implements QueryBiz {
 			}
 			startDate = s;
 			endDate = e;
-			diffDays = ChronoUnit.DAYS.between(s, e);
+			diffDays = (s != null && e != null ? ChronoUnit.DAYS.between(s, e) : 0);
 		}
 		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
