@@ -153,7 +153,6 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		ObjectMapper mapper = JsonUtils.newObjectMapper();
 		try (JsonParser p = mapper.createParser(new URL(uri))) {
 			ObjectNode root = p.readValueAsTree();
-			JsonNode cluster = root.get("Cluster");
 			JsonNode taskArn = root.get("TaskARN");
 			if ( taskArn == null ) {
 				logger.error(format("TaskARN not available in ECS container metadata from [%s]: %s", uri,
@@ -165,13 +164,10 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 				logger.error(format("TaskARN empty in ECS container metadata from [%s]: %s", uri, root));
 				return null;
 			}
-			if ( cluster != null ) {
-				String clusterId = cluster.textValue();
-				int slashIdx = clusterId.lastIndexOf('/');
-				if ( slashIdx >= 0 && slashIdx < clusterId.length() ) {
-					// strip cluster ID from taskARN to get final task ID
-					taskId = taskId.substring(slashIdx + 1);
-				}
+			int slashIdx = taskId.lastIndexOf('/');
+			if ( slashIdx >= 0 && slashIdx < taskId.length() ) {
+				// strip cluster ID from taskARN to get final task ID
+				taskId = taskId.substring(slashIdx + 1);
 			}
 			ContainerMetadata meta = new ContainerMetadata(taskId);
 			logger.info(format("Discovered ECS metadata from [%s]: %s", uri, root));
