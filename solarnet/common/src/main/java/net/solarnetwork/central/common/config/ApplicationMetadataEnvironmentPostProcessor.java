@@ -104,7 +104,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		Map<String, Object> sysEnv = environment.getSystemEnvironment();
 		Object ecsMetaUri = sysEnv.get("ECS_CONTAINER_METADATA_URI_V4");
 		if ( ecsMetaUri != null ) {
-			ContainerMetadata meta = ecsContainerMetadataV4(ecsMetaUri.toString());
+			ContainerMetadata meta = ecsContainerMetadataV4(ecsMetaUri + "/task");
 			if ( meta != null ) {
 				appInstanceId = meta.getContainerId();
 			}
