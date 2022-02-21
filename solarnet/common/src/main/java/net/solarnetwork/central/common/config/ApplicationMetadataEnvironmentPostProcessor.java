@@ -60,6 +60,21 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	 */
 	public static final String APP_PROP_PREFIX = "app.meta.";
 
+	/** The default container ID maximum length. */
+	public static final int DEFAULT_MAX_CONTAINER_ID_LENGTH = 8;
+
+	/**
+	 * The system environment variable for the maximum application instance ID
+	 * length, when derived from an ECS container ID.
+	 * 
+	 * <p>
+	 * The variable value must be an integer; if less than {@literal 1} then no
+	 * maximum length is enforced. If not defined then
+	 * {@link #DEFAULT_MAX_CONTAINER_ID_LENGTH} will be used.
+	 * </p>
+	 */
+	public static final String ENV_APP_ID_CONTAINER_ID_LENGTH = "APP_ID_CONTAINER_ID_LENGTH";
+
 	private final Log logger;
 
 	// Before ConfigFileApplicationListener so values there can use these ones
@@ -107,6 +122,12 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			ContainerMetadata meta = ecsContainerMetadataV4(ecsMetaUri + "/task");
 			if ( meta != null ) {
 				appInstanceId = meta.getContainerId();
+				Object maxLengthProp = sysEnv.get(ENV_APP_ID_CONTAINER_ID_LENGTH);
+				int maxLength = (maxLengthProp != null ? Integer.parseInt(maxLengthProp.toString())
+						: DEFAULT_MAX_CONTAINER_ID_LENGTH);
+				if ( maxLength > 0 && appInstanceId.length() > maxLength ) {
+					appInstanceId = appInstanceId.substring(0, maxLength);
+				}
 			}
 		}
 		if ( appInstanceId == null ) {
