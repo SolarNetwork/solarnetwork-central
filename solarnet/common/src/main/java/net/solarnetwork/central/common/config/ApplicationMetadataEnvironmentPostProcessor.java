@@ -167,9 +167,10 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			}
 			if ( cluster != null ) {
 				String clusterId = cluster.textValue();
-				if ( clusterId != null && !clusterId.isBlank() && taskId.startsWith(clusterId) ) {
+				int slashIdx = clusterId.lastIndexOf('/');
+				if ( slashIdx >= 0 && slashIdx < clusterId.length() ) {
 					// strip cluster ID from taskARN to get final task ID
-					taskId = taskId.substring(clusterId.length());
+					taskId = taskId.substring(slashIdx + 1);
 				}
 			}
 			ContainerMetadata meta = new ContainerMetadata(taskId);
