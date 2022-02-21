@@ -178,7 +178,7 @@ public class DaoRegistrationBizTest {
 		registrationBiz.setSolarLocationDao(solarLocationDao);
 		registrationBiz.setUserNodeCertificateDao(userNodeCertificateDao);
 		registrationBiz.setUserNodeDao(userNodeDao);
-		registrationBiz.setNetworkCertificateSubjectDNFormat(TEST_DN_FORMAT);
+		registrationBiz.setNetworkCertificateSubjectFormat(TEST_DN_FORMAT);
 		registrationBiz.setPasswordEncoder(passwordEncoder);
 		registrationBiz.setNodePKIBiz(nodePKIBiz);
 		registrationBiz.setExecutorService(executorService);

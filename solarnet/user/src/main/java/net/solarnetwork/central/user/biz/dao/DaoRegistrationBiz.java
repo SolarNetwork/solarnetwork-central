@@ -150,6 +150,20 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 */
 	public static final int INSTRUCTION_PARAM_DEFAULT_MAX_LENGTH = 256;
 
+	/**
+	 * The {@code networkCertificateSubjectFormat} property default value.
+	 * 
+	 * @since 2.0
+	 */
+	public static final String DEFAULT_CERT_SUBJECT_FORMAT = "UID=%s,O=SolarNetwork";
+
+	/**
+	 * The {@code approveCsrMaximumWaitSecs} property default value.
+	 * 
+	 * @since 2.0
+	 */
+	public static final int DEFAULT_APPROVE_CSR_MAX_WAIT_SECS = 15;
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private UserDao userDao;
@@ -169,14 +183,14 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private int nodePrivateKeySize = 2048;
 	private String nodeKeystoreAlias = "node";
 	private ExecutorService executorService = Executors.newCachedThreadPool();
-	private int approveCSRMaximumWaitSecs = 15;
+	private int approveCsrMaximumWaitSecs = DEFAULT_APPROVE_CSR_MAX_WAIT_SECS;
 	private InstructorBiz instructorBiz;
 	private int instructionParamMaxLength = INSTRUCTION_PARAM_DEFAULT_MAX_LENGTH;
 
 	private Period invitationExpirationPeriod = Period.ofWeeks(1);
 	private Period nodeCertificateRenewalPeriod = Period.ofMonths(3);
 	private String defaultSolarLocationName = "Unknown";
-	private String networkCertificateSubjectDNFormat = "UID=%s,O=SolarNetwork";
+	private String networkCertificateSubjectFormat = DEFAULT_CERT_SUBJECT_FORMAT;
 
 	private User getCurrentUser() {
 		String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -583,13 +597,13 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		cert.setRequestId(renewRequestID);
 		cert.setStatus(UserNodeCertificateStatus.a);
 
-		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
+		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 
 		final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword, user,
 				cert);
 		Instruction installInstruction = null;
 		try {
-			UserNodeCertificate renewedCert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
+			UserNodeCertificate renewedCert = approval.get(approveCsrMaximumWaitSecs, TimeUnit.SECONDS);
 			cert.setStatus(renewedCert.getStatus());
 			cert.setCreated(renewedCert.getCreated());
 			cert.setKeystoreData(renewedCert.getKeystoreData());
@@ -876,7 +890,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 						getCertificateAsString(userNode.getCertificate().getKeystoreData()));
 			}
 		}
-		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
+		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 		details.setNetworkCertificateSubjectDN(certSubjectDN);
 		return details;
 	}
@@ -916,7 +930,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		//		conf.setNodeId(nodeId);
 		//		userNodeConfirmationDao.store(conf);
 
-		final String certSubjectDN = String.format(networkCertificateSubjectDNFormat, nodeId.toString());
+		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 
 		UserNodeCertificate cert = null;
 		if ( keystorePassword != null ) {
@@ -941,7 +955,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			final Future<UserNodeCertificate> approval = approveCSR(certSubjectDN, keystorePassword,
 					user, cert);
 			try {
-				cert = approval.get(approveCSRMaximumWaitSecs, TimeUnit.SECONDS);
+				cert = approval.get(approveCsrMaximumWaitSecs, TimeUnit.SECONDS);
 			} catch ( TimeoutException e ) {
 				log.warn("Timeout waiting for {} CSR approval", certSubjectDN);
 				// save to DB when we do get our reply
@@ -1272,8 +1286,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		this.userNodeCertificateDao = userNodeCertificateDao;
 	}
 
-	public void setNetworkCertificateSubjectDNFormat(String networkCertificateSubjectDNFormat) {
-		this.networkCertificateSubjectDNFormat = networkCertificateSubjectDNFormat;
+	public void setNetworkCertificateSubjectFormat(String networkCertificateSubjectFormat) {
+		this.networkCertificateSubjectFormat = networkCertificateSubjectFormat;
 	}
 
 	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
@@ -1304,8 +1318,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		this.executorService = executorService;
 	}
 
-	public void setApproveCSRMaximumWaitSecs(int approveCSRMaximumWaitSecs) {
-		this.approveCSRMaximumWaitSecs = approveCSRMaximumWaitSecs;
+	public void setApproveCsrMaximumWaitSecs(int approveCsrMaximumWaitSecs) {
+		this.approveCsrMaximumWaitSecs = approveCsrMaximumWaitSecs;
 	}
 
 	@Override

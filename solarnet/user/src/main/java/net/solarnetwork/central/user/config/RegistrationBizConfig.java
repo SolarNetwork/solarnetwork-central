@@ -25,20 +25,17 @@ package net.solarnetwork.central.user.config;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.biz.NetworkIdentificationBiz;
-import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.biz.dao.DaoUserMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
-import net.solarnetwork.central.user.biz.RegistrationBiz;
-import net.solarnetwork.central.user.biz.UserAlertBiz;
-import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
 import net.solarnetwork.central.user.biz.dao.DaoUserAlertBiz;
 import net.solarnetwork.central.user.biz.dao.DaoUserBiz;
@@ -120,8 +117,9 @@ public class RegistrationBizConfig {
 	@Autowired
 	private CertificateService certificateService;
 
+	@ConfigurationProperties(prefix = "app.user.reg.biz")
 	@Bean
-	public RegistrationBiz registrationBiz() {
+	public DaoRegistrationBiz registrationBiz() {
 		DaoRegistrationBiz biz = new DaoRegistrationBiz();
 		biz.setUserDao(userDao);
 		biz.setUserNodeDao(userNodeDao);
@@ -140,7 +138,7 @@ public class RegistrationBizConfig {
 	}
 
 	@Bean
-	public UserBiz userBiz() {
+	public DaoUserBiz userBiz() {
 		DaoUserBiz biz = new DaoUserBiz();
 		biz.setUserDao(userDao);
 		biz.setUserAlertDao(userAlertDao);
@@ -155,12 +153,12 @@ public class RegistrationBizConfig {
 	}
 
 	@Bean
-	public UserMetadataBiz userMetadataBiz() {
+	public DaoUserMetadataBiz userMetadataBiz() {
 		return new DaoUserMetadataBiz(userMetadataDao);
 	}
 
 	@Bean
-	public UserAlertBiz userAlertBiz() {
+	public DaoUserAlertBiz userAlertBiz() {
 		return new DaoUserAlertBiz(userAlertDao, userAlertSituationDao);
 	}
 
