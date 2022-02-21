@@ -148,7 +148,7 @@ $(document).ready(function() {
 	}
 	
 	function renderInvoiceTable(table, pagination, displayCount, json) {
-		var haveRows = json && json.data && json.data.results && json.data.results.length > 0;
+		var haveRows = !!(json && json.data && json.data.results && json.data.results.length > 0);
 		var total = (json.data ? json.data.totalResults : returned);
 		var container, prop, cell;
 		var table = $(table);
@@ -286,7 +286,7 @@ $(document).ready(function() {
 	}
 
 	function renderPreviewInvoiceTable(table, json) {
-		var haveRows = json && json.data && json.data.id;
+		var haveRows = !!(json && json.data && json.data.id);
 		table = $(table);
 		if ( haveRows ) {
 			var templateRow = table.children('thead').children('tr.template');
@@ -295,6 +295,7 @@ $(document).ready(function() {
 			renderPreviewInvoiceTableRows(tbody, templateRow, json.data);
 			renderPreviewInvoiceTotals(tallyTable, json.data);
 		}
+		return haveRows;
 	}
 	
 	function loadInvoicePage(pageNum) {
@@ -335,8 +336,8 @@ $(document).ready(function() {
 		// get current usage
 		$.getJSON(SolarReg.solarUserURL('/sec/billing/invoices/preview'), function(json) {
 			console.log('Got preview invoice: %o', json);
-			renderPreviewInvoiceTable('#upcoming-invoice-table', json);
-			$('#upcoming-invoice').toggleClass('hidden', !json.data);
+			var havePreview = renderPreviewInvoiceTable('#upcoming-invoice-table', json);
+			$('#upcoming-invoice').toggleClass('hidden', !havePreview);
 		});
 		
 		// get unpaid invoices
