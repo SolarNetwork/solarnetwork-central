@@ -64,7 +64,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.mail.MailService;
@@ -85,6 +84,7 @@ import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
@@ -164,11 +164,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		service.setBatchSize(1);
 		AlertIdCounter.set(TEST_USER_ALERT_ID);
 
-		// not quite sure why unit tests require no leading slash, but runtime DOES
-		service.setMailTemplateResource(
-				EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOURCE.substring(1));
+		service.setMailTemplateResource(EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOURCE);
 		service.setMailTemplateResolvedResource(
-				EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE.substring(1));
+				EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE);
 
 		testUser = new User(TEST_USER_ID, "test@localhost");
 		testUser.setName("Tester Dude");

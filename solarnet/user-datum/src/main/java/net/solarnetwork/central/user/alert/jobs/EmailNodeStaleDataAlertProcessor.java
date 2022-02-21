@@ -50,7 +50,6 @@ import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.domain.DateInterval;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamPK.NodeDatumStreamPK;
 import net.solarnetwork.central.domain.SolarNode;
@@ -70,6 +69,7 @@ import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.DateUtils;
 
 /**
@@ -84,10 +84,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	public static final Integer DEFAULT_BATCH_SIZE = 50;
 
 	/** The default value for {@link #getMailTemplateResource()}. */
-	public static final String DEFAULT_MAIL_TEMPLATE_RESOURCE = "/net/solarnetwork/central/user/alert/jobs/user-alert-NodeStaleData.txt";
+	public static final String DEFAULT_MAIL_TEMPLATE_RESOURCE = "net/solarnetwork/central/user/alert/jobs/user-alert-NodeStaleData.txt";
 
 	/** The default value for {@link #getMailTemplateResolvedResource()}. */
-	public static final String DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE = "/net/solarnetwork/central/user/alert/jobs/user-alert-NodeStaleData-Resolved.txt";
+	public static final String DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE = "net/solarnetwork/central/user/alert/jobs/user-alert-NodeStaleData-Resolved.txt";
 
 	/**
 	 * A {@code UserAlertSituation} {@code info} key for an associated node ID.
