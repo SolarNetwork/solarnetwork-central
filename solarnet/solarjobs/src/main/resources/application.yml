@@ -1,9 +1,9 @@
 app:
-  meta.name: SolarJobs
+  meta.name: "SolarJobs"
   billing:
     delivery-timeout-secs: 60
     invoice:
-      mail.from: accounts@localhost
+      mail.from: "accounts@localhost"
       html-template-cache:
         ttl: 3600
   cache.persistence.path: "var/cache"
@@ -15,9 +15,9 @@ app:
       maxLifetime: 1800000
       readOnly: false
     url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
-    username: solartest
-    password: solartest
-    platform: postgres
+    username: "solartest"
+    password: "solartest"
+    platform: "postgres"
     initialize: false
   datum:
     export:
@@ -35,17 +35,17 @@ app:
       s3-storage:
         objectKeyPrefix: "datum-import/"
         s3Client:
-          bucketName: snf-apps
-          regionName: us-west-2
-          accessToken: TOKEN_HERE
-          accessSecret: SECRET_HERE
+          bucketName: "snf-apps"
+          regionName: "us-west-2"
+          accessToken: "TOKEN_HERE"
+          accessSecret: "SECRET_HERE"
     solarflux-publish:
-      uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
+      uid: "SolarFlux-Datum-Publisher-${app.meta.instance-id}"
       publish-qos-level: 0
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://solarflux.solarnetwork:1883"
-        client-id: "solarjobs-@@SOLAR_FLUX_PUB_ID@@"
+        client-id: "solarjobs-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
   email-throttle-cache:
@@ -65,43 +65,43 @@ app:
     datum:
       agg:
         hourly:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 59000
           parallelism: 4
           schedule: "15 0/1 * * * *"
         daily:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "30 0/5 * * * *"
         monthly:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "45 0/20 * * * *"
         flux:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 59000
           parallelism: 4
           schedule: "45 0/1 * * * *"
       audit:
         raw:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 59000
           parallelism: 4
           schedule: "45 1/5 * * * *"
         hourly:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 59000
           parallelism: 4
           schedule: "45 3/5 * * * *"
         daily:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "30 4/5 * * * *"
         monthly:
-          maximum-iterations: 1000
+          maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "40 10/20 * * * *"
@@ -121,7 +121,7 @@ app:
           schedule: "40 53 * * * *"
         processor:
           maximum-iterations: 2
-          maximum-wait-ms: 5400000
+          maximum-wait-ms: 7200000
           schedule: "52 3/5 * * * ?"
     instr:
       cleaner:
