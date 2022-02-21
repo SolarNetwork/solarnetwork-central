@@ -100,14 +100,14 @@ public class DatumInsightController {
 				(SortDescriptor) new SimpleSortDescriptor("source"));
 		filter.setSorts(sorts);
 		FilterResults<AuditDatumRollup, DatumPK> last30days = auditDatumBiz
-				.findAccumulativeAuditDatumFiltered(filter);
+				.findAuditDatumFiltered(filter);
 
 		// accumulative most recent
 		filter.setMostRecent(true);
 		filter.setStartDate(null);
 		filter.setEndDate(null);
 		FilterResults<AuditDatumRollup, DatumPK> accumulative = auditDatumBiz
-				.findAuditDatumFiltered(filter);
+				.findAccumulativeAuditDatumFiltered(filter);
 
 		DatumInsightOverallStatistics result = new DatumInsightOverallStatistics(last30days,
 				accumulative);
