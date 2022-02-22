@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.config;
 
+import java.time.Duration;
 import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,9 +104,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowCredentials(false);
+		configuration.setMaxAge(Duration.ofHours(24));
 		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "X-SN-Date"));
+		configuration.setAllowedMethods(
+				Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+		configuration.setAllowedHeaders(
+				Arrays.asList("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", configuration);
 		return source;
