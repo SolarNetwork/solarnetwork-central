@@ -94,12 +94,16 @@ public class SecurityTokenAuthenticationEntryPoint
 		final String authHeaderValue = request.getHeader("Authorization");
 		final String scheme = securityTokenAuthenticationScheme(authHeaderValue);
 		final int statusCode = HttpServletResponse.SC_UNAUTHORIZED;
-		response.addHeader("WWW-Authenticate", scheme);
+		if ( response.getHeader("WWW-Authenticate") == null ) {
+			response.addHeader("WWW-Authenticate", scheme);
+		}
 		response.setStatus(statusCode);
 		response.addHeader(WebConstants.HEADER_ERROR_MESSAGE, authException.getMessage());
 		if ( httpHeaders != null ) {
 			for ( Map.Entry<String, String> me : httpHeaders.entrySet() ) {
-				response.addHeader(me.getKey(), me.getValue());
+				if ( response.getHeader(me.getKey()) == null ) {
+					response.addHeader(me.getKey(), me.getValue());
+				}
 			}
 		}
 		if ( handlerExceptionResolver != null ) {
