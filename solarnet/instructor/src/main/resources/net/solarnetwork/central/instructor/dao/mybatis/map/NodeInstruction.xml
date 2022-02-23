@@ -145,6 +145,12 @@
 		)}
 	</update>
 	
+	<update id="delete-NodeInstruction-incomplete" statementType="CALLABLE" parameterType="map">
+		{#{result, mode=OUT, jdbcType=BIGINT} = call solarnet.purge_incomplete_instructions(
+			#{date, mode=IN, jdbcType=TIMESTAMP}
+		)}
+	</update>
+	
 	<!-- InstructionParameter support -->
 	
 	<select id="findall-NodeInstruction-InstructionParameter" parameterType="long" resultMap="InstructionParameterFullResult">

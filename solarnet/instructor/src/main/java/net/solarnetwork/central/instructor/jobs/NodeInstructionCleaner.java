@@ -32,15 +32,19 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to periodically clean out old, completed instructions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class NodeInstructionCleaner extends JobSupport {
 
 	/** The default value for the {@code daysOlder} property. */
 	public static final int DEFAULT_DAYS_OLDER = 30;
 
+	/** The default value for the {@code abandonedDaysOlder} property. */
+	public static final int DEFAULT_ABANDONED_DAYS_OLDER = 120;
+
 	private final NodeInstructionDao dao;
 	private int daysOlder = DEFAULT_DAYS_OLDER;
+	private int abandonedDaysOlder = DEFAULT_ABANDONED_DAYS_OLDER;
 
 	/**
 	 * Constructor.
@@ -61,13 +65,18 @@ public class NodeInstructionCleaner extends JobSupport {
 		Instant date = Instant.now().minus(daysOlder, ChronoUnit.DAYS);
 		long result = dao.purgeCompletedInstructions(date);
 		log.info("Purged {} node instructions older than {} ({} days ago)", result, date, daysOlder);
+
+		date = Instant.now().minus(abandonedDaysOlder, ChronoUnit.DAYS);
+		result = dao.purgeIncompleteInstructions(date);
+		log.info("Purged {} abandoned node instructions older than {} ({} days ago)", result, date,
+				abandonedDaysOlder);
 	}
 
 	/**
 	 * Get the number of days old an instruction must be in order to be
 	 * considered for purging.
 	 * 
-	 * @return The number of days old.
+	 * @return the number of days old
 	 */
 	public int getDaysOlder() {
 		return daysOlder;
@@ -78,11 +87,35 @@ public class NodeInstructionCleaner extends JobSupport {
 	 * considered for purging.
 	 * 
 	 * @param daysOlder
-	 *        The number of days old instructions can be before they can be
-	 *        purged.
+	 *        the number of days old instructions can be before they can be
+	 *        purged
 	 */
 	public void setDaysOlder(int daysOlder) {
 		this.daysOlder = daysOlder;
+	}
+
+	/**
+	 * Get the number of days old an incomplete instruction must be in order to
+	 * be considered for purging.
+	 * 
+	 * @return the number of days old
+	 * @since 2.1
+	 */
+	public int getAbandonedDaysOlder() {
+		return abandonedDaysOlder;
+	}
+
+	/**
+	 * Set the number of days old an incomplete instruction must be in order to
+	 * be considered for purging.
+	 * 
+	 * @param abandonedDaysOlder
+	 *        the number of days old incomplete instructions can be before they
+	 *        can be purged
+	 * @since 2.1
+	 */
+	public void setAbandonedDaysOlder(int abandonedDaysOlder) {
+		this.abandonedDaysOlder = abandonedDaysOlder;
 	}
 
 }

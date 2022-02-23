@@ -384,6 +384,49 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	@Test
+	public void purgeIncompleteInstructionsNone() {
+		long result = dao.purgeIncompleteInstructions(Instant.now());
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void purgeIncompleteInstructionsQueued() {
+		storeNew();
+		long result = dao
+				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
+		assertEquals(1, result);
+		assertNull("Purged instruction is not found", dao.get(lastDatum.getId()));
+	}
+
+	@Test
+	public void purgeIncompleteInstructionsMatch() {
+		storeNew();
+		lastDatum.setState(InstructionState.Received);
+		dao.store(lastDatum);
+		long result = dao
+				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
+		assertEquals(1, result);
+		NodeInstruction instr = dao.get(lastDatum.getId());
+		assertNull("Purged instruction is not found", instr);
+	}
+
+	@Test
+	public void purgeIncompleteInstructionsMatchMultiple() {
+		storeNew();
+		lastDatum.setState(InstructionState.Received);
+		dao.store(lastDatum);
+		storeNew(); // Queued state, should also be deleted
+		storeNew();
+		lastDatum.setState(InstructionState.Executing);
+		dao.store(lastDatum);
+		long result = dao
+				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
+		assertEquals(3, result);
+		NodeInstruction instr = dao.get(lastDatum.getId());
+		assertNull("Purged instruction is not found", instr);
+	}
+
+	@Test
 	public void updateStateWithResultParameters() {
 		// given
 		storeNew();

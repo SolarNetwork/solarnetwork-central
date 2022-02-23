@@ -35,7 +35,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface NodeInstructionDao
 		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {
@@ -50,6 +50,17 @@ public interface NodeInstructionDao
 	 * @since 2.0
 	 */
 	long purgeCompletedInstructions(Instant olderThanDate);
+
+	/**
+	 * Purge instructions that have not reached a final state and are older than
+	 * a given date.
+	 * 
+	 * @param olderThanDate
+	 *        The maximum date for which to purge completed instructions.
+	 * @return The number of instructions deleted.
+	 * @since 2.1
+	 */
+	long purgeIncompleteInstructions(Instant olderThanDate);
 
 	/**
 	 * Update the state of a node instruction.

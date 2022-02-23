@@ -40,7 +40,7 @@ import net.solarnetwork.codec.JsonUtils;
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -74,6 +74,13 @@ public class MyBatisNodeInstructionDao
 	public static final String UPDATE_STALE_STATE = "update-NodeInstruction-stale-state";
 
 	/**
+	 * Query name used by {@link #purgeIncompletInstructions(Instant)}.
+	 * 
+	 * @since 1.4
+	 */
+	public static final String UPDATE_PURGE_INCOMPLETE_INSTRUCTIONS = "delete-NodeInstruction-incomplete";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisNodeInstructionDao() {
@@ -93,6 +100,16 @@ public class MyBatisNodeInstructionDao
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("date", olderThanDate);
 		getSqlSession().update(UPDATE_PURGE_COMPLETED_INSTRUCTIONS, params);
+		Long result = (Long) params.get("result");
+		return (result == null ? 0 : result.longValue());
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public long purgeIncompleteInstructions(Instant olderThanDate) {
+		Map<String, Object> params = new HashMap<String, Object>(2);
+		params.put("date", olderThanDate);
+		getSqlSession().update(UPDATE_PURGE_INCOMPLETE_INSTRUCTIONS, params);
 		Long result = (Long) params.get("result");
 		return (result == null ? 0 : result.longValue());
 	}
