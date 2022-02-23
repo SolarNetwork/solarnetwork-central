@@ -126,6 +126,7 @@ app:
     instr:
       cleaner:
         days-older: 30
+        abandoned-days-older: 120
         schedule: "0 0 1 ? * SUN"
       stale-queuing:
         seconds-older: 30
