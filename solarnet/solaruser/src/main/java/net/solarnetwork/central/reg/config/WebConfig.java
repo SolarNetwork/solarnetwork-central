@@ -38,6 +38,8 @@ import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.CacheControl;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -131,4 +133,18 @@ public class WebConfig implements WebMvcConfigurer {
 		xml.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		converters.add(xml);
 	}
+
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		// @formatter:off
+		registry.addMapping("/**")
+			.allowCredentials(true)
+			.allowedOriginPatterns(CorsConfiguration.ALL)
+			.maxAge(TimeUnit.HOURS.toSeconds(24))
+			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")
+			;
+		// @formatter:on
+	}
+
 }

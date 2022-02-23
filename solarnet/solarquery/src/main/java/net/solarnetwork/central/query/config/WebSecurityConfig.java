@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.query.config;
 
-import java.time.Duration;
-import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -37,9 +35,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
@@ -100,21 +95,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new UserDetailsAuthenticationTokenService(userDetailsService());
 	}
 
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowCredentials(false);
-		configuration.setMaxAge(Duration.ofHours(24));
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(
-				Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-		configuration.setAllowedHeaders(
-				Arrays.asList("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date"));
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
-	}
-
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
@@ -139,7 +119,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 					UsernamePasswordAuthenticationFilter.class)
 	      
 	      .authorizeRequests()
-	      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 	        .antMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
 	            "/api/v1/pub/**").permitAll()
 	        

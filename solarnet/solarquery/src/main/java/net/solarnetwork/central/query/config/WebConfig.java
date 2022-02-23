@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -44,6 +45,8 @@ import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -195,6 +198,19 @@ public class WebConfig implements WebMvcConfigurer {
 				);
 		// @formatter:on
 		return reg;
+	}
+
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		// @formatter:off
+		registry.addMapping("/**")
+			.allowCredentials(true)
+			.allowedOriginPatterns(CorsConfiguration.ALL)
+			.maxAge(TimeUnit.HOURS.toSeconds(24))
+			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")
+			;
+		// @formatter:on
 	}
 
 }
