@@ -39,8 +39,8 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
@@ -191,7 +191,7 @@ public class SelectDatum
 				return true;
 
 			default:
-				return false;
+				return filter.isMostRecent();
 		}
 	}
 
@@ -253,6 +253,9 @@ public class SelectDatum
 			buf.append("		SELECT datum.*\n");
 			buf.append("		FROM ").append(sqlTableName()).append(" datum\n");
 			buf.append("		WHERE datum.stream_id = s.stream_id\n");
+			if ( filter.hasDateOrLocalDate() ) {
+				addSqlWhere(buf, true);
+			}
 			buf.append("		ORDER BY datum.").append(timeColumnName(aggregation)).append(" DESC\n");
 			buf.append("		LIMIT 1\n");
 			buf.append("	) datum ON datum.stream_id = s.stream_id\n");
@@ -263,18 +266,24 @@ public class SelectDatum
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter.isMostRecent() || isDateRangeInJoin() ) {
-			// date range not supported in MostRecent and not part of WHERE for *Minute aggregation
+		if ( isDateRangeInJoin() ) {
 			return;
 		}
+		addSqlWhere(buf, false);
+	}
 
+	private void addSqlWhere(StringBuilder buf, boolean and) {
 		StringBuilder where = new StringBuilder();
-		int idx = filter.hasLocalDateRange()
+		int idx = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation,
 						DatumSqlUtils.SQL_AT_STREAM_METADATA_TIME_ZONE, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( idx > 0 ) {
-			buf.append("WHERE").append(where.substring(4));
+			if ( and ) {
+				buf.append(where);
+			} else {
+				buf.append("WHERE").append(where.substring(4));
+			}
 		}
 	}
 

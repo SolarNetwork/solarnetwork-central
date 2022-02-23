@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.SortCriteria;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Search criteria for datum streams.
@@ -39,7 +39,7 @@ import net.solarnetwork.dao.SortCriteria;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface ObjectStreamCriteria
@@ -65,6 +65,16 @@ public interface ObjectStreamCriteria
 	 */
 	default boolean hasDateOrLocalDateRange() {
 		return (hasDateRange() || hasLocalDateRange());
+	}
+
+	/**
+	 * Test if the filter has any date or local date specified.
+	 * 
+	 * @return {@literal true} if {@link #hasDate()} or {@link #hasLocalDate()}
+	 *         return {@literal true}
+	 */
+	default boolean hasDateOrLocalDate() {
+		return (hasDate() || hasLocalDate());
 	}
 
 	/**
