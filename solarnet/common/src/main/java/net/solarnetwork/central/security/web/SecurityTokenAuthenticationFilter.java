@@ -33,8 +33,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,6 +47,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.Assert;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.web.security.AuthenticationData;
@@ -133,12 +134,11 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		AuthenticationData data;
 		try {
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
-		} catch ( SecurityException | net.solarnetwork.web.security.SecurityException e ) {
-			String msg = e.getMessage();
-			if ( msg == null ) {
-				msg = "Authorization security error.";
-			}
-			fail(request, response, new AuthenticationServiceException(msg, e));
+		} catch ( net.solarnetwork.web.security.SecurityException e ) {
+			deny(request, response, new MaxUploadSizeExceededException(maxRequestBodySize, e));
+			return;
+		} catch ( SecurityException e ) {
+			deny(request, response, e);
 			return;
 		} catch ( AuthenticationException e ) {
 			fail(request, response, e);
@@ -252,6 +252,16 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			AuthenticationException failed) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(null);
 		authenticationEntryPoint.commence(request, response, failed);
+	}
+
+	private void deny(HttpServletRequest request, HttpServletResponse response, Exception e)
+			throws IOException, ServletException {
+		SecurityContextHolder.getContext().setAuthentication(null);
+		String msg = e.getMessage();
+		if ( msg == null ) {
+			msg = "Access denied.";
+		}
+		authenticationEntryPoint.handle(request, response, new AccessDeniedException(msg, e));
 	}
 
 	/**
