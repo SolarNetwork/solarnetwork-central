@@ -198,6 +198,7 @@ public class SqsUserNodeEventHookServiceTests {
 		Map<String, Object> eventProps = new LinkedHashMap<>(2);
 		eventProps.put("foo", "bar");
 		eventProps.put("val", 123);
+		eventProps.put("uid", UUID.randomUUID().toString());
 		event.setTaskProperties(eventProps);
 
 		// WHEN
@@ -215,6 +216,7 @@ public class SqsUserNodeEventHookServiceTests {
 		assertThat("Source ID prop", msgData, hasEntry("sourceId", event.getSourceId()));
 		assertThat("foo prop", msgData, hasEntry("foo", eventProps.get("foo")));
 		assertThat("val prop", msgData, hasEntry("val", eventProps.get("val")));
+		assertThat("uid prop", msgData, hasEntry("uid", eventProps.get("uid")));
 	}
 
 }
