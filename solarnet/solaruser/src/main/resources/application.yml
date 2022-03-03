@@ -120,7 +120,7 @@ app:
       ttl: 600
   web.security:
     token:
-      max-request-body-size: 65535
+      max-request-body-size: "512KB"
       max-date-skew: 900000
 
 debug: true

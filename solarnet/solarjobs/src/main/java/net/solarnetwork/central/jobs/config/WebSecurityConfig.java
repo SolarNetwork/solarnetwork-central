@@ -39,6 +39,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import net.solarnetwork.central.security.Role;
+import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
@@ -77,6 +78,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@ConfigurationProperties(prefix = "app.web.security.token")
 	@Bean
+	public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
+		return new SecurityTokenFilterSettings();
+	}
+
+	@Bean
 	public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
 		AntPathMatcher pathMatcher = new AntPathMatcher();
 		pathMatcher.setCachePatterns(true);
@@ -85,6 +91,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				"/api/v1/sec");
 		filter.setUserDetailsService(userDetailsService());
 		filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
+
+		SecurityTokenFilterSettings settings = tokenAuthenticationFilterSettings();
+		filter.setMaxDateSkew(settings.getMaxDateSkew());
+		filter.setMaxRequestBodySize((int) settings.getMaxRequestBodySize().toBytes());
+
 		return filter;
 	}
 
