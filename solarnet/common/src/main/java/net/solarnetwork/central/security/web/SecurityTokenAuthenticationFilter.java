@@ -134,8 +134,11 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		try {
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
 		} catch ( SecurityException | net.solarnetwork.web.security.SecurityException e ) {
-			fail(request, response, new AuthenticationServiceException(
-					"Authorization security error: " + e.getMessage(), e));
+			String msg = e.getMessage();
+			if ( msg == null ) {
+				msg = "Authorization security error.";
+			}
+			fail(request, response, new AuthenticationServiceException(msg, e));
 			return;
 		} catch ( AuthenticationException e ) {
 			fail(request, response, e);
