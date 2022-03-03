@@ -106,23 +106,26 @@ public class SecurityTokenAuthenticationEntryPoint
 				}
 			}
 		}
+
 		if ( handlerExceptionResolver != null ) {
 			try {
-				handlerExceptionResolver.resolveException(request, response, null, authException);
+				if ( handlerExceptionResolver.resolveException(request, response, null,
+						authException) != null ) {
+					return;
+				}
 			} catch ( RuntimeException e ) {
 				throw e;
 			} catch ( Exception e ) {
 				throw new ServletException(e);
 			}
-		} else {
-			response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-			Response<Void> responseObj = new Response<>(Boolean.FALSE, String.valueOf(statusCode),
-					authException.getMessage(), null);
-			byte[] responseJson = JsonUtils.getJSONString(responseObj, "{\"success\":false}")
-					.getBytes(ByteUtils.UTF8);
-			response.setContentLength(responseJson.length);
-			response.getOutputStream().write(responseJson);
 		}
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		Response<Void> responseObj = new Response<>(Boolean.FALSE, String.valueOf(statusCode),
+				authException.getMessage(), null);
+		byte[] responseJson = JsonUtils.getJSONString(responseObj, "{\"success\":false}")
+				.getBytes(ByteUtils.UTF8);
+		response.setContentLength(responseJson.length);
+		response.getOutputStream().write(responseJson);
 	}
 
 	@Override
@@ -130,16 +133,17 @@ public class SecurityTokenAuthenticationEntryPoint
 			AccessDeniedException accessDeniedException) throws IOException, ServletException {
 		if ( handlerExceptionResolver != null ) {
 			try {
-				handlerExceptionResolver.resolveException(request, response, null,
-						accessDeniedException);
+				if ( handlerExceptionResolver.resolveException(request, response, null,
+						accessDeniedException) != null ) {
+					return;
+				}
 			} catch ( RuntimeException e ) {
 				throw e;
 			} catch ( Exception e ) {
 				throw new ServletException(e);
 			}
-		} else {
-			response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
 		}
+		response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
 	}
 
 	public void setOrder(int order) {
