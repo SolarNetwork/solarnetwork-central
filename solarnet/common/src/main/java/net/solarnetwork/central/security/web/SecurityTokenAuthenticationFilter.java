@@ -47,7 +47,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.Assert;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
-import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.web.security.AuthenticationData;
@@ -134,7 +133,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		AuthenticationData data;
 		try {
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
-		} catch ( SecurityException e ) {
+		} catch ( SecurityException | net.solarnetwork.web.security.SecurityException e ) {
 			fail(request, response, new AuthenticationServiceException(
 					"Authorization security error: " + e.getMessage(), e));
 			return;
