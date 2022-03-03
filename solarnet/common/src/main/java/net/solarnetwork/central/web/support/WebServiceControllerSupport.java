@@ -193,7 +193,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e) {
-		log.debug("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
+		log.info("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
@@ -209,7 +209,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleBadCredentialsException(BadCredentialsException e) {
-		log.debug("BadCredentialsException in {} controller: {}", getClass().getSimpleName(),
+		log.info("BadCredentialsException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -226,7 +226,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
 	public Response<?> handleAuthenticationException(AuthenticationException e) {
-		log.debug("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
+		log.info("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -243,7 +243,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleAuthenticationException(AccessDeniedException e) {
-		log.debug("AccessDeniedException in {} controller: {}", getClass().getSimpleName(),
+		log.info("AccessDeniedException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}

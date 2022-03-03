@@ -129,10 +129,10 @@ public abstract class AbstractNodeController {
 	 * <p>
 	 * This sets up a new {@link CloningPropertyEditorRegistrar} as a request
 	 * attribute, which could be used by the view for serializing model
-	 * properties in some way. A common use for this is to serialize
-	 * date objects into Strings, so this method accepts a
-	 * {@code dateFormat} and {@code node} property which, if provided, will add
-	 * editors to the registrar for all date objects, configured with the node's time zone.
+	 * properties in some way. A common use for this is to serialize date
+	 * objects into Strings, so this method accepts a {@code dateFormat} and
+	 * {@code node} property which, if provided, will add editors to the
+	 * registrar for all date objects, configured with the node's time zone.
 	 * </p>
 	 *
 	 * @param request
@@ -182,7 +182,7 @@ public abstract class AbstractNodeController {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleAuthorizationException(AuthorizationException e) {
-		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
+		log.info("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
 	}
