@@ -55,6 +55,9 @@ dependencies {
 	
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+	
+	// Use Commons FileUpload instead of built-in Servlet, so SecurityTokenAuthenticationFilter works as expected
+	implementation 'commons-fileupload:commons-fileupload:1.4'
 
 	// Utils
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
