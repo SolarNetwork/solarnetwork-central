@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.security;
@@ -38,7 +36,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
  * Implementation of {@link UserDetailsService} for X.509 authenticated nodes.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class NodeUserDetailsService implements UserDetailsService {
 

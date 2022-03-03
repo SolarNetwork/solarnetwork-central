@@ -31,7 +31,7 @@ import java.util.Map;
  * for by specifying filter keys and associated match values.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface Filter {
 

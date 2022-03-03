@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
@@ -30,7 +28,7 @@ import net.solarnetwork.central.dao.EntityMatch;
  * A match for a SourceLocation filter search.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface SourceLocationMatch extends EntityMatch {
 

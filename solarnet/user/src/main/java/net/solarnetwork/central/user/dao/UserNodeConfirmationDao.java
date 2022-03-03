@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.user.dao;
@@ -33,7 +31,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * DAO API for UserNodeConfirmation entities.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface UserNodeConfirmationDao extends GenericDao<UserNodeConfirmation, Long> {
 

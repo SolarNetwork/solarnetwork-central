@@ -30,7 +30,7 @@ package net.solarnetwork.central.datum.domain;
  * NodeDatum API for watt-hour related data.
  *
  * @author matt
- * @version $Revision$ $Date$
+ * @version 1.0 $Date$
  */
 public interface WattHourDatum {
 

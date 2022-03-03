@@ -28,7 +28,7 @@ package net.solarnetwork.central.dao;
  * A range specification.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  * @param <T> the range type
  */
 public interface MinMaxRange<T extends Number> {

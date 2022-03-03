@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
@@ -30,7 +28,7 @@ import java.io.Serializable;
  * A set of capabilities for a node.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public class SolarNodeCapability extends SolarCapability implements Cloneable, Serializable {
 

@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.Filter;
  * Generic object search criteria API.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface ObjectCriteria<T extends Filter> {
 

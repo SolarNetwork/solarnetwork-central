@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
  * 02111-1307 USA
  * ==================================================================
- * $Id$
- * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
@@ -38,7 +36,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
  * @param <T> the domain object type
  * @param <PK> the primary key type
  * @author matt.magoffin
- * @version $Revision$ $Date$
+ * @version 1.0 $Date$
  */
 public interface GenericDao<T extends Entity<PK>, PK extends Serializable> {
 

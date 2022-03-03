@@ -28,7 +28,7 @@ package net.solarnetwork.central.domain;
  * General node information.
  * 
  * @author matt
- * @version $Revision$
+ * @version 1.0
  */
 public interface NodeInformation extends NodeIdentity {
 
