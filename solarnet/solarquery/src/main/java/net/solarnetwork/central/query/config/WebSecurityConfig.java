@@ -35,6 +35,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -62,6 +63,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private DataSource dataSource;
 
+	@Autowired
+	private HandlerExceptionResolver handlerExceptionResolver;
+
 	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
@@ -75,7 +79,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-		return new SecurityTokenAuthenticationEntryPoint();
+		SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
+		ep.setHandlerExceptionResolver(handlerExceptionResolver);
+		return ep;
 	}
 
 	@ConfigurationProperties(prefix = "app.web.security.token")

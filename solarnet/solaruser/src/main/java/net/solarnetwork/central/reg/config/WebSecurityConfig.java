@@ -41,6 +41,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -164,6 +165,9 @@ public class WebSecurityConfig {
 		@Autowired
 		private DataSource dataSource;
 
+		@Autowired
+		private HandlerExceptionResolver handlerExceptionResolver;
+
 		public UserDetailsService tokenUserDetailsService() {
 			JdbcUserDetailsService service = new JdbcUserDetailsService();
 			service.setDataSource(dataSource);
@@ -175,7 +179,9 @@ public class WebSecurityConfig {
 
 		@Bean
 		public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-			return new SecurityTokenAuthenticationEntryPoint();
+			SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
+			ep.setHandlerExceptionResolver(handlerExceptionResolver);
+			return ep;
 		}
 
 		@ConfigurationProperties(prefix = "app.web.security.token")
