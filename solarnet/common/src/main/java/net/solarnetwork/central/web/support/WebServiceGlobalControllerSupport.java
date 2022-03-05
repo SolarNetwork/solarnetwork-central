@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
@@ -57,6 +58,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 1.1
  */
 @RestControllerAdvice
+@Order(-100)
 public class WebServiceGlobalControllerSupport {
 
 	/** A class-level logger. */

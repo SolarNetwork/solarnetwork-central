@@ -38,6 +38,7 @@ import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
@@ -74,6 +75,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.1
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
+@Order(100)
 public final class WebServiceControllerSupport {
 
 	/** The default format pattern for a date property. */
@@ -617,7 +619,8 @@ public final class WebServiceControllerSupport {
 		if ( cause instanceof IllegalArgumentException ) {
 			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
 		}
-		log.error("RuntimeException in request {}", requestDescription(request), e);
+		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
 
@@ -693,7 +696,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus
 	public Response<?> handleExecutionException(ExecutionException e, WebRequest request) {
-		log.debug("ExecutionException in request {}", requestDescription(request), e);
+		log.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
