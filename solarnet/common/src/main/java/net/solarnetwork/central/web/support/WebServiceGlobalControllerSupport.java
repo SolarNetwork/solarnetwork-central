@@ -22,13 +22,23 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.dao.QueryTimeoutException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.TransactionException;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -43,7 +53,7 @@ import net.solarnetwork.web.domain.Response;
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestControllerAdvice
 public class WebServiceGlobalControllerSupport {
@@ -67,7 +77,7 @@ public class WebServiceGlobalControllerSupport {
 	 * @param locale
 	 *        the locale
 	 * @return the response
-	 * @since 2.0
+	 * @since 1.0
 	 */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
@@ -83,6 +93,138 @@ public class WebServiceGlobalControllerSupport {
 					msg, locale);
 		}
 		return new Response<Object>(Boolean.FALSE, "WEB.00100", msg, null);
+	}
+
+	/**
+	 * Handle data access resource failure exceptions.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.1
+	 */
+	@ExceptionHandler(DataAccessResourceFailureException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
+			WebRequest request, Locale locale) {
+		log.warn("DataAccessResourceFailureException in request {}: {}", requestDescription(request),
+				e.toString());
+		String msg;
+		String msgKey;
+		String code;
+		msg = "Temporary connection failure";
+		msgKey = "error.dao.transientDataAccessResource";
+		code = "DAO.00206";
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle transient data access exceptions.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.1
+	 */
+	@ExceptionHandler(TransientDataAccessException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
+			WebRequest request, Locale locale) {
+		log.warn("TransientDataAccessException in request {}: {}", requestDescription(request),
+				e.toString());
+		String msg;
+		String msgKey;
+		String code;
+		if ( e instanceof DeadlockLoserDataAccessException ) {
+			msg = "Deadlock loser";
+			msgKey = "error.dao.deadlockLoser";
+			code = "DAO.00204";
+		} else if ( e instanceof TransientDataAccessResourceException ) {
+			msg = "Temporary connection failure";
+			msgKey = "error.dao.transientDataAccessResource";
+			code = "DAO.00203";
+		} else if ( e instanceof QueryTimeoutException ) {
+			msg = "Query timeout";
+			msgKey = "error.dao.queryTimeout";
+			code = "DAO.00202";
+		} else if ( e instanceof PessimisticLockingFailureException ) {
+			msg = "Lock failure";
+			msgKey = "error.dao.pessimisticLockingFailure";
+			code = "DAO.00201";
+		} else if ( e instanceof ConcurrencyFailureException ) {
+			msg = "Concurrency failure";
+			msgKey = "error.dao.concurrencyFailure";
+			code = "DAO.00205";
+		} else {
+			msg = "Data integrity violation";
+			msgKey = "error.dao.transientDataAccess";
+			code = "DAO.00200";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
+	}
+
+	/**
+	 * Handle a transaction exception.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the request locale
+	 * @return the response
+	 * @since 1.1
+	 */
+	@ExceptionHandler(TransactionException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
+	public Response<?> handleTransactionException(TransactionException e, WebRequest request,
+			Locale locale) {
+		log.warn("TransactionException in request {}", requestDescription(request), e);
+		String msg;
+		String msgKey;
+		String code;
+		if ( e instanceof CannotCreateTransactionException ) {
+			Throwable t = e.getRootCause();
+			// look for Tomcat JDBC pool exhaustion without direct dependency on class
+			if ( t != null && "org.apache.tomcat.jdbc.pool.PoolExhaustedException"
+					.equals(t.getClass().getName()) ) {
+				msg = "Connection pool exhausted";
+				msgKey = "error.dao.poolExhausted";
+				code = "DAO.00302";
+			} else {
+				msg = "Cannot create transaction";
+				msgKey = "error.dao.cannotCreateTransaction";
+				code = "DAO.00301";
+			}
+		} else {
+			msg = "Transaction error";
+			msgKey = "error.dao.transaction";
+			code = "DAO.00300";
+		}
+		if ( messageSource != null ) {
+			msg = messageSource.getMessage(msgKey,
+					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+		}
+		return new Response<Object>(Boolean.FALSE, code, msg, null);
 	}
 
 }

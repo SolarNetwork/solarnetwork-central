@@ -33,8 +33,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,6 +46,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.transaction.TransactionException;
 import org.springframework.util.Assert;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -155,8 +158,18 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		try {
 			user = userDetailsService.loadUserByUsername(data.getAuthTokenId());
 		} catch ( AuthenticationException e ) {
-			log.debug("Auth token {} exception: {}", data.getAuthTokenId(), e.getMessage());
+			log.debug("Auth token [{}] exception: {}", data.getAuthTokenId(), e.getMessage());
 			fail(request, response, new BadCredentialsException("Bad credentials"));
+			return;
+		} catch ( DataAccessException | TransactionException e ) {
+			log.debug("Auth token [{}] transient DAO exception: {}", data.getAuthTokenId(),
+					e.getMessage());
+			failDao(request, response, e);
+			return;
+		} catch ( Exception e ) {
+			log.debug("Auth token [{}] exception: {}", data.getAuthTokenId(), e.getMessage());
+			fail(request, response,
+					new AuthenticationServiceException("Unable to verify credentials", e));
 			return;
 		}
 
@@ -174,19 +187,19 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 		final String computedDigest = data.computeSignatureDigest(user.getPassword());
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
-			log.debug("Expected response: '{}' but received: '{}'", computedDigest,
+			log.debug("Expected response: [{}] but received: [{}]", computedDigest,
 					data.getSignatureDigest());
 			fail(request, response, new BadCredentialsException("Bad credentials"));
 			return;
 		}
 
 		if ( !data.isDateValid(maxDateSkew) ) {
-			log.debug("Request date '{}' diff too large: {}", data.getDate(), data.getDateSkew());
+			log.debug("Request date [{}] diff too large: {}", data.getDate(), data.getDateSkew());
 			fail(request, response, new BadCredentialsException("Date skew too large"));
 			return;
 		}
 
-		log.debug("Authentication success for user: '{}'", user.getUsername());
+		log.debug("Authentication success for user: [{}]", user.getUsername());
 
 		SecurityContextHolder.getContext()
 				.setAuthentication(createSuccessfulAuthentication(request, user));
@@ -262,6 +275,12 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			msg = "Access denied.";
 		}
 		authenticationEntryPoint.handle(request, response, new AccessDeniedException(msg, e));
+	}
+
+	private void failDao(HttpServletRequest request, HttpServletResponse response, Exception failed)
+			throws IOException, ServletException {
+		SecurityContextHolder.getContext().setAuthentication(null);
+		authenticationEntryPoint.handleTransientResourceException(request, response, failed);
 	}
 
 	/**

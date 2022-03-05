@@ -37,25 +37,16 @@ import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
-import org.springframework.dao.ConcurrencyFailureException;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
-import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.dao.QueryTimeoutException;
-import org.springframework.dao.TransientDataAccessException;
-import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.transaction.CannotCreateTransactionException;
-import org.springframework.transaction.TransactionException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -530,60 +521,6 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle transient data access exceptions.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @param locale
-	 *        the request locale
-	 * @return the response
-	 * @since 1.14
-	 */
-	@ExceptionHandler(TransientDataAccessException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
-			WebRequest request, Locale locale) {
-		log.warn("TransientDataAccessException in request {}: {}", requestDescription(request),
-				e.toString());
-		String msg;
-		String msgKey;
-		String code;
-		if ( e instanceof DeadlockLoserDataAccessException ) {
-			msg = "Deadlock loser";
-			msgKey = "error.dao.deadlockLoser";
-			code = "DAO.00204";
-		} else if ( e instanceof TransientDataAccessResourceException ) {
-			msg = "Temporary connection failure";
-			msgKey = "error.dao.transientDataAccessResource";
-			code = "DAO.00203";
-		} else if ( e instanceof QueryTimeoutException ) {
-			msg = "Query timeout";
-			msgKey = "error.dao.queryTimeout";
-			code = "DAO.00202";
-		} else if ( e instanceof PessimisticLockingFailureException ) {
-			msg = "Lock failure";
-			msgKey = "error.dao.pessimisticLockingFailure";
-			code = "DAO.00201";
-		} else if ( e instanceof ConcurrencyFailureException ) {
-			msg = "Concurrency failure";
-			msgKey = "error.dao.concurrencyFailure";
-			code = "DAO.00205";
-		} else {
-			msg = "Data integrity violation";
-			msgKey = "error.dao.transientDataAccess";
-			code = "DAO.00200";
-		}
-		if ( messageSource != null ) {
-			msg = messageSource.getMessage(msgKey,
-					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
-		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
-	}
-
-	/**
 	 * Handle a {@link InvalidDataAccessResourceUsageException} .
 	 * 
 	 * @param e
@@ -605,84 +542,6 @@ public final class WebServiceControllerSupport {
 		String msg = "Internal error";
 		String msgKey = "error.dao.invalidResourceUsage";
 		String code = "DAO.00500";
-		if ( messageSource != null ) {
-			msg = messageSource.getMessage(msgKey,
-					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
-		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
-	}
-
-	/**
-	 * Handle data access resource failure exceptions.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @param locale
-	 *        the request locale
-	 * @return the response
-	 * @since 1.16
-	 */
-	@ExceptionHandler(DataAccessResourceFailureException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
-			WebRequest request, Locale locale) {
-		log.warn("DataAccessResourceFailureException in request {}: {}", requestDescription(request),
-				e.toString());
-		String msg;
-		String msgKey;
-		String code;
-		msg = "Temporary connection failure";
-		msgKey = "error.dao.transientDataAccessResource";
-		code = "DAO.00206";
-		if ( messageSource != null ) {
-			msg = messageSource.getMessage(msgKey,
-					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
-		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
-	}
-
-	/**
-	 * Handle a transaction exception.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @param locale
-	 *        the request locale
-	 * @return the response
-	 * @since 1.14
-	 */
-	@ExceptionHandler(TransactionException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleTransactionException(TransactionException e, WebRequest request,
-			Locale locale) {
-		log.warn("TransactionException in request {}", requestDescription(request), e);
-		String msg;
-		String msgKey;
-		String code;
-		if ( e instanceof CannotCreateTransactionException ) {
-			Throwable t = e.getRootCause();
-			// look for Tomcat JDBC pool exhaustion without direct dependency on class
-			if ( t != null && "org.apache.tomcat.jdbc.pool.PoolExhaustedException"
-					.equals(t.getClass().getName()) ) {
-				msg = "Connection pool exhausted";
-				msgKey = "error.dao.poolExhausted";
-				code = "DAO.00302";
-			} else {
-				msg = "Cannot create transaction";
-				msgKey = "error.dao.cannotCreateTransaction";
-				code = "DAO.00301";
-			}
-		} else {
-			msg = "Transaction error";
-			msgKey = "error.dao.transaction";
-			code = "DAO.00300";
-		}
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);

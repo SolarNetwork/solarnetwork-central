@@ -29,6 +29,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -107,17 +108,8 @@ public class SecurityTokenAuthenticationEntryPoint
 			}
 		}
 
-		if ( handlerExceptionResolver != null ) {
-			try {
-				if ( handlerExceptionResolver.resolveException(request, response, null,
-						authException) != null ) {
-					return;
-				}
-			} catch ( RuntimeException e ) {
-				throw e;
-			} catch ( Exception e ) {
-				throw new ServletException(e);
-			}
+		if ( handleWithResolver(request, response, authException) ) {
+			return;
 		}
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		Response<Void> responseObj = new Response<>(Boolean.FALSE, String.valueOf(statusCode),
@@ -131,11 +123,42 @@ public class SecurityTokenAuthenticationEntryPoint
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 			AccessDeniedException accessDeniedException) throws IOException, ServletException {
+		if ( handleWithResolver(request, response, accessDeniedException) ) {
+			return;
+		}
+		response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+	}
+
+	/**
+	 * Handle an exception as a transient problem based on resource usage, i.e.
+	 * "try again later".
+	 * 
+	 * @param request
+	 *        the request
+	 * @param response
+	 *        the response
+	 * @param exception
+	 *        the exception
+	 * @throws IOException
+	 *         if an error occurs writing the response
+	 * @throws ServletException
+	 *         if a servlet error occurs
+	 */
+	public void handleTransientResourceException(HttpServletRequest request,
+			HttpServletResponse response, Exception exception) throws IOException, ServletException {
+		if ( handleWithResolver(request, response, exception) ) {
+			return;
+		}
+		response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(), "Try again later.");
+	}
+
+	private boolean handleWithResolver(HttpServletRequest request, HttpServletResponse response,
+			Exception exception) throws ServletException {
 		if ( handlerExceptionResolver != null ) {
 			try {
 				if ( handlerExceptionResolver.resolveException(request, response, null,
-						accessDeniedException) != null ) {
-					return;
+						exception) != null ) {
+					return true;
 				}
 			} catch ( RuntimeException e ) {
 				throw e;
@@ -143,7 +166,7 @@ public class SecurityTokenAuthenticationEntryPoint
 				throw new ServletException(e);
 			}
 		}
-		response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+		return false;
 	}
 
 	public void setOrder(int order) {

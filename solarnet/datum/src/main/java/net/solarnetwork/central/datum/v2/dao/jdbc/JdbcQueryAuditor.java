@@ -27,6 +27,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.SQLTransientException;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
@@ -347,7 +348,11 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 					try {
 						keepGoing.compareAndSet(true, execute());
 					} catch ( SQLException | RuntimeException e ) {
-						log.warn("Exception with query auditing", e);
+						if ( e instanceof SQLTransientException ) {
+							log.warn("Transient SQL exception with query auditing: {}", e.toString());
+						} else {
+							log.warn("Exception with query auditing: {}", e.getMessage(), e);
+						}
 						// sleep, then try again
 						try {
 							Thread.sleep(connectionRecoveryDelay);
