@@ -23,6 +23,7 @@
 package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
+import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
 			WebRequest request, Locale locale) {
-		log.warn("MaxUploadSizeExceededException for {}", request.getDescription(true));
+		log.warn("MaxUploadSizeExceededException for {}; user [{}]", requestDescription(request),
+				userPrincipalName(request));
 		String msg = "Upload size exceeded";
 		String maxSize = NumberUtils.humanReadableCount(
 				e.getMaxUploadSize() > -1 ? e.getMaxUploadSize() : maxUploadSize.toBytes());
@@ -112,8 +114,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
 			WebRequest request, Locale locale) {
-		log.warn("DataAccessResourceFailureException in request {}: {}", requestDescription(request),
-				e.toString());
+		log.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -144,8 +146,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
 			WebRequest request, Locale locale) {
-		log.warn("TransientDataAccessException in request {}: {}", requestDescription(request),
-				e.toString());
+		log.warn("TransientDataAccessException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -198,7 +200,8 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Response<?> handleTransactionException(TransactionException e, WebRequest request,
 			Locale locale) {
-		log.warn("TransactionException in request {}", requestDescription(request), e);
+		log.warn("TransactionException in request {}; user [{}]: {}", requestDescription(request),
+				userPrincipalName(request), e.toString());
 		String msg;
 		String msgKey;
 		String code;

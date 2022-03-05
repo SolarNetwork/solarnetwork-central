@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.support;
 
+import java.security.Principal;
 import java.sql.SQLException;
 import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
@@ -62,13 +63,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.security.AbstractAuthorizationBuilder;
+import net.solarnetwork.util.StringUtils;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * A base class to support web service style controllers.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 public final class WebServiceControllerSupport {
@@ -136,6 +139,13 @@ public final class WebServiceControllerSupport {
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
+	/**
+	 * A value to use for anonymous users in log messages.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String ANONYMOUS_USER_PRINCIPAL = "anonymous";
+
 	/** A class-level logger. */
 	private static final Logger log = LoggerFactory.getLogger(WebServiceControllerSupport.class);
 
@@ -173,6 +183,35 @@ public final class WebServiceControllerSupport {
 			}
 		}
 		return buf.toString();
+	}
+
+	/**
+	 * Get the user principal name of a given request.
+	 * 
+	 * @param request
+	 *        the request
+	 * @return the name, or {@link #ANONYMOUS_USER_PRINCIPAL}
+	 */
+	public static String userPrincipalName(WebRequest request) {
+		Principal userPrincipal = request.getUserPrincipal();
+		if ( userPrincipal != null ) {
+			return userPrincipal.getName();
+		}
+		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+		if ( authHeader != null ) {
+			int idx = authHeader.indexOf(' ');
+			if ( idx > 0 && idx < authHeader.length() ) {
+				String data = authHeader.substring(idx + 1);
+				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
+				String name = dataMap
+						.get(AbstractAuthorizationBuilder.AUTHORIZATION_COMPONENT_CREDENTIAL);
+				if ( name != null ) {
+					return name;
+				}
+			}
+			return authHeader;
+		}
+		return ANONYMOUS_USER_PRINCIPAL;
 	}
 
 	/**
@@ -228,7 +267,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
 			WebRequest request) {
-		log.info("SecurityException in request {}: {}", requestDescription(request), e.getMessage());
+		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
+				userPrincipalName(request), e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
@@ -284,8 +324,7 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
 	public Response<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
-		log.info("AccessDeniedException in {} controller: {}", requestDescription(request),
-				e.getMessage());
+		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
@@ -506,7 +545,8 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
 	public Response<?> handleDataRetrievalFailureException(DataRetrievalFailureException e,
 			WebRequest request, Locale locale) {
-		log.debug("DataRetrievalFailureException in request {}", requestDescription(request), e);
+		log.debug("DataRetrievalFailureException in request {}, user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 		String msg;
 		String msgKey;
 		String code;
@@ -694,7 +734,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleMultipartException(MultipartException e, WebRequest request) {
-		log.info("MultipartException in request {}: {}", requestDescription(request), e.toString());
+		log.info("MultipartException in request {}; user [{}]: {}", requestDescription(request),
+				userPrincipalName(request), e.toString());
 		StringBuilder buf = new StringBuilder();
 		buf.append("Error parsing multipart HTTP request");
 		String msg = e.getMostSpecificCause().getMessage();
