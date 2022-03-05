@@ -35,8 +35,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,7 +73,6 @@ public class DatumController {
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
-	//private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
 
 	/**
 	 * Constructor.
@@ -101,23 +98,6 @@ public class DatumController {
 			@Qualifier(SOURCE_ID_PATH_MATCHER) PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		// TODO: implement
-		/*-
-		binder.registerCustomEditor(DateTime.class,
-				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
-		binder.registerCustomEditor(LocalDateTime.class,
-				new JodaDateFormatEditor(this.requestDateFormats, null, ParseMode.LocalDateTime));
-		*/
 	}
 
 	@ResponseBody
@@ -219,10 +199,6 @@ public class DatumController {
 			}
 			retries--;
 		}
-	}
-
-	public void setRequestDateFormats(String[] requestDateFormats) {
-		// FIXME: this.requestDateFormats = requestDateFormats;
 	}
 
 	/**

@@ -33,8 +33,6 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -50,7 +48,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location-based data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
@@ -60,12 +58,15 @@ public class LocationDatumController {
 	/** The {@code transientExceptionRetryCount} property default value. */
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
 
-	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
+	/** The {@code transientExceptionRetryDelay} property default value. */
+	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
+
+	private static final Logger log = LoggerFactory.getLogger(LocationDatumController.class);
 
 	private final QueryBiz queryBiz;
 	private final PathMatcher pathMatcher;
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
-	//private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT };
+	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
 
 	/**
 	 * Constructor.
@@ -92,20 +93,6 @@ public class LocationDatumController {
 		super();
 		this.queryBiz = queryBiz;
 		this.pathMatcher = pathMatcher;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		/*- FIXME: implement
-		binder.registerCustomEditor(DateTime.class,
-				new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
-		*/
 	}
 
 	/**
@@ -154,8 +141,17 @@ public class LocationDatumController {
 				return new Response<Set<String>>(data);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -210,8 +206,17 @@ public class LocationDatumController {
 				return new Response<ReportableInterval>(data);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /interval request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -261,8 +266,17 @@ public class LocationDatumController {
 				return new Response<FilterResults<?>>(results);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /list request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -276,10 +290,6 @@ public class LocationDatumController {
 	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(cmd);
-	}
-
-	public void setRequestDateFormats(String[] requestDateFormats) {
-		// FIXME: this.requestDateFormats = requestDateFormats;
 	}
 
 	/**
@@ -302,6 +312,30 @@ public class LocationDatumController {
 	 */
 	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
 		this.transientExceptionRetryCount = transientExceptionRetryCount;
+	}
+
+	/**
+	 * Get the length of time, in milliseconds, to sleep before retrying a
+	 * request after a transient exception.
+	 * 
+	 * @return the delay, in milliseconds; defaults to
+	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
+	 * @since 2.1
+	 */
+	public long getTransientExceptionRetryDelay() {
+		return transientExceptionRetryDelay;
+	}
+
+	/**
+	 * Set the length of time, in milliseconds, to sleep before retrying a
+	 * request after a transient exception.
+	 * 
+	 * @param transientExceptionRetryDelay
+	 *        the delay to set
+	 * @since 2.1
+	 */
+	public void setTransientExceptionRetryDelay(long transientExceptionRetryDelay) {
+		this.transientExceptionRetryDelay = transientExceptionRetryDelay;
 	}
 
 }

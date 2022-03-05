@@ -32,8 +32,6 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -56,7 +54,7 @@ import net.solarnetwork.web.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -66,12 +64,16 @@ public class ReportableIntervalController {
 	/** The {@code transientExceptionRetryCount} property default value. */
 	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
 
+	/** The {@code transientExceptionRetryDelay} property default value. */
+	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
+
 	private static final Logger log = LoggerFactory.getLogger(ReportableIntervalController.class);
 
 	private final QueryBiz queryBiz;
 	private final DatumMetadataBiz datumMetadataBiz;
 	private final PathMatcher pathMatcher;
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
+	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
 
 	/**
 	 * Constructor.
@@ -103,28 +105,6 @@ public class ReportableIntervalController {
 		this.queryBiz = queryBiz;
 		this.datumMetadataBiz = datumMetadataBiz;
 		this.pathMatcher = pathMatcher;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * <p>
-	 * Registers a {@link LocalDate} property editor using the
-	 * {@link #DEFAULT_DATE_FORMAT} pattern.
-	 * </p>
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		/*- TODO: implement
-		binder.registerCustomEditor(LocalDate.class,
-				new JodaDateFormatEditor(DEFAULT_DATE_FORMAT, ParseMode.LocalDate));
-		binder.registerCustomEditor(DateTime.class,
-				new JodaDateFormatEditor(new String[] { DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_FORMAT },
-						TimeZone.getTimeZone("UTC")));
-		*/
 	}
 
 	/**
@@ -172,8 +152,17 @@ public class ReportableIntervalController {
 				return new Response<ReportableInterval>(data);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /interval request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -231,8 +220,17 @@ public class ReportableIntervalController {
 				return new Response<Set<String>>(data);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -305,8 +303,17 @@ public class ReportableIntervalController {
 				return new Response<Set<?>>(data);
 			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
 				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
+					log.warn(
+							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
+							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
+							e.toString());
+					if ( transientExceptionRetryDelay > 0 ) {
+						try {
+							Thread.sleep(transientExceptionRetryDelay);
+						} catch ( InterruptedException e2 ) {
+							// ignore
+						}
+					}
 				} else {
 					throw e;
 				}
@@ -407,6 +414,30 @@ public class ReportableIntervalController {
 	 */
 	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
 		this.transientExceptionRetryCount = transientExceptionRetryCount;
+	}
+
+	/**
+	 * Get the length of time, in milliseconds, to sleep before retrying a
+	 * request after a transient exception.
+	 * 
+	 * @return the delay, in milliseconds; defaults to
+	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
+	 * @since 3.1
+	 */
+	public long getTransientExceptionRetryDelay() {
+		return transientExceptionRetryDelay;
+	}
+
+	/**
+	 * Set the length of time, in milliseconds, to sleep before retrying a
+	 * request after a transient exception.
+	 * 
+	 * @param transientExceptionRetryDelay
+	 *        the delay to set
+	 * @since 3.1
+	 */
+	public void setTransientExceptionRetryDelay(long transientExceptionRetryDelay) {
+		this.transientExceptionRetryDelay = transientExceptionRetryDelay;
 	}
 
 }
