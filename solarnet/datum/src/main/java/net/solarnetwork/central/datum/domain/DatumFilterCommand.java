@@ -76,7 +76,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private boolean mostRecent = false;
 	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset = 0;
+	private Integer offset;
 	private Integer max;
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
@@ -187,17 +187,100 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		final Long[] nodeIds = getNodeIds();
 		final Long[] locationIds = getLocationIds();
 		final String[] sourceIds = getSourceIds();
-		return "DatumFilterCommand{aggregation=" + aggregation + ",mostRecent=" + mostRecent
-				+ (localStartDate != null || localEndDate != null
-						? ",localStartDate=" + localStartDate + ",localEndDate=" + localEndDate
-						: ",startDate=" + startDate + ",endDate=" + endDate)
-				+ ",withoutTotalResultsCount=" + withoutTotalResultsCount
-				+ (nodeIds != null && nodeIds.length > 0 ? ",nodeIds=" + Arrays.toString(nodeIds)
-						: locationIds != null && locationIds.length > 0
-								? ",locationIds=" + Arrays.toString(locationIds)
-								: "")
-				+ ",sourceIds=" + Arrays.toString(sourceIds)
-				+ (offset != null ? ",offset=" + offset : "") + (max != null ? ",max=" + max : "") + "}";
+		StringBuilder builder = new StringBuilder();
+		builder.append("DatumFilterCommand{");
+		if ( aggregation != null ) {
+			builder.append("aggregation=");
+			builder.append(aggregation);
+			builder.append(", ");
+		}
+		if ( startDate != null ) {
+			builder.append("startDate=");
+			builder.append(startDate);
+			builder.append(", ");
+		}
+		if ( endDate != null ) {
+			builder.append("endDate=");
+			builder.append(endDate);
+			builder.append(", ");
+		}
+		if ( localStartDate != null ) {
+			builder.append("localStartDate=");
+			builder.append(localStartDate);
+			builder.append(", ");
+		}
+		if ( localEndDate != null ) {
+			builder.append("localEndDate=");
+			builder.append(localEndDate);
+			builder.append(", ");
+		}
+		if ( locationIds != null && locationIds.length > 0 ) {
+			builder.append("locationIds=");
+			builder.append(Arrays.toString(locationIds));
+			builder.append(", ");
+		}
+		if ( nodeIds != null && nodeIds.length > 0 ) {
+			builder.append("nodeIds=");
+			builder.append(Arrays.toString(nodeIds));
+			builder.append(", ");
+		}
+		if ( sourceIds != null && sourceIds.length > 0 ) {
+			builder.append("sourceIds=");
+			builder.append(Arrays.toString(sourceIds));
+		}
+		builder.append("mostRecent=");
+		builder.append(mostRecent);
+		builder.append(", ");
+		if ( sorts != null ) {
+			builder.append("sorts=");
+			builder.append(sorts);
+			builder.append(", ");
+		}
+		if ( offset != null ) {
+			builder.append("offset=");
+			builder.append(offset);
+			builder.append(", ");
+		}
+		if ( max != null ) {
+			builder.append("max=");
+			builder.append(max);
+			builder.append(", ");
+		}
+		if ( type != null ) {
+			builder.append("type=");
+			builder.append(type);
+			builder.append(", ");
+		}
+		if ( partialAggregation != null ) {
+			builder.append("partialAggregation=");
+			builder.append(partialAggregation);
+			builder.append(", ");
+		}
+		builder.append("withoutTotalResultsCount=");
+		builder.append(withoutTotalResultsCount);
+		builder.append(", ");
+		if ( combiningType != null ) {
+			builder.append("combiningType=");
+			builder.append(combiningType);
+			builder.append(", ");
+		}
+		if ( nodeIdMappings != null ) {
+			builder.append("nodeIdMappings=");
+			builder.append(nodeIdMappings);
+			builder.append(", ");
+		}
+		if ( sourceIdMappings != null ) {
+			builder.append("sourceIdMappings=");
+			builder.append(sourceIdMappings);
+			builder.append(", ");
+		}
+		if ( datumRollupTypes != null ) {
+			builder.append("datumRollupTypes=");
+			builder.append(Arrays.toString(datumRollupTypes));
+			builder.append(", ");
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@JsonIgnore
@@ -329,6 +412,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	public void setMax(Integer max) {
 		this.max = max;
+		if ( this.offset == null ) {
+			this.offset = 0;
+		}
 	}
 
 	@Override

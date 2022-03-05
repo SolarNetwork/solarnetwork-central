@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
  * Supporting base class for {@link Filter} implementations.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 1.32
  */
 public class FilterSupport
@@ -75,6 +75,43 @@ public class FilterSupport
 			filter.put("metadataFilter", metadataFilter);
 		}
 		return filter;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("FilterSupport{");
+		if ( nodeIds != null ) {
+			builder.append("nodeIds=");
+			builder.append(Arrays.toString(nodeIds));
+			builder.append(", ");
+		}
+		if ( sourceIds != null ) {
+			builder.append("sourceIds=");
+			builder.append(Arrays.toString(sourceIds));
+			builder.append(", ");
+		}
+		if ( locationIds != null ) {
+			builder.append("locationIds=");
+			builder.append(Arrays.toString(locationIds));
+			builder.append(", ");
+		}
+		if ( userIds != null ) {
+			builder.append("userIds=");
+			builder.append(Arrays.toString(userIds));
+			builder.append(", ");
+		}
+		if ( tags != null ) {
+			builder.append("tags=");
+			builder.append(Arrays.toString(tags));
+			builder.append(", ");
+		}
+		if ( metadataFilter != null ) {
+			builder.append("metadataFilter=");
+			builder.append(metadataFilter);
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

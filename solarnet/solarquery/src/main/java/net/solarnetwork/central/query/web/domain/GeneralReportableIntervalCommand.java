@@ -23,12 +23,13 @@
 package net.solarnetwork.central.query.web.domain;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 /**
  * Command for general reportable interval queries.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class GeneralReportableIntervalCommand {
 
@@ -39,6 +40,46 @@ public class GeneralReportableIntervalCommand {
 	private Instant endDate;
 	private String metadataFilter;
 	private boolean withNodeIds;
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("GeneralReportableIntervalCommand{");
+		if ( locationId != null ) {
+			builder.append("locationId=");
+			builder.append(locationId);
+			builder.append(", ");
+		}
+		if ( nodeIds != null ) {
+			builder.append("nodeIds=");
+			builder.append(Arrays.toString(nodeIds));
+			builder.append(", ");
+		}
+		if ( sourceId != null ) {
+			builder.append("sourceId=");
+			builder.append(sourceId);
+			builder.append(", ");
+		}
+		if ( startDate != null ) {
+			builder.append("startDate=");
+			builder.append(startDate);
+			builder.append(", ");
+		}
+		if ( endDate != null ) {
+			builder.append("endDate=");
+			builder.append(endDate);
+			builder.append(", ");
+		}
+		if ( metadataFilter != null ) {
+			builder.append("metadataFilter=");
+			builder.append(metadataFilter);
+			builder.append(", ");
+		}
+		builder.append("withNodeIds=");
+		builder.append(withNodeIds);
+		builder.append("}");
+		return builder.toString();
+	}
 
 	/**
 	 * Set a single node ID.
