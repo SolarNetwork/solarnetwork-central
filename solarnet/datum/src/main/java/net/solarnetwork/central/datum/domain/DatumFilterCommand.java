@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "combiningType", "combiningTypeKey",
@@ -188,13 +188,16 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		final Long[] locationIds = getLocationIds();
 		final String[] sourceIds = getSourceIds();
 		return "DatumFilterCommand{aggregation=" + aggregation + ",mostRecent=" + mostRecent
-				+ ",startDate=" + startDate + ",endDate=" + endDate + ",withoutTotalResultsCount="
-				+ withoutTotalResultsCount
+				+ (localStartDate != null || localEndDate != null
+						? ",localStartDate=" + localStartDate + ",localEndDate=" + localEndDate
+						: ",startDate=" + startDate + ",endDate=" + endDate)
+				+ ",withoutTotalResultsCount=" + withoutTotalResultsCount
 				+ (nodeIds != null && nodeIds.length > 0 ? ",nodeIds=" + Arrays.toString(nodeIds)
 						: locationIds != null && locationIds.length > 0
 								? ",locationIds=" + Arrays.toString(locationIds)
 								: "")
-				+ ",sourceIds=" + Arrays.toString(sourceIds) + "}";
+				+ ",sourceIds=" + Arrays.toString(sourceIds)
+				+ (offset != null ? ",offset=" + offset : "") + (max != null ? ",max=" + max : "") + "}";
 	}
 
 	@JsonIgnore
