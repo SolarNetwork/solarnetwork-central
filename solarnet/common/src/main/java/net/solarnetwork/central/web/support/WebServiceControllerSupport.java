@@ -27,6 +27,8 @@ import java.time.DateTimeException;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -62,6 +64,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -149,17 +152,52 @@ public final class WebServiceControllerSupport {
 	private MessageSource messageSource;
 
 	/**
+	 * Get a standardized string description of a request.
+	 * 
+	 * @param request
+	 *        the request
+	 * @return the description
+	 */
+	public static String requestDescription(WebRequest request) {
+		StringBuilder buf = new StringBuilder(request.getDescription(false));
+		Map<String, String[]> params = request.getParameterMap();
+		if ( params != null ) {
+			buf.append("?");
+			for ( Entry<String, String[]> e : params.entrySet() ) {
+				buf.append(e.getKey()).append("=");
+				String[] vals = e.getValue();
+				if ( vals == null || vals.length < 1 ) {
+					continue;
+				} else if ( vals.length == 1 ) {
+					buf.append(vals[0]);
+				} else {
+					for ( int i = 0, len = vals.length; i < len; i++ ) {
+						if ( i > 0 ) {
+							buf.append(",");
+						}
+						buf.append(vals[i]);
+					}
+				}
+
+			}
+		}
+		return buf.toString();
+	}
+
+	/**
 	 * Handle an {@link AuthorizationException}.
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 */
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthorizationException(AuthorizationException e) {
-		log.debug("AuthorizationException in {} controller: {}", getClass().getSimpleName(),
+	public Response<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
+		log.debug("AuthorizationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
 	}
@@ -169,14 +207,17 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.15
 	 */
 	@ExceptionHandler(BeanInstantiationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleBeanInstantiationException(BeanInstantiationException e) {
-		log.debug("BeanInstantiationException in {} controller: {}", getClass().getSimpleName(),
+	public Response<?> handleBeanInstantiationException(BeanInstantiationException e,
+			WebRequest request) {
+		log.debug("BeanInstantiationException in request {}: {}", requestDescription(request),
 				e.getMessage(), e);
 		return new Response<Object>(Boolean.FALSE, "422", "Malformed request data.", null);
 	}
@@ -186,14 +227,17 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.2
 	 */
 	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e) {
-		log.info("SecurityException in {} controller: {}", getClass().getSimpleName(), e.getMessage());
+	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
+			WebRequest request) {
+		log.info("SecurityException in request {}: {}", requestDescription(request), e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
 
@@ -202,14 +246,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 2.0
 	 */
 	@ExceptionHandler(BadCredentialsException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleBadCredentialsException(BadCredentialsException e) {
-		log.info("BadCredentialsException in {} controller: {}", getClass().getSimpleName(),
+	public Response<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
+		log.info("BadCredentialsException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -219,14 +265,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.13
 	 */
 	@ExceptionHandler(AuthenticationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-	public Response<?> handleAuthenticationException(AuthenticationException e) {
-		log.info("AuthenticationException in {} controller: {}", getClass().getSimpleName(),
+	public Response<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
+		log.info("AuthenticationException in request {}: {}", requestDescription(request),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -236,14 +284,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.13
 	 */
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthenticationException(AccessDeniedException e) {
-		log.info("AccessDeniedException in {} controller: {}", getClass().getSimpleName(),
+	public Response<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
+		log.info("AccessDeniedException in {} controller: {}", requestDescription(request),
 				e.getMessage());
 		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
 	}
@@ -253,6 +303,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param response
 	 *        the response
 	 * @return an error response object
@@ -261,9 +313,9 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleTypeMismatchException(TypeMismatchException e,
+	public Response<?> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
 			HttpServletResponse response) {
-		log.debug("TypeMismatchException in {} controller", getClass().getSimpleName(), e);
+		log.debug("TypeMismatchException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -272,14 +324,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.3
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleIllegalArgumentException(IllegalArgumentException e) {
-		log.debug("IllegalArgumentException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
+		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -289,14 +343,17 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.15
 	 */
 	@ExceptionHandler(UnsupportedOperationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
-	public Response<?> handleUnsupportedOperationException(UnsupportedOperationException e) {
-		log.debug("UnsupportedOperationException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleUnsupportedOperationException(UnsupportedOperationException e,
+			WebRequest request) {
+		log.debug("UnsupportedOperationException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, "404", e.getMessage(), null);
 	}
 
@@ -306,14 +363,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.6
 	 */
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleJsonParseException(JsonProcessingException e) {
-		log.debug("JsonProcessingException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
+		log.debug("JsonProcessingException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getOriginalMessage(),
 				null);
 	}
@@ -323,14 +382,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.15
 	 */
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDateTimeParseException(DateTimeParseException e) {
-		log.debug("DateTimeParseException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
+		log.debug("DateTimeParseException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Malformed date string: " + e.getMessage(),
 				null);
 	}
@@ -340,14 +401,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return the error response object
 	 * @since 2.0
 	 */
 	@ExceptionHandler(DateTimeException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDateTimeException(DateTimeException e) {
-		log.debug("DateTimeException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleDateTimeException(DateTimeException e, WebRequest request) {
+		log.debug("DateTimeException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Date exception: " + e.getMessage(), null);
 	}
 
@@ -357,20 +420,24 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.6
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
+			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
 		if ( t instanceof JsonProcessingException ) {
-			return handleJsonParseException((JsonProcessingException) t);
+			return handleJsonParseException((JsonProcessingException) t, request);
 		} else if ( t instanceof DateTimeParseException ) {
-			return handleDateTimeParseException((DateTimeParseException) t);
+			return handleDateTimeParseException((DateTimeParseException) t, request);
 		}
-		log.warn("HttpMessageNotReadableException in {} controller", getClass().getSimpleName(), e);
+		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
+				e.toString());
 		return new Response<Object>(Boolean.FALSE, null, "Malformed request: " + e.getMessage(), null);
 	}
 
@@ -379,6 +446,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the locale
 	 * @return an error response object
@@ -388,8 +457,9 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
-			Locale locale) {
-		log.warn("DataIntegrityViolationException in {} controller", getClass().getSimpleName(), e);
+			WebRequest request, Locale locale) {
+		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
+				e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -433,6 +503,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the locale
 	 * @return an error response object
@@ -442,8 +514,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
 	public Response<?> handleDataRetrievalFailureException(DataRetrievalFailureException e,
-			Locale locale) {
-		log.debug("DataRetrievalFailureException in {} controller", getClass().getSimpleName(), e);
+			WebRequest request, Locale locale) {
+		log.debug("DataRetrievalFailureException in request {}", requestDescription(request), e);
 		String msg;
 		String msgKey;
 		String code;
@@ -462,17 +534,20 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the request locale
-	 * @return the repsonse
+	 * @return the response
 	 * @since 1.14
 	 */
 	@ExceptionHandler(TransientDataAccessException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
-			Locale locale) {
-		log.warn("TransientDataAccessException in {} controller", getClass().getSimpleName(), e);
+			WebRequest request, Locale locale) {
+		log.warn("TransientDataAccessException in request {}: {}", requestDescription(request),
+				e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -513,6 +588,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the desired locale
 	 * @return an error response object
@@ -522,8 +599,8 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus
 	public Response<?> handleInvalidDataAccessResourceUsageException(
-			InvalidDataAccessResourceUsageException e, Locale locale) {
-		log.error("InvalidDataAccessResourceUsageException in {} controller", getClass().getSimpleName(),
+			InvalidDataAccessResourceUsageException e, WebRequest request, Locale locale) {
+		log.error("InvalidDataAccessResourceUsageException in request {}", requestDescription(request),
 				e.getMostSpecificCause());
 		String msg = "Internal error";
 		String msgKey = "error.dao.invalidResourceUsage";
@@ -540,17 +617,20 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the request locale
-	 * @return the repsonse
+	 * @return the response
 	 * @since 1.16
 	 */
 	@ExceptionHandler(DataAccessResourceFailureException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
 	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
-			Locale locale) {
-		log.warn("DataAccessResourceFailureException in {} controller", getClass().getSimpleName(), e);
+			WebRequest request, Locale locale) {
+		log.warn("DataAccessResourceFailureException in request {}: {}", requestDescription(request),
+				e.toString());
 		String msg;
 		String msgKey;
 		String code;
@@ -569,6 +649,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the request locale
 	 * @return the response
@@ -577,8 +659,9 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(TransactionException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleTransactionException(TransactionException e, Locale locale) {
-		log.warn("TransactionException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleTransactionException(TransactionException e, WebRequest request,
+			Locale locale) {
+		log.warn("TransactionException in request {}", requestDescription(request), e);
 		String msg;
 		String msgKey;
 		String code;
@@ -613,21 +696,23 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleRuntimeException(RuntimeException e) {
+	public Response<?> handleRuntimeException(RuntimeException e, WebRequest request) {
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
 		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause);
+			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
 		}
-		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
+		log.error("RuntimeException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
 
@@ -636,6 +721,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the locale
 	 * @return an error response object
@@ -643,8 +730,8 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleBindException(BindException e, Locale locale) {
-		log.debug("BindException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleBindException(BindException e, WebRequest request, Locale locale) {
+		log.debug("BindException in request {}: {}", requestDescription(request), e.toString());
 		String msg = generateErrorsMessage(e, locale, messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
 	}
@@ -670,6 +757,8 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the locale
 	 * @return an error response object
@@ -677,8 +766,9 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleValidationException(ValidationException e, Locale locale) {
-		log.debug("ValidationException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleValidationException(ValidationException e, WebRequest request,
+			Locale locale) {
+		log.debug("ValidationException in request {}: {}", requestDescription(request), e.toString());
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
@@ -689,20 +779,22 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.10
 	 */
 	@ExceptionHandler(ExecutionException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleExecutionException(ExecutionException e) {
-		log.debug("ExecutionException in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleExecutionException(ExecutionException e, WebRequest request) {
+		log.debug("ExecutionException in request {}", requestDescription(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
 		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause);
+			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
 		}
 		return new Response<Object>(Boolean.FALSE, "EE.00500", cause.getMessage(), null);
 	}
@@ -712,14 +804,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.17
 	 */
 	@ExceptionHandler(Error.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleError(Error e) {
-		log.debug("Error in {} controller", getClass().getSimpleName(), e);
+	public Response<?> handleError(Error e, WebRequest request) {
+		log.warn("Error in request {}", requestDescription(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
@@ -732,13 +826,16 @@ public final class WebServiceControllerSupport {
 	 * 
 	 * @param e
 	 *        the exception
+	 * @param request
+	 *        the request
 	 * @return an error response object
 	 * @since 1.20
 	 */
 	@ExceptionHandler(MultipartException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleMultipartException(MultipartException e) {
+	public Response<?> handleMultipartException(MultipartException e, WebRequest request) {
+		log.info("MultipartException in request {}: {}", requestDescription(request), e.toString());
 		StringBuilder buf = new StringBuilder();
 		buf.append("Error parsing multipart HTTP request");
 		String msg = e.getMostSpecificCause().getMessage();
