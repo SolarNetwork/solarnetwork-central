@@ -164,7 +164,13 @@ public final class WebServiceControllerSupport {
 		Map<String, String[]> params = request.getParameterMap();
 		if ( params != null ) {
 			buf.append("?");
+			boolean next = false;
 			for ( Entry<String, String[]> e : params.entrySet() ) {
+				if ( next ) {
+					buf.append('&');
+				} else {
+					next = true;
+				}
 				buf.append(e.getKey()).append("=");
 				String[] vals = e.getValue();
 				if ( vals == null || vals.length < 1 ) {
