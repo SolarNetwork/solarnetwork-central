@@ -85,7 +85,7 @@ public class DatumFilterCommandTests {
 				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"aggregationKey\":\"d\""
 						+ ",\"partialAggregationKey\":\"0\"" + ",\"mostRecent\":false,\"startDate\":\""
 						+ TEST_START_TIMESTAMP_STRING + "\",\"endDate\":\"" + TEST_END_TIMESTAMP_STRING
-						+ "\",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+						+ "\",\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class DatumFilterCommandTests {
 						+ ",\"partialAggregation\":\"Hour\",\"partialAggregationKey\":\"h\""
 						+ ",\"mostRecent\":false,\"startDate\":\"" + TEST_START_TIMESTAMP_STRING
 						+ "\",\"endDate\":\"" + TEST_END_TIMESTAMP_STRING
-						+ "\",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+						+ "\",\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
@@ -124,7 +124,7 @@ public class DatumFilterCommandTests {
 						+ ",\"partialAggregationKey\":\"0\""
 						+ ",\"mostRecent\":false,\"localStartDate\":\"" + TEST_START_DATE_STRING
 						+ "\",\"localEndDate\":\"" + TEST_END_DATE_STRING
-						+ "\",\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+						+ "\",\"location\":{},\"withoutTotalResultsCount\":false}"));
 	}
 
 	@Test
@@ -142,7 +142,7 @@ public class DatumFilterCommandTests {
 				+ ",\"combiningType\":\"Sum\",\"combiningTypeKey\":\"s\""
 				+ ",\"nodeIdMappings\":{\"100\":[1,2,3]}"
 				+ ",\"sourceIdMappings\":{\"CON\":[\"A\",\"B\",\"C\"],\"GEN\":[\"E\",\"F\",\"G\"]}"
-				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+				+ ",\"mostRecent\":false,\"location\":{},\"withoutTotalResultsCount\":false}"));
 		// @formatter:on
 	}
 
@@ -158,7 +158,7 @@ public class DatumFilterCommandTests {
 				+ ",\"partialAggregationKey\":\"0\""
 				+ ",\"rollupTypes\":[\"Time\",\"Node\"]"
 				+ ",\"rollupTypeKeys\":[\"t\",\"n\"]"
-				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}"));
+				+ ",\"mostRecent\":false,\"location\":{},\"withoutTotalResultsCount\":false}"));
 		// @formatter:on
 	}
 
@@ -167,7 +167,7 @@ public class DatumFilterCommandTests {
 		DatumFilterCommand cmd = objectMapper.readValue(
 				"{\"nodeIds\":[1],\"sourceIds\":[\"test\"],\"aggregation\":\"Day\",\"mostRecent\":false,\"startDate\":\""
 						+ TEST_START_TIMESTAMP_STRING + "\",\"endDate\":\"" + TEST_END_TIMESTAMP_STRING
-						+ "\",\"offset\":0,\"location\":{}}",
+						+ "\",\"location\":{}}",
 				DatumFilterCommand.class);
 		assertThat(cmd, notNullValue());
 		assertThat(cmd.getAggregation(), equalTo(Aggregation.Day));
@@ -184,7 +184,7 @@ public class DatumFilterCommandTests {
 		DatumFilterCommand cmd = objectMapper.readValue("{\"combiningTypeKey\":\"s\""
 				+ ",\"nodeIdMappings\":{\"100\":[1,2,3]}"
 				+ ",\"sourceIdMappings\":{\"CON\":[\"A\",\"B\",\"C\"],\"GEN\":[\"E\",\"F\",\"G\"]}"
-				+ ",\"mostRecent\":false,\"offset\":0,\"location\":{},\"withoutTotalResultsCount\":false}",
+				+ ",\"mostRecent\":false,\"location\":{},\"withoutTotalResultsCount\":false}",
 				DatumFilterCommand.class);
 		assertThat(cmd, notNullValue());
 		assertThat(cmd.getCombiningType(), equalTo(CombiningType.Sum));
