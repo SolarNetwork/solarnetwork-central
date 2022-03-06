@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.6.0' apply false
+	id 'org.springframework.boot' version '2.6.4' apply false
 }
 
 apply plugin: 'java-library'
@@ -38,7 +38,7 @@ dependencies {
 	// DAO
 	implementation 'org.mybatis:mybatis:3.5.7'
 	implementation 'org.mybatis:mybatis-spring:2.0.6'
-	runtime "org.postgresql:postgresql:${postgresJdbcVersion}"
+	runtime "org.postgresql:postgresql"
 	
 	// JCache
 	implementation 'javax.cache:cache-api'
