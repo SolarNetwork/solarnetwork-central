@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.config;
 
 import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,12 +33,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.NodeUserDetailsService;
 import net.solarnetwork.central.security.Role;
+import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
 /**
  * Security configuration.
@@ -49,6 +53,14 @@ import net.solarnetwork.central.security.Role;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private static String[] NODE_AUTHORITIES = new String[] { Role.ROLE_NODE.toString() };
+
+	@Autowired
+	private HandlerExceptionResolver handlerExceptionResolver;
+
+	@Bean
+	public RequestRejectedHandler requestRejectedHandler() {
+		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
+	}
 
 	@Override
 	@Bean

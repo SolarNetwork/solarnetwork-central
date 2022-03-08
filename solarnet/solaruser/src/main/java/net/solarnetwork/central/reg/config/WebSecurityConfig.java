@@ -40,12 +40,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
+import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
@@ -80,6 +82,14 @@ public class WebSecurityConfig {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private HandlerExceptionResolver handlerExceptionResolver;
+
+	@Bean
+	public RequestRejectedHandler requestRejectedHandler() {
+		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
+	}
 
 	@Bean
 	public UserDetailsService userDetailsService() {

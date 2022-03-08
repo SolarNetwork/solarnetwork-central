@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,9 +45,6 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -62,7 +58,6 @@ import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
@@ -223,24 +218,6 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle an {@link AuthorizationException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 */
-	@ExceptionHandler(AuthorizationException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
-		log.debug("AuthorizationException in request {}: {}", requestDescription(request),
-				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
-	}
-
-	/**
 	 * Handle an {@link BeanInstantiationException}.
 	 * 
 	 * @param e
@@ -261,82 +238,6 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.2
-	 */
-	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
-			WebRequest request) {
-		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
-				userPrincipalName(request), e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
-	}
-
-	/**
-	 * Handle a {@link BadCredentialsException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 2.0
-	 */
-	@ExceptionHandler(BadCredentialsException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
-		log.info("BadCredentialsException in request {}: {}", requestDescription(request),
-				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
-	}
-
-	/**
-	 * Handle a {@link AuthenticationException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.13
-	 */
-	@ExceptionHandler(AuthenticationException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-	public Response<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
-		log.info("AuthenticationException in request {}: {}", requestDescription(request),
-				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
-	}
-
-	/**
-	 * Handle a {@link AccessDeniedException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.13
-	 */
-	@ExceptionHandler(AccessDeniedException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
-		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
-	}
-
-	/**
 	 * Handle an {@link TypeMismatchException}.
 	 * 
 	 * @param e
@@ -354,24 +255,6 @@ public final class WebServiceControllerSupport {
 	public Response<?> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
 			HttpServletResponse response) {
 		log.debug("TypeMismatchException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
-	}
-
-	/**
-	 * Handle an {@link IllegalArgumentException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.3
-	 */
-	@ExceptionHandler(IllegalArgumentException.class)
-	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
-		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
 	}
 
@@ -598,33 +481,6 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link RuntimeException} not handled by other exception
-	 * handlers.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 */
-	@ExceptionHandler(RuntimeException.class)
-	@ResponseBody
-	@ResponseStatus
-	public Response<?> handleRuntimeException(RuntimeException e, WebRequest request) {
-		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-		}
-		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
-		}
-		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
-	}
-
-	/**
 	 * Handle an {@link BindException}.
 	 * 
 	 * @param e
@@ -680,32 +536,6 @@ public final class WebServiceControllerSupport {
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
-	}
-
-	/**
-	 * Handle an {@link ExecutionException}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.10
-	 */
-	@ExceptionHandler(ExecutionException.class)
-	@ResponseBody
-	@ResponseStatus
-	public Response<?> handleExecutionException(ExecutionException e, WebRequest request) {
-		log.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
-				userPrincipalName(request), e);
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-		}
-		if ( cause instanceof IllegalArgumentException ) {
-			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
-		}
-		return new Response<Object>(Boolean.FALSE, "EE.00500", cause.getMessage(), null);
 	}
 
 	/**
