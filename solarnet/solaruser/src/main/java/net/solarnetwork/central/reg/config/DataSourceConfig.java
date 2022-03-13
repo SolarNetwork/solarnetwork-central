@@ -35,8 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.zaxxer.hikari.HikariDataSource;
 
 /**
- * DataSource configuration for SolarQuery, with a read-only primary data source
- * and a secondary read-write data source for auditing.
+ * DataSource configuration for SolarUser.
  * 
  * @author matt
  * @version 1.0
