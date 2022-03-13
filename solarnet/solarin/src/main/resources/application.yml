@@ -1,5 +1,17 @@
 app:
   meta.name: SolarIn
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
+    platform: "postgres"
+    initialize: false
   datum:
     solarflux-publish:
       uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
@@ -119,17 +131,6 @@ server:
   servlet.context-path: "/solarin"
 
 spring:
-  datasource:
-    hikari:
-      minimumIdle: 1
-      connectionTimeout: 30000
-      idleTimeout: 600000
-      maxLifetime: 1800000
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: "solarnet"
-    password: "solarnet"
-    platform: "postgres"
-    initialize: false
   jmx.enabled: false
   mvc.format:
     date: "iso"
@@ -141,7 +142,15 @@ spring:
   config.activate.on-profile: "development"
   thymeleaf.cache: false
 
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+
 debug: true
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
 
 ---
 spring:
