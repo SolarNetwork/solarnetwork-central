@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -62,9 +63,14 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	public PingController pingController() {
-		PingController controller = new PingController();
+		SolarInPingController controller = new SolarInPingController();
 		controller.setTests(pingTests);
 		return controller;
+	}
+
+	@RequestMapping("/solarin/ping")
+	static class SolarInPingController extends PingController {
+		// nothing new
 	}
 
 	@SuppressWarnings("deprecation")
