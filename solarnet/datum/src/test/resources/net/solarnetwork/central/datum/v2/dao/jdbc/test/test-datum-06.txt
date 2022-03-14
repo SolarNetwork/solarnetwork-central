@@ -1,0 +1,6 @@
+# single hour of data on imperfect times, with one row only
+# expected avg(x) = (1.3)/1 == 1.3
+# expected avg(y) = (3.1)/1 == 3.1
+# expected clock diff == 0
+# expected read  diff == 0
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 12:19:00Z","samples":{"i":{"x":1.3,"y":3.1},"a":{"w":110}}}

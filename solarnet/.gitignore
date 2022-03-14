@@ -1,0 +1,10 @@
+.DS_Store
+*.log
+*.swp
+.gradle/
+bin/
+build/
+var/
+/*.properties
+/solar*/src/main/resources/application-*.yml
+

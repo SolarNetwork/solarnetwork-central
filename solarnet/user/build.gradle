@@ -1,0 +1,55 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.6.4' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: User'
+version = '0.1.0'
+archivesBaseName = 'solarnet-user'
+
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-instructor')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	
+	// Utilities
+	implementation 'org.apache.httpcomponents:httpclient'
+	implementation 'org.aspectj:aspectjweaver'
+	implementation 'org.javamoney:moneta:1.4.2'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}

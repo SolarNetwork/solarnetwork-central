@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'none')">
+<head>
+    <title data-th-text="#{user.resetpassword.title}">Reset Password</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/global.css">
+</head>
+<body>
+<main class="container">
+	<p class="intro" data-th-text="#{user.resetpassword.confirm.intro}">
+		Enter your new password.
+	</p>
+	
+	<form class="form-horizontal" method="post" data-th-action="@{/u/resetPassword/reset}" data-th-object="${form}">	
+		<fieldset>
+			<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
+				<label class="col-sm-2 control-label" for="reset-pass-password" data-th-text="#{user.password.label}">Password</label>
+				<div class="col-sm-6">
+					<input type="password" data-th-field="*{password}" maxlength="240" id="user-password"
+						data-th-placeholder="#{user.password.placeholder}" class="form-control">
+					<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></span>
+				</div>
+			</div>
+			<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
+				<label class="col-sm-2 control-label" for="reset-pass-password-again" data-th-text="#{user.password.again.label}">Password Again</label>
+				<div class="col-sm-6">
+					<input type="password" data-th-field="*{passwordConfirm}" maxlength="240" id="user-password" class="form-control">
+					<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{passwordConfirm}"></span>
+				</div>
+			</div>
+		</fieldset>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<input type="submit" class="btn btn-primary" data-th-value="#{user.resetpassword.confirm.submit.label}">
+			</div>
+		</div>
+		<input type="hidden" data-th-field="*{confirmationCode}">
+		<input type="hidden" data-th-field="*{username}">
+	</form>
+</main>
+</body>
+</html>

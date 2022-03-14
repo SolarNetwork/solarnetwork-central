@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8" />
+	<title>SolarJobs Ping Test</title>
+	<style type="text/css">
+		body {
+			font-family: helvetica,sans-serif;
+			font-size: 13px;
+		}
+		
+		.caption {
+			font-size: 11px;
+			color: #ccc;
+			margin: 4px 0;
+			font-weight: normal;
+		}
+		
+		.pass {
+			color: #090;
+			background-color: inherit;
+		}
+		
+		.fail {
+			color: #c00;
+			background-color: inherit;
+		}
+				
+		table {
+		    border-collapse: collapse;
+		    border-spacing: 0;
+		}
+		td, th {
+		    padding: 0;
+		}
+		th {
+		    text-align: left;
+		}
+		.table {
+		    margin-bottom: 20px;
+		    max-width: 100%;
+		    width: 100%;
+		}
+		.table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td {
+		    border-top: 1px solid #ddd;
+		    line-height: 1.42857;
+		    padding: 8px;
+		    vertical-align: top;
+		}
+		.table > thead > tr > th {
+		    border-bottom: 2px solid #ddd;
+		    vertical-align: bottom;
+		}
+		.table > caption + thead > tr:first-child > th, .table > colgroup + thead > tr:first-child > th, .table > thead:first-child > tr:first-child > th, .table > caption + thead > tr:first-child > td, .table > colgroup + thead > tr:first-child > td, .table > thead:first-child > tr:first-child > td {
+		    border-top: 0 none;
+		}
+		.table > tbody + tbody {
+		    border-top: 2px solid #ddd;
+		}	
+	</style>
+</head>
+<body>
+	<section th:if="${results}">
+		<p>
+			<strong>Overall: </strong>
+			<span th:classappend="${!results.allGood}?fail"
+				th:text="${results.allGood} ? 'ALL_GOOD' : 'One or more tests failed.'">Unknown</span>
+		</p>
+		<p>
+			<strong>Date: </strong>
+			<span th:text="${#temporals.formatISO(results.date)}">2010-01-01T00:00:00.000Z</span>
+		</p>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Test</th>
+					<th>Status</th>
+					<th>Execution time (ms)</th>
+					<th>Message</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="result : ${results.results}">
+					<th>
+						<span th:text="${result.value.pingTestName}">Test 1</span><br />
+						<div class="caption" th:text="${result.key}">test.1</div>
+					</th>
+					<td th:classappend="${result.value.success}? pass : fail"
+						th:text="${result.value.success} ? PASS : FAIL">PASS</td>
+					<td th:text="${result.value.duration.toMillis()}">23</td>
+					<td th:text="${result.value.message}">Passed with flying colors.</td>
+				</tr>
+			</tbody>
+			</table>
+	</section>
+	<section th:unless="${results}">
+		<p class="fail">FAIL: no ping results available</p>
+	</section>
+</body>
+</html>

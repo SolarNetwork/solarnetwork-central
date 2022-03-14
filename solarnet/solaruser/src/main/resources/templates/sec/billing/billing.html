@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'billing')">
+<head>
+    <title data-th-text="#{billing.title}">Account</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{billing.intro}">
+	Here are your invoices and billing related stuff.
+</p>
+
+<section id="upcoming-invoice" class="hidden">
+	<h2>
+		<span data-th-text="#{billing.upcomingInvoice.header}">Upcoming invoices</span>
+		<a class="btn btn-info pull-right" data-th-href="@{/u/sec/billing/invoices/preview/render/pdf}"
+			data-th-text="#{print.label}">Print</a>
+	</h2>
+	<p class="intro" data-th-utext="#{billing.upcomingInvoice.intro}">
+		Here is your upcoming invoice.
+	</p>
+	<table class="invoice table" id="upcoming-invoice-table">
+		<thead>
+			<tr class="template">
+				<th data-tprop="localizedDescription" class="col-sm-3"></th>
+				<td class="col-sm-9">
+					<table class="table table-condensed tally">
+						<thead>
+							<tr>
+								<th class="col-sm-2" data-th-text="#{billing.usage.tier}">Tier</th>
+								<th class="col-sm-5" data-th-text="#{billing.usage.quantity}">Quantity</th>
+								<th class="col-sm-5" data-th-text="#{billing.usage.cost}">Cost</th>
+							</tr>
+							<tr class="template">
+								<td data-tprop="localizedDescription"></td>
+								<td data-tprop="localizedQuantity"></td>
+								<td data-tprop="localizedCost"></td>
+							</tr>
+						</thead>
+						<tbody class="tiers">
+						</tbody>
+						<tfoot>
+							<tr>
+								<th></th>
+								<th data-tprop="localizedAmount"></th>
+								<th data-tprop="localizedCost"></th>
+							</tr>
+						</tfoot>
+					</table>
+				</td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td></td>
+				<td>
+					<table class="table table-condensed tally">
+						<thead class="borderless">
+							<tr class="template">
+								<th></th>
+								<th data-tprop="localizedDescription"></th>
+								<th data-tprop="localizedAmount"></th>
+							</tr>
+							<tr>
+								<th class="col-sm-9"></th>
+								<th class="col-sm-1" data-th-text="#{billing.invoice.totalBeforeTax.label}">Subtotal</th>
+								<th class="col-sm-2" data-tprop="localizedNonTaxAmount"></th>
+							</tr>
+						</thead>
+						<tbody class="borderless">
+						</tbody>
+						<tfoot class="borderless">
+							<tr>
+								<th></th>
+								<th data-th-text="#{billing.invoice.totalWithTax.label}">Total</th>
+								<th data-tprop="localizedAmount"></th>
+							</tr>
+						</tfoot>
+					</table>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</section>
+
+<section id="outstanding-invoices" class="hidden">
+	<h2 data-th-text="#{billing.outstandingInvoiceList.header}">
+		Outstanding invoices
+	</h2>
+	<p class="intro" data-th-utext="#{billing.outstandingInvoiceList.intro(0)}">
+		You have <b>1</b> outstanding invoice.
+	</p>
+	<table class="table unpaid" id="outstanding-invoice-list-table">
+		<thead>
+			<tr>
+				<th data-th-text="#{billing.invoice.number.label}">Number</th>
+				<th data-th-text="#{billing.invoice.date.label}">Date</th>
+				<th data-th-text="#{billing.invoice.balance.label}">Balance</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" data-tprop="invoiceNumber"></a></td>
+				<td data-tprop="localizedDate"></td>
+				<td><span class="label label-danger" data-tprop="localizedBalance"></span></td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		<tfoot>
+			<tr>
+				<th colspan="2" class="ledger-amount-label" data-th-text="#{billing.invoice.balance.total.label}">Total</th>
+				<th data-tprop="localizedTotalBalance"></th>
+			</tr>
+		</tfoot>
+	</table>
+</section>
+
+<section id="invoices" class="hidden">
+	<h2 data-th-text="#{billing.invoiceList.header}">
+		Invoices
+	</h2>
+	<p class="intro" data-th-utext="#{billing.invoiceList.intro(0)}">
+		You have <b>1</b> invoice.
+	</p>
+	<nav data-th-aria-label="#{billing.invoice.pagination.label}" id="invoice-list-pagination" class="hidden">
+		<ul class="pagination">
+			<li><a href="#" data-th-aria-label="#{billing.invoice.pagination.prev.label}"><span aria-hidden="true">&laquo;</span></a></li>
+			<li class="template"><a href="#"><span data-tprop="pageNumber">1</span> <span class="sr-only hidden" data-th-text="#{billing.invoice.pagination.current.label}">1</span></a></li>
+			<li><a href="#" data-th-aria-label="#{billing.invoice.pagination.next.label}"><span aria-hidden="true">&raquo;</span></a></li>
+		</ul>
+	</nav>
+	<table class="table" id="invoice-list-table">
+		<thead>
+			<tr>
+				<th data-th-text="#{billing.invoice.number.label}">Number</th>
+				<th data-th-text="#{billing.invoice.date.label}">Date</th>
+				<th data-th-text="#{billing.invoice.amount.label}">Amount</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" data-tprop="invoiceNumber"></a></td>
+				<td data-tprop="localizedDate"></td>
+				<td><span class="label label-success" data-tprop="localizedAmount"></span></td>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</section>
+
+<!--*/ Modal forms */-->
+
+<div class="modal fade" tabindex="-1" role="dialog" id="invoice-details-modal">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{billing.invoice.details.title}">Invoice details</h4>
+			</div>
+			<div class="modal-body container-fluid">
+		 		<div class="row">
+		 			<div class="col-xs-2">
+		 				<p><b data-th-text="#{billing.invoice.number.label}">Number</b></p>
+			 		</div>
+		 			<div class="col-xs-6">
+		 				<p><b data-th-text="#{billing.invoice.date.label}">Date</b></p>
+			 		</div>
+		 			<div class="col-xs-4">
+		 				<p><b data-th-text="#{billing.invoice.amount.label}">Amount</b></p>
+			 		</div>
+		 		</div>
+		 		<div class="row invoice-details">
+		 			<div class="col-xs-2">
+		 				<p data-tprop="invoiceNumber"></p>
+			 		</div>
+		 			<div class="col-xs-6">
+		 				<p data-tprop="localizedDate"></p>
+			 		</div>
+		 			<div class="col-xs-4">
+		 				<p><span class="label" data-tprop="localizedAmount"></span></p>
+			 		</div>
+		 		</div>
+			</div>
+			<div class="modal-body invoice-items-loading">
+				<div class="progress">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">
+						<em data-th-text="#{billing.invoice.details.loading}">Loding</em>
+	    			</div>
+    			</div>
+			</div>
+			<table class="invoice-items hidden table table-striped">
+				<thead>
+					<tr>
+						<th data-th-text="#{billing.invoice.item.planName.label}">Plan</th>
+						<th data-th-text="#{billing.invoice.item.node.label}">Node ID</th>
+						<th data-th-text="#{billing.invoice.item.dateRange.label}">Date</th>
+						<th data-th-text="#{billing.invoice.item.usage.label}">Usage</th>
+						<th data-th-text="#{billing.invoice.item.amount.label}">Amount</th>
+					</tr>
+					<tr class="invoice-item template">
+						<td data-tprop="localizedDescription"></td>
+						<td data-tprop="metadata.nodeId"></td>
+						<td><span  data-tprop="localizedStartDate"></span> - <span data-tprop="localizedEndDate"></span></td>
+						<td>
+							<dl class="usage-records hidden">
+								<dt class="usage-record template" data-tprop="localizedUnitType"></dt>
+								<dd class="usage-record template" data-tprop="localizedAmount"></dd>
+							</dl>
+						</td>
+						<td><span class="label label-default" data-tprop="localizedAmount"></span></td>
+					</tr>
+					<tr class="invoice-item-tax template">
+						<td colspan="3"></td>
+						<td data-tprop="localizedDescription"></td>
+						<td><span class="label label-default" data-tprop="localizedAmount"></span></td>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+				<tfoot>
+				</tfoot>
+			</table>
+			<div class="modal-footer">
+				<a target="sn_invoice_print" class="btn btn-info pull-left invoice-render" data-th-href="@{/u/sec/billing/invoices/{invoiceId}/render}"
+					data-th-text="#{print.label}">Print</a>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+</body>
+</html>

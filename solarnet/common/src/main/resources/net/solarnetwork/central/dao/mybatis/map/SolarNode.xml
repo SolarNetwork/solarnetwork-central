@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Nov 05 09:48:44 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.dao.mybatis.SolarNode">
+
+	<cache flushInterval="${node-cache-flush}"/>
+
+	<select id="get-next-node-id" resultType="long" useCache="false">
+		SELECT nextval('solarnet.node_seq') AS id 
+	</select>
+
+	<insert id="insert-SolarNode" parameterType="SolarNode">
+		INSERT INTO solarnet.sn_node 
+			(node_id 
+			<if test="created != null">,created</if>
+			, node_name, loc_id)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{name}, #{locationId})
+	</insert>
+
+	<update id="update-SolarNode" parameterType="SolarNode">
+		UPDATE
+			solarnet.sn_node 
+		SET
+			node_name = #{name},
+			loc_id = #{locationId}
+		WHERE
+			node_id = #{id}
+	</update>
+
+	<sql id="fragment-SolarNode-full-result">
+		n.node_id AS sn_node_node_id, 
+		n.created AS sn_node_created,
+		n.node_name AS sn_node_node_name,
+		n.loc_id AS sn_node_loc_id
+	</sql>
+
+	<sql id="fragment-SolarNode-share-result">
+		n.node_id AS sn_node_node_id, 
+		n.node_name AS sn_node_node_name,
+		n.loc_id AS sn_node_loc_id
+	</sql>
+
+	<resultMap id="SolarNodeFullResult" type="SolarNode">
+		<id property="id" column="sn_node_node_id"/>
+		<result property="created" column="sn_node_created"/>
+		<result property="name" column="sn_node_node_name"/>
+		<result property="locationId" column="sn_node_loc_id"/>
+		<association property="location" resultMap="net.solarnetwork.central.dao.mybatis.SolarLocation.SolarLocationFullResult"/>
+	</resultMap>
+	
+	<select id="get-SolarNode-for-id" parameterType="long" resultMap="SolarNodeFullResult">
+		SELECT
+			<include refid="fragment-SolarNode-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>
+		FROM
+			solarnet.sn_node n
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		WHERE
+			n.node_id = #{id}
+	</select>
+	
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<resultMap id="SolarNodeMatchResult" type="net.solarnetwork.central.domain.SolarNodeMatch"
+		extends="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult">
+		<result property="metaJson" column="sn_node_meta_jdata"/>
+	</resultMap>
+
+	<sql id="fragment-findall-SolarNode-SolarNodeMatch-join">
+		<if test="filter.metadataFilter != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+			INNER JOIN solarnet.sn_node_meta nmeta ON nmeta.node_id = n.node_id
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-SolarNode-SolarNodeMatch-where">
+		<where>
+			<if test="filter.nodeIds != null and filter.nodeIds.length > 0">
+				AND n.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+		</where>
+	</sql>
+
+
+	<select id="findall-SolarNode-SolarNodeMatch" resultMap="SolarNodeMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SolarNode-full-result"/>
+			<if test="filter.metadataFilter != null and filter.nodeIds != null and filter.nodeIds.length > 0">
+				, nmeta.jdata AS sn_node_meta_jdata
+			</if>
+		FROM
+			solarnet.sn_node n
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-join"/>
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+					<if test="item.sortKey == &quot;created&quot;">n.created</if>
+					<if test="item.sortKey == &quot;node&quot;">n.node_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				n.node_id
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findall-SolarNode-SolarNodeMatch-count" resultType="long">
+		SELECT count(nmeta.created)
+		FROM
+			solarnet.sn_node n
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-join"/>
+		<include refid="fragment-findall-SolarNode-SolarNodeMatch-where"/>
+	</select>
+	
+</mapper>

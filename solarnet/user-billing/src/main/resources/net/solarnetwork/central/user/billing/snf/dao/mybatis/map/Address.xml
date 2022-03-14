@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address">
+
+	<insert id="insert-Address" parameterType="net.solarnetwork.central.user.billing.snf.domain.Address">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarbill.bill_seq') AS id 
+		</selectKey>
+		INSERT INTO solarbill.bill_address (
+			id
+			<if test="created != null">,created</if>
+			, disp_name
+			, email
+			, country
+			, time_zone
+			, region
+			, state_prov
+			, locality
+			, postal_code
+			, address
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{name}
+			, #{email}
+			, #{country}
+			, #{timeZoneId}
+			, #{region}
+			, #{stateOrProvince}
+			, #{locality}
+			, #{postalCode}
+			, #{street,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		)
+	</insert>
+	
+	<sql id="fragment-Address-full-result">
+		addr.id AS bill_address_id
+		, addr.created AS bill_address_created
+		, addr.disp_name AS bill_address_disp_name
+		, addr.email AS bill_address_email
+		, addr.country AS bill_address_country
+		, addr.time_zone AS bill_address_time_zone
+		, addr.region AS bill_address_region
+		, addr.state_prov AS bill_address_state_prov
+		, addr.locality AS  bill_address_locality
+		, addr.postal_code AS bill_address_postal_code
+		, addr.address AS bill_address_address
+	</sql>
+
+	<resultMap id="Address-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.Address">
+		<constructor>
+			<idArg column="bill_address_id" javaType="Long"/>
+			<arg column="bill_address_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="name" column="bill_address_disp_name"/>
+		<result property="email" column="bill_address_email"/>
+		<result property="country" column="bill_address_country"/>
+		<result property="timeZoneId" column="bill_address_time_zone"/>
+		<result property="region" column="bill_address_region"/>
+		<result property="stateOrProvince" column="bill_address_state_prov"/>
+		<result property="locality" column="bill_address_locality"/>
+		<result property="postalCode" column="bill_address_postal_code"/>
+		<result property="street" column="bill_address_address" jdbcType="ARRAY" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
+	</resultMap>
+	
+	<select id="get-Address-for-id" parameterType="long" resultMap="Address-FullResult">
+		SELECT
+			<include refid="fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_address addr
+		WHERE
+			addr.id = #{id}
+	</select>
+	
+	<update id="update-Address" parameterType="net.solarnetwork.central.user.billing.snf.domain.Address">
+		UPDATE solarbill.bill_address
+		SET disp_name = #{name}
+			, email = #{email}
+			, country = #{country}
+			, time_zone = #{timeZoneId}
+			, region = #{region}
+			, state_prov = #{stateOrProvince}
+			, locality =  #{locality}
+			, postal_code = #{postalCode}
+			, address = #{street,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete-Address" parameterType="long">
+		DELETE FROM solarbill.bill_address
+		WHERE id = #{id}
+	</delete>
+
+</mapper>

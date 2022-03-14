@@ -1,0 +1,1 @@
+org.springframework.boot.env.EnvironmentPostProcessor=net.solarnetwork.central.common.config.ApplicationMetadataEnvironmentPostProcessor

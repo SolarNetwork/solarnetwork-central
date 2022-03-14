@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'export')">
+<head>
+    <title data-th-text="#{export.title}">Export</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{export.intro}">
+	Export your data on this page.
+</p>
+
+<div class="datum-export-getstarted hidden alert alert-info alert-dismissible" role="alert">
+	<button type="button" class="close" data-dismiss="alert" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+	<strong data-th-text="#{export.getstarted.title}">Let's get started!</strong>
+	<div data-th-utext="#{export.getstarted.intro}">To get started, do the following easy things:</div>
+</div>
+
+<section id="datum-export-configs">
+	<h2>
+		<span data-th-text="#{export.datumExportList.header}">Exports</span>
+		<a href="#edit-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.datumExportList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.datumExportList.intro(0)}">
+		You've got <span class="listCount">1</span> export configuration.
+	</p>
+	<div id="datum-export-list-container" class="table configs hidden">
+		<ol class="list-container">
+		</ol>
+		<ol class="hidden">
+			<li class="template">
+				<p data-th-utext="#{export.datumExportList.exportListItem}">
+					List item template here.
+				</p>
+			</li>
+		</ol>
+	</div>
+</section>
+
+<section id="adhoc-datum-export-configs">
+	<h2>
+		<span data-th-text="#{export.adhocDatumExportList.header}">Adhoc exports</span>
+		<a href="#edit-adhoc-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			title="<fmt:message key='export.adhocDatumExportList.action.create'/>">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.adhocDatumExportList.intro(0)}">
+		You've got <span class="listCount">1</span> adhoc export configuration.
+	</p>
+	<table id="adhoc-datum-export-list-container" class="table configs hidden">
+		<thead class="statuses"
+			data-th-data-label-status-q="#{export.adhocConfig.status.q.label}"
+			data-th-data-label-status-p="#{export.adhocConfig.status.p.label}"
+			data-th-data-label-status-e="#{export.adhocConfig.status.e.label}"
+			data-th-data-label-status-c="#{export.adhocConfig.status.c.label}"
+			>
+			<tr>
+				<th data-th-text="#{export.adhocConfig.name.label}">Name</th>
+				<th data-th-text="#{export.adhocConfig.nodes.label}">Nodes</th>
+				<th data-th-text="#{export.adhocConfig.sources.label}">Sources</th>
+				<th data-th-text="#{export.adhocConfig.aggregation.label}">Aggregation</th>
+				<th data-th-text="#{export.adhocConfig.status.label}">Status</th>
+			</tr>
+			<tr class="template">
+				<td >
+					<span data-tprop="name"></span>
+					<p class="help-block"><small>
+						<span data-tprop="startDate"></span>
+						<span> - </span>
+						<span data-tprop="endDate"></span>
+					</small></p>
+				</td>
+				<td data-tprop="nodes"></td>
+				<td data-tprop="sources"></td>
+				<td data-tprop="aggregation"></td>
+				<td>
+					<span class="label status" data-tprop="status"></span>
+					<p class="completed hidden">
+						<span data-th-text="#{export.adhocConfig.status.completed.label}">Completed</span>
+						<span> </span>
+						<span data-tprop="completed"></span>
+						<span> </span>
+						<small class="help-block" data-tprop="message"></small>
+					</p>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<section id="export-data-configs">
+	<h2>
+		<span data-th-text="#{export.dataConfigList.header}">Data configurations</span>
+		<a href="#edit-export-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.dataConfigList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.dataConfigList.intro(0)}">
+		You've got <span class="listCount">1</span> data configuration.
+	</p>
+	<table id="export-data-config-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{export.dataConfig.name.label}">Name</th>
+				<th data-th-text="#{export.dataConfig.nodes.label}">Nodes</th>
+				<th data-th-text="#{export.dataConfig.sources.label}">Sources</th>
+				<th data-th-text="#{export.dataConfig.aggregation.label}">Aggregation</th>
+			</tr>
+			<!--/*
+				The .template class defines the HTML structure for one object.
+			 */-->
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-data-config-modal"></a></td>
+				<td data-tprop="nodes"></td>
+				<td data-tprop="sources"></td>
+				<td data-tprop="aggregation"></td>
+			</tr>
+		</thead>
+		<!--/*
+			The .list-container class defines where objects will be rendered into HTML.
+		 */-->
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<section id="export-output-configs">
+	<h2>
+		<span data-th-text="#{export.outputConfigList.header}">Output configurations</span>
+		<a href="#edit-export-output-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.outputConfigList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.outputConfigList.intro(0)}">
+		You've got <span class="listCount">1</span> output configuration.
+	</p>
+	<table id="export-output-config-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{export.outputConfig.name.label}">Name</th>
+				<th data-th-text="#{export.outputConfig.type.label}">Type</th>
+				<th data-th-text="#{export.outputConfig.compression.label}">Compression</th>
+			</tr>
+			<tr class="template">
+				<!--/*
+					Within a .template, data-tprop attributes correspond to model object property names,
+					whose text content will be replaced by the model object property value.
+
+					The a.edit-link element will have its click event ignored; instead a click
+					handler on the .list-container should be registered, and use the event.target
+					property to verify the click happened
+				 */-->
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-output-config-modal"></a></td>
+				<td data-tprop="type"></td>
+				<td data-tprop="compression"></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<section id="export-destination-configs">
+	<h2>
+		<span data-th-text="#{export.destinationConfigList.header}">Destination configurations</span>
+		<a href="#edit-export-destination-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.destinationConfigList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.destinationConfigList.intro(0)}">
+		You've got <span class="listCount">1</span> destination configuration.
+	</p>
+	<table id="export-destination-config-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{export.destinationConfig.name.label}">Name</th>
+				<th data-th-text="#{export.destinationConfig.type.label}">Type</th>
+				<th data-th-text="#{export.serviceProps.label}">Properties</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-destination-config-modal"></a></td>
+				<td data-tprop="type"></td>
+				<td>
+					<!--/*
+						The .service-props-container here serves as a nested template for dynamic service properties.
+					 */-->
+					<dl class="service-props-container">
+					</dl>
+					<dl class="service-props-template hidden">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
+					</dl>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/export/edit-adhoc-export-job-modal :: form"></form>
+<form data-th-replace="sec/export/edit-data-modal :: form"></form>
+<form data-th-replace="sec/export/edit-destination-modal :: form"></form>
+<form data-th-replace="sec/export/edit-export-job-date-modal :: form"></form>
+<form data-th-replace="sec/export/edit-export-job-modal :: form"></form>
+<form data-th-replace="sec/export/edit-output-modal :: form"></form>
+
+<!--/* Setting templates */-->
+
+<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+</div>
+</body>
+</html>

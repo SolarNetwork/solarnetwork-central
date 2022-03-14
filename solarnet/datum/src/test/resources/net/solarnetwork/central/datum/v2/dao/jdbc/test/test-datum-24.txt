@@ -1,0 +1,9 @@
+# single hour with only reset record in middle
+#
+# expected clock diff == 0
+# expected read  diff == 0
+
+# This very old datum is so the stream metadata is created
+{"nodeId":1,"sourceId":"a","created":"2000-06-01 12:09:00Z","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":15}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 12:20:00Z","type":"Reset","final":{"a":{"w":115}},"start":{"a":{"w":5}}}

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:38 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserAuthToken">
+
+	<cache flushInterval="${user-auth-token-cache-flush}"/>
+
+	<insert id="insert-UserAuthToken" parameterType="UserAuthToken">
+		INSERT INTO solaruser.user_auth_token 
+			(auth_token
+			<if test="created != null">,created</if>
+			, user_id, auth_secret, status, token_type, jpolicy
+			)
+		VALUES
+			(#{id}
+			<if test="created != null">,#{created}</if>
+			, #{userId}, #{authSecret}
+			, CAST(#{status} AS solaruser.user_auth_token_status)
+			, CAST(#{type} AS solaruser.user_auth_token_type)
+			, CAST(#{policyJson} AS jsonb)
+			)
+	</insert>
+
+	<!-- Notice we include the user_id in the update clause, because application
+	     logic attempts to update first, then insert, and we don't want two 
+	     random auth_token values that collide from two different users to 
+	     write over each other! -->
+	<update id="update-UserAuthToken" parameterType="UserAuthToken">
+		UPDATE solaruser.user_auth_token SET
+			status = CAST(#{status} AS solaruser.user_auth_token_status),
+			jpolicy = CAST(#{policyJson} AS jsonb)
+		WHERE
+			auth_token = #{id}
+			AND user_id = #{userId}
+	</update>
+
+	<update id="delete-UserAuthToken" parameterType="string">
+		DELETE FROM solaruser.user_auth_token
+		WHERE
+			auth_token = #{id}
+	</update>
+	
+	<sql id="fragment-UserAuthToken-full-result">
+		uat.auth_token AS uat_auth_token,
+		uat.created AS uat_created,
+		uat.user_id AS uat_user_id,
+		uat.auth_secret AS uat_auth_secret,
+		uat.status AS uat_status,
+		uat.token_type AS uat_token_type,
+		uat.jpolicy AS uat_jpolicy
+	</sql>
+
+	<resultMap id="UserAuthTokenFullResult" type="UserAuthToken">
+		<id property="id" column="uat_auth_token"/>
+		<result property="created" column="uat_created"/>
+		<result property="userId" column="uat_user_id"/>
+		<result property="status" column="uat_status"/>
+		<result property="type" column="uat_token_type"/>
+		<result property="policyJson" column="uat_jpolicy"/>
+	</resultMap>
+	
+	<select id="get-UserAuthToken-for-id" resultMap="UserAuthTokenFullResult">
+		SELECT
+			<include refid="fragment-UserAuthToken-full-result"/>
+		FROM
+			solaruser.user_auth_token uat
+		WHERE
+			uat.auth_token = #{id}
+	</select>
+	
+	<select id="find-UserAuthToken-for-UserID" parameterType="long" resultMap="UserAuthTokenFullResult">
+		SELECT 
+			<include refid="fragment-UserAuthToken-full-result"/>
+		FROM
+			solaruser.user_auth_token uat
+		WHERE
+			uat.user_id = #{id}
+		ORDER BY
+			uat.created, uat.auth_token
+	</select>
+	
+	<select id="get-snws2-signingkey-for-tokenid" parameterType="map" resultType="byte[]">
+		SELECT
+			solaruser.snws2_signing_key(#{date}, uat.auth_secret)
+		FROM
+			solaruser.user_auth_token uat
+		WHERE
+			uat.auth_token = #{id}
+	</select>
+
+</mapper>

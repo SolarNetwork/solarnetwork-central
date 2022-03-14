@@ -1,0 +1,82 @@
+buildscript {
+	dependencies {
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.6.0"
+	}
+}
+
+plugins {
+	id 'java'
+    id 'war'
+    id 'eclipse-wtp'
+	id 'org.springframework.boot' version '2.6.4'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'SolarJobs'
+version = '0.1.0'
+archivesBaseName = 'solarjobs'
+
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
+	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-ocpp')
+	implementation project(':solarnet-user')
+	implementation project(':solarnet-user-billing')
+	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-ocpp')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-security';
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// allow WAR to be run from command line OR deployed in Tomcat
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	
+	// Utils
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	implementation 'org.tukaani:xz:1.9'
+
+	// SolarNetwork
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+}
+
+eclipse {
+	wtp {
+		facet {
+			facet name: 'jst.java', version: 11
+			facet name: 'jst.web', version: '3.1'
+		}
+	}
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarJobs',
+					'Implementation-Version': version
+	}
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}

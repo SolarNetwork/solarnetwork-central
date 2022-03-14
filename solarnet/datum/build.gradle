@@ -1,0 +1,62 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.6.4' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Datum'
+version = '0.1.0'
+archivesBaseName = 'solarnet-datum'
+
+configurations {
+	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+
+	// Utilities
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation 'commons-io:commons-io:2.11.0'
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.aspectj:aspectjweaver'
+	
+	// SolarNetwork
+	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3:2.0.0'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-11'
+	}
+}

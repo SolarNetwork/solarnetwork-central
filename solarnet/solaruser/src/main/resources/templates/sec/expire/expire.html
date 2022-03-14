@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'expire')">
+<head>
+    <title data-th-text="#{expire.title}">Expire</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{expire.intro}">
+	Use this page to expire (delete) datum.
+</p>
+
+<div class="datum-expire-getstarted hidden alert alert-info alert-dismissible" role="alert">
+	<button type="button" class="close" data-dismiss="alert" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+	<strong data-th-text="#{expire.getstarted.title}">Get started</strong>
+	<div data-th-utext="#{expire.getstarted.intro}">Here's how you can get started:</div>
+</div>
+
+<section id="expire-data-configs">
+	<h2>
+		<span data-th-text="#{expire.dataConfigList.header}">Expire configurations</span>
+		<a href="#edit-expire-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			data-th-title="#{expire.dataConfigList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{expire.dataConfigList.intro(0)}">
+		You have <strong class="listCount">1</strong> expire configuration.
+	</p>
+	<table id="expire-data-config-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{expire.dataConfig.name.label}">Name</th>
+				<th data-th-text="#{expire.dataConfig.nodes.label}">Nodes</th>
+				<th data-th-text="#{expire.dataConfig.sources.label}">Sources</th>
+				<th data-th-text="#{expire.dataConfig.aggregation.label}">Aggregation</th>
+				<th data-th-text="#{expire.dataConfig.expireDays.label}">Expire days</th>
+				<th data-th-text="#{expire.dataConfig.active.label}">Active></th>
+				<th data-th-text="#{expire.dataConfig.preview.label}">Preview</th>
+			</tr>
+			<!--/*
+				The .template class defines the HTML structure for one object.
+			 */-->
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-expire-data-config-modal"></a></td>
+				<td data-tprop="nodes"></td>
+				<td data-tprop="sources"></td>
+				<td data-tprop="aggregation"></td>
+				<td data-tprop="expireDays"></td>
+				<td><span class="label label-success" data-tprop="active"></span></td>
+				<td><a href="#"><span class="glyphicon glyphicon-eye-open action-link" aria-hidden="true" 
+					data-action-modal="#expire-data-config-preview-modal"></span></a>
+			</tr>
+		</thead>
+		<!--/*
+			The .list-container class defines where objects will be rendered into HTML.
+		 */-->
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<div data-th-replace="sec/expire/datum-delete :: content" data-th-if="${datumDeleteBiz}"></div>
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/expire/edit-data-modal :: form"></form>
+
+<div id="expire-data-config-preview-modal" class="modal config-action fade" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{expire.dataConfig.preview.title}">Preview</h4>
+			</div>
+		 	<div class="modal-body">
+		 		<p data-th-utext="#{expire.dataConfig.preview.intro}">Preview the delete operation.</p>
+		 		<div class="progress waiting">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+				</div>
+				<p class="waiting" data-th-text="#{onemomentplease.label}">One moment, please...</p>
+		 		<table class="expire-preview-counts tally table ready hidden">
+		 			<tbody>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumMonthlyCount.label}">Monthly</th><td data-tprop="datumMonthlyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumDailyCount.label}">Daily</th><td data-tprop="datumDailyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumHourlyCount.label}">Hourly</th><td data-tprop="datumHourlyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumCount.label}">Raw</th><td data-tprop="datumCountDisplay"></td>
+		 				</tr>
+		 			</tbody>
+		 			<tfoot>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumTotalCount.label}">Total</th><th data-tprop="datumTotalCountDisplay"></th>
+		 				</tr>
+		 			</tfoot>
+		 		</table>
+		 	</div>
+		 	<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+		 	</div>
+		 </div>
+ 	</div>
+</div>
+
+<!--/* Setting templates */-->
+
+<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+</div>
+</body>
+</html>

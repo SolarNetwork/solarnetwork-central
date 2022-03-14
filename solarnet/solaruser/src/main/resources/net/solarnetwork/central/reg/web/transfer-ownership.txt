@@ -1,0 +1,7 @@
+SolarNetwork user ${actor.name} (${actor.email}) would like to transfer ownership of
+their SolarNode #${nodeId} to you. You can accept or decline this request by visiting
+the My Nodes page on SolarNetwork:
+
+${url}
+
+This automated email was sent to ${recipient} on behalf of ${actor.email}.

@@ -1,0 +1,1 @@
+CREATE EXTENSION IF NOT EXISTS 'aggs_for_vecs';

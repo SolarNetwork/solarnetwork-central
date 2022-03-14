@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'import')">
+<head>
+    <title data-th-text="#{import.title}">Import</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{import.intro}">
+	Import data on this page.
+</p>
+
+<section id="datum-import-jobs">
+	<h2>
+		<span data-th-text="#{import.jobList.header}">Datum import</span>
+		<a href="#edit-datum-import-job-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			data-th-title="#{import.jobList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{import.jobList.intro(0)}">
+		You have <strong class="listCount">1</strong> import job.
+	</p>
+	<table id="datum-import-job-list-container" class="table table-body-borderless configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{import.job.id.label}">ID</th>
+				<th data-th-text="#{import.job.groupKey.label}">Group</th>
+				<th data-th-text="#{import.job.name.label}">Name</th>
+				<th data-th-text="#{import.job.timeZoneId.label}">Time Zone</th>
+				<th data-th-text="#{import.job.batchSize.label}">Batch</th>
+				<th data-th-text="#{import.job.state.label}">State</th>
+				<th data-th-text="#{import.job.percentComplete.label}">Progress</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody class="template">
+			<tr>
+				<td>
+					<a href="#" class="edit-link" data-tprop="shortId" data-edit-modal="#edit-datum-import-job-modal"></a>
+					<div data-tprop="submitDateDisplay"></div>
+				</td>
+				<td data-tprop="groupKeyDisplay"></td>
+				<td data-tprop="name"></td>
+				<td data-tprop="timeZoneId"></td>
+				<td data-tprop="batchSize"></td>
+				<td>
+					<span data-tprop="state"></span>
+					<div class="complete hidden" data-tprop="completionDateDisplay"></div>
+				</td>
+				<td>
+					<p>
+						<span class="label label-danger success-error hidden" data-th-text="#{import.job.success.error}">Error</span>
+						<span class="label label-success success-ok hidden" data-th-text="#{import.job.success.ok}">Success</span>
+					</p>
+					<div class="progress hidden">
+						<div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+							<span data-tprop="progressAmount">0</span>%
+						</div>
+					</div>
+					<div class="running"  style="font-size: 86%">
+						<p class="running hidden"><b data-th-text="|#{import.job.loadedCount.label}:|"></b> <span data-tprop="loadedCount"></span></p>
+						<p class="running hidden"><b data-th-text="|#{import.job.duration.label}:|"></b> <span data-tprop="duration"></span></p>
+						<p class="running hidden"><b data-th-text="|#{import.job.eta.label}:|"></b> <span data-tprop="eta"></span></p>
+					</div>
+					<p class="success-error hidden" data-tprop="messageHtml"></p>
+					<p class="complete hidden">
+						<span data-th-text="#{import.job.loadedCount.label}">Loaded</span>
+						<span> </span>
+						<span data-tprop="loadedCount"></span>
+						<span> </span>
+						<span data-th-text="#{in.label}">in</span>
+						<span> </span>
+						<span data-tprop="duration"></span>
+					</p>
+				</td>
+				<td class="col-sm-2 text-right">
+					<div class="btn-group preview">
+						<button type="button" class="btn btn-small btn-default action-link"
+							 data-action-modal="#preview-datum-import-job-modal" data-th-text="#{import.job.action.preview}">Import</button>
+						<button type="button" class="btn btn-small btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+							<span class="caret"></span>
+							<span class="sr-only" data-th-text="#{toggle.dropdown.label}">Toggle</span>
+						</button>
+						<ul class="dropdown-menu dropdown-menu-right" role="menu">
+							<li>
+								<a href="#" class="action-link" data-action-modal="#confirm-datum-import-job-modal" data-th-text="#{import.job.action.confirm}">Confirm</a>
+							</li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+			<tr class="rule">
+				<td colspan="7">
+					<dl class="service-props-container hbox" style="font-size: 86%">
+					</dl>
+					<dl class="service-props-template hidden">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
+					</dl>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/imp/confirm-datum-import-job-modal :: form"></form>
+<form data-th-replace="sec/imp/edit-datum-import-job-modal :: form"></form>
+<form data-th-replace="sec/imp/preview-datum-import-job-modal :: form"></form>
+
+<!--/* Setting templates */-->
+
+<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+</div>
+</body>
+</html>
