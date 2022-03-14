@@ -145,6 +145,8 @@ spring:
 app:
   datasource:
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: "solarnet"
+    password: "solarnet"
 
 debug: true
 
