@@ -1,8 +1,0 @@
-# single hour of status data, one value most frequent (B)
-
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:09:00Z","samples":{"s":{"p":"A"}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:19:00Z","samples":{"s":{"p":"B"}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:29:00Z","samples":{"s":{"p":"B"}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:39:00Z","samples":{"s":{"p":"A"}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:49:00Z","samples":{"s":{"p":"B"}}}
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:59:00Z","samples":{"s":{"p":"C"}}}

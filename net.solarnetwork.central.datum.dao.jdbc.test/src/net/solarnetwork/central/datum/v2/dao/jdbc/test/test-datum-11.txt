@@ -1,2 +1,0 @@
-# single datum with just one status
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:19:00Z","samples":{"s":{"s":"On"}}}

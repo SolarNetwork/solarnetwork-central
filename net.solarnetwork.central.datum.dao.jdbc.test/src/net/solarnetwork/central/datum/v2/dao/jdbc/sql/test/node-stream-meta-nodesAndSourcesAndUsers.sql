@@ -1,9 +1,0 @@
-SELECT s.stream_id, s.node_id, s.source_id, s.names_i, s.names_a, s.names_s, 
-	s.jdata, 'n'::CHARACTER AS kind, COALESCE(l.time_zone, 'UTC') AS time_zone
-FROM solardatm.da_datm_meta s
-INNER JOIN solaruser.user_node un ON un.node_id = s.node_id
-LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = s.node_id
-LEFT OUTER JOIN solarnet.sn_loc l ON l.id = n.loc_id
-WHERE s.node_id = ANY(?)
-	AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
-	AND un.user_id = ANY(?)

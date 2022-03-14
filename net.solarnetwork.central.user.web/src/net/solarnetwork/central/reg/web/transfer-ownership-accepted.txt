@@ -1,5 +1,0 @@
-${actor.email} has accepted your SolarNetwork SolarNode ${transfer.nodeId} ownership 
-transfer request. This node will no longer appear on the My Nodes page of
-SolarNetwork, and any security tokens you had related to this node have been revoked.
-
-This automated email was sent to ${transfer.user.email} on behalf of ${actor.email}.

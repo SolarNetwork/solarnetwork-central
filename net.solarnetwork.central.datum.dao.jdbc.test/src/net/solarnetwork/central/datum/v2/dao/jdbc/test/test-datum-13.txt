@@ -1,2 +1,0 @@
-# single datum with one instantaneous and tags
-{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:19:00Z","samples":{"i":{"x":1.3},"t":["Ok","On"]}}

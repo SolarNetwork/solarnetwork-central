@@ -1,2 +1,0 @@
-"stream_id","obj_id","source_id","created","updated","names_i","names_a","names_s","jdata","kind","time_zone"
-"44783e61-34c2-4ea8-83be-15d484708c83",475,"test/energy","2021-05-14 22:48:25.109339+00","2021-05-17 23:11:14.442963+00","{watts,current,voltage,frequency,realPower,powerFactor,phaseVoltage,apparentPower,reactivePower,tou}","{wattHours,cost}",,"{""pm"": {""cost"": {""vm-date"": 1621293059006, ""vm-value"": ""5984718"", ""vm-reading"": ""-169.85648""}}}","n","Pacific/Auckland"

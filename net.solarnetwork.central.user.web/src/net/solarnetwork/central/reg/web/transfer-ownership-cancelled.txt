@@ -1,4 +1,0 @@
-${actor.name} (${actor.email}) has cancelled their request to transfer ownership of 
-their SolarNetwork SolarNode ${transfer.nodeId} to you. There is nothing further for you to do.
-
-This automated email was sent to ${transfer.email} on behalf of ${actor.email}.

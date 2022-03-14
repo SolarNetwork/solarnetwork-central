@@ -1,1 +1,0 @@
-# single day of hourly data, with no rows

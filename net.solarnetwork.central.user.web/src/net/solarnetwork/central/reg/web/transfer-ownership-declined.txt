@@ -1,5 +1,0 @@
-${actor.email} has declined your SolarNetwork SolarNode ${transfer.nodeId} ownership 
-transfer request. This node will still appear on the My Nodes page of SolarNetwork 
-for your account.
-
-This automated email was sent to ${transfer.user.email} on behalf of ${actor.email}.
