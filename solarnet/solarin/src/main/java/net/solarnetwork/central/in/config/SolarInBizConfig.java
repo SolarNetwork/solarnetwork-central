@@ -159,6 +159,102 @@ public class SolarInBizConfig {
 		private int queueSize = 200;
 		private int statFrequency = 200;
 		private int datumCacheRemovalAlertThreshold = 500;
+
+		/**
+		 * Get the thread count.
+		 * 
+		 * @return the thread count
+		 */
+		public int getThreads() {
+			return threads;
+		}
+
+		/**
+		 * Set the thread count.
+		 * 
+		 * @param threads
+		 *        the thread count to set
+		 */
+		public void setThreads(int threads) {
+			this.threads = threads;
+		}
+
+		/**
+		 * Get the shutdown wait time, in seconds.
+		 * 
+		 * @return the seconds
+		 */
+		public int getShutdownWaitSecs() {
+			return shutdownWaitSecs;
+		}
+
+		/**
+		 * Set the shutdown wait time, in seconds.
+		 * 
+		 * @param shutdownWaitSecs
+		 *        the seconds to set
+		 */
+		public void setShutdownWaitSecs(int shutdownWaitSecs) {
+			this.shutdownWaitSecs = shutdownWaitSecs;
+		}
+
+		/**
+		 * Get the queue size.
+		 * 
+		 * @return the queueSize
+		 */
+		public int getQueueSize() {
+			return queueSize;
+		}
+
+		/**
+		 * Set the queue size.
+		 * 
+		 * @param queueSize
+		 *        the queueSize to set
+		 */
+		public void setQueueSize(int queueSize) {
+			this.queueSize = queueSize;
+		}
+
+		/**
+		 * Get the statistic frequency.
+		 * 
+		 * @return the frequency
+		 */
+		public int getStatFrequency() {
+			return statFrequency;
+		}
+
+		/**
+		 * Set the statistic frequency.
+		 * 
+		 * @param statFrequency
+		 *        the frequency to set
+		 */
+		public void setStatFrequency(int statFrequency) {
+			this.statFrequency = statFrequency;
+		}
+
+		/**
+		 * Get the cache removal alert threshold.
+		 * 
+		 * @return the threshold
+		 */
+		public int getDatumCacheRemovalAlertThreshold() {
+			return datumCacheRemovalAlertThreshold;
+		}
+
+		/**
+		 * Set the cache removal alert threshold.
+		 * 
+		 * @param datumCacheRemovalAlertThreshold
+		 *        the threshold to set
+		 */
+		public void setDatumCacheRemovalAlertThreshold(int datumCacheRemovalAlertThreshold) {
+			this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
+		}
+
 	}
 
 	@Bean
