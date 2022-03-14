@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'my-nodes')">
+<head>
+    <title data-th-text="#{app.name}">SolarUser</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+	<p class="intro" data-th-utext="#{my-nodes.invitation.intro}">
+		Here is your invitation.
+	</p>
+	<div class="alert alert-info alert-dismissible" role="alert">
+		<button type="button" class="close" data-dismiss="alert" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+		<span data-th-utext="#{my-nodes.solarnode.link.help}">Your SolarNode setup screen is available at whatever your node's DNS name or IP address is.</span>
+	</div>
+	<pre class="well" data-th-text="${details.confirmationKey}"></pre>
+	<h3></h3>
+	<p class="alert alert-info">
+		<strong data-th-text="#{my-nodes.invitation.securityPhrase.label} + ':'">Phrase:</strong>
+		<span data-th-text="${details.securityPhrase}">My phrase</span>
+	</p>
+	<div>
+		<a data-th-href="@{/u/sec/my-nodes}" class="btn btn-primary" data-th-text="#{back.label}">Back</a>
+	</div>
+</div>
+</body>
+</html>

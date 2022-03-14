@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'auth-tokens')">
+<head>
+    <title data-th-text="#{auth-tokens.title}">Security Tokens</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+	<link rel="stylesheet" href="../../../static/css/edit-node.css">
+	<script src="../../../static/js-lib/jquery-3.3.1.js" ></script>
+	<script src="../../../static/js-lib/jquery.form.js"></script>
+	<script src="../../../static/js-lib/jquery.dataTables.js"></script>
+	<script src="../../../static/js-lib/moment.js"></script>
+	<script src="../../../static/js-lib/bootstrap.js"></script>
+	<script src="../../../static/js-lib/dataTables.bootstrap.js"></script>
+	<script src="../../../static/js/global.js"></script>
+	<script src="../../../static/js/auth-tokens.js"></script>
+</head>
+<body>
+<main class="container">
+<!--/*
+	Input parameters:
+
+		userAuthTokens - collection of "user" UserAuthToken objects
+		dataAuthTokens - collection of "data" UserAuthToken objects
+		userNodes      - collection of UserNode objects
+ */-->
+<p class="intro" data-th-utext="#{auth-tokens.intro}">
+	Security tokens grant API access to SolarNetwork.
+</p>
+
+<section id="user-auth-tokens">
+<h2>
+	<span data-th-text="#{auth-tokens.user.title}">User tokens</span>
+	<a href="#create-user-auth-token" class="btn btn-primary pull-right" data-toggle="modal"
+		data-th-title="#{auth-tokens.action.create}" title="Create">
+		<i class="glyphicon glyphicon-plus"></i>
+	</a>
+</h2>
+<p data-th-utext="#{auth-tokens.user.intro}">
+	User security tokens grant full API access to this account.
+</p>
+<p data-th-if="${#lists.isEmpty(userAuthTokens)}" data-th-text="#{auth-tokens.user.none}">
+	You do not have any user security tokens.
+</p>
+<table data-th-if="${not #lists.isEmpty(userAuthTokens)}" class="table">
+	<thead>
+		<tr>
+			<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			<th data-th-text="#{auth-tokens.label.policy}">Policy</th>
+			<th data-th-text="#{auth-tokens.label.created}">Created</th>
+			<th data-th-text="#{auth-tokens.label.status}">Status</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr data-th-each="token : ${userAuthTokens}">
+			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
+			<td>
+				<dl data-th-replace="sec/authtokens/token-policy :: content">
+					<dt>Not After</dt>
+					<dd>1 Jan 2010</dd>
+				</dl>
+			</td>
+			<td data-th-text="${#temporals.format(token.created, 'dd MMM yyyy') + ' UTC'}">
+				1 Jan 2010
+			</td>
+			<td>
+				<span class="label" data-th-classappend="${token.status.name() == 'Active'} ? 'label-success' : 'label-warning'"
+					data-th-text="#{auth-tokens.label.status.__${token.status}__}">
+					Active
+				</span>
+			</td>
+			<td>
+				<form class="action-user-token">
+					<input type="hidden" name="id" data-th-value="${token.authToken}"/>
+					<button type="button" class="btn btn-small btn-default user-token-change-status"
+						data-th-data-status="${token.status}"
+						data-th-data-action="@{/u/sec/auth-tokens/changeStatus}"
+						data-th-text="#{auth-tokens.action.__${token.status.name() == 'Active' ? 'disable' : 'enable'}__}">
+						Disable
+					</button>
+					<button type="button" class="btn btn-small btn-default user-token-delete"
+						data-th-title="#{auth-tokens.action.delete}">
+						<i class="glyphicon glyphicon-trash"></i>
+					</button>
+					<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}">
+				</form>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</section>
+
+<section id="data-auth-tokens" data-th-if="${not #lists.isEmpty(userNodes)}">
+<h2>
+	<span data-th-text="#{auth-tokens.data.title}">Data tokens</span>
+	<a href="#create-data-auth-token" class="btn btn-primary pull-right" data-toggle="modal"
+		data-th-title="#{auth-tokens.action.create}" title="Create">
+		<i class="glyphicon glyphicon-plus"></i>
+	</a>
+</h2>
+<p data-th-utext="#{auth-tokens.data.intro}">
+	Data security tokens grant access to data collected by SolarNodes.
+</p>
+<p data-th-if="${#lists.isEmpty(dataAuthTokens)}" data-th-text="#{auth-tokens.data.none}">
+	You do not have any data security tokens.
+</p>
+<table data-th-if="${not #lists.isEmpty(dataAuthTokens)}" class="table">
+	<thead>
+		<tr>
+			<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			<th data-th-text="#{auth-tokens.label.policy}">Policy</th>
+			<th data-th-text="#{auth-tokens.label.created}">Created</th>
+			<th data-th-text="#{auth-tokens.label.status}">Status</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr data-th-each="token : ${dataAuthTokens}">
+			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
+			<td>
+				<dl data-th-replace="sec/authtokens/token-policy :: content">
+					<dt>Not After</dt>
+					<dd>1 Jan 2010</dd>
+				</dl>
+			</td>
+			<td data-th-text="${#temporals.format(token.created, 'dd MMM yyyy') + ' UTC'}">
+				1 Jan 2010
+			</td>
+			<td data-th-switch="${token.expired}">
+				<span data-th-case="true" class="label label-danger" data-th-text="#{auth-tokens.label.expired}">
+					Expired
+				</span>
+				<span data-th-case="*" class="label" data-th-classappend="${token.status.name() eq 'Active' ? 'label-success' : 'label-warning'}"
+					data-th-text="#{auth-tokens.label.status.__${token.status}__}">
+					Active
+				</span>
+			</td>
+			<td>
+				<form class="action-data-token">
+					<input type="hidden" name="id" data-th-value="${token.authToken}">
+					<button type="button" class="btn btn-small btn-default data-token-change-status"
+						data-th-data-status="${token.status}"
+						data-th-data-action="@{/u/sec/auth-tokens/changeStatus}"
+						data-th-text="#{auth-tokens.action.__${token.status.name() eq 'Active' ? 'disable' : 'enable'}__}">
+						Disable
+					</button>
+					<button type="button" class="btn btn-small btn-default data-token-delete"
+						data-th-title="#{auth-tokens.action.delete}" title="Delete">
+						<i class="glyphicon glyphicon-trash"></i>
+					</button>
+					<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}">
+				</form>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</section>
+
+<form id="create-user-auth-token" class="modal fade" data-th-action="@{/u/sec/auth-tokens/generateUser}" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title" data-th-text="#{auth-tokens.user.create.title}">Create user token</h4>
+		 	</div>
+		 	<div class="modal-body">
+		 		<p class="before" data-th-utext="#{auth-tokens.user.create.intro}">Create user token here.</p>
+		 		<div class="before">
+		 			<label for="create-user-auth-token-policy-apipaths" data-th-text="#{auth-tokens.policy.apiPaths.label}">API Paths</label>
+		 			<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
+		 				data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"
+		 				placeholder="Comma delimited list of API paths"></textarea>
+		 			<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
+		 				API paths restrict the API methods this token is allowed to call.
+		 			</div>
+				</div>
+		 		<div class="after">
+		 			<p data-th-utext="#{auth-tokens.created.intro}">Token created.</p>
+			 		<table class="table">
+			 			<thead>
+			 				<tr>
+			 					<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			 					<th class="text-danger" data-th-text="#{auth-tokens.label.secret}">Secret</th>
+			 				</tr>
+			 			</thead>
+			 			<tbody>
+			 				<tr>
+			 					<td class="monospace result-token"></td>
+			 					<td class="monospace result-secret text-danger"></td>
+			 				</tr>
+			 			</tbody>
+			 		</table>
+			 		<div class="alert alert-danger">
+			 			<strong data-th-text="#{auth-tokens.created.reiterate.title}">Warning!</strong>
+			 			<span data-th-text="#{auth-tokens.created.reiterate}">You won't be showed this token again.</span>
+			 		</div>
+		 		</div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<button type="submit" class="btn btn-primary before" data-th-text="#{auth-tokens.action.create}">
+		 			Create
+		 		</button>
+		 	</div>
+		</div>
+	</div>
+</form>
+
+<form id="delete-user-auth-token" class="modal fade" data-th-action="@{/u/sec/auth-tokens/delete}" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title" data-th-text="#{auth-tokens.user.delete.title}">Delete token</h4>
+		 	</div>
+		 	<div class="modal-body">
+		 		<p data-th-utext="#{auth-tokens.user.delete.intro}">
+		 			Are you sure you want to delete this token?
+		 		</p>
+		 		<div class="row">
+		 			<label class="col-sm-3" data-th-text="#{auth-tokens.label.token}">
+		 				Token
+		 			</label>
+		 			<div class="col-sm-9 container-token monospace"></div>
+		 		</div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<input type="hidden" name="id" value="">
+		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<button type="submit" class="btn btn-danger">
+		 			<i class="glyphicon glyphicon-trash"></i>
+		 			<span data-th-text="#{auth-tokens.action.delete}">Delete</span>
+		 		</button>
+		 	</div>
+		</div>
+	</div>
+</form>
+
+<form id="create-data-auth-token" class="modal fade" data-th-if="${not #lists.isEmpty(userNodes)}"
+	data-th-action="@{/u/sec/auth-tokens/generateData}" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title" data-th-text="#{auth-tokens.data.create.title}">Create data token</h4>
+			</div>
+			<div class="modal-body">
+				<p class="before" data-th-utext="#{auth-tokens.data.create.intro}">
+					Fill in this form to create a new data security token.
+				</p>
+				<ul class="nav nav-pills form-group before">
+					<li class="active"><a data-toggle="pill" href="#create-data-auth-token-tab-ids" data-th-text="#{auth-tokens.data.create.group.ids}">Node/Source IDs</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-expiry" data-th-text="#{auth-tokens.data.create.group.expiry}">Expiry</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-agg" data-th-text="#{auth-tokens.data.create.group.agg}">Aggregation</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-node-meta" data-th-text="#{auth-tokens.data.create.group.node-meta}">Node Metadata</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-user-meta" data-th-text="#{auth-tokens.data.create.group.user-meta}">User Metadata</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-apipaths" data-th-text="#{auth-tokens.data.create.group.apipaths}">API Paths</a></li>
+				</ul>
+				<div class="tab-content before">
+					<div id="create-data-auth-token-tab-ids" class="tab-pane fade in active">
+						<div id="create-data-auth-token-policy-nodeids" class="toggle-buttons">
+							<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
+							<button type="button" class="toggle btn btn-sm btn-default"
+								data-th-data-node-id="${userNode.node.id}">
+								<span data-th-text="${userNode.node.id}">123</span>
+								<span data-th-if="${not #strings.isEmpty(userNode.name)}"
+									data-th-text="${' - ' + userNode.name}"> - Home node</span>
+							</button>
+							<!--/*/ </th:block> /*/-->
+						</div>
+						<div class="form-group">
+							<label for="create-data-auth-token-policy-sourceids"
+								data-th-text="#{auth-tokens.policy.sourceIds.label}">
+								Source IDs
+							</label>
+							<textarea id="create-data-auth-token-policy-sourceids" class="form-control"
+								name="sourceIds" rows="2" placeholder="Comma delimited list of source IDs"
+								data-th-placeholder="#{auth-tokens.policy.sourceIds.placeholder}"></textarea>
+							<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-expiry" class="tab-pane fade form-horizontal">
+						<div class="form-group">
+							<label for="create-data-auth-token-policy-not-after" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.policy.notAfter.label}">
+								Not After
+							</label>
+							<div class="col-sm-9">
+								<input type="date" id="create-data-auth-token-policy-not-after" class="form-control"
+									name="notAfter" maxlength="10" placeholder="Expire date"
+									data-th-placeholder="#{auth-tokens.policy.notAfter.placeholder}">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="create-data-auth-token-policy-not-after" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.policy.refreshAllowed.label}">
+								Refresh allowed
+							</label>
+							<div class="col-sm-9">
+								<label class="radio-inline">
+									<input type="radio" name="refreshAllowed" value="true">
+									<span data-th-text="#{auth-tokens-policy-refreshAllowed.true.label}">Yes</span>
+								</label>
+								<label class="radio-inline">
+									<input type="radio" name="refreshAllowed" value="false" checked="checked">
+									<span data-th-text="#{auth-tokens-policy-refreshAllowed.false.label}">No</span>
+								</label>
+								<div class="help-block" data-th-utext="#{auth-tokens.policy.refreshAllowed.caption}">
+									Enable to allow token holder to refresh a token signing key.
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-agg" class="tab-pane fade">
+						<label for="create-data-auth-token-policy-minagg" data-th-text="#{auth-tokens.policy.minAggregation.label}">
+							Minimum Aggregation
+						</label>
+						<select id="create-data-auth-token-policy-minagg" class="form-control" name="minAggregation">
+							<option value="" data-th-text="#{auth-tokens.policy.minAggregation.none}">None</option>
+							<!--/*/ <th:block th:each="agg : ${policyAggregations}"> /*/-->
+								<option value="Hourly" data-th-value="${agg}" data-th-text="#{aggregation.__${agg}__.label}">Hourly</option>
+							<!--/*/ </th:block> /*/-->
+						</select>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.minAggregation.caption}">
+							A minimum aggregation restricts the aggregate level this token has access to.
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-node-meta" class="tab-pane fade">
+						<label for="create-data-auth-token-policy-nodemeta" data-th-text="#{auth-tokens.policy.nodeMetadataPaths.label}">
+							Node Metadata
+						</label>
+						<textarea id="create-data-auth-token-policy-nodemeta" class="form-control" name="nodeMetadataPaths" rows="2"
+							placeholder="Comma delimieted list of metadata paths"
+							data-th-placeholder="#{auth-tokens.policy.nodeMetadataPaths.placeholder}"></textarea>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.nodeMetadataPaths.caption}">
+							Node metadata paths restrict the node metadata this token has access to.
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-user-meta" class="tab-pane fade">
+						<label for="create-data-auth-token-policy-usermeta" data-th-text="#{auth-tokens.policy.userMetadataPaths.label}">
+							User Metadata
+						</label>
+						<textarea id="create-data-auth-token-policy-usermeta" class="form-control" name="userMetadataPaths" rows="2"
+							placeholder="Comma delimited list of metadata paths"
+							data-th-placeholder="#{auth-tokens.policy.userMetadataPaths.placeholder}"></textarea>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.userMetadataPaths.caption}">
+							User metadata paths restrict the account metadata this token has access to.
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-apipaths" class="tab-pane fade">
+						<label for="create-data-auth-token-policy-apipaths" data-th-text="#{auth-tokens.policy.apiPaths.label}">
+							API Paths
+						</label>
+						<textarea id="create-data-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
+							placeholder="Comma delimited list of API paths"
+							data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"></textarea>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
+							API paths restrict the API methods this token is allowed to call.
+						</div>
+					</div>
+				</div>
+				<div class="after">
+					<p data-th-utext="#{auth-tokens.created.intro}">Your data token has been created.</p>
+			 		<table class="table">
+			 			<thead>
+			 				<tr>
+			 					<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			 					<th class="text-danger" data-th-text="#{auth-tokens.label.secret}">Secret</th>
+			 				</tr>
+			 			</thead>
+			 			<tbody>
+			 				<tr>
+			 					<td class="monospace result-token"></td>
+			 					<td class="monospace result-secret text-danger"></td>
+			 				</tr>
+			 			</tbody>
+			 		</table>
+			 		<div class="alert alert-danger">
+			 			<strong data-th-text="#{auth-tokens.created.reiterate.title}">Warning!</strong>
+			 			<span data-th-text="#{auth-tokens.created.reiterate}">You won't be showed this token again.</span>
+			 		</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+				<button type="submit" class="btn btn-primary before" data-th-text="#{auth-tokens.action.create}">
+					Create
+				</button>
+			</div>
+		</div>
+	</div>
+</form>
+
+<form id="delete-data-auth-token" class="modal fade" data-th-if="${not #lists.isEmpty(userNodes)}"
+	 data-th-action="@{/u/sec/auth-tokens/delete}" method="post">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title" data-th-text="#{auth-tokens.data.delete.title}">Delete data token</h4>
+			</div>
+			<div class="modal-body">
+				<p data-th-utext="#{auth-tokens.data.delete.intro}">Are you sure you want to delete this token?</p>
+				<div class="row">
+					<label class="col-sm-3" data-th-text="#{auth-tokens.label.token}">
+						Token
+					</label>
+					<div class="col-sm-9 container-token monospace"></div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<input type="hidden" name="id" value="">
+				<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+				<button type="submit" class="btn btn-danger">
+					<i class="glyphicon glyphicon-trash"></i>
+					<span data-th-text="#{auth-tokens.action.delete}">Delete</span>
+				</button>
+			</div>
+		</div>
+	</div>
+</form>
+</main>
+</body>
+</html>

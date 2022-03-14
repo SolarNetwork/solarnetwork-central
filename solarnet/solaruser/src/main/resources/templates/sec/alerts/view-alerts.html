@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'alerts')">
+<head>
+    <title data-th-text="#{alerts.title}">Alerts</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/dataTables.bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+	<link rel="stylesheet" href="../../../static/css/edit-node.css">
+	<script src="../../../static/js-lib/jquery-3.3.1.js" ></script>
+	<script src="../../../static/js-lib/jquery.form.js"></script>
+	<script src="../../../static/js-lib/jquery.dataTables.js"></script>
+	<script src="../../../static/js-lib/moment.js"></script>
+	<script src="../../../static/js-lib/bootstrap.js"></script>
+	<script src="../../../static/js-lib/dataTables.bootstrap.js"></script>
+	<script src="../../../static/js/global.js"></script>
+	<script src="../../../static/js/alerts.js"></script>
+</head>
+<body>
+<main class="container">
+<!--/*
+	Input parameters:
+
+		nodeDataAlerts 		- collection of UserAlert objects of type NodeStaleData
+		nodeDataAlertTypes 	- collection of UserAlertType that represent node data alerts
+		userNodes      		- collection of UserNode objects
+		alertStatuses       - collection of UesrAlertStatus
+ */-->
+<p class="intro" data-th-utext="#{alerts.intro}">
+	Here you can configure alerts and view any alert situations that have been triggered.
+</p>
+
+<section class="node-data-alerts">
+	<h2>
+		<span data-th-text="#{alerts.node.data.header}">Node data alerts</span>
+		<button type="button" id="add-node-data-button" class="btn btn-primary pull-right">
+			<i class="glyphicon glyphicon-plus"></i>
+			<span data-th-text="#{alerts.action.create}">Create alert</span>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{alerts.node.data.intro(${nodeDataAlerts.size})}">
+		You have <strong>1</strong> node data alerts.
+	</p>
+	<table class="table" id="node-data-alerts"
+		data-th-data-action-situation="@{u/sec/alerts/situation}"
+		data-th-if="${not #lists.isEmpty(nodeDataAlerts)}">
+		<thead>
+			<tr>
+				<th data-th-text="#{alert.nodeId.label}">Node ID</th>
+				<th data-th-text="#{alert.type.label}">Type</th>
+				<th data-th-text="#{alert.options.sourceIds.label}">Source IDs</th>
+				<th data-th-text="#{alert.options.ageMinutes.heading}">Age</th>
+				<th data-th-text="#{alert.options.window.label}">Window</th>
+				<th data-th-text="#{alert.status.label}">Status</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr class="alert-row" data-th-classappend="${alert.situation} ? 'alert-danger'"
+					data-th-each="alert : ${nodeDataAlerts}"
+					data-th-with="
+						alertSources=${#strings.listJoin(alert.options['sourceIds'], ', ')},
+						alertWindowTimeStart=${not #lists.isEmpty(alert.options['windows']) ? alert.options['windows'][0].timeStart : null},
+						alertWindowTimeEnd=${not #lists.isEmpty(alert.options['windows']) ? alert.options['windows'][0].timeEnd : null},
+						alertAge=${alert.options['age'] != null ? #numbers.formatDecimal(alert.options['age'] / 60, 0, 0) : null}">
+				<td data-th-text="${alert.nodeId} ? ${alert.nodeId} : #{alert.nodeId.any}">
+					123
+				</td>
+				<td data-th-text="#{alert.type.__${alert.type}__.label}">
+					Stale data
+				</td>
+				<td data-th-text="${alertSources}">
+					/src/1, /src/2
+				</td>
+				<td data-th-text="${alertAge}">
+					60
+				</td>
+				<td data-th-text="${alertWindowTimeStart != null and alertWindowTimeEnd != null}
+					? |${alertWindowTimeStart} - ${alertWindowTimeEnd}|">
+					08:00 - 16:00
+				</td>
+				<td>
+					<span class="label" data-th-classappend="${alert.status.name() eq 'Active'
+						? 'label-success' : alert.status.name() eq 'Disabled'
+						? 'label-default' : 'label-primary'}"
+						data-th-text="#{alert.status.__${alert.status}__.label}">
+					</span>
+				</td>
+				<td>
+					<button type="button" class="btn btn-small btn-default edit-alert"
+						data-th-data-node-id="${alert.nodeId}"
+						data-th-data-alert-id="${alert.id}"
+						data-th-data-alert-type="${alert.type}"
+						data-th-data-alert-status="${alert.status}"
+						data-th-data-sources="${alertSources}"
+						data-th-data-age="${alertAge}"
+						data-th-data-window-time-start="${alertWindowTimeStart}"
+						data-th-data-window-time-end="${alertWindowTimeEnd}"
+						data-th-text="#{alerts.action.edit}">
+						Edit
+					</button>
+					<button type="button" class="btn btn-small btn-danger view-situation"
+						data-th-data-alert-id="${alert.id}"
+						data-th-if="${alert.situation}">
+						<span class="glyphicon glyphicon-alert" aria-hidden="true"></span>
+						<span data-th-text="#{alerts.action.situation.view}">View situation</span>
+					</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<!--/* Modal views */-->
+
+<form id="create-node-data-alert-modal" class="modal fade alert-form" data-th-action="@{/u/sec/alerts/save}" method="post"
+	data-th-data-action-node-sources="@{/u/sec/alerts/node/0/sources}">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		 	<div class="modal-header">
+		 		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		 		<h4 class="modal-title" data-th-text="#{alerts.node.data.create.title}">Create alert</h4>
+		 	</div>
+		 	<div class="modal-body form-horizontal carousel slide" id="create-node-data-alert-carousel">
+		 		<ol class="carousel-indicators dark">
+    				<li data-target="#create-node-data-alert-carousel" data-slide-to="0" class="active" data-th-title="#{alerts.node.data.create.section.main.title}"></li>
+    				<li data-target="#create-node-data-alert-carousel" data-slide-to="1" data-th-title="#{alerts.node.data.create.section.filters.title}"></li>
+  				</ol>
+		 		<div class="carousel-inner" role="listbox">
+		 			<div class="item active">
+				 		<p data-th-utext="#{alerts.node.data.create.intro}">Create an alert here.</p>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="create-node-data-alert-node-id" data-th-text="#{alert.nodeId.label}">Node ID</label>
+							<div class="col-sm-10">
+								<select name="nodeId" class="form-control" id="create-node-data-alert-node-id">
+									<option value="" data-th-text="#{alert.nodeId.any}">Any</option>
+									<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
+										<option data-th-value="${userNode.node.id}" data-th-text="${userNode.idAndName}">123 Home node</option>
+									<!--/*/ </th:block> /*/-->
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="create-node-data-alert-type" data-th-text="#{alert.type.label}">Type</label>
+							<div class="col-sm-10 checkbox">
+								<select name="type" class="form-control" id="create-node-data-alert-type">
+									<!--/*/ <th:block th:each="alertType : ${nodeDataAlertTypes}"> /*/-->
+										<option data-th-value="${alertType}" data-th-text="#{|alert.type.${alertType}.label|}">
+											Stale data
+										</option>
+									<!--/*/ </th:block> /*/-->
+								</select>
+							</div>
+						</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-age" data-th-text="#{alert.options.ageMinutes.label}">Age</label>
+							<div class="col-sm-10">
+								<input name="option-age-minutes" type="number" min="10" required="required" value="30" class="form-control col-sm-3" id="create-node-data-alert-age">
+								<span class="help-block" data-th-utext="#{alert.options.ageMinutes.caption}">The number of minutes since the node has posted data before the alert is triggered.</span>
+							</div>
+				 		</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-status" data-th-text="#{alert.status.label}">Status</label>
+							<div class="col-sm-10" id="create-node-data-alert-status">
+								<!--/*/ <th:block th:each="alertStatus,itr : ${alertStatuses}"> /*/-->
+								<label class="radio-inline">
+									<input type="radio" name="status" data-th-value="${alertStatus}"
+										data-th-checked="${itr.first}"
+										data-th-title="#{|alert.status.${alertStatus}.caption|}">
+									<span> </span>
+									<span data-th-text="#{|alert.status.${alertStatus}.label|}">Active</span>
+								</label>
+								<!--/*/ </th:block> /*/-->
+								<div class="help-block alert-status-help"></div>
+							</div>
+				 		</div>
+		 			</div>
+		 			<div class="item">
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-sources" data-th-text="#{alert.options.sourceIds.label}">Source IDs</label>
+							<div class="col-sm-10">
+								<input name="option-sources" type="text" maxlength="255" class="form-control" id="create-node-data-alert-sources">
+								<span class="help-block" data-th-utext="#{alert.options.sourceIds.caption}">The source IDs matching the alert.</span>
+								<div class="text-info hidden" id="create-node-data-alert-sources-list">
+									<!--/* This container will be used to display the available sources for a given node. */-->
+									<b data-th-text="|#{alert.options.sourceIds.available.label}: |">Available sources: </b>
+									<span class="sources"></span>
+								</div>
+							</div>
+				 		</div>
+				 		<div class="form-group">
+				 			<label class="col-sm-2 control-label" for="create-node-data-alert-window" data-th-text="#{alert.options.window.label}">Window</label>
+							<div class="col-sm-10 form-inline" id="create-node-data-alert-window">
+								<input name="option-window-time-start" type="text" size="5" maxlength="5" placeholder="08:00" class="form-control" id="create-node-data-alert-window-time-start">
+								<input name="option-window-time-end" type="text" size="5" maxlength="5" placeholder="20:00" class="form-control" id="create-node-data-alert-window-time-end">
+								<span class="help-block" data-th-utext="#{alert.options.window.caption}">An optional time window within which the alert can be triggered.</span>
+							</div>
+				 		</div>
+				 	</div>
+				 </div>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<button class="btn btn-small btn-danger action-delete pull-left" type="button">
+					<i class="glyphicon glyphicon-trash"></i>
+					<span data-th-text="#{alerts.action.delete}">Delete</span>
+				</button>
+		 		<a href="#" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</a>
+		 		<button type="submit" class="btn btn-primary before" data-th-text="#{alerts.action.save}">
+		 			Save
+		 		</button>
+		 	</div>
+		</div>
+	</div>
+	<input type="hidden" name="id" value="">
+</form>
+
+<div data-th-replace="sec/alerts/situation-modal :: modal"></div>
+<script data-th-replace="sec/alerts/alert-enums :: script"></script>
+</main>
+</body>
+</html>

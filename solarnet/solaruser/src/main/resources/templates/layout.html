@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html data-th-fragment="layout (title, body, footer, navloc)">
+<head>
+    <title data-th-replace="${title}">SolarUser</title>
+	<link rel="icon" type="image/png" data-th-href="@{/img/favicon.png}" href="../static/img/favicon.png">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="csrf" content="" data-th-content="${_csrf.token}" data-th-if="${_csrf}">
+	<meta name="csrf_header" content="X-CSRF-TOKEN" data-th-content="${_csrf.headerName}" data-th-if="${_csrf}">
+	<meta name="solarUserRootURL" content="/solaruser/u" data-th-content="@{/u}">
+	<link rel="stylesheet" href="../static/css/bootstrap.css" data-th-href="@{/css/bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" data-th-href="@{/css/bootstrap-theme.css}">
+	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css" data-th-href="@{/css/dataTables.bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/global.css" data-th-href="@{/css/global.css}">
+	<link rel="stylesheet" href="../static/css/edit-node.css" data-th-href="@{/css/edit-node.css}">
+	<script src="../static/js-lib/jquery-3.3.1.js" data-th-src="@{/js-lib/jquery-3.3.1.js}"></script>
+	<script src="../static/js-lib/jquery.form.js" data-th-src="@{/js-lib/jquery.form.js}"></script>
+	<script src="../static/js-lib/jquery.maphilight.js" data-th-src="@{/js-lib/jquery.maphilight.js}"></script>
+	<script src="../static/js-lib/jquery.timezone-picker.js" data-th-src="@{/js-lib/jquery.timezone-picker.js}"></script>
+	<script src="../static/js-lib/jquery.dataTables.js" data-th-src="@{/js-lib/jquery.dataTables.js}"></script>
+	<script src="../static/js-lib/moment.js" data-th-src="@{/js-lib/moment.js}"></script>
+	<script src="../static/js-lib/bootstrap.js" data-th-src="@{/js-lib/bootstrap.js}"></script>
+	<script src="../static/js-lib/dataTables.bootstrap.js" data-th-src="@{/js-lib/dataTables.bootstrap.js}"></script>
+	<script src="../static/js/global.js" data-th-src="@{/js/global.js}"></script>
+	<script src="../static/js/templates.js" data-th-src="@{/js/templates.js}"></script>
+	<script src="../static/js/settings.js" data-th-src="@{/js/settings.js}"></script>
+	<script src="../static/js/login.js" data-th-src="@{/js/login.js}"></script>
+	<script src="../static/js/register.js" data-th-src="@{/js/register.js}"></script>
+	<script src="../static/js/my-nodes.js" data-th-src="@{/js/my-nodes.js}"></script>
+	<script src="../static/js/auth-tokens.js" data-th-src="@{/js/auth-tokens.js}"></script>
+	<script src="../static/js/alerts.js" data-th-src="@{/js/alerts.js}"></script>
+	<script src="../static/js/billing.js" data-th-src="@{/js/billing.js}"></script>
+	<script src="../static/js/data-insight.js" data-th-src="@{/js/data-insight.js}"></script>
+	<script src="../static/js/import.js" data-th-src="@{/js/import.js}"></script>
+	<script src="../static/js/export.js" data-th-src="@{/js/export.js}"></script>
+	<script src="../static/js/expire.js" data-th-src="@{/js/expire.js}"></script>
+	<script src="../static/js/node-event.js" data-th-src="@{/js/node-event.js}"></script>
+</head>
+<body>
+	<nav class="navbar navbar-default" data-th-replace="navbar :: navbar">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">
+					<img src="../static/img/logo.svg" alt="SolarUser" width="214" height="30">
+				</a>
+		    </div>
+		</div>
+	</nav>
+	<div class="container" data-th-if="${statusMessageKey}">
+		<div class="alert alert-success" data-th-utext="${#strings.startsWith(statusMessageKey, 'registration.')}
+			? #{__${statusMessageKey}__(${#authentication.principal.username})}
+			: #{__${statusMessageKey}__(${statusMessageKeyParam0})}">
+			Status alert.
+		</div>
+	</div>
+	<div class="container" data-th-if="${errorMessageKey}">
+		<div class="alert alert-warning" data-th-utext="#{__${errorMessageKey}__(${errorMessageKeyParam0})}">
+			Status alert.
+		</div>
+	</div>
+	<div class="container" data-th-replace="${body}">
+		Body content here.
+	</div>
+	<footer data-th-replace="${footer}">
+	</footer>
+</body>
+</html>

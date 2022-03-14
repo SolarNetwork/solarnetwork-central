@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title data-th-text="#{app.name}">SolarUser Alert Enumerations</title>
+<!--/*
+	Input parameters:
+	
+		nodeDataAlertTypes 	- collection of UserAlertType that represent node data alerts
+		alertStatuses       - collection of UesrAlertStatus
+*/-->
+<script data-th-inline="javascript">
+SolarReg.userAlertTypes = {
+	[# th:each="alertType,itr : ${nodeDataAlertTypes}"]
+		[[${alertType}]] : [[#{alert.type.__${alertType}__.label}]][(${!itr.last}? ', ' : '')]
+	[/]
+};
+SolarReg.userAlertStatuses = {
+	[# th:each="alertStatus,itr : ${alertStatuses}"]
+		[[${alertStatus}]] : [[#{alert.status.__${alertStatus}__.label}]][(${!itr.last}? ', ' : '')]
+	[/]
+};
+</script>
+</head>
+</html>

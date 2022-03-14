@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<head>
+    <title data-th-text="#{app.name}">SolarUser Registration Form</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../static/css/global.css">
+</head>
+<body>
+<main class="container" data-th-replace="registration/form-layout :: layout(~{::intro}, ~{::form}, ~{})">
+	<p class="intro" data-th-text="#{user.register.start.intro}" data-th-fragment="intro">
+		Let's register!
+	</p>
+	<form class="form-horizontal registration-form" method="post">
+		<fieldset data-th-replace="user/detail-form :: fieldset">User form content here.</fieldset>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button type="submit" class="btn btn-primary" name="_eventId_next" data-th-text="#{continue.label}">Continue</button>
+			</div>
+		</div>
+		<input type="hidden" name="_csrf" value="" data-th-name="${_csrf.parameterName}" data-th-value="${_csrf.token}">
+	</form>
+</main>
+</body>
+</html>

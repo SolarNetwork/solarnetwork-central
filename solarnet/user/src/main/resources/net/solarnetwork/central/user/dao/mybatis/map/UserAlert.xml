@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:38 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserAlert">
+
+<!-- 
+	id				BIGINT NOT NULL DEFAULT nextval('solaruser.user_alert_seq'),
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	user_id			BIGINT NOT NULL,
+	node_id			BIGINT,
+	alert_type		solaruser.user_alert_type NOT NULL,
+	status			solaruser.user_alert_status NOT NULL,
+	alert_opt		json,
+-->
+
+	<insert id="insert-UserAlert" parameterType="UserAlert">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solaruser.user_alert_seq') AS id 
+		</selectKey>
+		INSERT INTO solaruser.user_alert 
+			(id, user_id, alert_type, status
+			<if test="created != null">,created</if>
+			<if test="nodeId != null">,node_id</if>
+			<if test="validTo != null">,valid_to</if>
+			<if test="optionsJson != null">,alert_opt</if>
+			)
+		VALUES
+			(#{id}, #{userId}, 
+			CAST(#{type} AS solaruser.user_alert_type), 
+			CAST(#{status} AS solaruser.user_alert_status)
+			<if test="created != null">,#{created}</if>
+			<if test="nodeId != null">,#{nodeId}</if>
+			<if test="validTo != null">,#{validTo}</if>
+			<if test="optionsJson != null">,CAST(#{optionsJson} AS json)</if>
+			)
+	</insert>
+
+	<update id="update-UserAlert" parameterType="UserAlert">
+		UPDATE solaruser.user_alert SET
+			status = CAST(#{status} AS solaruser.user_alert_status) 
+			<if test="nodeId != null">, node_id = #{nodeId}</if>
+			<if test="validTo != null">, valid_to = #{validTo}</if>
+			<if test="optionsJson != null">, alert_opt = CAST(#{optionsJson} AS json)</if>
+		WHERE
+			id = #{id}
+	</update>
+
+	<update id="update-UserAlert-valid-to" parameterType="map">
+		UPDATE solaruser.user_alert
+		SET valid_to = #{validDate,jdbcType=TIMESTAMP}
+		WHERE id = #{id,javaType=long,jdbcType=BIGINT}
+	</update>
+
+	<delete id="delete-UserAlert" parameterType="long">
+		DELETE FROM solaruser.user_alert
+		WHERE id = #{id}
+	</delete>
+	
+	<delete id="delete-UserAlert-for-node" parameterType="map">
+		DELETE FROM solaruser.user_alert
+		WHERE user_id = #{user,javaType=long,jdbcType=BIGINT}
+			AND node_id = #{node,javaType=long,jdbcType=BIGINT}
+	</delete>
+	
+	<sql id="fragment-UserAlert-full-result">
+		ual.id AS user_alert_id, 
+		ual.created AS user_alert_created,
+		ual.user_id AS user_alert_user_id,
+		ual.node_id AS user_alert_node_id,
+		ual.valid_to AS user_alert_valid_to,
+		ual.alert_type AS user_alert_alert_type,
+		ual.status AS user_alert_status,
+		ual.alert_opt AS user_alert_alert_opt
+	</sql>
+
+	<resultMap id="UserAlertFullResult" type="UserAlert">
+		<id property="id" column="user_alert_id"/>
+		<result property="created" column="user_alert_created"/>
+		<result property="userId" column="user_alert_user_id"/>
+		<result property="nodeId" column="user_alert_node_id"/>
+		<result property="validTo" column="user_alert_valid_to"/>
+		<result property="type" column="user_alert_alert_type"/>
+		<result property="status" column="user_alert_status"/>
+		<result property="optionsJson" column="user_alert_alert_opt"/>
+	</resultMap>
+	
+	<select id="get-UserAlert-for-id" parameterType="long" resultMap="UserAlertFullResult">
+		SELECT
+			<include refid="fragment-UserAlert-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		WHERE
+			ual.id = #{id}
+	</select>
+	
+	<select id="find-UserAlert-for-processing" parameterType="map" resultMap="UserAlertFullResult" fetchSize="250" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-UserAlert-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		WHERE 
+			ual.alert_type = CAST(#{type,jdbcType=VARCHAR} AS solaruser.user_alert_type)
+			AND ual.status != CAST('Disabled' AS solaruser.user_alert_status)
+			<if test="validDate != null">AND ual.valid_to &lt; #{validDate,jdbcType=TIMESTAMP}</if>
+			<if test="startingId != null">AND ual.id > #{startingId,javaType=long,jdbcType=BIGINT}</if>
+		ORDER BY
+			ual.id
+	</select>
+	
+	<sql id="fragment-UserAlert-active-situations-select">
+		SELECT DISTINCT ON (ual.id)
+			<include refid="fragment-UserAlert-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		LEFT OUTER JOIN
+			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+	</sql>
+	
+	<resultMap id="UserAlertWithSituation" type="UserAlert" extends="UserAlertFullResult">
+		<association property="situation" notNullColumn="user_alert_alert_id" resultMap="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.UserAlertSituationResult"/>
+	</resultMap>
+	
+	<select id="find-UserAlert-for-user-with-situation" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="250" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-active-situations-select"/>
+		WHERE 
+			ual.user_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+
+	<sql id="fragment-UserAlert-only-active-situations-select">
+		SELECT DISTINCT ON (ual.id)
+			<include refid="fragment-UserAlert-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.UserAlertSituation.fragment-UserAlertSituation-full-result"/>
+		FROM
+			solaruser.user_alert ual
+		INNER JOIN
+			solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+				AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+	</sql>
+	
+	<select id="find-UserAlert-active-for-user" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-only-active-situations-select"/>
+		WHERE 
+			ual.user_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+	
+	<select id="find-UserAlert-active-for-user-count" parameterType="long" resultType="long">
+		SELECT COUNT(*) FROM (
+			SELECT DISTINCT ON (ual.id)
+				ual.id
+			FROM
+				solaruser.user_alert ual
+			INNER JOIN
+				solaruser.user_alert_sit uas ON uas.alert_id = ual.id 
+					AND uas.status = 'Active'::solaruser.user_alert_sit_status 
+			WHERE 
+				ual.user_id = #{id}
+			ORDER BY
+				ual.id, uas.created DESC, uas.id
+		) AS t
+	</select>
+	
+	<select id="find-UserAlert-active-for-node" parameterType="long" resultMap="UserAlertWithSituation" fetchSize="50" resultSetType="FORWARD_ONLY">
+		<include refid="fragment-UserAlert-only-active-situations-select"/>
+		WHERE 
+			ual.node_id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+	
+	<select id="get-UserAlert-with-situation" parameterType="long" resultMap="UserAlertWithSituation">
+		<include refid="fragment-UserAlert-active-situations-select"/>
+		WHERE 
+			ual.id = #{id}
+		ORDER BY
+			ual.id, uas.created DESC, uas.id
+	</select>
+	
+</mapper>

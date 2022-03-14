@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'data-insight')">
+<head>
+    <title data-th-text="#{dataInsight.title}">Data Insight</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<div class="row">
+	<div class="col-md-9 col-md-offset-1">
+		<p class="intro" data-th-utext="#{dataInsight.intro}">
+			Deep insight about your data can be found within this page.
+		</p>
+
+		<section id="data-insight-overview">
+			<h2 data-th-text="#{dataInsight.overall.nodes.header}">Nodes and source</h2>
+			<p data-th-utext="#{dataInsight.overall.nodes.intro}">Node and source information here.</p>
+			<div class="row">
+				<div class="col-md-7">
+					<table class="datum-counts tally table">
+						<tbody>
+							<tr>
+								<th data-th-text="#{dataInsight.nodeCount.label}">Node Count</th><td data-tprop="nodeCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.sourceCount.label}">Source Count</th><td data-tprop="sourceCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.recentNodeCount.label}">Recent Node Count</th><td data-tprop="activeNodeCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.recentSourceCount.label}">Recent Source Count</th><td data-tprop="activeSourceCountDisplay"></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+			
+		<section id="data-insight-overview-datum">
+			<h2 data-th-text="#{dataInsight.overall.datum.header}">Datum stored</h2>
+			<p data-th-utext="#{dataInsight.overall.datum.intro(@{/u/sec/expire})}">
+				This table shows the total number of datum stored.
+			</p>
+			<div class="row">
+				<div class="col-md-6">
+					<table class="datum-counts tally table">
+						<tbody>
+							<tr>
+								<th data-th-text="#{dataInsight.datumMonthlyCount.label}">Month Count</th><td data-tprop="accumulativeTotalDatumMonthlyCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.datumDailyCount.label}">Day Count</th><td data-tprop="accumulativeTotalDatumDailyCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.datumHourlyCount.label}">Hour Count</th><td data-tprop="accumulativeTotalDatumHourlyCountDisplay"></td>
+							</tr>
+							<tr>
+								<th data-th-text="#{dataInsight.datumCount.label}">Raw Count</th><td data-tprop="accumulativeTotalDatumCountDisplay"></td>
+							</tr>
+						</tbody>
+						<tfoot>
+							<tr>
+								<th data-th-text="#{dataInsight.datumTotalCount.label}">Total Count</th><th data-tprop="accumulativeTotalDatumTotalCountDisplay"></th>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+			</div>
+		</section>
+
+		<section id="data-insight-recent">
+			<h2 data-th-text="#{dataInsight.counts.header}">Datum activity</h2>
+			<p data-th-utext="#{dataInsight.counts.intro}">The following table shows recent datum activity.</p>
+			<table class="datum-counts tally table" id="data-insight-recent-table">
+				<thead>
+					<tr>
+						<th data-th-text="#{dataInsight.counts.date.label}">Date</th>
+						<th data-th-text="#{dataInsight.counts.node.label}">Node</th>
+						<th data-th-text="#{dataInsight.counts.source.label}">Source</th>
+						<th data-th-text="#{dataInsight.counts.datumQueryCount.label}" style="text-align: right;">Query Count</th>
+						<th data-th-text="#{dataInsight.counts.propertyPostedCount.label}">Posted Count</th>
+					</tr>
+					<tr class="template">
+						<td data-tprop="dateDisplay"></td>
+						<td data-tprop="nodeId"></td>
+						<td data-tprop="sourceId"></td>
+						<td style="text-align: right;" data-tprop="datumQueryCountDisplay"></td>
+						<td data-tprop="datumPropertyPostedCountDisplay"></td>
+					</tr>
+				</thead>
+				<tbody class="list-container">
+				</tbody>
+			</table>
+		
+		</section>
+	</div>
+</div>
+</div>
+</body>
+</html>

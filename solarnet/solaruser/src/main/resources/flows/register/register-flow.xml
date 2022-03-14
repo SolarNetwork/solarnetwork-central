@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd">
+	
+	<var name="user" class="net.solarnetwork.central.user.domain.User" />
+	<var name="mailHelper" class="net.solarnetwork.central.mail.support.MailServiceHelper"/>
+	
+	<view-state id="start" view="registration/start" model="user">
+		<transition on="next" to="review" />
+	</view-state>
+
+	<view-state id="review" view="registration/review" model="user">
+		<transition on="prev" to="start" />
+		<transition on="next" to="add"/>
+	</view-state>
+	
+	<action-state id="add">
+		<evaluate expression="registrationBiz.registerUser(user)" result="flowScope.receipt"/>
+		<transition on="success" to="done">
+			<evaluate expression="flowScope.mailHelper.createAddress(
+				user.name, user.email)" result="flowScope.mailAddress"/>
+			<evaluate expression="flowScope.mailHelper.createResourceDataSource(
+				resourceBundle.registrationConfirmMailSubject, 
+				'net/solarnetwork/central/reg/web/confirm-register.txt',
+				externalContext.locale, 
+				user,
+				receipt,
+				externalContext)" result="flowScope.mailDataSource"/>
+			<evaluate expression="mailService.sendMail(mailAddress, mailDataSource)"/>
+		</transition>
+	</action-state>
+	
+	<end-state id="done" view="registration/submitted" />
+	
+	<global-transitions>
+		<transition on-exception="net.solarnetwork.central.security.AuthorizationException" to="start"/>
+	</global-transitions>
+	
+</flow>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="resources">
+	<link rel="icon" type="image/png" th:href="@{/img/favicon.png}" href="../static/img/favicon.png">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="csrf" content="" th:content="${_csrf.token}">
+	<meta name="csrf_header" content="X-CSRF-TOKEN" th:content="${_csrf.headerName}">
+	<meta name="solarUserRootURL" content="/solaruser/u" th:content="@{/u}">
+	<link rel="stylesheet" href="../static/css/bootstrap.css" th:href="@{/css/bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" th:href="@{/css/bootstrap-theme.css}">
+	<link rel="stylesheet" href="../static/css/dataTables.bootstrap.css" th:href="@{/css/dataTables.bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/global.css" th:href="@{/css/global.css}">
+	<link rel="stylesheet" href="../static/css/edit-node.css" th:href="@{/css/edit-node.css}">
+	<script src="../static/js-lib/jquery-3.3.1.js" th:src="@{/js-lib/jquery-3.3.1.js}"></script>
+	<script src="../static/js-lib/jquery.form.js" th:src="@{/js-lib/jquery.form.js}"></script>
+	<script src="../static/js-lib/jquery.maphilight.js" th:src="@{/js-lib/jquery.maphilight.js}"></script>
+	<script src="../static/js-lib/jquery.timezone-picker.js" th:src="@{/js-lib/jquery.timezone-picker.js}"></script>
+	<script src="../static/js-lib/jquery.dataTables.js" th:src="@{/js-lib/jquery.dataTables.js}"></script>
+	<script src="../static/js-lib/moment.js" th:src="@{/js-lib/moment.js}"></script>
+	<script src="../static/js-lib/bootstrap.js" th:src="@{/js-lib/bootstrap.js}"></script>
+	<script src="../static/js-lib/dataTables.bootstrap.js" th:src="@{/js-lib/dataTables.bootstrap.js}"></script>
+	<script src="../static/js/global.js" th:src="@{/js/global.js}"></script>
+	<script src="../static/js/templates.js" th:src="@{/js/templates.js}"></script>
+	<script src="../static/js/settings.js" th:src="@{/js/settings.js}"></script>
+	<script src="../static/js/login.js" th:src="@{/js/login.js}"></script>
+	<script src="../static/js/register.js" th:src="@{/js/register.js}"></script>
+	<script src="../static/js/my-nodes.js" th:src="@{/js/my-nodes.js}"></script>
+	<script src="../static/js/auth-tokens.js" th:src="@{/js/auth-tokens.js}"></script>
+	<script src="../static/js/alerts.js" th:src="@{/js/alerts.js}"></script>
+	<script src="../static/js/billing.js" th:src="@{/js/billing.js}"></script>
+	<script src="../static/js/data-insight.js" th:src="@{/js/data-insight.js}"></script>
+	<script src="../static/js/import.js" th:src="@{/js/import.js}"></script>
+	<script src="../static/js/export.js" th:src="@{/js/export.js}"></script>
+	<script src="../static/js/expire.js" th:src="@{/js/expire.js}"></script>
+	<script src="../static/js/node-event.js" th:src="@{/js/node-event.js}"></script>
+</head>
+</html>

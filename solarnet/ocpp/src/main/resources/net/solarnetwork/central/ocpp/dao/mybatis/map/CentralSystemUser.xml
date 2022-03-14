@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+
+	<insert id="insert-CentralSystemUser" parameterType="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarev.ocpp_system_user_seq') AS id 
+		</selectKey>
+		INSERT INTO solarev.ocpp_system_user (
+			id
+			<if test="created != null">,created</if>
+			, user_id
+			, username
+			, password
+			, allowed_cp
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{userId}
+			, #{username}
+			, #{password}
+			, #{allowedChargePointsArray,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		)
+	</insert>
+
+	<update id="update-CentralSystemUser" parameterType="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		UPDATE 
+			solarev.ocpp_system_user
+		SET
+			username = #{username}
+			<if test="password != null">, password = #{password}</if>
+			, allowed_cp = #{allowedChargePointsArray,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+		WHERE
+			id = #{id}
+			AND user_id = #{userId}
+	</update>
+
+	<sql id="fragment-CentralSystemUser-view-result">
+		su.id AS ocpp_system_user_id
+		, su.created AS ocpp_system_user_created
+		, su.user_id AS ocpp_system_user_user_id
+		, su.username AS ocpp_system_user_username
+		, su.allowed_cp AS ocpp_system_user_allowed_cp
+	</sql>
+	
+	<sql id="fragment-CentralSystemUser-full-result">
+		<include refid="fragment-CentralSystemUser-view-result"/>
+		, su.password AS ocpp_system_user_password
+	</sql>
+	
+	<resultMap id="CentralSystemUser-ViewResult" type="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		<constructor>
+			<idArg  column="ocpp_system_user_id" javaType="Long"/>
+			<arg column="ocpp_system_user_user_id" javaType="Long"/>
+			<arg column="ocpp_system_user_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="username" column="ocpp_system_user_username"/>
+		<result property="password" column="ocpp_system_user_password"/>
+		<result property="allowedChargePointsArray" column="ocpp_system_user_allowed_cp" 
+			jdbcType="ARRAY" typeHandler="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
+	</resultMap>
+
+	<resultMap id="CentralSystemUser-FullResult" extends="CentralSystemUser-ViewResult" type="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		<result property="password" column="ocpp_system_user_password"/>
+	</resultMap>
+
+	<select id="get-CentralSystemUser-for-id" parameterType="long" resultMap="CentralSystemUser-ViewResult">
+		SELECT
+			<include refid="fragment-CentralSystemUser-view-result"/>
+		FROM
+			solarev.ocpp_system_user su
+		WHERE
+			su.id = #{id}
+	</select>
+
+	<select id="get-CentralSystemUser-for-username" parameterType="string" resultMap="CentralSystemUser-FullResult">
+		SELECT
+			<include refid="fragment-CentralSystemUser-full-result"/>
+		FROM
+			solarev.ocpp_system_user su
+		WHERE
+			su.username = #{username}
+	</select>
+	
+	<sql id="fragment-findall-CentralSystemUser-where">
+		<if test="filter != null">
+			<where>
+				<if test="filter.id != null">
+					AND su.id = #{filter.id}
+				</if>
+				<if test="filter.userId != null">
+					AND su.user_id = #{filter.userId}
+				</if>
+				<if test="filter.username != null">
+					AND su.username = #{filter.username}
+				</if>
+				<if test="filter.allowedChargePointsArray != null and filter.allowedChargePointsArray.length > 0">
+					AND (su.allowed_cp IS NULL 
+						OR cardinality(su.allowed_cp) = 0 
+						OR su.allowed_cp &amp;&amp; #{filter.allowedChargePoints,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}::text[])
+				</if>
+			</where>
+		</if>
+	</sql>
+
+	<sql id="fragment-findall-CentralSystemUser-order">
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+				 	<choose>
+				 		<when test="&quot;created&quot;.equalsIgnoreCase(item.sortKey)">ocpp_system_user_created</when>
+				 		<when test="&quot;username&quot;.equalsIgnoreCase(item.sortKey)">ocpp_system_user_username</when>
+				 		<otherwise>ocpp_system_user_id</otherwise>
+				 	</choose>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				ocpp_system_user_user_id, ocpp_system_user_created, ocpp_system_user_id
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="findall-CentralSystemUser" resultMap="CentralSystemUser-ViewResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralSystemUser-view-result"/>
+		FROM
+			solarev.ocpp_system_user su
+		<include refid="fragment-findall-CentralSystemUser-where"/>
+		<include refid="fragment-findall-CentralSystemUser-order"/>
+	</select>
+	
+	<delete id="delete-CentralSystemUser-for-user-and-id" parameterType="net.solarnetwork.central.ocpp.domain.CentralSystemUser">
+		DELETE FROM solarev.ocpp_system_user
+		WHERE user_id = #{userId} AND id = #{id}
+	</delete>
+
+</mapper>

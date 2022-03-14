@@ -1,0 +1,28 @@
+logging:
+  level:
+    ROOT: INFO
+    net.solarnetwork: DEBUG
+    org.springframework.jdbc: DEBUG
+  pattern:
+    console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  mapper-locations: "classpath:net/solarnetwork/**/mybatis/map/*.xml"
+
+spring:
+  datasource:
+    hikari:
+      minimumIdle: 0
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+    url: jdbc:postgresql://localhost:5412/solarnetwork_unittest
+    username: solartest
+    password: solartest
+    platform: postgres
+    initialize: false

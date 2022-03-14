@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account">
+
+	<insert id="insert-Account" parameterType="net.solarnetwork.central.user.billing.snf.domain.Account">
+		<selectKey keyProperty="id.id" resultType="long" order="BEFORE"> 
+              SELECT nextval('solarbill.bill_seq') AS id 
+		</selectKey>
+		INSERT INTO solarbill.bill_account (
+			id
+			<if test="created != null">,created</if>
+			, user_id
+			, addr_id
+			, currency
+			, locale
+		) VALUES (
+			#{id.id}
+			<if test="created != null">,#{created}</if>
+			, #{id.userId}
+			, #{address.id}
+			, #{currencyCode}
+			, #{locale}
+		)
+	</insert>
+	
+	<sql id="fragment-Account-full-result">
+		acct.id AS bill_account_id
+		, acct.created AS bill_account_created
+		, acct.user_id AS bill_account_user_id
+		, acct.addr_id AS bill_account_addr_id
+		, acct.currency AS bill_account_currency
+		, acct.locale AS bill_account_locale
+	</sql>
+
+	<resultMap id="Account-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.Account">
+		<constructor>
+			<idArg column="bill_account_id" javaType="Long"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_account_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="currencyCode" column="bill_account_currency"/>
+		<result property="locale" column="bill_account_locale"/>
+		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
+	</resultMap>
+	
+	<select id="get-Account-for-id" parameterType="long" resultMap="Account-FullResult">
+		SELECT
+			<include refid="fragment-Account-full-result"/>,
+			<include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_account acct
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = acct.addr_id
+		WHERE
+			acct.id = #{id}
+	</select>
+	
+	<select id="get-Account-for-user" parameterType="long" resultMap="Account-FullResult">
+		SELECT
+			<include refid="fragment-Account-full-result"/>,
+			<include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM
+			solarbill.bill_account acct
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = acct.addr_id
+		WHERE
+			acct.user_id = #{id}
+	</select>
+	
+	<update id="update-Account" parameterType="net.solarnetwork.central.user.billing.snf.domain.Account">
+		UPDATE solarbill.bill_account
+		SET currency = #{currencyCode}
+			, locale = #{locale}
+		WHERE id = #{id.id}
+	</update>
+
+	<delete id="delete-Account" parameterType="long">
+		DELETE FROM solarbill.bill_account
+		WHERE id = #{id}
+	</delete>
+	
+	<!-- 
+		AccountBalance support
+	 -->
+	 
+	 <sql id="fragment-AccountBalance-full-result">
+		bal.acct_id AS bill_account_balance_acct_id
+		, bal.created AS bill_account_balance_created
+		, bal.charge_total AS bill_account_balance_charge_total
+		, bal.payment_total AS bill_account_balance_payment_total
+		, bal.avail_credit AS bill_account_balance_avail_credit
+	</sql>
+
+	<resultMap id="AccountBalance-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.AccountBalance">
+		<constructor>
+			<idArg column="bill_account_balance_acct_id" javaType="Long"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_account_balance_created" javaType="java.time.Instant"/>
+			<arg column="bill_account_balance_charge_total" javaType="java.math.BigDecimal"/>
+			<arg column="bill_account_balance_payment_total" javaType="java.math.BigDecimal"/>
+			<arg column="bill_account_balance_avail_credit" javaType="java.math.BigDecimal"/>
+		</constructor>
+	</resultMap>
+	
+	<select id="get-AccountBalance-for-user" parameterType="long" resultMap="AccountBalance-FullResult">
+		SELECT
+			<include refid="fragment-AccountBalance-full-result"/>
+			, acct.user_id AS bill_account_user_id
+		FROM
+			solarbill.bill_account_balance bal
+		INNER JOIN
+			solarbill.bill_account acct ON acct.id = bal.acct_id
+		WHERE
+			acct.user_id = #{id}
+	</select>
+	
+	<select id="claim-AccountBalance-credit" parameterType="map" resultType="java.math.BigDecimal" 
+			flushCache="true" useCache="false">
+		SELECT solarbill.claim_account_credit(
+				#{accountId,javaType=long,jdbcType=BIGINT}
+				<if test="max != null">, #{max,javaType=java.math.BigDecimal,jdbcType=NUMERIC}</if>
+				)
+	</select>
+	
+</mapper>

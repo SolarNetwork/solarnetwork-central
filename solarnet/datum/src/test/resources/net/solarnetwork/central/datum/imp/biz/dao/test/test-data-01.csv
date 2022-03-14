@@ -1,0 +1,7 @@
+Node,Source,Created,Instantaneous,Accumulating
+1,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,"{""watts"":11899,""irradiance"":696.000}","{""wattHours"":78434365}"
+1,/DE/G1/B600/GEN/1,2017-04-17 14:35:00,"{""watts"":9843,""irradiance"":691.668}","{""wattHours"":78436074}"
+1,/DE/G1/B600/GEN/1,2017-04-17 14:40:00,"{""watts"":6934,""irradiance"":687.336}","{""wattHours"":78437105}"
+1,/DE/G1/B600/GEN/1,2017-04-17 14:45:00,"{""watts"":27314,""irradiance"":683.004}","{""wattHours"":78438990}"
+1,/DE/G1/B600/GEN/1,2017-04-17 14:50:00,"{""watts"":13630,""irradiance"":678.672}","{""wattHours"":78440411}"
+1,/DE/G1/B600/GEN/1,2017-04-17 14:55:00,"{""watts"":8740,""irradiance"":674.340}","{""wattHours"":78441320}"

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.TaxCode">
+	
+	<sql id="fragment-TaxCode-full-result">
+		  tax.id 			AS bill_tax_code_id
+		, tax.created 		AS bill_tax_code_created
+		, tax.tax_zone 		AS bill_tax_code_tax_zone
+		, tax.item_key 		AS bill_tax_code_item_key
+		, tax.tax_code 		AS bill_tax_code_tax_code
+		, tax.tax_rate 		AS bill_tax_code_tax_rate
+		, tax.valid_from 	AS bill_tax_code_valid_from
+		, tax.valid_to 		AS bill_tax_code_valid_to
+	</sql>
+
+	<resultMap id="TaxCode-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.TaxCode">
+		<constructor>
+			<idArg column="bill_tax_code_id" javaType="Long"/>
+			<arg column="bill_tax_code_created" javaType="java.time.Instant"/>
+			<arg column="bill_tax_code_tax_zone" javaType="String"/>
+			<arg column="bill_tax_code_item_key" javaType="String"/>
+			<arg column="bill_tax_code_tax_code" javaType="String"/>
+			<arg column="bill_tax_code_tax_rate" javaType="java.math.BigDecimal"/>
+			<arg column="bill_tax_code_valid_from" javaType="java.time.Instant"/>
+			<arg column="bill_tax_code_valid_to" javaType="java.time.Instant"/>
+		</constructor>
+	</resultMap>
+
+	<select id="find-TaxCode-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter" 
+			resultMap="TaxCode-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-TaxCode-full-result"/>
+		FROM
+			solarbill.bill_tax_code tax
+		<where>
+			<if test="zones != null and zones.length > 0">
+				AND tax.tax_zone = ANY(#{zones,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="itemKey != null">
+				AND tax.item_key = #{itemKey}
+			</if>
+			<if test="code != null">
+				AND tax.code = #{code}
+			</if>
+			<if test="date != null">
+				AND tax.valid_from &lt;= #{date} AND (
+					tax.valid_to IS NULL
+					OR tax.valid_to &gt; #{date}
+				)
+			</if>
+		</where>
+		ORDER BY
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;CODE&quot;">bill_tax_code_tax_code</if>
+					<if test="item.sortKey == &quot;CREATED&quot;">bill_tax_code_created</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_tax_code_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				bill_tax_code_tax_code, bill_tax_code_id
+			</otherwise>
+		</choose>
+	</select>
+
+</mapper>

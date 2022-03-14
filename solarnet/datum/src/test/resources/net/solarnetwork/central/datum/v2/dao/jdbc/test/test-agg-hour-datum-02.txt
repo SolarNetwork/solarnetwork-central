@@ -1,0 +1,8 @@
+# single day of hourly data, with only one row
+
+# expected avg(x) = (1.2*6/6) == 1.2 ; stats = [6, 1.1, 3.1]
+# expected avg(y) = (2.1*6/6) == 2.1 ; stats = [6, 2.0, 7.0]
+# expected clock diff == (100) == 100
+# expected read diff  == (101) == 101 ; stats = [100, 201, 101]
+
+{"nodeId":1,"sourceId":"a","ts":"2020-06-01 00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[101,100,201]}}}

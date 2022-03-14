@@ -1,0 +1,214 @@
+app:
+  meta.name: SolarUser
+  billing:
+    delivery-timeout-secs: 60
+    invoice:
+      mail.from: accounts@localhost
+      html-template-cache:
+        ttl: 3600
+  cache.persistence.path: "var/cache"
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: solartest
+    password: solartest
+    platform: postgres
+    initialize: false
+  datum:
+    export.temporaryDir: "${java.io.tmpdir}"
+    import:
+      concurrent-tasks: 2
+      concurrent-preview-tasks: 4
+      preview-max-count: 100
+      progress-log-count: 25000
+      completed-task-minimum-cache-time: 14400000
+      workPath: "${java.io.tmpdir}"
+      resource-storage-wait-ms: 60000
+      resource-storage-uid: "Datum-Import"
+      s3-storage:
+        objectKeyPrefix: "datum-import/"
+        s3Client:
+          bucketName: snf-apps
+          regionName: us-west-2
+          accessToken: TOKEN_HERE
+          accessSecret: SECRET_HERE
+  email-throttle-cache:
+    ttl: 600
+    heap-max-entries: 1000
+    disk-max-size-mb: 100
+  instr.publish:
+    uid: "SolarInstr-${app.meta.instance-id}"
+    publish-qos-level: 0
+    mqtt-stats.log-frequency: 200
+    mqtt-config:
+      server-uri: "mqtt://queue.solarnetwork:1883"
+      client-id: "solaruser-${app.meta.instance-id}"
+      username: "USERNAME_HERE"
+      password: "PASSWORD_HERE"
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
+  network-identity:
+    network-identity-key: "solaruser:identity:here"
+    terms-of-service: "solaruser:tos:here"
+    host: "localhost"
+    port: 8080
+    force-tls: false
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost/solarquery"
+      solaruser: "http://localhost/solaruser"
+  node.pki:
+    cs:
+      certificate-expire-days: 730
+      signature-algorithm: "SHA256WithRSA"
+    dogtag:
+      base-url: "https://ca.solarnetwork.net:8443"
+      profile-id: "SolarNode"
+      keystore-resource: "classpath:dogtag-client.jks"
+      keystore-password: "changeit"
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
+  ocpp.v16:
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OCPP_v16"
+      mqtt-timeout: 30
+      publish-only: true
+  solaruser:
+    node-ownership-cache:
+      ttl: 60
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    query-cache:
+      ttl: 60
+      heap-max-entries: 1000
+      disk-max-size-mb: 100
+      compress-minimum-length: 512
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+  task.executor:
+    thread-name-prefix: "SolarNet-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarNet-Sched-"
+    pool-size: 5  
+  user.datum:
+    delete:
+      completed-task-minimum-cache-time: 14400000
+      delete-batch-days: 7
+      parallelism: 1
+  user.reg:
+    biz:
+      network-certificate-subject-format: "UID=%s,O=SolarNetwork"
+      approve-csr-maximum-wait-secs: 15
+      node-certificate-renewal-period-months: 3
+    mail.template:
+      from: "nobody@localhost.localdomain"
+  versioned-messages-cache:
+      ttl: 600
+  web.security:
+    token:
+      max-request-body-size: "512KB"
+      max-date-skew: 900000
+
+debug: true
+
+logging:
+  level:
+    ROOT: INFO
+    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: "classpath*:net/solarnetwork/central/**/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.datum.export.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9081
+  servlet.context-path: /solaruser
+  tomcat:
+#    max-http-form-post-size: "2MB"
+    max-swallow-size: -1
+
+spring:
+  jmx.enabled: false
+  mvc.format:
+    date: iso
+    date-time: iso
+    time: iso
+  servlet.multipart:
+    max-file-size: "250MB"
+    max-request-size: "256MB"
+    location: ""
+    file-size-threshold: "1MB"
+
+---
+spring:
+  config.activate.on-profile: development
+  thymeleaf.cache: false
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: solarnet
+    password: solarnet
+
+
+debug: false
+
+---
+spring:
+  config.activate.on-profile: production
+  mail:
+    host: "localhost"
+    port: 587
+    username: "mailuser"
+    password: "mailpass"
+    properties:
+      "[mail.smtp.auth]": true
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
+  thymeleaf.cache: true
+
+app:
+  billing:
+    invoice.mail.from: "accounts@solarnetwork.net"
+  user.reg:
+    mail.template.from: "system@solarnetwork.net"
+
+debug: false
+ 

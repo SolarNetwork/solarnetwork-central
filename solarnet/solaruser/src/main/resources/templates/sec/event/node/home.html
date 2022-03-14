@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'node-event')">
+<head>
+    <title data-th-text="#{node-event.title}">Node Events</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{node-event.intro}">
+	This page is about node events.
+</p>
+
+<section id="node-event-hooks">
+	<h2>
+		<span data-th-text="#{node-event.hookList.header}">Node Event Hooks</span>
+		<a href="#edit-node-event-hook-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{node-event.hook.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{node-event.hookList.intro(0)}">
+		You have <strong class="listCount">1</strong> node event hook.
+	</p>
+	<table id="node-event-hook-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{node-event.hookConfig.name.label}">Name</th>
+				<th data-th-text="#{node-event.hookConfig.topic.label}">Topic</th>
+				<th data-th-text="#{node-event.hookConfig.nodes.label}">Nodes</th>
+				<th data-th-text="#{node-event.hookConfig.sources.label}">Sources</th>
+				<th data-th-text="#{node-event.serviceProperties.label}">Properties</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-node-event-hook-modal"></a></td>
+				<td><span data-tprop="topicName"></span><br><span class="label label-default" data-tprop="topic"></span></td>
+				<td data-tprop="nodes"></td>
+				<td data-tprop="sources"></td>
+				<td>
+					<dl class="service-props-container">
+					</dl>
+					<dl class="service-props-template hidden">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
+					</dl>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/event/node/edit-hook-modal :: form"></form>
+
+<!--/* Setting templates */-->
+
+<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+</div>
+</body>
+</html>

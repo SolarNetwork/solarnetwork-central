@@ -1,0 +1,162 @@
+app:
+  meta.name: SolarIn
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
+    platform: "postgres"
+    initialize: false
+  datum:
+    solarflux-publish:
+      uid: "SolarFlux-Datum-Publisher-@@SOLAR_FLUX_PUB_ID@@"
+      publish-qos-level: 0
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solarin-datumpub-@@SOLAR_FLUX_PUB_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+  email-throttle-cache:
+    ttl: 600
+    heap-max-entries: 1000
+    disk-max-size-mb: 100
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
+  network-identity:
+    network-identity-key: "replace:identity:here"
+    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-tos.txt"
+    host: "localhost"
+    port: 9083
+    force-tls: false
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost:9082/solarquery"
+      solaruser: "http://localhost:9081/solaruser"
+  node.pki.cs:
+    certificate-expire-days: 730
+    signature-algorithm: "SHA256WithRSA"
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
+  ocpp.v16:
+    cs:
+      boot-notification:
+        heartbeat-interval-seconds: 300
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OCPP_v16"
+      mqtt-timeout: 30
+      publish-only: false
+  solarin:
+    async-collector:
+      threads: 2
+      shutdown-wait-secs: 30
+      queue-size: 200
+      stat-frequency: 200
+      datum-cache-removal-alert-threshold: 500
+    cache.persistence.path: "var/cache"
+    datum-buffer:
+      temp-max-entries: 100
+      heap-max-entries: 200
+      disk-max-size-mb: 2000
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    mqtt-collector:
+      uid: "SolarIn-Datum-Collector-@@SOLAR_IN_ID@@"
+      publish-qos-level: 0
+      subscribe-qos-level: 1
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solarin-@@SOLAR_IN_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: false
+  task.executor:
+    thread-name-prefix: "SolarNet-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarNet-Sched-"
+    pool-size: 2
+  user.reg:
+    biz:
+      network-certificate-subject-format: "UID=%s,O=SolarNetwork"
+      approve-csr-maximum-wait-secs: 15
+      node-certificate-renewal-period-months: 3
+
+logging:
+  level:
+    ROOT: "INFO"
+    org.mybatis.spring.mapper.ClassPathMapperScanner: "OFF"
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: "classpath*:net/solarnetwork/**/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.datum.export.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9083
+
+spring:
+  jmx.enabled: false
+  mvc.format:
+    date: "iso"
+    date-time: "iso"
+    time: "iso"
+
+---
+spring:
+  config.activate.on-profile: "development"
+  thymeleaf.cache: false
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    username: "solarnet"
+    password: "solarnet"
+
+debug: true
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
+
+---
+spring:
+  config.activate.on-profile: "production"
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true

@@ -1,0 +1,2 @@
+# single datum with just one accumulating
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 12:19:00Z","samples":{"a":{"x":100}}}

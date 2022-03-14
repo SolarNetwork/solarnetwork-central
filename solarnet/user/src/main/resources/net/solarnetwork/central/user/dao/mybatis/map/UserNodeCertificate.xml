@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Tue Nov 11 06:02:39 NZDT 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.dao.mybatis.UserNodeCertificate">
+
+	<cache-ref namespace="net.solarnetwork.central.user.dao.mybatis.UserNode"/>
+
+	<parameterMap id="pmap-UserNodeCertificate" type="UserNodeCertificate">
+		<parameter property="created" jdbcType="TIMESTAMP" mode="IN"/>
+		<parameter property="nodeId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
+		<parameter property="status" jdbcType="CHAR" mode="IN"/>
+		<parameter property="requestId" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="keystoreData" jdbcType="BINARY" mode="IN"/>
+	</parameterMap>
+
+	<update id="insert-UserNodeCertificate" parameterMap="pmap-UserNodeCertificate" statementType="CALLABLE">
+		{call solaruser.store_user_node_cert(?, ?, ?, ?, ?, ?)}
+	</update>
+	
+	<update id="update-UserNodeCertificate" parameterMap="pmap-UserNodeCertificate" statementType="CALLABLE">
+		{call solaruser.store_user_node_cert(?, ?, ?, ?, ?, ?)}
+	</update>
+
+	<update id="delete-UserNodeCertificate" parameterType="UserNodePK">
+		DELETE FROM solaruser.user_node_cert
+		WHERE
+			user_id = #{userId}
+			AND node_id = #{nodeId}
+	</update>
+
+	<sql id="fragment-UserNodeCertificate-full-result">
+		uncert.created AS uncert_created,
+		uncert.user_id AS uncert_user_id,
+		uncert.node_id AS uncert_node_id,
+		uncert.keystore AS uncert_keystore,
+		uncert.status AS uncert_status,
+		uncert.request_id AS uncert_request_id
+	</sql>
+
+	<resultMap id="UserNodeCertificateFullResult" type="UserNodeCertificate">
+		<id property="userId" column="uncert_user_id"/>
+		<id property="nodeId" column="uncert_node_id"/>
+		<result property="created" column="uncert_created"/>
+		<result property="keystoreData" column="uncert_keystore"/>
+		<result property="status" column="uncert_status"/>
+		<result property="requestId" column="uncert_request_id"/>
+		<association property="user" resultMap="net.solarnetwork.central.user.dao.mybatis.User.UserFullResult"/>
+		<association property="node" resultMap="net.solarnetwork.central.dao.mybatis.SolarNode.SolarNodeFullResult"/>
+	</resultMap>
+	
+	<select id="get-UserNodeCertificate-for-id" parameterType="UserNodePK" resultMap="UserNodeCertificateFullResult">
+		SELECT
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.user_id = #{userId}
+			AND uncert.node_id = #{nodeId}
+	</select>
+	
+	<select id="get-UserNodeCertificate-for-active-node" parameterType="long" resultMap="UserNodeCertificateFullResult">
+		SELECT
+			<include refid="fragment-UserNodeCertificate-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarNode.fragment-SolarNode-full-result"/>,
+			<include refid="net.solarnetwork.central.dao.mybatis.SolarLocation.fragment-SolarLocation-full-result"/>,
+			<include refid="net.solarnetwork.central.user.dao.mybatis.User.fragment-User-full-result"/>
+		FROM
+			solaruser.user_node_cert uncert
+		INNER JOIN
+			solarnet.sn_node n ON n.node_id = uncert.node_id
+		INNER JOIN
+			solarnet.sn_loc l ON l.id = n.loc_id
+		INNER JOIN
+			solaruser.user_user u ON u.id = uncert.user_id
+		WHERE
+			uncert.node_id = #{nodeId}
+			AND uncert.status = 'a'::bpchar
+	</select>
+	
+</mapper>

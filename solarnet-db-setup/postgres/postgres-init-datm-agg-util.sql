@@ -130,7 +130,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, p.val / s.stat[1] AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -139,7 +139,7 @@ BEGIN
 	)
 	, di_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_i
+			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_i
 			, array_agg(
 				ARRAY[cnt, val_min, val_max] ORDER BY idx
 			) AS stat_i
@@ -148,12 +148,12 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val, 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, p.val
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
 	)
 	, da_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_a
+			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_a
 		FROM da
 	)
 	SELECT
@@ -322,7 +322,7 @@ BEGIN
 	WITH di AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, p.val / s.stat[1] AS val
 			, s.stat[1] AS cnt
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
@@ -331,7 +331,7 @@ BEGIN
 	)
 	, di_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_i
+			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_i
 			, array_agg(
 				ARRAY[cnt, val_min, val_max] ORDER BY idx
 			) AS stat_i
@@ -340,7 +340,7 @@ BEGIN
 	, da AS (
 		SELECT
 			  p.idx
-			, to_char(p.val / s.stat[1], 'FM999999999999999999999999999999999999990.999999999')::numeric AS val
+			, p.val / s.stat[1] AS val
 			, s.stat[2] AS val_min
 			, s.stat[3] AS val_max
 		FROM unnest(agg_state.data_a) WITH ORDINALITY AS p(val, idx)
@@ -348,7 +348,7 @@ BEGIN
 	)
 	, da_ary AS (
 		SELECT
-			  array_agg(val ORDER BY idx) AS data_a
+			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_a
 			, array_agg(
 				ARRAY[NULL, val_min, val_max] ORDER BY idx
 			) AS read_a

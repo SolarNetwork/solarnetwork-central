@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="datum-delete-jobs">
+	<h2>
+		<span data-th-text="#{datumDelete.jobList.header}">Jobs</span>
+		<a href="#edit-datum-delete-job-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+			data-th-title="#{datumDelete.jobList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{datumDelete.jobList.intro(0)}">
+		You have <strong class="listCount">1</strong> job.
+	</p>
+	<table id="datum-delete-job-list-container" class="table table-body-borderless configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{datumDelete.job.id.label}">ID</th>
+				<th data-th-text="#{datumDelete.job.filter.label}">Filter</th>
+				<th data-th-text="#{datumDelete.job.state.label}">State</th>
+			</tr>
+		</thead>
+		<tbody class="template">
+			<tr>
+				<td>
+					<span data-tprop="shortId"></span>
+					<div data-tprop="submitDateDisplay"></div>
+				</td>
+				<td data-tprop="filter">
+					<dl class="dl-horizontal">
+						<dt data-th-text="#{datumDelete.nodes.label}">Nodes</dt>
+						<dd data-tprop="nodes"></dd>
+						<dt data-th-text="#{datumDelete.sources.label}">Sources</dt>
+						<dd data-tprop="sources"></dd>
+						<dt data-th-text="#{datumDelete.minDate.label}">Min date</dt>
+						<dd data-tprop="minDate"></dd>
+						<dt data-th-text="#{datumDelete.maxDate.label}">Max date</dt>
+						<dd data-tprop="maxDate"></dd>
+					</dl>
+				</td>
+				<td>
+					<span data-tprop="state"></span>
+					<div class="complete hidden" data-tprop="completionDateDisplay"></div>
+				</td>
+				<td>
+					<p>
+						<span class="label label-danger success-error hidden" data-th-text="#{datumDelete.job.success.error}">Error</span>
+						<span class="label label-success success-ok hidden" data-th-text="#{datumDelete.job.success.ok}">Success</span>
+					</p>
+					<p class="success-error hidden" data-tprop="messageHtml"></p>
+					<p class="complete hidden">
+						<span data-th-text="#{datumDelete.job.resultCount.label}">Result count:</span> <span data-tprop="resultCount"></span> <span data-th-text="#{in.label}">in</span> <span data-tprop="duration"></span>
+					</p>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</section>
+
+<form id="edit-datum-delete-job-modal" class="modal fade" data-th-action="@{/u/sec/expire/datum-delete}" method="post">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{datumDelete.title}">Delete</h4>
+			</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p data-th-utext="#{datumDelete.intro}">Fill in this form to delete datum matching the given criteria.</p>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="datum-delete-node-ids" data-th-text="#{datumDelete.nodes.label}">
+						Nodes
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="nodeIds" class="form-control" id="datum-delete-node-ids"
+							data-th-placeholder="#{datumDelete.nodes.placeholder}">
+				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.nodes.caption}">
+				 			A comma-delimited list of node IDs to match. 
+				 		</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="datum-delete-source-ids" data-th-text="#{datumDelete.sources.label}">
+						Sources
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="sourceIds" class="form-control" id="datum-delete-source-ids"
+							data-th-placeholder="#{datumDelete.sources.placeholder}">
+				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.sources.caption}">
+				 			A comma-delimited list of source IDs to match.
+						</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="datum-delete-min-date" data-th-text="#{datumDelete.minDate.label}">
+						Min date
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="localStartDate" class="form-control" id="datum-delete-min-date"
+							data-th-placeholder="#{datumDelete.minDate.placeholder}" required>
+				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.minDate.caption}">
+				 			The minimum date to match.
+				 		</span>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-2 control-label" for="datum-delete-max-date" data-th-text="#{datumDelete.maxDate.label}">
+						Max date
+					</label>
+					<div class="col-sm-10">
+						<input type="text" name="localEndDate" class="form-control" id="datum-delete-max-date"
+							data-th-placeholder="#{datumDelete.maxDate.placeholder}" required>
+				 		<span id="helpBlock" class="help-block" data-th-utext="#{datumDelete.maxDate.caption}">
+				 			The maximum date to match.
+				 		</span>
+					</div>
+				</div>
+			</div>
+		 	<div class="modal-footer">
+				<button type="submit" class="btn btn-primary" data-th-text="#{datumDelete.action.preview}">Preview</button>
+			</div>
+		</div>
+	</div>
+</form>
+
+<form id="datum-delete-preview-modal" class="modal fade edit-config" data-th-action="@{/u/sec/expire/datum-delete/confirm}" method="post" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{datumDelete.preview.title}">Preview delete</h4>
+			</div>
+		 	<div class="modal-body">
+		 		<p data-th-utext="#{datumDelete.preview.intro}">Preview the delete here.</p>
+		 		<div class="progress waiting">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%"></div>
+				</div>
+				<p class="waiting" data-th-text="#{onemomentplease.label}">One moment please...</p>
+		 		<table class="expire-preview-counts tally table ready hidden">
+		 			<tbody>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumMonthlyCount.label}">Monthly</th><td data-tprop="datumMonthlyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumDailyCount.label}">Daily</th><td data-tprop="datumDailyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumHourlyCount.label}">Hourly count</th><td data-tprop="datumHourlyCountDisplay"></td>
+		 				</tr>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumCount.label}">Raw count</th><td data-tprop="datumCountDisplay"></td>
+		 				</tr>
+		 			</tbody>
+		 			<tfoot>
+		 				<tr>
+		 					<th data-th-text="#{expire.datumTotalCount.label}">Total</th><th data-tprop="datumTotalCountDisplay"></th>
+		 				</tr>
+		 			</tfoot>
+		 		</table>
+		 	</div>
+		 	<div class="modal-body delete-confirm hidden">
+		 		<p class="alert alert-danger" data-th-utext="#{datumDelete.confirm.intro}">
+		 			Are you sure you want to do this?
+		 		</p>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<button type="button" class="btn btn-danger pull-left delete-config">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<span data-th-text="#{datumDelete.action.delete}">Delete</span>
+		 		</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{close.label}">Close</button>
+		 	</div>
+		 </div>
+ 	</div>
+ 	<input type="hidden" name="nodeIds">
+ 	<input type="hidden" name="sourceIds">
+ 	<input type="hidden" name="localStartDate">
+ 	<input type="hidden" name="localEndDate">
+</form>
+</div>
+</body>
+</html>

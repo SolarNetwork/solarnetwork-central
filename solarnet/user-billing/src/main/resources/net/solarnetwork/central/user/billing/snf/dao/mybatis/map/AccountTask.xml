@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.domain.AccountTask">
+
+	<update id="update-AccountTask" parameterType="net.solarnetwork.central.user.billing.snf.domain.AccountTask">
+		INSERT INTO solarbill.bill_account_task (
+			id
+			<if test="created != null">,created</if>
+			, acct_id
+			, task_type
+			, jdata
+		) VALUES (
+			#{id}
+			<if test="created != null">,#{created}</if>
+			, #{accountId}
+			, #{taskType,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, #{taskData,jdbcType=VARCHAR,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
+		)
+		ON CONFLICT (id) DO NOTHING
+	</update>
+	
+	<sql id="fragment-AccountTask-full-result">
+		bat.id AS bill_account_task_id
+		, bat.created AS bill_account_task_created
+		, bat.acct_id AS bill_account_task_acct_id
+		, bat.task_type AS bill_account_task_type
+		, bat.jdata AS bill_account_task_jdata
+	</sql>
+
+	<resultMap id="AccountTask-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.AccountTask">
+		<constructor>
+			<idArg column="bill_account_task_id" javaType="java.util.UUID"/>
+			<arg column="bill_account_task_created" javaType="java.time.Instant"/>
+			<arg column="bill_account_task_type" javaType="net.solarnetwork.central.user.billing.snf.domain.AccountTaskType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+			<arg column="bill_account_task_acct_id" javaType="java.lang.Long"/>
+			<arg column="bill_account_task_jdata" javaType="java.util.Map" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
+		</constructor>
+	</resultMap>
+	
+	<select id="get-AccountTask-for-id" parameterType="java.util.UUID" resultMap="AccountTask-FullResult">
+		SELECT
+			<include refid="fragment-AccountTask-full-result"/>
+		FROM
+			solarbill.bill_account_task bat
+		WHERE
+			bat.id = #{id}
+	</select>
+	
+	<select id="claim-queued-account-task" resultMap="AccountTask-FullResult">
+		SELECT
+			<include refid="fragment-AccountTask-full-result"/>
+		FROM solarbill.claim_bill_account_task() bat
+	</select>
+	
+	<delete id="delete-AccountTask" parameterType="java.util.UUID">
+		DELETE FROM solarbill.bill_account_task
+		WHERE id = #{id}
+	</delete>
+
+</mapper>
