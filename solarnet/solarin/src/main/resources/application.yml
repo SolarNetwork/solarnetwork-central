@@ -31,7 +31,7 @@ app:
     wire-logging-enabled: false
   network-identity:
     network-identity-key: "replace:identity:here"
-    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-toc.txt"
+    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-tos.txt"
     host: "localhost"
     port: 9083
     force-tls: false
