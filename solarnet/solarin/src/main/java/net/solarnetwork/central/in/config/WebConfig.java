@@ -22,17 +22,21 @@
 
 package net.solarnetwork.central.in.config;
 
+import static java.lang.String.format;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
@@ -119,6 +123,18 @@ public class WebConfig implements WebMvcConfigurer {
 		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		view.setIncludeParentheses(false);
 		return view;
+	}
+
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		// enable client caching of static resources
+		// @formatter:off
+		for ( String dir : new String[] {"css", "img"} ) {
+			registry.addResourceHandler(format("/*/%s/", dir))
+					.addResourceLocations("classpath:/static/")
+					.setCacheControl(CacheControl.maxAge(1, TimeUnit.DAYS));
+		}
+		// @formatter:on
 	}
 
 }
