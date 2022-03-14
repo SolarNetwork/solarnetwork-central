@@ -91,7 +91,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	    http
 	      // limit this configuration to specific paths
 	      .requestMatchers()
-	        .antMatchers("/solarin")
+	        .antMatchers("/solarin/**")
 	        .and()
 
 	        // CSRF not needed for stateless calls
