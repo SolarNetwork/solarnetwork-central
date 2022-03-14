@@ -63,7 +63,8 @@ import net.solarnetwork.web.domain.Response;
  * @version 3.0
  */
 @Controller
-@RequestMapping(value = { "/bulkCollector.do", "/u/bulkCollector.do" }, consumes = "application/json")
+@RequestMapping(value = { "/solarin/bulkCollector.do",
+		"/solarin/u/bulkCollector.do" }, consumes = "application/json")
 public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/** The JSON field name for an "object type". */

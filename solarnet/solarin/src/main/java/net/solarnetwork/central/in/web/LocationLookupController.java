@@ -149,7 +149,8 @@ public class LocationLookupController {
 	 *        the model
 	 * @return the result view name
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = { "/locationSearch.*", "/u/locationSearch.*" })
+	@RequestMapping(method = RequestMethod.GET, value = { "/solarin/locationSearch.*",
+			"/solarin/u/locationSearch.*" })
 	public String searchForLocations(@Valid GenericSourceLocationFilter criteria, Model model) {
 		List<? extends EntityMatch> matches = getDataCollectorBiz()
 				.findLocations(criteria.getLocation());

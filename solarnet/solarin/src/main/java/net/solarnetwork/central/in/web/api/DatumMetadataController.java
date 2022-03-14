@@ -38,13 +38,13 @@ import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -54,7 +54,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.0
  */
 @Controller("v1DatumMetadataController")
-@RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })
+@RequestMapping({ "/solarin/api/v1/pub/datum/meta/{nodeId}", "/solarin/api/v1/sec/datum/meta/{nodeId}" })
 @GlobalExceptionRestController
 public class DatumMetadataController {
 

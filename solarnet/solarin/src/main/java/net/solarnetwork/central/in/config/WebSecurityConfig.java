@@ -89,7 +89,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		// @formatter:off
 	    http
-	      // CSRF not needed for stateless calls
+	      // limit this configuration to specific paths
+	      .requestMatchers()
+	        .antMatchers("/solarin")
+	        .and()
+
+	        // CSRF not needed for stateless calls
 	      .csrf().disable()
 	      
 	      // make sure CORS honored
@@ -115,19 +120,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .and()
 	        
 	      .authorizeRequests()
-	      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+	      	.antMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
 	        .antMatchers(HttpMethod.GET, 
-	        		"/",
-	        		"/error",
-	        		"/*.html",
-	        		"/css/**",
-	        		"/img/**",
-	        		"/ping",
-	        		"/api/v1/pub/**",
-	        		"/identity.do").permitAll()
+	        		"/solarin/",
+	        		"/solarin/error",
+	        		"/solarin/*.html",
+	        		"/solarin/css/**",
+	        		"/solarin/img/**",
+	        		"/solarin/ping",
+	        		"/solarin/api/v1/pub/**",
+	        		"/solarin/identity.do").permitAll()
 	        
-	        .antMatchers(HttpMethod.GET, "/**/*Collector.do").hasAnyAuthority(NODE_AUTHORITIES)
-	        .antMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITIES)
+	        .antMatchers(HttpMethod.GET, "/solarin/**/*Collector.do").hasAnyAuthority(NODE_AUTHORITIES)
+	        .antMatchers(HttpMethod.GET, "/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITIES)
 	        
 	        .anyRequest().authenticated()
 	    ;

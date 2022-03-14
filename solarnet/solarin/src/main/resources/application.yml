@@ -128,7 +128,6 @@ server:
     min-response-size: 2048
   error.whitelabel.enabled: false
   port: 9083
-  servlet.context-path: "/solarin"
 
 spring:
   jmx.enabled: false

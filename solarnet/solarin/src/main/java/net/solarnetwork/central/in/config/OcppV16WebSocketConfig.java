@@ -117,7 +117,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-		WebSocketHandlerRegistration reg = registry.addHandler(ocppWebSocketHandler_v16(), "/v16/**");
+		WebSocketHandlerRegistration reg = registry.addHandler(ocppWebSocketHandler_v16(),
+				"/ocpp/j/v16/**");
 
 		OcppWebSocketHandshakeInterceptor interceptor = new OcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);

@@ -49,7 +49,7 @@ import net.solarnetwork.web.domain.Response;
  * @since 1.21
  */
 @Controller("v1NodeMetadataController")
-@RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
+@RequestMapping({ "/solarin/api/v1/pub/nodes/meta", "/solarin/api/v1/sec/nodes/meta" })
 @GlobalExceptionRestController
 public class NodeMetadataController {
 

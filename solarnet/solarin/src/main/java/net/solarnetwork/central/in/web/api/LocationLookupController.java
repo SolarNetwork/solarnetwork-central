@@ -50,7 +50,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 2.2
  */
 @Controller("v1LocationLookupController")
-@RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
+@RequestMapping({ "/solarin/api/v1/pub/location", "/solarin/api/v1/sec/location" })
 @GlobalExceptionRestController
 public class LocationLookupController {
 

@@ -48,7 +48,7 @@ import net.solarnetwork.web.domain.Response;
  * @version 1.0
  */
 @Controller("v1NodeCertificateController")
-@RequestMapping(value = "/api/v1/sec/cert")
+@RequestMapping(value = "/solarin/api/v1/sec/cert")
 @GlobalExceptionRestController
 public class NodeCertificateController {
 
