@@ -272,6 +272,9 @@ server:
   error.whitelabel.enabled: false
   port: 9080
   servlet.context-path: /solarjobs
+  tomcat.threads:
+    min-spare: 1
+    max: 5
 
 spring:
   jmx.enabled: false

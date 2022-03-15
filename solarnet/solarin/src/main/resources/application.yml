@@ -128,6 +128,9 @@ server:
     min-response-size: 2048
   error.whitelabel.enabled: false
   port: 9083
+  tomcat.threads:
+    min-spare: 10
+    max: 50
 
 spring:
   jmx.enabled: false

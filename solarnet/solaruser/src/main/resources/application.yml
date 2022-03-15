@@ -161,6 +161,9 @@ server:
   tomcat:
 #    max-http-form-post-size: "2MB"
     max-swallow-size: -1
+    threads:
+      min-spare: 10
+      max: 50
 
 spring:
   jmx.enabled: false
