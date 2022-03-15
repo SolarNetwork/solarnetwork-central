@@ -258,6 +258,9 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			writer = new CsvMapWriter(new OutputStreamWriter(out, ByteUtils.UTF8),
 					CsvPreference.STANDARD_PREFERENCE);
 			setEstimatedResultCount(estimatedResultCount);
+			log.info(
+					"Starting CSV export with estimated row count {} to temporary file [{}] for config {}",
+					estimatedResultCount, temporaryFile, config);
 		}
 
 		@Override
@@ -307,6 +310,10 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		public Iterable<DatumExportResource> finish() throws IOException {
 			flush();
 			close();
+			if ( temporaryFile == null ) {
+				return Collections.emptyList();
+			}
+			log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			final boolean decompressTemp = (config == null || config.getCompressionType() == null
 					|| config.getCompressionType() == OutputCompressionType.None);
 			if ( !isSinglePassOutput() ) {
@@ -329,16 +336,17 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				}
 				temporaryFile.delete();
 				temporaryFile = temporaryConcatenatedFile;
+				log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			}
-			if ( temporaryFile != null ) {
-				Resource outputResource = new FileSystemResource(temporaryFile);
-				if ( decompressTemp ) {
-					outputResource = new DecompressingResource(outputResource);
-				}
-				return Collections.singleton(new BasicDatumExportResource(
-						new DeleteOnCloseFileResource(outputResource), getContentType(config)));
+			if ( temporaryFile == null ) {
+				return Collections.emptyList();
 			}
-			return Collections.emptyList();
+			Resource outputResource = new FileSystemResource(temporaryFile);
+			if ( decompressTemp ) {
+				outputResource = new DecompressingResource(outputResource);
+			}
+			return Collections.singleton(new BasicDatumExportResource(
+					new DeleteOnCloseFileResource(outputResource), getContentType(config)));
 		}
 
 		@Override

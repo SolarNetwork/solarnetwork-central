@@ -23,9 +23,12 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serializable;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import net.solarnetwork.util.CollectionUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Basic implementation of {@link OutputConfiguration}.
@@ -59,6 +62,36 @@ public class BasicOutputConfiguration extends BasicIdentifiableConfiguration
 	public BasicOutputConfiguration(OutputConfiguration other) {
 		super(other);
 		setCompressionType(other.getCompressionType());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicOutputConfiguration{");
+		if ( getName() != null ) {
+			builder.append("name=");
+			builder.append(getName());
+			builder.append(", ");
+		}
+		if ( getServiceIdentifier() != null ) {
+			builder.append("serviceIdentifier=");
+			builder.append(getServiceIdentifier());
+			builder.append(", ");
+		}
+		if ( compressionType != null ) {
+			builder.append("compressionType=");
+			builder.append(compressionType);
+			builder.append(", ");
+		}
+		Map<String, Object> props = getServiceProps();
+		if ( props != null ) {
+			builder.append("serviceProps=");
+			Map<String, Object> maskedServiceProps = StringUtils.sha256MaskedMap(props,
+					CollectionUtils.sensitiveNamesToMask(props.keySet()));
+			builder.append(maskedServiceProps);
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@JsonIgnore

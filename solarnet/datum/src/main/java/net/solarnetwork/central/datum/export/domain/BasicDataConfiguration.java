@@ -23,10 +23,13 @@
 package net.solarnetwork.central.datum.export.domain;
 
 import java.io.Serializable;
+import java.util.Map;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import net.solarnetwork.util.CollectionUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Basic implementation of {@link DataConfiguration}.
@@ -61,6 +64,36 @@ public class BasicDataConfiguration extends BasicIdentifiableConfiguration
 			return;
 		}
 		setDatumFilter(other.getDatumFilter());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicDataConfiguration{");
+		if ( getName() != null ) {
+			builder.append("name=");
+			builder.append(getName());
+			builder.append(", ");
+		}
+		if ( getServiceIdentifier() != null ) {
+			builder.append("serviceIdentifier=");
+			builder.append(getServiceIdentifier());
+			builder.append(", ");
+		}
+		if ( datumFilter != null ) {
+			builder.append("datumFilter=");
+			builder.append(datumFilter);
+			builder.append(", ");
+		}
+		Map<String, Object> props = getServiceProps();
+		if ( props != null ) {
+			builder.append("serviceProps=");
+			Map<String, Object> maskedServiceProps = StringUtils.sha256MaskedMap(props,
+					CollectionUtils.sensitiveNamesToMask(props.keySet()));
+			builder.append(maskedServiceProps);
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override

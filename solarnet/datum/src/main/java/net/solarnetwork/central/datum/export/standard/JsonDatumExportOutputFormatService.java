@@ -28,7 +28,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.zip.GZIPOutputStream;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -36,10 +38,12 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.io.DecompressingResource;
 import net.solarnetwork.io.DeleteOnCloseFileResource;
 import net.solarnetwork.service.ProgressListener;
 
@@ -109,8 +113,12 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 		public void start(long estimatedResultCount) throws IOException {
 			setEstimatedResultCount(estimatedResultCount);
 			temporaryFile = createTemporaryResource(config);
-			OutputStream out = createCompressedOutputStream(
-					new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+			BufferedOutputStream rawOut = new BufferedOutputStream(new FileOutputStream(temporaryFile));
+			OutputStream out = createCompressedOutputStream(rawOut);
+			if ( out == rawOut ) {
+				// compress temporary results so don't run out of local disk space
+				out = new GZIPOutputStream(out);
+			}
 			generator = objectMapper.getFactory().createGenerator(out);
 		}
 
@@ -134,9 +142,18 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 			}
 			flush();
 			close();
-			return Collections.singleton(new BasicDatumExportResource(
-					new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)),
-					getContentType(config)));
+			final boolean decompressTemp = (config == null || config.getCompressionType() == null
+					|| config.getCompressionType() == OutputCompressionType.None);
+			if ( temporaryFile != null ) {
+				log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
+				Resource outputResource = new FileSystemResource(temporaryFile);
+				if ( decompressTemp ) {
+					outputResource = new DecompressingResource(outputResource);
+				}
+				return Collections.singleton(new BasicDatumExportResource(
+						new DeleteOnCloseFileResource(outputResource), getContentType(config)));
+			}
+			return Collections.emptyList();
 		}
 
 		@Override

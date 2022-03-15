@@ -23,8 +23,11 @@
 package net.solarnetwork.central.datum.imp.domain;
 
 import java.io.Serializable;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.domain.BasicIdentifiableConfiguration;
+import net.solarnetwork.util.CollectionUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Basic implementation of {@link InputConfiguration}.
@@ -59,18 +62,42 @@ public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicInputConfiguration{");
+		if ( getName() != null ) {
+			builder.append("name=");
+			builder.append(getName());
+			builder.append(", ");
+		}
+		if ( getServiceIdentifier() != null ) {
+			builder.append("serviceIdentifier=");
+			builder.append(getServiceIdentifier());
+			builder.append(", ");
+		}
+		if ( timeZoneId != null ) {
+			builder.append("timeZoneId=");
+			builder.append(timeZoneId);
+			builder.append(", ");
+		}
+		Map<String, Object> props = getServiceProps();
+		if ( props != null ) {
+			builder.append("serviceProps=");
+			Map<String, Object> maskedServiceProps = StringUtils.sha256MaskedMap(props,
+					CollectionUtils.sensitiveNamesToMask(props.keySet()));
+			builder.append(maskedServiceProps);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public String getTimeZoneId() {
 		return timeZoneId;
 	}
 
 	public void setTimeZoneId(String timeZoneId) {
 		this.timeZoneId = timeZoneId;
-	}
-
-	@Override
-	public String toString() {
-		return "BasicInputConfiguration{timeZoneId=" + timeZoneId + ",service=" + getServiceIdentifier()
-				+ ",properties=" + getServiceProperties() + "}";
 	}
 
 }
