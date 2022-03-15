@@ -132,7 +132,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 	@Override
 	public ExportContext createExportContext(OutputConfiguration config) {
-		return new CsvExportContext(config, false); // TODO: make setting for including header
+		return new CsvExportContext(config, false);
 	}
 
 	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
