@@ -114,7 +114,7 @@ app:
         processor:
           maximum-iterations: 1000
           maximum-wait-ms: 300000
-          schedule: "8 1/10 * * * *"
+          schedule: "8 1/2 * * * *"
       import:
         cleaner:
           minimum-age-minutes: 720
