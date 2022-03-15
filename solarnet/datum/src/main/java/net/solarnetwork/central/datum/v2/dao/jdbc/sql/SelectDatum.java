@@ -46,15 +46,23 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class SelectDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
+	/**
+	 * The {@code fetchSize} property default value.
+	 * 
+	 * @since 1.2
+	 */
+	public static final int DEFAULT_FETCH_SIZE = 1000;
+
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
 	private final CombiningConfig combine;
+	private final int fetchSize;
 
 	/**
 	 * Constructor.
@@ -65,6 +73,21 @@ public class SelectDatum
 	 *         if {@code filter} is {@literal null} or invalid
 	 */
 	public SelectDatum(DatumCriteria filter) {
+		this(filter, DEFAULT_FETCH_SIZE);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param fetchSize
+	 *        the row fetch size
+	 * @throws IllegalArgumentException
+	 *         if {@code filter} is {@literal null} or invalid
+	 * @since 1.2
+	 */
+	public SelectDatum(DatumCriteria filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.aggregation = (filter.getAggregation() != null ? filter.getAggregation()
@@ -87,6 +110,7 @@ public class SelectDatum
 					format("A date range must be specified for aggregation %s.", aggregation));
 		}
 		this.combine = CombiningConfig.configFromCriteria(filter);
+		this.fetchSize = fetchSize;
 	}
 
 	private boolean isDateOrLocalDateRangeRequired() {
@@ -368,6 +392,9 @@ public class SelectDatum
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
 		DatumSqlUtils.preparePaginationFilter(filter, con, stmt, p);
+		if ( fetchSize > 0 ) {
+			stmt.setFetchSize(fetchSize);
+		}
 		return stmt;
 	}
 

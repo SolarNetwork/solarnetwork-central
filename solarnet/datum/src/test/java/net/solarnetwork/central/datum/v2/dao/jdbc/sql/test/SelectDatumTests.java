@@ -68,6 +68,8 @@ import net.solarnetwork.central.domain.Aggregation;
  */
 public class SelectDatumTests {
 
+	private static final int TEST_FETCH_SIZE = 567;
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Test(expected = IllegalArgumentException.class)
@@ -178,6 +180,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -212,6 +215,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(TEST_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -223,7 +227,7 @@ public class SelectDatumTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
@@ -248,6 +252,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -285,6 +290,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(TEST_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -296,7 +302,7 @@ public class SelectDatumTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
@@ -405,6 +411,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(TEST_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -422,7 +429,7 @@ public class SelectDatumTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
@@ -622,6 +629,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(TEST_FETCH_SIZE);
 
 		// set virtual ID parameters
 		Long[] virtRealNodeIds = new Long[] { 1L, 2L, 3L };
@@ -670,7 +678,7 @@ public class SelectDatumTests {
 		// WHEN
 		replay(con, stmt, virtRealNodeIdsArray, virtRealNodeIdsOrderArray, virtRealSourceIdsArray,
 				virtRealSourceIdsOrderArray, nodeIdsArray, sourceIdsArray);
-		PreparedStatement result = new SelectDatum(filter).createPreparedStatement(con);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
@@ -790,6 +798,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
@@ -849,6 +858,7 @@ public class SelectDatumTests {
 		Capture<String> sqlCaptor = new Capture<>();
 		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(SelectDatum.DEFAULT_FETCH_SIZE);
 
 		Array nodeIdsArray = EasyMock.createMock(Array.class);
 		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
