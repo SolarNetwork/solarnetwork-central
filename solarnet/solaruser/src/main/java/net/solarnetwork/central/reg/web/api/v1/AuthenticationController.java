@@ -41,7 +41,7 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 2.0
  */
-@Controller("v1authenticationController")
+@Controller("v1AuthenticationController")
 @GlobalExceptionRestController
 public class AuthenticationController {
 
@@ -66,7 +66,7 @@ public class AuthenticationController {
 			data.put("name", user.getDisplayName());
 		} else if ( actor instanceof SecurityToken ) {
 			SecurityToken token = (SecurityToken) actor;
-			data.put("token", token.getToken());
+			data.put("token", token.getToken().trim());
 			data.put("tokenType", token.getTokenType());
 		}
 		return Response.response(data);
