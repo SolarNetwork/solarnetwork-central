@@ -290,7 +290,6 @@ public class WebSecurityConfig {
 		        		"/", 
 		        		"/error", 
 		        		"/*.html",
-		        		"/associate.*",
 		        		"/cert.*",
 		        		"/css/**",
 		        		"/fonts/**",
@@ -299,6 +298,8 @@ public class WebSecurityConfig {
 		        		"/js-lib/**",
 		        		"/ping", 
 		        		"/api/v1/pub/**").permitAll()
+		        .antMatchers(HttpMethod.POST,
+		        		"/associate.*").permitAll()
 		        .anyRequest().denyAll();
 		    // @formatter:on
 		}
