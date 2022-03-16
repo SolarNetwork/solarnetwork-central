@@ -34,7 +34,7 @@ import net.solarnetwork.domain.SimplePagination;
  * Basic implementation of some core criteria APIs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicCoreCriteria extends SimplePagination implements PaginationCriteria, LocationCriteria,
 		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria {
@@ -310,7 +310,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	 */
 	@JsonSetter
 	public void setTokenId(String tokenId) {
-		setTokenIds(tokenId == null ? null : new String[] { tokenId });
+		setTokenIds(tokenId == null ? null : new String[] { tokenId.trim() });
 	}
 
 	@Override

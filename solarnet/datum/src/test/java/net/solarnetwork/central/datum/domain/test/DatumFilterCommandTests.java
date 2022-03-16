@@ -43,8 +43,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Test cases for the {@link DatumFilterCommand} class.
@@ -67,7 +67,7 @@ public class DatumFilterCommandTests {
 
 	@Before
 	public void setup() {
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.newDatumObjectMapper();
 	}
 
 	@Test

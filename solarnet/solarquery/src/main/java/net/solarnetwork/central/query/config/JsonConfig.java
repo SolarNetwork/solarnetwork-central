@@ -25,7 +25,7 @@ package net.solarnetwork.central.query.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 
 /**
  * JSON configuration.
@@ -38,7 +38,7 @@ public class JsonConfig {
 
 	@Bean
 	public ObjectMapper objectMapper() {
-		return JsonUtils.newDatumObjectMapper();
+		return DatumJsonUtils.newDatumObjectMapper();
 	}
 
 }

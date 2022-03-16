@@ -36,7 +36,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -58,7 +58,7 @@ public class GeneralNodeDatumAuxiliaryTests {
 
 	@Before
 	public void setup() {
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.newDatumObjectMapper();
 	}
 
 	private GeneralNodeDatumAuxiliary getTestInstance() {
