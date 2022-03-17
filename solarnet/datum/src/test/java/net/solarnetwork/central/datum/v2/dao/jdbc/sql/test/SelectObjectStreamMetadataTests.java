@@ -49,8 +49,8 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.SimpleLocation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link SelectObjectStreamMetadata} class.
@@ -382,7 +382,7 @@ public class SelectObjectStreamMetadataTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
 		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setUserId(1L); // ignored for location query
 
 		// WHEN
 		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location).getSql();
@@ -398,7 +398,7 @@ public class SelectObjectStreamMetadataTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setLocationId(1L);
 		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setUserId(1L); // ignored for location query
 
 		Connection con = EasyMock.createMock(Connection.class);
 		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
@@ -417,13 +417,8 @@ public class SelectObjectStreamMetadataTests {
 		stmt.setArray(2, sourceIdsArray);
 		sourceIdsArray.free();
 
-		Array userIdsArray = EasyMock.createMock(Array.class);
-		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getUserIds()))).andReturn(userIdsArray);
-		stmt.setArray(3, userIdsArray);
-		userIdsArray.free();
-
 		// WHEN
-		replay(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
+		replay(con, stmt, locIdsArray, sourceIdsArray);
 		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location)
 				.createPreparedStatement(con);
 
@@ -432,7 +427,7 @@ public class SelectObjectStreamMetadataTests {
 		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
 				"loc-stream-meta-locsAndSourcesAndUsers.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		verify(con, stmt, locIdsArray, sourceIdsArray, userIdsArray);
+		verify(con, stmt, locIdsArray, sourceIdsArray);
 	}
 
 	@Test

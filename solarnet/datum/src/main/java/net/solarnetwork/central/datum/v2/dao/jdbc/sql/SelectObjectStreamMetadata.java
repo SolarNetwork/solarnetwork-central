@@ -32,8 +32,8 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.SearchFilter;
 
 /**
@@ -143,7 +143,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
 		}
-		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, kind, con, stmt, p);
 		if ( p > 0 && searchFilter != null ) {
 			DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
 		}

@@ -28,8 +28,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link DatumSqlUtils} class.
@@ -159,7 +160,8 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray);
-		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt,
+				0);
 
 		// THEN
 		assertThat("Node IDs parameter set", count, equalTo(1));
@@ -181,7 +183,8 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, sourceIdsArray);
-		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt,
+				0);
 
 		// THEN
 		assertThat("Source IDs parameter set", count, equalTo(1));
@@ -203,7 +206,8 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, streamIdsArray);
-		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt,
+				0);
 
 		// THEN
 		assertThat("Stream IDs parameter set", count, equalTo(1));
@@ -225,7 +229,8 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, userIdsArray);
-		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt,
+				0);
 
 		// THEN
 		assertThat("User IDs parameter set", count, equalTo(1));
@@ -253,7 +258,8 @@ public class DatumSqlUtilsTests {
 
 		// WHEN
 		replay(con, stmt, nodeIdsArray, sourceIdsArray);
-		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int count = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt,
+				0);
 
 		// THEN
 		assertThat("Node IDs and source IDs parameters set", count, equalTo(2));

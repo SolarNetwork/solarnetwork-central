@@ -37,13 +37,14 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Generate dynamic SQL for a {@link DatumCriteria} "calculate datum at a point
  * in time" query.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlProvider {
@@ -110,7 +111,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, con, stmt, 0);
+		int p = DatumSqlUtils.prepareObjectMetadataFilter(filter, ObjectDatumKind.Node, con, stmt, 0);
 		if ( filter.hasLocalStartDate() ) {
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
 			stmt.setObject(++p, filter.getLocalStartDate(), Types.TIMESTAMP);
