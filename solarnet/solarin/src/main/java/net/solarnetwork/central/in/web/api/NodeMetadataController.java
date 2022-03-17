@@ -36,6 +36,8 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -76,14 +78,18 @@ public class NodeMetadataController {
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
 			DatumFilterCommand criteria) {
-		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return findMetadata(nodeId, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
 	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
-			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
+			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
+		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		if ( !nodeId.equals(requestNodeId) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);
+		}
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = dataCollectorBiz
@@ -95,14 +101,18 @@ public class NodeMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST)
 	public Response<Object> addMetadata(@RequestBody GeneralDatumMetadata meta) {
-		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return addMetadata(nodeId, meta);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
+	public Response<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
 			@RequestBody GeneralDatumMetadata meta) {
+		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		if ( !nodeId.equals(requestNodeId) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);
+		}
 		dataCollectorBiz.addSolarNodeMetadata(nodeId, meta);
 		return response(null);
 	}

@@ -46,9 +46,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  */
 // @formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
-		// FIXME: this needed? SolarNetDatumAopConfiguration.class,
 		SolarNetDatumConfiguration.class,
-		// FIXME: this needed? SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarInApp.class,
