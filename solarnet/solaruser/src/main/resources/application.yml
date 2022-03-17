@@ -57,14 +57,14 @@ app:
     network-identity-key: "solaruser:identity:here"
     terms-of-service: "solaruser:tos:here"
     host: "localhost"
-    port: 8080
+    port: 9083
     force-tls: false
     service-urls:
       node-dashboard: "http://localhost/node-dashboard"
       node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
       solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost/solarquery"
-      solaruser: "http://localhost/solaruser"
+      solarquery: "http://localhost:9082/solarquery"
+      solaruser: "http://localhost:9081/solaruser"
   node.pki:
     cs:
       certificate-expire-days: 730
