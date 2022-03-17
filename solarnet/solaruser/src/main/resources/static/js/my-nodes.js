@@ -560,6 +560,7 @@ $(document).ready(function() {
 				return;
 			}
 			// do it!
+			btn.siblings('button').addBack().prop('disabled', true);
 			$.post(SolarReg.solarUserURL('/sec/my-nodes/create-cert'), { 
 					timeZone : tzInput.val(), 
 					country : countryInput.val(),
@@ -568,6 +569,7 @@ $(document).ready(function() {
 				}, function(json) {
 				document.location.reload(true);
 			}).fail(function(data, statusText, xhr) {
+				btn.siblings('button').addBack().prop('disabled', false);
 				SolarReg.showAlertBefore('#node-cert-create .modal-body > *:first-child', 'alert-warning', statusText);
 			});
 		} else {
