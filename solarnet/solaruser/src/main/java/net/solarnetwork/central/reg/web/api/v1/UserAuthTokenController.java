@@ -120,8 +120,8 @@ public class UserAuthTokenController {
 	 *        The ID of the token to delete.
 	 * @return Success response indicator.
 	 */
-	@RequestMapping(value = "/{tokenId}", method = RequestMethod.DELETE)
-	public Response<Object> deleteToken(Principal principal, @PathVariable("tokenId") String tokenId) {
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE)
+	public Response<Object> deleteToken(Principal principal, @RequestParam("tokenId") String tokenId) {
 		final Long actorUserId = getUserId(principal);
 		userBiz.deleteUserAuthToken(actorUserId, tokenId);
 		return new Response<Object>();
@@ -138,9 +138,9 @@ public class UserAuthTokenController {
 	 *        The policy to merge into the token's existing policy.
 	 * @return The updated policy.
 	 */
-	@RequestMapping(value = "/{tokenId}", method = RequestMethod.PATCH, consumes = "application/json")
+	@RequestMapping(value = "/policy", method = RequestMethod.PATCH, consumes = "application/json")
 	public Response<UserAuthToken> mergePolicy(Principal principal,
-			@PathVariable("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
+			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
 		final Long actorUserId = getUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, false);
 		return Response.response(token);
@@ -157,9 +157,9 @@ public class UserAuthTokenController {
 	 *        The policy to set in the token.
 	 * @return The updated policy.
 	 */
-	@RequestMapping(value = "/{tokenId}", method = RequestMethod.PUT, consumes = "application/json")
+	@RequestMapping(value = "/policy", method = RequestMethod.PUT, consumes = "application/json")
 	public Response<UserAuthToken> replacePolicy(Principal principal,
-			@PathVariable("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
+			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
 		final Long actorUserId = getUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, true);
 		return Response.response(token);
@@ -176,8 +176,8 @@ public class UserAuthTokenController {
 	 *        The status to set.
 	 * @return Success response indicator.
 	 */
-	@RequestMapping(value = "/{tokenId}/status", method = RequestMethod.POST)
-	public Response<Object> changeStatus(Principal principal, @PathVariable("tokenId") String tokenId,
+	@RequestMapping(value = "/status", method = RequestMethod.POST)
+	public Response<Object> changeStatus(Principal principal, @RequestParam("tokenId") String tokenId,
 			@RequestParam("status") SecurityTokenStatus status) {
 		final Long actorUserId = getUserId(principal);
 		userBiz.updateUserAuthTokenStatus(actorUserId, tokenId, status);
