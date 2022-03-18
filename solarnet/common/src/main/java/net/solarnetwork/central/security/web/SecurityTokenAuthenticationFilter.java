@@ -49,10 +49,12 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.transaction.TransactionException;
 import org.springframework.util.Assert;
 import org.springframework.util.PathMatcher;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.web.security.AuthenticationData;
 import net.solarnetwork.web.security.AuthenticationDataFactory;
 import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
@@ -72,7 +74,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -89,10 +91,9 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
 	private SecurityTokenAuthenticationEntryPoint authenticationEntryPoint;
 	private UserDetailsService userDetailsService;
-	private long maxDateSkew = 15 * 60 * 1000; // 15 minutes default
-	private int maxRequestBodySize = 65535;
 	private final PathMatcher pathMatcher;
 	private final String pathMatcherPrefixStrip;
+	private final SecurityTokenFilterSettings settings;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -100,7 +101,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * Default constructor.
 	 */
 	public SecurityTokenAuthenticationFilter() {
-		this(null, null);
+		this(null, null, null);
 	}
 
 	/**
@@ -116,9 +117,29 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * @since 1.5
 	 */
 	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip) {
+		this(pathMatcher, pathMatcherPrefixStrip, null);
+	}
+
+	/**
+	 * Construct with a {@link PathMatcher}.
+	 * 
+	 * @param pathMatcher
+	 *        the matcher to use, or {@literal null} if not supported
+	 * @param pathMatcherPrefixStrip
+	 *        a path prefix to strip from
+	 *        {@link HttpServletRequest#getRequestURI()} <i>after</i> any
+	 *        {@link HttpServletRequest#getContextPath()} has been removed,
+	 *        before comparing paths, or {@literal null} to not strip any prefix
+	 * @param settings,
+	 *        or {@literal null} to create a default instance
+	 * @since 1.7
+	 */
+	public SecurityTokenAuthenticationFilter(PathMatcher pathMatcher, String pathMatcherPrefixStrip,
+			SecurityTokenFilterSettings settings) {
 		super();
 		this.pathMatcher = pathMatcher;
 		this.pathMatcherPrefixStrip = pathMatcherPrefixStrip;
+		this.settings = (settings != null ? settings : new SecurityTokenFilterSettings());
 	}
 
 	@Override
@@ -131,14 +152,18 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
 			throws ServletException, IOException {
 		SecurityHttpServletRequestWrapper request = new SecurityHttpServletRequestWrapper(req,
-				maxRequestBodySize);
+				(int) settings.getMaxRequestBodySize().toBytes(), true,
+				(int) settings.getMinimumCompressLength().toBytes(),
+				settings.getCompressibleContentTypePattern(),
+				(int) settings.getMinimumSpoolLength().toBytes(), settings.getSpoolDirectory());
 		HttpServletResponse response = res;
 
 		AuthenticationData data;
 		try {
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
 		} catch ( net.solarnetwork.web.security.SecurityException e ) {
-			deny(request, response, new MaxUploadSizeExceededException(maxRequestBodySize, e));
+			deny(request, response, new MaxUploadSizeExceededException(
+					(int) settings.getMaxRequestBodySize().toBytes(), e));
 			return;
 		} catch ( SecurityException e ) {
 			deny(request, response, e);
@@ -193,7 +218,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			return;
 		}
 
-		if ( !data.isDateValid(maxDateSkew) ) {
+		if ( !data.isDateValid(settings.getMaxDateSkew()) ) {
 			log.debug("Request date [{}] diff too large: {}", data.getDate(), data.getDateSkew());
 			fail(request, response, new BadCredentialsException("Date skew too large"));
 			return;
@@ -261,15 +286,17 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		return authRequest;
 	}
 
-	private void fail(HttpServletRequest request, HttpServletResponse response,
+	private void fail(SecurityHttpServletRequestWrapper request, HttpServletResponse response,
 			AuthenticationException failed) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(null);
+		request.deleteCachedContent();
 		authenticationEntryPoint.commence(request, response, failed);
 	}
 
-	private void deny(HttpServletRequest request, HttpServletResponse response, Exception e)
-			throws IOException, ServletException {
+	private void deny(SecurityHttpServletRequestWrapper request, HttpServletResponse response,
+			Exception e) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(null);
+		request.deleteCachedContent();
 		String msg = e.getMessage();
 		if ( msg == null ) {
 			msg = "Access denied.";
@@ -277,9 +304,10 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		authenticationEntryPoint.handle(request, response, new AccessDeniedException(msg, e));
 	}
 
-	private void failDao(HttpServletRequest request, HttpServletResponse response, Exception failed)
-			throws IOException, ServletException {
+	private void failDao(SecurityHttpServletRequestWrapper request, HttpServletResponse response,
+			Exception failed) throws IOException, ServletException {
 		SecurityContextHolder.getContext().setAuthentication(null);
+		request.deleteCachedContent();
 		authenticationEntryPoint.handleTransientResourceException(request, response, failed);
 	}
 
@@ -329,7 +357,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 *        the maximum allowed date skew
 	 */
 	public void setMaxDateSkew(long maxDateSkew) {
-		this.maxDateSkew = maxDateSkew;
+		this.settings.setMaxDateSkew(maxDateSkew);
 	}
 
 	/**
@@ -351,7 +379,17 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * @since 1.3
 	 */
 	public void setMaxRequestBodySize(int maxRequestBodySize) {
-		this.maxRequestBodySize = maxRequestBodySize;
+		this.settings.setMaxRequestBodySize(DataSize.ofBytes(maxRequestBodySize));
+	}
+
+	/**
+	 * Get the filter settings.
+	 * 
+	 * @return the settings, never {@literal null}
+	 * @since 1.7
+	 */
+	public SecurityTokenFilterSettings getSettings() {
+		return settings;
 	}
 
 }

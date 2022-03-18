@@ -50,6 +50,10 @@ app:
       client-id: "solaruser-${app.meta.instance-id}"
       username: "USERNAME_HERE"
       password: "PASSWORD_HERE"
+  job:
+    security-token-spool.cleaner:
+      minutes-older: 10
+      schedule: 120000
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
@@ -83,6 +87,9 @@ app:
       mqtt-topic: "instr/OCPP_v16"
       mqtt-timeout: 30
       publish-only: true
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
   solaruser:
     node-ownership-cache:
       ttl: 60
@@ -120,8 +127,11 @@ app:
       ttl: 600
   web.security:
     token:
-      max-request-body-size: "512KB"
+      max-request-body-size: "20MB"
       max-date-skew: 900000
+      minimum-compress-length: "32KB"
+      minimum-spool-length: "65KB"
+      spool-directory: "${java.io.tmpdir}/SecurityTokenFilter"
 
 debug: true
 

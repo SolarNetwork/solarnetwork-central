@@ -54,6 +54,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -107,7 +108,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -274,10 +275,18 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	private CompletableFuture<Boolean> saveToResourceStorage(File f, UserUuidPK id,
 			ResourceStorageService rss) {
+		final AtomicInteger logCount = new AtomicInteger(0);
 		return rss.saveResource(f.getName(), new FileSystemResource(f), true, (r, amount) -> {
-			String msg = String.format("Saved %.1f%% of datum import [%s] to resource storage [%s]",
-					(amount * 100.0), f.getName(), rss.getUid());
-			log.info(msg);
+			final double percent = amount * 100.0;
+			final int now = (int) percent;
+			final int prev = logCount.get();
+			final int diff = now - prev;
+			if ( diff > 10 || now >= 100 ) {
+				String msg = String.format("Saved %.1f%% of datum import [%s] to resource storage [%s]",
+						percent, f.getName(), rss.getUid());
+				log.info(msg);
+				logCount.set(now);
+			}
 		});
 	}
 

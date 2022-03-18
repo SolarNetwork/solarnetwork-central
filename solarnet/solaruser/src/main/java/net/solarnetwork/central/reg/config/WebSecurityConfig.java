@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.reg.config;
 
+import static java.lang.String.format;
+import java.io.IOException;
+import java.nio.file.Files;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -76,6 +80,8 @@ public class WebSecurityConfig {
 
 	/** The import authority. */
 	public static final String IMPORT_AUTHORITY = "ROLE_IMPORT";
+
+	private static final Logger log = LoggerFactory.getLogger(WebSecurityConfig.class);
 
 	@Autowired
 	private DataSource dataSource;
@@ -178,6 +184,9 @@ public class WebSecurityConfig {
 		@Autowired
 		private HandlerExceptionResolver handlerExceptionResolver;
 
+		@Autowired
+		private SecurityTokenFilterSettings securityTokenFilterSettings;
+
 		public UserDetailsService tokenUserDetailsService() {
 			JdbcUserDetailsService service = new JdbcUserDetailsService();
 			service.setDataSource(dataSource);
@@ -194,25 +203,26 @@ public class WebSecurityConfig {
 			return ep;
 		}
 
-		@ConfigurationProperties(prefix = "app.web.security.token")
-		@Bean
-		public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
-			return new SecurityTokenFilterSettings();
-		}
-
 		@Bean
 		public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
+			try {
+				if ( !Files.isDirectory(securityTokenFilterSettings.getSpoolDirectory()) ) {
+					Files.createDirectories(securityTokenFilterSettings.getSpoolDirectory());
+					log.info("Created security token spool directory: {}",
+							securityTokenFilterSettings.getSpoolDirectory());
+				}
+			} catch ( IOException e ) {
+				throw new RuntimeException(format("Error setting up security token spool directory %s",
+						securityTokenFilterSettings.getSpoolDirectory()), e);
+			}
+
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
 			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec");
+					"/api/v1/sec", securityTokenFilterSettings);
 			filter.setUserDetailsService(tokenUserDetailsService());
 			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
-
-			SecurityTokenFilterSettings settings = tokenAuthenticationFilterSettings();
-			filter.setMaxDateSkew(settings.getMaxDateSkew());
-			filter.setMaxRequestBodySize((int) settings.getMaxRequestBodySize().toBytes());
 
 			return filter;
 		}
