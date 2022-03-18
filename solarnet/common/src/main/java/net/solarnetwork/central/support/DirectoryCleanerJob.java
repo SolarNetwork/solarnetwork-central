@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.support;
 
+import static java.lang.String.format;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
@@ -131,7 +132,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 		}
 		FileStore fs = Files.getFileStore(directory);
 		long freeSpace = fs.getUsableSpace();
-		props.put("FreeSpace", freeSpace);
+		props.put("FreeSpace", format("%d MB", DataSize.ofBytes(freeSpace).toMegabytes()));
 		if ( freeSpace < size.toBytes() ) {
 			return new PingTestResult(false, String.format("Disk space below %s.", size), props);
 		}
