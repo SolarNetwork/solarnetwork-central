@@ -12,6 +12,10 @@ var SolarReg = {
 		return $('meta[name=solarUserRootURL]').attr('content') + relativeURL;
 	},
 
+	solarUserPublicURL : function(relativeURL) {
+		return $('meta[name=solarUserRootPublicURL]').attr('content').replace(/\/$/, '') + relativeURL;
+	},
+
 	csrfData : (function() {
 		var csrf = $("meta[name='csrf']").attr("content"),
 			header = $("meta[name='csrf_header']").attr("content");
@@ -174,4 +178,9 @@ $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');
 	});
+}).ajaxComplete(function(event, xhr, ajaxOptions) {
+	// look for X-LoginFormPage header to handle auto client-side redirect to login page
+	if ( xhr.readyState == 4 && "true" === xhr.getResponseHeader("X-LoginFormPage") ) {
+		window.location.href = SolarReg.solarUserPublicURL('/login');
+	}
 });

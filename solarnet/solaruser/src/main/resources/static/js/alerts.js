@@ -28,7 +28,7 @@ $(document).ready(function() {
 				} else {
 					sourceListContainer.addClass('hidden');
 				}
-			}).fail(function(data, statusText, xhr) {
+			}).fail(function(xhr, statusText, error) {
 				// just hide the list
 				sourceListContainer.addClass('hidden');
 			});;
@@ -178,7 +178,7 @@ $(document).ready(function() {
 				$('#alert-situation-resolve').data('alert-id', json.data.id);
 			}
 			modal.modal('show');
-		}).fail(function(data, statusText, xhr) {
+		}).fail(function(xhr, statusText, error) {
 			SolarReg.showAlertBefore('#alert-situation-modal .modal-body > *:first-child', 'alert-warning', 
 					'Error getting alert situation details. ' +statusText);
 		});

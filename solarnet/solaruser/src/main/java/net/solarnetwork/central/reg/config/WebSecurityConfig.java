@@ -45,6 +45,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.security.web.header.HeaderWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
@@ -60,7 +64,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -80,6 +84,9 @@ public class WebSecurityConfig {
 
 	/** The import authority. */
 	public static final String IMPORT_AUTHORITY = "ROLE_IMPORT";
+
+	/** A HTTP header to indicate the response contains the login form page. */
+	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
 
 	private static final Logger log = LoggerFactory.getLogger(WebSecurityConfig.class);
 
@@ -130,6 +137,11 @@ public class WebSecurityConfig {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
+			// Add a special header to the login page, so JavaScript can reliably detect when redirected there
+			HeaderWriter loginHeaderWriter = new DelegatingRequestMatcherHeaderWriter(
+					new AntPathRequestMatcher("/login"),
+					new StaticHeadersWriter(LOGIN_PAGE_HEADER, "true"));
+
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
@@ -138,6 +150,10 @@ public class WebSecurityConfig {
 		        .antMatchers("/logout")
 		        .antMatchers("/*.do")
 		        .antMatchers("/u/**")
+		        .and()
+		      
+		      .headers()
+		        .addHeaderWriter(loginHeaderWriter)
 		        .and()
 		      
 		      // no sessions
