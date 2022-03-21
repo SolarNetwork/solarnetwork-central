@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html th:fragment="layout (title, body, code)" xmlns:th="http://www.thymeleaf.org">
+<html data-th-fragment="layout (title, body, code)">
 <head>
-    <title th:replace="${title}">Oops!</title>
-	<link rel="icon" type="image/png" href="../static/img/favicon.png" th:href="@{/img/favicon.png}">
+    <title data-th-replace="${title}">Oops!</title>
+	<link rel="icon" type="image/png" href="../static/img/favicon.png" data-th-href="@{/img/favicon.png}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="solarUserRootPublicURL" content="/solaruser" data-th-content="@{/}">
-	<meta name="solarUserRootURL" content="/solaruser/u" th:content="@{/u}">
-	<link rel="stylesheet" href="../static/css/bootstrap.css" th:href="@{/css/bootstrap.css}">
-	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" th:href="@{/css/bootstrap-theme.css}">
-	<link rel="stylesheet" href="../static/css/global.css" th:href="@{/css/global.css}">
-	<script src="../static/js-lib/jquery-3.3.1.js" th:src="@{/js-lib/jquery-3.3.1.js}"></script>
-	<script src="../static/js-lib/bootstrap.js" th:src="@{/js-lib/bootstrap.js}"></script>
+	<meta name="solarUserRootURL" content="/solaruser/u" data-th-content="@{/u}">
+	<link rel="stylesheet" href="../static/css/bootstrap.css" data-th-href="@{/css/bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" data-th-href="@{/css/bootstrap-theme.css}">
+	<link rel="stylesheet" href="../static/css/global.css" data-th-href="@{/css/global.css}">
+	<script src="../static/js-lib/jquery-3.3.1.js" data-th-src="@{/js-lib/jquery-3.3.1.js}"></script>
+	<script src="../static/js-lib/bootstrap.js" data-th-src="@{/js-lib/bootstrap.js}"></script>
 </head>
 <body>
-	<nav class="navbar navbar-default" th:replace="navbar :: navbar">
+	<nav class="navbar navbar-default" data-th-replace="navbar :: navbar">
 		<div class="container-fluid">
 			<div class="navbar-header">
 				<a class="navbar-brand" href="#">
@@ -23,12 +23,12 @@
 		</div>
 	</nav>
 	<div class="container">
-		<main th:replace="${body}">
+		<main data-th-replace="${body}">
 			<h1>Oops!</h1>
 			<p>Egads! That wasn't supposed to happen.</p>
 		</main>
-		<footer th:if="${code}">
-			<p class="text-muted"><small th:text="${code}">500</small>
+		<footer data-th-if="${code}">
+			<p class="text-muted"><small data-th-text="${code}">500</small>
 		</footer>
 	</div>
 </body>

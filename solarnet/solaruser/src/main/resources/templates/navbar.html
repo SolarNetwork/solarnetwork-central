@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<html xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 <head>
     <title>SolarUser Navbar</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,7 +14,7 @@
 	<script src="../static/js-lib/bootstrap.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-default" th:fragment="navbar" th:with="homeUrl=${#authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}" xmlns:th="http://www.thymeleaf.org">
+<nav class="navbar navbar-default" data-th-fragment="navbar" data-th-with="homeUrl=${#authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}" xmlns:th="http://www.thymeleaf.org">
 	<div class="container-fluid">
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#solaruser-navbar-collapse-1">
@@ -24,73 +23,73 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</button>
-			<a class="navbar-brand" href="/index.do" th:href="${homeUrl}">
-				<img src="../static/img/logo.svg" th:src="@{/img/logo.svg}" th:alt="#{app.name}" width="214" height="30">
+			<a class="navbar-brand" href="/index.do" data-th-href="${homeUrl}">
+				<img src="../static/img/logo.svg" data-th-src="@{/img/logo.svg}" data-th-alt="#{app.name}" width="214" height="30">
 			</a>
 	    </div>
 
 	    <div class="collapse navbar-collapse" id="solaruser-navbar-collapse-1">
 			<ul class="nav navbar-nav">
-				<li th:classappend="${navloc == 'home'}?active"><a href="/index.do" th:href="${homeUrl}" th:text="#{link.home}">Home</a></li>
-				<li th:classappend="${navloc == 'login'}?active" sec:authorize="!hasRole('ROLE_USER')">
-					<a th:href="@{/login}" th:text="#{link.login}">Login</a>
+				<li data-th-classappend="${navloc == 'home'}?active"><a href="/index.do" data-th-href="${homeUrl}" data-th-text="#{link.home}">Home</a></li>
+				<li data-th-classappend="${navloc == 'login'}?active" sec:authorize="!hasRole('ROLE_USER')">
+					<a data-th-href="@{/login}" data-th-text="#{link.login}">Login</a>
 				</li>
-				<li th:classappend="${navloc == 'my-nodes'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a th:href="@{/u/sec/my-nodes}" th:text="#{link.my-nodes}">My Nodes</a>
+				<li data-th-classappend="${navloc == 'my-nodes'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a data-th-href="@{/u/sec/my-nodes}" data-th-text="#{link.my-nodes}">My Nodes</a>
 				</li>
-				<li th:classappend="${navloc == 'alerts'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a th:href="@{/u/sec/alerts}"><span th:text="#{link.alerts}" th:remove="tag">Alerts</span> <span class="label label-danger label-as-badge alert-situation-count"></span></a>
+				<li data-th-classappend="${navloc == 'alerts'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a data-th-href="@{/u/sec/alerts}"><span data-th-text="#{link.alerts}" data-th-remove="tag">Alerts</span> <span class="label label-danger label-as-badge alert-situation-count"></span></a>
 				</li>
-				<li th:classappend="${navloc == 'auth-tokens'}?active" sec:authorize="hasRole('ROLE_USER')">
-					<a th:href="@{/u/sec/auth-tokens}" th:text="#{link.auth-tokens}">Security Tokens</a>
+				<li data-th-classappend="${navloc == 'auth-tokens'}?active" sec:authorize="hasRole('ROLE_USER')">
+					<a data-th-href="@{/u/sec/auth-tokens}" data-th-text="#{link.auth-tokens}">Security Tokens</a>
 				</li>
-				<li class="dropdown" th:classappend="${navloc == 'data'
+				<li class="dropdown" data-th-classappend="${navloc == 'data'
 						|| navloc == 'data-insight'
 						|| navloc == 'expire'
 						|| navloc == 'export'
 						|| navloc == 'node-event'
 						}?active" sec:authorize="hasRole('ROLE_USER')">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-						<span th:text="#{nav.label.data}" th:remove="tag">My Data</span> <b class="caret"></b>
+						<span data-th-text="#{nav.label.data}" data-th-remove="tag">My Data</span> <b class="caret"></b>
 					</a>
 					<ul class="dropdown-menu">
-						<li th:classappend="${navloc == 'data-insight'}?active">
-							<a th:href="@{/u/sec/data-insight}" th:text="#{link.dataInsight}">Data Insight</a>
+						<li data-th-classappend="${navloc == 'data-insight'}?active">
+							<a data-th-href="@{/u/sec/data-insight}" data-th-text="#{link.dataInsight}">Data Insight</a>
 						</li>
-						<li th:classappend="${navloc == 'expire'}?active" th:if="expireBiz">
-							<a th:href="@{/u/sec/expire}" th:text="#{link.expire}">Data Expire</a>
+						<li data-th-classappend="${navloc == 'expire'}?active" data-th-if="expireBiz">
+							<a data-th-href="@{/u/sec/expire}" data-th-text="#{link.expire}">Data Expire</a>
 						</li>
-						<li th:classappend="${navloc == 'import'}?active" sec:authorize="hasRole('ROLE_IMPORT')" th:if="importBiz">
-							<a th:href="@{/u/sec/import}" th:text="#{link.import}">Data Import</a>
+						<li data-th-classappend="${navloc == 'import'}?active" sec:authorize="hasRole('ROLE_IMPORT')" data-th-if="importBiz">
+							<a data-th-href="@{/u/sec/import}" data-th-text="#{link.import}">Data Import</a>
 						</li>
-						<li th:classappend="${navloc == 'export'}?active" sec:authorize="hasRole('ROLE_EXPORT')" th:if="exportBiz">
-							<a th:href="@{/u/sec/export}" th:text="#{link.export}">Data Export</a>
+						<li data-th-classappend="${navloc == 'export'}?active" sec:authorize="hasRole('ROLE_EXPORT')" data-th-if="exportBiz">
+							<a data-th-href="@{/u/sec/export}" data-th-text="#{link.export}">Data Export</a>
 						</li>
-						<li th:classappend="${navloc == 'node-event'}?active" sec:authorize="hasRole('ROLE_EVENT')" th:if="eventHookBiz">
-							<a th:href="@{/u/sec/event/node}" th:text="#{link.node-event}">Node Event Hooks</a>
+						<li data-th-classappend="${navloc == 'node-event'}?active" sec:authorize="hasRole('ROLE_EVENT')" data-th-if="eventHookBiz">
+							<a data-th-href="@{/u/sec/event/node}" data-th-text="#{link.node-event}">Node Event Hooks</a>
 						</li>
 					</ul>
 				</li>
-				<li th:classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')">
-					<a th:href="@{/u/sec/billing}" th:text="#{link.billing}">Account</a>
+				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')">
+					<a data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
 				</li>
 	 		</ul>
 
 			<ul class="nav navbar-nav navbar-right" sec:authorize="hasRole('ROLE_USER')">
 				<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-						<span th:text="#{nav.label.principal(${#authentication.principal.username})}">user@localhost</span>
+						<span data-th-text="#{nav.label.principal(${#authentication.principal.username})}">user@localhost</span>
 						<b class="caret"></b>
 					</a>
 					<ul class="dropdown-menu">
-						<li  th:classappend="${navloc == 'profile'}?active">
-							<a th:href="@{/u/sec/profile}" th:text="#{link.profile}">Profile</a>
+						<li  data-th-classappend="${navloc == 'profile'}?active">
+							<a data-th-href="@{/u/sec/profile}" data-th-text="#{link.profile}">Profile</a>
 						</li>
-						<li><a class="logout" href="#" th:text="#{link.logout}" onclick="document.getElementById('logout-form').submit();">Logout</a></li>
+						<li><a class="logout" href="#" data-th-text="#{link.logout}" onclick="document.getElementById('logout-form').submit();">Logout</a></li>
 					</ul>
 				</li>
 			</ul>
-			<form id="logout-form" method="post" action="/logout" th:action="@{/logout}" sec:authorize="hasRole('ROLE_USER')">
+			<form id="logout-form" method="post" action="/logout" data-th-action="@{/logout}" sec:authorize="hasRole('ROLE_USER')">
 			</form>
 	    </div>
 	</div>
