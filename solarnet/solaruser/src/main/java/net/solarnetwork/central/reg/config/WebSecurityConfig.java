@@ -160,7 +160,6 @@ public class WebSecurityConfig {
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
 		      .authorizeRequests()
-		        .antMatchers("/login").hasAnyAuthority(ANONYMOUS_AUTHORITY)
 		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
@@ -173,6 +172,7 @@ public class WebSecurityConfig {
 			      
 		      // form login
 		      .formLogin()
+		        .permitAll()
 		        .loginPage("/login")
 		        .defaultSuccessUrl("/u/sec/home")
 		        .failureUrl("/login?login_error=1")
@@ -180,8 +180,13 @@ public class WebSecurityConfig {
 		        
 		      // logout
 		      .logout()
+		        .permitAll()
 		        .logoutUrl("/logout")
 		        .logoutSuccessUrl("/logoutSuccess.do")
+		        .and()
+		        
+		      .sessionManagement()
+		        .invalidSessionUrl("/login")
 		    ;
 		    // @formatter:on
 		}
@@ -314,7 +319,8 @@ public class WebSecurityConfig {
 		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 		        .antMatchers(HttpMethod.GET, 
 		        		"/", 
-		        		"/error", 
+		        		"/error",
+		        		"/session-expired",
 		        		"/*.html",
 		        		"/cert.*",
 		        		"/css/**",
