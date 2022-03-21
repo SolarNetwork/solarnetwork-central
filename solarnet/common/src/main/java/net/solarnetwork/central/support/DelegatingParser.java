@@ -49,9 +49,9 @@ public class DelegatingParser<T> implements Parser<T> {
 	 *         if {@code delegates} is {@literal null} or empty
 	 */
 	@SafeVarargs
+	@SuppressWarnings("varargs")
 	public DelegatingParser(Parser<T>... delegates) {
 		super();
-
 		this.delegates = ObjectUtils.requireNonNullArgument(delegates, "delegates");
 		if ( delegates.length < 1 ) {
 			throw new IllegalArgumentException("At least one delegate parser must be provided.");
