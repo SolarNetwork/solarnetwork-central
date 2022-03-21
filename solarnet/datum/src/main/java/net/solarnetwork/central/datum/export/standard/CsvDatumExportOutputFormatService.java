@@ -43,7 +43,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StreamUtils;
 import org.supercsv.cellprocessor.FmtDate;
@@ -57,15 +60,18 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
+import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormatServiceExportContext;
 import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.TemporalPropertySerializer;
+import net.solarnetwork.io.DecompressingResource;
 import net.solarnetwork.io.DeleteOnCloseFileResource;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
+import net.solarnetwork.util.ByteUtils;
 import net.solarnetwork.util.ClassUtils;
 
 /**
@@ -132,7 +138,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 	@Override
 	public ExportContext createExportContext(OutputConfiguration config) {
-		return new CsvExportContext(config, false); // TODO: make setting for including header
+		return new CsvExportContext(config, false);
 	}
 
 	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
@@ -233,20 +239,28 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		}
 
 		private boolean isSinglePassOutput() {
-			return (!props.isIncludeHeader() || config == null || config.getCompressionType() == null);
+			return !props.isIncludeHeader();
 		}
 
 		@Override
 		public void start(long estimatedResultCount) throws IOException {
 			temporaryFile = createTemporaryResource(config);
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(temporaryFile));
+			BufferedOutputStream rawOut = new BufferedOutputStream(new FileOutputStream(temporaryFile));
+			OutputStream out = rawOut;
 			if ( isSinglePassOutput() ) {
 				// compress stream in single pass
 				out = createCompressedOutputStream(out);
 			}
-			writer = new CsvMapWriter(new OutputStreamWriter(out, "UTF-8"),
+			if ( out == rawOut ) {
+				// compress temporary results so don't run out of local disk space
+				out = new GZIPOutputStream(out);
+			}
+			writer = new CsvMapWriter(new OutputStreamWriter(out, ByteUtils.UTF8),
 					CsvPreference.STANDARD_PREFERENCE);
 			setEstimatedResultCount(estimatedResultCount);
+			log.info(
+					"Starting CSV export with estimated row count {} to temporary file [{}] for config {}",
+					estimatedResultCount, temporaryFile, config);
 		}
 
 		@Override
@@ -296,11 +310,21 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		public Iterable<DatumExportResource> finish() throws IOException {
 			flush();
 			close();
+			if ( temporaryFile == null ) {
+				return Collections.emptyList();
+			}
+			log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
+			final boolean decompressTemp = (config == null || config.getCompressionType() == null
+					|| config.getCompressionType() == OutputCompressionType.None);
 			if ( !isSinglePassOutput() ) {
 				// we have to concatenate headers + content
 				File temporaryConcatenatedFile = createTemporaryResource(config);
-				try (OutputStream out = createCompressedOutputStream(
-						new BufferedOutputStream(new FileOutputStream(temporaryConcatenatedFile)));
+				// if the output does not have compression, we still keep the resource compressed locally to conserve disk space,
+				// and just decompress the stream when sending to the output destination
+				try (BufferedOutputStream rawOut = new BufferedOutputStream(
+						new FileOutputStream(temporaryConcatenatedFile));
+						OutputStream out = (decompressTemp ? new GZIPOutputStream(rawOut)
+								: createCompressedOutputStream(rawOut));
 						ICsvMapWriter concatenatedWriter = new CsvMapWriter(
 								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
 								CsvPreference.STANDARD_PREFERENCE)) {
@@ -308,17 +332,21 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 						concatenatedWriter.writeHeader(headers);
 						concatenatedWriter.flush();
 					}
-					FileCopyUtils.copy(new FileInputStream(temporaryFile), out);
+					FileCopyUtils.copy(new GZIPInputStream(new FileInputStream(temporaryFile)), out);
 				}
 				temporaryFile.delete();
 				temporaryFile = temporaryConcatenatedFile;
+				log.info("Wrote {} bytes to temporary file [{}]", temporaryFile.length(), temporaryFile);
 			}
-			if ( temporaryFile != null ) {
-				return Collections.singleton(new BasicDatumExportResource(
-						new DeleteOnCloseFileResource(new FileSystemResource(temporaryFile)),
-						getContentType(config)));
+			if ( temporaryFile == null ) {
+				return Collections.emptyList();
 			}
-			return Collections.emptyList();
+			Resource outputResource = new FileSystemResource(temporaryFile);
+			if ( decompressTemp ) {
+				outputResource = new DecompressingResource(outputResource);
+			}
+			return Collections.singleton(new BasicDatumExportResource(
+					new DeleteOnCloseFileResource(outputResource), getContentType(config)));
 		}
 
 		@Override

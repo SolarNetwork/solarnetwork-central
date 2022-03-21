@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '0.1.0'
+version = '1.1.0'
 archivesBaseName = 'solarnet-common'
 
 configurations {
@@ -75,7 +75,7 @@ dependencies {
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common:2.3.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
-	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.1.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

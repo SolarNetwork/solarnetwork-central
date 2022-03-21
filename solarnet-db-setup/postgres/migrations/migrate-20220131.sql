@@ -3,4 +3,4 @@
 -- NOTE: the NET-289-aggs-for-vecs-admin.sql must be run as a DB superuser to install the
 -- aggs_for_vecs extension
 
-\i NET-289-aggs-for-vecs.sql
+\i updates/NET-289-aggs-for-vecs.sql

@@ -35,25 +35,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 
 /**
  * Utilities for Datum JSON processing.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.8
  */
 public final class DatumJsonUtils {
@@ -1198,6 +1203,47 @@ public final class DatumJsonUtils {
 			}
 		}
 		return timestamp;
+	}
+
+	/**
+	 * A module for handling datum objects.
+	 * 
+	 * @since 2.1
+	 */
+	public static final com.fasterxml.jackson.databind.Module DATUM_MODULE;
+	static {
+		SimpleModule m = new SimpleModule("SolarNet Datum");
+		m.addSerializer(ObjectDatumStreamMetadataId.class,
+				BasicObjectDatumStreamMetadataIdSerializer.INSTANCE);
+		m.addDeserializer(ObjectDatumStreamMetadataId.class,
+				BasicObjectDatumStreamMetadataIdDeserializer.INSTANCE);
+		DATUM_MODULE = m;
+	}
+
+	/**
+	 * Create a new {@link ObjectMapper} with datum support.
+	 * 
+	 * @return a new {@link ObjectMapper}
+	 * @since 2.1
+	 */
+	public static ObjectMapper newDatumObjectMapper() {
+		ObjectMapper mapper = JsonUtils.newDatumObjectMapper();
+		mapper.registerModule(DATUM_MODULE);
+		return mapper;
+	}
+
+	/**
+	 * Create a new {@link ObjectMapper} with datum support.
+	 * 
+	 * @param jsonFactory
+	 *        the JSON factory to use
+	 * @return a new {@link ObjectMapper}
+	 * @since 2.1
+	 */
+	public static ObjectMapper newDatumObjectMapper(JsonFactory jsonFactory) {
+		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(jsonFactory);
+		mapper.registerModule(DATUM_MODULE);
+		return mapper;
 	}
 
 }

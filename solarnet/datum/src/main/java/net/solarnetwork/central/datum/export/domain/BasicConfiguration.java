@@ -89,6 +89,46 @@ public class BasicConfiguration implements Configuration, Serializable {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicConfiguration{");
+		if ( name != null ) {
+			builder.append("name=");
+			builder.append(name);
+			builder.append(", ");
+		}
+		if ( dataConfiguration != null ) {
+			builder.append("dataConfiguration=");
+			builder.append(dataConfiguration);
+			builder.append(", ");
+		}
+		if ( outputConfiguration != null ) {
+			builder.append("outputConfiguration=");
+			builder.append(outputConfiguration);
+			builder.append(", ");
+		}
+		if ( destinationConfiguration != null ) {
+			builder.append("destinationConfiguration=");
+			builder.append(destinationConfiguration);
+			builder.append(", ");
+		}
+		if ( schedule != null ) {
+			builder.append("schedule=");
+			builder.append(schedule);
+			builder.append(", ");
+		}
+		builder.append("hourDelayOffset=");
+		builder.append(hourDelayOffset);
+		builder.append(", ");
+		if ( timeZoneId != null ) {
+			builder.append("timeZoneId=");
+			builder.append(timeZoneId);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}

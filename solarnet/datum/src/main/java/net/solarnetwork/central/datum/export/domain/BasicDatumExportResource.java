@@ -54,6 +54,23 @@ public class BasicDatumExportResource implements DatumExportResource {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicDatumExportResource{");
+		if ( contentType != null ) {
+			builder.append("contentType=");
+			builder.append(contentType);
+			builder.append(", ");
+		}
+		if ( delegate != null ) {
+			builder.append("resource=");
+			builder.append(delegate);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public InputStream getInputStream() throws IOException {
 		return delegate.getInputStream();
 	}

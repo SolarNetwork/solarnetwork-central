@@ -53,7 +53,6 @@ import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
@@ -61,6 +60,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ByteUtils;
 import net.solarnetwork.util.SearchFilter;
 import net.solarnetwork.util.SearchFilter.LogicOperator;
@@ -70,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -971,9 +971,6 @@ public final class DatumSqlUtils {
 			buf.append(", COALESCE(l.time_zone, 'UTC') AS time_zone");
 		}
 		buf.append("\nFROM solardatm.da_loc_datm_meta s\n");
-		if ( filter != null && filter.getUserIds() != null ) {
-			buf.append("INNER JOIN solaruser.user_node un ON un.node_id = s.node_id\n");
-		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
 		if ( style != MetadataSelectStyle.Minimum ) {
 			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
@@ -1031,6 +1028,8 @@ public final class DatumSqlUtils {
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param kind
+	 *        the stream kind
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -1041,8 +1040,8 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareStreamMetadataFilter(StreamMetadataCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareStreamMetadataFilter(StreamMetadataCriteria filter, ObjectDatumKind kind,
+			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
@@ -1050,7 +1049,7 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			if ( filter.getUserIds() != null ) {
+			if ( kind != ObjectDatumKind.Location && filter.getUserIds() != null ) {
 				Array array = con.createArrayOf("bigint", filter.getUserIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
@@ -1099,6 +1098,8 @@ public final class DatumSqlUtils {
 	 * 
 	 * @param filter
 	 *        the search criteria
+	 * @param kind
+	 *        the stream kind
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -1113,15 +1114,16 @@ public final class DatumSqlUtils {
 	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
 	 *      PreparedStatement, int)
 	 */
-	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter, ObjectDatumKind kind,
+			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getObjectIds() != null ) {
 				Array array = con.createArrayOf("bigint", filter.getObjectIds());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
+			parameterOffset = prepareStreamMetadataFilter(filter,
+					kind != null ? kind : filter.getObjectKind(), con, stmt, parameterOffset);
 		}
 		return parameterOffset;
 	}
@@ -1226,7 +1228,8 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			parameterOffset = prepareStreamMetadataFilter(filter, con, stmt, parameterOffset);
+			parameterOffset = prepareStreamMetadataFilter(filter, filter.getObjectKind(), con, stmt,
+					parameterOffset);
 		}
 		return parameterOffset;
 	}

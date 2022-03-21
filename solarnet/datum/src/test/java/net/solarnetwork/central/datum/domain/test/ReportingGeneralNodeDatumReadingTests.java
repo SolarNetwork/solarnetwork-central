@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 
 /**
@@ -56,7 +56,7 @@ public class ReportingGeneralNodeDatumReadingTests {
 
 	@Before
 	public void setup() {
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.newDatumObjectMapper();
 	}
 
 	private ReportingGeneralNodeDatumReading getTestInstance() {

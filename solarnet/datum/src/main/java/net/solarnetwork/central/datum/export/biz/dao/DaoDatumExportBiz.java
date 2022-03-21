@@ -405,6 +405,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			DateTimeFormatter dateFormatter = config.createDateTimeFormatterForSchedule();
 			Map<String, Object> runtimeProps = config.createRuntimeProperties(info.getExportDate(),
 					dateFormatter, outputService);
+			log.info("Uploading datum export job {} resources to {}: {}", info.getId(),
+					config.getOutputConfiguration(), resources);
 			destService.export(config, resources, runtimeProps, this);
 		}
 

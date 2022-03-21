@@ -209,7 +209,8 @@ public class SqsUserNodeEventHookServiceTests {
 
 		String msgBody = getQueueMessage();
 		Map<String, Object> msgData = JsonUtils.getStringMap(msgBody);
-		assertThat("Message object property count", msgData.keySet(), hasSize(6));
+		assertThat("Message object property count", msgData.keySet(),
+				containsInAnyOrder("hookId", "userId", "nodeId", "sourceId", "foo", "val", "uid"));
 		assertThat("Hook ID prop", msgData, hasEntry("hookId", config.getId().getId().intValue()));
 		assertThat("User ID prop", msgData, hasEntry("userId", config.getUserId().intValue()));
 		assertThat("Node ID prop", msgData, hasEntry("nodeId", event.getNodeId().intValue()));

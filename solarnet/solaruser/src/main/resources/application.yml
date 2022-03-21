@@ -50,6 +50,10 @@ app:
       client-id: "solaruser-${app.meta.instance-id}"
       username: "USERNAME_HERE"
       password: "PASSWORD_HERE"
+  job:
+    security-token-spool.cleaner:
+      minutes-older: 10
+      schedule: 120000
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
@@ -57,14 +61,14 @@ app:
     network-identity-key: "solaruser:identity:here"
     terms-of-service: "solaruser:tos:here"
     host: "localhost"
-    port: 8080
+    port: 9083
     force-tls: false
     service-urls:
       node-dashboard: "http://localhost/node-dashboard"
       node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
       solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost/solarquery"
-      solaruser: "http://localhost/solaruser"
+      solarquery: "http://localhost:9082/solarquery"
+      solaruser: "http://localhost:9081/solaruser"
   node.pki:
     cs:
       certificate-expire-days: 730
@@ -83,6 +87,9 @@ app:
       mqtt-topic: "instr/OCPP_v16"
       mqtt-timeout: 30
       publish-only: true
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
   solaruser:
     node-ownership-cache:
       ttl: 60
@@ -120,8 +127,11 @@ app:
       ttl: 600
   web.security:
     token:
-      max-request-body-size: "512KB"
+      max-request-body-size: "20MB"
       max-date-skew: 900000
+      minimum-compress-length: "32KB"
+      minimum-spool-length: "65KB"
+      spool-directory: "${java.io.tmpdir}/SecurityTokenFilter"
 
 debug: true
 
@@ -157,17 +167,26 @@ server:
     min-response-size: 2048
   error.whitelabel.enabled: false
   port: 9081
-  servlet.context-path: /solaruser
+  servlet:
+    context-path: "/solaruser"
+    session:
+      cookie:
+        http-only: true
+      timeout: "15m"
+      tracking-modes: "COOKIE"
   tomcat:
 #    max-http-form-post-size: "2MB"
     max-swallow-size: -1
+    threads:
+      min-spare: 10
+      max: 50
 
 spring:
   jmx.enabled: false
   mvc.format:
-    date: iso
-    date-time: iso
-    time: iso
+    date: "iso"
+    date-time: "iso"
+    time: "iso"
   servlet.multipart:
     max-file-size: "250MB"
     max-request-size: "256MB"
@@ -181,8 +200,8 @@ spring:
 app:
   datasource:
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
-    username: solarnet
-    password: solarnet
+    username: "solarnet"
+    password: "solarnet"
 
 
 debug: false
@@ -211,4 +230,9 @@ app:
     mail.template.from: "system@solarnetwork.net"
 
 debug: false
- 
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true

@@ -223,13 +223,15 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		final long base = (long) (Math.random() * 1000L);
+
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = (long) (Math.random() * 1000) + 1000L;
+			Long nodeId = base + 1000 + i;
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-			Long instrId = (long) (Math.random() * 1000) + 2000L;
+			Long instrId = base + 2000L + i;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 			instr.setId(instrId);
 			expect(nodeInstructionDao.get(instrId)).andReturn(instr);

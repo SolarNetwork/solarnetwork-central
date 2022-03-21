@@ -34,7 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadata;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -56,7 +56,7 @@ public class GeneralLocationDatumMetadataTests {
 
 	@Before
 	public void setup() {
-		objectMapper = JsonUtils.newDatumObjectMapper();
+		objectMapper = DatumJsonUtils.newDatumObjectMapper();
 	}
 
 	private GeneralLocationDatumMetadata getTestInstance() {

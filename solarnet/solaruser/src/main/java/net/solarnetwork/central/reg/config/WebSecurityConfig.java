@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.reg.config;
 
+import static java.lang.String.format;
+import java.io.IOException;
+import java.nio.file.Files;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -41,6 +45,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.security.web.header.HeaderWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
@@ -56,7 +64,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -76,6 +84,11 @@ public class WebSecurityConfig {
 
 	/** The import authority. */
 	public static final String IMPORT_AUTHORITY = "ROLE_IMPORT";
+
+	/** A HTTP header to indicate the response contains the login form page. */
+	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
+
+	private static final Logger log = LoggerFactory.getLogger(WebSecurityConfig.class);
 
 	@Autowired
 	private DataSource dataSource;
@@ -124,6 +137,11 @@ public class WebSecurityConfig {
 
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
+			// Add a special header to the login page, so JavaScript can reliably detect when redirected there
+			HeaderWriter loginHeaderWriter = new DelegatingRequestMatcherHeaderWriter(
+					new AntPathRequestMatcher("/login"),
+					new StaticHeadersWriter(LOGIN_PAGE_HEADER, "true"));
+
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
@@ -134,11 +152,14 @@ public class WebSecurityConfig {
 		        .antMatchers("/u/**")
 		        .and()
 		      
+		      .headers()
+		        .addHeaderWriter(loginHeaderWriter)
+		        .and()
+		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
 		      .authorizeRequests()
-		        .antMatchers("/login").hasAnyAuthority(ANONYMOUS_AUTHORITY)
 		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
@@ -151,6 +172,7 @@ public class WebSecurityConfig {
 			      
 		      // form login
 		      .formLogin()
+		        .permitAll()
 		        .loginPage("/login")
 		        .defaultSuccessUrl("/u/sec/home")
 		        .failureUrl("/login?login_error=1")
@@ -158,8 +180,13 @@ public class WebSecurityConfig {
 		        
 		      // logout
 		      .logout()
+		        .permitAll()
 		        .logoutUrl("/logout")
 		        .logoutSuccessUrl("/logoutSuccess.do")
+		        .and()
+		        
+		      .sessionManagement()
+		        .invalidSessionUrl("/login")
 		    ;
 		    // @formatter:on
 		}
@@ -178,6 +205,9 @@ public class WebSecurityConfig {
 		@Autowired
 		private HandlerExceptionResolver handlerExceptionResolver;
 
+		@Autowired
+		private SecurityTokenFilterSettings securityTokenFilterSettings;
+
 		public UserDetailsService tokenUserDetailsService() {
 			JdbcUserDetailsService service = new JdbcUserDetailsService();
 			service.setDataSource(dataSource);
@@ -194,25 +224,26 @@ public class WebSecurityConfig {
 			return ep;
 		}
 
-		@ConfigurationProperties(prefix = "app.web.security.token")
-		@Bean
-		public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
-			return new SecurityTokenFilterSettings();
-		}
-
 		@Bean
 		public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
+			try {
+				if ( !Files.isDirectory(securityTokenFilterSettings.getSpoolDirectory()) ) {
+					Files.createDirectories(securityTokenFilterSettings.getSpoolDirectory());
+					log.info("Created security token spool directory: {}",
+							securityTokenFilterSettings.getSpoolDirectory());
+				}
+			} catch ( IOException e ) {
+				throw new RuntimeException(format("Error setting up security token spool directory %s",
+						securityTokenFilterSettings.getSpoolDirectory()), e);
+			}
+
 			AntPathMatcher pathMatcher = new AntPathMatcher();
 			pathMatcher.setCachePatterns(true);
 			pathMatcher.setCaseSensitive(true);
 			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-					"/api/v1/sec");
+					"/api/v1/sec", securityTokenFilterSettings);
 			filter.setUserDetailsService(tokenUserDetailsService());
 			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
-
-			SecurityTokenFilterSettings settings = tokenAuthenticationFilterSettings();
-			filter.setMaxDateSkew(settings.getMaxDateSkew());
-			filter.setMaxRequestBodySize((int) settings.getMaxRequestBodySize().toBytes());
 
 			return filter;
 		}
@@ -288,9 +319,9 @@ public class WebSecurityConfig {
 		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 		        .antMatchers(HttpMethod.GET, 
 		        		"/", 
-		        		"/error", 
+		        		"/error",
+		        		"/session-expired",
 		        		"/*.html",
-		        		"/associate.*",
 		        		"/cert.*",
 		        		"/css/**",
 		        		"/fonts/**",
@@ -299,6 +330,8 @@ public class WebSecurityConfig {
 		        		"/js-lib/**",
 		        		"/ping", 
 		        		"/api/v1/pub/**").permitAll()
+		        .antMatchers(HttpMethod.POST,
+		        		"/associate.*").permitAll()
 		        .anyRequest().denyAll();
 		    // @formatter:on
 		}

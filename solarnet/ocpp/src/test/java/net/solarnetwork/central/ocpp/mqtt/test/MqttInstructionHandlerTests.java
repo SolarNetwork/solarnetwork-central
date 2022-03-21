@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.ocpp.mqtt.test;
+package net.solarnetwork.central.ocpp.mqtt.test;
 
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;

@@ -66,7 +66,7 @@ $(document).ready(function() {
 			nodeId = btn.data('node-id');
 		$.post(url, { userId:userId, nodeId:nodeId, _csrf:SolarReg.csrf() }, function(json) {
 			document.location.reload(true);
-		}).fail(function(data, statusText, xhr) {
+		}).fail(function(xhr, statusText, error) {
 			SolarReg.showAlertBefore('#top', 'alert-warning', statusText);
 		});
 	});
@@ -288,7 +288,7 @@ $(document).ready(function() {
 		setupEditUserNodeFields(form, {node : {id : req.nodeId}, user : {id : req.userId}});
 		$.getJSON(url, req, function(json) {
 			setupEditUserNodeFields(form, json.data);
-		}).fail(function(data, statusText, xhr) {
+		}).fail(function(xhr, statusText, error) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		});
 		editNodeShowPage(form, 1);
@@ -462,7 +462,7 @@ $(document).ready(function() {
 			if ( json.success == true && json.data && Array.isArray(json.data.results) ) {
 				showLocationSearchResults(json.data.results);
 			}
-		}).fail(function(xhr, statusText, data) {
+		}).fail(function(xhr, statusText, error) {
 			SolarReg.showAlertBefore('#edit-node-modal .modal-body > *:first-child', 'alert-warning', statusText);
 		});
 	}
@@ -560,6 +560,7 @@ $(document).ready(function() {
 				return;
 			}
 			// do it!
+			btn.siblings('button').addBack().prop('disabled', true);
 			$.post(SolarReg.solarUserURL('/sec/my-nodes/create-cert'), { 
 					timeZone : tzInput.val(), 
 					country : countryInput.val(),
@@ -567,7 +568,8 @@ $(document).ready(function() {
 					_csrf : SolarReg.csrf() 
 				}, function(json) {
 				document.location.reload(true);
-			}).fail(function(data, statusText, xhr) {
+			}).fail(function(xhr, statusText, error) {
+				btn.siblings('button').addBack().prop('disabled', false);
 				SolarReg.showAlertBefore('#node-cert-create .modal-body > *:first-child', 'alert-warning', statusText);
 			});
 		} else {

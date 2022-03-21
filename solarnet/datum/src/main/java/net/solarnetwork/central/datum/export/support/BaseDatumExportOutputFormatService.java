@@ -86,7 +86,10 @@ public abstract class BaseDatumExportOutputFormatService
 		if ( !compExt.isEmpty() ) {
 			ext += "." + compExt;
 		}
-		return File.createTempFile(getClass().getSimpleName() + "-", "." + ext, getTemporaryDir());
+		File result = File.createTempFile(getClass().getSimpleName() + "-", "." + ext,
+				getTemporaryDir());
+		log.info("Created temporary file [{}] for config {}", result, config);
+		return result;
 	}
 
 	/**

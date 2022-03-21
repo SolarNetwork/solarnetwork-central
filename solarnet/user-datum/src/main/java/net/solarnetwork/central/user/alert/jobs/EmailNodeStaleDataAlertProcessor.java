@@ -393,7 +393,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		}
 
 		// load up data for users first, as that might pull in all node data already
-		if ( userIds.isEmpty() == false ) {
+		if ( !userIds.isEmpty() ) {
 			BasicDatumCriteria filter = new BasicDatumCriteria();
 			filter.setUserIds(userIds.toArray(new Long[userIds.size()]));
 			filter.setMostRecent(true);
@@ -419,7 +419,9 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 				// now add match to User list
 				Long userId = nodeUserMapping.get(pk.getNodeId());
 				if ( userId == null ) {
-					log.warn("No user ID found for node ID: {}", pk.getNodeId());
+					// this must be an archived node; just ignore
+					log.debug("No user ID found for node ID; assuming from archived node: {}",
+							pk.getNodeId());
 					continue;
 				}
 				datumMatches = userDataCache.get(userId);

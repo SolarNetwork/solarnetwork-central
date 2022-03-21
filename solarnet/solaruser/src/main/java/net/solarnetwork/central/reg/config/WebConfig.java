@@ -56,8 +56,10 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.codec.TimeZonePropertySerializer;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.DateUtils;
+import net.solarnetwork.web.support.JSONView;
 import net.solarnetwork.web.support.SimpleCsvHttpMessageConverter;
 import net.solarnetwork.web.support.SimpleXmlHttpMessageConverter;
+import net.solarnetwork.web.support.SimpleXmlView;
 
 /**
  * Web layer configuration.
@@ -100,6 +102,24 @@ public class WebConfig implements WebMvcConfigurer {
 						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC));
 		registry.addFormatterForFieldType(Instant.class,
 				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
+	}
+
+	@Bean
+	public SimpleXmlView xml() {
+		SimpleXmlView view = new SimpleXmlView();
+		view.setContentType("text/xml;charset=UTF-8");
+		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
+		view.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
+		return view;
+	}
+
+	@Bean
+	public JSONView json() {
+		JSONView view = new JSONView();
+		view.setContentType("application/json;charset=UTF-8");
+		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
+		view.setIncludeParentheses(false);
+		return view;
 	}
 
 	@Override
