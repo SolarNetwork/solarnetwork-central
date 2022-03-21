@@ -26,6 +26,7 @@ import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.
 import static net.solarnetwork.central.query.config.ContentCachingServiceConfig.QUERY_CACHING_SERVICE;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,6 +50,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
+import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
@@ -106,10 +108,15 @@ public class WebConfig implements WebMvcConfigurer {
 	public void addFormatters(FormatterRegistry registry) {
 		registry.addFormatterForFieldType(LocalDateTime.class,
 				new TemporalAccessorPrinter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC),
-				new TemporalAccessorParser(LocalDateTime.class,
-						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
+				new DelegatingParser<TemporalAccessor>(
+						new TemporalAccessorParser(LocalDateTime.class,
+								DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC),
+						new TemporalAccessorParser(LocalDateTime.class,
+								DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC)));
 		registry.addFormatterForFieldType(Instant.class,
-				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC));
+				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC,
+						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC,
+						DateUtils.ISO_DATE_TIME_ALT_UTC));
 	}
 
 	@Bean
