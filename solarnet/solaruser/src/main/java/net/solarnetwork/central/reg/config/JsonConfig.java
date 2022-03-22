@@ -40,20 +40,5 @@ public class JsonConfig {
 	public ObjectMapper objectMapper() {
 		return DatumJsonUtils.newDatumObjectMapper();
 	}
-	/*-
-		@Bean
-		public Module coreDateModule() {
-			return JsonUtils.JAVA_TIME_MODULE;
-		}
-	
-		@Bean
-		public Module coreDatumModule() {
-			return JsonUtils.DATUM_MODULE;
-		}
-	
-		@Bean
-		public Module datumModule() {
-			return DatumJsonUtils.DATUM_MODULE;
-		}
-	*/
+
 }

@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,9 +68,6 @@ public class DatumExpireController {
 	private final UserExpireBiz expireBiz;
 	private final UserDatumDeleteBiz datumDeleteBiz;
 
-	// FIXME: private String[] requestDateFormats = new String[] { DEFAULT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT,
-	//		ALT_TIMESTAMP_FORMAT, DEFAULT_DATE_FORMAT };
-
 	/**
 	 * Constructor.
 	 * 
@@ -86,28 +81,6 @@ public class DatumExpireController {
 		super();
 		this.expireBiz = expireBiz;
 		this.datumDeleteBiz = datumDeleteBiz;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		/*
-		 * FIXME: binder.registerCustomEditor(DateTime.class, new
-		 * JodaDateFormatEditor(this.requestDateFormats,
-		 * TimeZone.getTimeZone("UTC")));
-		 * binder.registerCustomEditor(LocalDateTime.class, new
-		 * JodaDateFormatEditor(this.requestDateFormats, null,
-		 * ParseMode.LocalDateTime));
-		 */
-	}
-
-	public void setRequestDateFormats(String[] requestDateFormats) {
-		// FIXME: this.requestDateFormats = requestDateFormats;
 	}
 
 	@ResponseBody

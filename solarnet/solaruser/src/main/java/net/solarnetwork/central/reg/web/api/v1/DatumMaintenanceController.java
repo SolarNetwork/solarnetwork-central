@@ -24,8 +24,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -51,13 +49,6 @@ public class DatumMaintenanceController {
 
 	private final DatumMaintenanceBiz datumMaintenanceBiz;
 
-	/*- FIXME
-	private final String[] requestDateFormats = new String[] { DEFAULT_TIMESTAMP_FORMAT,
-			DEFAULT_TIMESTAMP_FORMAT_Z, ALT_TIMESTAMP_FORMAT, ALT_TIMESTAMP_FORMAT_Z,
-			DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT, DEFAULT_DATE_TIME_FORMAT_Z,
-			ALT_DATE_TIME_FORMAT, ALT_DATE_TIME_FORMAT_Z };
-	*/
-
 	/**
 	 * Constructor.
 	 * 
@@ -70,18 +61,6 @@ public class DatumMaintenanceController {
 	public DatumMaintenanceController(DatumMaintenanceBiz datumMaintenanceBiz) {
 		super();
 		this.datumMaintenanceBiz = datumMaintenanceBiz;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		// FIXME: binder.registerCustomEditor(DateTime.class,
-		//		new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
 	}
 
 	/**
