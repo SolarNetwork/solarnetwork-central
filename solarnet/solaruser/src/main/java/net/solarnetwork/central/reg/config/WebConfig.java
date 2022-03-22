@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.config;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -107,7 +108,8 @@ public class WebConfig implements WebMvcConfigurer {
 								DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC)));
 		registry.addFormatterForFieldType(Instant.class,
 				new InstantFormatter(DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_ALT_UTC,
-						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC, DateUtils.ISO_DATE_TIME_ALT_UTC));
+						DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC, DateUtils.ISO_DATE_TIME_ALT_UTC,
+						DateTimeFormatter.ISO_INSTANT, DateTimeFormatter.ISO_DATE_TIME));
 	}
 
 	@Bean
