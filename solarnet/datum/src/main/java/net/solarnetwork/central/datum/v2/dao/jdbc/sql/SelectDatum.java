@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public class SelectDatum
@@ -125,13 +125,13 @@ public class SelectDatum
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
 		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
-					filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					filter.hasLocalDate() || isDefaultLocalDateRange()
 							? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
 		} else {
 			DatumSqlUtils.nodeMetadataFilterSql(filter,
-					filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					filter.hasLocalDate() || isDefaultLocalDateRange()
 							? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
@@ -374,7 +374,7 @@ public class SelectDatum
 			// currently this implies a DOW/HOD style query; default date range will be the past 2 years
 			stmt.setObject(++p, LocalDate.now().minusYears(2).atStartOfDay(), Types.TIMESTAMP);
 			stmt.setObject(++p, LocalDate.now().plusDays(1).atStartOfDay(), Types.TIMESTAMP);
-		} else if ( filter.hasLocalDateRange() ) {
+		} else if ( filter.hasLocalDate() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
 			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);

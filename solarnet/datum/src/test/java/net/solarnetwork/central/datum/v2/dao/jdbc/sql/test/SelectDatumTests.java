@@ -131,6 +131,77 @@ public class SelectDatumTests {
 	}
 
 	@Test
+	public void sql_find_mostRecent_nodes_localStartDate() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setMostRecent(true);
+		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-mostRecent-nodes-localStartDate.sql",
+						TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_mostRecent_nodes_localEndDate() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setMostRecent(true);
+		filter.setLocalEndDate(LocalDateTime.of(2022, 03, 28, 0, 0));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-datum-mostRecent-nodes-localEndDate.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_find_mostRecent_nodes_localStartDate() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(1L);
+		filter.setMostRecent(true);
+		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+		stmt.setFetchSize(TEST_FETCH_SIZE);
+
+		Array nodeIdsArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("bigint"), aryEq(filter.getNodeIds()))).andReturn(nodeIdsArray);
+		stmt.setArray(1, nodeIdsArray);
+		nodeIdsArray.free();
+
+		stmt.setObject(eq(2), eq(filter.getLocalStartDate()), eq(Types.TIMESTAMP));
+
+		// WHEN
+		replay(con, stmt, nodeIdsArray);
+		PreparedStatement result = new SelectDatum(filter, TEST_FETCH_SIZE).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(),
+				equalToTextResource("select-datum-mostRecent-nodes-localStartDate.sql",
+						TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, nodeIdsArray);
+	}
+
+	@Test
 	public void sql_find_daily_mostRecent_nodes() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
