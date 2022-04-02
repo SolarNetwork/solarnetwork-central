@@ -268,14 +268,6 @@ $(document).ready(function() {
 				} else {
 					delete filter.sourceIds;
 				}
-
-				// convert dates to epoch
-				if ( filter.startDate ) {
-					filter.startDate = moment(filter.startDate).valueOf();
-				}
-				if ( filter.endDate ) {
-					filter.endDate = moment(filter.endDate).valueOf();
-				}
 			}
 			return data;
 		});
