@@ -28,22 +28,35 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.standard.BasicCsvDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.standard.CsvDatumImportInputProperties;
+import net.solarnetwork.central.datum.imp.standard.SimpleCsvDatumImportInputFormatService;
 
 /**
  * Configuration for datum import standard services.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class DatumImportStandardServiceConfig {
 
 	@Bean
-	public DatumImportInputFormatService csvDatumImportInputFormatService() {
+	public DatumImportInputFormatService basicCsvDatumImportInputFormatService() {
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(BasicCsvDatumImportInputFormatService.class.getName(),
+				CsvDatumImportInputProperties.class.getName());
+		service.setMessageSource(msgSource);
+
+		return service;
+	}
+
+	@Bean
+	public DatumImportInputFormatService simpleCsvDatumImportInputFormatService() {
+		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(SimpleCsvDatumImportInputFormatService.class.getName(),
 				CsvDatumImportInputProperties.class.getName());
 		service.setMessageSource(msgSource);
 
