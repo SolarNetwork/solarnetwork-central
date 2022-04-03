@@ -31,7 +31,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Service properties for basic CSV based datum import.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicCsvDatumImportInputProperties extends CsvDatumImportInputProperties {
 
@@ -47,10 +47,10 @@ public class BasicCsvDatumImportInputProperties extends CsvDatumImportInputPrope
 	/** The default tag JSON column: {@literal 7}. */
 	public static final Integer DEFAULT_TAG_DATA_COLUMN = 7;
 
-	private Integer instantaneousDataColumn = DEFAULT_INSTANTANEOUS_DATA_COLUMN;
-	private Integer accumulatingDataColumn = DEFAULT_ACCUMULATING_DATA_COLUMN;
-	private Integer statusDataColumn = DEFAULT_STATUS_DATA_COLUMN;
-	private Integer tagDataColumn = DEFAULT_TAG_DATA_COLUMN;
+	private String instantaneousDataColumn = DEFAULT_INSTANTANEOUS_DATA_COLUMN.toString();
+	private String accumulatingDataColumn = DEFAULT_ACCUMULATING_DATA_COLUMN.toString();
+	private String statusDataColumn = DEFAULT_STATUS_DATA_COLUMN.toString();
+	private String tagDataColumn = DEFAULT_TAG_DATA_COLUMN.toString();
 
 	public static List<SettingSpecifier> getBasicCsvSettingSpecifiers() {
 		List<SettingSpecifier> result = CsvDatumImportInputProperties.getCsvSettingSpecifiers();
@@ -72,8 +72,9 @@ public class BasicCsvDatumImportInputProperties extends CsvDatumImportInputPrope
 		boolean valid = super.isValid();
 		if ( valid ) {
 			// at least one data column must be present
-			valid = (instantaneousDataColumn != null || accumulatingDataColumn != null
-					|| statusDataColumn != null);
+			valid = (isValidColumnsReference(instantaneousDataColumn)
+					|| isValidColumnsReference(accumulatingDataColumn)
+					|| isValidColumnsReference(statusDataColumn));
 		}
 		return valid;
 	}
@@ -81,50 +82,82 @@ public class BasicCsvDatumImportInputProperties extends CsvDatumImportInputPrope
 	@Override
 	public Map<String, Object> toServiceProperties() {
 		Map<String, Object> result = super.toServiceProperties();
-		if ( instantaneousDataColumn != null ) {
+		if ( isValidColumnsReference(instantaneousDataColumn) ) {
 			result.put("instantaneousDataColumn", instantaneousDataColumn);
 		}
-		if ( accumulatingDataColumn != null ) {
+		if ( isValidColumnsReference(accumulatingDataColumn) ) {
 			result.put("accumulatingDataColumn", accumulatingDataColumn);
 		}
-		if ( statusDataColumn != null ) {
+		if ( isValidColumnsReference(statusDataColumn) ) {
 			result.put("statusDataColumn", statusDataColumn);
 		}
-		if ( tagDataColumn != null ) {
+		if ( isValidColumnsReference(tagDataColumn) ) {
 			result.put("tagDataColumn", tagDataColumn);
 		}
 		return result;
 	}
 
-	public Integer getInstantaneousDataColumn() {
+	public Integer instantaneousDataColumn() {
+		try {
+			return CsvUtils.parseColumnReference(instantaneousDataColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getInstantaneousDataColumn() {
 		return instantaneousDataColumn;
 	}
 
-	public void setInstantaneousDataColumn(Integer instantaneousDataColumn) {
+	public void setInstantaneousDataColumn(String instantaneousDataColumn) {
 		this.instantaneousDataColumn = instantaneousDataColumn;
 	}
 
-	public Integer getAccumulatingDataColumn() {
+	public Integer accumulatingDataColumn() {
+		try {
+			return CsvUtils.parseColumnReference(accumulatingDataColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getAccumulatingDataColumn() {
 		return accumulatingDataColumn;
 	}
 
-	public void setAccumulatingDataColumn(Integer accumulatingDataColumn) {
+	public void setAccumulatingDataColumn(String accumulatingDataColumn) {
 		this.accumulatingDataColumn = accumulatingDataColumn;
 	}
 
-	public Integer getStatusDataColumn() {
+	public Integer statusDataColumn() {
+		try {
+			return CsvUtils.parseColumnReference(statusDataColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getStatusDataColumn() {
 		return statusDataColumn;
 	}
 
-	public void setStatusDataColumn(Integer statusDataColumn) {
+	public void setStatusDataColumn(String statusDataColumn) {
 		this.statusDataColumn = statusDataColumn;
 	}
 
-	public Integer getTagDataColumn() {
+	public Integer tagDataColumn() {
+		try {
+			return CsvUtils.parseColumnReference(tagDataColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getTagDataColumn() {
 		return tagDataColumn;
 	}
 
-	public void setTagDataColumn(Integer tagDataColumn) {
+	public void setTagDataColumn(String tagDataColumn) {
 		this.tagDataColumn = tagDataColumn;
 	}
 

@@ -325,14 +325,14 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	protected GeneralNodeDatum parseDatum(List<String> row) {
 		Long nodeId;
 		try {
-			nodeId = Long.valueOf(getColumnValue(row, props.getNodeIdColumn()));
+			nodeId = Long.valueOf(getColumnValue(row, props.nodeIdColumn()));
 		} catch ( NumberFormatException e ) {
 			throw new DatumImportValidationException(
 					"Error parsing node ID from column " + props.getNodeIdColumn() + ".", e,
 					(long) reader.getLineNumber(), reader.getUntokenizedRow());
 		}
 
-		String sourceId = getColumnValue(row, props.getSourceIdColumn());
+		String sourceId = getColumnValue(row, props.sourceIdColumn());
 		if ( sourceId == null ) {
 			throw new DatumImportValidationException(
 					"Unable to parse source ID from column " + props.getSourceIdColumn(),

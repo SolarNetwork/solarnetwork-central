@@ -77,14 +77,8 @@ public class SimpleCsvDatumImportInputPropertiesTests {
 				allOf(hasEntry("headerRowCount", (Object) 1),
 						hasEntry("dateColumnsValue", "3"),
 						hasEntry("dateFormat", "yyyy-MM-dd HH:mm:ss"),
-						hasEntry("nodeIdColumn", (Object) 1),
-						hasEntry("sourceIdColumn", (Object) 2)
-						/*-
-						hasEntry("instantaneousDataColumns", (Object) 4),
-						hasEntry("accumulatingDataColumns", (Object) 5),
-						hasEntry("statusDataColumns", (Object) 6),
-						hasEntry("tagDataColumns", (Object) 7)
-						*/
+						hasEntry("nodeIdColumn", "1"),
+						hasEntry("sourceIdColumn", "2")
 				));
 		// @formatter:on
 	}

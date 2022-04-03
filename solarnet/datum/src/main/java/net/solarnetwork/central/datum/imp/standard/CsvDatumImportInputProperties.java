@@ -39,7 +39,7 @@ import net.solarnetwork.util.StringUtils;
  * Service properties for CSV based datum import.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CsvDatumImportInputProperties {
 
@@ -56,17 +56,17 @@ public class CsvDatumImportInputProperties {
 	public static final Integer DEFAULT_SOURCE_ID_COLUMN = 2;
 
 	/** The default date column number. */
-	public static final int DEFAULT_DATE_COLUMN = 3;
+	public static final Integer DEFAULT_DATE_COLUMN = 3;
 
 	/** The default date column; contains just {@literal 3}. */
 	public static final List<Integer> DEFAULT_DATE_COLUMNS = Collections
 			.singletonList(DEFAULT_DATE_COLUMN);
 
 	private Integer headerRowCount = DEFAULT_HEADER_ROW_COUNT;
-	private String dateColumns = Integer.toString(DEFAULT_DATE_COLUMN);
+	private String dateColumns = DEFAULT_DATE_COLUMN.toString();
 	private String dateFormat = DEFAULT_DATE_FORMAT;
-	private Integer nodeIdColumn = DEFAULT_NODE_ID_COLUMN;
-	private Integer sourceIdColumn = DEFAULT_SOURCE_ID_COLUMN;
+	private String nodeIdColumn = DEFAULT_NODE_ID_COLUMN.toString();
+	private String sourceIdColumn = DEFAULT_SOURCE_ID_COLUMN.toString();
 	private String timeZoneId;
 
 	/**
@@ -99,8 +99,20 @@ public class CsvDatumImportInputProperties {
 	 * @return {@literal true} if the configuration appears valid
 	 */
 	public boolean isValid() {
-		return (dateColumns != null && !dateColumns.isEmpty() && dateFormat != null
-				&& dateFormat.trim().length() > 0 && nodeIdColumn != null && sourceIdColumn != null);
+		return (isValidColumnsReference(dateColumns) && dateFormat != null
+				&& dateFormat.trim().length() > 0 && isValidColumnsReference(nodeIdColumn)
+				&& isValidColumnsReference(sourceIdColumn));
+	}
+
+	/**
+	 * Test if a value is a valid columns reference.
+	 * 
+	 * @param value
+	 *        the value to test
+	 * @return {@literal true} if {@code value} is a valid columns reference
+	 */
+	protected static boolean isValidColumnsReference(String value) {
+		return CsvUtils.parseColumnsReference(value) != null;
 	}
 
 	/**
@@ -168,19 +180,35 @@ public class CsvDatumImportInputProperties {
 		this.dateFormat = dateFormat;
 	}
 
-	public Integer getNodeIdColumn() {
+	public Integer nodeIdColumn() {
+		try {
+			return CsvUtils.parseColumnReference(nodeIdColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getNodeIdColumn() {
 		return nodeIdColumn;
 	}
 
-	public void setNodeIdColumn(Integer nodeIdColumn) {
+	public void setNodeIdColumn(String nodeIdColumn) {
 		this.nodeIdColumn = nodeIdColumn;
 	}
 
-	public Integer getSourceIdColumn() {
+	public Integer sourceIdColumn() {
+		try {
+			return CsvUtils.parseColumnReference(sourceIdColumn);
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			return null;
+		}
+	}
+
+	public String getSourceIdColumn() {
 		return sourceIdColumn;
 	}
 
-	public void setSourceIdColumn(Integer sourceIdColumn) {
+	public void setSourceIdColumn(String sourceIdColumn) {
 		this.sourceIdColumn = sourceIdColumn;
 	}
 
