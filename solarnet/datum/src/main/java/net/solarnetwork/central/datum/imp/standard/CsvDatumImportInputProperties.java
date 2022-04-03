@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.imp.standard;
 
+import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.datum.imp.standard.CsvUtils.parseColumnsReference;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.StringUtils;
@@ -54,11 +55,15 @@ public class CsvDatumImportInputProperties {
 	/** The default source ID column: {@literal 2}. */
 	public static final Integer DEFAULT_SOURCE_ID_COLUMN = 2;
 
+	/** The default date column number. */
+	public static final int DEFAULT_DATE_COLUMN = 3;
+
 	/** The default date column; contains just {@literal 3}. */
-	public static final List<Integer> DEFAULT_DATE_COLUMNS = Collections.singletonList(3);
+	public static final List<Integer> DEFAULT_DATE_COLUMNS = Collections
+			.singletonList(DEFAULT_DATE_COLUMN);
 
 	private Integer headerRowCount = DEFAULT_HEADER_ROW_COUNT;
-	private List<Integer> dateColumns = DEFAULT_DATE_COLUMNS;
+	private String dateColumns = Integer.toString(DEFAULT_DATE_COLUMN);
 	private String dateFormat = DEFAULT_DATE_FORMAT;
 	private Integer nodeIdColumn = DEFAULT_NODE_ID_COLUMN;
 	private Integer sourceIdColumn = DEFAULT_SOURCE_ID_COLUMN;
@@ -132,27 +137,27 @@ public class CsvDatumImportInputProperties {
 	}
 
 	public List<Integer> getDateColumns() {
-		return dateColumns;
-	}
-
-	public void setDateColumns(List<Integer> dateColumnPositions) {
-		this.dateColumns = dateColumnPositions;
-	}
-
-	public String getDateColumnsValue() {
-		return StringUtils.commaDelimitedStringFromCollection(dateColumns);
-	}
-
-	public void setDateColumnsValue(String list) {
-		Set<String> set = StringUtils.commaDelimitedStringToSet(list);
+		Set<String> set = StringUtils.commaDelimitedStringToSet(dateColumns);
 		List<Integer> cols = null;
 		try {
-			cols = set.stream().map(Integer::valueOf).collect(Collectors.toList());
+			cols = set.stream().flatMap(s -> parseColumnsReference(s).stream()).collect(toList());
 		} catch ( NumberFormatException e ) {
 			// ignore
 			cols = DEFAULT_DATE_COLUMNS;
 		}
-		setDateColumns(cols);
+		return cols;
+	}
+
+	public void setDateColumns(List<Integer> dateColumnPositions) {
+		setDateColumnsValue(StringUtils.commaDelimitedStringFromCollection(dateColumnPositions));
+	}
+
+	public String getDateColumnsValue() {
+		return dateColumns;
+	}
+
+	public void setDateColumnsValue(String dateColumns) {
+		this.dateColumns = dateColumns;
 	}
 
 	public String getDateFormat() {

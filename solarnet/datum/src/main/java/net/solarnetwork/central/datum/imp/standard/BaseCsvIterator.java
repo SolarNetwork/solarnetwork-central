@@ -55,7 +55,7 @@ import net.solarnetwork.util.StringUtils;
  * Base class to support parsing CSV data into objects.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @param <E>
  *        the element type
  * @param <T>
@@ -89,23 +89,33 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		// @formatter:on
 	}
 	private final ICsvListReader reader;
+	protected final List<String> headerRow;
 	protected final T props;
 	protected final DateTimeFormatter dateFormatter;
 	protected final ObjectMapper objectMapper;
 
 	private E next;
 
+	private static List<String> parseHeaderRows(ICsvListReader reader,
+			CsvDatumImportInputProperties props) throws IOException {
+		List<String> result = null;
+		if ( props != null && props.getHeaderRowCount() != null ) {
+			for ( int i = props.getHeaderRowCount(); i > 0; i-- ) {
+				List<String> row = reader.read();
+				if ( result == null ) {
+					result = row;
+				}
+			}
+		}
+		return result;
+	}
+
 	public BaseCsvIterator(ICsvListReader reader, T props) throws IOException {
 		super();
 		this.reader = reader;
 		this.props = props;
+		this.headerRow = parseHeaderRows(reader, props);
 
-		// skip past any header rows
-		if ( props != null && props.getHeaderRowCount() != null ) {
-			for ( int i = props.getHeaderRowCount(); i > 0; i-- ) {
-				reader.read();
-			}
-		}
 		DateTimeFormatter formatter = null;
 		if ( props.getDateFormat() != null ) {
 			try {

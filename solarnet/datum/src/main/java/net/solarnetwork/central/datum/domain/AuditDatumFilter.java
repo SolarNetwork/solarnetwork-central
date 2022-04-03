@@ -23,11 +23,7 @@
 package net.solarnetwork.central.datum.domain;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * API for an audit datum filter.
  * 
  * @author matt
  * @version 1.0

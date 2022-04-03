@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import org.springframework.format.Formatter;
 
@@ -34,11 +35,12 @@ import org.springframework.format.Formatter;
  * {@link DateTimeFormatter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InstantFormatter implements Formatter<Instant> {
 
 	private final DateTimeFormatter formatter;
+	private final DateTimeFormatter[] fallbackFormatters;
 
 	/**
 	 * Constructor.
@@ -49,8 +51,23 @@ public class InstantFormatter implements Formatter<Instant> {
 	 *         if any argument is {@literal null}
 	 */
 	public InstantFormatter(DateTimeFormatter formatter) {
+		this(formatter, (DateTimeFormatter[]) null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param formatter
+	 *        the formatter to use
+	 * @param fallbackFormatters
+	 *        optional fallback formatters to use during parsing
+	 * @throws IllegalArgumentException
+	 *         if {@code formatter} is {@literal null}
+	 */
+	public InstantFormatter(DateTimeFormatter formatter, DateTimeFormatter... fallbackFormatters) {
 		super();
 		this.formatter = requireNonNullArgument(formatter, "formatter");
+		this.fallbackFormatters = fallbackFormatters;
 	}
 
 	@Override
@@ -60,7 +77,20 @@ public class InstantFormatter implements Formatter<Instant> {
 
 	@Override
 	public Instant parse(String text, Locale locale) throws ParseException {
-		return formatter.parse(text, Instant::from);
+		try {
+			return formatter.parse(text, Instant::from);
+		} catch ( DateTimeParseException e ) {
+			if ( fallbackFormatters != null ) {
+				for ( DateTimeFormatter fmt : fallbackFormatters ) {
+					try {
+						return fmt.parse(text, Instant::from);
+					} catch ( DateTimeParseException e2 ) {
+						// ignore and continue
+					}
+				}
+			}
+			throw e;
+		}
 	}
 
 }

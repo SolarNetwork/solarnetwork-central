@@ -52,7 +52,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 	 * Constructor.
 	 */
 	public BasicCsvDatumImportInputFormatService() {
-		super(BasicCsvDatumImportInputFormatService.class.getName());
+		super("net.solarnetwork.central.datum.imp.standard.BasicCsvDatumImportInputFormatService");
 	}
 
 	@Override

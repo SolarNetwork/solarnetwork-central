@@ -26,8 +26,6 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,9 +59,6 @@ public class DatumAuxiliaryController {
 
 	private final DatumAuxiliaryBiz datumAuxiliaryBiz;
 
-	// FIXME: private String[] requestDateFormats = new String[] { DEFAULT_TIMESTAMP_FORMAT,
-	//		DEFAULT_TIMESTAMP_FORMAT_Z, ALT_TIMESTAMP_FORMAT, ALT_TIMESTAMP_FORMAT_Z };
-
 	/**
 	 * Constructor.
 	 * 
@@ -74,18 +69,6 @@ public class DatumAuxiliaryController {
 	public DatumAuxiliaryController(DatumAuxiliaryBiz datumAuxiliaryBiz) {
 		super();
 		this.datumAuxiliaryBiz = datumAuxiliaryBiz;
-	}
-
-	/**
-	 * Web binder initialization.
-	 * 
-	 * @param binder
-	 *        the binder to initialize
-	 */
-	@InitBinder
-	public void initBinder(WebDataBinder binder) {
-		// FIXME: binder.registerCustomEditor(DateTime.class,
-		//		new JodaDateFormatEditor(this.requestDateFormats, TimeZone.getTimeZone("UTC")));
 	}
 
 	/**
@@ -270,7 +253,4 @@ public class DatumAuxiliaryController {
 		return removeNodeDatumAuxiliary(type, nodeId, date, sourceId);
 	}
 
-	public void setRequestDateFormats(String[] requestDateFormats) {
-		// FIXME: this.requestDateFormats = requestDateFormats;
-	}
 }
