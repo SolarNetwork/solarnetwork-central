@@ -121,8 +121,9 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 		if ( valid ) {
 			// at least 1 header row and at least one data column must be present
 			valid = getHeaderRowCount() != null && getHeaderRowCount().intValue() > 0
-					&& (hasColumns(instantaneousDataColumns) || hasColumns(accumulatingDataColumns)
-							|| hasColumns(statusDataColumns));
+					&& (isValidColumnsReference(instantaneousDataColumns)
+							|| isValidColumnsReference(accumulatingDataColumns)
+							|| isValidColumnsReference(statusDataColumns));
 		}
 		return valid;
 	}
@@ -130,23 +131,19 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 	@Override
 	public Map<String, Object> toServiceProperties() {
 		Map<String, Object> result = super.toServiceProperties();
-		if ( hasColumns(instantaneousDataColumns) ) {
+		if ( isValidColumnsReference(instantaneousDataColumns) ) {
 			result.put("instantaneousDataColumns", instantaneousDataColumns);
 		}
-		if ( hasColumns(accumulatingDataColumns) ) {
+		if ( isValidColumnsReference(accumulatingDataColumns) ) {
 			result.put("accumulatingDataColumns", accumulatingDataColumns);
 		}
-		if ( hasColumns(statusDataColumns) ) {
+		if ( isValidColumnsReference(statusDataColumns) ) {
 			result.put("statusDataColumns", statusDataColumns);
 		}
-		if ( hasColumns(tagDataColumns) ) {
+		if ( isValidColumnsReference(tagDataColumns) ) {
 			result.put("tagDataColumns", tagDataColumns);
 		}
 		return result;
-	}
-
-	private static boolean hasColumns(String value) {
-		return CsvUtils.parseColumnsReference(value) != null;
 	}
 
 	/**

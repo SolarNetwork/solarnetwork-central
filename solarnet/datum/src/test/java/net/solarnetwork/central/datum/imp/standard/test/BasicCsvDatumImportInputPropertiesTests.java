@@ -67,15 +67,20 @@ public class BasicCsvDatumImportInputPropertiesTests {
 	@Test
 	public void defaultServiceProperties() {
 		Map<String, Object> props = new BasicCsvDatumImportInputProperties().toServiceProperties();
+		// @formatter:off
 		assertThat(props,
-				allOf(hasEntry("headerRowCount", (Object) 1), hasEntry("dateColumnsValue", "3"),
+				allOf(hasEntry("headerRowCount", (Object) 1),
+						hasEntry("dateColumnsValue", "3"),
 						hasEntry("dateFormat", "yyyy-MM-dd HH:mm:ss"),
-						hasEntry("nodeIdColumn", (Object) 1), hasEntry("sourceIdColumn", (Object) 2),
-						hasEntry("instantaneousDataColumn", (Object) 4),
-						hasEntry("accumulatingDataColumn", (Object) 5),
-						hasEntry("statusDataColumn", (Object) 6), hasEntry("tagDataColumn", (Object) 7)
+						hasEntry("nodeIdColumn", "1"),
+						hasEntry("sourceIdColumn", "2"),
+						hasEntry("instantaneousDataColumn", "4"),
+						hasEntry("accumulatingDataColumn", "5"),
+						hasEntry("statusDataColumn", "6"),
+						hasEntry("tagDataColumn", "7")
 
 				));
+		// @formatter:on
 	}
 
 	@Test

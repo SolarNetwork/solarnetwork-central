@@ -44,7 +44,7 @@ import net.solarnetwork.util.ClassUtils;
  * accumulating, status, and tag sample properties of datum.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFormatServiceSupport {
 
@@ -118,10 +118,10 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 
 				DatumSamples s = new DatumSamples();
 
-				s.setInstantaneous(parseNumberMap(row, props.getInstantaneousDataColumn()));
-				s.setAccumulating(parseNumberMap(row, props.getAccumulatingDataColumn()));
-				s.setStatus(parseMap(row, props.getStatusDataColumn()));
-				s.setTags(parseSet(row, props.getTagDataColumn()));
+				s.setInstantaneous(parseNumberMap(row, props.instantaneousDataColumn()));
+				s.setAccumulating(parseNumberMap(row, props.accumulatingDataColumn()));
+				s.setStatus(parseMap(row, props.statusDataColumn()));
+				s.setTags(parseSet(row, props.tagDataColumn()));
 
 				if ( s.getInstantaneous() != null || s.getAccumulating() != null
 						|| s.getStatus() != null ) {
