@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.imp.standard;
 
-import static java.lang.String.format;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -147,47 +146,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 	}
 
 	private static boolean hasColumns(String value) {
-		return parseColumnsReference(value) != null;
-	}
-
-	private static int parseColumnReference(String ref) {
-		int c = 0;
-		try {
-			c = Integer.parseInt(ref);
-		} catch ( NumberFormatException e ) {
-			char[] chars = ref.toCharArray();
-			for ( int i = 0, len = chars.length; i < len; i++ ) {
-				char l = Character.toUpperCase(chars[i]);
-				if ( l < 'A' || l > 'Z' ) {
-					throw new IllegalArgumentException(
-							format("The character [%c] is not a valid column reference.", chars[i]));
-				}
-				c *= 26;
-				c += (l - 'A' + 1);
-			}
-		}
-		return c;
-	}
-
-	private static IntRangeSet parseColumnsReference(String value) {
-		if ( value == null || value.trim().isEmpty() ) {
-			return null;
-		}
-		IntRangeSet set = new IntRangeSet();
-		String[] ranges = value.trim().split("\\s*,\\s*");
-		for ( String range : ranges ) {
-			String[] components = range.split("\\s*-\\s*", 2);
-			try {
-				int a = parseColumnReference(components[0]);
-				int b = (components.length > 1 ? parseColumnReference(components[1]) : a);
-				if ( a > 0 && b > 0 ) {
-					set.addRange(a, b);
-				}
-			} catch ( IllegalArgumentException e ) {
-				// ignore and continue
-			}
-		}
-		return (set.isEmpty() ? null : set);
+		return CsvUtils.parseColumnsReference(value) != null;
 	}
 
 	/**
@@ -213,7 +172,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 				refs = getTagDataColumns();
 				break;
 		}
-		return parseColumnsReference(refs);
+		return CsvUtils.parseColumnsReference(refs);
 	}
 
 	public String getInstantaneousDataColumns() {

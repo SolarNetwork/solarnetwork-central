@@ -67,4 +67,18 @@ public class CsvDatumImportInputPropertiesTests {
 		assertThat("Date columns value", p.getDateColumnsValue(), equalTo("3,2,1"));
 	}
 
+	@Test
+	public void setDateColumnsValue_names() {
+		CsvDatumImportInputProperties p = new CsvDatumImportInputProperties();
+		p.setDateColumnsValue("A-C,E");
+		assertThat("Date columns parsed", p.getDateColumns(), contains(1, 2, 3, 5));
+	}
+
+	@Test
+	public void dateColumnsValue_names() {
+		CsvDatumImportInputProperties p = new CsvDatumImportInputProperties();
+		p.setDateColumnsValue("A-C,E");
+		assertThat("Date columns parsed", p.getDateColumnsValue(), equalTo("A-C,E"));
+	}
+
 }
