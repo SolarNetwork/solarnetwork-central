@@ -50,6 +50,7 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -60,7 +61,7 @@ import net.solarnetwork.web.domain.Response;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do",
@@ -163,6 +164,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 		try {
 			JsonNode tree = objectMapper.readTree(input);
+			log.trace("Got JSON: {}", tree);
 			if ( tree.isArray() ) {
 				for ( JsonNode child : tree ) {
 					Object o = handleNode(child);
@@ -178,6 +180,8 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 						parsedGeneralLocationDatum.add((GeneralLocationDatum) o);
 					} else if ( o instanceof Instruction ) {
 						resultDatum.add(o);
+					} else {
+						log.warn("Discarding unknown JSON object {} parsed as {}", child, o);
 					}
 				}
 			}
@@ -219,6 +223,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		BulkUploadResult result = new BulkUploadResult();
 		if ( resultDatum.size() > 0 ) {
 			result.setDatum(resultDatum);
+			log.trace("Upload result datum: {}", resultDatum);
 		}
 
 		// add instructions for the node
@@ -285,16 +290,16 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		try {
 			return objectMapper.treeToValue(node, StreamDatum.class);
 		} catch ( IOException e ) {
-			log.debug("Unable to parse JSON into StreamDatum: {}", e.getMessage());
+			log.warn("Unable to parse JSON {} into StreamDatum: {}", node, e.getMessage());
 		}
 		return null;
 	}
 
-	private GeneralDatum handleGeneralDatum(JsonNode node) {
+	private Datum handleGeneralDatum(JsonNode node) {
 		try {
-			return objectMapper.treeToValue(node, net.solarnetwork.domain.datum.GeneralDatum.class);
+			return objectMapper.treeToValue(node, Datum.class);
 		} catch ( IOException e ) {
-			log.debug("Unable to parse JSON into GeneralDatum: {}", e.getMessage());
+			log.warn("Unable to parse JSON {} into GeneralDatum: {}", node, e.getMessage());
 			return null;
 		}
 	}
