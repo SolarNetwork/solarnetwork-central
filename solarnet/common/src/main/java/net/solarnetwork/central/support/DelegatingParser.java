@@ -32,7 +32,7 @@ import net.solarnetwork.util.ObjectUtils;
  * successful result.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DelegatingParser<T> implements Parser<T> {
 
@@ -61,6 +61,7 @@ public class DelegatingParser<T> implements Parser<T> {
 	@Override
 	public T parse(String text, Locale locale) throws ParseException {
 		ParseException exception = null;
+		RuntimeException runtimeException = null;
 		for ( Parser<T> p : delegates ) {
 			try {
 				return p.parse(text, locale);
@@ -68,10 +69,16 @@ public class DelegatingParser<T> implements Parser<T> {
 				if ( exception == null ) {
 					exception = e;
 				}
+			} catch ( RuntimeException e ) {
+				if ( runtimeException == null ) {
+					runtimeException = e;
+				}
 			}
 		}
 		if ( exception != null ) {
 			throw exception;
+		} else if ( runtimeException != null ) {
+			throw runtimeException;
 		}
 		return null;
 	}
