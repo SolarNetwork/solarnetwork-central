@@ -56,6 +56,8 @@ import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
+import javax.cache.event.CacheEntryRemovedListener;
+import javax.cache.event.CacheEntryUpdatedListener;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
@@ -73,9 +75,13 @@ import net.solarnetwork.central.support.JCacheFactoryBean;
  * @author matt
  * @version 2.0
  */
-public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<Integer, Integer> {
+public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<Integer, Integer>,
+		CacheEntryUpdatedListener<Integer, Integer>, CacheEntryRemovedListener<Integer, Integer> {
 
-	private final List<Integer> listenerData = Collections.synchronizedList(new ArrayList<>());
+	private final List<Integer> createdListenerData = Collections.synchronizedList(new ArrayList<>());
+	private final List<Integer> updatedListenerData = Collections.synchronizedList(new ArrayList<>());
+	private final List<Integer> removedListenerData = Collections.synchronizedList(new ArrayList<>());
+
 	private ExecutorService executor;
 	private CacheManager cacheManager;
 	private Cache<Integer, Integer> delegate;
@@ -106,6 +112,30 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		executor.shutdown();
 	}
 
+	@Override
+	public void onCreated(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends Integer, ? extends Integer> event : events ) {
+			createdListenerData.add(event.getKey());
+		}
+	}
+
+	@Override
+	public void onUpdated(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends Integer, ? extends Integer> event : events ) {
+			updatedListenerData.add(event.getKey());
+		}
+	}
+
+	@Override
+	public void onRemoved(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends Integer, ? extends Integer> event : events ) {
+			removedListenerData.add(event.getKey());
+		}
+	}
+
 	public static CacheManager createCacheManager() {
 		try {
 			File path = Files.createTempDirectory("net.solarnetwork.central.common.test").toFile();
@@ -117,14 +147,6 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 			return cachingProvider.getCacheManager(cachingProvider.getDefaultURI(), configuration);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public void onCreated(Iterable<CacheEntryEvent<? extends Integer, ? extends Integer>> events)
-			throws CacheEntryListenerException {
-		for ( CacheEntryEvent<? extends Integer, ? extends Integer> event : events ) {
-			listenerData.add(event.getKey());
 		}
 	}
 
@@ -173,6 +195,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		executor.awaitTermination(10, TimeUnit.SECONDS);
 		assertThat("Map has all entries", map.keySet(), equalTo(keys));
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(keys.size()));
+		assertThat("High watermark value", cache.getInternalSizeWatermark(), equalTo(keys.size()));
 		assertThat("Delegate does not have any entries", delegate.getAll(keys).keySet(), hasSize(0));
 	}
 
@@ -239,8 +262,8 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 			overflow.remove(k);
 		}
 		assertThat("Delegate has overflow entries", delegate.getAll(keys).keySet(), equalTo(overflow));
-		assertThat("Listener called for all puts", listenerData, hasSize(keys.size()));
-		assertThat("Listener called for all put values", new TreeSet<>(listenerData), equalTo(keys));
+		assertThat("Listener called for all put values", new TreeSet<>(createdListenerData),
+				equalTo(keys));
 	}
 
 	@Test
@@ -273,6 +296,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		executor.shutdown();
 		executor.awaitTermination(10, TimeUnit.SECONDS);
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(keys.size()));
+		assertThat("High watermark value", cache.getInternalSizeWatermark(), equalTo(keys.size()));
 		assertThat("Map has non-removed entries", map.keySet(), equalTo(keys));
 		assertThat("Delegate does not have any entries", delegate.getAll(keys).keySet(), hasSize(0));
 	}
@@ -324,6 +348,8 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		SortedSet<Integer> combinedKeys = new TreeSet<>(internalKeys);
 		combinedKeys.addAll(delegateKeys);
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(internalKeys.size()));
+		assertThat("High watermark value", cache.getInternalSizeWatermark(),
+				equalTo(internalKeys.size()));
 		assertThat("No overlapping keys present", commonKeys, hasSize(0));
 		assertThat("All keys accounted for between internal and delegate", combinedKeys, equalTo(keys));
 	}
@@ -402,19 +428,14 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 	public void preloadedCacheDrain() throws Exception {
 		// GIVEN
 		cache = new BufferingDelegatingCache<>(delegate, 50, map);
+		addListener(cache);
 
 		// WHEN
 		SortedSet<Integer> keys = new ConcurrentSkipListSet<>();
 		for ( int i = 0; i < 1000; i++ ) {
 			Integer k = i;
-			executor.execute(new Runnable() {
-
-				@Override
-				public void run() {
-					keys.add(k);
-					delegate.put(k, k); // adding to delegate directly
-				}
-			});
+			keys.add(k);
+			delegate.put(k, k); // adding to delegate directly
 		}
 		ExecutorService executor2 = Executors.newFixedThreadPool(4);
 		ConcurrentMap<Integer, Integer> shared = new ConcurrentHashMap<>(250);
@@ -455,10 +476,8 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		}
 
 		// THEN
-		executor.shutdown();
-		executor.awaitTermination(10, TimeUnit.SECONDS);
 		executor2.shutdown();
-		executor2.awaitTermination(10, TimeUnit.SECONDS);
+		executor2.awaitTermination(60, TimeUnit.SECONDS);
 
 		Set<Integer> internalKeys = map.keySet();
 		Set<Integer> delegateKeys = StreamSupport.stream(delegate.spliterator(), false)
@@ -466,6 +485,8 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(internalKeys.size()));
 		assertThat("All internal keys processed", internalKeys, hasSize(0));
 		assertThat("All delegate keys processed", delegateKeys, hasSize(0));
+		assertThat("Listener called for all removes", removedListenerData, hasSize(keys.size()));
+		assertThat("Listener called for all removes", new TreeSet<>(removedListenerData), equalTo(keys));
 	}
 
 	@Test
@@ -548,6 +569,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		// WHEN
 		SortedSet<Integer> keys = new TreeSet<>();
 		SortedSet<Integer> allPuts = new TreeSet<>();
+		SortedSet<Integer> allRemoves = new TreeSet<>();
 		for ( int i = 0; i < 100; i++ ) {
 			Integer k = i;
 			keys.add(k);
@@ -557,6 +579,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		for ( int i = 0; i < 100; i += 2 ) {
 			Integer k = i;
 			keys.remove(k);
+			allRemoves.add(k);
 			cache.remove(k);
 		}
 		for ( int i = 200; i < 250; i++ ) {
@@ -570,7 +593,53 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(keys.size()));
 		assertThat("Map has all entries", map.keySet(), equalTo(keys));
 		assertThat("Delegate does not have any entries", delegate.getAll(keys).keySet(), hasSize(0));
-		assertThat("Listener called for all puts", new TreeSet<>(listenerData), equalTo(allPuts));
+		assertThat("Listener called for all puts", new TreeSet<>(createdListenerData), equalTo(allPuts));
+		assertThat("Listener called for all removes", new TreeSet<>(removedListenerData),
+				equalTo(allRemoves));
+	}
+
+	@Test
+	public void fillDrainAndRefill_withDuplicates_withListener() {
+		// GIVEN
+		cache = new BufferingDelegatingCache<>(delegate, 100, map);
+		addListener(cache);
+
+		// WHEN
+		SortedSet<Integer> keys = new TreeSet<>();
+		SortedSet<Integer> allPuts = new TreeSet<>();
+		SortedSet<Integer> allUpdates = new TreeSet<>();
+		SortedSet<Integer> allRemoves = new TreeSet<>();
+		for ( int i = 0; i < 50; i++ ) {
+			Integer k = i;
+			keys.add(k);
+			allPuts.add(k);
+			cache.put(k, k);
+		}
+		assertThat("High watermark value", cache.getInternalSizeWatermark(), equalTo(50));
+		for ( int i = 0; i < 50; i += 2 ) {
+			Integer k = i;
+			allUpdates.add(k);
+			cache.put(k, k + 10000);
+		}
+		assertThat("High watermark value unchanged after updates", cache.getInternalSizeWatermark(),
+				equalTo(50));
+		for ( int i = 200; i < 250; i++ ) {
+			Integer k = i;
+			keys.add(k);
+			allPuts.add(k);
+			cache.put(k, k);
+		}
+		assertThat("High watermark value updated", cache.getInternalSizeWatermark(), equalTo(100));
+
+		// THEN
+		assertThat("Reported internal size", cache.getInternalSize(), equalTo(keys.size()));
+		assertThat("Map has all entries", map.keySet(), equalTo(keys));
+		assertThat("Delegate does not have any entries", delegate.getAll(keys).keySet(), hasSize(0));
+		assertThat("Listener called for all puts", new TreeSet<>(createdListenerData), equalTo(allPuts));
+		assertThat("Listener called for all updates", new TreeSet<>(updatedListenerData),
+				equalTo(allUpdates));
+		assertThat("Listener called for all removes", new TreeSet<>(removedListenerData),
+				equalTo(allRemoves));
 	}
 
 }
