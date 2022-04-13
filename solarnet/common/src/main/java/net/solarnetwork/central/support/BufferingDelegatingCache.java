@@ -110,7 +110,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	 * 
 	 * @param delegate
 	 *        the cache to delegate elements to once more than
-	 *        {@code internalCapacity} elemements are managed by the cache
+	 *        {@code internalCapacity} elements are managed by the cache
 	 * @param internalCapacity
 	 *        the maximum number of elements to keep in the internal store
 	 * @param internalStore
