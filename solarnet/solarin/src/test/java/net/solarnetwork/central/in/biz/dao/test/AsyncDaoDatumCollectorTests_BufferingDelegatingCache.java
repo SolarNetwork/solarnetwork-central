@@ -69,6 +69,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
+import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -80,12 +81,13 @@ import net.solarnetwork.service.PingTest;
  * @author matt
  * @version 2.0
  */
-public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
+public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements UncaughtExceptionHandler {
 
 	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
 	private Cache<Serializable, Serializable> datumCache;
+	private BufferingDelegatingCache<Serializable, Serializable> bufDatumCache;
 	private CollectorStats stats;
 
 	private AsyncDaoDatumCollector collector;
@@ -122,12 +124,14 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
 		datumCache = factory.getObject();
 
+		bufDatumCache = new BufferingDelegatingCache<>(datumCache, 5);
+
 		uncaughtExceptions = new ArrayList<>(2);
 
 		stats = new CollectorStats("AsyncDaoDatumCollector", 1);
 
-		collector = new AsyncDaoDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
-				stats);
+		collector = new AsyncDaoDatumCollector(bufDatumCache, datumDao,
+				new TransactionTemplate(txManager), stats);
 		collector.setConcurrency(2);
 		collector.setQueueSize(5);
 		collector.setExceptionHandler(this);
