@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.biz.dao;
 
+import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -58,6 +59,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -66,7 +68,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Data collector that processes datum and location datum asynchronously.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		PingTest, ServiceLifecycleObserver {
@@ -234,9 +236,14 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 		long addCount = stats.get(CollectorStats.BasicCount.BufferAdds);
 		long removeCount = stats.get(CollectorStats.BasicCount.BufferRemovals);
 		long lagDiff = addCount - removeCount;
-		Map<String, Long> statMap = new LinkedHashMap<>(CollectorStats.BasicCount.values().length);
+		Map<String, Object> statMap = new LinkedHashMap<>(CollectorStats.BasicCount.values().length);
 		for ( CollectorStats.BasicCount s : CollectorStats.BasicCount.values() ) {
 			statMap.put(s.toString(), stats.get(s));
+		}
+		if ( datumCache instanceof BufferingDelegatingCache ) {
+			BufferingDelegatingCache<Serializable, Serializable> buf = (BufferingDelegatingCache<Serializable, Serializable>) datumCache;
+			statMap.put("BufferStatus",
+					format("%d/%d", buf.getInternalSize(), buf.getInternalCapacity()));
 		}
 		if ( lagDiff > datumCacheRemovalAlertThreshold ) {
 			return new PingTestResult(false, String.format("Buffer removal lag %d > %d", lagDiff,
