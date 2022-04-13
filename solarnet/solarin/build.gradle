@@ -16,7 +16,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarIn'
-version = '1.0.1'
+version = '1.0.2'
 archivesBaseName = 'solarin'
 
 configurations {
