@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.web.api;
+package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -164,6 +164,33 @@ public class LocationMetadataController {
 	}
 
 	/**
+	 * Add metadata to a source. The metadata is merged only, and will not
+	 * replace existing values.
+	 * 
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param meta
+	 *        the metadata to merge
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.POST)
+	public Response<Object> addMetadata(@PathVariable("locationId") Long locationId,
+			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		datumMetadataBiz.addGeneralLocationDatumMetadata(locationId, sourceId, meta);
+		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.POST, params = { "sourceId" })
+	public Response<Object> addMetadataAlt(@PathVariable("locationId") Long locationId,
+			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		return addMetadata(locationId, sourceId, meta);
+	}
+
+	/**
 	 * Completely replace the metadata for a given source ID, or create it if it
 	 * doesn't already exist.
 	 * 
@@ -188,6 +215,30 @@ public class LocationMetadataController {
 	public Response<Object> replaceMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return replaceMetadata(locationId, sourceId, meta);
+	}
+
+	/**
+	 * Completely remove the metadata for a given source ID.
+	 * 
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/{locationId}/{sourceId}", method = RequestMethod.DELETE)
+	public Response<Object> deleteMetadata(@PathVariable("locationId") Long locationId,
+			@PathVariable("sourceId") String sourceId) {
+		datumMetadataBiz.removeGeneralLocationDatumMetadata(locationId, sourceId);
+		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/{locationId}", method = RequestMethod.DELETE, params = { "sourceId" })
+	public Response<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
+			@RequestParam("sourceId") String sourceId) {
+		return deleteMetadata(locationId, sourceId);
 	}
 
 }

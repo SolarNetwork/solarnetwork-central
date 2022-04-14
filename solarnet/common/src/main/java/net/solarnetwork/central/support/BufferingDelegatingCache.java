@@ -26,6 +26,7 @@ import static java.util.Collections.singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ import javax.cache.configuration.Configuration;
 import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryListener;
+import javax.cache.event.CacheEntryRemovedListener;
+import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
 import javax.cache.integration.CompletionListener;
 import javax.cache.processor.EntryProcessor;
@@ -68,14 +71,16 @@ import net.solarnetwork.util.UnionIterator;
  * </p>
  * 
  * <p>
- * <b>Note</b> that not all {@link Cache} methods are supported, and will throw
- * an {@link UnsupportedOperationException} if invoked. Additionally only a
- * <b>single</b> {@link CacheEntryCreatedListener} is supported, when calling
+ * <b>Note</b> that not {@literal null} values are not supported. Not all
+ * {@link Cache} methods are supported, and will throw an
+ * {@link UnsupportedOperationException} if invoked. Additionally only one
+ * {@link CacheEntryListener} for each of created, updated, and removed events
+ * is supported, when calling
  * {@link #registerCacheEntryListener(CacheEntryListenerConfiguration)}.
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.2
  */
 public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
@@ -84,8 +89,11 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	private final int internalCapacity;
 	private final ConcurrentMap<K, V> internalStore;
 	private final AtomicInteger size;
+	private final AtomicInteger maxSize;
 
 	private CacheEntryCreatedListener<? super K, ? super V> createdListener;
+	private CacheEntryUpdatedListener<? super K, ? super V> updatedListener;
+	private CacheEntryRemovedListener<? super K, ? super V> removedListener;
 
 	/**
 	 * Constructor.
@@ -110,7 +118,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	 * 
 	 * @param delegate
 	 *        the cache to delegate elements to once more than
-	 *        {@code internalCapacity} elemements are managed by the cache
+	 *        {@code internalCapacity} elements are managed by the cache
 	 * @param internalCapacity
 	 *        the maximum number of elements to keep in the internal store
 	 * @param internalStore
@@ -123,6 +131,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		this.internalCapacity = internalCapacity;
 		this.internalStore = internalStore;
 		this.size = new AtomicInteger(0);
+		this.maxSize = new AtomicInteger(0);
 	}
 
 	/**
@@ -144,11 +153,23 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		return size.get();
 	}
 
+	/**
+	 * Get the highest number of elements stored internally, since the last
+	 * reset via {@link #clear()}.
+	 * 
+	 * @return the highest number of elements stored internally
+	 * @since 1.1
+	 */
+	public int getInternalSizeWatermark() {
+		return maxSize.get();
+	}
+
 	@Override
 	public synchronized void clear() {
 		internalStore.clear();
 		delegate.clear();
 		size.set(0);
+		maxSize.set(0);
 	}
 
 	@Override
@@ -159,6 +180,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			}
 			internalStore.clear();
 			size.set(0);
+			maxSize.set(0);
 			delegate.close();
 		}
 	}
@@ -169,8 +191,19 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	}
 
 	@Override
-	public void deregisterCacheEntryListener(CacheEntryListenerConfiguration<K, V> listener) {
-		delegate.deregisterCacheEntryListener(listener);
+	public void deregisterCacheEntryListener(CacheEntryListenerConfiguration<K, V> config) {
+		CacheEntryListener<? super K, ? super V> listener = config.getCacheEntryListenerFactory()
+				.create();
+		if ( listener instanceof CacheEntryCreatedListener<?, ?> ) {
+			this.createdListener = null;
+		}
+		if ( listener instanceof CacheEntryUpdatedListener<?, ?> ) {
+			this.updatedListener = null;
+		}
+		if ( listener instanceof CacheEntryRemovedListener<?, ?> ) {
+			this.removedListener = null;
+		}
+		delegate.deregisterCacheEntryListener(config);
 	}
 
 	@Override
@@ -199,27 +232,39 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V getAndPut(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		int currSize;
+		V result = null;
 		do {
+			result = internalStore.replace(key, value);
+			if ( result == null ) {
+				result = delegate.getAndReplace(key, value);
+			}
+			if ( result != null ) {
+				// replaced existing value
+				publishUpdatedEvent(key, value);
+				return result;
+			}
 			currSize = size.get();
-			if ( currSize < internalCapacity && size.compareAndSet(currSize, currSize + 1) ) {
-				V v = internalStore.put(key, value);
-				if ( v != null ) {
+			final int newSize = currSize + 1;
+			if ( currSize < internalCapacity && size.compareAndSet(currSize, newSize) ) {
+				result = internalStore.put(key, value);
+				if ( result != null ) {
 					// replaced existing value
 					size.decrementAndGet();
+					publishUpdatedEvent(key, value);
 				} else {
+					maxSize.getAndUpdate(m -> {
+						return (m < newSize ? newSize : m);
+					});
 					publishCreatedEvent(key, value);
 				}
-				return v;
+				return result;
 			}
 		} while ( currSize < internalCapacity );
 		return delegate.getAndPut(key, value);
-	}
-
-	private void publishCreatedEvent(K key, V value) {
-		if ( createdListener != null ) {
-			createdListener.onCreated(singleton(new CacheEntryCreatedEvent(key, value)));
-		}
 	}
 
 	@Override
@@ -227,6 +272,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		V old = internalStore.remove(key);
 		if ( old != null ) {
 			size.decrementAndGet();
+			publishRemovedEvent(key, old);
 		} else {
 			old = delegate.getAndRemove(key);
 		}
@@ -235,8 +281,13 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V getAndReplace(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		V old = internalStore.replace(key, value);
-		if ( old == null ) {
+		if ( old != null ) {
+			publishUpdatedEvent(key, value);
+		} else {
 			old = delegate.getAndReplace(key, value);
 		}
 		return old;
@@ -311,19 +362,33 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	 */
 	@Override
 	public void put(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		int currSize;
 		do {
+			if ( internalStore.replace(key, value) != null || delegate.replace(key, value) ) {
+				// replaced existing value
+				publishUpdatedEvent(key, value);
+				return;
+			}
 			currSize = size.get();
-			if ( currSize < internalCapacity && size.compareAndSet(currSize, currSize + 1) ) {
+			final int newSize = currSize + 1;
+			if ( currSize < internalCapacity && size.compareAndSet(currSize, newSize) ) {
 				if ( internalStore.put(key, value) != null ) {
 					// only replaced existing value
 					size.decrementAndGet();
+					publishUpdatedEvent(key, value);
 				} else {
+					maxSize.getAndUpdate(m -> {
+						return (m < newSize ? newSize : m);
+					});
 					publishCreatedEvent(key, value);
 				}
 				return;
 			}
 		} while ( currSize < internalCapacity );
+		assert internalStore.get(key) == null;
 		delegate.put(key, value);
 	}
 
@@ -367,13 +432,21 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		if ( listener instanceof CacheEntryCreatedListener<?, ?> ) {
 			this.createdListener = (CacheEntryCreatedListener<? super K, ? super V>) listener;
 		}
+		if ( listener instanceof CacheEntryUpdatedListener<?, ?> ) {
+			this.updatedListener = (CacheEntryUpdatedListener<? super K, ? super V>) listener;
+		}
+		if ( listener instanceof CacheEntryRemovedListener<?, ?> ) {
+			this.removedListener = (CacheEntryRemovedListener<? super K, ? super V>) listener;
+		}
 		delegate.registerCacheEntryListener(config);
 	}
 
 	@Override
 	public boolean remove(K key) {
-		if ( internalStore.remove(key) != null ) {
+		final V oldValue = internalStore.remove(key);
+		if ( oldValue != null ) {
 			size.decrementAndGet();
+			publishRemovedEvent(key, oldValue);
 			return true;
 		}
 		return delegate.remove(key);
@@ -383,6 +456,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	public boolean remove(K key, V expected) {
 		if ( internalStore.remove(key, expected) ) {
 			size.decrementAndGet();
+			publishRemovedEvent(key, expected);
 			return true;
 		}
 		return delegate.remove(key, expected);
@@ -397,17 +471,26 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public void removeAll(Set<? extends K> keys) {
-		for ( K k : keys ) {
-			if ( internalStore.remove(k) != null ) {
+		Set<K> keysToRemove = new HashSet<>(keys);
+		for ( Iterator<K> itr = keysToRemove.iterator(); itr.hasNext(); ) {
+			K k = itr.next();
+			final V oldValue = internalStore.remove(k);
+			if ( oldValue != null ) {
 				size.decrementAndGet();
+				publishRemovedEvent(k, oldValue);
+				itr.remove();
 			}
 		}
-		delegate.removeAll(keys);
+		if ( !keysToRemove.isEmpty() ) {
+			delegate.removeAll(keysToRemove);
+		}
 	}
 
 	@Override
 	public boolean replace(K key, V value) {
-		if ( internalStore.replace(key, value) != null ) {
+		final V oldValue = internalStore.replace(key, value);
+		if ( oldValue != null ) {
+			publishUpdatedEvent(key, value);
 			return true;
 		}
 		return delegate.replace(key, value);
@@ -416,9 +499,28 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	@Override
 	public boolean replace(K key, V oldValue, V newValue) {
 		if ( internalStore.replace(key, oldValue, newValue) ) {
+			publishUpdatedEvent(key, newValue);
 			return true;
 		}
 		return delegate.replace(key, oldValue, newValue);
+	}
+
+	private void publishCreatedEvent(K key, V value) {
+		if ( createdListener != null ) {
+			createdListener.onCreated(singleton(new CacheEntryEventImpl(key, value, EventType.CREATED)));
+		}
+	}
+
+	private void publishUpdatedEvent(K key, V value) {
+		if ( updatedListener != null ) {
+			updatedListener.onUpdated(singleton(new CacheEntryEventImpl(key, value, EventType.UPDATED)));
+		}
+	}
+
+	private void publishRemovedEvent(K key, V value) {
+		if ( removedListener != null ) {
+			removedListener.onRemoved(singleton(new CacheEntryEventImpl(key, value, EventType.REMOVED)));
+		}
 	}
 
 	/**
@@ -481,15 +583,15 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		}
 	}
 
-	private class CacheEntryCreatedEvent extends CacheEntryEvent<K, V> {
+	private final class CacheEntryEventImpl extends CacheEntryEvent<K, V> {
 
 		private static final long serialVersionUID = 6369201595734400543L;
 
 		private final K key;
 		private final V value;
 
-		private CacheEntryCreatedEvent(K key, V value) {
-			super(BufferingDelegatingCache.this, EventType.CREATED);
+		private CacheEntryEventImpl(K key, V value, EventType eventType) {
+			super(BufferingDelegatingCache.this, eventType);
 			this.key = key;
 			this.value = value;
 		}

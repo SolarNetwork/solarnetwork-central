@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.web.api;
+package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.web.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,6 +38,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
 
 /**
@@ -116,6 +118,84 @@ public class DatumMetadataController {
 			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(nodeId, sourceId, criteria);
+	}
+
+	/**
+	 * Add metadata to a source. The metadata is merged only, and will not
+	 * replace existing values.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param meta
+	 *        the metadata to merge
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
+	public Response<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST, params = { "sourceId" })
+	public Response<Object> addMetadataAlt(@PathVariable("nodeId") Long nodeId,
+			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		return addMetadata(nodeId, sourceId, meta);
+	}
+
+	/**
+	 * Completely replace the metadata for a given source ID, or create it if it
+	 * doesn't already exist.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param meta
+	 *        the metadata to store
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.PUT)
+	public Response<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		datumMetadataBiz.storeGeneralNodeDatumMetadata(nodeId, sourceId, meta);
+		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.PUT, params = { "sourceId" })
+	public Response<Object> replaceMetadataAlt(@PathVariable("nodeId") Long nodeId,
+			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
+		return replaceMetadata(nodeId, sourceId, meta);
+	}
+
+	/**
+	 * Completely remove the metadata for a given source ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @return the results
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.DELETE)
+	public Response<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId,
+			@PathVariable("sourceId") String sourceId) {
+		datumMetadataBiz.removeGeneralNodeDatumMetadata(nodeId, sourceId);
+		return response(null);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE, params = { "sourceId" })
+	public Response<Object> deleteMetadataAlt(@PathVariable("nodeId") Long nodeId,
+			@RequestParam("sourceId") String sourceId) {
+		return deleteMetadata(nodeId, sourceId);
 	}
 
 }
