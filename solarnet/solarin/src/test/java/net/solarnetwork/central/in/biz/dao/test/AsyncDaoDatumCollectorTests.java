@@ -30,6 +30,7 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -60,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -81,6 +83,8 @@ import net.solarnetwork.service.PingTest;
  * @version 2.0
  */
 public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
+
+	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
 
 	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
@@ -138,7 +142,11 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	@After
 	public void teardown() throws Throwable {
 		collector.shutdownAndWait();
-		cacheManager.destroyCache("Test Datum Buffer");
+		try {
+			cacheManager.destroyCache(TEST_CACHE_NAME);
+		} catch ( Exception e ) {
+			// ignore
+		}
 		log.info(stats.toString());
 		EasyMock.verify(datumDao, txManager);
 		if ( !uncaughtExceptions.isEmpty() ) {
@@ -298,6 +306,81 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	}
 
 	@Test
+	public void addNodeDatumToCache_manyThreads_overflow_duplicates() throws Exception {
+		// GIVEN
+		GeneralNodeDatum d1 = createDatum();
+		ExecutorService executor = Executors.newWorkStealingPool(4);
+		List<GeneralNodeDatum> datum = new ArrayList<>(50);
+		UUID streamId = UUID.randomUUID();
+		expect(txManager.getTransaction(anyObject())).andAnswer(new IAnswer<TransactionStatus>() {
+
+			@Override
+			public TransactionStatus answer() throws Throwable {
+				return new SimpleTransactionStatus(true);
+			}
+		}).atLeastOnce();
+		txManager.commit(anyObject(TransactionStatus.class));
+		expectLastCall().atLeastOnce();
+
+		expect(datumDao.store(d1)).andAnswer(new IAnswer<DatumPK>() {
+
+			@Override
+			public DatumPK answer() throws Throwable {
+				try {
+					Thread.sleep(200);
+				} catch ( InterruptedException e ) {
+					// ignore
+				}
+				return new DatumPK(streamId, d1.getCreated());
+			}
+		}).atLeastOnce();
+
+		for ( int i = 0; i < 50; i++ ) {
+			GeneralNodeDatum d = d1.clone();
+			datum.add(d);
+		}
+
+		// WHEN
+		replayAll();
+		PingTest.Result pingResult1 = collector.performPingTest();
+		for ( GeneralNodeDatum d : datum ) {
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(50);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					datumCache.put(d.getId(), d);
+				}
+
+			});
+		}
+
+		// THEN
+		Thread.sleep(1000);
+		executor.shutdown();
+		executor.awaitTermination(60, TimeUnit.SECONDS);
+		Thread.sleep(2000); // give time for cache to call listener
+		collector.shutdownAndWait();
+		PingTest.Result pingResult2 = collector.performPingTest();
+
+		log.info("Ping result 1: {}", pingResult1.getProperties());
+		log.info("Ping result 2: {}", pingResult2.getProperties());
+
+		assertThat("Added 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferAdds),
+				equalTo(50L));
+		assertThat("Removed 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferRemovals),
+				equalTo(50L));
+		assertThat("Received at least 1 datum", stats.get(CollectorStats.BasicCount.DatumReceived),
+				greaterThanOrEqualTo(1L));
+		assertThat("Stored at least 1 datum", stats.get(CollectorStats.BasicCount.DatumStored),
+				greaterThanOrEqualTo(1L));
+	}
+
+	@Test
 	public void addLocationDatumToCache() throws Exception {
 		// GIVEN
 		GeneralLocationDatum d = createLocationDatum();
@@ -352,7 +435,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 		// GIVEN
 		JCacheFactoryBean<String, Boolean> factory = new JCacheFactoryBean<>(cacheManager, String.class,
 				Boolean.class);
-		factory.setName("test-datum-buffer-persistence");
+		factory.setName(TEST_CACHE_NAME);
 		factory.setHeapMaxEntries(3);
 		factory.setDiskMaxSizeMB(1);
 		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
@@ -373,7 +456,7 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		JCacheFactoryBean<String, Boolean> factory2 = new JCacheFactoryBean<>(cacheManager, String.class,
 				Boolean.class);
-		factory2.setName("test-datum-buffer-persistence");
+		factory2.setName(TEST_CACHE_NAME);
 		factory2.setHeapMaxEntries(3);
 		factory2.setDiskMaxSizeMB(1);
 		factory2.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
