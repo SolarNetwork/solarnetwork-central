@@ -71,12 +71,12 @@ import net.solarnetwork.util.UnionIterator;
  * </p>
  * 
  * <p>
- * <b>Note</b> that not all {@link Cache} methods are supported, and will throw
- * an {@link UnsupportedOperationException} if invoked. Additionally only a
- * <b>single</b> {@link CacheEntryCreatedListener} is supported, when calling
+ * <b>Note</b> that not {@literal null} values are not supported. Not all
+ * {@link Cache} methods are supported, and will throw an
+ * {@link UnsupportedOperationException} if invoked. Additionally only one
+ * {@link CacheEntryListener} for each of created, updated, and removed events
+ * is supported, when calling
  * {@link #registerCacheEntryListener(CacheEntryListenerConfiguration)}.
- * Similarly a single {@link CacheEntryUpdatedListener} and
- * {@link CacheEntryRemovedListener} is supported.
  * </p>
  * 
  * @author matt
@@ -232,13 +232,26 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V getAndPut(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		int currSize;
+		V result = null;
 		do {
+			result = internalStore.replace(key, value);
+			if ( result == null ) {
+				result = delegate.getAndReplace(key, value);
+			}
+			if ( result != null ) {
+				// replaced existing value
+				publishUpdatedEvent(key, value);
+				return result;
+			}
 			currSize = size.get();
 			final int newSize = currSize + 1;
 			if ( currSize < internalCapacity && size.compareAndSet(currSize, newSize) ) {
-				V v = internalStore.put(key, value);
-				if ( v != null ) {
+				result = internalStore.put(key, value);
+				if ( result != null ) {
 					// replaced existing value
 					size.decrementAndGet();
 					publishUpdatedEvent(key, value);
@@ -248,28 +261,10 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 					});
 					publishCreatedEvent(key, value);
 				}
-				return v;
+				return result;
 			}
 		} while ( currSize < internalCapacity );
 		return delegate.getAndPut(key, value);
-	}
-
-	private void publishCreatedEvent(K key, V value) {
-		if ( createdListener != null ) {
-			createdListener.onCreated(singleton(new CacheEntryEventImpl(key, value, EventType.CREATED)));
-		}
-	}
-
-	private void publishUpdatedEvent(K key, V value) {
-		if ( updatedListener != null ) {
-			updatedListener.onUpdated(singleton(new CacheEntryEventImpl(key, value, EventType.UPDATED)));
-		}
-	}
-
-	private void publishRemovedEvent(K key, V value) {
-		if ( removedListener != null ) {
-			removedListener.onRemoved(singleton(new CacheEntryEventImpl(key, value, EventType.REMOVED)));
-		}
 	}
 
 	@Override
@@ -286,6 +281,9 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V getAndReplace(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		V old = internalStore.replace(key, value);
 		if ( old != null ) {
 			publishUpdatedEvent(key, value);
@@ -364,8 +362,16 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	 */
 	@Override
 	public void put(K key, V value) {
+		if ( value == null ) {
+			throw new IllegalArgumentException("Null values are not allowed.");
+		}
 		int currSize;
 		do {
+			if ( internalStore.replace(key, value) != null || delegate.replace(key, value) ) {
+				// replaced existing value
+				publishUpdatedEvent(key, value);
+				return;
+			}
 			currSize = size.get();
 			final int newSize = currSize + 1;
 			if ( currSize < internalCapacity && size.compareAndSet(currSize, newSize) ) {
@@ -382,6 +388,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 				return;
 			}
 		} while ( currSize < internalCapacity );
+		assert internalStore.get(key) == null;
 		delegate.put(key, value);
 	}
 
@@ -496,6 +503,24 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			return true;
 		}
 		return delegate.replace(key, oldValue, newValue);
+	}
+
+	private void publishCreatedEvent(K key, V value) {
+		if ( createdListener != null ) {
+			createdListener.onCreated(singleton(new CacheEntryEventImpl(key, value, EventType.CREATED)));
+		}
+	}
+
+	private void publishUpdatedEvent(K key, V value) {
+		if ( updatedListener != null ) {
+			updatedListener.onUpdated(singleton(new CacheEntryEventImpl(key, value, EventType.UPDATED)));
+		}
+	}
+
+	private void publishRemovedEvent(K key, V value) {
+		if ( removedListener != null ) {
+			removedListener.onRemoved(singleton(new CacheEntryEventImpl(key, value, EventType.REMOVED)));
+		}
 	}
 
 	/**

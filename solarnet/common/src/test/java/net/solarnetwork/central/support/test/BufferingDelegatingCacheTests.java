@@ -23,9 +23,12 @@
 package net.solarnetwork.central.support.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -296,7 +299,8 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		executor.shutdown();
 		executor.awaitTermination(10, TimeUnit.SECONDS);
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(keys.size()));
-		assertThat("High watermark value", cache.getInternalSizeWatermark(), equalTo(keys.size()));
+		assertThat("High watermark value", cache.getInternalSizeWatermark(),
+				allOf(greaterThan(0), lessThanOrEqualTo(10)));
 		assertThat("Map has non-removed entries", map.keySet(), equalTo(keys));
 		assertThat("Delegate does not have any entries", delegate.getAll(keys).keySet(), hasSize(0));
 	}
@@ -309,7 +313,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		// WHEN
 		SortedSet<Integer> keys = new ConcurrentSkipListSet<>();
 		for ( int i = 0; i < 10000; i++ ) {
-			Integer k = (int) (Math.random() * 50);
+			Integer k = (int) (Math.random() * 200);
 			executor.execute(new Runnable() {
 
 				@Override
@@ -330,6 +334,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		// THEN
 		executor.shutdown();
 		executor.awaitTermination(10, TimeUnit.SECONDS);
+		Thread.sleep(1000L);
 
 		Set<Integer> internalKeys = map.keySet();
 		Set<Integer> delegateKeys = StreamSupport.stream(delegate.spliterator(), false)
@@ -349,7 +354,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		combinedKeys.addAll(delegateKeys);
 		assertThat("Reported internal size", cache.getInternalSize(), equalTo(internalKeys.size()));
 		assertThat("High watermark value", cache.getInternalSizeWatermark(),
-				equalTo(internalKeys.size()));
+				allOf(greaterThan(0), lessThanOrEqualTo(50)));
 		assertThat("No overlapping keys present", commonKeys, hasSize(0));
 		assertThat("All keys accounted for between internal and delegate", combinedKeys, equalTo(keys));
 	}
