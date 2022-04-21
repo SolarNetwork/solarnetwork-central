@@ -6,18 +6,22 @@ SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *
 
 /**
  * Reset an edit service form for reuse.
- * 
+ *
  * @param {HTMLFormElement} form the form to reset
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
- * @param {Function} [callback] an optional callback that will be invoked with the `id` form element value and a boolean 
+ * @param {Function} [callback] an optional callback that will be invoked with the `id` form element value and a boolean
  *                              `deleted flag set to `true` if the form item has been deleted
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container, callback) {
 	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
 	var f = $(form),
-		deleted = f.hasClass('deleted');
+		deleted = f.hasClass('deleted'),
+		idNum = Number(id);
 	// look if we deleted an item, which will only be true if form in "danger" mode
 	if ( id ) {
+		if ( !Number.isNaN(idNum) ) {
+			id = idNum;
+		}
 		if ( container && deleted ) {
 			var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
 			if ( existing.length > 0 ) {
@@ -50,14 +54,14 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 
 	// clear any context item
 	SolarReg.Templates.setContextItem(f, null);
-	
+
 	// clean any alert
 	f.find(SolarReg.Settings.modalAlertBeforeSelector +'.alert-warning').remove();
 };
 
 /**
  * Handle the delete action for an edit service item form.
- * 
+ *
  * @param {event} event the event that triggered the delete action
  */
 SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDelete(event) {
@@ -91,14 +95,18 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 					modal.addClass('deleted');
 					modal.modal('hide');
 				} else {
-					var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
+					var msg = SolarReg.formatResponseMessage(json);
+					if ( !msg ) {
+						msg = 'Unknown error.';
+					}
 					SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 				}
 			}).fail(function(xhr, statusText, error) {
 				modal.removeClass('danger');
 				modal.find('.delete-confirm').addClass('hidden');
 				submitBtn.prop('disabled', false);
-				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', statusText);
+				SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning',
+					SolarReg.extractResponseMessage(xhr, statusText, error));
 			});
 		} else {
 			modal.modal('hide');
@@ -113,13 +121,13 @@ SolarReg.Settings.focusEditServiceForm = function focusEditServiceForm(event) {
 
 /**
  * Generate a display model object out of a configuration object.
- * 
+ *
  * The returned object will contain:
- * 
+ *
  *  * `name` - the `config.name`
  *  * `type` - the localized name of the service matching `config.serviceIdentifier`
  *  * `serviceProperties` - result of calling {@link SolarReg.Settings.serviceConfigurationItemServiceProperties}
- * 
+ *
  * @param {object} config the configuration object to generate a display model object for
  * @param {array} services the array of possible services the configuration might adopt
  * @returns {object} a display model object
@@ -144,12 +152,12 @@ SolarReg.Settings.serviceConfigurationItem = function serviceConfigurationItem(c
 
 /**
  * Get a service configuration display model item for the service properties of a service configuration.
- * 
+ *
  * This method will iterate over the `settingSpecifiers` array of the service with an `id` that matches
  * `config.serviceIdentifier`, and then populate localized keys and associated values for each non-empty
  * service property. If a setting has the `secureTextEntry` flag set to `true` then the value will be
  * rendered as a set of asterisk characters only.
- * 
+ *
  * @param {Object} config the service configuration to get a display model for
  * @param {Array} services the available services
  */
@@ -187,7 +195,7 @@ SolarReg.Settings.serviceConfigurationItemServiceProperties = function serviceCo
 
 /**
  * Create a setting item form object suitable for using as template parameters for a setting item.
- * 
+ *
  * @param {object} service the service info
  * @param {object} setting the setting specifier
  * @param {config} [config] the current configuration settings, if available
@@ -210,17 +218,17 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
 
 /**
  * Populate form fields with corresponding values from a configuration object.
- * 
+ *
  * This method will iterate over all form fields, and look for a corresponding property in `config`
  * with the same name. Names will be split on `.` characters, such that nested objects within
  * `config` will be inspected for the associated value.
- * 
+ *
  * For example given a configuration object like `{filter: {ids: [1, 2, 3]}}` then a form field
  * named `filter.ids` would resolve to the array `[1, 2, 3]`.
- * 
+ *
  * Array values will be passed to {@link SolarReg.arrayAsDelimitedString} before being set
  * as a form field value.
- * 
+ *
  * @param {HTMLFormElement} form the form
  * @param {object} config the current configuration settings
  */
@@ -247,8 +255,8 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 			component = components[j];
 		}
 		if ( name && obj && obj[component] ) {
-			$(field).val(Array.isArray(obj[component]) 
-				? SolarReg.arrayAsDelimitedString(obj[component]) 
+			$(field).val(Array.isArray(obj[component])
+				? SolarReg.arrayAsDelimitedString(obj[component])
 				: obj[component]);
 		}
 	}
@@ -256,10 +264,10 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 
 /**
  * Render a form item for each setting defined on a service.
- * 
+ *
  * Each form item template must have a `.template` class and a `data-setting-type` attribute
  * that matches the setting type that template supports.
- * 
+ *
  * @param {object} service the service info whose settings should be rendered as form items
  * @param {jQuery} container the container to render all form item HTML into
  * @param {jQuery} templates a container of setting form item templates, one for each type of supported setting
@@ -327,7 +335,7 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
 
 /**
  * Prepare a form to edit a service configuration.
- * 
+ *
  * @param {jQuery} modal the modal form
  * @param {array} services array of possible service infos for this form
  * @param {jQuery} settingTemplates the container for setting templates
@@ -350,17 +358,17 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 
 /**
  * Handle a click on a service item, to display a edit form or action modal.
- * 
+ *
  * This function will examine the `event.target` for an `edit-link` class.
  * If found, then a modal defined by the CSS selector found on the `edit-modal`
  * data attribute will be opened. If `edit-link` is not available, then it
  * will look for an `action-link` class. If found, then a modal defined by the
  * CSS selector found on the `action-modal` data attribute will be opened.
- * 
+ *
  * For any opened modal, {@link SolarReg.Templates.setContextItem()} will be
  * called on it before opening, setting whatever context item is returned by
  * passing the event target to {@link SolarReg.Templates.findContextItem()}.
- * 
+ *
  * @param {Event} event the event that triggered the action
  */
 SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event) {
@@ -385,7 +393,7 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event)
 /**
  * Encode a service item configuration form into an object, suitable for encoding into JSON
  * for posting to SolarNetwork.
- * 
+ *
  * @param {HTMLFormElement} form the form
  * @returns {object} the encoded object
  */
@@ -400,7 +408,7 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 		components,
 		component,
 		bodyPart;
-	
+
 	for ( i = 0, iLen = fields.length; i < iLen; i += 1 ) {
 		field = fields.item(i);
 		name = field.name;
@@ -443,7 +451,7 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 
 /**
  * Handle the submit event for a edit service form.
- * 
+ *
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
  * @param {function} [serializer] a callback to invoke to serialize the form data; will be passed the form object and must return
@@ -460,11 +468,11 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 	event.preventDefault();
 	var form = event.target;
 	var modal = $(form);
-	var body = (typeof serializer === 'function' 
-		? serializer(form) 
+	var body = (typeof serializer === 'function'
+		? serializer(form)
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	var urlFn = (options && typeof options.urlSerializer === 'function' 
-		? options.urlSerializer 
+	var urlFn = (options && typeof options.urlSerializer === 'function'
+		? options.urlSerializer
 		: SolarReg.replaceTemplateParameters);
 	var action = (options && options.urlId && form.elements['id'] && form.elements['id'].value
 		? form.action + '/' + encodeURIComponent(form.elements['id'].value)

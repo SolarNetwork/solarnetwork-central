@@ -162,7 +162,7 @@ $(document).ready(function() {
 				return;
 			}
 
-			btn.parent().find('.edit-link[data-config-type]').each(function(idx, el) {
+			btn.closest('li').find('.edit-link[data-config-type]').each(function(idx, el) {
 				var link = $(el),
 					configType = link.data('config-type'),
 					relatedConfig;
@@ -237,6 +237,18 @@ $(document).ready(function() {
 		}
 	}
 
+	function handleDeleteConfiguration(id, configs) {
+		if ( id === undefined || !Array.isArray(configs) || configs.length < 1 ) {
+			return;
+		}
+		var idx = configs.findIndex(function(el) {
+			return (id == el.id);
+		});
+		if ( idx >= 0 ) {
+			configs.splice(idx, 1);
+		}
+	}
+
 	// ***** Edit ad hoc datum export job form
 	$('#edit-adhoc-datum-export-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), [], settingTemplates);
@@ -276,12 +288,7 @@ $(document).ready(function() {
 	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#datum-export-list-container .list-container'), function(id, deleted) {
 			if ( deleted ) {
-				var idx = exportConfigs.adhocDatumExportConfigs.findIndex(function(el) {
-					return (id == el.id);
-				});
-				if ( idx >= 0 ) {
-					exportConfigs.adhocDatumExportConfigs.splice(idx, 1);
-				}
+				handleDeleteConfiguration(id, exportConfigs.adhocDatumExportConfigs);
 				SolarReg.populateListCount($('#datum-export-list-container'), exportConfigs.adhocDatumExportConfigs);
 			}
 		});
@@ -308,18 +315,13 @@ $(document).ready(function() {
 	.on('hidden.bs.modal', function() {
 		SolarReg.Settings.resetEditServiceForm(this, $('#datum-export-list-container .list-container'), function(id, deleted) {
 			if ( deleted ) {
-				var idx = exportConfigs.datumExportConfigs.findIndex(function(el) {
-					return (id == el.id);
-				});
-				if ( idx >= 0 ) {
-					exportConfigs.datumExportConfigs.splice(idx, 1);
-				}
+				handleDeleteConfiguration(id, exportConfigs.datumExportConfigs);
 				SolarReg.populateListCount($('#datum-export-list-container'), exportConfigs.datumExportConfigs);
 			}
 		});
 	});
 
-	// ***** Edit data format form
+	// ***** Edit data set form
 	$('#edit-export-data-config-modal').on('show.bs.modal', function(event) {
 		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
 	})
@@ -353,7 +355,11 @@ $(document).ready(function() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#export-data-config-list-container .list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, $('#export-data-config-list-container .list-container'), function(id, deleted) {
+			if ( deleted ) {
+				handleDeleteConfiguration(id, exportConfigs.dataConfigs);
+			}
+		});
 	});
 
 	$('#export-data-config-list-container .list-container').on('click', function(event) {
@@ -375,7 +381,11 @@ $(document).ready(function() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#export-destination-config-list-container .list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, $('#export-destination-config-list-container .list-container'), function(id, deleted) {
+			if ( deleted ) {
+				handleDeleteConfiguration(id, exportConfigs.destinationConfigs);
+			}
+		});
 	});
 
 	$('#export-destination-config-list-container .list-container').on('click', function(event) {
@@ -399,7 +409,11 @@ $(document).ready(function() {
 		return false;
 	})
 	.on('hidden.bs.modal', function() {
-		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'));
+		SolarReg.Settings.resetEditServiceForm(this, $('#export-output-config-list-container .list-container'), function(id, deleted) {
+			if ( deleted ) {
+				handleDeleteConfiguration(id, exportConfigs.outputConfigs);
+			}
+		});
 	});
 
 	// ***** Edit job date form
