@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoDataCollectorBizTest.java - Oct 23, 2011 2:49:59 PM
+ * DaoDataCollectorBizTests.java - Oct 23, 2011 2:49:59 PM
  * 
  * Copyright 2007-2011 SolarNetwork.net Dev Team
  * 
@@ -31,9 +31,7 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isNull;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -57,13 +55,12 @@ import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
@@ -74,15 +71,16 @@ import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.test.Assertion;
 
 /**
- * Test case for the {@link DaoDataCollectorBiz} class.
+ * Test cases for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
-public class DaoDataCollectorBizTest {
+public class DaoDataCollectorBizTests {
 
 	private static final String TEST_SOURCE_ID = "test.source";
 
@@ -219,7 +217,7 @@ public class DaoDataCollectorBizTest {
 		expect(metaDao.findStreamMetadata(capture(metaCriteriaCaptor))).andReturn(meta);
 
 		// save datum
-		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
+		Capture<DatumEntity> datumCaptor = new Capture<>();
 		expect(datumDao.store(capture(datumCaptor))).andReturn(datumPk);
 
 		// WHEN
@@ -231,22 +229,9 @@ public class DaoDataCollectorBizTest {
 		StreamMetadataCriteria metaCriteria = metaCriteriaCaptor.getValue();
 		assertThat("Meta criteria stream ID", metaCriteria.getStreamId(), is(equalTo(d.getStreamId())));
 
-		GeneralNodeDatum entity = datumCaptor.getValue();
-		assertThat("Datum ID copied", entity.getId(),
-				is(equalTo(new GeneralNodeDatumPK(1L, d.getTimestamp(), "test"))));
-		assertThat("Datum timestamp copied", entity.getCreated(), is(equalTo(d.getTimestamp())));
-		assertThat("Datum i copied", entity.getSamples().getInstantaneous().keySet(), hasSize(1));
-		assertThat("Datum i copied", entity.getSamples().getInstantaneous(),
-				hasEntry("a", new BigDecimal("1.23")));
-
-		assertThat("Datum a copied", entity.getSamples().getAccumulating().keySet(), hasSize(1));
-		assertThat("Datum a copied", entity.getSamples().getAccumulating(),
-				hasEntry("b", new BigDecimal("2.34")));
-
-		assertThat("Datum s copied", entity.getSamples().getStatus().keySet(), hasSize(1));
-		assertThat("Datum s copied", entity.getSamples().getStatus(), hasEntry("c", "a"));
-
-		assertThat("Datum t copied", entity.getSamples().getTags(), containsInAnyOrder(p.getTags()));
+		DatumEntity entity = datumCaptor.getValue();
+		assertThat("Datum ID copied", entity.getId(), is(equalTo(datumPk)));
+		assertThat("Datum properties copied", entity.getProperties(), is(equalTo(p)));
 	}
 
 	@Test
@@ -260,15 +245,15 @@ public class DaoDataCollectorBizTest {
 		BasicObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(d.getStreamId(),
 				"Etc/UTC", ObjectDatumKind.Node, 1L, "test", null, new String[] { "a" },
 				new String[] { "b" }, new String[] { "c" }, null);
-		GeneralNodeDatumPK genDatumPk = new GeneralNodeDatumPK(1L, d.getTimestamp(), "test");
+		DatumPK datumPk = new DatumPK(d.getStreamId(), d.getTimestamp());
 
 		// lookup stream metadata
 		Capture<StreamMetadataCriteria> metaCriteriaCaptor = new Capture<>();
 		expect(metaDao.findStreamMetadata(capture(metaCriteriaCaptor))).andReturn(meta);
 
 		// add datum to cache
-		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		datumCache.put(eq(genDatumPk), capture(datumCaptor));
+		Capture<DatumEntity> datumCaptor = new Capture<>();
+		datumCache.put(eq(datumPk), capture(datumCaptor));
 
 		// WHEN
 		replayAll();
@@ -279,22 +264,9 @@ public class DaoDataCollectorBizTest {
 		StreamMetadataCriteria metaCriteria = metaCriteriaCaptor.getValue();
 		assertThat("Meta criteria stream ID", metaCriteria.getStreamId(), is(equalTo(d.getStreamId())));
 
-		GeneralNodeDatum entity = datumCaptor.getValue();
-		assertThat("Datum ID copied", entity.getId(),
-				is(equalTo(new GeneralNodeDatumPK(1L, d.getTimestamp(), "test"))));
-		assertThat("Datum timestamp copied", entity.getCreated(), is(equalTo(d.getTimestamp())));
-		assertThat("Datum i copied", entity.getSamples().getInstantaneous().keySet(), hasSize(1));
-		assertThat("Datum i copied", entity.getSamples().getInstantaneous(),
-				hasEntry("a", new BigDecimal("1.23")));
-
-		assertThat("Datum a copied", entity.getSamples().getAccumulating().keySet(), hasSize(1));
-		assertThat("Datum a copied", entity.getSamples().getAccumulating(),
-				hasEntry("b", new BigDecimal("2.34")));
-
-		assertThat("Datum s copied", entity.getSamples().getStatus().keySet(), hasSize(1));
-		assertThat("Datum s copied", entity.getSamples().getStatus(), hasEntry("c", "a"));
-
-		assertThat("Datum t copied", entity.getSamples().getTags(), containsInAnyOrder(p.getTags()));
+		DatumEntity entity = datumCaptor.getValue();
+		assertThat("Datum ID copied", entity.getId(), is(equalTo(datumPk)));
+		assertThat("Datum properties copied", entity.getProperties(), is(equalTo(p)));
 	}
 
 	private SolarLocation createLocation(Long id) {

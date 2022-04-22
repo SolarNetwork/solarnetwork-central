@@ -39,7 +39,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link DatumEntity} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface DatumEntityDao
@@ -67,7 +67,18 @@ public interface DatumEntityDao
 	}
 
 	/**
-	 * Store a general node datum, saving as a datum entity.
+	 * Store a datum, treating as input from a node.
+	 * 
+	 * @param datum
+	 *        the datum to store
+	 * @return the stored primary key
+	 * @since 1.1
+	 */
+	DatumPK store(DatumEntity datum);
+
+	/**
+	 * Store a general node datum, saving as a datum entity, treating as input
+	 * from a node.
 	 * 
 	 * @param datum
 	 *        the datum to store
@@ -76,7 +87,8 @@ public interface DatumEntityDao
 	DatumPK store(GeneralNodeDatum datum);
 
 	/**
-	 * Store a general location datum, saving as a datum entity.
+	 * Store a general location datum, saving as a datum entity, treating as
+	 * input from a node.
 	 * 
 	 * @param datum
 	 *        the datum to store

@@ -482,7 +482,7 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.save(d)).andReturn(d.getId());
+		expect(datumDao.store(d)).andReturn(d.getId());
 		txManager.commit(txStatus);
 
 		// WHEN
