@@ -97,6 +97,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectObjectStreamMetadata
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataIdAttributes;
@@ -106,8 +107,6 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
-import net.solarnetwork.domain.datum.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -124,7 +123,9 @@ import net.solarnetwork.dao.jdbc.JdbcBulkLoadingContextSupport;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
@@ -189,11 +190,25 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public DatumPK save(DatumEntity entity) {
-		if ( entity.getTimestamp() == null ) {
-			throw new IllegalArgumentException("The timestamp property is required.");
-		}
+		requireNonNullArgument(entity, "entity");
+		requireNonNullArgument(entity.getStreamId(), "streamId");
+		requireNonNullArgument(entity.getTimestamp(), "timestamp");
 		jdbcTemplate.update(new InsertDatum(entity));
 		return entity.getId();
+	}
+
+	@Override
+	public DatumPK store(DatumEntity datum) {
+		StoreDatum sql = new StoreDatum(datum);
+		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
+
+			@Override
+			public DatumPK doInCallableStatement(CallableStatement cs)
+					throws SQLException, DataAccessException {
+				cs.execute();
+				return datum.getId();
+			}
+		});
 	}
 
 	@Override

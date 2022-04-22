@@ -54,11 +54,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.domain.datum.DatumProperties;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -72,7 +68,11 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
@@ -251,6 +251,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 									authNode.getNodeId(), meta.getObjectId());
 						}
 						throw new AuthorizationException(Reason.ACCESS_DENIED, meta.getObjectId());
+
+						// TODO: NET-284: use DatumEntity directly, add to buffer without any ObjectDatumStreamMetadata
+
 					} else if ( meta.getKind() == ObjectDatumKind.Location ) {
 						entity = DatumUtils.toGeneralLocationDatum(datum, meta);
 					} else {
