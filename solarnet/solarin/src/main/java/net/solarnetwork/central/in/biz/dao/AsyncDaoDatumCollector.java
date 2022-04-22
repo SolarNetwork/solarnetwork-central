@@ -68,7 +68,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Data collector that processes datum and location datum asynchronously.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -289,7 +289,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 							@Override
 							protected void doInTransactionWithoutResult(TransactionStatus status) {
 								if ( entity instanceof DatumEntity ) {
-									datumDao.save((DatumEntity) entity);
+									datumDao.store((DatumEntity) entity);
 								} else if ( entity instanceof GeneralNodeDatum ) {
 									datumDao.store((GeneralNodeDatum) entity);
 								} else if ( entity instanceof GeneralLocationDatum ) {
