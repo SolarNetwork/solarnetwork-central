@@ -379,7 +379,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			WebRequest request, Locale locale) {
-		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
+		log.error("DataIntegrityViolationException in request {}: {}", requestDescription(request),
 				e.toString());
 		String msg;
 		String msgKey;
@@ -391,6 +391,7 @@ public final class WebServiceControllerSupport {
 		} else {
 			SQLException sqlEx = null;
 			Throwable t = e;
+			String sqlState = null;
 			while ( t.getCause() != null ) {
 				t = t.getCause();
 				if ( t instanceof SQLException ) {
@@ -400,12 +401,22 @@ public final class WebServiceControllerSupport {
 			}
 			if ( sqlEx != null ) {
 				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
+				sqlState = sqlEx.getSQLState();
 			}
-			if ( sqlEx != null && sqlEx.getSQLState() != null && sqlEx.getSQLState().startsWith("22") ) {
+			if ( sqlState != null && sqlState.startsWith("22") ) {
 				// Class 22 — Data Exception
 				msg = "Invalid query parameter";
 				msgKey = "error.dao.sqlState.class.22";
 				code = "DAO.00103";
+			} else if ( sqlState != null && sqlState.startsWith("23") ) {
+				msg = "Integrity constraint violation";
+				if ( sqlState.equals("23503") ) {
+					msgKey = "error.dao.sqlState.class.23503";
+					code = "DAO.00105";
+				} else {
+					msgKey = "error.dao.sqlState.class.23";
+					code = "DAO.00104";
+				}
 			} else {
 				msg = "Data integrity violation";
 				msgKey = "error.dao.dataIntegrityViolation";
@@ -536,28 +547,6 @@ public final class WebServiceControllerSupport {
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
 		return new Response<Object>(Boolean.FALSE, null, msg, null);
-	}
-
-	/**
-	 * Handle an {@link Error}.
-	 * 
-	 * @param e
-	 *        the exception
-	 * @param request
-	 *        the request
-	 * @return an error response object
-	 * @since 1.17
-	 */
-	@ExceptionHandler(Error.class)
-	@ResponseBody
-	@ResponseStatus
-	public Response<?> handleError(Error e, WebRequest request) {
-		log.warn("Error in request {}", requestDescription(request), e);
-		Throwable cause = e;
-		while ( cause.getCause() != null ) {
-			cause = cause.getCause();
-		}
-		return new Response<Object>(Boolean.FALSE, "E.00500", cause.getMessage(), null);
 	}
 
 	/**

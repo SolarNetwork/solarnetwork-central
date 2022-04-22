@@ -21,30 +21,6 @@
 	<div data-th-utext="#{export.getstarted.intro}">To get started, do the following easy things:</div>
 </div>
 
-<section id="datum-export-configs">
-	<h2>
-		<span data-th-text="#{export.datumExportList.header}">Exports</span>
-		<a href="#edit-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
-			data-th-title="#{export.datumExportList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
-		</a>
-	</h2>
-	<p class="intro" data-th-utext="#{export.datumExportList.intro(0)}">
-		You've got <span class="listCount">1</span> export configuration.
-	</p>
-	<div id="datum-export-list-container" class="table configs hidden">
-		<ol class="list-container">
-		</ol>
-		<ol class="hidden">
-			<li class="template">
-				<p data-th-utext="#{export.datumExportList.exportListItem}">
-					List item template here.
-				</p>
-			</li>
-		</ol>
-	</div>
-</section>
-
 <section id="adhoc-datum-export-configs">
 	<h2>
 		<span data-th-text="#{export.adhocDatumExportList.header}">Adhoc exports</span>
@@ -99,6 +75,30 @@
 	</table>
 </section>
 
+<section id="datum-export-configs">
+	<h2>
+		<span data-th-text="#{export.datumExportList.header}">Exports</span>
+		<a href="#edit-datum-export-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.datumExportList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.datumExportList.intro(0)}">
+		You've got <span class="listCount">1</span> export configuration.
+	</p>
+	<div id="datum-export-list-container" class="table configs hidden">
+		<ol class="list-container">
+		</ol>
+		<ol class="hidden">
+			<li class="template">
+				<p data-th-utext="#{export.datumExportList.exportListItem}">
+					List item template here.
+				</p>
+			</li>
+		</ol>
+	</div>
+</section>
+
 <section id="export-data-configs">
 	<h2>
 		<span data-th-text="#{export.dataConfigList.header}">Data configurations</span>
@@ -136,43 +136,6 @@
 	</table>
 </section>
 
-<section id="export-output-configs">
-	<h2>
-		<span data-th-text="#{export.outputConfigList.header}">Output configurations</span>
-		<a href="#edit-export-output-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
-			data-th-title="#{export.outputConfigList.action.create}">
-			<i class="glyphicon glyphicon-plus"></i>
-		</a>
-	</h2>
-	<p class="intro" data-th-utext="#{export.outputConfigList.intro(0)}">
-		You've got <span class="listCount">1</span> output configuration.
-	</p>
-	<table id="export-output-config-list-container" class="table configs hidden">
-		<thead>
-			<tr>
-				<th data-th-text="#{export.outputConfig.name.label}">Name</th>
-				<th data-th-text="#{export.outputConfig.type.label}">Type</th>
-				<th data-th-text="#{export.outputConfig.compression.label}">Compression</th>
-			</tr>
-			<tr class="template">
-				<!--/*
-					Within a .template, data-tprop attributes correspond to model object property names,
-					whose text content will be replaced by the model object property value.
-
-					The a.edit-link element will have its click event ignored; instead a click
-					handler on the .list-container should be registered, and use the event.target
-					property to verify the click happened
-				 */-->
-				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-output-config-modal"></a></td>
-				<td data-tprop="type"></td>
-				<td data-tprop="compression"></td>
-			</tr>
-		</thead>
-		<tbody class="list-container">
-		</tbody>
-	</table>
-</section>
-
 <section id="export-destination-configs">
 	<h2>
 		<span data-th-text="#{export.destinationConfigList.header}">Destination configurations</span>
@@ -205,6 +168,43 @@
 						<dd class="template" data-tprop="serviceProperties.value"></dd>
 					</dl>
 				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+
+<section id="export-output-configs">
+	<h2>
+		<span data-th-text="#{export.outputConfigList.header}">Output configurations</span>
+		<a href="#edit-export-output-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
+			data-th-title="#{export.outputConfigList.action.create}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</a>
+	</h2>
+	<p class="intro" data-th-utext="#{export.outputConfigList.intro(0)}">
+		You've got <span class="listCount">1</span> output configuration.
+	</p>
+	<table id="export-output-config-list-container" class="table configs hidden">
+		<thead>
+			<tr>
+				<th data-th-text="#{export.outputConfig.name.label}">Name</th>
+				<th data-th-text="#{export.outputConfig.type.label}">Type</th>
+				<th data-th-text="#{export.outputConfig.compression.label}">Compression</th>
+			</tr>
+			<tr class="template">
+				<!--/*
+					Within a .template, data-tprop attributes correspond to model object property names,
+					whose text content will be replaced by the model object property value.
+
+					The a.edit-link element will have its click event ignored; instead a click
+					handler on the .list-container should be registered, and use the event.target
+					property to verify the click happened
+				 */-->
+				<td><a href="#" class="edit-link" data-tprop="name" data-edit-modal="#edit-export-output-config-modal"></a></td>
+				<td data-tprop="type"></td>
+				<td data-tprop="compression"></td>
 			</tr>
 		</thead>
 		<tbody class="list-container">

@@ -7,7 +7,7 @@ var SolarReg = {
 	    		+'"><button type="button" class="close" data-dismiss="alert">\u00d7</button>'
 	    		+msg +'</div>').insertBefore(el);
 	},
-	
+
 	solarUserURL : function(relativeURL) {
 		return $('meta[name=solarUserRootURL]').attr('content') + relativeURL;
 	},
@@ -25,7 +25,7 @@ var SolarReg = {
 
 /**
  * Get the CSRF token value or set the token as a request header on an XHR object.
- * 
+ *
  * @param {XMLHttpRequest} [xhr] The XHR object to set the CSR request header on.
  * @return The CSRF value.
  */
@@ -38,7 +38,7 @@ SolarReg.csrf = function(xhr) {
 
 /**
  * Search for an object with a matching `id` property value.
- * 
+ *
  * @param {array} array the array of objects to search through
  * @param {string} identifier the `id` value to search for
  * @returns {object} the first object that has a matching `id` property
@@ -55,7 +55,7 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
 
 /**
  * Search for an object with a matching `name` property value.
- * 
+ *
  * @param {array} array the array of objects to search through
  * @param {string} name the `name` value to search for
  * @returns {object} the first object that has a matching `name` property
@@ -72,9 +72,9 @@ SolarReg.findByName = function findByName(array, name) {
 
  /**
   * Split a string into an array of numbers.
-  * 
+  *
   * This method will filter out any values that are not numbers.
-  * 
+  *
   * @param {string} string the string to split into numbers
   * @param {RegExp} [delimiter] the regular expression to split with; defaults to comma with optional surrounding whitespace
   * @returns {array<Number>}
@@ -91,9 +91,9 @@ SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
 
 /**
   * Split a string into an array of numbers.
-  * 
+  *
   * This method will filter out any values that are not numbers.
-  * 
+  *
   * @param {array} array the array to join into a string
   * @param {string} [delimiter] the string to join elements with; defaults to comma and space
   * @returns {string}
@@ -109,9 +109,9 @@ SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimit
 
 /**
  * Replace template variables on a string with corresponding values from a parameter object.
- * 
+ *
  * The template variables take the form of `{x}` where `x` is the parameter name.
- * 
+ *
  * @param {string} str the string to replace template values on
  * @param {object} params the substitution parameter values
  * @returns {string} the string with parameters replaced
@@ -125,11 +125,11 @@ SolarReg.replaceTemplateParameters = function replaceTemplateParameters(str, par
 
 /**
  * Either update an existing or add a new service configuration to an array of configurations.
- * 
+ *
  * If an existing object in `configurations` has an `id` that matches `config.id` then
- * that element's properties will be replaced by those on `config`. Otherwise `config` 
+ * that element's properties will be replaced by those on `config`. Otherwise `config`
  * will be appended to `configurations`.
- * 
+ *
  * @param {Object} config the configuration to save
  * @param {Array} configurations the array of existing configurations
  */
@@ -162,7 +162,7 @@ SolarReg.storeServiceConfiguration = function storeServiceConfiguration(config, 
 
 /**
  * Update counter elements with a `listCount` class with the count of items in an array.
- * 
+ *
  * @param {jQuery} container the element to search for `.listCount` elements in
  * @param {Array} configurations the array whose lenght to use
  */
@@ -172,6 +172,51 @@ SolarReg.populateListCount = function populateListCount(container, configuration
 	}
 	container.closest('section').find('.listCount').text(
 		Array.isArray(configurations) ? configurations.length : 0);
+}
+
+/**
+ * Extract an error message from a JSON response object.
+ *
+ * @param {Object} json the JSON response with a message and optional code properties
+ * @returns {String} error message
+ */
+SolarReg.formatResponseMessage = function formatResponseMessage(json) {
+	var result = (json ? json.message : "");
+	if ( result && json.code ) {
+		result += " (" +json.code +")";
+	}
+	return result;
+}
+
+/**
+ * Extract an error message from an XHR error response.
+ *
+ * @param {XMLHttpRequest} xhr the request
+ * @returns {String} error message
+ */
+SolarReg.extractResponseMessage = function extractResponseMessage(xhr, statusText, error) {
+	var result = "";
+	if ( xhr.responseJSON ) {
+		result = SolarReg.formatResponseMessage(xhr.responseJSON);
+	}
+	if ( !result ) {
+		try {
+			json = JSON.parse(xhr.responseText);
+			result = SolarReg.formatResponseMessage(json);
+		} catch (ex) {
+			// ignore
+		}
+	}
+	if ( !result ) {
+		if ( error ) {
+			result = error;
+		} else if ( statusText ) {
+			result = statusText;
+		} else {
+			result = "Unknown error.";
+		}
+	}
+	return result;
 }
 
 $(document).ready(function() {

@@ -61,10 +61,10 @@ import net.solarnetwork.web.domain.Response;
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestControllerAdvice
-@Order(-100)
+@Order(1000)
 public class WebServiceGlobalControllerSupport {
 
 	/** A class-level logger. */
@@ -423,6 +423,28 @@ public class WebServiceGlobalControllerSupport {
 		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+	}
+
+	/**
+	 * Handle an {@link Error}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.2
+	 */
+	@ExceptionHandler(Error.class)
+	@ResponseBody
+	@ResponseStatus
+	public Response<?> handleError(Error e, WebRequest request) {
+		log.warn("Error in request {}", requestDescription(request), e);
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+		}
+		return new Response<Object>(Boolean.FALSE, "E.00500", cause.getMessage(), null);
 	}
 
 }
