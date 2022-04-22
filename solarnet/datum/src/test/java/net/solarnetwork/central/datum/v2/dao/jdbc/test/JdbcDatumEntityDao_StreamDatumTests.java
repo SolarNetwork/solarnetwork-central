@@ -98,6 +98,7 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 				is(equalTo(id.getStreamId())));
 		assertThat("Hourly audit timestamp truncated to hour from datum", audit.get(0).getTimestamp(),
 				is(equalTo(id.getTimestamp().truncatedTo(ChronoUnit.HOURS))));
+		assertThat("Hourly audit datum count added", audit.get(0).getDatumCount(), is(equalTo(1L)));
 		assertThat("Hourly audit prop count from datum", audit.get(0).getDatumPropertyCount(),
 				is(equalTo(5L)));
 		lastDatum = datum;
@@ -133,6 +134,7 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 				is(equalTo(id.getStreamId())));
 		assertThat("Hourly audit timestamp truncated to hour from datum", audit.get(0).getTimestamp(),
 				is(equalTo(id.getTimestamp().truncatedTo(ChronoUnit.HOURS))));
+		assertThat("Hourly audit datum count added", audit.get(0).getDatumCount(), is(equalTo(1L)));
 		assertThat("Hourly audit prop count from datum", audit.get(0).getDatumPropertyCount(),
 				is(equalTo(5L)));
 	}
@@ -174,6 +176,8 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 				is(equalTo(id.getStreamId())));
 		assertThat("Hourly audit timestamp truncated to hour from datum", audit.get(0).getTimestamp(),
 				is(equalTo(id.getTimestamp().truncatedTo(ChronoUnit.HOURS))));
+		assertThat("Hourly audit datum count incremented", audit.get(0).getDatumCount(),
+				is(equalTo(2L)));
 		assertThat("Hourly audit prop count sum from datum insert and update",
 				audit.get(0).getDatumPropertyCount(), is(equalTo(10L)));
 	}
