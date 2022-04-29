@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNodeMetadataFilter.java - 11/11/2016 11:02:18 AM
+ * TagFilter.java - 29/04/2022 4:37:35 pm
  * 
- * Copyright 2007-2016 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,31 +23,31 @@
 package net.solarnetwork.central.domain;
 
 /**
- * Filter API for {@link SolarNodeMetadata}.
+ * Filter API for tags.
  * 
  * @author matt
- * @version 1.2
- * @since 1.32
+ * @version 1.0
+ * @since 1.2
  */
-public interface SolarNodeMetadataFilter extends Filter, MetadataFilter, TagFilter {
+public interface TagFilter {
 
 	/**
-	 * Get the first node ID.
+	 * Get the first tag.
 	 * 
 	 * <p>
-	 * This returns the first available node ID from the {@link #getNodeIds()}
-	 * array, or {@literal null} if not available.
+	 * This returns the first available tag from the {@link #getTags()} array,
+	 * or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the first tag, or {@literal null} if not available
 	 */
-	Long getNodeId();
+	String getTag();
 
 	/**
-	 * Get an array of node IDs.
+	 * Get an array of tags.
 	 * 
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of tags (may be {@literal null})
 	 */
-	Long[] getNodeIds();
+	String[] getTags();
 
 }
