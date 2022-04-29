@@ -65,7 +65,7 @@ eclipse {
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarQuery',
-					'Implementation-Version': version
+					'Implementation-Version': archiveVersion
 	}
 }
 

@@ -81,7 +81,7 @@ eclipse {
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarIn',
-					'Implementation-Version': version
+					'Implementation-Version': archiveVersion
 	}
 }
 

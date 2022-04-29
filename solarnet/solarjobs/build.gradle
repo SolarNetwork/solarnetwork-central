@@ -71,7 +71,7 @@ eclipse {
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarJobs',
-					'Implementation-Version': version
+					'Implementation-Version': archiveVersion
 	}
 }
 
