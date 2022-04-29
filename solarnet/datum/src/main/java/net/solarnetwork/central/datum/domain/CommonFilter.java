@@ -31,19 +31,11 @@ import net.solarnetwork.central.domain.OptimizedQueryFilter;
  * API for common filter properties.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.22
  */
-public interface CommonFilter
-		extends Filter, DateRangeFilter, LocalDateRangeFilter, SourceFilter, OptimizedQueryFilter {
-
-	/**
-	 * Flag to indicate that only the most recently available data should be
-	 * returned.
-	 * 
-	 * @return the most recent only
-	 */
-	boolean isMostRecent();
+public interface CommonFilter extends Filter, DateRangeFilter, LocalDateRangeFilter, SourceFilter,
+		OptimizedQueryFilter, MostRecentFilter {
 
 	/**
 	 * Get a bean object path to a specific data value key to extract and return
