@@ -62,7 +62,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * key/trust store.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SSLContextFactory implements PingTest {
 
@@ -209,27 +209,27 @@ public class SSLContextFactory implements PingTest {
 						validated = true;
 						if ( x509.getNotBefore().getTime() > now ) {
 							result = new PingTestResult(false,
-									"Certificate " + x509.getSubjectDN().getName()
+									"Certificate " + x509.getSubjectX500Principal().getName()
 											+ " not yet valid. Valid from " + x509.getNotBefore() + ".");
 							break;
 						}
 						if ( x509.getNotAfter().getTime() < now ) {
 							result = new PingTestResult(false,
-									"Certificate " + x509.getSubjectDN().getName() + " expired on "
-											+ x509.getNotAfter() + ".");
+									"Certificate " + x509.getSubjectX500Principal().getName()
+											+ " expired on " + x509.getNotAfter() + ".");
 							break;
 						}
 						if ( x509.getNotAfter().getTime() < monthAgo ) {
 							result = new PingTestResult(false,
-									"Certificate " + x509.getSubjectDN().getName() + " will exipre on "
-											+ x509.getNotAfter() + ".");
+									"Certificate " + x509.getSubjectX500Principal().getName()
+											+ " will exipre on " + x509.getNotAfter() + ".");
 							break;
 						}
 						if ( message.length() > 0 ) {
 							message.append(" ");
 						}
-						message.append("Certificate " + x509.getSubjectDN().getName() + " valid until "
-								+ x509.getNotAfter() + ".");
+						message.append("Certificate " + x509.getSubjectX500Principal().getName()
+								+ " valid until " + x509.getNotAfter() + ".");
 					}
 				}
 			}

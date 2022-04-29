@@ -117,7 +117,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -589,7 +589,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		String renewRequestID = nodePKIBiz.submitRenewalRequest(certificate);
 		if ( renewRequestID == null ) {
-			log.error("No renew request ID returned for {}", certificate.getSubjectDN());
+			log.error("No renew request ID returned for {}", certificate.getSubjectX500Principal());
 			throw new CertificateException("No CSR request ID returned");
 		}
 
@@ -1009,7 +1009,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private void saveNodeSignedCertificate(final String keystorePassword, UserNodeCertificate cert,
 			X509Certificate[] chain) throws CertificateException {
 		log.debug("Saving approved certificate {}",
-				(chain != null && chain.length > 0 ? chain[0].getSubjectDN().getName() : null));
+				(chain != null && chain.length > 0 ? chain[0].getSubjectX500Principal().getName()
+						: null));
 		KeyStore keyStore = cert.getKeyStore(keystorePassword);
 		Key key;
 		try {
@@ -1025,8 +1026,10 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		log.info("Saving node certificate reply {} issued by {}",
-				(chain != null && chain.length > 0 ? chain[0].getSubjectDN().getName() : null),
-				(chain != null && chain.length > 0 ? chain[0].getIssuerDN().getName() : null));
+				(chain != null && chain.length > 0 ? chain[0].getSubjectX500Principal().getName()
+						: null),
+				(chain != null && chain.length > 0 ? chain[0].getIssuerX500Principal().getName()
+						: null));
 		try {
 			keyStore.setKeyEntry(UserNodeCertificate.KEYSTORE_NODE_ALIAS, key,
 					keystorePassword.toCharArray(), chain);
