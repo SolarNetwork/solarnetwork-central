@@ -26,6 +26,7 @@
 
 package net.solarnetwork.central.query.biz;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.Period;
 import java.util.List;
@@ -43,18 +44,21 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * API for querying business logic.
  * 
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public interface QueryBiz {
 
@@ -186,6 +190,28 @@ public interface QueryBiz {
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);
+
+	/**
+	 * API for querying for a filtered set of stream datum, streaming the
+	 * results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param processor
+	 *        the processor for the results
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 4.1
+	 */
+	void findFilteredStreamDatum(StreamDatumFilter filter, FilteredResultsProcessor<Datum> processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of "readings".

@@ -63,6 +63,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -88,6 +89,7 @@ import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -95,7 +97,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public class DaoQueryBiz implements QueryBiz {
 
@@ -385,6 +387,17 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( !criteria.hasDateOrLocalDateRange() ) {
 			throw new IllegalArgumentException("A date range is required.");
 		}
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public void findFilteredStreamDatum(StreamDatumFilter filter,
+			FilteredResultsProcessor<Datum> processor, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) {
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
+				limitFilterOffset(offset), limitFilterMaximum(max));
+		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
+		// TODO: return new BasicObjectDatumStreamDataSet<>(daoResults, daoResults.getResults());
 	}
 
 	@Override

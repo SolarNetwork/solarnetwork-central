@@ -25,6 +25,8 @@ package net.solarnetwork.central.datum.v2.domain;
 import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of
@@ -32,7 +34,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * stream ID included.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ObjectDatumStreamMetadataId
 		extends net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId {
@@ -40,6 +42,22 @@ public class ObjectDatumStreamMetadataId
 	private static final long serialVersionUID = 5974028952580494428L;
 
 	private final UUID streamId;
+
+	/**
+	 * Create a metadata ID instance from a metadata instance.
+	 * 
+	 * @param meta
+	 *        the metadata to create the ID instance for
+	 * @return the ID, never {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code meta} is {@literal null}
+	 * @since 1.1
+	 */
+	public static ObjectDatumStreamMetadataId idForMetadata(ObjectDatumStreamMetadata meta) {
+		ObjectUtils.requireNonNullArgument(meta, "meta");
+		return new ObjectDatumStreamMetadataId(meta.getStreamId(), meta.getKind(), meta.getObjectId(),
+				meta.getSourceId());
+	}
 
 	/**
 	 * Constructor.

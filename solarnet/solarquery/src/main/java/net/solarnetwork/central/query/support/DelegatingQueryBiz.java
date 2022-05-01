@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.support;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.Period;
 import java.util.List;
@@ -37,6 +38,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -44,6 +47,7 @@ import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
@@ -147,6 +151,13 @@ public class DelegatingQueryBiz implements QueryBiz {
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		return delegate.findFilteredAggregateReading(filter, readingType, tolerance, sortDescriptors,
 				offset, max);
+	}
+
+	@Override
+	public void findFilteredStreamDatum(StreamDatumFilter filter,
+			FilteredResultsProcessor<Datum> processor, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) throws IOException {
+		delegate.findFilteredStreamDatum(filter, processor, sortDescriptors, offset, max);
 	}
 
 }

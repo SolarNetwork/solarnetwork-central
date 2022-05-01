@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.IOException;
 import java.util.List;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -29,17 +30,19 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * DAO API for {@link DatumEntity} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface DatumEntityDao
@@ -64,6 +67,60 @@ public interface DatumEntityDao
 	@Override
 	default ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter) {
 		return findFiltered(filter, null, null, null);
+	}
+
+	/**
+	 * API for querying for a stream of {@link StreamDatum}.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        the optional starting offset
+	 * @param max
+	 *        the optional maximum result count
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.2
+	 */
+	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+
+	/**
+	 * API for querying for a stream of {@link StreamDatum}.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.2
+	 */
+	default void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor)
+			throws IOException {
+		findFilteredStream(filter, processor, null, null, null);
+	}
+
+	/**
+	 * API for querying for a stream of {@link StreamDatum}.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.2
+	 */
+	default void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors) throws IOException {
+		findFilteredStream(filter, processor, sortDescriptors, null, null);
 	}
 
 	/**

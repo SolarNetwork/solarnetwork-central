@@ -59,6 +59,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -103,7 +104,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 2.8
  */
 public final class DatumUtils {
@@ -156,6 +157,35 @@ public final class DatumUtils {
 			c.setNodeIds(f.getNodeIds());
 			c.setLocationIds(f.getLocationIds());
 			c.setLocation(locationFromFilter(f.getLocation()));
+			c.setSourceIds(f.getSourceIds());
+			c.setUserIds(f.getUserIds());
+			c.setAggregation(f.getAggregation());
+			c.setPartialAggregation(f.getPartialAggregation());
+			c.setStartDate(f.getStartDate());
+			c.setEndDate(f.getEndDate());
+			c.setLocalStartDate(f.getLocalStartDate());
+			c.setLocalEndDate(f.getLocalEndDate());
+			c.setMostRecent(f.isMostRecent());
+			c.setDatumRollupTypes(f.getDatumRollupTypes());
+			c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
+			c.setCombiningType(f.getCombiningType());
+			c.setObjectIdMappings(f.getNodeIdMappings());
+			c.setSourceIdMappings(f.getSourceIdMappings());
+			c.setSearchFilter(f.getMetadataFilter());
+			tags = f.getTags();
+			if ( s == null || s.isEmpty() ) {
+				s = f.getSorts();
+			}
+			if ( m == null ) {
+				m = f.getMax();
+			}
+			if ( o == null ) {
+				o = f.getOffset();
+			}
+		} else if ( filter instanceof StreamDatumFilterCommand ) {
+			StreamDatumFilterCommand f = (StreamDatumFilterCommand)filter;
+			// most common
+			c.setStreamIds(f.getStreamIds());
 			c.setSourceIds(f.getSourceIds());
 			c.setUserIds(f.getUserIds());
 			c.setAggregation(f.getAggregation());

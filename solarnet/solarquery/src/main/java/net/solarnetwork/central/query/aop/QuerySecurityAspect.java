@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.aop;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -29,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -44,6 +46,9 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -52,6 +57,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Security enforcing AOP aspect for {@link QueryBiz}.
@@ -66,6 +72,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	public static final String FILTER_KEY_NODE_ID = "nodeId";
 	public static final String FILTER_KEY_NODE_IDS = "nodeIds";
 
+	private final DatumStreamMetadataDao streamMetadataDao;
 	private Set<String> nodeIdNotRequiredSet;
 
 	/**
@@ -73,9 +80,13 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	 * 
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
+	 * @param streamMetadataDao
+	 *        the stream metadata DAO
 	 */
-	public QuerySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
+	public QuerySecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
+			DatumStreamMetadataDao streamMetadataDao) {
 		super(nodeOwnershipDao);
+		this.streamMetadataDao = requireNonNullArgument(streamMetadataDao, "streamMetadataDao");
 		AntPathMatcher antMatch = new AntPathMatcher();
 		antMatch.setCachePatterns(false);
 		antMatch.setCaseSensitive(true);
@@ -399,13 +410,24 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			if ( nodeIdRequired ) {
 				nodeIds = cmd.getNodeIds();
 			}
+		} else if ( filter instanceof StreamDatumFilter ) {
+			StreamDatumFilter cmd = (StreamDatumFilter) filter;
+			if ( cmd.getStreamIds() != null ) {
+				Map<UUID, ObjectDatumStreamMetadataId> ids = streamMetadataDao
+						.getDatumStreamMetadataIds(cmd.getStreamIds());
+				nodeIds = ids.values().stream().filter(e -> e.getKind() == ObjectDatumKind.Node)
+						.map(e -> e.getObjectId()).toArray(Long[]::new);
+			} else if ( cmd.getKind() == ObjectDatumKind.Node && cmd.getObjectIds() != null ) {
+				nodeIds = cmd.getObjectIds();
+			}
 		} else {
-			nodeIdRequired = false;
 			Map<String, ?> f = filter.getFilter();
 			if ( f.containsKey(FILTER_KEY_NODE_IDS) ) {
 				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_IDS);
 			} else if ( f.containsKey(FILTER_KEY_NODE_ID) ) {
 				nodeIds = getLongArrayParameter(f, FILTER_KEY_NODE_ID);
+			} else {
+				nodeIdRequired = false;
 			}
 		}
 		if ( !nodeIdRequired ) {

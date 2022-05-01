@@ -52,7 +52,7 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.support.DatumCsvIterator;
-import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Location;
