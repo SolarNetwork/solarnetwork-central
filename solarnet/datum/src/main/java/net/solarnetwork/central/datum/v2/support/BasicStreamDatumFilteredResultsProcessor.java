@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.util.MimeType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
 
@@ -41,6 +42,11 @@ public class BasicStreamDatumFilteredResultsProcessor implements StreamDatumFilt
 	private final List<StreamDatum> data = new ArrayList<>(8);
 
 	private ObjectDatumStreamMetadataProvider metadataProvider;
+
+	@Override
+	public MimeType getMimeType() {
+		return MimeType.valueOf("application/octet-stream");
+	}
 
 	@Override
 	public void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,

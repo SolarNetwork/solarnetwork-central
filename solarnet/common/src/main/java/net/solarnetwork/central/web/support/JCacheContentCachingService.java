@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -262,8 +263,18 @@ public class JCacheContentCachingService implements ContentCachingService {
 				String vary = response.getHeader(HttpHeaders.VARY);
 				if ( vary == null ) {
 					response.setHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
-				} else if ( !"*".equals(vary) ) {
-					response.setHeader(HttpHeaders.VARY, vary + "," + HttpHeaders.ACCEPT_ENCODING);
+				} else {
+					Collection<String> varies = response.getHeaders(HttpHeaders.VARY);
+					boolean addVary = true;
+					for ( String v : varies ) {
+						if ( "*".equals(v) || HttpHeaders.ACCEPT_ENCODING.equals(v) ) {
+							addVary = false;
+							break;
+						}
+					}
+					if ( addVary ) {
+						response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
+					}
 				}
 				FileCopyUtils.copy(in, response.getOutputStream());
 			} else if ( "gzip".equals(contentEncoding) ) {

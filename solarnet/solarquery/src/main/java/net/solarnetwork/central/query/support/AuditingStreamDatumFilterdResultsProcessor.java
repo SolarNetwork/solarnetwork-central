@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -111,6 +112,11 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 				return 1;
 			}
 		};
+	}
+
+	@Override
+	public MimeType getMimeType() {
+		return delegate.getMimeType();
 	}
 
 	@Override

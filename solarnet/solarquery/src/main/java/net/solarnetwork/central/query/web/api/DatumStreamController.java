@@ -25,7 +25,7 @@ package net.solarnetwork.central.query.web.api;
 import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.io.OutputStream;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -71,15 +71,17 @@ public class DatumStreamController {
 	}
 
 	private StreamDatumFilteredResultsProcessor processorForType(final MediaType acceptType,
-			final OutputStream out) throws IOException {
+			final HttpServletResponse response) throws IOException {
 		StreamDatumFilteredResultsProcessor processor = null;
 		if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 			processor = new JsonObjectDatumStreamFilteredResultsProcessor(
-					objectMapper.createGenerator(out), objectMapper.getSerializerProvider());
+					objectMapper.createGenerator(response.getOutputStream()),
+					objectMapper.getSerializerProvider());
 		} else {
 			throw new IllegalArgumentException(
 					format("The [%s] media type is not supported.", acceptType));
 		}
+		response.setContentType(processor.getMimeType().toString());
 		return processor;
 	}
 
@@ -90,16 +92,16 @@ public class DatumStreamController {
 	 *        the query criteria
 	 * @param accept
 	 *        the HTTP accept header value
-	 * @param out
+	 * @param response
 	 *        the HTTP response
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public void filterGeneralDatumData(final StreamDatumFilterCommand cmd,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final OutputStream out)
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
 			throws IOException {
 		final MediaType acceptType = MediaType.valueOf(accept);
-		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, out)) {
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, response)) {
 			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
 					cmd.getMax());
 		}

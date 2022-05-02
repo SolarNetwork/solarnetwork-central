@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.util.MimeType;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -94,6 +95,11 @@ public class JsonObjectDatumStreamFilteredResultsProcessor
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
 		this.generator.enable(Feature.AUTO_CLOSE_TARGET);
+	}
+
+	@Override
+	public MimeType getMimeType() {
+		return MimeType.valueOf("application/json");
 	}
 
 	@Override
