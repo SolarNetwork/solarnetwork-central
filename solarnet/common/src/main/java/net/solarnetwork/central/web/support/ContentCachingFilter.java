@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -253,7 +254,7 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 				if ( origResponse.getContentType() != null ) {
 					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
 				}
-				for ( String headerName : origResponse.getHeaderNames() ) {
+				for ( String headerName : new LinkedHashSet<>(origResponse.getHeaderNames()) ) {
 					Collection<String> values = origResponse.getHeaders(headerName);
 					for ( String headerValue : values ) {
 						headers.add(headerName, headerValue);
