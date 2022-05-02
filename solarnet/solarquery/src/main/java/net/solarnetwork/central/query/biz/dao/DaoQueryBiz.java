@@ -30,6 +30,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralLocationDatum;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -75,21 +76,22 @@ import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
+import net.solarnetwork.central.domain.Securable;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -99,6 +101,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @author matt
  * @version 4.1
  */
+@Securable
 public class DaoQueryBiz implements QueryBiz {
 
 	private final DatumEntityDao datumDao;
@@ -392,12 +395,12 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public void findFilteredStreamDatum(StreamDatumFilter filter,
-			FilteredResultsProcessor<Datum> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			StreamDatumFilteredResultsProcessor processor,
+			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Integer offset, Integer max)
+			throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
-				limitFilterOffset(offset), limitFilterMaximum(max));
-		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
-		// TODO: return new BasicObjectDatumStreamDataSet<>(daoResults, daoResults.getResults());
+				limitFilterOffset(offset), max);
+		datumDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
 	}
 
 	@Override

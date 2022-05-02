@@ -1613,11 +1613,12 @@ public final class DatumSqlUtils {
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
 			if ( max > 0 ) {
-				int offset = 0;
-				if ( filter.getOffset() != null ) {
-					offset = filter.getOffset();
-				}
 				stmt.setInt(++parameterOffset, max);
+			}
+		}
+		if ( filter != null && filter.getOffset() != null ) {
+			int offset = filter.getOffset();
+			if ( offset > 0 ) {
 				stmt.setInt(++parameterOffset, offset);
 			}
 		}

@@ -45,14 +45,13 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
-import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for querying business logic.
@@ -210,8 +209,9 @@ public interface QueryBiz {
 	 *         if any IO error occurs
 	 * @since 4.1
 	 */
-	void findFilteredStreamDatum(StreamDatumFilter filter, FilteredResultsProcessor<Datum> processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+	void findFilteredStreamDatum(StreamDatumFilter filter, StreamDatumFilteredResultsProcessor processor,
+			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Integer offset, Integer max)
+			throws IOException;
 
 	/**
 	 * API for querying for a filtered set of "readings".

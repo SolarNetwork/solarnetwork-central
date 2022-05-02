@@ -189,6 +189,11 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	}
 
 	@Override
+	public Clock getAuditClock() {
+		return clock;
+	}
+
+	@Override
 	public <T extends FilterMatch<GeneralNodeDatumPK>> void auditNodeDatumFilterResults(
 			GeneralNodeDatumFilter filter, FilterResults<T> results) {
 		final int returnedCount = (results.getReturnedResultCount() != null

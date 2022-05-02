@@ -43,9 +43,9 @@ import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
-import net.solarnetwork.central.support.MutableSortDescriptor;
+import net.solarnetwork.domain.MutableSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.StringUtils;
 
 /**

@@ -50,13 +50,13 @@ import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -93,27 +93,27 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getReportableInterval(..)) && args(nodeId,sourceId,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodeReportableInterval(Long nodeId, String sourceId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodeReportableSources(Long nodeId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getAvailableSources(..)) && args(filter,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodesReportableSources(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findAvailableSources(..)) && args(filter) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodesAvailableSources(GeneralNodeDatumFilter filter) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.getMostRecentWeatherConditions(..)) && args(nodeId,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodeMostRecentWeatherConditions(Long nodeId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.query.biz.*.findFiltered*(..)) && args(filter,..) && @target(net.solarnetwork.central.domain.Securable)")
 	public void nodeDatumFilter(Filter filter) {
 	}
 

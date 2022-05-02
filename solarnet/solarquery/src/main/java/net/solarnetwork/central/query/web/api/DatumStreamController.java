@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import static java.lang.String.format;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.OutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.SmartValidator;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
+import net.solarnetwork.central.datum.v2.support.JsonObjectDatumStreamFilteredResultsProcessor;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 
@@ -43,43 +48,61 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
  * @version 1.0
  */
 @Controller("v1DatumStreamController")
-@RequestMapping({ "/api/v1/sec/datum/stream", "/api/v1/pub/datum/stream" })
+@RequestMapping("/api/v1/sec/datum/stream")
 @GlobalExceptionRestController
 public class DatumStreamController {
 
-	/** The {@code transientExceptionRetryCount} property default value. */
-	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
-
-	/** The {@code transientExceptionRetryDelay} property default value. */
-	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
-
-	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
-
+	private final ObjectMapper objectMapper;
 	private final QueryBiz queryBiz;
-	private SmartValidator readingFilterValidator;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param queryBiz
 	 *        the QueryBiz to use
+	 * @param objectMapper
+	 *        the object mapper to use
 	 */
 	@Autowired
-	public DatumStreamController(QueryBiz queryBiz) {
-		this.queryBiz = queryBiz;
+	public DatumStreamController(QueryBiz queryBiz, ObjectMapper objectMapper) {
+		super();
+		this.queryBiz = requireNonNullArgument(queryBiz, "queryBiz");
+		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
+	}
+
+	private StreamDatumFilteredResultsProcessor processorForType(final MediaType acceptType,
+			final OutputStream out) throws IOException {
+		StreamDatumFilteredResultsProcessor processor = null;
+		if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
+			processor = new JsonObjectDatumStreamFilteredResultsProcessor(
+					objectMapper.createGenerator(out), objectMapper.getSerializerProvider());
+		} else {
+			throw new IllegalArgumentException(
+					format("The [%s] media type is not supported.", acceptType));
+		}
+		return processor;
 	}
 
 	/**
 	 * Query for a listing of datum.
 	 * 
 	 * @param cmd
-	 * @return
+	 *        the query criteria
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param out
+	 *        the HTTP response
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public void filterGeneralDatumData(final StreamDatumFilterCommand cmd, OutputStream out)
+	public void filterGeneralDatumData(final StreamDatumFilterCommand cmd,
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final OutputStream out)
 			throws IOException {
-		// TODO
+		final MediaType acceptType = MediaType.valueOf(accept);
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, out)) {
+			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
+					cmd.getMax());
+		}
 	}
 
 }

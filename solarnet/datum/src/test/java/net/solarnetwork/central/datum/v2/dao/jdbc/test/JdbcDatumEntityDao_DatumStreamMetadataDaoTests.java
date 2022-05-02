@@ -276,7 +276,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
 					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
 					new String[] { "f" }));
-			expect(cache.get(streamId)).andReturn(null);
+			expect(idCache.get(streamId)).andReturn(null);
 			idCache.put(eq(streamId), capture(idCaptor));
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
@@ -291,8 +291,10 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		final List<ObjectDatumStreamMetadataId> ids = data.stream()
 				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toList());
-		assertThat("Metadata IDs same and ordered", new ArrayList<>(results.values()), is(equalTo(ids)));
-		assertThat("Cached meta IDs", idCaptor.getValues(), is(equalTo(ids)));
+		assertThat("Metadata IDs same", new HashSet<>(results.values()),
+				is(equalTo(new HashSet<>(ids))));
+		assertThat("Cached meta IDs", new HashSet<>(idCaptor.getValues()),
+				is(equalTo(new HashSet<>(ids))));
 	}
 
 	@Test
@@ -321,9 +323,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Stream IDs same", results.keySet(), is(equalTo(streamIds)));
 
-		final List<ObjectDatumStreamMetadataId> ids = data.stream()
-				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toList());
-		assertThat("Metadata IDs same and ordered", new ArrayList<>(results.values()), is(equalTo(ids)));
+		final Set<ObjectDatumStreamMetadataId> ids = data.stream()
+				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toSet());
+		assertThat("Metadata IDs same", new HashSet<>(results.values()), is(equalTo(ids)));
 	}
 
 	@Test
@@ -343,7 +345,9 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 			data.add(meta);
 			ObjectDatumStreamMetadataId foundId = (i == 2 ? idForMetadata(meta) : null);
 			expect(idCache.get(streamId)).andReturn(foundId);
-			idCache.put(eq(streamId), capture(idCaptor));
+			if ( foundId == null ) {
+				idCache.put(eq(streamId), capture(idCaptor));
+			}
 		}
 		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
 
@@ -357,9 +361,10 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 
 		final List<ObjectDatumStreamMetadataId> ids = data.stream()
 				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toList());
-		assertThat("Metadata IDs same and ordered", new ArrayList<>(results.values()), is(equalTo(ids)));
-		assertThat("Populdated missing cache meta IDs", idCaptor.getValues(),
-				is(contains(ids.get(0), ids.get(1))));
+		assertThat("Metadata IDs same", new HashSet<>(results.values()),
+				is(equalTo(new HashSet<>(ids))));
+		assertThat("Populated missing cache meta IDs", idCaptor.getValues(),
+				containsInAnyOrder(idForMetadata(data.get(0)), idForMetadata(data.get(2))));
 	}
 
 	@Test

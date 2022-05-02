@@ -433,8 +433,8 @@ public class DatumUtilsTests {
 	public void criteriaFromFilter_datumFilterCommand_sortsFromFilter() {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();
-		List<net.solarnetwork.central.support.MutableSortDescriptor> msds = new ArrayList<>();
-		net.solarnetwork.central.support.MutableSortDescriptor msd = new net.solarnetwork.central.support.MutableSortDescriptor();
+		List<net.solarnetwork.domain.MutableSortDescriptor> msds = new ArrayList<>();
+		net.solarnetwork.domain.MutableSortDescriptor msd = new net.solarnetwork.domain.MutableSortDescriptor();
 		msd.setSortKey("a");
 		msd.setDescending(true);
 		msds.add(msd);
@@ -454,15 +454,15 @@ public class DatumUtilsTests {
 	public void criteriaFromFilter_datumFilterCommand_sortsFromArgs() {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();
-		List<net.solarnetwork.central.support.MutableSortDescriptor> msds = new ArrayList<>();
-		net.solarnetwork.central.support.MutableSortDescriptor msd = new net.solarnetwork.central.support.MutableSortDescriptor();
+		List<net.solarnetwork.domain.MutableSortDescriptor> msds = new ArrayList<>();
+		net.solarnetwork.domain.MutableSortDescriptor msd = new net.solarnetwork.domain.MutableSortDescriptor();
 		msd.setSortKey("a");
 		msd.setDescending(true);
 		msds.add(msd);
 		f.setSorts(msds);
 
-		List<net.solarnetwork.central.domain.SortDescriptor> msds2 = new ArrayList<>();
-		net.solarnetwork.central.support.MutableSortDescriptor msd2 = new net.solarnetwork.central.support.MutableSortDescriptor();
+		List<net.solarnetwork.domain.SortDescriptor> msds2 = new ArrayList<>();
+		net.solarnetwork.domain.MutableSortDescriptor msd2 = new net.solarnetwork.domain.MutableSortDescriptor();
 		msd2.setSortKey("a");
 		msd2.setDescending(true);
 		msds2.add(msd);

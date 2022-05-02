@@ -42,11 +42,11 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.NodeMappingFilter;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceMappingFilter;
 import net.solarnetwork.central.support.BaseFilterSupport;
-import net.solarnetwork.central.support.MutableSortDescriptor;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
+import net.solarnetwork.domain.MutableSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.StringUtils;
 
@@ -351,7 +351,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the stream ID
 	 */
 	@JsonSetter
-	public void setObjectId(UUID streamId) {
+	public void setStreamId(UUID streamId) {
 		this.streamIds = (streamId == null ? null : new UUID[] { streamId });
 	}
 
@@ -399,6 +399,50 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	@JsonIgnore
 	public Long getObjectId() {
 		return (this.objectIds == null || this.objectIds.length < 1 ? null : this.objectIds[0]);
+	}
+
+	/**
+	 * Set the stream kind to {@literal Node} and configure the object IDs.
+	 * 
+	 * @param nodeId
+	 *        the node ID to set
+	 */
+	public void setNodeId(Long nodeId) {
+		setKind(ObjectDatumKind.Node);
+		setObjectId(nodeId);
+	}
+
+	/**
+	 * Set the stream kind to {@literal Node} and configure the object IDs.
+	 * 
+	 * @param nodeIds
+	 *        the node IDs to set
+	 */
+	public void setNodeIds(Long[] nodeIds) {
+		setKind(ObjectDatumKind.Node);
+		setObjectIds(nodeIds);
+	}
+
+	/**
+	 * Set the stream kind to {@literal Location} and configure the object IDs.
+	 * 
+	 * @param locId
+	 *        the node ID to set
+	 */
+	public void setLocationId(Long locId) {
+		setKind(ObjectDatumKind.Location);
+		setObjectId(locId);
+	}
+
+	/**
+	 * Set the stream kind to {@literal Location} and configure the object IDs.
+	 * 
+	 * @param locIds
+	 *        the node IDs to set
+	 */
+	public void setLocationIds(Long[] locIds) {
+		setKind(ObjectDatumKind.Location);
+		setObjectIds(locIds);
 	}
 
 	@Override
