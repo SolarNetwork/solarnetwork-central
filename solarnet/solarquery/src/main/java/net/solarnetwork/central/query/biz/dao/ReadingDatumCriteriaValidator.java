@@ -25,7 +25,7 @@ package net.solarnetwork.central.query.biz.dao;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.domain.Aggregation;
 
 /**
@@ -39,15 +39,15 @@ public class ReadingDatumCriteriaValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
-		return ReadingDatumCriteria.class.isAssignableFrom(clazz);
+		return DatumCriteria.class.isAssignableFrom(clazz);
 	}
 
 	@Override
 	public void validate(Object target, Errors errors) {
-		validateCriteria((ReadingDatumCriteria) target, errors);
+		validateCriteria((DatumCriteria) target, errors);
 	}
 
-	private void validateCriteria(ReadingDatumCriteria c, Errors errors) {
+	private void validateCriteria(DatumCriteria c, Errors errors) {
 		Aggregation agg = c.getAggregation();
 		DatumReadingType readingType = c.getReadingType();
 		if ( agg != null && agg != Aggregation.None ) {
@@ -57,7 +57,7 @@ public class ReadingDatumCriteriaValidator implements Validator {
 		}
 	}
 
-	private void validateCriteria(ReadingDatumCriteria c, Errors errors, DatumReadingType readingType) {
+	private void validateCriteria(DatumCriteria c, Errors errors, DatumReadingType readingType) {
 		if ( c.isMostRecent() ) {
 			errors.rejectValue("mostRecent", "error.filter.reading.mostRecent.invalid",
 					"The mostRecent mode is not supported for reading queries.");
@@ -67,7 +67,7 @@ public class ReadingDatumCriteriaValidator implements Validator {
 		}
 	}
 
-	private void validateAggregateCriteria(ReadingDatumCriteria c, Errors errors,
+	private void validateAggregateCriteria(DatumCriteria c, Errors errors,
 			DatumReadingType readingType, Aggregation agg) {
 		if ( !(agg == Aggregation.Hour || agg == Aggregation.Day || agg == Aggregation.Month) ) {
 			errors.rejectValue("aggregation", "error.filter.reading.aggregation.invalid",

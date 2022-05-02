@@ -36,11 +36,11 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Generate dynamic SQL for a {@link ReadingDatumCriteria} difference query.
+ * Generate dynamic SQL for a {@link DatumCriteria} difference query.
  * 
  * @author matt
  * @version 1.0
@@ -55,7 +55,7 @@ public class SelectReadingDifference
 	 */
 	public static Period DEFAULT_NEAREST_DIFFERENCE_TIME_TOLERANCE = Period.ofMonths(3);
 
-	private final ReadingDatumCriteria filter;
+	private final DatumCriteria filter;
 
 	/**
 	 * Constructor.
@@ -65,7 +65,7 @@ public class SelectReadingDifference
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectReadingDifference(ReadingDatumCriteria filter) {
+	public SelectReadingDifference(DatumCriteria filter) {
 		super();
 		if ( filter == null || filter.getReadingType() == null ) {
 			throw new IllegalArgumentException("The filter argument and reading type must not be null.");

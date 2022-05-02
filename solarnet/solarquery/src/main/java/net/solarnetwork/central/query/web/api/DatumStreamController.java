@@ -25,6 +25,7 @@ package net.solarnetwork.central.query.web.api;
 import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.time.Period;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -33,8 +34,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.support.JsonObjectDatumStreamFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -97,13 +100,37 @@ public class DatumStreamController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public void filterGeneralDatumData(final StreamDatumFilterCommand cmd,
+	public void listDatum(final StreamDatumFilterCommand cmd,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
 			throws IOException {
 		final MediaType acceptType = MediaType.valueOf(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, response)) {
 			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
 					cmd.getMax());
+		}
+	}
+
+	/**
+	 * Query for a reading datum.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/reading", method = RequestMethod.GET)
+	public void listReadings(final StreamDatumFilterCommand cmd,
+			final @RequestParam("readingType") DatumReadingType readingType,
+			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
+			throws IOException {
+		final MediaType acceptType = MediaType.valueOf(accept);
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, response)) {
+			queryBiz.findFilteredStreamReadings(cmd, readingType, tolerance, processor,
+					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		}
 	}
 

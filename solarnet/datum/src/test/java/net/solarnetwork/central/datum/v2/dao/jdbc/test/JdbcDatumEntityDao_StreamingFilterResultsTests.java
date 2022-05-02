@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.UUID_STRING_ORDER;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listNodeMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.sortedStreamIds;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.populateBasicDatumStream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -33,9 +34,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import java.io.IOException;
-import java.sql.CallableStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -47,15 +45,11 @@ import java.util.UUID;
 import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.CallableStatementCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
-import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -78,44 +72,13 @@ public class JdbcDatumEntityDao_StreamingFilterResultsTests extends BaseDatumJdb
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
 
-	private void insertDatum(Long nodeId, String sourceId, String propPrefix, ZonedDateTime start,
-			Duration frequency, int count) {
-		jdbcTemplate.execute("{call solardatm.store_datum(?,?,?,?,?)}",
-				new CallableStatementCallback<Void>() {
-
-					@Override
-					public Void doInCallableStatement(CallableStatement cs)
-							throws SQLException, DataAccessException {
-						ZonedDateTime ts = start;
-						Timestamp received = Timestamp.from(Instant.now());
-						DatumSamples data = new DatumSamples();
-						for ( int i = 0; i < count; i++ ) {
-							cs.setTimestamp(1, Timestamp.from(ts.toInstant()));
-							cs.setLong(2, nodeId);
-							cs.setString(3, sourceId);
-							cs.setTimestamp(4, received);
-
-							data.putInstantaneousSampleValue(propPrefix + "_i", Math.random() * 1000000);
-							data.putAccumulatingSampleValue(propPrefix + "_a", i + 1);
-
-							String jdata = JsonUtils.getJSONString(data, null);
-							cs.setString(5, jdata);
-							cs.execute();
-							log.debug("Inserted datum node {} source {} ts {}", nodeId, sourceId, ts);
-							ts = ts.plus(frequency);
-						}
-						return null;
-					}
-				});
-	}
-
 	@Test
 	public void stream_byStreamId() throws IOException {
 		// GIVEN
 		final ZonedDateTime start = ZonedDateTime.of(2020, 10, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		final Duration freq = Duration.ofMinutes(30);
-		insertDatum(1L, "s1", "foo", start, freq, 4);
-		insertDatum(2L, "s2", "bim", start.plusMinutes(15), freq, 4);
+		populateBasicDatumStream(jdbcTemplate, log, 1L, "s1", "foo", start, freq, 4);
+		populateBasicDatumStream(jdbcTemplate, log, 2L, "s2", "bim", start.plusMinutes(15), freq, 4);
 
 		Map<UUID, ObjectDatumStreamMetadata> metas = listNodeMetadata(jdbcTemplate).stream()
 				.collect(toMap(DatumStreamMetadata::getStreamId, Function.identity()));
@@ -129,7 +92,7 @@ public class JdbcDatumEntityDao_StreamingFilterResultsTests extends BaseDatumJdb
 
 		// THEN
 		List<StreamDatum> datumList = processor.getData();
-		assertThat("Results collected", datumList, hasSize(4));
+		assertThat("Results collected", datumList, hasSize(1));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(processor.getMetadataProvider(), UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));

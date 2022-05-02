@@ -69,7 +69,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
@@ -374,7 +374,7 @@ public class DaoQueryBiz implements QueryBiz {
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
-	private void validateReadingCriteria(ReadingDatumCriteria criteria) {
+	private void validateReadingCriteria(DatumCriteria criteria) {
 		Validator v = (readingCriteriaValidator != null
 				&& readingCriteriaValidator.supports(criteria.getClass()) ? readingCriteriaValidator
 						: null);
@@ -401,6 +401,19 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), max);
 		datumDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
+			Period tolerance, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
+		c.setObjectKind(ObjectDatumKind.Node);
+		c.setReadingType(readingType);
+		c.setTimeTolerance(tolerance);
+		validateReadingCriteria(c);
+		readingDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
 	}
 
 	@Override

@@ -210,8 +210,36 @@ public interface QueryBiz {
 	 * @since 4.1
 	 */
 	void findFilteredStreamDatum(StreamDatumFilter filter, StreamDatumFilteredResultsProcessor processor,
-			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Integer offset, Integer max)
-			throws IOException;
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+
+	/**
+	 * API for querying for a filtered set of reading stream datum, streaming
+	 * the results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param readingType
+	 *        the type of reading to perform
+	 * @param tolerance
+	 *        a time period of tolerance to use when querying around the
+	 *        start/end dates, or {@literal null} for a default tolerance based
+	 *        on {@code readingType}
+	 * @param processor
+	 *        the processor for the results
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return the results, never {@literal null}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 4.1
+	 */
+	void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
+			Period tolerance, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of "readings".

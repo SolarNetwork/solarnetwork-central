@@ -88,7 +88,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.ProviderObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
@@ -293,6 +292,24 @@ public class JdbcDatumEntityDao
 	}
 
 	private static PreparedStatementCreator filterSql(DatumCriteria filter) {
+		DatumReadingType readingType = filter.getReadingType();
+		if ( readingType != null && filter.getAggregation() == null ) {
+			switch (readingType) {
+				case Difference:
+				case DifferenceWithin:
+				case NearestDifference:
+				case CalculatedAtDifference:
+					return new SelectReadingDifference(filter);
+
+				case CalculatedAt:
+					return new SelectDatumCalculatedAt(filter);
+
+				default:
+					throw new UnsupportedOperationException(
+							"Reading type " + readingType + " is not supported.");
+
+			}
+		}
 		if ( filter.getPartialAggregation() != null || filter.getAggregation() == Aggregation.Year ) {
 			return new SelectDatumPartialAggregate(filter,
 					filter.getPartialAggregation() != null ? filter.getPartialAggregation()
@@ -305,15 +322,19 @@ public class JdbcDatumEntityDao
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static RowMapper<Datum> mapper(DatumCriteria filter) {
-		if ( filter.hasIdMappings() ) {
+		if ( filter.getReadingType() == DatumReadingType.CalculatedAt ) {
+			return DatumEntityRowMapper.INSTANCE;
+		} else if ( filter.hasIdMappings() ) {
 			return (RowMapper) new VirtualAggregateDatumEntityRowMapper(filter.getAggregation(),
 					filter.getObjectKind() == ObjectDatumKind.Location ? ObjectDatumKind.Location
 							: ObjectDatumKind.Node);
+		} else if ( filter.getAggregation() != null && filter.getAggregation() != Aggregation.None ) {
+			return (RowMapper) mapperForAggregate(filter.getAggregation(),
+					filter.getReadingType() != null);
+		} else if ( filter.getReadingType() != null ) {
+			return (RowMapper) ReadingDatumEntityRowMapper.INSTANCE;
 		}
-		return filter.getAggregation() != null && filter.getAggregation() != Aggregation.None
-				? (RowMapper) mapperForAggregate(filter.getAggregation(),
-						filter.getReadingType() != null)
-				: DatumEntityRowMapper.INSTANCE;
+		return DatumEntityRowMapper.INSTANCE;
 	}
 
 	private void validateFilter(DatumCriteria filter) {
@@ -380,9 +401,8 @@ public class JdbcDatumEntityDao
 	@Override
 	public void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
-		if ( filter == null ) {
-			throw new IllegalArgumentException("The filter argument must be provided.");
-		}
+		requireNonNullArgument(filter, "filter");
+		requireNonNullArgument(processor, "processor");
 		validateFilter(filter);
 		final PreparedStatementCreator sql = filterSql(filter);
 		final RowMapper<Datum> mapper = mapper(filter);
@@ -648,29 +668,12 @@ public class JdbcDatumEntityDao
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(
-			ReadingDatumCriteria filter) {
+			DatumCriteria filter) {
 		if ( filter == null || filter.getReadingType() == null ) {
 			throw new IllegalArgumentException("The filter reading type must be provided.");
 		}
-		PreparedStatementCreator sql = null;
-		DatumReadingType readingType = filter.getReadingType();
-		switch (readingType) {
-			case Difference:
-			case DifferenceWithin:
-			case NearestDifference:
-			case CalculatedAtDifference:
-				sql = new SelectReadingDifference(filter);
-				break;
-
-			case CalculatedAt:
-				sql = new SelectDatumCalculatedAt(filter);
-				break;
-
-			default:
-				throw new UnsupportedOperationException(
-						"Reading type " + readingType + " is not supported.");
-
-		}
+		final PreparedStatementCreator sql = filterSql(filter);
+		final DatumReadingType readingType = filter.getReadingType();
 
 		FilterResults<ReadingDatum, DatumPK> results;
 		if ( readingType == DatumReadingType.CalculatedAt ) {

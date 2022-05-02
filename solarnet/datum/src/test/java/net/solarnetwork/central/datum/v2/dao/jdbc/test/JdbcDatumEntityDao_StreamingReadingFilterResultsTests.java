@@ -1,7 +1,7 @@
 /* ==================================================================
- * JdbcReadingDatumEntityDaoTests.java - 17/11/2020 7:28:08 pm
+ * JdbcDatumEntityDao_StreamingReadingFilterResultsTests.java - 3/05/2022 8:18:41 am
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,22 +22,23 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.elementsOf;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -61,32 +62,36 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
- * Test cases for the {@link ReadingDatumDao} implementation within the
- * {@link JdbcDatumEntityDao} class.
+ * Test cases for stream reading filter results in {@link JdbcDatumEntityDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSupport {
+public class JdbcDatumEntityDao_StreamingReadingFilterResultsTests extends BaseDatumJdbcTestSupport {
 
 	private JdbcDatumEntityDao dao;
+
+	protected DatumEntity lastDatum;
+
+	@Before
+	public void setup() {
+		dao = new JdbcDatumEntityDao(jdbcTemplate);
+	}
 
 	private Map<NodeSourcePK, ObjectDatumStreamMetadata> loadStreamWithAuxiliary(String resource) {
 		return loadStreamWithAuxiliary(resource, null, null);
@@ -115,25 +120,30 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		return meta;
 	}
 
-	private ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> execute(DatumCriteria filter) {
-		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> results = dao
-				.findDatumReadingFiltered(filter);
-		if ( results.getReturnedResultCount() > 0 ) {
-			log.debug("Got {} ReadingDatum results:\n{}", results.getReturnedResultCount(),
-					stream(results.spliterator(), false).map(Object::toString).collect(joining("\n")));
+	private void execute(DatumCriteria filter, BasicStreamDatumFilteredResultsProcessor processor) {
+		try {
+			dao.findFilteredStream(filter, processor);
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
 		}
-		return results;
+		if ( !processor.getData().isEmpty() ) {
+			log.debug("Got {} ReadingDatum results:\n{}", processor.getData().size(),
+					processor.getData().stream().map(Object::toString).collect(joining("\n")));
+		}
 	}
 
-	private static void assertReading(String prefix, ReadingDatum result, ReadingDatum expected) {
-		DatumTestUtils.assertAggregateDatum(prefix, result, expected);
-		assertThat(prefix + " end timestamp", result.getEndTimestamp(),
-				equalTo(expected.getEndTimestamp()));
+	private static void assertReading(String prefix, StreamDatum result, ReadingDatum expected) {
+		assertThat(format("%s ReadingDatum instance", prefix), result,
+				is(instanceOf(ReadingDatum.class)));
+		ReadingDatum d = (ReadingDatum) result;
+		DatumTestUtils.assertAggregateDatum(prefix, d, expected);
+		assertThat(prefix + " end timestamp", d.getEndTimestamp(), equalTo(expected.getEndTimestamp()));
 	}
 
-	@Before
-	public void setup() {
-		dao = new JdbcDatumEntityDao(jdbcTemplate);
+	private static void assertDatum(String prefix, StreamDatum result, Datum expected) {
+		assertThat(format("%s Datum instance", prefix), result, is(instanceOf(Datum.class)));
+		Datum d = (Datum) result;
+		DatumTestUtils.assertDatum(prefix, d, expected);
 	}
 
 	@Test
@@ -148,11 +158,12 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setSourceId(TEST_SOURCE_ID);
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
-		FilterResults<ReadingDatum, DatumPK> results = dao.findDatumReadingFiltered(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(0L));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("No results collected", datumList, hasSize(0));
 	}
 
 	@Test
@@ -169,14 +180,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setSourceId("a");
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
+		StreamDatum d = datumList.get(0);
 		assertReading("Node and source", d,
 				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), null,
 						start.plusHours(1).minusMinutes(1).toInstant(),
@@ -201,14 +212,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setSourceId("a");
 		filter.setLocalStartDate(start.withZoneSameInstant(tz).toLocalDateTime());
 		filter.setLocalEndDate(start.plusHours(1).withZoneSameInstant(tz).toLocalDateTime());
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
+		StreamDatum d = datumList.get(0);
 		assertReading("Node and source", d,
 				new ReadingDatumEntity(streamId, start.minusMinutes(1).toInstant(), null,
 						start.plusHours(1).minusMinutes(1).toInstant(),
@@ -239,15 +250,15 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
 		filter.setSorts(sorts("node", "source", "time"));
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo((long) metas.size()));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(metas.size()));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(metas.size()));
 
 		int i = 0;
-		for ( ReadingDatum d : results ) {
+		for ( StreamDatum d : datumList ) {
 			final Long nodeId = (long) (i + 1);
 			final String sourceId = Character.toString((char) ('a' + i));
 			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
@@ -293,15 +304,15 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setLocalStartDate(start);
 		filter.setLocalEndDate(start.plusHours(1));
 		filter.setSorts(sorts("node", "source", "time"));
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo((long) metas.size()));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(metas.size()));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(metas.size()));
 
 		int i = 0;
-		for ( ReadingDatum d : results ) {
+		for ( StreamDatum d : datumList ) {
 			final Long nodeId = (long) (i + 1);
 			final String sourceId = Character.toString((char) ('a' + i));
 			UUID streamId = metas.get(new NodeSourcePK(nodeId, sourceId)).getStreamId();
@@ -329,14 +340,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
 		filter.setTimeTolerance(Period.ofDays(7));
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
+		StreamDatum d = datumList.get(0);
 		assertReading("Node and source", d, readingWith(streamId, null, start.minusMinutes(1),
 				start.plusHours(1).minusMinutes(1), decimalArray("30", "100", "130")));
 	}
@@ -356,14 +367,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
 		filter.setTimeTolerance(Period.ofDays(7));
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
+		StreamDatum d = datumList.get(0);
 		assertReading("Difference at calculated", d,
 				readingWith(streamId, null, start, start.plusHours(1), decimalArray("30"),
 						new BigDecimal[][] { decimalArray("30.0", "100.5", "130.5") }));
@@ -408,16 +419,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setLocalStartDate(start.plusMinutes(1)); // 1/5 of slot time
 		filter.setLocalEndDate(start.plusMinutes(4)); // 4/5 of slot time
 		filter.setSorts(sorts("node", "source"));
-
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(2L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(2));
 
-		List<ReadingDatum> datumList = stream(results.spliterator(), false).collect(toList());
-		ReadingDatum d = datumList.get(0);
+		StreamDatum d = datumList.get(0);
 		assertReading("CalcualtedAt reading diff for stream 1 @ local time", d,
 				new ReadingDatumEntity(meta_1.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
@@ -448,14 +457,14 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setSourceId("a");
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
+		StreamDatum d = datumList.get(0);
 		assertReading("Node and source", d, readingWith(streamId, null, start.plusMinutes(9),
 				start.plusHours(1).minusMinutes(1), decimalArray("25", "105", "130")));
 	}
@@ -473,18 +482,17 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setStartDate(start.plusMinutes(8).toInstant());
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
-		assertReading("CalcualtedAt reading has props without stats", d,
-				new ReadingDatumEntity(streamId, filter.getStartDate(), null, null,
-						propertiesOf(decimalArray("1.28", "2.9"), decimalArray("104"), null, null),
-						null));
+		StreamDatum d = datumList.get(0);
+		assertDatum("CalcualtedAt reading has props without stats", d,
+				new DatumEntity(streamId, filter.getStartDate(), null,
+						propertiesOf(decimalArray("1.28", "2.9"), decimalArray("104"), null, null)));
 	}
 
 	@Test
@@ -512,18 +520,17 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setNodeId(1L);
 		filter.setSourceId("a");
 		filter.setStartDate(start.plusMinutes(1).toInstant());
-
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(1L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(1));
 
-		ReadingDatum d = results.iterator().next();
-		assertReading("CalcualtedAt reading between no difference", d,
-				new ReadingDatumEntity(meta.getStreamId(), filter.getStartDate(), null, null,
-						propertiesOf(decimalArray("3"), decimalArray("33"), null, null), null));
+		StreamDatum d = datumList.get(0);
+		assertDatum("CalcualtedAt reading between no difference", d,
+				new DatumEntity(meta.getStreamId(), filter.getStartDate(), null,
+						propertiesOf(decimalArray("3"), decimalArray("33"), null, null)));
 	}
 
 	@Test
@@ -564,28 +571,24 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		filter.setSourceIds(new String[] { "a", "b" });
 		filter.setLocalStartDate(start.plusMinutes(2)); // 2/5 of slot time
 		filter.setSorts(sorts("node", "source"));
-
-		FilterResults<ReadingDatum, DatumPK> results = execute(filter);
+		final BasicStreamDatumFilteredResultsProcessor processor = new BasicStreamDatumFilteredResultsProcessor();
+		execute(filter, processor);
 
 		// THEN
-		assertThat("Results returned", results, notNullValue());
-		assertThat("Total result populated", results.getTotalResults(), equalTo(2L));
-		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
+		List<StreamDatum> datumList = processor.getData();
+		assertThat("Results collected", datumList, hasSize(2));
 
-		List<ReadingDatum> datumList = stream(results.spliterator(), false).collect(toList());
-		ReadingDatum d = datumList.get(0);
-		assertReading("CalcualtedAt reading for stream 1 @ local time", d,
-				new ReadingDatumEntity(meta_1.getStreamId(),
+		StreamDatum d = datumList.get(0);
+		assertDatum("CalcualtedAt reading for stream 1 @ local time", d,
+				new DatumEntity(meta_1.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_1.getTimeZoneId())).toInstant(),
-						null, null, propertiesOf(decimalArray("1.2"), decimalArray("13.2"), null, null),
-						null));
+						null, propertiesOf(decimalArray("1.2"), decimalArray("13.2"), null, null)));
 
 		d = datumList.get(1);
-		assertReading("CalcualtedAt reading for stream 2 @ local time", d,
-				new ReadingDatumEntity(meta_2.getStreamId(),
+		assertDatum("CalcualtedAt reading for stream 2 @ local time", d,
+				new DatumEntity(meta_2.getStreamId(),
 						filter.getLocalStartDate().atZone(ZoneId.of(meta_2.getTimeZoneId())).toInstant(),
-						null, null, propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null),
-						null));
+						null, propertiesOf(decimalArray("3.6"), decimalArray("39.6"), null, null)));
 	}
 
 }

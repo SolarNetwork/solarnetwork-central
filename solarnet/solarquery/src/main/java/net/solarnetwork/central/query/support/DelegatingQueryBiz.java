@@ -43,16 +43,16 @@ import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProce
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -157,6 +157,14 @@ public class DelegatingQueryBiz implements QueryBiz {
 			StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) throws IOException {
 		delegate.findFilteredStreamDatum(filter, processor, sortDescriptors, offset, max);
+	}
+
+	@Override
+	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
+			Period tolerance, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+		delegate.findFilteredStreamReadings(filter, readingType, tolerance, processor, sortDescriptors,
+				offset, max);
 	}
 
 }

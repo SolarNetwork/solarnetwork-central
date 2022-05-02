@@ -30,6 +30,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +43,9 @@ import java.util.UUID;
 import java.util.function.Function;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.slf4j.Logger;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.prefs.CsvPreference;
@@ -46,16 +55,17 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
-import net.solarnetwork.domain.datum.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.support.DatumCsvIterator;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Location;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.util.NumberUtils;
 
 /**
@@ -440,6 +450,59 @@ public final class DatumTestUtils {
 			result.add(itr.next());
 		}
 		return result;
+	}
+
+	/**
+	 * Populate datum in the database.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param log
+	 *        the log
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param propPrefix
+	 *        a property prefix; one instantaneous property with a {@literal _i}
+	 *        suffix will be created along with one accumulating property with a
+	 *        {@literal _a} suffix
+	 * @param start
+	 *        the stream start date
+	 * @param frequency
+	 *        the period between datum
+	 * @param count
+	 *        the number of datum to populate
+	 */
+	public static void populateBasicDatumStream(JdbcOperations jdbcTemplate, Logger log, Long nodeId,
+			String sourceId, String propPrefix, ZonedDateTime start, Duration frequency, int count) {
+		jdbcTemplate.execute("{call solardatm.store_datum(?,?,?,?,?)}",
+				new CallableStatementCallback<Void>() {
+
+					@Override
+					public Void doInCallableStatement(CallableStatement cs)
+							throws SQLException, DataAccessException {
+						ZonedDateTime ts = start;
+						Timestamp received = Timestamp.from(Instant.now());
+						DatumSamples data = new DatumSamples();
+						for ( int i = 0; i < count; i++ ) {
+							cs.setTimestamp(1, Timestamp.from(ts.toInstant()));
+							cs.setLong(2, nodeId);
+							cs.setString(3, sourceId);
+							cs.setTimestamp(4, received);
+
+							data.putInstantaneousSampleValue(propPrefix + "_i", Math.random() * 1000000);
+							data.putAccumulatingSampleValue(propPrefix + "_a", i + 1);
+
+							String jdata = JsonUtils.getJSONString(data, null);
+							cs.setString(5, jdata);
+							cs.execute();
+							log.debug("Inserted datum node {} source {} ts {}", nodeId, sourceId, ts);
+							ts = ts.plus(frequency);
+						}
+						return null;
+					}
+				});
 	}
 
 }

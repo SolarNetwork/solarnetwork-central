@@ -78,7 +78,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
@@ -89,11 +88,11 @@ import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -746,7 +745,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		BasicObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = new BasicObjectDatumStreamFilterResults<>(
 				singletonMap(meta.getStreamId(), meta), singleton(d));
 
-		Capture<ReadingDatumCriteria> filterCaptor = new Capture<>();
+		Capture<DatumCriteria> filterCaptor = new Capture<>();
 		expect(readingDao.findDatumReadingFiltered(capture(filterCaptor))).andReturn(daoResults);
 
 		// WHEN
