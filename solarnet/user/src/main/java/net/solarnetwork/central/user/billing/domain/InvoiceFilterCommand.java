@@ -25,9 +25,9 @@ package net.solarnetwork.central.user.billing.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
-import net.solarnetwork.central.support.MutableSortDescriptor;
+import net.solarnetwork.domain.MutableSortDescriptor;
 
 /**
  * Filter support for invoice actions.

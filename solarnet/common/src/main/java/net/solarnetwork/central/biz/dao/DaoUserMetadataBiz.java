@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
 import net.solarnetwork.central.domain.UserMetadataFilterMatch;

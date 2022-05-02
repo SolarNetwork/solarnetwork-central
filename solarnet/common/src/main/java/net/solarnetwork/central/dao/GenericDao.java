@@ -25,7 +25,7 @@ package net.solarnetwork.central.dao;
 import java.io.Serializable;
 import java.util.List;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Generic DAO API.

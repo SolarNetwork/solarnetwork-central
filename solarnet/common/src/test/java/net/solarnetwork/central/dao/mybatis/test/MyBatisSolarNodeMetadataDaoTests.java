@@ -44,9 +44,9 @@ import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
-import net.solarnetwork.central.support.SimpleSortDescriptor;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**

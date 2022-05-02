@@ -27,8 +27,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.support.FilterSupport;
-import net.solarnetwork.central.support.MutableSortDescriptor;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.MutableSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Filter support for user actions.
@@ -59,7 +60,7 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 		if ( sorts == null ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<SortDescriptor>(sorts);
+		return new ArrayList<>(sorts);
 	}
 
 	public Integer getOffset() {

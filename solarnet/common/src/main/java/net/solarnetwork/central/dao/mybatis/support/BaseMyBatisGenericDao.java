@@ -39,7 +39,7 @@ import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.Identity;
 
 /**
