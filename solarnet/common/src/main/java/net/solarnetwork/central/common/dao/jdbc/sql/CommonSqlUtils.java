@@ -148,14 +148,27 @@ public final class CommonSqlUtils {
 	 * @return the number of JDBC query parameters generated
 	 */
 	public static int limitOffset(PaginationCriteria filter, StringBuilder buf) {
+		int result = 0;
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
 			if ( max > 0 ) {
-				buf.append("\nLIMIT ? OFFSET ?");
-				return 2;
+				buf.append("\nLIMIT ?");
+				result++;
 			}
 		}
-		return 0;
+		if ( filter != null && filter.getOffset() != null ) {
+			int offset = filter.getOffset();
+			if ( offset > 0 ) {
+				if ( result < 1 ) {
+					buf.append('\n');
+				} else {
+					buf.append(' ');
+				}
+				buf.append("OFFSET ?");
+				result++;
+			}
+		}
+		return result;
 	}
 
 	/**
