@@ -25,7 +25,9 @@ package net.solarnetwork.central.web.support;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -33,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.FastByteArrayOutputStream;
+import org.springframework.web.util.WebUtils;
 
 /**
  * {@link javax.servlet.http.HttpServletResponse} wrapper that caches all
@@ -61,6 +64,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	private final OutputStream cacheStream;
 	private final HttpHeaders headers;
 	private ServletOutputStream outputStream;
+	private PrintWriter outputWriter;
 	private boolean cacheStreamFinished;
 
 	/**
@@ -127,12 +131,13 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	@Override
 	public PrintWriter getWriter() throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void flushBuffer() throws IOException {
-		// do not flush the underlying response as the content has not been copied to it yet
+		if ( this.outputWriter == null ) {
+			String characterEncoding = getCharacterEncoding();
+			this.outputWriter = new ResponsePrintWriter(
+					characterEncoding != null ? characterEncoding : WebUtils.DEFAULT_CHARACTER_ENCODING,
+					getOutputStream());
+		}
+		return this.outputWriter;
 	}
 
 	@Override
@@ -245,6 +250,32 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 			super.close();
 		}
 
+	}
+
+	private class ResponsePrintWriter extends PrintWriter {
+
+		public ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
+				throws UnsupportedEncodingException {
+			super(new OutputStreamWriter(os, characterEncoding));
+		}
+
+		@Override
+		public void write(char[] buf, int off, int len) {
+			super.write(buf, off, len);
+			super.flush();
+		}
+
+		@Override
+		public void write(String s, int off, int len) {
+			super.write(s, off, len);
+			super.flush();
+		}
+
+		@Override
+		public void write(int c) {
+			super.write(c);
+			super.flush();
+		}
 	}
 
 }
