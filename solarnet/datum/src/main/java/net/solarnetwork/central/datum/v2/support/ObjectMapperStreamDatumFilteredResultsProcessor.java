@@ -39,6 +39,7 @@ import java.util.UUID;
 import org.springframework.util.MimeType;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
+import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -156,6 +157,9 @@ import net.solarnetwork.domain.datum.StreamDatum;
 public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		implements StreamDatumFilteredResultsProcessor {
 
+	/** The success array field name. */
+	public static final SerializedString SUCCESS_FIELD_NAME = new SerializedString("success");
+
 	private final JsonGenerator generator;
 	private final SerializerProvider provider;
 	private final MimeType mimeType;
@@ -201,11 +205,13 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		this.streamIds = metadataProvider.metadataStreamIds();
 		this.metaIndexMap = new HashMap<>(streamIds.size());
 
-		int count = (expectedResultCount != null ? 1 : 0) + (startingOffset != null ? 1 : 0)
+		int count = 1 + (expectedResultCount != null ? 1 : 0) + (startingOffset != null ? 1 : 0)
 				+ (totalResultCount != null ? 1 : 0)
 				+ (streamIds != null && !streamIds.isEmpty() ? 2 : 0);
 
 		generator.writeStartObject(this, count);
+		generator.writeFieldName(SUCCESS_FIELD_NAME);
+		generator.writeBoolean(true);
 
 		if ( expectedResultCount != null ) {
 			generator.writeFieldName(RETURNED_RESULT_COUNT_FIELD_NAME);

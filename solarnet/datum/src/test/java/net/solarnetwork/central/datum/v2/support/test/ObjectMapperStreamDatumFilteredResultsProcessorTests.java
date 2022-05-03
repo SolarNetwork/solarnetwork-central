@@ -119,8 +119,8 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 		// THEN
 		String json = out.toString(ByteUtils.UTF8);
-		assertThat("Datum JSON", json, is(format("{\"meta\":[{\"streamId\":\"%s\",", meta.getStreamId())
-				+ "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
+		assertThat("Datum JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
+				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
 				+ "\"data\":[[0,1651197120000,1.23,2.34,3.45,\"foo\",\"a\"],"
 				+ "[0,1651197121000,3.21,4.32,5.43,\"bar\"]]}"));
@@ -166,7 +166,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 		// THEN
 		String json = out.toString(ByteUtils.UTF8);
-		assertThat("Reading JSON", json, is(format("{\"meta\":[{\"streamId\":\"%s\",",
+		assertThat("Reading JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
 				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
 				+ "\"data\":[[0,[1651197060000,1651200660000],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130]]]}"));
