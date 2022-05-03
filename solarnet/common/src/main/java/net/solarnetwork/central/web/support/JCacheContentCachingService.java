@@ -360,7 +360,7 @@ public class JCacheContentCachingService
 			throws IOException {
 		byte[] data = FileCopyUtils.copyToByteArray(content);
 
-		String contentEncoding = null;
+		String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
 		if ( compressionType != null ) {
 			// content already compressed for us
 			contentEncoding = compressionType.getContentEncoding();
