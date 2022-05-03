@@ -92,7 +92,7 @@ public class JdbcDatumEntityDao_StreamingFilterResultsTests extends BaseDatumJdb
 
 		// THEN
 		List<StreamDatum> datumList = processor.getData();
-		assertThat("Results collected", datumList, hasSize(1));
+		assertThat("Results collected", datumList, hasSize(4));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(processor.getMetadataProvider(), UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));
