@@ -47,6 +47,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
 import net.solarnetwork.central.web.support.ContentCachingService;
+import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
 import net.solarnetwork.central.web.support.SimpleCachedContent;
 import net.solarnetwork.test.Assertion;
 
@@ -183,7 +184,7 @@ public class ContentCachingFilterTests {
 		// cache response
 		Capture<InputStream> bodyCaptor = new Capture<>();
 		service.cacheResponse(eq(cacheKey), same(request), eq(200), anyObject(HttpHeaders.class),
-				capture(bodyCaptor));
+				capture(bodyCaptor), eq(CompressionType.GZIP));
 
 		// when
 		replayAll();
@@ -260,7 +261,7 @@ public class ContentCachingFilterTests {
 		// cache response
 		Capture<InputStream> bodyCaptor = new Capture<>();
 		service.cacheResponse(eq(cacheKey), same(request1), eq(200), anyObject(HttpHeaders.class),
-				capture(bodyCaptor));
+				capture(bodyCaptor), eq(CompressionType.GZIP));
 
 		// when
 		replayAll();

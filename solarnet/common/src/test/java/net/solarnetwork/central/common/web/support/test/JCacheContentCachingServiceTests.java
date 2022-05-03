@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.web.support.test;
 
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -85,6 +86,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -99,6 +102,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addParameter("foo", "bar");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -115,6 +120,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addParameter("foo", "bar");
 		req.addParameter("foo", "baz");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -133,6 +140,8 @@ public class JCacheContentCachingServiceTests {
 		req.addParameter("a", "b");
 		req.addParameter("123", "c");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -147,6 +156,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.AUTHORIZATION, "SolarNetworkWS foo:bar");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -165,6 +176,8 @@ public class JCacheContentCachingServiceTests {
 		req.addParameter("bim", "bam");
 		req.addParameter("yin", "yang");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -180,6 +193,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.AUTHORIZATION,
 				"SNWS2 Credential=foo,SignedHeaders=Date,Signature=abc123");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -199,6 +214,8 @@ public class JCacheContentCachingServiceTests {
 		req.addParameter("bim", "bam");
 		req.addParameter("yin", "yang");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -213,6 +230,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "text/csv");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -229,6 +248,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "application/json");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -243,6 +264,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "application/xml");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -259,6 +282,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "text/xml");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -273,6 +298,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "text/xml, application/json");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -289,6 +316,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "text/html");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -303,6 +332,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "application/json, */*; q=0.01");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		// when
 		replayAll();
@@ -319,6 +350,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/somepath");
 		req.addHeader(HttpHeaders.ACCEPT, "*/*");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		// when
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
@@ -333,6 +366,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 		MockHttpServletResponse response = new MockHttpServletResponse();
+
+		cache.registerCacheEntryListener(anyObject());
 
 		final String key = "test.key";
 		expect(cache.get(key)).andReturn(null);
@@ -351,6 +386,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 		MockHttpServletResponse response = new MockHttpServletResponse();
+
+		cache.registerCacheEntryListener(anyObject());
 
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
@@ -398,6 +435,8 @@ public class JCacheContentCachingServiceTests {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
+		cache.registerCacheEntryListener(anyObject());
+
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
 		final String contentType = "text/plain;charset=UTF-8";
@@ -426,6 +465,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 		request.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -459,6 +500,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
 		final String contentType = "text/plain;charset=UTF-8";
@@ -488,6 +531,8 @@ public class JCacheContentCachingServiceTests {
 	public void cacheContentCompressed() throws IOException {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
+
+		cache.registerCacheEntryListener(anyObject());
 
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
@@ -521,6 +566,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
 		final String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
@@ -550,6 +597,8 @@ public class JCacheContentCachingServiceTests {
 		// given
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/somepath");
 
+		cache.registerCacheEntryListener(anyObject());
+
 		final String key = "test.key";
 		final HttpHeaders headers = new HttpHeaders();
 		final String contentType = "text/plain;charset=UTF-8";
@@ -574,28 +623,6 @@ public class JCacheContentCachingServiceTests {
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
 		assertThat("Cached data", new String(cachedBody, "UTF-8"), equalTo(body));
-	}
-
-	@Test
-	public void foo() throws IOException {
-		replayAll();
-		for ( int i = 0; i < 100; i += 1 ) {
-			long c = (long) (Math.random() * 1000000);
-			StringBuilder buf = new StringBuilder("{\"success=\"true\",\"data\":[");
-			for ( int j = 0; j <= i; j++ ) {
-				if ( j > 0 ) {
-					buf.append(",");
-				}
-				buf.append("{\"nodeId\":123\",\"sourceId\":\"test.source\",\"watts\":")
-						.append((int) (Math.random() * 1000)).append(",\"wattHours\":").append(c)
-						.append("}");
-				c += (long) (Math.random() * 5000);
-			}
-			buf.append("}");
-			byte[] compressed = compress(buf.toString());
-			System.out.println("Input " + buf.length() + " -> " + compressed.length + " ("
-					+ (int) (100.0 * compressed.length / buf.length()) + "%)");
-		}
 	}
 
 }
