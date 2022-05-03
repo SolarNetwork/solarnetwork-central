@@ -113,7 +113,7 @@ public class DatumStreamController {
 	 *        the HTTP response
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/list", method = RequestMethod.GET)
+	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand cmd,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
 			throws IOException {
@@ -135,7 +135,7 @@ public class DatumStreamController {
 	 *        the HTTP response
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/reading", method = RequestMethod.GET)
+	@RequestMapping(value = "/readings", method = RequestMethod.GET)
 	public void listReadings(final StreamDatumFilterCommand cmd,
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
