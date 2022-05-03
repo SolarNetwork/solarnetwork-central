@@ -24,9 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -51,7 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.util.ContentCachingResponseWrapper;
+import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.ObjectUtils;
 
@@ -63,7 +61,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
@@ -242,7 +240,7 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 
 			// cache miss: pass on request and capture result for cache
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
-					origResponse);
+					origResponse, true);
 			log.debug("{} [{}] Cache miss, passing on for processing", requestId, requestUri);
 			chain.doFilter(origRequest, wrappedResponse);
 
@@ -250,22 +248,15 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 			HttpStatus status = HttpStatus.valueOf(origResponse.getStatus());
 			if ( status.is2xxSuccessful() ) {
 				log.debug("{} [{}] Caching response", requestId, requestUri);
-				HttpHeaders headers = new HttpHeaders();
+				HttpHeaders headers = wrappedResponse.getHttpHeaders();
 				if ( origResponse.getContentType() != null ) {
 					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
 				}
-				for ( String headerName : new LinkedHashSet<>(origResponse.getHeaderNames()) ) {
-					Collection<String> values = origResponse.getHeaders(headerName);
-					for ( String headerValue : values ) {
-						headers.add(headerName, headerValue);
-					}
-				}
 				contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
-						headers, wrappedResponse.getContentInputStream());
+						headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
 			}
 
 			// send the response body
-			wrappedResponse.copyBodyToResponse();
 			if ( log.isDebugEnabled() ) {
 				if ( status.is2xxSuccessful() ) {
 					log.debug("{} [{}] Response cached and sent", requestId, requestUri);

@@ -33,10 +33,38 @@ import org.springframework.http.HttpHeaders;
  * requests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.16
  */
 public interface ContentCachingService {
+
+	/**
+	 * Enumeration of supported compression types.
+	 * 
+	 * @since 1.1
+	 */
+	enum CompressionType {
+
+		/** The gzip compression type. */
+		GZIP("gzip");
+
+		private final String contentEncoding;
+
+		private CompressionType(String contentEncoding) {
+			this.contentEncoding = contentEncoding;
+		}
+
+		/**
+		 * Get the HTTP {@literal Content-Encoding} value associated with this
+		 * compression type.
+		 * 
+		 * @return the content encoding
+		 */
+		public String getContentEncoding() {
+			return contentEncoding;
+		}
+
+	}
 
 	/**
 	 * Get a cache key from a HTTP request.
@@ -79,9 +107,38 @@ public interface ContentCachingService {
 	 *        the resolved HTTP response headers
 	 * @param content
 	 *        the resolved HTTP response content, or {@literal null} if none
+	 * @param compression
+	 *        if {@code content} has been compressed then the compression type,
+	 *        otherwise {@literal null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */
+	default void cacheResponse(String key, HttpServletRequest request, int statusCode,
+			HttpHeaders headers, InputStream content) throws IOException {
+		cacheResponse(key, request, statusCode, headers, content, null);
+	}
+
+	/**
+	 * Cache a response after completing an intercepted response.
+	 * 
+	 * @param key
+	 *        the cache key, returned previously from
+	 *        {@link #keyForRequest(HttpServletRequest)}
+	 * @param request
+	 *        the active HTTP request
+	 * @param statusCode
+	 *        the resolved HTTP response status code
+	 * @param headers
+	 *        the resolved HTTP response headers
+	 * @param content
+	 *        the resolved HTTP response content, or {@literal null} if none
+	 * @param compression
+	 *        if {@code content} has been compressed then the compression type,
+	 *        otherwise {@literal null}
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.1
+	 */
 	void cacheResponse(String key, HttpServletRequest request, int statusCode, HttpHeaders headers,
-			InputStream content) throws IOException;
+			InputStream content, CompressionType compression) throws IOException;
 }

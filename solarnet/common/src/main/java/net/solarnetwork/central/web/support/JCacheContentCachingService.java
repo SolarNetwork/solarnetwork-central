@@ -57,7 +57,7 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JCacheContentCachingService implements ContentCachingService {
 
@@ -256,7 +256,8 @@ public class JCacheContentCachingService implements ContentCachingService {
 		if ( in != null ) {
 			String contentEncoding = content.getContentEncoding();
 			String accept = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
-			if ( accept != null && accept.contains("gzip") && "gzip".equals(contentEncoding) ) {
+			if ( accept != null && accept.contains(CompressionType.GZIP.getContentEncoding())
+					&& CompressionType.GZIP.getContentEncoding().equals(contentEncoding) ) {
 				// send already compressed content
 				response.setHeader(HttpHeaders.CONTENT_ENCODING, contentEncoding);
 				response.setContentLength(content.getContentLength());
@@ -277,7 +278,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 					}
 				}
 				FileCopyUtils.copy(in, response.getOutputStream());
-			} else if ( "gzip".equals(contentEncoding) ) {
+			} else if ( CompressionType.GZIP.getContentEncoding().equals(contentEncoding) ) {
 				// send decompressed content
 				FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
 			} else {
@@ -292,20 +293,28 @@ public class JCacheContentCachingService implements ContentCachingService {
 
 	@Override
 	public void cacheResponse(String key, HttpServletRequest request, int statusCode,
-			HttpHeaders headers, InputStream content) throws IOException {
+			HttpHeaders headers, InputStream content, CompressionType compressionType)
+			throws IOException {
 		byte[] data = FileCopyUtils.copyToByteArray(content);
-		String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
-		MediaType type = headers.getContentType();
-		if ( contentEncoding == null && type != null && data.length >= compressMinimumLength ) {
-			for ( MediaType t : compressibleMediaTypes ) {
-				if ( t.includes(type) ) {
-					try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
-							GZIPOutputStream out = new GZIPOutputStream(byos)) {
-						FileCopyUtils.copy(data, out);
-						data = byos.toByteArray();
-						contentEncoding = "gzip";
+
+		String contentEncoding = null;
+		if ( compressionType != null ) {
+			// content already compressed for us
+			contentEncoding = compressionType.getContentEncoding();
+		} else {
+			MediaType type = headers.getContentType();
+			if ( type != null && data.length >= compressMinimumLength ) {
+				// compress the content if possible
+				for ( MediaType t : compressibleMediaTypes ) {
+					if ( t.includes(type) ) {
+						try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
+								GZIPOutputStream out = new GZIPOutputStream(byos)) {
+							FileCopyUtils.copy(data, out);
+							data = byos.toByteArray();
+							contentEncoding = CompressionType.GZIP.getContentEncoding();
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
