@@ -72,7 +72,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 	private final ContentCacheStats stats;
 
 	private Set<MediaType> compressibleMediaTypes = new HashSet<>(
-			MediaType.parseMediaTypes("text/*, application/json, application/xml"));
+			MediaType.parseMediaTypes("text/*, application/cbor, application/json, application/xml"));
 	private int compressMinimumLength = 2048;
 
 	/**

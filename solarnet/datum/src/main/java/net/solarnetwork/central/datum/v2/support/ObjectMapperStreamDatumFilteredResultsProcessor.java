@@ -1,5 +1,5 @@
 /* ==================================================================
- * JsonObjectDatumStreamFilteredResultsProcessor.java - 1/05/2022 5:32:46 pm
+ * ObjectMapperStreamDatumFilteredResultsProcessor.java - 1/05/2022 5:32:46 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -31,6 +31,7 @@ import static net.solarnetwork.codec.JsonUtils.writeDecimalArrayValues;
 import static net.solarnetwork.codec.JsonUtils.writeStringArrayValues;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,8 @@ import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.BasicObjectDatumStreamMetadataSerializer;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -50,8 +53,12 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
- * {@link FilteredResultsProcessor} for encoding {@link Datum} results into
- * datum stream JSON form.
+ * {@link FilteredResultsProcessor} for encoding overall results into datum
+ * stream form.
+ * 
+ * <p>
+ * The overall structure has the metadata followed by the data:
+ * </p>
  * 
  * <pre>
  * <code>{
@@ -65,21 +72,93 @@ import net.solarnetwork.domain.datum.StreamDatum;
  *     ...
  *   ],
  *   "data" : [
- *     [&lt;meta index&gt;, &lt;timestamp&gt;, &lt;i data&gt;..., &lt;a data&gt;..., &lt;s data&gt;..., &lt;tags*&gt;...],
+ *     [ // Datum ],
  *     ...
  *   ]
  * }</code>
+ * </pre>
+ * 
+ * <p>
+ * For {@link Datum} results, each {@code data} element is an array with the
+ * following:
+ * </p>
+ * 
+ * <ol>
+ * <li>0-based index of the associated stream metadata object in the
+ * {@literal meta} array</li>
+ * <li>timestamp, in millisecond epoch form</li>
+ * <li>instantaneous property values (elements in order of the {@code meta.i}
+ * array)</li>
+ * <li>accumulating property values (elements in order of the {@code meta.a}
+ * array)</li>
+ * <li>status property values (elements in order of the {@code meta.s}
+ * array)</li>
+ * <li>tags (one element per tag)</li>
+ * </ol>
+ * 
+ * <p>
+ * The {@link Datum} structure resembles this:
+ * </p>
+ * 
+ * <pre>
+ * <code>[
+ *   &lt;meta index&gt;,
+ *   &lt;timestamp&gt;,
+ *   &lt;i data&gt;,
+ *   ...,
+ *   &lt;a data&gt;,
+ *   ...,
+ *   &lt;s data&gt;,
+ *   ...,
+ *   &lt;tag*&gt;,
+ *   ...,
+ * ]</code>
+ * </pre>
+ * 
+ * <p>
+ * For {@link ReadingDatum} results, each {@code data} element is an array with
+ * the following:
+ * </p>
+ * 
+ * <ol>
+ * <li>0-based index of the associated stream metadata object in the
+ * {@literal meta} array</li>
+ * <li>2-element array with the reading starting and ending timestamps, each in
+ * millisecond epoch form</li>
+ * <li>4-element arrays with the property value, count, minimum, and maximum,
+ * for each instantaneous property value (elements in order of the
+ * {@code meta.i} array); values may be {@literal null} if no instantaneous
+ * property data is available</li>
+ * <li>3-element arrays with the accumulating property value, starting value,
+ * ending value, for each accumulating property value (elements in order of the
+ * {@code meta.a} array)</li>
+ * </ol>
+ * 
+ * <p>
+ * The {@link ReadingDatum} structure resembles this:
+ * </p>
+ * 
+ * <pre>
+ * <code>[
+ *   &lt;meta index&gt;,
+ *   [&lt;timestamp start&gt;, &lt;timestamp end&gt;],
+ *   [&lt;i val&gt;, &lt;count&gt;, &lt;min&gt;, &lt;max&gt;],
+ *   ...,
+ *   [&lt;a val&gt;, &lt;start val&gt;, &lt;end val&gt;],
+ *   ...,
+ * ]</code>
  * </pre>
  * 
  * @author matt
  * @version 1.0
  * @since 1.3
  */
-public class JsonObjectDatumStreamFilteredResultsProcessor
+public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		implements StreamDatumFilteredResultsProcessor {
 
 	private final JsonGenerator generator;
 	private final SerializerProvider provider;
+	private final MimeType mimeType;
 
 	private ObjectDatumStreamMetadataProvider metadataProvider;
 	private Collection<UUID> streamIds;
@@ -88,18 +167,26 @@ public class JsonObjectDatumStreamFilteredResultsProcessor
 
 	/**
 	 * Constructor.
+	 * 
+	 * @param generator
+	 *        the generator to use
+	 * @param provider
+	 *        the provider to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public JsonObjectDatumStreamFilteredResultsProcessor(JsonGenerator generator,
-			SerializerProvider provider) {
+	public ObjectMapperStreamDatumFilteredResultsProcessor(JsonGenerator generator,
+			SerializerProvider provider, MimeType mimeType) {
 		super();
 		this.generator = requireNonNullArgument(generator, "generator");
 		this.provider = requireNonNullArgument(provider, "provider");
+		this.mimeType = requireNonNullArgument(mimeType, "mimeType");
 		this.generator.enable(Feature.AUTO_CLOSE_TARGET);
 	}
 
 	@Override
 	public MimeType getMimeType() {
-		return MimeType.valueOf("application/json");
+		return mimeType;
 	}
 
 	@Override
@@ -171,8 +258,25 @@ public class JsonObjectDatumStreamFilteredResultsProcessor
 
 		generator.writeStartArray(d, totalLen);
 		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
-		generator.writeNumber(ts);
-		if ( p != null ) {
+		if ( d instanceof ReadingDatum ) {
+			ReadingDatum rd = (ReadingDatum) d;
+			generator.writeStartArray(d, 2);
+			generator.writeNumber(ts);
+			generator
+					.writeNumber(rd.getEndTimestamp() != null ? rd.getEndTimestamp().toEpochMilli() : 0);
+			generator.writeEndArray();
+
+			DatumPropertiesStatistics stats = rd.getStatistics();
+			if ( stats != null ) {
+				writeReadingStatistics(generator, DatumSamplesType.Instantaneous, iLen,
+						p.getInstantaneous(), stats.getInstantaneous());
+				writeReadingStatistics(generator, DatumSamplesType.Accumulating, aLen,
+						p.getAccumulating(), stats.getAccumulating());
+			} else {
+				generator.writeNull();
+			}
+		} else if ( p != null ) {
+			generator.writeNumber(ts);
 			writeDecimalArrayValues(generator, p.getInstantaneous(), iLen);
 			writeDecimalArrayValues(generator, p.getAccumulating(), aLen);
 			writeStringArrayValues(generator, p.getStatus(), sLen);
@@ -180,6 +284,41 @@ public class JsonObjectDatumStreamFilteredResultsProcessor
 		}
 		generator.writeEndArray();
 		resultIndex++;
+	}
+
+	private static void writeReadingStatistics(final JsonGenerator generator,
+			final DatumSamplesType type, final int len, final BigDecimal[] values,
+			final BigDecimal[][] statValues) throws IOException {
+		for ( int i = 0; i < len; i++ ) {
+			BigDecimal[] sv = (statValues != null && statValues.length >= i ? statValues[i] : null);
+			int arrayLen = (sv != null ? sv.length : 0);
+			if ( type == DatumSamplesType.Instantaneous && values != null && values.length >= i ) {
+				arrayLen++;
+			}
+			if ( arrayLen > 0 ) {
+				generator.writeStartArray(sv, arrayLen);
+				if ( type == DatumSamplesType.Instantaneous && values != null ) {
+					BigDecimal v = values[i];
+					if ( v != null ) {
+						generator.writeNumber(v);
+					} else {
+						generator.writeNull();
+					}
+				}
+				if ( sv != null ) {
+					for ( BigDecimal v : sv ) {
+						if ( v != null ) {
+							generator.writeNumber(v);
+						} else {
+							generator.writeNull();
+						}
+					}
+				}
+				generator.writeEndArray();
+			} else {
+				generator.writeNull();
+			}
+		}
 	}
 
 	@Override

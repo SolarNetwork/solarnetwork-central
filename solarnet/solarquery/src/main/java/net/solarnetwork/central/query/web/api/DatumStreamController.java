@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.time.Period;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,9 +41,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
-import net.solarnetwork.central.datum.v2.support.JsonObjectDatumStreamFilteredResultsProcessor;
+import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.config.JsonConfig;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 
 /**
@@ -56,6 +59,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 public class DatumStreamController {
 
 	private final ObjectMapper objectMapper;
+	private final ObjectMapper cborObjectMapper;
 	private final QueryBiz queryBiz;
 
 	/**
@@ -64,22 +68,32 @@ public class DatumStreamController {
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param objectMapper
-	 *        the object mapper to use
+	 *        the object mapper to use for JSON
+	 * @param cborObjectMapper
+	 *        the mapper to use for CBOR
 	 */
 	@Autowired
-	public DatumStreamController(QueryBiz queryBiz, ObjectMapper objectMapper) {
+	public DatumStreamController(QueryBiz queryBiz, ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper) {
 		super();
 		this.queryBiz = requireNonNullArgument(queryBiz, "queryBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
+		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
 	}
 
 	private StreamDatumFilteredResultsProcessor processorForType(final MediaType acceptType,
 			final HttpServletResponse response) throws IOException {
 		StreamDatumFilteredResultsProcessor processor = null;
 		if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
-			processor = new JsonObjectDatumStreamFilteredResultsProcessor(
+			processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
 					objectMapper.createGenerator(response.getOutputStream()),
-					objectMapper.getSerializerProvider());
+					objectMapper.getSerializerProvider(),
+					MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+		} else if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
+			processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+					cborObjectMapper.createGenerator(response.getOutputStream()),
+					cborObjectMapper.getSerializerProvider(),
+					MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
 		} else {
 			throw new IllegalArgumentException(
 					format("The [%s] media type is not supported.", acceptType));

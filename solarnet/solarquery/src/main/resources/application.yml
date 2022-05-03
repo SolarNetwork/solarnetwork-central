@@ -115,7 +115,7 @@ spring:
 server:
   compression:
     enabled: true
-    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types: "application/cbor,application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
   port: 9082
   servlet.context-path: /solarquery

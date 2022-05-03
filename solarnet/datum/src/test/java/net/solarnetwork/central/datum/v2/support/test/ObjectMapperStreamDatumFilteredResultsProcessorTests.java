@@ -1,5 +1,5 @@
 /* ==================================================================
- * JsonObjectDatumStreamFilteredResultsProcessorTests.java - 1/05/2022 6:02:55 pm
+ * ObjectMapperStreamDatumFilteredResultsProcessorTests.java - 1/05/2022 6:02:55 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -25,21 +25,29 @@ package net.solarnetwork.central.datum.v2.support.test;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
 import static net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet.dataSet;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.http.MediaType;
+import org.springframework.util.MimeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.datum.v2.support.JsonObjectDatumStreamFilteredResultsProcessor;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
@@ -50,13 +58,13 @@ import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.util.ByteUtils;
 
 /**
- * Test cases for the {@link JsonObjectDatumStreamFilteredResultsProcessor}
+ * Test cases for the {@link ObjectMapperStreamDatumFilteredResultsProcessor}
  * class.
  * 
  * @author matt
  * @version 1.0
  */
-public class JsonObjectDatumStreamFilteredResultsProcessorTests {
+public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
 	private ObjectMapper mapper;
 
@@ -77,7 +85,7 @@ public class JsonObjectDatumStreamFilteredResultsProcessorTests {
 	}
 
 	@Test
-	public void oneStream() throws IOException {
+	public void oneStream_datum() throws IOException {
 		// GIVEN
 		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
 				new String[] { "c" }, new String[] { "d" });
@@ -101,8 +109,9 @@ public class JsonObjectDatumStreamFilteredResultsProcessorTests {
 
 		// WHEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		try (JsonObjectDatumStreamFilteredResultsProcessor processor = new JsonObjectDatumStreamFilteredResultsProcessor(
-				mapper.createGenerator(out), mapper.getSerializerProviderInstance())) {
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
 			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
 			processor.handleResultItem(d1);
 			processor.handleResultItem(d2);
@@ -110,11 +119,57 @@ public class JsonObjectDatumStreamFilteredResultsProcessorTests {
 
 		// THEN
 		String json = out.toString(ByteUtils.UTF8);
-		assertThat("JSON", json, is(format("{\"meta\":[{\"streamId\":\"%s\",", meta.getStreamId())
+		assertThat("Datum JSON", json, is(format("{\"meta\":[{\"streamId\":\"%s\",", meta.getStreamId())
 				+ "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
 				+ "\"data\":[[0,1651197120000,1.23,2.34,3.45,\"foo\",\"a\"],"
 				+ "[0,1651197121000,3.21,4.32,5.43,\"bar\"]]}"));
+	}
+
+	@Test
+	public void oneStream_reading() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		ZonedDateTime start = LocalDateTime.of(2022, 4, 29, 13, 52)
+				.atZone(ZoneId.of("Pacific/Auckland"));
+
+		DatumProperties p1 = new DatumProperties();
+		p1.setInstantaneous(decimalArray("1.23", "2.34"));
+		p1.setAccumulating(decimalArray("3.45"));
+		p1.setStatus(new String[] { "foo" });
+		p1.setTags(new String[] { "a" });
+		// @formatter:off
+		ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
+				null, start.plusHours(1).minusMinutes(1).toInstant(),
+				propertiesOf(
+						decimalArray("1.23", "2.34"),
+						decimalArray("30"), null, null),
+				statisticsOf(new BigDecimal[][] {
+					decimalArray("10", "1.0", "2.0"),
+					decimalArray("10", "2.0", "3.0")
+				}, new BigDecimal[][] { 
+					decimalArray("30", "100", "130")
+				}));
+		// @formatter:on
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1));
+
+		// WHEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+		}
+
+		// THEN
+		String json = out.toString(ByteUtils.UTF8);
+		assertThat("Reading JSON", json, is(format("{\"meta\":[{\"streamId\":\"%s\",",
+				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
+				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
+				+ "\"data\":[[0,[1651197060000,1651200660000],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130]]]}"));
 	}
 
 }
