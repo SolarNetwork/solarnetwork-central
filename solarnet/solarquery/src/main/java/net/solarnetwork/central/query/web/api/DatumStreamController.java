@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Period;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -81,22 +82,26 @@ public class DatumStreamController {
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
 	}
 
-	private StreamDatumFilteredResultsProcessor processorForType(final MediaType acceptType,
+	private StreamDatumFilteredResultsProcessor processorForType(final List<MediaType> acceptTypes,
 			final HttpServletResponse response) throws IOException {
 		StreamDatumFilteredResultsProcessor processor = null;
-		if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
-			processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-					objectMapper.createGenerator(response.getOutputStream()),
-					objectMapper.getSerializerProvider(),
-					MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
-		} else if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
-			processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-					cborObjectMapper.createGenerator(response.getOutputStream()),
-					cborObjectMapper.getSerializerProvider(),
-					MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
-		} else {
-			throw new IllegalArgumentException(
-					format("The [%s] media type is not supported.", acceptType));
+		for ( MediaType acceptType : acceptTypes ) {
+			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
+				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+						cborObjectMapper.createGenerator(response.getOutputStream()),
+						cborObjectMapper.getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
+				break;
+			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
+				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+						objectMapper.createGenerator(response.getOutputStream()),
+						objectMapper.getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+				break;
+			} else {
+				throw new IllegalArgumentException(
+						format("The [%s] media type is not supported.", acceptType));
+			}
 		}
 		response.setContentType(processor.getMimeType().toString());
 		return processor;
@@ -117,8 +122,8 @@ public class DatumStreamController {
 	public void listDatum(final StreamDatumFilterCommand cmd,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
 			throws IOException {
-		final MediaType acceptType = MediaType.valueOf(accept);
-		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, response)) {
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
 			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
 					cmd.getMax());
 		}
@@ -141,8 +146,8 @@ public class DatumStreamController {
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
 			throws IOException {
-		final MediaType acceptType = MediaType.valueOf(accept);
-		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptType, response)) {
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
 			queryBiz.findFilteredStreamReadings(cmd, readingType, tolerance, processor,
 					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		}
