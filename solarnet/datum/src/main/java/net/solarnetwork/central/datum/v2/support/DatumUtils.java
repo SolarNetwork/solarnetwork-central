@@ -185,6 +185,15 @@ public final class DatumUtils {
 			StreamDatumFilterCommand f = (StreamDatumFilterCommand) filter;
 			// most common
 			c.setStreamIds(f.getStreamIds());
+			Long[] objIds = f.getObjectIds();
+			if ( objIds != null ) {
+				if ( f.getKind() == ObjectDatumKind.Location ) {
+
+					c.setLocationIds(objIds);
+				} else {
+					c.setNodeIds(objIds);
+				}
+			}
 			c.setSourceIds(f.getSourceIds());
 			c.setUserIds(f.getUserIds());
 			c.setAggregation(f.getAggregation());

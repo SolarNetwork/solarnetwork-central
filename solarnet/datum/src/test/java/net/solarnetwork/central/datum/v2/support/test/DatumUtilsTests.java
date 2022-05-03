@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.math.BigDecimal;
@@ -48,20 +49,21 @@ import org.junit.Assert;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.DateUtils;
 
 /**
@@ -536,6 +538,21 @@ public class DatumUtilsTests {
 		// THEN
 		assertThat("Tags converted to search filter", c.getSearchFilter(),
 				equalTo("(|(/t=foo)(/t=bar))"));
+	}
+
+	@Test
+	public void criteriaFromFilter_streamDatumFilterCommand_nodesAndSources() {
+		// GIVEN
+		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
+		f.setNodeIds(new Long[] { 1L, 2L });
+		f.setSourceIds(new String[] { "a", "b" });
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Node IDs copied", c.getNodeIds(), is(arrayContaining(1L, 2L)));
+		assertThat("Source IDs copied", c.getSourceIds(), is(arrayContaining("a", "b")));
 	}
 
 	@Test
