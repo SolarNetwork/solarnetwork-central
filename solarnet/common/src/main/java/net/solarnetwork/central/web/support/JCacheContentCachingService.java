@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,13 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
+import javax.cache.configuration.FactoryBuilder.SingletonFactory;
+import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
+import javax.cache.event.CacheEntryCreatedListener;
+import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.CacheEntryExpiredListener;
+import javax.cache.event.CacheEntryListener;
+import javax.cache.event.CacheEntryListenerException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.codec.binary.Hex;
@@ -49,7 +57,8 @@ import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import net.solarnetwork.central.web.support.ContentCacheStats.Counts;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
@@ -59,7 +68,9 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * @author matt
  * @version 1.2
  */
-public class JCacheContentCachingService implements ContentCachingService {
+public class JCacheContentCachingService
+		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
+		CacheEntryExpiredListener<String, CachedContent> {
 
 	/** The default value for the {@code statLogAccessCount} property. */
 	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
@@ -69,7 +80,8 @@ public class JCacheContentCachingService implements ContentCachingService {
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
 
 	private final Cache<String, CachedContent> cache;
-	private final ContentCacheStats stats;
+	private final ContentCacheStatCounter stats;
+	private final String pingTestId;
 
 	private Set<MediaType> compressibleMediaTypes = new HashSet<>(
 			MediaType.parseMediaTypes("text/*, application/cbor, application/json, application/xml"));
@@ -86,7 +98,58 @@ public class JCacheContentCachingService implements ContentCachingService {
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
 		this.cache = ObjectUtils.requireNonNullArgument(cache, "cache");
-		this.stats = new ContentCacheStats(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
+		this.stats = new ContentCacheStatCounter(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
+		this.pingTestId = String.format("%s-%s", JCacheContentCachingService.class.getName(),
+				cache.getName());
+		MutableCacheEntryListenerConfiguration<String, CachedContent> listenerConfiguration = new MutableCacheEntryListenerConfiguration<>(
+				new SingletonFactory<CacheEntryListener<String, CachedContent>>(this), null, false,
+				false);
+		cache.registerCacheEntryListener(listenerConfiguration);
+	}
+
+	@Override
+	public String getPingTestId() {
+		return pingTestId;
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Content Cache";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 500;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		Map<String, Number> statMap = new LinkedHashMap<>(ContentCacheStats.values().length);
+		for ( ContentCacheStats s : ContentCacheStats.values() ) {
+			statMap.put(s.toString(), stats.get(s));
+		}
+		statMap.put("HitRate", (int) (stats.getHitRate() * 100));
+		return new PingTestResult(true, "Cache active.", statMap);
+	}
+
+	@Override
+	public void onExpired(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
+			long size = event.getValue().getContentLength();
+			stats.addAndGet(ContentCacheStats.EntryCount, -1L);
+			stats.addAndGet(ContentCacheStats.ByteSize, -size);
+		}
+	}
+
+	@Override
+	public void onCreated(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
+			long size = event.getValue().getContentLength();
+			stats.incrementAndGet(ContentCacheStats.EntryCount);
+			stats.addAndGet(ContentCacheStats.ByteSize, size);
+		}
 	}
 
 	private void addAuthorization(HttpServletRequest request, MessageDigest digest) {
@@ -235,11 +298,11 @@ public class JCacheContentCachingService implements ContentCachingService {
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
-			stats.incrementAndGet(Counts.Miss);
+			stats.incrementAndGet(ContentCacheStats.Miss);
 			return null;
 		}
 
-		stats.incrementAndGet(Counts.Hit);
+		stats.incrementAndGet(ContentCacheStats.Hit);
 		response.reset();
 		response.setStatus(200);
 
@@ -321,7 +384,7 @@ public class JCacheContentCachingService implements ContentCachingService {
 		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
 		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
 				metadata));
-		stats.incrementAndGet(Counts.Stored);
+		stats.incrementAndGet(ContentCacheStats.Stored);
 	}
 
 	/**
