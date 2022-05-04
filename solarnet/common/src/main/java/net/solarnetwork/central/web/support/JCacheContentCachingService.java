@@ -303,7 +303,6 @@ public class JCacheContentCachingService
 		}
 
 		stats.incrementAndGet(ContentCacheStats.Hit);
-		response.reset();
 		response.setStatus(200);
 
 		MultiValueMap<String, String> headers = content.getHeaders();
