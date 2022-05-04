@@ -140,7 +140,7 @@ public class DatumStreamController {
 	 *        the HTTP response
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/readings", method = RequestMethod.GET)
+	@RequestMapping(value = "/reading", method = RequestMethod.GET)
 	public void listReadings(final StreamDatumFilterCommand cmd,
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
