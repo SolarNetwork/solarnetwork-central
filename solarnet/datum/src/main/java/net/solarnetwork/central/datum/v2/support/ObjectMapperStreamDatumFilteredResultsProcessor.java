@@ -268,8 +268,11 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			ReadingDatum rd = (ReadingDatum) d;
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
-			generator
-					.writeNumber(rd.getEndTimestamp() != null ? rd.getEndTimestamp().toEpochMilli() : 0);
+			if ( rd.getEndTimestamp() != null ) {
+				generator.writeNumber(rd.getEndTimestamp().toEpochMilli());
+			} else {
+				generator.writeNull();
+			}
 			generator.writeEndArray();
 
 			DatumPropertiesStatistics stats = rd.getStatistics();
