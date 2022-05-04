@@ -1,7 +1,7 @@
 /* ==================================================================
- * SortDescriptors.java - Apr 29, 2011 3:40:16 PM
+ * StreamDatumFilteredResultsProcessor.java - 1/05/2022 8:23:35 pm
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,33 +20,29 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.datum.v2.support;
+
+import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
- * An API for specifying a collection ordering.
+ * Filtered results processor for {@link StreamDatum}.
+ * 
+ * <p>
+ * The {@link #start(Long, Integer, Integer, java.util.Map)} method must provide
+ * the {@link #METADATA_PROVIDER_ATTR} attribute value.
+ * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
+ * @since 1.3
  */
-public interface SortDescriptor {
+public interface StreamDatumFilteredResultsProcessor extends FilteredResultsProcessor<StreamDatum> {
 
 	/**
-	 * Get the name of the value to sort by.
-	 * 
-	 * <p>
-	 * How this value is interpreted is implementation dependent.
-	 * </p>
-	 * 
-	 * @return the sort key
+	 * A starting attribute for a
+	 * {@link net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider}.
 	 */
-	String getSortKey();
-
-	/**
-	 * Return <em>true</em> if the sort should be in descending order, otherwise
-	 * the short should be in ascending order.
-	 * 
-	 * @return <em>true</em> if the sort should be in descending order
-	 */
-	boolean isDescending();
+	String METADATA_PROVIDER_ATTR = "ObjectDatumStreamMetadataProvider";
 
 }

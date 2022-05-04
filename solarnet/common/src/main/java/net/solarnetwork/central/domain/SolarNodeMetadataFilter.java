@@ -26,10 +26,10 @@ package net.solarnetwork.central.domain;
  * Filter API for {@link SolarNodeMetadata}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.32
  */
-public interface SolarNodeMetadataFilter extends Filter, MetadataFilter {
+public interface SolarNodeMetadataFilter extends Filter, MetadataFilter, TagFilter {
 
 	/**
 	 * Get the first node ID.
@@ -49,24 +49,5 @@ public interface SolarNodeMetadataFilter extends Filter, MetadataFilter {
 	 * @return array of node IDs (may be {@literal null})
 	 */
 	Long[] getNodeIds();
-
-	/**
-	 * Get the first tag.
-	 * 
-	 * <p>
-	 * This returns the first available tag from the {@link #getTags()} array,
-	 * or {@literal null} if not available.
-	 * </p>
-	 * 
-	 * @return the first tag, or {@literal null} if not available
-	 */
-	String getTag();
-
-	/**
-	 * Get an array of tags.
-	 * 
-	 * @return array of tags (may be {@literal null})
-	 */
-	String[] getTags();
 
 }

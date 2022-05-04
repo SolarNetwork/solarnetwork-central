@@ -23,7 +23,6 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.READING_DATUM_FILTER;
-import static net.solarnetwork.central.query.config.WebConfig.SOURCE_ID_PATH_MATCHER;
 import java.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.PathMatcher;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -81,21 +79,6 @@ public class DatumController {
 	 *        the QueryBiz to use
 	 */
 	public DatumController(QueryBiz queryBiz) {
-		this(queryBiz, null);
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param queryBiz
-	 *        the QueryBiz to use
-	 * @param pathMatcher
-	 *        the source ID path matcher to use
-	 * @since 2.1
-	 */
-	@Autowired
-	public DatumController(QueryBiz queryBiz,
-			@Qualifier(SOURCE_ID_PATH_MATCHER) PathMatcher pathMatcher) {
 		super();
 		this.queryBiz = queryBiz;
 	}

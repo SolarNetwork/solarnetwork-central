@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.time.Period;
 import java.util.List;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
@@ -31,8 +32,10 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 
 /**
@@ -65,6 +68,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
+		auditor.resetCurrentAuditResults();
 		FilterResults<GeneralNodeDatumFilterMatch> results = super.findFilteredGeneralNodeDatum(filter,
 				sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
@@ -75,6 +79,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
 			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
+		auditor.resetCurrentAuditResults();
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateGeneralNodeDatum(
 				filter, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
@@ -84,6 +89,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+		auditor.resetCurrentAuditResults();
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredReading(filter,
 				readingType, tolerance);
 		auditor.auditNodeDatumFilterResults(filter, results);
@@ -94,10 +100,21 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+		auditor.resetCurrentAuditResults();
 		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateReading(
 				filter, readingType, tolerance, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
+	}
+
+	@Override
+	public void findFilteredStreamDatum(StreamDatumFilter filter,
+			StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) throws IOException {
+		auditor.resetCurrentAuditResults();
+		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilterdResultsProcessor(
+				processor, auditor);
+		super.findFilteredStreamDatum(filter, proxy, sortDescriptors, offset, max);
 	}
 
 }

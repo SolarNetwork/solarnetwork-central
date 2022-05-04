@@ -16,7 +16,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarQuery'
-version = '1.1.0'
+version = '1.2.0'
 archivesBaseName = 'solarquery'
 
 configurations {
@@ -39,11 +39,10 @@ dependencies {
 	// allow WAR to be run from command line OR deployed in Tomcat
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	
-	// JCache
+	// Utilities
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
-
-	// Utilities
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing
@@ -65,7 +64,7 @@ eclipse {
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarQuery',
-					'Implementation-Version': version
+					'Implementation-Version': archiveVersion
 	}
 }
 

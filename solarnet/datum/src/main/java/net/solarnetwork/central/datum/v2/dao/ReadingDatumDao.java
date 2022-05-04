@@ -22,14 +22,19 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.IOException;
+import java.util.List;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
+import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * API for datum reading information.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface ReadingDatumDao {
@@ -41,7 +46,35 @@ public interface ReadingDatumDao {
 	 *        the search criteria
 	 * @return the matching records
 	 */
-	ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(
-			ReadingDatumCriteria filter);
+	ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(DatumCriteria filter);
+
+	/**
+	 * API for querying for a stream of reading {@link StreamDatum}.
+	 * 
+	 * <p>
+	 * The type of datum instances passed to the given {@code processor} will
+	 * depend on the {@link DatumCriteria#getReadingType()} passed in the
+	 * {@code filter}. For
+	 * {@code net.solarnetwork.central.datum.domain.DatumReadingType#CalculatedAt}
+	 * plain {@link net.solarnetwork.central.datum.v2.domain.Datum} objects will
+	 * be used. For all others {@link import ReadingDatum} objects will be used.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        the optional starting offset
+	 * @param max
+	 *        the optional maximum result count
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.1
+	 */
+	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
 
 }

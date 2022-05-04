@@ -63,7 +63,7 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
@@ -115,7 +115,7 @@ public class JdbcDatumEntityDao_ReadingDatumDaoTests extends BaseDatumJdbcTestSu
 		return meta;
 	}
 
-	private ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> execute(ReadingDatumCriteria filter) {
+	private ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> execute(DatumCriteria filter) {
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> results = dao
 				.findDatumReadingFiltered(filter);
 		if ( results.getReturnedResultCount() > 0 ) {

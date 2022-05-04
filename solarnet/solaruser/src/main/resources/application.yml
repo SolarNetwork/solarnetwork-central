@@ -37,6 +37,14 @@ app:
           regionName: us-west-2
           accessToken: TOKEN_HERE
           accessSecret: SECRET_HERE
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
@@ -90,20 +98,6 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
-  solaruser:
-    node-ownership-cache:
-      ttl: 60
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
-    query-cache:
-      ttl: 60
-      heap-max-entries: 1000
-      disk-max-size-mb: 100
-      compress-minimum-length: 512
-    stream-metadata-cache:
-      ttl: 300
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10

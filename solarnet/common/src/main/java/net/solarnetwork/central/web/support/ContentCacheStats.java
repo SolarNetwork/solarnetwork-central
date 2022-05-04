@@ -22,130 +22,50 @@
 
 package net.solarnetwork.central.web.support;
 
-import java.util.concurrent.atomic.AtomicLongArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.solarnetwork.util.StatCounter;
 
 /**
- * Statistics for content cache processing.
+ * Content cache statistics.
  * 
  * @author matt
  * @version 1.0
- * @since 1.16
+ * @since 1.2
  */
-public class ContentCacheStats {
+public enum ContentCacheStats implements StatCounter.Stat {
 
-	/** Counted fields. */
-	public enum Counts {
+	/** Cache hit. */
+	Hit(0, "cache hits"),
 
-		Hit(0, "cache hits"),
+	/** Cache miss. */
+	Miss(1, "cache misses"),
 
-		Miss(1, "cache misses"),
+	/** Count of items added to cache. */
+	Stored(2, "cache puts"),
 
-		Stored(2, "cache puts");
+	/** Number of entries in the cache. */
+	EntryCount(3, "number of entries"),
 
-		private final int index;
-		private final String description;
+	/** Total bytes size of all entries in the cache. */
+	ByteSize(4, "byte size of entries"),
 
-		private Counts(int index, String description) {
-			this.index = index;
-			this.description = description;
-		}
-	}
+	;
 
-	private static final Logger log = LoggerFactory.getLogger(ContentCacheStats.class);
+	final int index;
+	final String description;
 
-	private final AtomicLongArray counts;
-	private int logFrequency;
-	private String uid;
-
-	/**
-	 * Construct with a unique ID.
-	 * 
-	 * @param uid
-	 *        the UID
-	 * @param logFrequency
-	 *        a frequency at which to log INFO level statistic messages
-	 */
-	public ContentCacheStats(String uid, int logFrequency) {
-		super();
-		this.uid = uid;
-		this.logFrequency = logFrequency;
-		this.counts = new AtomicLongArray(Counts.values().length);
-	}
-
-	/**
-	 * Set the log frequency.
-	 * 
-	 * @param logFrequency
-	 *        the frequency
-	 */
-	public void setLogFrequency(int logFrequency) {
-		this.logFrequency = logFrequency;
-	}
-
-	/**
-	 * Set the unique ID.
-	 * 
-	 * @param uid
-	 *        the unique ID
-	 */
-	public void setUid(String uid) {
-		this.uid = uid;
-	}
-
-	/**
-	 * Get a current count value.
-	 * 
-	 * @param count
-	 *        the count to get
-	 * @return the current count value
-	 */
-	public long get(Counts count) {
-		return counts.get(count.index);
-	}
-
-	/**
-	 * Increment and get the current count value.
-	 * 
-	 * @param count
-	 *        the count to increment and get
-	 * @return the incremented count value
-	 */
-	public long incrementAndGet(Counts count) {
-		long c = counts.incrementAndGet(count.index);
-		if ( log.isInfoEnabled() && ((c % logFrequency) == 0) ) {
-			long hits = 0;
-			long total = 0;
-			switch (count) {
-				case Hit:
-					hits = c;
-					total = hits + get(Counts.Miss);
-					break;
-
-				case Miss:
-					hits = get(Counts.Hit);
-					total = hits + c;
-					break;
-
-				default:
-					hits = get(Counts.Hit);
-					total = hits + get(Counts.Miss);
-			}
-			int hitRate = (total < 1 ? 0 : (int) (((double) hits / (double) total) * 100));
-			log.info("Content cache {} {}: {} ({}% hit rate)", uid, count.description, c, hitRate);
-		}
-		return c;
+	private ContentCacheStats(int index, String description) {
+		this.index = index;
+		this.description = description;
 	}
 
 	@Override
-	public String toString() {
-		StringBuilder buf = new StringBuilder("ContentCacheStats{\n");
-		for ( Counts c : Counts.values() ) {
-			buf.append(String.format("%30s: %d\n", c.description, get(c)));
-		}
-		buf.append("}");
-		return buf.toString();
+	public int getIndex() {
+		return index;
+	}
+
+	@Override
+	public String getDescription() {
+		return description;
 	}
 
 }

@@ -24,9 +24,9 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -69,7 +69,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
-import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.TypedDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -78,21 +77,21 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
-import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 
 /**
  * Utilities for working with datum at the database level.
@@ -102,7 +101,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -153,15 +152,15 @@ public final class DatumDbUtils {
 	/**
 	 * Extract a sorted set of stream IDs from filter results.
 	 * 
-	 * @param results
+	 * @param provider
 	 *        the results to extract the stream IDs from
 	 * @param comparator
 	 *        the comparator to use; for example {@link #UUID_STRING_ORDER}
 	 * @return the sorted set
 	 */
-	public static SortedSet<UUID> sortedStreamIds(ObjectDatumStreamFilterResults<?, ?> results,
+	public static SortedSet<UUID> sortedStreamIds(ObjectDatumStreamMetadataProvider provider,
 			Comparator<UUID> comparator) {
-		return results.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
+		return provider.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
 			return new TreeSet<>(comparator);
 		}));
 	}

@@ -27,18 +27,27 @@ app:
     platform: postgres
     initialize: false
     ping-query: "SELECT CURRENT_TIMESTAMP"
-  datum.query:
-    filtered-results-limit: 1000
-    max-days-for-minute-aggregation: 7
-    max-days-for-hour-aggregation: 31
-    max-days-for-day-aggregation: 730
-    max-days-for-day-of-week-aggregation: 3650
-    max-days-for-hour-of-day-aggregation: 3650
-  datum.query-auditor:
-    update-delay: 100
-    flush-delay: 10000
-    connection-recovery-delay: 15000
-    stat-log-update-count: 10000
+  datum:
+    query:
+      filtered-results-limit: 1000
+      max-days-for-minute-aggregation: 7
+      max-days-for-hour-aggregation: 31
+      max-days-for-day-aggregation: 730
+      max-days-for-day-of-week-aggregation: 3650
+      max-days-for-hour-of-day-aggregation: 3650
+    query-auditor:
+      update-delay: 100
+      flush-delay: 10000
+      connection-recovery-delay: 15000
+      stat-log-update-count: 10000
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
   network-identity:
     network-identity-key: "solarquery:identity:here"
     terms-of-service: "solarquery:tos:here"
@@ -66,11 +75,6 @@ app:
     filter:
       lock-pool-capacity: 128
       request-lock-timeout: 180000
-  solarquery:
-    stream-metadata-cache:
-      ttl: 300
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
   web.security:
     token:
       max-request-body-size: 65535
@@ -111,7 +115,7 @@ spring:
 server:
   compression:
     enabled: true
-    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    mime-types: "application/cbor,application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
   port: 9082
   servlet.context-path: /solarquery

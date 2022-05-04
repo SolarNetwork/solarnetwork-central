@@ -30,9 +30,10 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.util.StringUtils;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.domain.SourceLocation;
+import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Criteria for location data tied to a source.

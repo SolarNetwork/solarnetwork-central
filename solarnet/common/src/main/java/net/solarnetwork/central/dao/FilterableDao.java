@@ -27,7 +27,7 @@ import java.util.List;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for DAOs that support filtered queries.

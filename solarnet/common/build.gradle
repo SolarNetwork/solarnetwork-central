@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '1.1.2'
+version = '1.2.0'
 archivesBaseName = 'solarnet-common'
 
 configurations {
@@ -34,7 +34,7 @@ dependencies {
 	// DAO
 	implementation 'org.mybatis:mybatis:3.5.7'
 	implementation 'org.mybatis:mybatis-spring:2.0.6'
-	runtime "org.postgresql:postgresql"
+	runtimeOnly "org.postgresql:postgresql"
 	
 	// JAXB
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
@@ -73,7 +73,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common:2.3.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common:2.4.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.1.0'
 	

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz;
 
+import java.time.Clock;
 import java.util.Map;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -32,9 +33,21 @@ import net.solarnetwork.central.domain.FilterResults;
  * API for auditing query events in SolarNetwork.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface QueryAuditor {
+
+	/**
+	 * Get the clock used for auditing.
+	 * 
+	 * <p>
+	 * This clock may bucket time into discreet intervals.
+	 * </p>
+	 * 
+	 * @return the clock never {@literal null}
+	 * @since 1.2
+	 */
+	Clock getAuditClock();
 
 	/**
 	 * Audit the results of a general node datum query.

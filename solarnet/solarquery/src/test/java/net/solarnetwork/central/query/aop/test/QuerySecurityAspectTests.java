@@ -22,21 +22,26 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static java.util.Collections.singleton;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.easymock.Capture;
@@ -56,6 +61,9 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
+import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
@@ -72,6 +80,7 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Unit tests for the {@link QuerySecurityAspect} class.
@@ -84,19 +93,28 @@ public class QuerySecurityAspectTests {
 	private static final Long TEST_USER_ID = -9999L;
 
 	private SolarNodeOwnershipDao nodeOwnershipDao;
+	private DatumStreamMetadataDao streamMetadataDao;
 	private QuerySecurityAspect service;
 
 	@Before
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
-		service = new QuerySecurityAspect(nodeOwnershipDao);
+		streamMetadataDao = EasyMock.createMock(DatumStreamMetadataDao.class);
+		service = new QuerySecurityAspect(nodeOwnershipDao, streamMetadataDao);
 		service.setNodeIdNotRequiredSet(new HashSet<>(Arrays.asList("price", "weather")));
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(nodeOwnershipDao);
+		EasyMock.verify(nodeOwnershipDao, streamMetadataDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
+	}
+
+	private void replayAll(Object... others) {
+		EasyMock.replay(nodeOwnershipDao, streamMetadataDao);
+		if ( others != null ) {
+			EasyMock.replay(others);
+		}
 	}
 
 	private void setUser(Authentication auth) {
@@ -137,7 +155,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = ownershipFor(node.getNodeId(), TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(node.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -151,7 +169,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = ownershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -166,7 +184,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = ownershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -181,7 +199,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(node.getNodeId(), TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -195,7 +213,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -214,7 +232,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(-1L, TEST_USER_ID);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -237,7 +255,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -256,7 +274,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -279,7 +297,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -297,7 +315,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -317,7 +335,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -337,7 +355,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -360,7 +378,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, -200L);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
@@ -385,7 +403,7 @@ public class QuerySecurityAspectTests {
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
 
 		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -412,7 +430,7 @@ public class QuerySecurityAspectTests {
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -444,7 +462,7 @@ public class QuerySecurityAspectTests {
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
@@ -477,7 +495,7 @@ public class QuerySecurityAspectTests {
 		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
 
 		EasyMock.replay(pjp);
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
@@ -493,7 +511,7 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void weatherFilterAsAnonymous() {
-		EasyMock.replay(nodeOwnershipDao);
+		replayAll();
 
 		SolarLocation loc = new SolarLocation();
 		loc.setTimeZoneId("Pacific/Auckland");
@@ -538,7 +556,8 @@ public class QuerySecurityAspectTests {
 				EasyMock.isNull(List.class), EasyMock.isNull(Integer.class),
 				EasyMock.isNull(Integer.class))).andReturn(filterResults);
 
-		replay(nodeOwnershipDao, pjp, methodSig, queryBiz);
+		// WHEN
+		replayAll(pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
 		assertSame("Filtered results", filterResults, result);
@@ -547,7 +566,8 @@ public class QuerySecurityAspectTests {
 		Assert.assertEquals("Redirected filter aggregation", policyMinAgg,
 				redirectedFilter.getAggregation());
 
-		verify(nodeOwnershipDao, pjp, methodSig, queryBiz);
+		// THEN
+		verify(pjp, methodSig, queryBiz);
 	}
 
 	@Test
@@ -590,7 +610,8 @@ public class QuerySecurityAspectTests {
 				Integer.valueOf(0), Integer.valueOf(0));
 		expect(pjp.proceed(EasyMock.capture(proceedArgsCapture))).andReturn(filterResults);
 
-		replay(nodeOwnershipDao, pjp, methodSig, queryBiz);
+		// WHEN
+		replayAll(pjp, methodSig, queryBiz);
 
 		Object result = service.userNodeFilterAccessCheck(pjp, criteria);
 		assertSame("Filtered results", filterResults, result);
@@ -611,7 +632,200 @@ public class QuerySecurityAspectTests {
 		assertThat("Source ID filter start date", filterCapture.getValue().getStartDate(), nullValue());
 		assertThat("Source ID filter end date", filterCapture.getValue().getEndDate(), nullValue());
 
-		verify(nodeOwnershipDao, pjp, methodSig, queryBiz);
+		// THEN
+		verify(pjp, methodSig, queryBiz);
+	}
+
+	@Test
+	public void streamDatumFilter_privateNodeAsAnonymous() {
+		// GIVEN
+		UUID streamId = UUID.randomUUID();
+		SolarNodeOwnership ownership = privateOwnershipFor(-1L, TEST_USER_ID);
+
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId, new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, -1L, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		try {
+			service.userNodeAccessCheck(criteria);
+			fail("Should have thrown AuthorizationException");
+		} catch ( AuthorizationException e ) {
+			assertThat("Denied", e.getReason(), is(Reason.ACCESS_DENIED));
+		}
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_readNodeDataToken_noNodePolicy_allowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		service.userNodeAccessCheck(criteria);
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_readNodeDataToken_noNodePolicy_notAllowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		setAuthenticatedReadNodeDataToken(-101L, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		try {
+			service.userNodeAccessCheck(criteria);
+			fail("Should have thrown AuthorizationException");
+		} catch ( AuthorizationException e ) {
+			assertThat("Denied becauase not node owner", e.getReason(), is(Reason.ACCESS_DENIED));
+		}
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_readNodeDataToken_nodePolicy_allowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(nodeId))
+				.build();
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		service.userNodeAccessCheck(criteria);
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_readNodeDataToken_nodePolicy_notAllowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().withNodeIds(singleton(-2L))
+				.build();
+		setAuthenticatedReadNodeDataToken(userId, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		try {
+			service.userNodeAccessCheck(criteria);
+			fail("Should have thrown AuthorizationException");
+		} catch ( AuthorizationException e ) {
+			assertThat("Denied because of node ID policy", e.getReason(), is(Reason.ACCESS_DENIED));
+		}
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_userToken_noNodePolicy_allowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		setAuthenticatedUserToken(userId, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		service.userNodeAccessCheck(criteria);
+	}
+
+	@Test
+	public void streamDatumFilter_privateNode_userToken_noNodePolicy_notAllowed() {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long userId = -100L;
+		final SecurityPolicy policy = new BasicSecurityPolicy.Builder().build();
+		setAuthenticatedUserToken(-101L, policy);
+		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
+
+		UUID streamId = UUID.randomUUID();
+		Map<UUID, ObjectDatumStreamMetadataId> idMap = new LinkedHashMap<>();
+		idMap.put(streamId,
+				new ObjectDatumStreamMetadataId(streamId, ObjectDatumKind.Node, nodeId, "foo"));
+		expect(streamMetadataDao.getDatumStreamMetadataIds(streamId)).andReturn(idMap);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(ownership.getNodeId())).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+
+		StreamDatumFilterCommand criteria = new StreamDatumFilterCommand();
+		criteria.setStreamIds(new UUID[] { streamId });
+		try {
+			service.userNodeAccessCheck(criteria);
+			fail("Should have thrown AuthorizationException");
+		} catch ( AuthorizationException e ) {
+			assertThat("Denied because not node owner", e.getReason(), is(Reason.ACCESS_DENIED));
+		}
 	}
 
 }

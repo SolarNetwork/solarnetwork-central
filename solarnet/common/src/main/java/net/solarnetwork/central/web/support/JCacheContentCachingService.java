@@ -29,9 +29,11 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +42,13 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
+import javax.cache.configuration.FactoryBuilder.SingletonFactory;
+import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
+import javax.cache.event.CacheEntryCreatedListener;
+import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.CacheEntryExpiredListener;
+import javax.cache.event.CacheEntryListener;
+import javax.cache.event.CacheEntryListenerException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.codec.binary.Hex;
@@ -48,7 +57,8 @@ import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import net.solarnetwork.central.web.support.ContentCacheStats.Counts;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
 
@@ -56,9 +66,11 @@ import net.solarnetwork.web.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class JCacheContentCachingService implements ContentCachingService {
+public class JCacheContentCachingService
+		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
+		CacheEntryExpiredListener<String, CachedContent> {
 
 	/** The default value for the {@code statLogAccessCount} property. */
 	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
@@ -68,10 +80,11 @@ public class JCacheContentCachingService implements ContentCachingService {
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
 
 	private final Cache<String, CachedContent> cache;
-	private final ContentCacheStats stats;
+	private final ContentCacheStatCounter stats;
+	private final String pingTestId;
 
 	private Set<MediaType> compressibleMediaTypes = new HashSet<>(
-			MediaType.parseMediaTypes("text/*, application/json, application/xml"));
+			MediaType.parseMediaTypes("text/*, application/cbor, application/json, application/xml"));
 	private int compressMinimumLength = 2048;
 
 	/**
@@ -85,7 +98,58 @@ public class JCacheContentCachingService implements ContentCachingService {
 	public JCacheContentCachingService(Cache<String, CachedContent> cache) {
 		super();
 		this.cache = ObjectUtils.requireNonNullArgument(cache, "cache");
-		this.stats = new ContentCacheStats(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
+		this.stats = new ContentCacheStatCounter(cache.getName(), DEFAULT_STAT_LOG_ACCESS_COUNT);
+		this.pingTestId = String.format("%s-%s", JCacheContentCachingService.class.getName(),
+				cache.getName());
+		MutableCacheEntryListenerConfiguration<String, CachedContent> listenerConfiguration = new MutableCacheEntryListenerConfiguration<>(
+				new SingletonFactory<CacheEntryListener<String, CachedContent>>(this), null, false,
+				false);
+		cache.registerCacheEntryListener(listenerConfiguration);
+	}
+
+	@Override
+	public String getPingTestId() {
+		return pingTestId;
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Content Cache";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 500;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		Map<String, Number> statMap = new LinkedHashMap<>(ContentCacheStats.values().length);
+		for ( ContentCacheStats s : ContentCacheStats.values() ) {
+			statMap.put(s.toString(), stats.get(s));
+		}
+		statMap.put("HitRate", (int) (stats.getHitRate() * 100));
+		return new PingTestResult(true, "Cache active.", statMap);
+	}
+
+	@Override
+	public void onExpired(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
+			long size = event.getValue().getContentLength();
+			stats.addAndGet(ContentCacheStats.EntryCount, -1L);
+			stats.addAndGet(ContentCacheStats.ByteSize, -size);
+		}
+	}
+
+	@Override
+	public void onCreated(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
+			long size = event.getValue().getContentLength();
+			stats.incrementAndGet(ContentCacheStats.EntryCount);
+			stats.addAndGet(ContentCacheStats.ByteSize, size);
+		}
 	}
 
 	private void addAuthorization(HttpServletRequest request, MessageDigest digest) {
@@ -234,12 +298,11 @@ public class JCacheContentCachingService implements ContentCachingService {
 			HttpServletResponse response) throws IOException {
 		CachedContent content = cache.get(key);
 		if ( content == null ) {
-			stats.incrementAndGet(Counts.Miss);
+			stats.incrementAndGet(ContentCacheStats.Miss);
 			return null;
 		}
 
-		stats.incrementAndGet(Counts.Hit);
-		response.reset();
+		stats.incrementAndGet(ContentCacheStats.Hit);
 		response.setStatus(200);
 
 		MultiValueMap<String, String> headers = content.getHeaders();
@@ -251,22 +314,35 @@ public class JCacheContentCachingService implements ContentCachingService {
 			}
 		}
 
+		response.setHeader(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_HIT);
+
 		InputStream in = content.getContent();
 		if ( in != null ) {
 			String contentEncoding = content.getContentEncoding();
 			String accept = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
-			if ( accept != null && accept.contains("gzip") && "gzip".equals(contentEncoding) ) {
+			if ( accept != null && accept.contains(CompressionType.GZIP.getContentEncoding())
+					&& CompressionType.GZIP.getContentEncoding().equals(contentEncoding) ) {
 				// send already compressed content
 				response.setHeader(HttpHeaders.CONTENT_ENCODING, contentEncoding);
 				response.setContentLength(content.getContentLength());
 				String vary = response.getHeader(HttpHeaders.VARY);
 				if ( vary == null ) {
 					response.setHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
-				} else if ( !"*".equals(vary) ) {
-					response.setHeader(HttpHeaders.VARY, vary + "," + HttpHeaders.ACCEPT_ENCODING);
+				} else {
+					Collection<String> varies = response.getHeaders(HttpHeaders.VARY);
+					boolean addVary = true;
+					for ( String v : varies ) {
+						if ( "*".equals(v) || HttpHeaders.ACCEPT_ENCODING.equals(v) ) {
+							addVary = false;
+							break;
+						}
+					}
+					if ( addVary ) {
+						response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING);
+					}
 				}
 				FileCopyUtils.copy(in, response.getOutputStream());
-			} else if ( "gzip".equals(contentEncoding) ) {
+			} else if ( CompressionType.GZIP.getContentEncoding().equals(contentEncoding) ) {
 				// send decompressed content
 				FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
 			} else {
@@ -281,27 +357,35 @@ public class JCacheContentCachingService implements ContentCachingService {
 
 	@Override
 	public void cacheResponse(String key, HttpServletRequest request, int statusCode,
-			HttpHeaders headers, InputStream content) throws IOException {
+			HttpHeaders headers, InputStream content, CompressionType compressionType)
+			throws IOException {
 		byte[] data = FileCopyUtils.copyToByteArray(content);
+
 		String contentEncoding = headers.getFirst(HttpHeaders.CONTENT_ENCODING);
-		MediaType type = headers.getContentType();
-		if ( contentEncoding == null && type != null && data.length >= compressMinimumLength ) {
-			for ( MediaType t : compressibleMediaTypes ) {
-				if ( t.includes(type) ) {
-					try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
-							GZIPOutputStream out = new GZIPOutputStream(byos)) {
-						FileCopyUtils.copy(data, out);
-						data = byos.toByteArray();
-						contentEncoding = "gzip";
+		if ( compressionType != null ) {
+			// content already compressed for us
+			contentEncoding = compressionType.getContentEncoding();
+		} else {
+			MediaType type = headers.getContentType();
+			if ( type != null && data.length >= compressMinimumLength ) {
+				// compress the content if possible
+				for ( MediaType t : compressibleMediaTypes ) {
+					if ( t.includes(type) ) {
+						try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
+								GZIPOutputStream out = new GZIPOutputStream(byos)) {
+							FileCopyUtils.copy(data, out);
+							data = byos.toByteArray();
+							contentEncoding = CompressionType.GZIP.getContentEncoding();
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
 		Map<String, ?> metadata = getCacheContentMetadata(key, request, statusCode, headers);
 		cache.put(key, new SimpleCachedContent(new LinkedMultiValueMap<>(headers), data, contentEncoding,
 				metadata));
-		stats.incrementAndGet(Counts.Stored);
+		stats.incrementAndGet(ContentCacheStats.Stored);
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /* ==================================================================
- * ReadingDatumCriteria.java - 17/11/2020 7:43:19 am
+ * MostRecentFilter.java - 29/04/2022 5:14:01 pm
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,16 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.datum.domain;
 
 /**
- * Search criteria for datum reading results.
+ * API for a "most recent" query filter.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 1.3
  */
-public interface ReadingDatumCriteria
-		extends DatumStreamCriteria, TimeToleranceCriteria, ReadingTypeCriteria {
+public interface MostRecentFilter {
+
+	/**
+	 * Flag to indicate that only the most recently available data should be
+	 * returned.
+	 * 
+	 * @return the most recent only
+	 */
+	boolean isMostRecent();
 
 }

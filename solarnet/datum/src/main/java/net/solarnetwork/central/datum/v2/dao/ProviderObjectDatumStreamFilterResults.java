@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.dao;
 import java.util.Collection;
 import java.util.UUID;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Identity;
 

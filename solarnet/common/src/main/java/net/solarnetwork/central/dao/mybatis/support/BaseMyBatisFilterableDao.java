@@ -33,7 +33,7 @@ import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 
 /**

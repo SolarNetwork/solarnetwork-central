@@ -26,7 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.domain.Filter;
-import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Convenience extension of {@link BasicBulkExportOptions} for filterable export

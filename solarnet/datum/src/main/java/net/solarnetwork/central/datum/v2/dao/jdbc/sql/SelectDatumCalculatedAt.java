@@ -36,7 +36,6 @@ import java.time.Period;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.ReadingDatumCriteria;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -56,7 +55,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	 */
 	public static Period DEFAULT_CALCULATED_AT_TIME_TOLERANCE = Period.ofMonths(1);
 
-	private final ReadingDatumCriteria filter;
+	private final DatumCriteria filter;
 
 	/**
 	 * Constructor.
@@ -66,7 +65,7 @@ public class SelectDatumCalculatedAt implements PreparedStatementCreator, SqlPro
 	 * @throws IllegalArgumentException
 	 *         if {@code filter} is {@literal null}
 	 */
-	public SelectDatumCalculatedAt(ReadingDatumCriteria filter) {
+	public SelectDatumCalculatedAt(DatumCriteria filter) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 	}

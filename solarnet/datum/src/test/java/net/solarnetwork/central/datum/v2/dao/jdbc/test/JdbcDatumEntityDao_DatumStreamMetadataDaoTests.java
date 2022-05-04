@@ -36,6 +36,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertLocation;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId.idForMetadata;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertSecurityToken;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
@@ -70,6 +71,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -84,8 +86,6 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -94,8 +94,10 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SimpleLocation;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -109,6 +111,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 	private JdbcDatumEntityDao dao;
 
 	private Cache<UUID, ObjectDatumStreamMetadata> cache;
+	private Cache<UUID, ObjectDatumStreamMetadataId> idCache;
 
 	@SuppressWarnings("unchecked")
 	@Before
@@ -116,15 +119,16 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 
 		cache = EasyMock.createMock(Cache.class);
+		idCache = EasyMock.createMock(Cache.class);
 	}
 
 	public void replayAll() {
-		EasyMock.replay(cache);
+		EasyMock.replay(cache, idCache);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(cache);
+		EasyMock.verify(cache, idCache);
 	}
 
 	@Test
@@ -192,6 +196,175 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		Set<ObjectDatumStreamMetadataId> resultIds = StreamSupport.stream(results.spliterator(), false)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		assertThat("Stream IDs same", resultIds, equalTo(ids));
+	}
+
+	@Test
+	public void getDatumStreamMetadataIds() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }));
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		Map<UUID, ObjectDatumStreamMetadataId> results = dao
+				.getDatumStreamMetadataIds(streamIds.toArray(new UUID[streamIds.size()]));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Stream IDs same", results.keySet(), is(equalTo(streamIds)));
+
+		final List<ObjectDatumStreamMetadataId> ids = data.stream().map(d -> {
+			return new ObjectDatumStreamMetadataId(d.getStreamId(), d.getKind(), d.getObjectId(),
+					d.getSourceId());
+		}).collect(Collectors.toList());
+		assertThat("Metadata IDs same and ordered", new ArrayList<>(results.values()), equalTo(ids));
+	}
+
+	@Test
+	public void getDatumStreamMetadataIds_someMissing() {
+		// GIVEN
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			if ( i < 3 ) {
+				data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node,
+						(long) i, format("s%d", i), new String[] { "a", "b", "c" },
+						new String[] { "d", "e" }, new String[] { "f" }));
+			}
+
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		Map<UUID, ObjectDatumStreamMetadataId> results = dao
+				.getDatumStreamMetadataIds(streamIds.toArray(new UUID[streamIds.size()]));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Stream IDs for all available", results.keySet(),
+				is(containsInAnyOrder(data.get(0).getStreamId(), data.get(1).getStreamId())));
+
+		final List<ObjectDatumStreamMetadataId> ids = data.stream().map(d -> {
+			return new ObjectDatumStreamMetadataId(d.getStreamId(), d.getKind(), d.getObjectId(),
+					d.getSourceId());
+		}).collect(Collectors.toList());
+		assertThat("Metadata IDs same and ordered", new ArrayList<>(results.values()), equalTo(ids));
+	}
+
+	@Test
+	public void getDatumStreamMetadataIds_cacheMiss() {
+		// GIVEN
+		dao.setStreamMetadataIdCache(idCache);
+
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+
+		final Capture<ObjectDatumStreamMetadataId> idCaptor = new Capture<>(CaptureType.ALL);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			data.add(new BasicObjectDatumStreamMetadata(streamId, "UTC", ObjectDatumKind.Node, (long) i,
+					format("s%d", i), new String[] { "a", "b", "c" }, new String[] { "d", "e" },
+					new String[] { "f" }));
+			expect(idCache.get(streamId)).andReturn(null);
+			idCache.put(eq(streamId), capture(idCaptor));
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		Map<UUID, ObjectDatumStreamMetadataId> results = dao
+				.getDatumStreamMetadataIds(streamIds.toArray(new UUID[streamIds.size()]));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Stream IDs same", results.keySet(), is(equalTo(streamIds)));
+
+		final List<ObjectDatumStreamMetadataId> ids = data.stream()
+				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toList());
+		assertThat("Metadata IDs same", new HashSet<>(results.values()),
+				is(equalTo(new HashSet<>(ids))));
+		assertThat("Cached meta IDs", new HashSet<>(idCaptor.getValues()),
+				is(equalTo(new HashSet<>(ids))));
+	}
+
+	@Test
+	public void getDatumStreamMetadataIds_cacheHit() {
+		dao.setStreamMetadataIdCache(idCache);
+
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+					ObjectDatumKind.Node, (long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" });
+			data.add(meta);
+			expect(idCache.get(streamId)).andReturn(idForMetadata(meta));
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		Map<UUID, ObjectDatumStreamMetadataId> results = dao
+				.getDatumStreamMetadataIds(streamIds.toArray(new UUID[streamIds.size()]));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Stream IDs same", results.keySet(), is(equalTo(streamIds)));
+
+		final Set<ObjectDatumStreamMetadataId> ids = data.stream()
+				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toSet());
+		assertThat("Metadata IDs same", new HashSet<>(results.values()), is(equalTo(ids)));
+	}
+
+	@Test
+	public void getDatumStreamMetadataIds_cacheMix() {
+		dao.setStreamMetadataIdCache(idCache);
+
+		final List<ObjectDatumStreamMetadata> data = new ArrayList<>(3);
+		final Set<UUID> streamIds = new LinkedHashSet<>(3);
+
+		final Capture<ObjectDatumStreamMetadataId> idCaptor = new Capture<>(CaptureType.ALL);
+		for ( int i = 1; i <= 3; i++ ) {
+			UUID streamId = UUID.randomUUID();
+			streamIds.add(streamId);
+			ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(streamId, "UTC",
+					ObjectDatumKind.Node, (long) i, format("s%d", i), new String[] { "a", "b", "c" },
+					new String[] { "d", "e" }, new String[] { "f" });
+			data.add(meta);
+			ObjectDatumStreamMetadataId foundId = (i == 2 ? idForMetadata(meta) : null);
+			expect(idCache.get(streamId)).andReturn(foundId);
+			if ( foundId == null ) {
+				idCache.put(eq(streamId), capture(idCaptor));
+			}
+		}
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, data);
+
+		// WHEN
+		replayAll();
+		Map<UUID, ObjectDatumStreamMetadataId> results = dao
+				.getDatumStreamMetadataIds(streamIds.toArray(new UUID[streamIds.size()]));
+
+		assertThat("Results returned", results, notNullValue());
+		assertThat("Stream IDs same", results.keySet(), is(equalTo(streamIds)));
+
+		final List<ObjectDatumStreamMetadataId> ids = data.stream()
+				.map(ObjectDatumStreamMetadataId::idForMetadata).collect(Collectors.toList());
+		assertThat("Metadata IDs same", new HashSet<>(results.values()),
+				is(equalTo(new HashSet<>(ids))));
+		assertThat("Populated missing cache meta IDs", idCaptor.getValues(),
+				containsInAnyOrder(idForMetadata(data.get(0)), idForMetadata(data.get(2))));
 	}
 
 	@Test

@@ -34,7 +34,6 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.query.web.support.AuditingJCacheContentCachingService;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.web.support.CachedContent;
-import net.solarnetwork.central.web.support.ContentCachingService;
 
 /**
  * Content caching service configuration.
@@ -101,7 +100,7 @@ public class ContentCachingServiceConfig {
 
 	@Bean(QUERY_CACHING_SERVICE)
 	@Qualifier(QUERY_CACHE)
-	public ContentCachingService queryCachingService() {
+	public AuditingJCacheContentCachingService queryCachingService() {
 		QueryCacheSettings settings = queryCacheSettings();
 		AuditingJCacheContentCachingService service = new AuditingJCacheContentCachingService(
 				queryCache(), queryAuditor);

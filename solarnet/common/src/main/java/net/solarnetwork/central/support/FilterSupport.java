@@ -22,15 +22,11 @@
 
 package net.solarnetwork.central.support;
 
-import java.io.Serializable;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.Filter;
-import net.solarnetwork.central.domain.MetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 
@@ -41,21 +37,19 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
  * @version 1.4
  * @since 1.32
  */
-public class FilterSupport
-		implements Filter, Serializable, MetadataFilter, SolarNodeFilter, SolarNodeMetadataFilter {
+public class FilterSupport extends BaseFilterSupport
+		implements SolarNodeFilter, SolarNodeMetadataFilter {
 
-	private static final long serialVersionUID = -2540617835857624112L;
+	private static final long serialVersionUID = -4826724231965486643L;
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
 	private String[] sourceIds;
-	private Long[] userIds;
-	private String[] tags;
-	private String metadataFilter;
 
 	@Override
 	public Map<String, ?> getFilter() {
-		Map<String, Object> filter = new LinkedHashMap<String, Object>();
+		@SuppressWarnings("unchecked")
+		Map<String, Object> filter = (Map<String, Object>) super.getFilter();
 		if ( locationIds != null ) {
 			filter.put("locationIds", locationIds);
 		}
@@ -64,15 +58,6 @@ public class FilterSupport
 		}
 		if ( sourceIds != null ) {
 			filter.put("sourceIds", sourceIds);
-		}
-		if ( userIds != null ) {
-			filter.put("userIds", userIds);
-		}
-		if ( tags != null ) {
-			filter.put("tags", tags);
-		}
-		if ( metadataFilter != null && !metadataFilter.trim().isEmpty() ) {
-			filter.put("metadataFilter", metadataFilter);
 		}
 		return filter;
 	}
@@ -96,19 +81,19 @@ public class FilterSupport
 			builder.append(Arrays.toString(locationIds));
 			builder.append(", ");
 		}
-		if ( userIds != null ) {
+		if ( getUserIds() != null ) {
 			builder.append("userIds=");
-			builder.append(Arrays.toString(userIds));
+			builder.append(Arrays.toString(getUserIds()));
 			builder.append(", ");
 		}
-		if ( tags != null ) {
+		if ( getTags() != null ) {
 			builder.append("tags=");
-			builder.append(Arrays.toString(tags));
+			builder.append(Arrays.toString(getTags()));
 			builder.append(", ");
 		}
-		if ( metadataFilter != null ) {
+		if ( getMetadataFilter() != null ) {
 			builder.append("metadataFilter=");
-			builder.append(metadataFilter);
+			builder.append(getMetadataFilter());
 		}
 		builder.append("}");
 		return builder.toString();
@@ -207,45 +192,6 @@ public class FilterSupport
 		this.sourceIds = sourceIds;
 	}
 
-	@JsonIgnore
-	@Override
-	public String getTag() {
-		return (this.tags == null || this.tags.length < 1 ? null : this.tags[0]);
-	}
-
-	/**
-	 * Set a single tag.
-	 * 
-	 * <p>
-	 * This is a convenience method for requests that use a single tag at a
-	 * time. The tag is still stored on the {@code tags} array, just as the
-	 * first value. Calling this method replaces any existing {@code tags} value
-	 * with a new array containing just the tag passed into this method.
-	 * </p>
-	 * 
-	 * @param tag
-	 *        the tag
-	 */
-	@JsonSetter
-	public void setTag(String tag) {
-		this.tags = (tag == null ? null : new String[] { tag });
-	}
-
-	@Override
-	public String[] getTags() {
-		return tags;
-	}
-
-	/**
-	 * Set a list of tags to filter on.
-	 * 
-	 * @param tags
-	 *        the tags to filter on
-	 */
-	public void setTags(String[] tags) {
-		this.tags = tags;
-	}
-
 	/**
 	 * Set a single location ID.
 	 * 
@@ -298,75 +244,6 @@ public class FilterSupport
 	}
 
 	/**
-	 * Set a single user ID.
-	 * 
-	 * <p>
-	 * This is a convenience method for requests that use a single user ID at a
-	 * time. The user ID is still stored on the {@code userIds} array, just as
-	 * the first value. Calling this method replaces any existing
-	 * {@code userIds} value with a new array containing just the ID passed into
-	 * this method.
-	 * </p>
-	 * 
-	 * @param userId
-	 *        the ID of the user
-	 */
-	@JsonSetter
-	public void setUserId(Long userId) {
-		this.userIds = (userId == null ? null : new Long[] { userId });
-	}
-
-	/**
-	 * Get the first user ID.
-	 * 
-	 * <p>
-	 * This returns the first available user ID from the {@code userIds} array,
-	 * or {@literal null} if not available.
-	 * </p>
-	 * 
-	 * @return the first user ID, or {@literal null}
-	 */
-	@JsonIgnore
-	public Long getUserId() {
-		return (this.userIds == null || this.userIds.length < 1 ? null : this.userIds[0]);
-	}
-
-	/**
-	 * Get all user IDs to filter on.
-	 * 
-	 * @return The user IDs, or {@literal null}.
-	 */
-	public Long[] getUserIds() {
-		return userIds;
-	}
-
-	/**
-	 * Set a list of user IDs to filter on.
-	 * 
-	 * @param userIds
-	 *        The user IDs to filter on.
-	 */
-	public void setUserIds(Long[] userIds) {
-		this.userIds = userIds;
-	}
-
-	@Override
-	public String getMetadataFilter() {
-		return metadataFilter;
-	}
-
-	/**
-	 * Set a metadata search filter, in LDAP search filter syntax.
-	 * 
-	 * @param metadataFilter
-	 *        the metadata filter to use, or {@literal null}
-	 * @since 1.3
-	 */
-	public void setMetadataFilter(String metadataFilter) {
-		this.metadataFilter = metadataFilter;
-	}
-
-	/**
 	 * {@inheritDoc}
 	 * 
 	 * @since 1.1
@@ -374,13 +251,10 @@ public class FilterSupport
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(locationIds);
 		result = prime * result + Arrays.hashCode(nodeIds);
 		result = prime * result + Arrays.hashCode(sourceIds);
-		result = prime * result + Arrays.hashCode(tags);
-		result = prime * result + Arrays.hashCode(userIds);
-		result = prime * result + Objects.hash(metadataFilter);
 		return result;
 	}
 
@@ -394,14 +268,15 @@ public class FilterSupport
 		if ( this == obj ) {
 			return true;
 		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
 		if ( !(obj instanceof FilterSupport) ) {
 			return false;
 		}
 		FilterSupport other = (FilterSupport) obj;
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
-				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tags, other.tags)
-				&& Arrays.equals(userIds, other.userIds)
-				&& Objects.equals(metadataFilter, other.metadataFilter);
+				&& Arrays.equals(sourceIds, other.sourceIds);
 	}
 
 }
