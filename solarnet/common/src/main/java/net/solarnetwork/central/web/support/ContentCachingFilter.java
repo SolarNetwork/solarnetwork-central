@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER;
+import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER_MISS;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -239,6 +241,7 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 			}
 
 			// cache miss: pass on request and capture result for cache
+			origResponse.setHeader(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_MISS);
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
 					origResponse, true);
 			log.debug("{} [{}] Cache miss, passing on for processing", requestId, requestUri);

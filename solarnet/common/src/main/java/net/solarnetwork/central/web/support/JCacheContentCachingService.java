@@ -314,6 +314,8 @@ public class JCacheContentCachingService
 			}
 		}
 
+		response.setHeader(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_HIT);
+
 		InputStream in = content.getContent();
 		if ( in != null ) {
 			String contentEncoding = content.getContentEncoding();

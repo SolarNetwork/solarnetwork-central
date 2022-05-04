@@ -39,6 +39,27 @@ import org.springframework.http.HttpHeaders;
 public interface ContentCachingService {
 
 	/**
+	 * A HTTP response header for the content cache status.
+	 * 
+	 * @since 1.1
+	 */
+	String CONTENT_CACHE_HEADER = "X-SN-Content-Cache";
+
+	/**
+	 * The {@link #CONTENT_CACHE_HEADER} value for a cache hit.
+	 * 
+	 * @since 1.1
+	 */
+	String CONTENT_CACHE_HEADER_HIT = "HIT";
+
+	/**
+	 * The {@link #CONTENT_CACHE_HEADER} value for a cache miss.
+	 * 
+	 * @since 1.1
+	 */
+	String CONTENT_CACHE_HEADER_MISS = "MISS";
+
+	/**
 	 * Enumeration of supported compression types.
 	 * 
 	 * @since 1.1
