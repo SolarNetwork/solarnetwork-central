@@ -45,9 +45,12 @@ import org.junit.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet;
 import net.solarnetwork.domain.datum.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
@@ -127,6 +130,52 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 	}
 
 	@Test
+	public void oneStream_aggregate() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		ZonedDateTime start = LocalDateTime.of(2022, 4, 29, 13, 52)
+				.atZone(ZoneId.of("Pacific/Auckland"));
+
+		// @formatter:off
+		AggregateDatum d1 = new AggregateDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
+				Aggregation.Hour,
+				propertiesOf(
+						decimalArray("1.23", "2.34"),
+						decimalArray("30"),
+						new String[] {"foo"},
+						new String[] {"wham", "bam"}),
+				statisticsOf(new BigDecimal[][] {
+						decimalArray("10", "1.0", "2.0"),
+						decimalArray("10", "2.0", "3.0")
+					}, new BigDecimal[][] { 
+						decimalArray("30", "100", "130")
+					}
+				)
+			);
+		// @formatter:on
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1));
+
+		// WHEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (ObjectMapperStreamDatumFilteredResultsProcessor processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
+				mapper.createGenerator(out), mapper.getSerializerProviderInstance(),
+				MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE))) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+		}
+
+		// THEN
+		String json = out.toString(ByteUtils.UTF8);
+		assertThat("Aggregate JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
+				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
+				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],\"data\":["
+				+ "[0,[1651197060000,null],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130],\"foo\",\"wham\",\"bam\"]"
+				+ "]}"));
+	}
+
+	@Test
 	public void oneStream_reading() throws IOException {
 		// GIVEN
 		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
@@ -134,11 +183,6 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		ZonedDateTime start = LocalDateTime.of(2022, 4, 29, 13, 52)
 				.atZone(ZoneId.of("Pacific/Auckland"));
 
-		DatumProperties p1 = new DatumProperties();
-		p1.setInstantaneous(decimalArray("1.23", "2.34"));
-		p1.setAccumulating(decimalArray("3.45"));
-		p1.setStatus(new String[] { "foo" });
-		p1.setTags(new String[] { "a" });
 		// @formatter:off
 		ReadingDatum d1 = new ReadingDatumEntity(meta.getStreamId(), start.minusMinutes(1).toInstant(),
 				null, start.plusHours(1).minusMinutes(1).toInstant(),
