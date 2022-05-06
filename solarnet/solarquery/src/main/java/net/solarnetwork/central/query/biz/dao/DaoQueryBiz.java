@@ -66,10 +66,10 @@ import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
@@ -109,7 +109,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private final ReadingDatumDao readingDao;
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeOwnershipDao nodeOwnershipDao;
-	private Validator readingCriteriaValidator;
+	private Validator criteriaValidator;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
 	private long maxDaysForHourAggregation = 31;
@@ -145,11 +145,12 @@ public class DaoQueryBiz implements QueryBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public ReportableInterval getReportableInterval(Long nodeId, String sourceId) {
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(nodeId);
-		filter.setSourceId(sourceId);
-		filter.setObjectKind(ObjectDatumKind.Node);
-		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(filter);
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.setNodeId(nodeId);
+		c.setSourceId(sourceId);
+		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
+		Iterable<DatumDateInterval> results = datumDao.findAvailableInterval(c);
 		for ( DatumDateInterval interval : results ) {
 			return new ReportableInterval(interval.getStart(), interval.getEnd(), interval.getZone());
 		}
@@ -161,6 +162,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<String> getAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
 		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
 		return stream(results.spliterator(), false).map(ObjectDatumStreamMetadata::getSourceId)
 				.collect(toCollection(LinkedHashSet::new));
@@ -171,6 +173,7 @@ public class DaoQueryBiz implements QueryBiz {
 	public Set<NodeSourcePK> findAvailableSources(GeneralNodeDatumFilter filter) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
 		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
 		return stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
@@ -225,6 +228,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<GeneralNodeDatumFilterMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
@@ -241,6 +245,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Node);
+		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
@@ -347,7 +352,7 @@ public class DaoQueryBiz implements QueryBiz {
 				sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
-		validateReadingCriteria(c);
+		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralNodeDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
@@ -364,7 +369,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
-		validateReadingCriteria(c);
+		validateDatumCriteria(c);
 		ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> daoResults = readingDao
 				.findDatumReadingFiltered(c);
 		List<ReportingGeneralNodeDatumMatch> data = stream(daoResults.spliterator(), false)
@@ -374,10 +379,10 @@ public class DaoQueryBiz implements QueryBiz {
 				daoResults.getStartingOffset(), daoResults.getReturnedResultCount());
 	}
 
-	private void validateReadingCriteria(DatumCriteria criteria) {
-		Validator v = (readingCriteriaValidator != null
-				&& readingCriteriaValidator.supports(criteria.getClass()) ? readingCriteriaValidator
-						: null);
+	private void validateDatumCriteria(DatumCriteria criteria) {
+		Validator v = (criteriaValidator != null && criteriaValidator.supports(criteria.getClass())
+				? criteriaValidator
+				: null);
 		if ( v == null ) {
 			return;
 		}
@@ -385,10 +390,6 @@ public class DaoQueryBiz implements QueryBiz {
 		v.validate(criteria, errors);
 		if ( errors.hasErrors() ) {
 			throw new ValidationException(errors);
-		}
-
-		if ( !criteria.hasDateOrLocalDateRange() ) {
-			throw new IllegalArgumentException("A date range is required.");
 		}
 	}
 
@@ -400,6 +401,7 @@ public class DaoQueryBiz implements QueryBiz {
 			throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), max);
+		validateDatumCriteria(c);
 		datumDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
 	}
 
@@ -412,7 +414,7 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
-		validateReadingCriteria(c);
+		validateDatumCriteria(c);
 		readingDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
 	}
 
@@ -572,6 +574,17 @@ public class DaoQueryBiz implements QueryBiz {
 	@Autowired
 	public void setSolarLocationDao(SolarLocationDao solarLocationDao) {
 		this.solarLocationDao = solarLocationDao;
+	}
+
+	/**
+	 * Set a Validator to use for reading datum queries.
+	 * 
+	 * @param criteriaValidator
+	 *        the validator to set
+	 * @since 3.4
+	 */
+	public void setCriteriaValidator(Validator criteriaValidator) {
+		this.criteriaValidator = criteriaValidator;
 	}
 
 }

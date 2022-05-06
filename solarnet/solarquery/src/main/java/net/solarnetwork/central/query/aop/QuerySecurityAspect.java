@@ -58,6 +58,7 @@ import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.util.ArrayUtils;
 
 /**
  * Security enforcing AOP aspect for {@link QueryBiz}.
@@ -433,7 +434,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 		if ( !nodeIdRequired ) {
 			return filter;
 		}
-		if ( nodeIds == null || nodeIds.length < 1 ) {
+		if ( nodeIds == null || nodeIds.length < 1 || ArrayUtils.isOnlyNull(nodeIds) ) {
 			log.warn("Access DENIED; no node ID provided");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}

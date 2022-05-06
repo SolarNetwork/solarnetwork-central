@@ -20,20 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.biz.dao;
+package net.solarnetwork.central.query.support;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Period;
 import org.springframework.validation.Errors;
 import org.springframework.validation.SmartValidator;
+import org.springframework.validation.Validator;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.support.DelegatingErrors;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Validator for filter used for reading queries.
+ * Validator for filter used for datum queries using the
+ * {@link GeneralNodeDatumFilter} API.
  * 
  * <p>
  * This validator is used to support consumers of the QueryBiz API.
@@ -42,8 +46,20 @@ import net.solarnetwork.central.support.DelegatingErrors;
  * @author matt
  * @version 2.0
  */
-public class ReadingDatumFilterValidator extends ReadingDatumCriteriaValidator
-		implements SmartValidator {
+public class GeneralNodeDatumFilterValidator implements SmartValidator {
+
+	private final Validator delegate;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param delegate
+	 *        the validator for {@link DatumCriteria} objects
+	 */
+	public GeneralNodeDatumFilterValidator(Validator delegate) {
+		super();
+		this.delegate = requireNonNullArgument(delegate, "delegate");
+	}
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -58,7 +74,7 @@ public class ReadingDatumFilterValidator extends ReadingDatumCriteriaValidator
 	@Override
 	public void validate(Object target, Errors errors, Object... validationHints) {
 		GeneralNodeDatumFilter filter = (GeneralNodeDatumFilter) target;
-		DatumReadingType readingType = DatumReadingType.Difference;
+		DatumReadingType readingType = null;
 		Period tolerance = null;
 		if ( validationHints != null ) {
 			for ( Object o : validationHints ) {
@@ -73,7 +89,7 @@ public class ReadingDatumFilterValidator extends ReadingDatumCriteriaValidator
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
-		super.validate(c, new DelegatingErrors(errors) {
+		delegate.validate(c, new DelegatingErrors(errors) {
 
 			@Override
 			public void rejectValue(String field, String errorCode, Object[] errorArgs,
