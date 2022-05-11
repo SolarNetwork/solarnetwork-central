@@ -64,7 +64,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -84,6 +84,9 @@ public class WebSecurityConfig {
 
 	/** The import authority. */
 	public static final String IMPORT_AUTHORITY = "ROLE_IMPORT";
+
+	/** The OCPP authority. */
+	public static final String OCPP_AUTHORITY = "ROLE_OCPP";
 
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
@@ -165,6 +168,7 @@ public class WebSecurityConfig {
 		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.antMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.antMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+		      	.antMatchers("/u/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
 		        .antMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .antMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		        .anyRequest().denyAll()
@@ -287,6 +291,7 @@ public class WebSecurityConfig {
 		      	.antMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.antMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+		      	.antMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
 		        .antMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .antMatchers("/api/v1/pub/**").permitAll()
 		        .anyRequest().denyAll()
