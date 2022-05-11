@@ -81,7 +81,7 @@ public class DatumAggJobsConfig {
 		processor.setParallelTaskExecutor(taskExecutor);
 		processor.setDatumAppEventAcceptors(datumAppEventAcceptors);
 		processor.setId("StaleDatumStreamProcessorMonthly");
-		processor.setAggregateProcessType(Aggregation.Hour.getKey());
+		processor.setAggregateProcessType(Aggregation.Month.getKey());
 		return processor;
 	}
 
