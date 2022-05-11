@@ -50,6 +50,7 @@ import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfigurati
 import net.solarnetwork.central.user.export.aop.SolarNetUserExportAopConfiguration;
 import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
 import net.solarnetwork.central.user.ocpp.aop.SolarNetUserOcppAopConfiguration;
+import net.solarnetwork.central.user.ocpp.config.SolarNetUserOcppConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
@@ -70,7 +71,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
 		SolarNetUserOcppAopConfiguration.class,
-		SolarNetUserOcppAopConfiguration.class,
+		SolarNetUserOcppConfiguration.class,
 		SolarNetUserEventAopConfiguration.class,
 		SolarNetUserEventConfiguration.class,
 		SolarNetUserExpireAopConfiguration.class,
