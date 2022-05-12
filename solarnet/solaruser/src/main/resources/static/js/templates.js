@@ -121,10 +121,25 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * to this:
 * 
 * ```html
-* <tr><td data-tprop="name">Hello, world.</td></tr>
+* <tr><td>Hello, world.</td></tr>
 * ```
 * 
 * **Note** that parameter names starting with `_` are skipped.
+*
+* The element with the `data-tprop` attribute can also define other `data-X-text` attributes, where `X`
+* is the replacement value. If available, the data attribute value will be used in the DOM, rather than
+* the property value directly. For example if you have a DOM structure like this:
+*
+* ```html
+* <tr><td data-tprop="active" data-true-text="On" data-false-text="Off"></td></tr>
+* ```
+* 
+* Then calling this method like `replaceTemplateProperties($(trEl), {active:true})` will change the DOM
+* to this:
+* 
+* ```html
+* <tr><td>On</td></tr>
+* ```
 *
 * In addition, if `obj` has an object property named `serviceProperties`, special handling is performed
 * to generate a dynamic list of key/value property pairs using another HTML template. The desintation
@@ -150,7 +165,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * @param {string} [prefix] an optional prefix to prepend to each template parameter
 */
 SolarReg.Templates.replaceTemplateProperties = function replaceTemplateProperties(el, obj, prefix) {
-	var prop, sel, val,
+	var prop, sel, val, vel, vkey,
 		sPropKey, sPropVal, sPropItem,
 		sPropContainer = el.find('.service-props-container').first(),
 		sPropTemplate = el.find('.service-props-template .template');
@@ -178,7 +193,17 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 			if ( Array.isArray(val) ) {
 				el.find(sel).addBack(sel).html(val);
 			} else {
-				el.find(sel).addBack(sel).text(val);
+				vel = el.find(sel).addBack(sel);
+				if ( typeof val == 'boolean' ) {
+					// for boolean values, toggle 'success' and 'default' label classes if 'label' class exists
+					if ( vel.hasClass('label') ) {
+						vel.toggleClass('label-success', val);
+						vel.toggleClass('label-default', !val);
+					}
+				}
+				// look for a data property named the lower-case value + '-text' for i18n message replacement
+				vkey = String(val).toLowerCase()+'-text';
+				vel.text(vel.data(vkey) ? vel.data(vkey) : val);
 			}
 		}
 	}

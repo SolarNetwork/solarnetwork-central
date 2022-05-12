@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="ocpp-chargers">
+	<h2>
+		<span data-th-text="#{ocpp.chargers.header}">Chargers</span>
+		<button type="button" id="ocpp-add-charger-button" class="btn btn-primary pull-right"
+			data-target="#ocpp-charger-edit-modal" data-toggle="modal"
+			data-th-title="#{ocpp.chargers.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{ocpp.chargers.intro(0)}">
+		Your chargers are shown here. Use the + button to add new chargers.
+	</p>
+	<table id="ocpp-chargers-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{ocpp.chargers.id.label}">ID</th>
+				<th data-th-text="#{ocpp.chargers.created.label}">Created</th>
+				<th data-th-text="#{ocpp.chargers.nodeId.label}">Node</th>
+				<th data-th-text="#{ocpp.chargers.identifier.label}">Identifier</th>
+				<th data-th-text="#{ocpp.chargers.enabled.label}">Enabled</th>
+				<th data-th-text="#{ocpp.chargers.registrationStatus.label}">Registration Status</th>
+				<th data-th-text="#{ocpp.chargers.details.label}">Details</th>
+			</tr>
+			<tr data-th-classappend="'template'">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#ocpp-charger-edit-modal"></a></td>
+				<td data-tprop="createdDisplay"></td>
+				<td data-tprop="nodeId"></td>
+				<td data-tprop="identifier"></td>
+				<td><span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+				<td data-tprop="registrationStatus"
+					data-th-data-unknown-text="#{ocpp.chargers.registrationStatus.Unknown}"
+					data-th-data-pending-text="#{ocpp.chargers.registrationStatus.Pending}"
+					data-th-data-accepted-text="#{ocpp.chargers.registrationStatus.Accepted}"
+					data-th-data-rejected-text="#{ocpp.chargers.registrationStatus.Rejected}"
+					></td>
+				<td>
+					<small>
+						<dl class="details-container">
+							<dt data-th-text="#{ocpp.chargers.model.label}">Model</dt>
+							<dd data-tprop="chargePointModel"></dd>
+							<dt data-th-text="#{ocpp.chargers.serialNumber.label}">Serial Number</dt>
+							<dd data-tprop="chargePointSerialNumber"></dd>
+							<dt data-th-text="#{ocpp.chargers.chargePointVendor.label}">Vendor</dt>
+							<dd data-tprop="chargePointVendor"></dd>
+						</dl>
+					</small>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

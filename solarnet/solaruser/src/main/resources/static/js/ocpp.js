@@ -2,12 +2,36 @@ $(document).ready(function() {
 	'use strict';
 
 	$('#ocpp-management').first().each(function ocppManagement() {
-		const credentialsContainer = $('#ocpp-credentials-container');
-		const credentialConfigs = [];
+		/* ============================
+		   Chargers
+		   ============================ */
+		const chargersContainer = $('#ocpp-chargers-container');
+		const chargerConfigs = [];
+
+		function populateChargerConfigs(configs, preserve) {
+			configs = Array.isArray(configs) ? configs : [];
+			var items = configs.map(function(config) {
+				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+				Object.assign(model, config.info); // copy info props directly onto model
+				model.identifier = model.id; // rename info.id
+				model.id = config.id;
+				model.createdDisplay = moment(config.created).format('D MMM YYYY');
+				model.nodeId = config.nodeId;
+				model.enabled = config.enabled;
+				model.registrationStatus = config.registrationStatus;
 	
+				return model;
+			});
+			SolarReg.Templates.populateTemplateItems(chargersContainer, items, preserve);
+			SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
+		}
+
 		/* ============================
 		   Credentials
 		   ============================ */
+		const credentialsContainer = $('#ocpp-credentials-container');
+		const credentialConfigs = [];
+	
 		function populateCredentialConfigs(configs, preserve) {
 			configs = Array.isArray(configs) ? configs : [];
 			var items = configs.map(function(config) {
@@ -22,7 +46,7 @@ $(document).ready(function() {
 				return model;
 			});
 			SolarReg.Templates.populateTemplateItems(credentialsContainer, items, preserve);
-			SolarReg.Settings.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
+			SolarReg.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
 		}
 	
 		$('#ocpp-credential-edit-modal').on('show.bs.modal', function(event) {
@@ -65,7 +89,7 @@ $(document).ready(function() {
 		})
 		.on('hidden.bs.modal', function() {
 			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-credentials-container .list-container'), function(id, deleted) {
-				SolarReg.Settings.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
 			});
 		});
 
@@ -87,21 +111,32 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 1;
-			var credConfigs = [];
+			var loadCountdown = 2;
+			var chargerConfs = [];
+			var credentialConfs = [];
 	
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
-					populateCredentialConfigs(credConfigs);
+					populateChargerConfigs(chargerConfs);
+					populateCredentialConfigs(credentialConfs);
 				}
 			}
-	
-			// list all configs
+
+			// list all chargers
+			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers'), function(json) {
+				console.debug('Got OCPP chargers: %o', json);
+				if ( json && json.success === true ) {
+					chargerConfs = json.data;
+				}
+				liftoff();
+			});
+			
+			// list all credentials
 			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/credentials'), function(json) {
 				console.debug('Got OCPP credentials: %o', json);
 				if ( json && json.success === true ) {
-					credConfigs = json.data;
+					credentialConfs = json.data;
 				}
 				liftoff();
 			});
