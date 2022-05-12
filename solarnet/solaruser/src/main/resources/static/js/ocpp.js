@@ -1,33 +1,15 @@
 $(document).ready(function() {
 	'use strict';
 
-	/**
-	 * Handle removing a deleted configuration from a service form delete action.
-	 * @param {Number|String} deletedId the deleted config ID
-	 * @param {Array} configs the array of configurations to delete from
-	 * @param {jQuery} container the container to update the config count in
-	 */
-	function handleDeletedConfig(deletedId, configs, container) {
-		if ( deletedId && Array.isArray(configs) ) {
-			var idx = configs.findIndex(function(el) {
-				return (el.id == deletedId);
-			});
-			if ( idx >= 0 ) {
-				configs.splice(idx, 1);
-			}
-			container.closest('section').find('.listCount').text(configs.length);
-		}
-	}
-
 	$('#ocpp-management').first().each(function ocppManagement() {
-		var credentialConfigs = [];
+		const credentialsContainer = $('#ocpp-credentials-container');
+		const credentialConfigs = [];
 	
 		/* ============================
 		   Credentials
 		   ============================ */
 		function populateCredentialConfigs(configs, preserve) {
 			configs = Array.isArray(configs) ? configs : [];
-			var container = $('#ocpp-credentials-container');
 			var items = configs.map(function(config) {
 				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 				model.id = config.id;
@@ -39,26 +21,24 @@ $(document).ready(function() {
 	
 				return model;
 			});
-			SolarReg.Templates.populateTemplateItems(container, items, preserve);
-			if ( !preserve ) {
-				credentialConfigs = configs;
-			}
-			container.closest('section').find('.listCount').text(credentialConfigs.length);
-			return configs;
+			SolarReg.Templates.populateTemplateItems(credentialsContainer, items, preserve);
+			SolarReg.Settings.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
 		}
 	
 		$('#ocpp-credential-edit-modal').on('show.bs.modal', function(event) {
-			var config = SolarReg.Templates.findContextItem(this);
 			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
 			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
-				credentialConfigs.push(res);
+				if ( res.password ) {
+					// server returned a password, so show that to the user once and delete from config
+					const pwModal = $('#ocpp-credential-password-modal');
+					SolarReg.Templates.replaceTemplateProperties(pwModal.find('table'), res);
+					pwModal.modal('show');
+					delete res.password;
+				}
 				populateCredentialConfigs([res], true);
-				var pwModal = $('#ocpp-credential-password-modal');
-				SolarReg.Templates.replaceTemplateProperties(pwModal.find('table'), res);
-				pwModal.modal('show');
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form);
 
@@ -85,7 +65,7 @@ $(document).ready(function() {
 		})
 		.on('hidden.bs.modal', function() {
 			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-credentials-container .list-container'), function(id, deleted) {
-				handleDeletedConfig(deleted ? id : null, credentialConfigs, $('#ocpp-credentials-container'));
+				SolarReg.Settings.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
 			});
 		});
 
@@ -108,11 +88,12 @@ $(document).ready(function() {
 		   ============================ */
 		(function initOcppManagement() {
 			var loadCountdown = 1;
+			var credConfigs = [];
 	
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
-					populateCredentialConfigs(credentialConfigs);
+					populateCredentialConfigs(credConfigs);
 				}
 			}
 	
@@ -120,7 +101,7 @@ $(document).ready(function() {
 			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/credentials'), function(json) {
 				console.debug('Got OCPP credentials: %o', json);
 				if ( json && json.success === true ) {
-					credentialConfigs = json.data;
+					credConfigs = json.data;
 				}
 				liftoff();
 			});

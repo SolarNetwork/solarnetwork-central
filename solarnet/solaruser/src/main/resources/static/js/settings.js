@@ -17,7 +17,6 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	var f = $(form),
 		deleted = f.hasClass('deleted'),
 		idNum = Number(id);
-	// look if we deleted an item, which will only be true if form in "danger" mode
 	if ( id ) {
 		if ( !Number.isNaN(idNum) ) {
 			id = idNum;
@@ -530,4 +529,55 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		var el = modal.find(SolarReg.Settings.modalAlertBeforeSelector);
 		SolarReg.showAlertBefore(el, 'alert-warning', msg);
 	});
+};
+
+/**
+ * Save service configurations to an array.
+ * 
+ * @param {Array.<Object>} updates the configurations that have been updated
+ * @param {boolean} preserve {@constant true} to update existing configurations, {@constant false} to replace all existing configurations
+ * @param {Array.<Object>} configs the service configurations array which will be updated
+ * @param {jQuery} [container] the container whose closest `section` while have a  `.listCount` element updated with the final configuration count
+ * @returns {Array.<Object>} the {@code configs} array
+ */
+	SolarReg.Settings.saveServiceConfigurations = function saveServiceConfigurations(updates, preserve, configs, container) {
+	if ( !Array.isArray(updates) ) {
+		return;
+	}
+	if ( preserve ) {
+		for ( const config of updates ) {
+			const idx = configs.findIndex(function(el) {
+				return (el.id === config.id);
+			});
+			if ( idx >= 0 ) {
+				configs[idx] = config;
+			}
+		}
+	} else {
+		configs.length = 0;
+		configs.push(...updates);
+		if ( container ) {
+			container.closest('section').find('.listCount').text(configs.length);
+		}
+	}
+	return configs;
+};
+
+/**
+* Handle removing a deleted configuration from an array of service configurations.
+* @param {Number|String} deletedId the deleted config ID
+* @param {Array.<Object>} configs the array of configurations to delete from
+* @param {jQuery} container the container to update the config count in
+*/
+SolarReg.Settings.deleteServiceConfiguration = function deleteServiceConfiguration(deletedId, configs, container) {
+	if ( !(deletedId && Array.isArray(configs)) ) {
+		return;
+	}
+	const idx = configs.findIndex(function(el) {
+		return (el.id === deletedId);
+	});
+	if ( idx >= 0 ) {
+		configs.splice(idx, 1);
+	}
+	container.closest('section').find('.listCount').text(configs.length);
 };
