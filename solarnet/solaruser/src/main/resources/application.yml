@@ -216,6 +216,7 @@ spring:
       "[mail.smtp.timeout]": 5000
       "[mail.smtp.writetimeout]": 5000
   thymeleaf.cache: true
+  web.resources.cache.period: "1d"
 
 app:
   billing:
