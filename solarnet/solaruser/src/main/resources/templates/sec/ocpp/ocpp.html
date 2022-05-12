@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'ocpp')">
+<head>
+    <title data-th-text="#{ocpp.title}">Account</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content" id="ocpp-management">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{ocpp.intro}">
+	Here is your OCPP related stuff.
+</p>
+
+<div data-th-replace="sec/ocpp/ocpp-credential-list :: content"></div>
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/ocpp/ocpp-credential-edit-modal :: form"></form>
+
+</div>
+</body>
+</html>
