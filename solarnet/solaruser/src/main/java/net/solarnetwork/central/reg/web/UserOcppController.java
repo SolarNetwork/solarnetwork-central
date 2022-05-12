@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.reg.web;
 
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import net.solarnetwork.central.security.SecurityUtils;
 
 /**
  * Controller for OCPP UI.
@@ -34,9 +36,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @GlobalServiceController
 public class UserOcppController {
 
+	/** The model attribute for the actor's user ID. */
+	public static final String ACTOR_USER_ID_ATTR = "actorUserId";
+
 	@RequestMapping(value = "/u/sec/ocpp", method = RequestMethod.GET)
 	public String home() {
 		return "sec/ocpp/ocpp";
+	}
+
+	@ModelAttribute(name = ACTOR_USER_ID_ATTR)
+	public Long actorUserId() {
+		return SecurityUtils.getCurrentActorUserId();
 	}
 
 }
