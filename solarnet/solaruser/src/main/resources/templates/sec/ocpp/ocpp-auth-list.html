@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="ocpp-auths">
+	<h2>
+		<span data-th-text="#{ocpp.auths.header}">Credentials</span>
+		<button type="button" id="ocpp-add-auth-button" class="btn btn-primary pull-right"
+			data-target="#ocpp-auth-edit-modal" data-toggle="modal"
+			data-th-title="#{ocpp.auths.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{ocpp.auths.intro(0)}">
+		Your authorizations are shown here. Use the + button to add new authorizations.
+	</p>
+	<table id="ocpp-auths-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{ocpp.auths.id.label}">ID</th>
+				<th data-th-text="#{ocpp.auths.created.label}">Created</th>
+				<th data-th-text="#{ocpp.auths.token.label}">Token</th>
+				<th data-th-text="#{ocpp.auths.expiryDate.label}">Expire Date</th>
+				<th data-th-text="#{ocpp.auths.enabled.label}">Enabled</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#ocpp-auth-edit-modal"></a></td>
+				<td data-tprop="createdDisplay"></td>
+				<td data-tprop="token"></td>
+				<td data-tprop="expiryDateDisplay"></td>
+				<td><span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

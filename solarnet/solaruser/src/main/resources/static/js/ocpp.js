@@ -3,6 +3,81 @@ $(document).ready(function() {
 
 	$('#ocpp-management').first().each(function ocppManagement() {
 		/* ============================
+		   Authorizations
+		   ============================ */
+		const authsContainer = $('#ocpp-auths-container');
+		const authConfigs = [];
+
+		function populateAuthConfigs(configs, preserve) {
+			configs = Array.isArray(configs) ? configs : [];
+			var items = configs.map(function(config) {
+				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+				model.id = config.id;
+				model.createdDisplay = moment(config.created).format('D MMM YYYY');
+				model.token = config.token;
+				model.expiryDateDisplay = (config.expiryDate ? moment(config.expiryDate).format('D MMM YYYY') : '');
+				model.enabled = config.enabled;
+	
+				return model;
+			});
+			SolarReg.Templates.populateTemplateItems(authsContainer, items, preserve);
+			SolarReg.saveServiceConfigurations(configs, preserve, authConfigs, authsContainer);
+		}
+
+		$('#ocpp-auths-container .list-container').on('click', function(event) {
+			// edit auth
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+		$('#ocpp-auth-edit-modal').on('show.bs.modal', function(event) {
+			var config = SolarReg.Templates.findContextItem(this),
+				enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				populateAuthConfigs([res], true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+				if ( data.expiryDate ) {
+					// make sure encoded as ISO timestamp
+					data.expiryDate = moment(data.expiryDate).toISOString();
+				}
+
+				if ( !data.userId ) {
+					// use actor user ID, i.e. for new auths
+					data.userId = form.elements['userId'].dataset.userId;
+				}
+
+				return data;
+			}, {
+				errorMessageGenerator: function(xhr, json, form) {
+					var msg;
+					if ( json ) {
+						if ( json.code === 'DAO.00101' ) {
+							// assume this means the given identifier is a duplicate
+							msg = form.elements['token'].dataset['errorDuplicateText'];
+						}
+					}
+					return msg;
+				}
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function() {
+			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-auths-container .list-container'), function(id, deleted) {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, authConfigs, authsContainer);
+			});
+		})
+		.find('button.toggle').each(function() {
+			var toggle = $(this);
+			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+		});
+   
+		/* ============================
 		   Chargers
 		   ============================ */
 		const chargersContainer = $('#ocpp-chargers-container');
@@ -76,10 +151,10 @@ $(document).ready(function() {
 		.find('button.toggle').each(function() {
 			var toggle = $(this);
 			SolarReg.Settings.setupSettingToggleButton(toggle, false);
-		});;
+		});
 
 		/* ============================
-		   chargers
+		   Credentials
 		   ============================ */
 		const credentialsContainer = $('#ocpp-credentials-container');
 		const credentialConfigs = [];
@@ -164,14 +239,16 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 2;
+			var loadCountdown = 3;
 			var chargerConfs = [];
+			var authConfs = [];
 			var credentialConfs = [];
 	
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
 					populateChargerConfigs(chargerConfs);
+					populateAuthConfigs(authConfs);
 					populateCredentialConfigs(credentialConfs);
 				}
 			}
@@ -181,6 +258,15 @@ $(document).ready(function() {
 				console.debug('Got OCPP chargers: %o', json);
 				if ( json && json.success === true ) {
 					chargerConfs = json.data;
+				}
+				liftoff();
+			});
+
+			// list all authorizations
+			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/authorizations'), function(json) {
+				console.debug('Got OCPP authorizations: %o', json);
+				if ( json && json.success === true ) {
+					authConfs = json.data;
 				}
 				liftoff();
 			});
