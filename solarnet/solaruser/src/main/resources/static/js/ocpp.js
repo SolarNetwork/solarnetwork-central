@@ -19,6 +19,7 @@ $(document).ready(function() {
 				model.nodeId = config.nodeId;
 				model.enabled = config.enabled;
 				model.registrationStatus = config.registrationStatus;
+				model.connectorCount = config.connectorCount;
 	
 				return model;
 			});
@@ -26,8 +27,59 @@ $(document).ready(function() {
 			SolarReg.saveServiceConfigurations(configs, preserve, chargerConfigs, chargersContainer);
 		}
 
+		$('#ocpp-chargers-container .list-container').on('click', function(event) {
+			// edit charger
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+		$('#ocpp-charger-edit-modal').on('show.bs.modal', function(event) {
+			var config = SolarReg.Templates.findContextItem(this),
+				enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				populateChargerConfigs([res], true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+				if ( !data.userId ) {
+					// use actor user ID, i.e. for new chargers
+					data.userId = form.elements['userId'].dataset.userId;
+				}
+
+				return data;
+			}, {
+				errorMessageGenerator: function(xhr, json, form) {
+					var msg;
+					if ( json ) {
+						if ( json.code === 'DAO.00101' ) {
+							// assume this means the given identifier is a duplicate
+							msg = form.elements['info.id'].dataset['errorDuplicateText'];
+						} else if ( json.message === 'UNKNOWN_OBJECT' ) {
+							// assume this means the given node ID is not valid
+							msg = form.elements['nodeId'].dataset['errorInvalidText'];
+						}
+					}
+					return msg;
+				}
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function() {
+			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-chargers-container .list-container'), function(id, deleted) {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, chargerConfigs, chargersContainer);
+			});
+		})
+		.find('button.toggle').each(function() {
+			var toggle = $(this);
+			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+		});;
+
 		/* ============================
-		   Credentials
+		   chargers
 		   ============================ */
 		const credentialsContainer = $('#ocpp-credentials-container');
 		const credentialConfigs = [];
@@ -49,6 +101,16 @@ $(document).ready(function() {
 			SolarReg.saveServiceConfigurations(configs, preserve, credentialConfigs, credentialsContainer);
 		}
 	
+		$('#ocpp-credentials-container .list-container').on('click', function(event) {
+			// edit credentials
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+		$('#ocpp-credential-password-modal').on('hidden.bs.modal', function(event) {
+			// clear out credentials
+			$(this).find('*[data-tprop]').text('');
+		});
+
 		$('#ocpp-credential-edit-modal').on('show.bs.modal', function(event) {
 			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
 		})
@@ -78,7 +140,7 @@ $(document).ready(function() {
 					delete data.allowedChargePoints;
 				}
 
-				if ( data.userId === "" ) {
+				if ( !data.userId ) {
 					// use actor user ID, i.e. for new credentials
 					data.userId = form.elements['userId'].dataset.userId;
 				}
@@ -91,15 +153,6 @@ $(document).ready(function() {
 			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-credentials-container .list-container'), function(id, deleted) {
 				SolarReg.deleteServiceConfiguration(deleted ? id : null, credentialConfigs, credentialsContainer);
 			});
-		});
-
-		$('#ocpp-credentials-container .list-container').on('click', function(event) {
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-
-		$('#ocpp-credential-password-modal').on('hidden.bs.modal', function(event) {
-			// clear out credentials
-			$(this).find('*[data-tprop]').text('');
 		});
 
 		/* ============================

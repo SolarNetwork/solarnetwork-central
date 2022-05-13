@@ -91,6 +91,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 			el = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}
 		if ( el && el.length > 0 ) {
+			// clear any existing props in case values have been deleted
+			el.find('[data-tprop]').text('');
+
 			SolarReg.Templates.replaceTemplateProperties(el, item);
 			SolarReg.Templates.setContextItem(el, item._contextItem);
 		} else {
@@ -100,6 +103,11 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 			callback(item, el);
 		}
 	});
+	
+	// look for empty "detail list" items to hide, non-empty items to show
+	container.find('dl.details-container > dd:empty').prev('dt').addBack().addClass('hidden');
+	container.find('dl.details-container > dd:not(:empty)').prev('dt').addBack().removeClass('hidden');
+	
 	container.toggleClass('hidden', items.length < 1);
 };
 

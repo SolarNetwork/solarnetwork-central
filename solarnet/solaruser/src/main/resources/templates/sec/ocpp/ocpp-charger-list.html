@@ -5,6 +5,14 @@
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
 	<link rel="stylesheet" href="../../../static/css/global.css">
+	<style>
+		dl.details-container dd:empty {
+			display: none;
+		}
+		dl.details-container dt:has(+ dd:empty) {
+			display: none;
+		}
+	</style>
 </head>
 <body>
 <div data-th-fragment="content">
@@ -27,6 +35,7 @@
 				<th data-th-text="#{ocpp.chargers.created.label}">Created</th>
 				<th data-th-text="#{ocpp.chargers.nodeId.label}">Node</th>
 				<th data-th-text="#{ocpp.chargers.identifier.label}">Identifier</th>
+				<th data-th-text="#{ocpp.chargers.connectorCount.label}">Connectors</th>
 				<th data-th-text="#{ocpp.chargers.enabled.label}">Enabled</th>
 				<th data-th-text="#{ocpp.chargers.registrationStatus.label}">Registration Status</th>
 				<th data-th-text="#{ocpp.chargers.details.label}">Details</th>
@@ -36,6 +45,7 @@
 				<td data-tprop="createdDisplay"></td>
 				<td data-tprop="nodeId"></td>
 				<td data-tprop="identifier"></td>
+				<td data-tprop="connectorCount"></td>
 				<td><span class="label" data-tprop="enabled"
 						data-th-data-true-text="#{settings.enabled.label}"
 						data-th-data-false-text="#{settings.disabled.label}"></span></td>
@@ -47,13 +57,25 @@
 					></td>
 				<td>
 					<small>
-						<dl class="details-container">
+						<dl class="details-container dl-horizontal">
 							<dt data-th-text="#{ocpp.chargers.model.label}">Model</dt>
 							<dd data-tprop="chargePointModel"></dd>
 							<dt data-th-text="#{ocpp.chargers.serialNumber.label}">Serial Number</dt>
 							<dd data-tprop="chargePointSerialNumber"></dd>
-							<dt data-th-text="#{ocpp.chargers.chargePointVendor.label}">Vendor</dt>
+							<dt data-th-text="#{ocpp.chargers.vendor.label}">Vendor</dt>
 							<dd data-tprop="chargePointVendor"></dd>
+							<dt data-th-text="#{ocpp.chargers.firmwareVersion.label}">Firmware Version</dt>
+							<dd data-tprop="firmwareVersion"></dd>
+							<dt data-th-text="#{ocpp.chargers.chargeBoxSerialNumber.label}">Charge Box Serial Number</dt>
+							<dd data-tprop="chargeBoxSerialNumber"></dd>
+							<dt data-th-text="#{ocpp.chargers.iccid.label}">ICCID</dt>
+							<dd data-tprop="iccid"></dd>
+							<dt data-th-text="#{ocpp.chargers.imsi.label}">IMSI</dt>
+							<dd data-tprop="imsi"></dd>
+							<dt data-th-text="#{ocpp.chargers.meterType.label}">Meter Type</dt>
+							<dd data-tprop="meterType"></dd>
+							<dt data-th-text="#{ocpp.chargers.meterSerialNumber.label}">Meter Serial Number</dt>
+							<dd data-tprop="meterSerialNumber"></dd>
 						</dl>
 					</small>
 				</td>

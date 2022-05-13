@@ -2,6 +2,14 @@
 /* Global SolarNetwork App Support */
 
 var SolarReg = {
+	/**
+	 * Insert an alert element before a given element.
+	 * 
+	 * @param {jQuery} el the element to insert the alert before
+	 * @param {String} clazz an alert class to add
+	 * @param {String} msg a message to show
+	 * @returns {void}
+	 */
 	showAlertBefore: function(el, clazz, msg) {
 	    $('<div class="alert'+(clazz.length > 0 ? ' ' +clazz : '')
 	    		+'"><button type="button" class="close" data-dismiss="alert">\u00d7</button>'
@@ -56,9 +64,9 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
 /**
  * Search for an object with a matching `name` property value.
  *
- * @param {array} array the array of objects to search through
- * @param {string} name the `name` value to search for
- * @returns {object} the first object that has a matching `name` property
+ * @param {Array} array the array of objects to search through
+ * @param {String} name the `name` value to search for
+ * @returns {Object} the first object that has a matching `name` property
  */
 SolarReg.findByName = function findByName(array, name) {
 	var result;
@@ -77,7 +85,7 @@ SolarReg.findByName = function findByName(array, name) {
   *
   * @param {string} string the string to split into numbers
   * @param {RegExp} [delimiter] the regular expression to split with; defaults to comma with optional surrounding whitespace
-  * @returns {array<Number>}
+  * @returns {Array.<Number>}
   */
 SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
 	 delimiter = (delimiter || /\s*,\s*/);
@@ -87,6 +95,30 @@ SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
 	 return string.split(delimiter)
 		 .map(function(id) { return Number(id); })
 		 .filter(function(id) { return !isNaN(id); });
+ };
+
+ /**
+  * Delete empty string properties from an object.
+  * 
+  * @param {Object} obj the object to remove empty string properties from
+  * @param {boolean} recurse {@constant true} to recurse into nested objects
+  * @returns {void}
+  */
+ SolarReg.deleteEmptyProperties = function deleteEmptyProperties(obj, recurse) {
+	 var prop;
+	 if ( typeof obj !== 'object' ) {
+		 return;
+	 }
+	 for ( prop in obj ) {
+		if ( !Object.prototype.hasOwnProperty.call(obj, prop) ) {
+			continue;
+		}
+		if ( typeof obj[prop] === 'string' && obj[prop].trim().length < 1 ) {
+			delete obj[prop];
+		} else if ( recurse && typeof obj[prop] === 'object' ) {
+			deleteEmptyProperties(obj[prop], true);
+		}
+	 }
  };
 
 /**
