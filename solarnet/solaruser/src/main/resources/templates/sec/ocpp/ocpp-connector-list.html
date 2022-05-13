@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+	<style>
+		dl.details-container dd:empty {
+			display: none;
+		}
+		dl.details-container dt:has(+ dd:empty) {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="ocpp-connectors">
+	<h2>
+		<span data-th-text="#{ocpp.connectors.header}">Connectors</span>
+		<button type="button" id="ocpp-add-connector-button" class="btn btn-primary pull-right"
+			data-target="#ocpp-connector-edit-modal" data-toggle="modal"
+			data-th-title="#{ocpp.connectors.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{ocpp.connectors.intro(0)}">
+		Your connectors are shown here. Use the + button to add new connectors.
+	</p>
+	<table id="ocpp-connectors-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{ocpp.connectors.id.label}">ID</th>
+				<th data-th-text="#{ocpp.connectors.created.label}">Created</th>
+				<th data-th-text="#{ocpp.connectors.status.label}">Status</th>
+				<th data-th-text="#{ocpp.connectors.errorCode.label}">Error Code</th>
+				<th data-th-text="#{ocpp.connectors.info.label}">Info</th>
+				<th data-th-text="#{ocpp.connectors.timestamp.label}">Timestamp</th>
+				<th data-th-text="#{ocpp.connectors.vendorInfo.label}">Vendor Info</th>
+			</tr>
+			<tr data-th-classappend="'template'">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#ocpp-connector-edit-modal"></a></td>
+				<td data-tprop="createdDisplay"></td>
+				<td data-tprop="status"
+					data-th-data-unknown-text="#{ocpp.connectors.status.Unknown}"
+					data-th-data-available-text="#{ocpp.connectors.status.Available}"
+					data-th-data-faulted-text="#{ocpp.connectors.status.Faulted}"
+					data-th-data-unavailable-text="#{ocpp.connectors.status.Unavailable}"
+					data-th-data-reserved-text="#{ocpp.connectors.status.Reserved}"
+					data-th-data-preparing-text="#{ocpp.connectors.status.Preparing}"
+					data-th-data-charging-text="#{ocpp.connectors.status.Charging}"
+					data-th-data-suspendedev-text="#{ocpp.connectors.status.SuspendedEV}"
+					data-th-data-suspendedevse-text="#{ocpp.connectors.status.SuspendedEVSE}"
+					data-th-data-finishing-text="#{ocpp.connectors.status.Finishing}"
+					></td>
+				<td data-tprop="errorCode"
+					data-th-data-unknown-text="#{ocpp.connectors.errorCode.Unknown}"
+					data-th-data-connectorlockfailure-text="#{ocpp.connectors.errorCode.ConnectorLockFailure}"
+					data-th-data-hightemperature-text="#{ocpp.connectors.errorCode.HighTemperature}"
+					data-th-data-noerror-text="#{ocpp.connectors.errorCode.NoError}"
+					data-th-data-powermeterfailure-text="#{ocpp.connectors.errorCode.PowerMeterFailure}"
+					data-th-data-powerswitchfailure-text="#{ocpp.connectors.errorCode.PowerSwitchFailure}"
+					data-th-data-readerfailure-text="#{ocpp.connectors.errorCode.ReaderFailure}"
+					data-th-data-resetfailure-text="#{ocpp.connectors.errorCode.ResetFailure}"
+					data-th-data-groundfailure-text="#{ocpp.connectors.errorCode.GroundFailure}"
+					data-th-data-overcurrentfailure-text="#{ocpp.connectors.errorCode.OverCurrentFailure}"
+					data-th-data-undervoltage-text="#{ocpp.connectors.errorCode.UnderVoltage}"
+					data-th-data-weaksignal-text="#{ocpp.connectors.errorCode.WeakSignal}"
+					data-th-data-othererror-text="#{ocpp.connectors.errorCode.OtherError}"
+					data-th-data-evcommunicationerror-text="#{ocpp.connectors.errorCode.EVCommunicationError}"
+					data-th-data-internalerror-text="#{ocpp.connectors.errorCode.InternalError}"
+					data-th-data-locallistconflict-text="#{ocpp.connectors.errorCode.LocalListConflict}"
+					data-th-data-overvoltage-text="#{ocpp.connectors.errorCode.OverVoltage}"
+					></td>
+				<td data-tprop="info"></td>
+				<td data-tprop="timestampDisplay"></td>
+				<td>
+					<small>
+						<dl class="details-container dl-horizontal">
+							<dt data-th-text="#{ocpp.connectors.vendorId.label}">Vendor ID</dt>
+							<dd data-tprop="vendorId"></dd>
+							<dt data-th-text="#{ocpp.connectors.vendorErrorCode.label}">Vendor Error Code</dt>
+							<dd data-tprop="vendorErrorCode"></dd>
+						</dl>
+					</small>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

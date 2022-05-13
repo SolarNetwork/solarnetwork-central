@@ -154,6 +154,85 @@ $(document).ready(function() {
 		});
 
 		/* ============================
+		   Connectors
+		   ============================ */
+		const connectorsContainer = $('#ocpp-connectors-container');
+		const connectorConfigs = [];
+
+		function setupConnectorId(config) {
+			if ( config.id ) {
+				return;
+			}
+			config.id = config.chargePointId + '.' + config.connectorId;
+			return config;
+		}
+
+		function populateConnectorConfigs(configs, preserve) {
+			configs = Array.isArray(configs) ? configs : [];
+			var items = configs.map(function(config) {
+				var model = SolarReg.Settings.serviceConfigurationItem(setupConnectorId(config), []);
+				Object.assign(model, config.info); // copy info props directly onto model
+				model.id = config.id;
+				model.chargePointId = config.chargePointId;
+				model.createdDisplay = moment(config.created).format('D MMM YYYY');
+				if ( model.timestamp ) {
+					model.timestampDisplay = moment(model.timestamp).format('D MMM YYYY');
+				}	
+				return model;
+			});
+			SolarReg.Templates.populateTemplateItems(connectorsContainer, items, preserve);
+			SolarReg.saveServiceConfigurations(configs, preserve, connectorConfigs, connectorsContainer);
+		}
+
+		$('#ocpp-connectors-container .list-container').on('click', function(event) {
+			// edit connector
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+		$('#ocpp-connector-edit-modal').on('show.bs.modal', function(event) {
+			var config = SolarReg.Templates.findContextItem(this),
+				enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				populateConnectorConfigs([res], true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+				if ( !data.userId ) {
+					// use actor user ID, i.e. for new connectors
+					data.userId = form.elements['userId'].dataset.userId;
+				}
+
+				return data;
+			}, {
+				errorMessageGenerator: function(xhr, json, form) {
+					var msg;
+					if ( json ) {
+						if ( json.code === 'DAO.00105' ) {
+							// assume this means the given charger ID is not valid
+							msg = form.elements['chargePointId'].dataset['errorInvalidText'];
+						}
+					}
+					return msg;
+				}
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function() {
+			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-connectors-container .list-container'), function(id, deleted) {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, connectorConfigs, connectorsContainer);
+			});
+		})
+		.find('button.toggle').each(function() {
+			var toggle = $(this);
+			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+		});
+
+		/* ============================
 		   Credentials
 		   ============================ */
 		const credentialsContainer = $('#ocpp-credentials-container');
@@ -233,16 +312,28 @@ $(document).ready(function() {
 		/* ============================
 		   OCPP entity delete
 		   ============================ */
-		$('.ocpp.edit-config button.delete-config').on('click', SolarReg.Settings.handleEditServiceItemDeleteAction);
+		$('.ocpp.edit-config button.delete-config').on('click', function(event) {
+			var options = {};
+			var form = $(event.target).closest('form').get(0);
+			if ( form && form.elements['connectorId'] ) {
+				// connectors have a (chargePointId, connectorId) ID value
+				options.urlSerializer = function(action) {
+					return action + '/' + encodeURIComponent(form.elements['chargePointId'].value)
+						+ '/' + encodeURIComponent(form.elements['connectorId'].value);
+				};
+			}
+			SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
+		});
 
 		/* ============================
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 3;
+			var loadCountdown = 4;
 			var chargerConfs = [];
 			var authConfs = [];
 			var credentialConfs = [];
+			var connectorConfs = [];
 	
 			function liftoff() {
 				loadCountdown -= 1;
@@ -250,6 +341,7 @@ $(document).ready(function() {
 					populateChargerConfigs(chargerConfs);
 					populateAuthConfigs(authConfs);
 					populateCredentialConfigs(credentialConfs);
+					populateConnectorConfigs(connectorConfs);
 				}
 			}
 
@@ -276,6 +368,15 @@ $(document).ready(function() {
 				console.debug('Got OCPP credentials: %o', json);
 				if ( json && json.success === true ) {
 					credentialConfs = json.data;
+				}
+				liftoff();
+			});
+			
+			// list all connectors
+			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/connectors'), function(json) {
+				console.debug('Got OCPP connectors: %o', json);
+				if ( json && json.success === true ) {
+					connectorConfs = json.data;
 				}
 				liftoff();
 			});
