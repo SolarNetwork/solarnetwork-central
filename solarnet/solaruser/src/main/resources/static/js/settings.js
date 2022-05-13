@@ -242,6 +242,7 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 		components,
 		component,
 		obj,
+		val,
 		j, jLen;
 	for ( i = 0, len = fields.length; i < len; i += 1 ) {
 		field = fields.item(i);
@@ -254,11 +255,51 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 			component = components[j];
 		}
 		if ( name && obj && obj[component] ) {
-			$(field).val(Array.isArray(obj[component])
+			val = Array.isArray(obj[component])
 				? SolarReg.arrayAsDelimitedString(obj[component])
-				: obj[component]);
+				: obj[component];
+			if ( field.type == "date" ) {
+				// make sure date formatted
+				val = moment(val).format('YYYY-MM-DD');
+			}
+			$(field).val(val);
 		}
 	}
+}
+
+/**
+ * Handle the configuration of a setting toggle button.
+ * 
+ * @param {jQuery} btn the toggle button
+ * @param {boolean} enabled {@constant true} if the button is enabled
+ */
+SolarReg.Settings.handleSettingToggleButtonChange = function handleSettingToggleButtonChange(btn, enabled) {
+	if ( !btn ) {
+		return;
+	}
+	btn.toggleClass('btn-success', enabled)
+		.toggleClass('btn-default', !enabled)
+		.toggleClass('active', enabled)
+		.attr('aria-pressed', enabled )
+		.button(enabled ? 'on' : 'off')
+		.val(enabled ? 'true' : 'false');
+}
+
+/**
+ * Configure a toggle button.
+ * 
+ * @param {jQuery} btn the toggle button
+ * @param {boolean} enabled {@constant true} if the button is enabled
+ */
+SolarReg.Settings.setupSettingToggleButton = function setupSettingToggleButton(btn, enabled) {
+	if ( !(btn.data('toggle') === 'setting-toggle' && btn.data('on-text') && btn.data('off-text')) ) {
+		return false;
+	}
+	SolarReg.Settings.handleSettingToggleButtonChange(btn, enabled); // initialize initial state
+	btn.on('click', function() {
+		var btn = $(this);
+		SolarReg.Settings.handleSettingToggleButtonChange(btn, btn.val() !== 'true');
+	});
 }
 
 /**
@@ -303,20 +344,7 @@ SolarReg.Settings.renderServiceInfoSettings = function renderServiceInfoSettings
         fieldElement
             .val(setting.secureTextEntry ? '' : formItem.value)
 			.attr('name', 'serviceProperties.' + setting.key);
-		if ( fieldElement.data('toggle') === 'setting-toggle' && fieldElement.data('on-text') && fieldElement.data('off-text') ) {
-			var handleButton = function handleButton(btn, enabled) {
-				btn.toggleClass('btn-success', enabled)
-					.toggleClass('active', enabled)
-					.attr('aria-pressed', enabled )
-					.button(enabled ? 'on' : 'off')
-					.val(enabled ? 'true' : 'false');
-			}
-			handleButton(fieldElement, formItem.value === 'true'); // initialize initial state
-			fieldElement.on('click', function() {
-				var btn = $(this);
-				handleButton(btn, btn.val() !== 'true');
-			});
-		}
+		SolarReg.Settings.setupSettingToggleButton(fieldElement, formItem.value === 'true');
         var helpElement = templateElement.find('.setting-help');
         if ( helpElement.data('toggle') === 'popover' ) {
             helpElement.attr('data-content', formItem.description);
@@ -394,9 +422,10 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event)
  * for posting to SolarNetwork.
  *
  * @param {HTMLFormElement} form the form
- * @returns {object} the encoded object
+ * @param {boolean} excludeEmptyProperties {@constant true} to omit empty form field values from the result
+ * @returns {Object} the encoded object
  */
-SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
+SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, excludeEmptyProperties) {
 	var body = {},
 		fields = form.elements;
 	var i, iLen,
@@ -427,8 +456,8 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
 		} else {
 			// <input>
 			value = field.value || '';
-			if ( name === 'id' && !value ) {
-				// don't populate empty ID value
+			if ( !value && (excludeEmptyProperties || name === 'id') ) {
+				// don't populate empty ID value or when excludeEmptyProperties === true
 				continue;
 			}
 		}
@@ -460,7 +489,9 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form) {
  * @param {function} [options.upload] an optional upload progress event callback function
  * @param {function} [options.urlSerializer] an optional function to generate the submit URL; will be passed the form action (decoded) and the serialized body content;
  *                                           defaults to `SolarReg.replaceTemplateParameters`
- * @param {function} [options.urlId] if `true` then if the form as an `id` input with a non-empty value, add the value to the submit URL after a `/`
+ * @param {boolean} [options.urlId] if `true` then if the form as an `id` input with a non-empty value, add the value to the submit URL after a `/`
+ * @param {function} [options.errorMessageGenerator] an optional function called after an error to generate the error message to show,
+ *                                                   with (xhr, json, form, formData) arguments
  * @returns {jqXHR} the jQuery XHR object
  */
 SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, options) {
@@ -518,15 +549,21 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 			var msg = (json && json.message ? json.message : 'Unknown error: ' +statusText);
 			SolarReg.showAlertBefore(modal.find(SolarReg.Settings.modalAlertBeforeSelector), 'alert-warning', msg);
 		}
-	}).fail(function(xhr, statusText, error) {
-		var json = {};
+	}).fail(function(xhr, statusText) {
+		var json = {}, msg;
 		if ( xhr.responseJSON ) {
 			json = xhr.responseJSON;
 		} else if ( xhr.responseText ) {
 			json = JSON.parse(xhr.responseText);
 		}
-		var msg = 'Error: ' +(json && json.message ? json.message : statusText);
+		if ( options && typeof options.errorMessageGenerator === 'function' ) {
+			msg = options.errorMessageGenerator(xhr, json, form, body);
+		}
+		if ( !msg ) {
+			msg = 'Error: ' +(json && json.message ? json.message : statusText);
+		}
 		var el = modal.find(SolarReg.Settings.modalAlertBeforeSelector);
 		SolarReg.showAlertBefore(el, 'alert-warning', msg);
+		modal.find('button[type=submit]').prop('disabled', false);
 	});
 };
