@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+	<style>
+		dl.details-container dd:empty {
+			display: none;
+		}
+		dl.details-container dt:has(+ dd:empty) {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="ocpp-settings">
+	<h2>
+		<span data-th-text="#{ocpp.settings.header}">Connectors</span>
+		<button type="button" id="ocpp-edit-settings-button" class="btn btn-primary pull-right"
+			data-target="#ocpp-settings-edit-modal" data-toggle="modal"
+			data-th-title="#{ocpp.settings.add}"
+			data-th-text="#{ocpp.settings.add}">
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{ocpp.settings.intro(0)}">
+		Your settings are shown here. Use the Edit button to edit the settings.
+	</p>
+	<table id="ocpp-settings-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</th>
+				<th data-th-text="#{ocpp.settings.publishToSolarIn.label}">SolarIn</th>
+				<th data-th-text="#{ocpp.settings.publishToSolarFlux.label}">SolarFlux</th>
+			</tr>
+			<tr data-th-classappend="'template'">
+				<td data-tprop="sourceIdTemplate"></td>
+				<td><span class="label" data-tprop="publishToSolarIn"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+				<td><span class="label" data-tprop="publishToSolarFlux"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

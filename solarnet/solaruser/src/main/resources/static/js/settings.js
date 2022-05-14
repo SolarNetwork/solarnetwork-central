@@ -410,7 +410,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
  *
  * @param {Event} event the event that triggered the action
  */
-SolarReg.Settings.handleEditServiceItemAction = function handleEditAction(event) {
+SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAction(event) {
 	if ( !(event.target && event.target.classList) ) {
 		return;
 	}

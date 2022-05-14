@@ -310,6 +310,61 @@ $(document).ready(function() {
 		});
 
 		/* ============================
+		   Settings
+		   ============================ */
+		const settingsContainer = $('#ocpp-settings-container');
+		const settingConfigs = []; // only ever one of these, use array for consistency with Settings/Templates functions
+
+		function populateSettingConfigs(configs, preserve) {
+			configs = Array.isArray(configs) ? configs : [];
+			var items = configs.map(function(config) {
+				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+				config.id = 1;
+				model.id = config.id;
+				model.publishToSolarIn = config.publishToSolarIn;
+				model.publishToSolarFlux = config.publishToSolarFlux;
+				model.sourceIdTemplate = config.sourceIdTemplate;
+				return model;
+			});
+			SolarReg.Templates.populateTemplateItems(settingsContainer, items, preserve);
+			SolarReg.saveServiceConfigurations(configs, preserve, settingConfigs, settingsContainer);
+		}
+
+		$('#ocpp-settings-edit-modal').on('show.bs.modal', function(event) {
+			var config = (settingConfigs.length > 0 ? settingConfigs[0] : undefined),
+				pubSolarIn = (config && config.publishToSolarIn === true ? true : false),
+				pubSolarFlux = (config && config.publishToSolarFlux === true ? true : false),
+				modal = $(event.target);
+			SolarReg.Templates.setContextItem(modal, config);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarIn]'), pubSolarIn);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), pubSolarFlux);
+			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				populateSettingConfigs([res], true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+				if ( !data.userId ) {
+					// use actor user ID, i.e. for new settings
+					data.userId = form.elements['userId'].dataset.userId;
+				}
+
+				return data;
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function() {
+			SolarReg.Settings.resetEditServiceForm(this, $('#ocpp-settings-container .list-container'));
+		})
+		.find('button.toggle').each(function() {
+			var toggle = $(this);
+			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+		});
+
+		/* ============================
 		   OCPP entity delete
 		   ============================ */
 		$('.ocpp.edit-config button.delete-config').on('click', function(event) {
@@ -329,7 +384,8 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 4;
+			var loadCountdown = 5;
+			var settingConfs = [];
 			var chargerConfs = [];
 			var authConfs = [];
 			var credentialConfs = [];
@@ -338,12 +394,22 @@ $(document).ready(function() {
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
+					populateSettingConfigs(settingConfs);
 					populateChargerConfigs(chargerConfs);
 					populateAuthConfigs(authConfs);
 					populateCredentialConfigs(credentialConfs);
 					populateConnectorConfigs(connectorConfs);
 				}
 			}
+
+			// get settings
+			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/settings'), function(json) {
+				console.debug('Got OCPP settings: %o', json);
+				if ( json && json.success === true ) {
+					settingConfs = [json.data];
+				}
+				liftoff();
+			});
 
 			// list all chargers
 			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/chargers'), function(json) {
