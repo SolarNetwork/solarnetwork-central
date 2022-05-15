@@ -340,6 +340,15 @@ $(document).ready(function() {
 			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 			if ( config.chargePointId === undefined ) {
 				config.id = 1; // assign arbitrary ID for default settings
+				if ( config.publishToSolarIn === undefined ) {
+					config.publishToSolarIn = true;
+				}
+				if ( config.publishToSolarFlux === undefined ) {
+					config.publishToSolarFlux = true;
+				}
+				if ( config.sourceIdTemplate === undefined ) {
+					config.sourceIdTemplate = '/ocpp/{chargePointId}/{connectorId}/{location}';
+				}
 			} else {
 				config.id = config.chargePointId;
 				model.chargePointId = config.chargePointId;
@@ -372,8 +381,8 @@ $(document).ready(function() {
 					if ( chargerItem ) {
 						chargerItem.settings = model._contextItem;
 						chargerItem.sourceIdTemplate = model.sourceIdTemplate;
-						chargerItem.publishToSolarIn = model.publishToSolarIn;
-						chargerItem.publishToSolarFlux = model.publishToSolarFlux;
+						chargerItem.publishToSolarIn = !!model.publishToSolarIn;
+						chargerItem.publishToSolarFlux = !!model.publishToSolarFlux;
 						chargerItems.push(chargerItem);
 					}
 				}
@@ -502,8 +511,10 @@ $(document).ready(function() {
 			// get settings
 			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/settings'), function(json) {
 				console.debug('Got OCPP settings: %o', json);
-				if ( json && json.success === true ) {
+				if ( json && json.success === true && Array.isArray(json.data) ) {
 					settingConfs = [json.data];
+				} else {
+					settingConfs = [{}];
 				}
 				liftoff();
 			});
