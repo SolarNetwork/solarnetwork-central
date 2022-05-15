@@ -51,19 +51,11 @@ $(document).ready(function() {
 		}
 	}
 
-	function handleToggleButton(btn, enabled) {
-		btn.toggleClass('btn-success', enabled)
-			.toggleClass('active', enabled)
-			.attr('aria-pressed', enabled )
-			.button(enabled ? 'on' : 'off')
-			.val(enabled ? 'true' : 'false');
-	}
-
 	// ***** Edit data policy form
 	$('#edit-expire-data-config-modal').on('show.bs.modal', function(event) {
 		var config = SolarReg.Templates.findContextItem(this),
 			active = (config && config.active === true ? true : false);
-		handleToggleButton($(this).find('button[name=active]'), active);
+		SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=active]'), active);
 		SolarReg.Settings.prepareEditServiceForm($(event.target), dataServices, settingTemplates);
 	})
 	.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
@@ -100,11 +92,7 @@ $(document).ready(function() {
 	})
 	.find('button[name=active]').each(function() {
 		var fieldElement = $(this);
-		handleToggleButton(fieldElement, false); // initialize initial state
-		fieldElement.on('click', function() {
-			var btn = $(this);
-			handleToggleButton(btn, btn.val() !== 'true');
-		});
+		SolarReg.Settings.setupSettingToggleButton(fieldElement, false);
 	});
 
 	// ***** Preview data policy modal

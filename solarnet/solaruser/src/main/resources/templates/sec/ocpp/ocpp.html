@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'ocpp')">
+<head>
+    <title data-th-text="#{ocpp.title}">Account</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content" id="ocpp-management">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{ocpp.intro}">
+	Here is your OCPP related stuff.
+</p>
+
+<div data-th-replace="sec/ocpp/ocpp-settings :: content"></div>
+
+<div data-th-replace="sec/ocpp/ocpp-credential-list :: content"></div>
+
+<div data-th-replace="sec/ocpp/ocpp-auth-list :: content"></div>
+
+<div data-th-replace="sec/ocpp/ocpp-charger-list :: content"></div>
+
+<div data-th-replace="sec/ocpp/ocpp-connector-list :: content"></div>
+
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/ocpp/ocpp-auth-edit-modal :: form"></form>
+<form data-th-replace="sec/ocpp/ocpp-charger-edit-modal :: form"></form>
+<form data-th-replace="sec/ocpp/ocpp-connector-edit-modal :: form"></form>
+<form data-th-replace="sec/ocpp/ocpp-credential-edit-modal :: form"></form>
+<form data-th-replace="sec/ocpp/ocpp-credential-password-modal :: div"></form>
+<form data-th-replace="sec/ocpp/ocpp-settings-edit-modal :: form"></form>
+
+</div>
+</body>
+</html>
