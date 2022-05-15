@@ -47,35 +47,38 @@ SolarReg.csrf = function(xhr) {
 /**
  * Search for an object with a matching `id` property value.
  *
- * @param {array} array the array of objects to search through
- * @param {string} identifier the `id` value to search for
- * @returns {object} the first object that has a matching `id` property
+ * @param {Iterable} array the iterable list to search through
+ * @param {String} identifier the `id` value to search for
+ * @returns {Object} the first object that has a matching `id` property
  */
 SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
-	var result;
-	if ( identifier && Array.isArray(array) ) {
-		result = array.find(function(obj) {
-			return obj.id === identifier;
-		});
+	if ( identifier && array ) {
+		for ( const el of array ) {
+			if ( el.id === identifier ) {
+				return el;
+			}
+		}
 	}
-	return result;
+	return undefined;
  };
 
 /**
  * Search for an object with a matching `name` property value.
  *
- * @param {Array} array the array of objects to search through
+ * @param {Iterable} array the iterable list of objects to search through
  * @param {String} name the `name` value to search for
  * @returns {Object} the first object that has a matching `name` property
  */
 SolarReg.findByName = function findByName(array, name) {
 	var result;
-	if ( name && Array.isArray(array) ) {
-		result = array.find(function(obj) {
-			return obj.name === name;
-		});
+	if ( name && array ) {
+		for ( const el of array ) {
+			if ( el.name === identifier ) {
+				return el;
+			}
+		}
 	}
-	return result;
+	return undefined;
  };
 
  /**

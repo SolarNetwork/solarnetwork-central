@@ -72,7 +72,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  *                                           defaults to appending a `/{id}` value where {id} is the value of the `id`
  *                                           form field
  */
-SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDelete(event, options) {
+SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDeleteAction(event, options) {
 	var deleteBtn = event.target;
 	var modal = $(deleteBtn).closest('.modal');
 	var confirmEl = modal.find('.delete-confirm');
