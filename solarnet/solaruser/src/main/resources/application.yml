@@ -191,6 +191,10 @@ spring:
 spring:
   config.activate.on-profile: development
   thymeleaf.cache: false
+
+server:
+  forward-headers-strategy: "NATIVE"
+
 app:
   datasource:
     url: "jdbc:postgresql://localhost:5412/solarnetwork"
@@ -227,6 +231,7 @@ app:
 debug: false
 
 server:
+  forward-headers-strategy: "NATIVE"
   servlet:
     session:
       cookie:
