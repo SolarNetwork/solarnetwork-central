@@ -152,6 +152,7 @@ public class WebSecurityConfig {
 		        .antMatchers("/login")
 		        .antMatchers("/logout")
 		        .antMatchers("/*.do")
+		        .antMatchers("/register/**")
 		        .antMatchers("/u/**")
 		        .and()
 		      
@@ -163,7 +164,8 @@ public class WebSecurityConfig {
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
 		      
 		      .authorizeRequests()
-		        .antMatchers("/*.do").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
+		        .antMatchers("/*.do").permitAll()
+		        .antMatchers("/register/**").permitAll()
 		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.antMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
@@ -187,10 +189,7 @@ public class WebSecurityConfig {
 		        .permitAll()
 		        .logoutUrl("/logout")
 		        .logoutSuccessUrl("/logoutSuccess.do")
-		        .and()
 		        
-		      .sessionManagement()
-		        .invalidSessionUrl("/login")
 		    ;
 		    // @formatter:on
 		}
