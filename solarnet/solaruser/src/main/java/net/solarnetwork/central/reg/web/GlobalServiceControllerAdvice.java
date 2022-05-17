@@ -29,12 +29,13 @@ import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
+import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 
 /**
  * Add global services to all MVC controllers.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.26
  */
 @ControllerAdvice(annotations = { GlobalServiceController.class })
@@ -64,6 +65,13 @@ public class GlobalServiceControllerAdvice {
 	 */
 	public static final String EVENT_HOOK_BIZ_ATTRIBUTE = "eventHookBiz";
 
+	/**
+	 * The model attribute name for the {@link UserOcppBiz}.
+	 * 
+	 * @since 2.1
+	 */
+	public static final String OCPP_BIZ_ATTRIBUTE = "ocppBiz";
+
 	@Autowired(required = false)
 	private UserExpireBiz expireBiz;
 
@@ -75,6 +83,9 @@ public class GlobalServiceControllerAdvice {
 
 	@Autowired(required = false)
 	private UserEventHookBiz eventHookBiz;
+
+	@Autowired(required = false)
+	private UserOcppBiz userOcppBiz;
 
 	@ModelAttribute(value = EXPORT_BIZ_ATTRIBUTE)
 	public UserExportBiz exportBiz() {
@@ -112,6 +123,17 @@ public class GlobalServiceControllerAdvice {
 	@ModelAttribute(value = EVENT_HOOK_BIZ_ATTRIBUTE)
 	public UserEventHookBiz eventHookBiz() {
 		return eventHookBiz;
+	}
+
+	/**
+	 * The user OCPP service.
+	 * 
+	 * @return the service
+	 * @since 2.1
+	 */
+	@ModelAttribute(value = OCPP_BIZ_ATTRIBUTE)
+	public UserOcppBiz ocppBiz() {
+		return userOcppBiz;
 	}
 
 }

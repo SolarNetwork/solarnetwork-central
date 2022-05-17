@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.central.query.config.DatumQueryBizConfig.READING_DATUM_FILTER;
+import static net.solarnetwork.central.query.config.DatumQueryBizConfig.DATUM_FILTER;
 import java.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -67,7 +67,7 @@ public class DatumController {
 	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
 
 	private final QueryBiz queryBiz;
-	private SmartValidator readingFilterValidator;
+	private SmartValidator filterValidator;
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
@@ -85,7 +85,14 @@ public class DatumController {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
+	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd,
+			BindingResult validationResult) {
+		if ( filterValidator != null ) {
+			filterValidator.validate(cmd, validationResult);
+			if ( validationResult.hasErrors() ) {
+				throw new ValidationException(validationResult);
+			}
+		}
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
@@ -121,9 +128,10 @@ public class DatumController {
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd,
+			BindingResult validationResult) {
 		cmd.setMostRecent(true);
-		return filterGeneralDatumData(cmd);
+		return filterGeneralDatumData(cmd, validationResult);
 	}
 
 	/**
@@ -146,8 +154,8 @@ public class DatumController {
 			@RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
 			BindingResult validationResult) {
-		if ( readingFilterValidator != null ) {
-			readingFilterValidator.validate(cmd, validationResult, readingType, tolerance);
+		if ( filterValidator != null ) {
+			filterValidator.validate(cmd, validationResult, readingType, tolerance);
 			if ( validationResult.hasErrors() ) {
 				throw new ValidationException(validationResult);
 			}
@@ -207,34 +215,33 @@ public class DatumController {
 	}
 
 	/**
-	 * Get the reading filter validator to use.
+	 * Get the filter validator to use.
 	 * 
 	 * @return the validator
 	 * @since 2.9
 	 */
-	public SmartValidator getReadingFilterValidator() {
-		return readingFilterValidator;
+	public SmartValidator getFilterValidator() {
+		return filterValidator;
 	}
 
 	/**
-	 * Set the reading filter validator to use.
+	 * Set the filter validator to use.
 	 * 
-	 * @param readingFilterValidator
+	 * @param filterValidator
 	 *        the valiadtor to set
 	 * @throws IllegalArgumentException
 	 *         if {@code validator} does not support the
 	 *         {@link GeneralNodeDatumFilter} class
-	 * @since 2.9
+	 * @since 3.3
 	 */
 	@Autowired
-	@Qualifier(READING_DATUM_FILTER)
-	public void setReadingFilterValidator(SmartValidator readingFilterValidator) {
-		if ( readingFilterValidator != null
-				&& !readingFilterValidator.supports(GeneralNodeDatumFilter.class) ) {
+	@Qualifier(DATUM_FILTER)
+	public void setFilterValidator(SmartValidator filterValidator) {
+		if ( filterValidator != null && !filterValidator.supports(GeneralNodeDatumFilter.class) ) {
 			throw new IllegalArgumentException(
 					"The Validator must support the GeneralNodeDatumFilter class.");
 		}
-		this.readingFilterValidator = readingFilterValidator;
+		this.filterValidator = filterValidator;
 	}
 
 	/**

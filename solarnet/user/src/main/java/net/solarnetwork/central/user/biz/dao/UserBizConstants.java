@@ -25,7 +25,9 @@ package net.solarnetwork.central.user.biz.dao;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.io.RFC1924OutputStream;
 
@@ -33,23 +35,51 @@ import net.solarnetwork.io.RFC1924OutputStream;
  * Constants for common user items.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class UserBizConstants {
 
-	private static final int RANDOM_AUTH_TOKEN_LENGTH = 20;
-	private static final char UNCONFIRMED_EMAIL_DELIMITER = '@';
-	private static final int UNCONFIRMED_EMAIL_PREFIX_LENGTH = RANDOM_AUTH_TOKEN_LENGTH + 1;
+	/** The number of bytes used in a security token. */
+	public static final int RANDOM_AUTH_TOKEN_BYTE_COUNT = 16;
+
+	/** The number of random bytes used for the unconfirmed email prefix. */
+	public static final int UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT = 10;
+
+	/**
+	 * The delimiter used between the unconfirmed prefix and the actual email.
+	 */
+	public static final char UNCONFIRMED_EMAIL_DELIMITER = '@';
+
+	/**
+	 * The number of characters for the unconfirmed email prefix, including the
+	 * delimiter.
+	 */
+	public static final int UNCONFIRMED_EMAIL_PREFIX_LENGTH = UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT * 2
+			+ 1;
 
 	/**
 	 * Get an "unconfirmed" value for a given email address.
+	 * 
+	 * <p>
+	 * The unconfirmed value will have
+	 * {@link #UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT} Hex-encoded random bytes
+	 * prepended, along with {@link #UNCONFIRMED_EMAIL_DELIMITER}.
+	 * </p>
 	 * 
 	 * @param email
 	 *        the email
 	 * @return the encoded "unconfirmed" value
 	 */
 	public static String getUnconfirmedEmail(String email) {
-		return generateRandomAuthToken(new SecureRandom()) + UNCONFIRMED_EMAIL_DELIMITER + email;
+		SecureRandom rng;
+		try {
+			rng = SecureRandom.getInstance("SHA1PRNG");
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new RuntimeException("Unable to generate random bytes", e);
+		}
+		byte[] data = new byte[UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT];
+		rng.nextBytes(data);
+		return Hex.encodeHexString(data) + UNCONFIRMED_EMAIL_DELIMITER + email;
 	}
 
 	/**
@@ -95,7 +125,7 @@ public final class UserBizConstants {
 	 * @return the random token
 	 */
 	public static String generateRandomAuthToken(SecureRandom rng) {
-		return generateRandomToken(rng, 16);
+		return generateRandomToken(rng, RANDOM_AUTH_TOKEN_BYTE_COUNT);
 	}
 
 	/**

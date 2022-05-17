@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.web.api;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.query.config.DatumQueryBizConfig.STREAM_DATUM_FILTER;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Period;
@@ -34,13 +35,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MimeType;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -62,6 +67,7 @@ public class DatumStreamController {
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final QueryBiz queryBiz;
+	private SmartValidator filterValidator;
 
 	/**
 	 * Constructor.
@@ -120,8 +126,14 @@ public class DatumStreamController {
 	@ResponseBody
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand cmd,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
-			throws IOException {
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response,
+			BindingResult validationResult) throws IOException {
+		if ( filterValidator != null ) {
+			filterValidator.validate(cmd, validationResult);
+			if ( validationResult.hasErrors() ) {
+				throw new ValidationException(validationResult);
+			}
+		}
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
 			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
@@ -144,13 +156,47 @@ public class DatumStreamController {
 	public void listReadings(final StreamDatumFilterCommand cmd,
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
-			throws IOException {
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response,
+			BindingResult validationResult) throws IOException {
+		if ( filterValidator != null ) {
+			filterValidator.validate(cmd, validationResult, readingType, tolerance);
+			if ( validationResult.hasErrors() ) {
+				throw new ValidationException(validationResult);
+			}
+		}
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
 			queryBiz.findFilteredStreamReadings(cmd, readingType, tolerance, processor,
 					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		}
+	}
+
+	/**
+	 * Get the filter validator to use.
+	 * 
+	 * @return the validator
+	 */
+	public SmartValidator getFilterValidator() {
+		return filterValidator;
+	}
+
+	/**
+	 * Set the filter validator to use.
+	 * 
+	 * @param filterValidator
+	 *        the valiadtor to set
+	 * @throws IllegalArgumentException
+	 *         if {@code validator} does not support the
+	 *         {@link StreamDatumFilter} class
+	 */
+	@Autowired
+	@Qualifier(STREAM_DATUM_FILTER)
+	public void setFilterValidator(SmartValidator filterValidator) {
+		if ( filterValidator != null && !filterValidator.supports(StreamDatumFilter.class) ) {
+			throw new IllegalArgumentException(
+					"The Validator must support the StreamDatumFilter class.");
+		}
+		this.filterValidator = filterValidator;
 	}
 
 }

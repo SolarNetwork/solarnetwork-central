@@ -39,13 +39,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
-import org.springframework.http.CacheControl;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -128,18 +126,6 @@ public class WebConfig implements WebMvcConfigurer {
 		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		view.setIncludeParentheses(false);
 		return view;
-	}
-
-	@Override
-	public void addResourceHandlers(ResourceHandlerRegistry registry) {
-		// enable client caching of static resources
-		// @formatter:off
-		for ( String dir : new String[] {"css", "fonts", "img", "js", "js-lib"} ) {
-			registry.addResourceHandler(String.format("/*/%s/", dir))
-					.addResourceLocations("classpath:/static/")
-					.setCacheControl(CacheControl.maxAge(1, TimeUnit.DAYS));
-		}
-		// @formatter:on
 	}
 
 	@Bean

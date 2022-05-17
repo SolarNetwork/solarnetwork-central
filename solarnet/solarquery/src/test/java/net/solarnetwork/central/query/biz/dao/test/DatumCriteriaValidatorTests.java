@@ -1,5 +1,5 @@
 /* ==================================================================
- * ReadingDatumCriteriaValidatorTests.java - 30/04/2021 10:12:06 AM
+ * DatumCriteriaValidatorTests.java - 30/04/2021 10:12:06 AM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -36,15 +36,32 @@ import org.springframework.validation.ObjectError;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.domain.Aggregation;
-import net.solarnetwork.central.query.biz.dao.ReadingDatumCriteriaValidator;
+import net.solarnetwork.central.query.biz.dao.DatumCriteriaValidator;
 
 /**
- * Test cases for the {@link ReadingDatumCriteriaValidator} class.
+ * Test cases for the {@link DatumCriteriaValidator} class.
  * 
  * @author matt
  * @version 2.0
  */
-public class ReadingDatumCriteriaValidatorTests {
+public class DatumCriteriaValidatorTests {
+
+	@Test
+	public void nullNodeId() {
+		// GIVEN
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.setNodeIds(new Long[] { null });
+		c.setSourceId("s");
+
+		// WHEN
+		Errors errors = new BindException(c, "filter");
+		new DatumCriteriaValidator().validate(c, errors);
+
+		// THEN
+		assertThat("Validation errors", errors.hasErrors(), equalTo(true));
+		ObjectError oe = errors.getGlobalError();
+		assertThat("Date range error", oe.getCode(), equalTo("error.filter.nodeOrStreamId.required"));
+	}
 
 	@Test
 	public void queryDiff_localDateRange() {
@@ -58,7 +75,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 		// WHEN
 		Errors errors = new BindException(c, "filter");
-		new ReadingDatumCriteriaValidator().validate(c, errors);
+		new DatumCriteriaValidator().validate(c, errors);
 
 		// THEN
 		assertThat("No validation errors", errors.hasErrors(), equalTo(false));
@@ -76,7 +93,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 		// WHEN
 		Errors errors = new BindException(c, "filter");
-		new ReadingDatumCriteriaValidator().validate(c, errors);
+		new DatumCriteriaValidator().validate(c, errors);
 
 		// THEN
 		assertThat("No validation errors", errors.hasErrors(), equalTo(false));
@@ -92,7 +109,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 		// WHEN
 		Errors errors = new BindException(c, "filter");
-		new ReadingDatumCriteriaValidator().validate(c, errors);
+		new DatumCriteriaValidator().validate(c, errors);
 
 		// THEN
 		assertThat("Validation errors", errors.hasErrors(), equalTo(true));
@@ -119,7 +136,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 		// WHEN
 		Errors errors = new BindException(c, "filter");
-		new ReadingDatumCriteriaValidator().validate(c, errors);
+		new DatumCriteriaValidator().validate(c, errors);
 
 		// THEN
 		assertField("Most recent", errors, "mostRecent", "error.filter.reading.mostRecent.invalid");
@@ -140,7 +157,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 			// WHEN
 			Errors errors = new BindException(c, "filter");
-			new ReadingDatumCriteriaValidator().validate(c, errors);
+			new DatumCriteriaValidator().validate(c, errors);
 
 			// THEN
 			assertField(agg + " aggregation not allowed", errors, "aggregation",
@@ -163,7 +180,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 			// WHEN
 			Errors errors = new BindException(c, "filter");
-			new ReadingDatumCriteriaValidator().validate(c, errors);
+			new DatumCriteriaValidator().validate(c, errors);
 
 			// THEN
 			assertThat(agg + " aggregation allowed with mostRecent", errors.hasErrors(), equalTo(false));
@@ -186,7 +203,7 @@ public class ReadingDatumCriteriaValidatorTests {
 
 				// WHEN
 				Errors errors = new BindException(c, "filter");
-				new ReadingDatumCriteriaValidator().validate(c, errors);
+				new DatumCriteriaValidator().validate(c, errors);
 
 				// THEN
 				assertField(readingType + " reading type with " + agg + " aggregation not allowed",

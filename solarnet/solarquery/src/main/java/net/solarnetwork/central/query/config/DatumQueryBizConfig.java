@@ -38,9 +38,10 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
-import net.solarnetwork.central.query.biz.dao.ReadingDatumCriteriaValidator;
-import net.solarnetwork.central.query.biz.dao.ReadingDatumFilterValidator;
+import net.solarnetwork.central.query.biz.dao.DatumCriteriaValidator;
 import net.solarnetwork.central.query.support.AuditingQueryBiz;
+import net.solarnetwork.central.query.support.GeneralNodeDatumFilterValidator;
+import net.solarnetwork.central.query.support.StreamDatumFilterValidator;
 
 /**
  * Configuration for Datum Query business configuration.
@@ -51,11 +52,14 @@ import net.solarnetwork.central.query.support.AuditingQueryBiz;
 @Configuration
 public class DatumQueryBizConfig {
 
-	/** A qualifier used for reading datum criteria components. */
-	public static final String READING_DATUM_CRITERIA = "reading-datum-criteria";
+	/** A qualifier used for datum criteria components. */
+	public static final String DATUM_CRITERIA = "datum-criteria";
 
-	/** A qualifier used for reading datum filter components. */
-	public static final String READING_DATUM_FILTER = "reading-datum-filter";
+	/** A qualifier used for datum filter components. */
+	public static final String DATUM_FILTER = "datum-filter";
+
+	/** A qualifier used for stream datum filter components. */
+	public static final String STREAM_DATUM_FILTER = "stream-datum-filter";
 
 	@Autowired
 	private DatumEntityDao datumDao;
@@ -145,6 +149,7 @@ public class DatumQueryBizConfig {
 		biz.setMaxDaysForDayAggregation(settings.maxDaysForDayAggregation);
 		biz.setMaxDaysForDayOfWeekAggregation(settings.maxDaysForDayOfWeekAggregation);
 		biz.setMaxDaysForHourOfDayAggregation(settings.maxDaysForHourOfDayAggregation);
+		biz.setCriteriaValidator(datumCriteriaValidator());
 		return biz;
 	}
 
@@ -156,15 +161,21 @@ public class DatumQueryBizConfig {
 	}
 
 	@Bean
-	@Qualifier(READING_DATUM_CRITERIA)
-	public Validator readingDatumCriteriaValidator() {
-		return new ReadingDatumCriteriaValidator();
+	@Qualifier(DATUM_CRITERIA)
+	public Validator datumCriteriaValidator() {
+		return new DatumCriteriaValidator();
 	}
 
 	@Bean
-	@Qualifier(READING_DATUM_FILTER)
-	public SmartValidator readingDatumFilterValidator() {
-		return new ReadingDatumFilterValidator();
+	@Qualifier(DATUM_FILTER)
+	public SmartValidator datumFilterValidator() {
+		return new GeneralNodeDatumFilterValidator(datumCriteriaValidator());
+	}
+
+	@Bean
+	@Qualifier(STREAM_DATUM_FILTER)
+	public SmartValidator streamDatumFilterValidator() {
+		return new StreamDatumFilterValidator(datumCriteriaValidator());
 	}
 
 }

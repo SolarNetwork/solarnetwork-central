@@ -42,6 +42,7 @@ import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
@@ -52,6 +53,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.ArrayUtils;
 
 /**
  * {@link FilteredResultsProcessor} for encoding overall results into datum
@@ -117,8 +119,8 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </pre>
  * 
  * <p>
- * For {@link ReadingDatum} results, each {@code data} element is an array with
- * the following:
+ * For {@link AggregateDatum} results, each {@code data} element is an array
+ * with the following:
  * </p>
  * 
  * <ol>
@@ -136,7 +138,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </ol>
  * 
  * <p>
- * The {@link ReadingDatum} structure resembles this:
+ * The {@link AggregateDatum} structure resembles this:
  * </p>
  * 
  * <pre>
@@ -264,12 +266,12 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 		generator.writeStartArray(d, totalLen);
 		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
-		if ( d instanceof ReadingDatum ) {
-			ReadingDatum rd = (ReadingDatum) d;
+		if ( d instanceof AggregateDatum ) {
+			AggregateDatum rd = (AggregateDatum) d;
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
-			if ( rd.getEndTimestamp() != null ) {
-				generator.writeNumber(rd.getEndTimestamp().toEpochMilli());
+			if ( rd instanceof ReadingDatum && ((ReadingDatum) rd).getEndTimestamp() != null ) {
+				generator.writeNumber(((ReadingDatum) rd).getEndTimestamp().toEpochMilli());
 			} else {
 				generator.writeNull();
 			}
@@ -277,10 +279,17 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 			DatumPropertiesStatistics stats = rd.getStatistics();
 			if ( stats != null ) {
-				writeReadingStatistics(generator, DatumSamplesType.Instantaneous, iLen,
+				writeAggregateProperty(generator, DatumSamplesType.Instantaneous, iLen,
 						p.getInstantaneous(), stats.getInstantaneous());
-				writeReadingStatistics(generator, DatumSamplesType.Accumulating, aLen,
+				writeAggregateProperty(generator, DatumSamplesType.Accumulating, aLen,
 						p.getAccumulating(), stats.getAccumulating());
+				if ( sLen > 0 || tLen > 0 ) {
+					// if status or tags provided try to optimize them away if
+					if ( !ArrayUtils.isOnlyNull(p.getStatus()) || tLen > 0 ) {
+						writeStringArrayValues(generator, p.getStatus(), sLen);
+					}
+					writeStringArrayValues(generator, p.getTags(), tLen);
+				}
 			} else {
 				generator.writeNull();
 			}
@@ -295,13 +304,13 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		resultIndex++;
 	}
 
-	private static void writeReadingStatistics(final JsonGenerator generator,
+	private static void writeAggregateProperty(final JsonGenerator generator,
 			final DatumSamplesType type, final int len, final BigDecimal[] values,
 			final BigDecimal[][] statValues) throws IOException {
 		for ( int i = 0; i < len; i++ ) {
-			BigDecimal[] sv = (statValues != null && statValues.length >= i ? statValues[i] : null);
+			BigDecimal[] sv = (statValues != null && statValues.length > i ? statValues[i] : null);
 			int arrayLen = (sv != null ? sv.length : 0);
-			if ( type == DatumSamplesType.Instantaneous && values != null && values.length >= i ) {
+			if ( type == DatumSamplesType.Instantaneous && values != null && values.length > i ) {
 				arrayLen++;
 			}
 			if ( arrayLen > 0 ) {

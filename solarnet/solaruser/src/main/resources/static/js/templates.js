@@ -84,13 +84,16 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		// found .list-container and !preserve
 		itemContainer.empty();
 	}
-	items.forEach(function(item) {
+	items.forEach(item => {
 		var el;
 		if ( preserve && item._contextItem && item._contextItem.id ) {
 			// look for existing row to update, rather than append
 			el = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}
 		if ( el && el.length > 0 ) {
+			// clear any existing props in case values have been deleted
+			el.find('[data-tprop]').text('');
+
 			SolarReg.Templates.replaceTemplateProperties(el, item);
 			SolarReg.Templates.setContextItem(el, item._contextItem);
 		} else {
@@ -100,6 +103,11 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 			callback(item, el);
 		}
 	});
+	
+	// look for empty "detail list" items to hide, non-empty items to show
+	container.find('dl.details-container > dd:empty').prev('dt').addBack().addClass('hidden');
+	container.find('dl.details-container > dd:not(:empty)').prev('dt').addBack().removeClass('hidden');
+	
 	container.toggleClass('hidden', items.length < 1);
 };
 
@@ -121,10 +129,29 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * to this:
 * 
 * ```html
-* <tr><td data-tprop="name">Hello, world.</td></tr>
+* <tr><td>Hello, world.</td></tr>
 * ```
 * 
 * **Note** that parameter names starting with `_` are skipped.
+*
+* The element with the `data-tprop` attribute can also define other `data-X-text` attributes, where `X`
+* is the replacement value. If available, the data attribute value will be used in the DOM, rather than
+* the property value directly. For example if you have a DOM structure like this:
+*
+* ```html
+* <tr><td data-tprop="active" data-true-text="On" data-false-text="Off"></td></tr>
+* ```
+* 
+* Then calling this method like `replaceTemplateProperties($(trEl), {active:true})` will change the DOM
+* to this:
+* 
+* ```html
+* <tr><td>On</td></tr>
+* ```
+*
+* The element with the `data-tprop` attribute can also define other `data-X-label` attributes, where `X`
+* is the replacement value. If available, and the element also has a `label` class, then the attribute
+* value will be added as a label class, and `label-default` removed.
 *
 * In addition, if `obj` has an object property named `serviceProperties`, special handling is performed
 * to generate a dynamic list of key/value property pairs using another HTML template. The desintation
@@ -150,7 +177,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * @param {string} [prefix] an optional prefix to prepend to each template parameter
 */
 SolarReg.Templates.replaceTemplateProperties = function replaceTemplateProperties(el, obj, prefix) {
-	var prop, sel, val,
+	var prop, sel, val, vel, vkey, vlabel,
 		sPropKey, sPropVal, sPropItem,
 		sPropContainer = el.find('.service-props-container').first(),
 		sPropTemplate = el.find('.service-props-template .template');
@@ -178,7 +205,24 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 			if ( Array.isArray(val) ) {
 				el.find(sel).addBack(sel).html(val);
 			} else {
-				el.find(sel).addBack(sel).text(val);
+				vel = el.find(sel).addBack(sel);
+				if ( vel.hasClass('label') ) {
+					// for boolean values, toggle 'success' and 'default' label classes if 'label' class exists
+					if ( typeof val == 'boolean' ) {
+						vel.toggleClass('label-success', val);
+						vel.toggleClass('label-default', !val);
+					} else {
+						vkey = String(val).toLowerCase()+'-label';
+						vlabel = vel.data(vkey);
+						vel.toggleClass('label-default', vlabel === undefined);
+						if ( vlabel ) {
+							vel.addClass('label-' + vlabel);
+						}
+					}
+				}
+				// look for a data property named the lower-case value + '-text' for i18n message replacement
+				vkey = String(val).toLowerCase()+'-text';
+				vel.text(vel.data(vkey) ? vel.data(vkey) : val);
 			}
 		}
 	}

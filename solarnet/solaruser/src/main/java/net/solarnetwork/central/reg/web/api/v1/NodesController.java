@@ -69,7 +69,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user nodes web service API.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalExceptionRestController
 @Controller("v1nodesController") // note no @RequestMapping because of getMyNodes() same path with MyNodesController
@@ -387,7 +387,7 @@ public class NodesController {
 		 * @return The certificate subject DN.
 		 */
 		public String getCertificateSubjectDN() {
-			return (nodeCert != null ? nodeCert.getSubjectDN().getName() : null);
+			return (nodeCert != null ? nodeCert.getSubjectX500Principal().getName() : null);
 		}
 
 		/**
@@ -396,7 +396,7 @@ public class NodesController {
 		 * @return The certificate issuer DN.
 		 */
 		public String getCertificateIssuerDN() {
-			return (nodeCert != null ? nodeCert.getIssuerDN().getName() : null);
+			return (nodeCert != null ? nodeCert.getIssuerX500Principal().getName() : null);
 		}
 
 		/**

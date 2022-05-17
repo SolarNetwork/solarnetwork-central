@@ -27,6 +27,8 @@ import org.springframework.validation.Validator;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.util.ArrayUtils;
 
 /**
  * Validator for criteria used for reading queries.
@@ -35,7 +37,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * @version 1.0
  * @since 3.1
  */
-public class ReadingDatumCriteriaValidator implements Validator {
+public class DatumCriteriaValidator implements Validator {
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -48,12 +50,27 @@ public class ReadingDatumCriteriaValidator implements Validator {
 	}
 
 	private void validateCriteria(DatumCriteria c, Errors errors) {
+		// basic requirements: some node ID and/or stream IDs
+		if ( c.getObjectKind() == ObjectDatumKind.Location ) {
+			if ( ArrayUtils.isOnlyNull(c.getLocationIds()) && ArrayUtils.isOnlyNull(c.getStreamIds()) ) {
+				errors.reject("error.filter.locationOrStreamId.required",
+						"A location or stream ID is required.");
+			}
+		} else {
+			if ( ArrayUtils.isOnlyNull(c.getNodeIds()) && ArrayUtils.isOnlyNull(c.getStreamIds()) ) {
+				errors.reject("error.filter.nodeOrStreamId.required",
+						"A node or stream ID is required.");
+			}
+		}
+
 		Aggregation agg = c.getAggregation();
 		DatumReadingType readingType = c.getReadingType();
-		if ( agg != null && agg != Aggregation.None ) {
-			validateAggregateCriteria(c, errors, readingType, agg);
-		} else {
-			validateCriteria(c, errors, readingType);
+		if ( readingType != null ) {
+			if ( agg != null && agg != Aggregation.None ) {
+				validateAggregateCriteria(c, errors, readingType, agg);
+			} else {
+				validateCriteria(c, errors, readingType);
+			}
 		}
 	}
 
@@ -67,8 +84,8 @@ public class ReadingDatumCriteriaValidator implements Validator {
 		}
 	}
 
-	private void validateAggregateCriteria(DatumCriteria c, Errors errors,
-			DatumReadingType readingType, Aggregation agg) {
+	private void validateAggregateCriteria(DatumCriteria c, Errors errors, DatumReadingType readingType,
+			Aggregation agg) {
 		if ( !(agg == Aggregation.Hour || agg == Aggregation.Day || agg == Aggregation.Month) ) {
 			errors.rejectValue("aggregation", "error.filter.reading.aggregation.invalid",
 					new Object[] { agg },
