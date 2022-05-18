@@ -47,7 +47,6 @@ import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.easymock.IAnswer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -415,24 +414,6 @@ public class DaoDataCollectorBizTests {
 		Capture<SolarLocation> locCaptor = new Capture<>(CaptureType.ALL);
 		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
 
-		// get curr shared loc
-		expect(locationDao.get(assertWith(new Assertion<Long>() {
-
-			@Override
-			public void check(Long argument) throws Throwable {
-				assertThat("Save new location", argument, is(newLocId));
-			}
-
-		}))).andAnswer(new IAnswer<SolarLocation>() {
-
-			@Override
-			public SolarLocation answer() throws Throwable {
-				SolarLocation loc = (SolarLocation) locCaptor.getValue().clone();
-				loc.setId(newLocId);
-				return loc;
-			}
-		});
-
 		// re-assign node to new location
 		SolarNode node = new SolarNode(nodeId, curr.getId());
 		expect(nodeDao.get(nodeId)).andReturn(node);
@@ -448,9 +429,6 @@ public class DaoDataCollectorBizTests {
 
 		}))).andReturn(nodeId);
 
-		// re-save new non-shared instance
-		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
-
 		// WHEN
 		replayAll();
 		SecurityUtils.becomeNode(nodeId);
@@ -461,15 +439,15 @@ public class DaoDataCollectorBizTests {
 		biz.updateLocation(nodeId, loc);
 
 		// THEN
-		assertThat("Saved location twice", locCaptor.getValues(), hasSize(2));
-		SolarLocation update = locCaptor.getValues().get(1);
+		assertThat("Saved new location", locCaptor.getValues(), hasSize(1));
+		SolarLocation update = locCaptor.getValues().get(0);
 		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
-		expectedUpdate.setId(newLocId);
+		expectedUpdate.setId(null);
 		expectedUpdate.setPostalCode(curr.getPostalCode().toUpperCase());
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
-		assertThat("Updated location saved", update, is(notNullValue()));
+		assertThat("New location has updated GPS details", update, is(notNullValue()));
 		assertLocationPropertiesMatch("Saved location", update, expectedUpdate);
 	}
 
