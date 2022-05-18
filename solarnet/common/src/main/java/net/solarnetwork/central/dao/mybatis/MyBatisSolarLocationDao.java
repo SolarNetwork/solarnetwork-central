@@ -68,6 +68,19 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
+	public Long store(SolarLocation datum) {
+		if ( log.isTraceEnabled() ) {
+			// this added to help troubleshoot excess location storing
+			try {
+				throw new RuntimeException("Storing solar location: " + datum);
+			} catch ( Exception e ) {
+				log.trace("Storing solar location {} with data {}", datum, datum.getFilter(), e);
+			}
+		}
+		return super.store(datum);
+	}
+
+	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
 		Map<String, String> params = new HashMap<String, String>(2);
