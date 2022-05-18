@@ -41,13 +41,14 @@ import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.domain.Location;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/solarin/api/v1/pub/location", "/solarin/api/v1/sec/location" })
@@ -161,7 +162,7 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/update" }, method = RequestMethod.POST)
-	public Response<Void> updateLocation(@RequestBody SolarLocation location) {
+	public Response<Void> updateLocation(@RequestBody Location location) {
 		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		dataCollectorBiz.updateLocation(nodeId, location);
 		return response(null);
