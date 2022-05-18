@@ -61,12 +61,12 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -278,7 +278,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void updateLocation(Long nodeId, Location location) {
+	public void updateLocation(Long nodeId, final net.solarnetwork.domain.Location location) {
 		// verify node ID with security
 		AuthenticatedNode authNode = getAuthenticatedNode();
 		if ( authNode == null ) {
@@ -293,24 +293,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			}
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
-		SolarLocation loc = solarLocationDao.getSolarLocationForNode(nodeId);
+		final SolarLocation loc = solarLocationDao.getSolarLocationForNode(nodeId);
 		if ( loc == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
 		}
 
-		SolarLocation norm = SolarLocation.normalizedLocation(loc);
-		if ( isSharedLocation(norm) ) {
-			// switch node to new non-shared location
-			loc = solarLocationDao.get(solarLocationDao.store(norm));
-			SolarNode node = solarNodeDao.get(nodeId);
-			log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
-					loc.getId());
-			node.setLocationId(loc.getId());
-			solarNodeDao.store(node);
-		}
+		final SolarLocation norm = SolarLocation.normalizedLocation(loc);
 
 		// only GPS coordinates of a node's location can be updated by node itself
-
 		boolean changed = false;
 		if ( location.getLatitude() != null && (loc.getLatitude() == null
 				|| location.getLatitude().compareTo(loc.getLatitude()) != 0) ) {
@@ -327,7 +317,21 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			changed = true;
 			loc.setElevation(location.getElevation());
 		}
-		if ( changed ) {
+
+		if ( !changed ) {
+			return;
+		}
+
+		if ( isSharedLocation(norm) ) {
+			// switch node to new non-shared location based on loc updates
+			Long locId = solarLocationDao.store(SolarLocation.normalizedLocation(loc));
+			SolarNode node = solarNodeDao.get(nodeId);
+			log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
+					locId);
+			node.setLocationId(locId);
+			solarNodeDao.store(node);
+		} else {
+			// update current location
 			solarLocationDao.store(loc);
 		}
 	}

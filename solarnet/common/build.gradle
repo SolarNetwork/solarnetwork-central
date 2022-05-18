@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '1.2.0'
+version = '1.2.1'
 archivesBaseName = 'solarnet-common'
 
 configurations {
@@ -73,7 +73,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common:2.4.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common:2.4.1'
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.1.0'
 	

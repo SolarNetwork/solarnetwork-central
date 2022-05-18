@@ -48,7 +48,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public interface DataCollectorBiz {
 
@@ -94,7 +94,7 @@ public interface DataCollectorBiz {
 	 *        the location information to update on the node
 	 * @since 2.2
 	 */
-	void updateLocation(Long nodeId, Location location);
+	void updateLocation(Long nodeId, net.solarnetwork.domain.Location location);
 
 	/**
 	 * Add metadata to a specific node and source. If metadata already exists
