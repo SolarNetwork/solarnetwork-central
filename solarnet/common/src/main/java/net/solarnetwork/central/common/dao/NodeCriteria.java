@@ -1,5 +1,5 @@
 /* ==================================================================
- * SourceCriteria.java - 23/10/2020 9:19:11 pm
+ * NodeCriteria.java - 23/10/2020 9:16:44 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,34 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Search criteria for source related data.
+ * Search criteria for node related data.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface SourceCriteria {
+public interface NodeCriteria {
 
 	/**
-	 * Get the first source ID.
+	 * Get the first node ID.
 	 * 
 	 * <p>
-	 * This returns the first available source ID from the
-	 * {@link #getSourceIds()} array, or {@literal null} if not available.
+	 * This returns the first available node ID from the {@link #getNodeIds()}
+	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the first source ID, or {@literal null} if not available
+	 * @return the node ID, or {@literal null} if not available
 	 */
-	String getSourceId();
+	Long getNodeId();
 
 	/**
-	 * Get an array of source IDs.
+	 * Get an array of node IDs.
 	 * 
-	 * @return array of source IDs (may be {@literal null})
+	 * @return array of node IDs (may be {@literal null})
 	 */
-	String[] getSourceIds();
+	Long[] getNodeIds();
 
 }

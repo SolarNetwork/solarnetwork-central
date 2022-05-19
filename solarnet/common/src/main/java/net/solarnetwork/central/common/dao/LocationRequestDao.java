@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * LocationRequestDao.java - 19/05/2022 1:58:50 pm
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,17 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao;
 
-import net.solarnetwork.central.common.dao.NodeCriteria;
+import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.GenericDao;
 
 /**
- * Search criteria for node metadata.
+ * DAO API for location requests.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 1.3
  */
-public interface NodeMetadataCriteria extends NodeCriteria, ObjectMetadataCriteria {
+public interface LocationRequestDao extends GenericDao<LocationRequest, Long>,
+		FilterableDao<LocationRequest, Long, LocationRequestCriteria> {
 
 }
