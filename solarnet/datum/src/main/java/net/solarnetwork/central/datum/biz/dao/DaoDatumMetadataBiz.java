@@ -35,6 +35,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -46,15 +49,16 @@ import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
 
@@ -62,23 +66,27 @@ import net.solarnetwork.util.SearchFilter;
  * DAO-based implementation of {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	private final DatumStreamMetadataDao metaDao;
+	private final LocationRequestDao locationRequestDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param metaDao
 	 *        the metadata DAO to use
+	 * @param locationRequestDao
+	 *        the location request DAO to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao) {
+	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao, LocationRequestDao locationRequestDao) {
 		super();
 		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
+		this.locationRequestDao = requireNonNullArgument(locationRequestDao, "locationRequestDao");
 	}
 
 	private static GeneralDatumMetadata extractGeneralDatumMetadata(
@@ -260,6 +268,17 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		}
 		return StreamSupport.stream(result.spliterator(), false)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
+			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max) {
+		requireNonNullArgument(userId, "userId");
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria(filter);
+		criteria.setUserId(userId);
+		return locationRequestDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 
 }

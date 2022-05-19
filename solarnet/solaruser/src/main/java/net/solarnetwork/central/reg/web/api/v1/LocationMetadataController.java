@@ -33,11 +33,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
@@ -46,7 +49,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location metadata actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
@@ -239,6 +242,14 @@ public class LocationMetadataController {
 	public Response<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId) {
 		return deleteMetadata(locationId, sourceId);
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/requests", method = RequestMethod.GET)
+	public Response<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
+			BasicLocationRequestCriteria filter) {
+		return response(datumMetadataBiz.findLocationRequests(SecurityUtils.getCurrentActorUserId(),
+				filter, null, null, null));
 	}
 
 }

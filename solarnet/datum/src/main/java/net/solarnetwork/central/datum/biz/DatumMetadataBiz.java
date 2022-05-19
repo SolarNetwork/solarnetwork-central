@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
@@ -31,18 +32,19 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * API for manipulating general datum metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumMetadataBiz {
 
@@ -226,5 +228,25 @@ public interface DatumMetadataBiz {
 	 * @since 2.0
 	 */
 	Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
+
+	/**
+	 * Get a set of location requests for a given user and filter.
+	 * 
+	 * @param userId
+	 *        the user ID to get requests for
+	 * @param filter
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        optional sort descriptors
+	 * @param offset
+	 *        optional starting offset
+	 * @param max
+	 *        optional max number of results
+	 * @return the results, never {@literal null}
+	 * @since 2.1
+	 */
+	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
+			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
 
 }

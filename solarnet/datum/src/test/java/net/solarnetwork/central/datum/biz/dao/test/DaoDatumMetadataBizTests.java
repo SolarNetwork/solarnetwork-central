@@ -28,13 +28,20 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
 import java.util.Collections;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -44,11 +51,14 @@ import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link DaoDatumMetadataBiz} class.
@@ -63,20 +73,22 @@ public class DaoDatumMetadataBizTests {
 	private final String TEST_SOURCE_ID = "test.source";
 
 	private DatumStreamMetadataDao metaDao;
+	private LocationRequestDao locationRequestDao;
 	private DaoDatumMetadataBiz biz;
 
 	private void replayAll() {
-		replay(metaDao);
+		replay(metaDao, locationRequestDao);
 	}
 
 	private void verifyAll() {
-		verify(metaDao);
+		verify(metaDao, locationRequestDao);
 	}
 
 	@Before
 	public void setup() {
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
-		biz = new DaoDatumMetadataBiz(metaDao);
+		locationRequestDao = EasyMock.createMock(LocationRequestDao.class);
+		biz = new DaoDatumMetadataBiz(metaDao, locationRequestDao);
 	}
 
 	@Test
@@ -409,6 +421,31 @@ public class DaoDatumMetadataBizTests {
 
 		// THEN
 		verifyAll();
+	}
+
+	@Test
+	public void findLocationRequests() {
+		// GIVEN
+		Capture<LocationRequestCriteria> criteriaCaptor = new Capture<>();
+		net.solarnetwork.dao.FilterResults<LocationRequest, Long> bfr = BasicFilterResults
+				.filterResults(Collections.<LocationRequest> emptyList(), null, 0L, 0);
+		expect(locationRequestDao.findFiltered(EasyMock.capture(criteriaCaptor), EasyMock.isNull(),
+				EasyMock.isNull(), EasyMock.isNull())).andReturn(bfr);
+
+		// WHEN
+		replayAll();
+		BasicLocationRequestCriteria filter = new BasicLocationRequestCriteria();
+		filter.setRequestStatus(LocationRequestStatus.Created);
+		Long userId = UUID.randomUUID().getLeastSignificantBits();
+		net.solarnetwork.dao.FilterResults<LocationRequest, Long> results = biz
+				.findLocationRequests(userId, filter, null, null, null);
+
+		// THEN
+		assertThat("Results returned directly from DAO", results, is(sameInstance(bfr)));
+
+		LocationRequestCriteria crit = criteriaCaptor.getValue();
+		assertThat("Copy of filter passed to DAO", crit, is(not(sameInstance(filter))));
+		assertThat("User ID added to DAO filter", crit.getUserIds(), is(arrayContaining(userId)));
 	}
 
 }

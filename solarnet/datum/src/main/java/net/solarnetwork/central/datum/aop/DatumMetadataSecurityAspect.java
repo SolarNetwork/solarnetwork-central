@@ -37,6 +37,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
@@ -52,14 +53,14 @@ import net.solarnetwork.central.security.SecurityUtils;
  * Security AOP support for {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
 public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
-	 * The default value for the {@link #setLocaitonMetadataAdminRoles(Set)}
+	 * The default value for the {@link #setLocationMetadataAdminRoles(Set)}
 	 * property, contains the single role {@code ROLE_LOC_META_ADMIN}.
 	 */
 	public static final Set<String> DEFAULT_LOCATION_METADATA_ADMIN_ROLES = Collections
@@ -81,40 +82,44 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		setPathMatcher(antMatch);
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralNode*(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.addGeneralNode*(..)) && args(nodeId,..)")
 	public void addMetadata(Long nodeId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.storeGeneralNode*(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.storeGeneralNode*(..)) && args(nodeId,..)")
 	public void storeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralNode*(..)) && args(nodeId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.removeGeneralNode*(..)) && args(nodeId,..)")
 	public void removeMetadata(Long nodeId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findGeneralNode*(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findGeneralNode*(..)) && args(filter,..)")
 	public void findMetadata(GeneralNodeDatumMetadataFilter filter) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.getGeneralNodeDatumMetadataFilteredSources(..)) && args(nodeIds,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(..)) && args(nodeIds,..)")
 	public void getMetadataFilteredSources(Long[] nodeIds) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.addGeneralLocation*(..)) && args(locationId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.addGeneralLocation*(..)) && args(locationId,..)")
 	public void addLocationMetadata(Long locationId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.storeGeneralLocation*(..)) && args(locationId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.storeGeneralLocation*(..)) && args(locationId,..)")
 	public void storeLocationMetadata(Long locationId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.removeGeneralLocation*(..)) && args(locationId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.removeGeneralLocation*(..)) && args(locationId,..)")
 	public void removeLocationMetadata(Long locationId) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadata*.findDatumStreamMetadata(..)) && args(filter,..)")
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findDatumStreamMetadata(..)) && args(filter,..)")
 	public void findDatumStreamMetadata(ObjectStreamCriteria filter) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findLocationRequests(..)) && args(userId, filter,..)")
+	public void findLocationRequests(Long userId, LocationRequestCriteria filter) {
 	}
 
 	/**
@@ -247,26 +252,47 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * than one role is provided, any one role must match for the authorization
 	 * to succeed.
 	 * 
-	 * @param locaitonMetadataAdminRoles
+	 * @param locationMetadataAdminRoles
 	 *        the set of roles
 	 * @since 1.2
 	 */
-	public void setLocaitonMetadataAdminRoles(Set<String> locaitonMetadataAdminRoles) {
-		if ( locaitonMetadataAdminRoles == null || locaitonMetadataAdminRoles.size() < 1 ) {
+	public void setLocationMetadataAdminRoles(Set<String> locationMetadataAdminRoles) {
+		if ( locationMetadataAdminRoles == null || locationMetadataAdminRoles.size() < 1 ) {
 			throw new IllegalArgumentException(
 					"The roleLocationMetadataAdmin argument must not be null or empty.");
 		}
 		Set<String> capitalized;
-		if ( locaitonMetadataAdminRoles.size() == 1 ) {
+		if ( locationMetadataAdminRoles.size() == 1 ) {
 			capitalized = Collections
-					.singleton(locaitonMetadataAdminRoles.iterator().next().toUpperCase());
+					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase());
 		} else {
-			capitalized = new HashSet<String>(locaitonMetadataAdminRoles.size());
-			for ( String role : locaitonMetadataAdminRoles ) {
+			capitalized = new HashSet<String>(locationMetadataAdminRoles.size());
+			for ( String role : locationMetadataAdminRoles ) {
 				capitalized.add(role.toUpperCase());
 			}
 		}
 		this.locaitonMetadataAdminRoles = capitalized;
+	}
+
+	/**
+	 * Check access to location requests.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param filter
+	 *        the filter
+	 */
+	@Before("findLocationRequests(userId, filter)")
+	public void findLocationRequestsCheck(Long userId, LocationRequestCriteria filter) {
+		requireUserReadAccess(userId);
+		if ( filter.hasUserCriteria() ) {
+			for ( Long filterUserId : filter.getUserIds() ) {
+				if ( userId.equals(filterUserId) ) {
+					continue;
+				}
+				requireUserReadAccess(filterUserId);
+			}
+		}
 	}
 
 }

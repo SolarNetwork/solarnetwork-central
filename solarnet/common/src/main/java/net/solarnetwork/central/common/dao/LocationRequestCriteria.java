@@ -24,6 +24,7 @@ package net.solarnetwork.central.common.dao;
 
 import java.util.Set;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Criteria API for location requests.
@@ -32,7 +33,7 @@ import net.solarnetwork.central.domain.LocationRequestStatus;
  * @version 1.0
  * @since 1.3
  */
-public interface LocationRequestCriteria extends LocationCriteria, UserCriteria {
+public interface LocationRequestCriteria extends LocationCriteria, UserCriteria, PaginationCriteria {
 
 	/**
 	 * Get the location request statuses.

@@ -25,6 +25,7 @@ package net.solarnetwork.central.common.dao;
 import java.util.Collections;
 import java.util.Set;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of {@link LocationRequestCriteria}.
@@ -36,6 +37,34 @@ import net.solarnetwork.central.domain.LocationRequestStatus;
 public class BasicLocationRequestCriteria extends BasicCoreCriteria implements LocationRequestCriteria {
 
 	private Set<LocationRequestStatus> requestStatuses;
+
+	/**
+	 * Default constructor.
+	 */
+	public BasicLocationRequestCriteria() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 */
+	public BasicLocationRequestCriteria(LocationRequestCriteria other) {
+		super(other);
+	}
+
+	@Override
+	public void copyFrom(PaginationCriteria criteria) {
+		super.copyFrom(criteria);
+		if ( criteria instanceof LocationRequestCriteria ) {
+			LocationRequestCriteria c = (LocationRequestCriteria) criteria;
+			setRequestStatuses(c.getRequestStatuses());
+		}
+	}
+
+	@Override
+	public BasicLocationRequestCriteria clone() {
+		return (BasicLocationRequestCriteria) super.clone();
+	}
 
 	/**
 	 * Set a single request status.

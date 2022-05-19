@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
@@ -61,6 +62,9 @@ public class DatumBizDaoConfig {
 	@Autowired
 	private DatumStreamMetadataDao datumStreamMetadataDao;
 
+	@Autowired
+	private LocationRequestDao locationRequestDao;
+
 	@Bean
 	public DatumAuxiliaryBiz datumAuxiliaryBiz() {
 		return new DaoDatumAuxiliaryBiz(datumAuxiliaryDao, datumStreamMetadataDao);
@@ -73,7 +77,7 @@ public class DatumBizDaoConfig {
 
 	@Bean
 	public DatumMetadataBiz datumMetadataBiz() {
-		return new DaoDatumMetadataBiz(datumStreamMetadataDao);
+		return new DaoDatumMetadataBiz(datumStreamMetadataDao, locationRequestDao);
 	}
 
 	@Bean

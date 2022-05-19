@@ -47,6 +47,21 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	private SimpleLocation location;
 	private String searchFilter;
 
+	/**
+	 * Default constructor.
+	 */
+	public BasicCoreCriteria() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 */
+	public BasicCoreCriteria(PaginationCriteria criteria) {
+		super();
+		copyFrom(criteria);
+	}
+
 	@Override
 	public BasicCoreCriteria clone() {
 		BasicCoreCriteria result = (BasicCoreCriteria) super.clone();
