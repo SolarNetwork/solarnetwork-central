@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectLocationRequest.java - 19/05/2022 3:08:25 pm
+ * DeleteLocationRequest.java - 20/05/2022 7:00:12 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -25,57 +25,56 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 
 /**
- * Select location request entities.
+ * Delete a location request entity.
  * 
  * @author matt
  * @version 1.0
  * @since 1.3
  */
-public class SelectLocationRequest implements PreparedStatementCreator, SqlProvider {
+public class DeleteLocationRequest implements PreparedStatementCreator, SqlProvider {
 
 	private final Long id;
 	private final LocationRequestCriteria filter;
 
 	/**
-	 * Select for a specific entity.
+	 * Constructor.
 	 * 
 	 * @param id
-	 *        the ID of the entity to fetch
+	 *        the ID to delete
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public SelectLocationRequest(Long id) {
-		super();
-		this.id = requireNonNullArgument(id, "id");
-		this.filter = null;
+	public DeleteLocationRequest(Long id) {
+		this(requireNonNullArgument(id, "id"), null);
 	}
 
 	/**
-	 * Select for matching entities.
+	 * Constructor.
 	 * 
 	 * @param filter
-	 *        the search criteria
+	 *        filter to limit the query to
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public SelectLocationRequest(LocationRequestCriteria filter) {
-		super();
-		this.id = null;
-		this.filter = requireNonNullArgument(filter, "filter");
+	public DeleteLocationRequest(LocationRequestCriteria filter) {
+		this(null, requireNonNullArgument(filter, "filter"));
 	}
 
 	/**
-	 * Select for matching entities.
+	 * Constructor.
 	 * 
 	 * @param id
-	 *        the ID of the entity to fetch
+	 *        an optional ID to delete
 	 * @param filter
-	 *        the search criteria
+	 *        an optional filter to limit the query to
 	 */
-	public SelectLocationRequest(Long id, LocationRequestCriteria filter) {
+	public DeleteLocationRequest(Long id, LocationRequestCriteria filter) {
 		super();
 		this.id = id;
 		this.filter = filter;
@@ -83,24 +82,19 @@ public class SelectLocationRequest implements PreparedStatementCreator, SqlProvi
 
 	@Override
 	public String getSql() {
-		StringBuilder buf = new StringBuilder();
-		buf.append(
-				"SELECT id, created, modified, user_id, status, jdata, loc_id, message\nFROM solarnet.sn_loc_req");
-		StringBuilder where = new StringBuilder();
+		StringBuilder buf = new StringBuilder(64);
+		buf.append("DELETE FROM solarnet.sn_loc_req");
+		StringBuilder where = new StringBuilder(64);
 		LocationRequestSqlUtils.appendLocationRequestCriteria(id, filter, where);
 		if ( where.length() > 0 ) {
 			buf.append(" WHERE").append(where.substring(CommonSqlUtils.WHERE_COMPONENT_PREFIX_LENGTH));
-		}
-		if ( id == null ) {
-			buf.append("\nORDER BY id");
 		}
 		return buf.toString();
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+		PreparedStatement stmt = con.prepareStatement(getSql());
 		LocationRequestSqlUtils.prepareLocationRequestCriteria(id, filter, con, stmt, 0);
 		return stmt;
 	}

@@ -33,6 +33,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
@@ -53,8 +55,11 @@ import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
+import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -272,13 +277,84 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
-			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
+	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(
+			final Long userId, final LocationRequestCriteria filter,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
 		requireNonNullArgument(userId, "userId");
 		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria(filter);
 		criteria.setUserId(userId);
 		return locationRequestDao.findFiltered(criteria, sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public LocationRequest getLocationRequest(final Long userId, final Long id) {
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria();
+		criteria.setUserId(requireNonNullArgument(userId, "userId"));
+		List<LocationRequest> results = locationRequestDao.find(requireNonNullArgument(id, "id"),
+				criteria);
+		if ( results.isEmpty() ) {
+			throw new EmptyResultDataAccessException(1);
+		}
+		return results.get(0);
+	}
+
+	private LocationRequestInfo normalizedInfo(LocationRequestInfo info) {
+		LocationRequestInfo infoToSave = requireNonNullArgument(info, "info").clone();
+		if ( infoToSave.getLocationId() != null ) {
+			infoToSave.setLocation(null);
+		} else {
+			BasicLocation norm = BasicLocation
+					.normalizedLocation(requireNonNullArgument(info.getLocation(), "info.location"));
+			if ( !norm.hasLocationCriteria() || norm.getCountry() == null || norm.getTimeZoneId() == null
+					|| norm.getStateOrProvince() == null || norm.getLocality() == null ) {
+				throw new IllegalArgumentException(
+						"Location details must be provided, i.e. country, zone, stateOrProvince, locality, etc.");
+			}
+			infoToSave.setLocation(norm);
+		}
+		return infoToSave;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public LocationRequest submitLocationRequest(final Long userId, final LocationRequestInfo info) {
+		LocationRequest entity = new LocationRequest();
+		entity.setUserId(requireNonNullArgument(userId, "userId"));
+		LocationRequestInfo infoToSave = normalizedInfo(info);
+		entity.setLocationId(infoToSave.getLocationId());
+		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		entity.setStatus(LocationRequestStatus.Submitted);
+		Long id = locationRequestDao.save(entity);
+		return locationRequestDao.get(id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public LocationRequest updateLocationRequest(final Long userId, final Long id,
+			final LocationRequestInfo info) {
+		LocationRequest entity = getLocationRequest(userId, id);
+		if ( entity == null ) {
+			throw new EmptyResultDataAccessException("Entity not found.", 1);
+		} else if ( entity.getStatus() != LocationRequestStatus.Submitted ) {
+			throw new DataIntegrityViolationException(String.format(
+					"Only requests with status %s can be updated.", LocationRequestStatus.Submitted));
+		}
+		LocationRequestInfo infoToSave = normalizedInfo(info);
+		entity.setLocationId(infoToSave.getLocationId());
+		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		return locationRequestDao.get(locationRequestDao.save(entity));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void removeLocationRequest(final Long userId, final Long id) {
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria();
+		criteria.setUserId(requireNonNullArgument(userId, "userId"));
+		int count = locationRequestDao.delete(requireNonNullArgument(id, "id"), criteria);
+		if ( count < 1 ) {
+			throw new EmptyResultDataAccessException("Entity not found.", 1);
+		}
 	}
 
 }

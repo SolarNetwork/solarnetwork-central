@@ -63,11 +63,11 @@ public class LocationRequestRowMapper implements RowMapper<LocationRequest> {
 		Instant created = rs.getTimestamp(2).toInstant();
 		LocationRequest result = new LocationRequest(id, created);
 		result.setModified(rs.getTimestamp(3).toInstant());
-		result.setUserId(rs.getLong(4));
+		result.setUserId((Long) rs.getObject(4));
 		result.setStatus(
 				forCodeValue((int) rs.getString(5).charAt(0), LocationRequestStatus.class, null));
 		result.setJsonData(rs.getString(6));
-		result.setLocationId(rs.getLong(7));
+		result.setLocationId((Long) rs.getObject(7));
 		result.setMessage(rs.getString(8));
 		return result;
 	}

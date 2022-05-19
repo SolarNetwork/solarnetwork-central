@@ -37,7 +37,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
-import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
@@ -118,8 +117,24 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	public void findDatumStreamMetadata(ObjectStreamCriteria filter) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findLocationRequests(..)) && args(userId, filter,..)")
-	public void findLocationRequests(Long userId, LocationRequestCriteria filter) {
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.findLocationRequests(..)) && args(userId,..)")
+	public void findLocationRequests(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.getLocationRequest(..)) && args(userId,..)")
+	public void getLocationRequest(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.removeLocationRequest(..)) && args(userId,..)")
+	public void removeLocationRequest(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.submitLocationRequest(..)) && args(userId,..)")
+	public void submitLocationRequest(Long userId) {
+	}
+
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumMetadataBiz.updateLocationRequest(..)) && args(userId,..)")
+	public void updateLocationRequest(Long userId) {
 	}
 
 	/**
@@ -248,6 +263,32 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Check access to location requests.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param filter
+	 *        the filter
+	 */
+	@Before("findLocationRequests(userId) || getLocationRequest(userId)")
+	public void viewLocationRequestsCheck(Long userId) {
+		requireUserReadAccess(userId);
+	}
+
+	/**
+	 * Check access to location requests.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param filter
+	 *        the filter
+	 */
+	@Before("submitLocationRequest(userId) || updateLocationRequest(userId) || removeLocationRequest(userId)")
+	public void modifyLocationRequestsCheck(Long userId) {
+		requireUserWriteAccess(userId);
+	}
+
+	/**
 	 * Set the set of roles required to administer location metadata. If more
 	 * than one role is provided, any one role must match for the authorization
 	 * to succeed.
@@ -272,27 +313,6 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 			}
 		}
 		this.locaitonMetadataAdminRoles = capitalized;
-	}
-
-	/**
-	 * Check access to location requests.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param filter
-	 *        the filter
-	 */
-	@Before("findLocationRequests(userId, filter)")
-	public void findLocationRequestsCheck(Long userId, LocationRequestCriteria filter) {
-		requireUserReadAccess(userId);
-		if ( filter.hasUserCriteria() ) {
-			for ( Long filterUserId : filter.getUserIds() ) {
-				if ( userId.equals(filterUserId) ) {
-					continue;
-				}
-				requireUserReadAccess(filterUserId);
-			}
-		}
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static java.lang.String.format;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -30,6 +31,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -134,6 +136,26 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 		assertThat("Row has message updated", row.get("message"), is(equalTo(req.getMessage())));
 	}
 
+	@Test
+	public void delete() {
+		// GIVEN
+		LocationRequest req = new LocationRequest();
+		req.setUserId(1L);
+		req.setStatus(LocationRequestStatus.Submitted);
+		req.setJsonData("{\"foo\":\"bar\"}");
+		Long id = dao.save(req);
+		LocationRequest entity = dao.get(id);
+
+		// WHEN
+		dao.delete(entity);
+		LocationRequest notFound = dao.get(entity.getId());
+
+		// THEN
+		assertThat("Deleted entity not found by ID", notFound, is(nullValue()));
+		List<Map<String, Object>> rows = allReqData();
+		assertThat("Row was deleted from table", rows, hasSize(0));
+	}
+
 	private static final String INSERT_SQL = "insert into solarnet.sn_loc_req (id, created, modified, user_id, status, jdata, loc_id, message)\n"
 			+ "VALUES (?,?,?,?,?,?::jsonb,?,?)";
 
@@ -224,4 +246,58 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 		}
 	}
 
+	@Test
+	public void delete_user_status() {
+		// GIVEN
+		final Instant now = Instant.now();
+		List<LocationRequest> data = new ArrayList<>();
+		for ( int i = 0; i < 12; i++ ) {
+			LocationRequest req = new LocationRequest((long) i, now);
+			req.setModified(now);
+			req.setUserId(i / 4L);
+			switch (i % 4) {
+				case 0:
+					req.setStatus(LocationRequestStatus.Submitted);
+					break;
+				case 1:
+					req.setStatus(LocationRequestStatus.Created);
+					break;
+				case 2:
+					req.setStatus(LocationRequestStatus.Duplicate);
+					break;
+				default:
+					req.setStatus(LocationRequestStatus.Rejected);
+			}
+			req.setJsonData(String.format("{\"yeah\":%d}", i));
+			req.setLocationId(UUID.randomUUID().getLeastSignificantBits());
+			req.setMessage(UUID.randomUUID().toString());
+			jdbcTemplate.update(INSERT_SQL, req.getId(), Timestamp.from(now), Timestamp.from(now),
+					req.getUserId(), String.valueOf((char) req.getStatus().getCode()), req.getJsonData(),
+					req.getLocationId(), req.getMessage());
+			data.add(req);
+		}
+
+		allReqData();
+
+		// WHEN
+		BasicLocationRequestCriteria filter = new BasicLocationRequestCriteria();
+		filter.setUserIds(new Long[] { 0L, 1L });
+		filter.setRequestStatuses(EnumSet.of(LocationRequestStatus.Created,
+				LocationRequestStatus.Duplicate, LocationRequestStatus.Rejected));
+		int result = dao.delete(null, filter);
+
+		// THEN
+		assertThat("Deleted rows for 2 users x 3 statuses", result, is(equalTo(6)));
+
+		List<Map<String, Object>> rows = allReqData();
+		assertThat("After delete rows reduced by 2 users x 3 statuses", rows, hasSize(data.size() - 6));
+		for ( int i = 0; i < 2; i++ ) {
+			Map<String, Object> row = rows.get(i);
+			assertThat(format("Remaining row for user %d", i), row, hasEntry("id", (long) (i * 4)));
+		}
+		for ( int i = 2; i < 6; i++ ) {
+			Map<String, Object> row = rows.get(i);
+			assertThat(format("Remaining row user 2 %d", i), row, hasEntry("id", (long) (i + 6)));
+		}
+	}
 }

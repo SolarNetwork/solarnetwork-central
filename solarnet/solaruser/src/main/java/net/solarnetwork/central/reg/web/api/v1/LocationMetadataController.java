@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.web.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -39,8 +40,8 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.SolarLocation;
-import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
@@ -244,12 +245,73 @@ public class LocationMetadataController {
 		return deleteMetadata(locationId, sourceId);
 	}
 
+	/**
+	 * List location requests matching a search filter.
+	 * 
+	 * @param filter
+	 *        the search filter
+	 * @return the matching results
+	 */
 	@ResponseBody
-	@RequestMapping(value = "/requests", method = RequestMethod.GET)
+	@RequestMapping(value = "/request", method = RequestMethod.GET)
 	public Response<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
 			BasicLocationRequestCriteria filter) {
-		return response(datumMetadataBiz.findLocationRequests(SecurityUtils.getCurrentActorUserId(),
-				filter, null, null, null));
+		return response(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null,
+				null, null));
+	}
+
+	/**
+	 * Submit a location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request", method = RequestMethod.POST)
+	public Response<LocationRequest> submitLocationRequest(@RequestBody LocationRequestInfo info) {
+		return response(datumMetadataBiz.submitLocationRequest(getCurrentActorUserId(), info));
+	}
+
+	/**
+	 * View a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to view
+	 * @return the request, or an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.GET)
+	public Response<LocationRequest> getLocationRequest(@PathVariable("id") Long id) {
+		return response(datumMetadataBiz.getLocationRequest(getCurrentActorUserId(), id));
+	}
+
+	/**
+	 * Delete a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.POST)
+	public Response<LocationRequest> updateLocationRequest(@PathVariable("id") Long id,
+			@RequestBody LocationRequestInfo info) {
+		return response(datumMetadataBiz.updateLocationRequest(getCurrentActorUserId(), id, info));
+	}
+
+	/**
+	 * Delete a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.DELETE)
+	public Response<LocationRequest> deleteLocationRequest(@PathVariable("id") Long id) {
+		datumMetadataBiz.removeLocationRequest(getCurrentActorUserId(), id);
+		return response(null);
 	}
 
 }

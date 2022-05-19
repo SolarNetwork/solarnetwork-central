@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
+import java.util.List;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -35,5 +36,27 @@ import net.solarnetwork.dao.GenericDao;
  */
 public interface LocationRequestDao extends GenericDao<LocationRequest, Long>,
 		FilterableDao<LocationRequest, Long, LocationRequestCriteria> {
+
+	/**
+	 * Get a persisted entity by its primary key.
+	 * 
+	 * @param id
+	 *        the primary key to retrieve
+	 * @param filter
+	 *        the optional filter
+	 * @return the domain object, or {@literal null} if not available
+	 */
+	List<LocationRequest> find(Long id, LocationRequestCriteria filter);
+
+	/**
+	 * Remove persisted entities.
+	 * 
+	 * @param id
+	 *        optional ID to delete
+	 * @param filter
+	 *        optional filter to delete
+	 * @return the number of entities deleted
+	 */
+	int delete(Long id, LocationRequestCriteria filter);
 
 }

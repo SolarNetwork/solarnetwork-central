@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Collections;
 import java.util.List;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -91,7 +92,7 @@ public class InsertLocationRequest
 
 	@Override
 	public String getSql() {
-		return "INSERT INTO solarnet.sn_loc_req (user_id, status, jdata)\nVALUES (?, ?, ?::jsonb)";
+		return "INSERT INTO solarnet.sn_loc_req (user_id, loc_id, status, jdata)\nVALUES (?, ?, ?, ?::jsonb)";
 	}
 
 	@Override
@@ -107,8 +108,13 @@ public class InsertLocationRequest
 	public void setValues(PreparedStatement ps, int i) throws SQLException {
 		LocationRequest req = requests.get(i);
 		ps.setObject(1, req.getUserId());
-		ps.setString(2, String.valueOf((char) req.getStatus().getCode()));
-		ps.setString(3, req.getJsonData());
+		if ( req.getLocationId() != null ) {
+			ps.setObject(2, req.getLocationId());
+		} else {
+			ps.setNull(2, Types.BIGINT);
+		}
+		ps.setString(3, String.valueOf((char) req.getStatus().getCode()));
+		ps.setString(4, req.getJsonData());
 	}
 
 }

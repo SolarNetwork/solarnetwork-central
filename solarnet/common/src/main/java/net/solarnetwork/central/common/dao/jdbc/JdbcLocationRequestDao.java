@@ -31,6 +31,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
+import net.solarnetwork.central.common.dao.jdbc.sql.DeleteLocationRequest;
 import net.solarnetwork.central.common.dao.jdbc.sql.InsertLocationRequest;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectLocationRequest;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateLocationRequest;
@@ -108,7 +109,17 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 
 	@Override
 	public void delete(LocationRequest entity) {
-		throw new UnsupportedOperationException();
+		jdbcOps.update(new DeleteLocationRequest(requireNonNullArgument(entity, "entity").getId()));
+	}
+
+	@Override
+	public List<LocationRequest> find(Long id, LocationRequestCriteria filter) {
+		return jdbcOps.query(new SelectLocationRequest(id, filter), LocationRequestRowMapper.INSTANCE);
+	}
+
+	@Override
+	public int delete(Long id, LocationRequestCriteria filter) {
+		return jdbcOps.update(new DeleteLocationRequest(id, filter));
 	}
 
 }

@@ -23,6 +23,9 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import net.solarnetwork.dao.BasicLongEntity;
 
 /**
@@ -32,6 +35,7 @@ import net.solarnetwork.dao.BasicLongEntity;
  * @version 1.0
  * @since 1.3
  */
+@JsonPropertyOrder({ "id", "created", "modified", "userId", "status", "locationId", "message", "data" })
 public class LocationRequest extends BasicLongEntity {
 
 	private static final long serialVersionUID = 7700770585486402946L;
@@ -60,6 +64,11 @@ public class LocationRequest extends BasicLongEntity {
 	 */
 	public LocationRequest(Long id, Instant created) {
 		super(id, created);
+	}
+
+	@Override
+	public LocationRequest clone() {
+		return (LocationRequest) super.clone();
 	}
 
 	/**
@@ -217,6 +226,8 @@ public class LocationRequest extends BasicLongEntity {
 	 * 
 	 * @return the JSON data
 	 */
+	@JsonProperty("data")
+	@JsonRawValue
 	public String getJsonData() {
 		return jsonData;
 	}
@@ -227,6 +238,7 @@ public class LocationRequest extends BasicLongEntity {
 	 * @param jsonData
 	 *        the jsonData to set
 	 */
+	@JsonProperty("data")
 	public void setJsonData(String jsonData) {
 		this.jsonData = jsonData;
 	}
