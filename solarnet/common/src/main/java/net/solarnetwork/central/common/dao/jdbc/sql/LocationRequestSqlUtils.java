@@ -61,11 +61,11 @@ public final class LocationRequestSqlUtils {
 				p++;
 			}
 			if ( filter.getLocationId() != null ) {
-				where.append("\t AND loc_id = ANY(?)");
+				where.append("\tAND loc_id = ANY(?)");
 				p++;
 			}
 			if ( filter.hasRequestStatusCriteria() ) {
-				where.append("\t AND status = ANY(?)");
+				where.append("\tAND status = ANY(?)");
 				p++;
 			}
 		}
