@@ -28,6 +28,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
@@ -81,6 +82,9 @@ public class DatumBizDaoConfig {
 	@Autowired
 	private MailService mailService;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@Bean
 	public DatumAuxiliaryBiz datumAuxiliaryBiz() {
 		return new DaoDatumAuxiliaryBiz(datumAuxiliaryDao, datumStreamMetadataDao);
@@ -93,7 +97,8 @@ public class DatumBizDaoConfig {
 
 	@Bean
 	public DatumMetadataBiz datumMetadataBiz() {
-		DaoDatumMetadataBiz biz = new DaoDatumMetadataBiz(datumStreamMetadataDao, locationRequestDao);
+		DaoDatumMetadataBiz biz = new DaoDatumMetadataBiz(datumStreamMetadataDao, locationRequestDao,
+				objectMapper);
 		biz.setTaskExecutor(taskExecutor);
 		biz.setLocationRequestSubmittedAlertEmailRecipient(locationRequestAlertEmail);
 		biz.setMessageSource(messageSource);
