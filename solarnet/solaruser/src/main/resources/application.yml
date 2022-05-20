@@ -58,6 +58,8 @@ app:
       client-id: "solaruser-${app.meta.instance-id}"
       username: "USERNAME_HERE"
       password: "PASSWORD_HERE"
+  location.request:
+    alert-email: "nobody@localhost"
   job:
     security-token-spool.cleaner:
       minutes-older: 10

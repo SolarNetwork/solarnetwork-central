@@ -23,8 +23,11 @@
 package net.solarnetwork.central.datum.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.AuditDatumBiz;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
@@ -40,6 +43,7 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumDao;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.mail.MailService;
 
 /**
  * Datum Biz DAO configuration.
@@ -65,6 +69,18 @@ public class DatumBizDaoConfig {
 	@Autowired
 	private LocationRequestDao locationRequestDao;
 
+	@Autowired
+	private TaskExecutor taskExecutor;
+
+	@Value("${app.location.request.alert-mail:nobody@localhost}")
+	private String locationRequestAlertEmail;
+
+	@Autowired
+	private MessageSource messageSource;
+
+	@Autowired
+	private MailService mailService;
+
 	@Bean
 	public DatumAuxiliaryBiz datumAuxiliaryBiz() {
 		return new DaoDatumAuxiliaryBiz(datumAuxiliaryDao, datumStreamMetadataDao);
@@ -77,7 +93,12 @@ public class DatumBizDaoConfig {
 
 	@Bean
 	public DatumMetadataBiz datumMetadataBiz() {
-		return new DaoDatumMetadataBiz(datumStreamMetadataDao, locationRequestDao);
+		DaoDatumMetadataBiz biz = new DaoDatumMetadataBiz(datumStreamMetadataDao, locationRequestDao);
+		biz.setTaskExecutor(taskExecutor);
+		biz.setLocationRequestSubmittedAlertEmailRecipient(locationRequestAlertEmail);
+		biz.setMessageSource(messageSource);
+		biz.setMailService(mailService);
+		return biz;
 	}
 
 	@Bean

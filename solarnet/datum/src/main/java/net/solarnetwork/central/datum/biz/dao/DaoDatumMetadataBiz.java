@@ -26,13 +26,17 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.springframework.context.MessageSource;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Propagation;
@@ -57,6 +61,9 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.BasicMailAddress;
+import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
@@ -77,6 +84,11 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	private final DatumStreamMetadataDao metaDao;
 	private final LocationRequestDao locationRequestDao;
+
+	private String locationRequestSubmittedAlertEmailRecipient;
+	private MailService mailService;
+	private MessageSource messageSource;
+	private TaskExecutor taskExecutor;
 
 	/**
 	 * Constructor.
@@ -326,6 +338,28 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
 		entity.setStatus(LocationRequestStatus.Submitted);
 		Long id = locationRequestDao.save(entity);
+
+		if ( mailService != null && messageSource != null
+				&& locationRequestSubmittedAlertEmailRecipient != null ) {
+			Runnable task = () -> {
+				Map<String, Object> mailModel = new HashMap<>(4);
+				mailModel.put("userId", userId);
+				mailModel.put("requestId", id);
+				mailModel.put("info", infoToSave);
+				mailService.sendMail(
+						new BasicMailAddress(null, locationRequestSubmittedAlertEmailRecipient),
+						new ClasspathResourceMessageTemplateDataSource(Locale.getDefault(),
+								messageSource.getMessage("location.request.submitted.mail.subject", null,
+										Locale.getDefault()),
+								"META-INF/mail/location-request-submitted.txt", mailModel));
+			};
+			if ( taskExecutor != null ) {
+				taskExecutor.execute(task);
+			} else {
+				task.run();
+			}
+		}
+
 		return locationRequestDao.get(id);
 	}
 
@@ -355,6 +389,47 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		if ( count < 1 ) {
 			throw new EmptyResultDataAccessException("Entity not found.", 1);
 		}
+	}
+
+	/**
+	 * Set the recipient mail address for location request submission alerts.
+	 * 
+	 * @param locationRequestSubmittedAlertEmailRecipient
+	 *        the locationRequestSubmittedAlertEmailRecipient to set
+	 */
+	public void setLocationRequestSubmittedAlertEmailRecipient(
+			String locationRequestSubmittedAlertEmailRecipient) {
+		this.locationRequestSubmittedAlertEmailRecipient = locationRequestSubmittedAlertEmailRecipient;
+	}
+
+	/**
+	 * Set a mail service to send emails with.
+	 * 
+	 * @param mailService
+	 *        the service to set
+	 */
+	public void setMailService(MailService mailService) {
+		this.mailService = mailService;
+	}
+
+	/**
+	 * Set a message source.
+	 * 
+	 * @param messageSource
+	 *        the source to set
+	 */
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
+	}
+
+	/**
+	 * Set a task executor.
+	 * 
+	 * @param taskExecutor
+	 *        the taskExecutor to set
+	 */
+	public void setTaskExecutor(TaskExecutor taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 
 }
