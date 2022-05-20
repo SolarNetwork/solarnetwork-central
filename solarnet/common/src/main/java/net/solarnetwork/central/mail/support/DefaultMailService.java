@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.mail.support;
 
+import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.function.Consumer;
 import javax.mail.MessagingException;
 import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
@@ -45,7 +45,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DefaultMailService implements MailService {
 
@@ -53,7 +53,6 @@ public class DefaultMailService implements MailService {
 	private SimpleMailMessage templateMessage;
 	private int hardWrapColumnIndex = 0;
 	private boolean html = false;
-	private boolean cclWorkaround = true;
 
 	private final Logger log = LoggerFactory.getLogger(DefaultMailService.class);
 
@@ -106,34 +105,6 @@ public class DefaultMailService implements MailService {
 				msg.setText(msgText);
 			}
 		}
-
-		if ( log.isDebugEnabled() ) {
-			log.debug("Sending mail [{}] to {}",
-					messageDataSource.getSubject() != null ? messageDataSource.getSubject()
-							: templateMessage.getSubject(),
-					Arrays.toString(address.getTo()));
-		}
-	}
-
-	private <T extends MailSender> void doWithSender(T sender, Consumer<T> handler) {
-		if ( !cclWorkaround ) {
-			handler.accept(sender);
-			return;
-		}
-		// work around class loading issues re:
-		// javax.mail.NoSuchProviderException: Unable to load class for provider: protocol=smtp; 
-		//   class=org.apache.geronimo.javamail.transport.smtp.SMTPTransport
-		ClassLoader oldCCL = Thread.currentThread().getContextClassLoader();
-		if ( oldCCL != null ) {
-			Thread.currentThread().setContextClassLoader(null);
-		}
-		try {
-			handler.accept(sender);
-		} finally {
-			if ( oldCCL != null ) {
-				Thread.currentThread().setContextClassLoader(oldCCL);
-			}
-		}
 	}
 
 	@Override
@@ -160,14 +131,13 @@ public class DefaultMailService implements MailService {
 						msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
 					}
 				}
-				doWithSender(sender, new Consumer<JavaMailSender>() {
-
-					@Override
-					public void accept(JavaMailSender service) {
-						service.send(msg.getMimeMessage());
-					}
-
-				});
+				if ( log.isInfoEnabled() ) {
+					log.info("Sending MIME mail [{}] from [{}] to [{}]",
+							msg.getMimeMessage().getSubject(),
+							arrayToCommaDelimitedString(msg.getMimeMessage().getFrom()),
+							arrayToCommaDelimitedString(msg.getMimeMessage().getAllRecipients()));
+				}
+				sender.send(msg.getMimeMessage());
 			} catch ( MessagingException e ) {
 				String err = String.format("Error preparing mail [%s] to %s: %s",
 						messageDataSource.getSubject() != null ? messageDataSource.getSubject()
@@ -178,14 +148,11 @@ public class DefaultMailService implements MailService {
 		} else {
 			SimpleMailMessage msg = new SimpleMailMessage();
 			prepareMailMessage(msg, address, messageDataSource);
-			doWithSender(mailSender, new Consumer<MailSender>() {
-
-				@Override
-				public void accept(MailSender service) {
-					service.send(msg);
-				}
-
-			});
+			if ( log.isInfoEnabled() ) {
+				log.info("Sending mail [{}] from [{}] to [{}]", msg.getSubject(), msg.getFrom(),
+						arrayToCommaDelimitedString(msg.getTo()));
+			}
+			mailSender.send(msg);
 		}
 	}
 
@@ -256,30 +223,6 @@ public class DefaultMailService implements MailService {
 	 */
 	public void setHtml(boolean html) {
 		this.html = html;
-	}
-
-	/**
-	 * Get the CCL workaround flag.
-	 * 
-	 * @return {@literal true} if the context {@link ClassLoader} should be set
-	 *         to {@literal null} before sending any message; defaults to
-	 *         {@literal true}
-	 * @since 1.3
-	 */
-	public boolean isCclWorkaround() {
-		return cclWorkaround;
-	}
-
-	/**
-	 * Set the CCL workaround flag.
-	 * 
-	 * @param cclWorkaround
-	 *        {@literal true} if the context {@link ClassLoader} should be set
-	 *        to {@literal null} before sending any message
-	 * @since 1.3
-	 */
-	public void setCclWorkaround(boolean cclWorkaround) {
-		this.cclWorkaround = cclWorkaround;
 	}
 
 }
