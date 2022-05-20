@@ -53,7 +53,6 @@ public class DefaultMailServiceTests extends AbstractJavaMailTestSupport {
 		super.setup();
 
 		mailService = new DefaultMailService(sender);
-		mailService.setCclWorkaround(false);
 
 		SimpleMailMessage template = new SimpleMailMessage();
 		template.setSubject("Test message");
