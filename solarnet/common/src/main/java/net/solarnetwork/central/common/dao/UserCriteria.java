@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeCriteria.java - 23/10/2020 9:16:44 pm
+ * UserCriteria.java - 15/11/2020 12:52:35 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,34 +20,43 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Search criteria for node related data.
+ * Search criteria for user related data.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeCriteria {
+public interface UserCriteria {
 
 	/**
-	 * Get the first node ID.
+	 * Get the first user ID.
 	 * 
 	 * <p>
-	 * This returns the first available node ID from the {@link #getNodeIds()}
+	 * This returns the first available user ID from the {@link #getUserIds()}
 	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the node ID, or {@literal null} if not available
+	 * @return the first user ID, or {@literal null} if not available
 	 */
-	Long getNodeId();
+	Long getUserId();
 
 	/**
-	 * Get an array of node IDs.
+	 * Get an array of user IDs.
 	 * 
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of user IDs (may be {@literal null})
 	 */
-	Long[] getNodeIds();
+	Long[] getUserIds();
+
+	/**
+	 * Test if this filter has any user criteria.
+	 * 
+	 * @return {@literal true} if the user ID is non-null
+	 */
+	default boolean hasUserCriteria() {
+		return getUserId() != null;
+	}
 
 }

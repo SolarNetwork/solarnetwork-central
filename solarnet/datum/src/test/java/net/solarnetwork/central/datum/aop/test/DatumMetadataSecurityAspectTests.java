@@ -63,7 +63,7 @@ public class DatumMetadataSecurityAspectTests extends AbstractCentralTest {
 	private DatumMetadataSecurityAspect getTestInstance(Set<String> locMetaAdminRoles) {
 		DatumMetadataSecurityAspect aspect = new DatumMetadataSecurityAspect(userNodeDao);
 		if ( locMetaAdminRoles != null ) {
-			aspect.setLocaitonMetadataAdminRoles(locMetaAdminRoles);
+			aspect.setLocationMetadataAdminRoles(locMetaAdminRoles);
 		}
 		return aspect;
 	}

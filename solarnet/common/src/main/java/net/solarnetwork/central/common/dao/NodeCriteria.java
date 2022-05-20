@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * NodeCriteria.java - 23/10/2020 9:16:44 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,17 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
-
-import net.solarnetwork.central.common.dao.NodeCriteria;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Search criteria for node metadata.
+ * Search criteria for node related data.
  * 
  * @author matt
  * @version 1.0
  * @since 2.8
  */
-public interface NodeMetadataCriteria extends NodeCriteria, ObjectMetadataCriteria {
+public interface NodeCriteria {
+
+	/**
+	 * Get the first node ID.
+	 * 
+	 * <p>
+	 * This returns the first available node ID from the {@link #getNodeIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the node ID, or {@literal null} if not available
+	 */
+	Long getNodeId();
+
+	/**
+	 * Get an array of node IDs.
+	 * 
+	 * @return array of node IDs (may be {@literal null})
+	 */
+	Long[] getNodeIds();
 
 }

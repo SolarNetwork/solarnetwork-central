@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.biz;
 
 import java.util.List;
 import java.util.Set;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
@@ -31,18 +32,21 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
+import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * API for manipulating general datum metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumMetadataBiz {
 
@@ -226,5 +230,84 @@ public interface DatumMetadataBiz {
 	 * @since 2.0
 	 */
 	Set<ObjectDatumStreamMetadataId> findDatumStreamMetadataIds(ObjectStreamCriteria filter);
+
+	/**
+	 * Get a set of location requests for a given user and filter.
+	 * 
+	 * @param userId
+	 *        the user ID to get requests for
+	 * @param filter
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        optional sort descriptors
+	 * @param offset
+	 *        optional starting offset
+	 * @param max
+	 *        optional max number of results
+	 * @return the results, never {@literal null}
+	 * @since 2.1
+	 */
+	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
+			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			Integer max);
+
+	/**
+	 * Get a specific location request.
+	 * 
+	 * @param userId
+	 *        the user ID to get the request for
+	 * @param id
+	 *        the request ID
+	 * @return the matching entity, or {@literal null} if not found
+	 * @since 2.1
+	 */
+	LocationRequest getLocationRequest(Long userId, Long id);
+
+	/**
+	 * Submit a location request.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param info
+	 *        the request info
+	 * @return the request entity
+	 */
+	LocationRequest submitLocationRequest(Long userId, LocationRequestInfo info);
+
+	/**
+	 * Delete a specific location request.
+	 * 
+	 * <p>
+	 * Only requests in the {@link LocationRequestStatus#Submitted} state can be
+	 * removed.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID of the request to delete
+	 * @param id
+	 *        the ID of the request to delete
+	 * @since 2.1
+	 */
+	void removeLocationRequest(Long userId, Long id);
+
+	/**
+	 * Update an existing location request.
+	 * 
+	 * <p>
+	 * Only requests in the {@link LocationRequestStatus#Submitted} state can be
+	 * updated.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID of the request to save
+	 * @param id
+	 *        the ID of the request to update
+	 * @param request
+	 *        the request details to save; the {@code id} property must be
+	 *        specified
+	 * @return the saved request details
+	 * @since 2.1
+	 */
+	LocationRequest updateLocationRequest(Long userId, Long id, LocationRequestInfo info);
 
 }

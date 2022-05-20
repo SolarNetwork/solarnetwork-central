@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;

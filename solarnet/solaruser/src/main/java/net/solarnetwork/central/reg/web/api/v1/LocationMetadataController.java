@@ -22,9 +22,14 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,11 +38,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.reg.web.domain.LocationRequestInfoValidator;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.domain.Response;
@@ -46,7 +55,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for location metadata actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
@@ -54,6 +63,7 @@ import net.solarnetwork.web.domain.Response;
 public class LocationMetadataController {
 
 	private final DatumMetadataBiz datumMetadataBiz;
+	private final Validator locationRequestInfoValidator;
 
 	/**
 	 * Constructor.
@@ -62,9 +72,12 @@ public class LocationMetadataController {
 	 *        the DatumMetadataBiz to use
 	 */
 	@Autowired
-	public LocationMetadataController(DatumMetadataBiz datumMetadataBiz) {
+	public LocationMetadataController(DatumMetadataBiz datumMetadataBiz,
+			@Qualifier(LocationRequestInfoValidator.LOCATION_REQUEST_INFO) Validator locationRequestInfoValidator) {
 		super();
-		this.datumMetadataBiz = datumMetadataBiz;
+		this.datumMetadataBiz = requireNonNullArgument(datumMetadataBiz, "datumMetadataBiz");
+		this.locationRequestInfoValidator = requireNonNullArgument(locationRequestInfoValidator,
+				"locationRequestInfoValidator");
 	}
 
 	@InitBinder
@@ -239,6 +252,83 @@ public class LocationMetadataController {
 	public Response<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId) {
 		return deleteMetadata(locationId, sourceId);
+	}
+
+	/**
+	 * List location requests matching a search filter.
+	 * 
+	 * @param filter
+	 *        the search filter
+	 * @return the matching results
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request", method = RequestMethod.GET)
+	public Response<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
+			BasicLocationRequestCriteria filter) {
+		return response(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null,
+				null, null));
+	}
+
+	@InitBinder(value = LocationRequestInfoValidator.LOCATION_REQUEST_INFO)
+	public void initLocationRequestInfoBinder(WebDataBinder binder) {
+		binder.setValidator(locationRequestInfoValidator);
+	}
+
+	/**
+	 * Submit a location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request", method = RequestMethod.POST)
+	public Response<LocationRequest> submitLocationRequest(
+			@RequestBody @Valid LocationRequestInfo locationRequestInfo) {
+		return response(
+				datumMetadataBiz.submitLocationRequest(getCurrentActorUserId(), locationRequestInfo));
+	}
+
+	/**
+	 * View a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to view
+	 * @return the request, or an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.GET)
+	public Response<LocationRequest> getLocationRequest(@PathVariable("id") Long id) {
+		return response(datumMetadataBiz.getLocationRequest(getCurrentActorUserId(), id));
+	}
+
+	/**
+	 * Delete a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.POST)
+	public Response<LocationRequest> updateLocationRequest(@PathVariable("id") Long id,
+			@RequestBody @Valid LocationRequestInfo locationRequestInfo) {
+		return response(datumMetadataBiz.updateLocationRequest(getCurrentActorUserId(), id,
+				locationRequestInfo));
+	}
+
+	/**
+	 * Delete a specific location request.
+	 * 
+	 * @param id
+	 *        the ID of the request to delete
+	 * @return an empty result
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/request/{id}", method = RequestMethod.DELETE)
+	public Response<LocationRequest> deleteLocationRequest(@PathVariable("id") Long id) {
+		datumMetadataBiz.removeLocationRequest(getCurrentActorUserId(), id);
+		return response(null);
 	}
 
 }

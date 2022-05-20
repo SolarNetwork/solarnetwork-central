@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -46,6 +46,21 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	private String[] tokenIds;
 	private SimpleLocation location;
 	private String searchFilter;
+
+	/**
+	 * Default constructor.
+	 */
+	public BasicCoreCriteria() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 */
+	public BasicCoreCriteria(PaginationCriteria criteria) {
+		super();
+		copyFrom(criteria);
+	}
 
 	@Override
 	public BasicCoreCriteria clone() {
