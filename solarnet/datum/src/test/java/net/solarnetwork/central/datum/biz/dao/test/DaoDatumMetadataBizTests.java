@@ -33,10 +33,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
@@ -53,9 +56,11 @@ import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -88,7 +93,7 @@ public class DaoDatumMetadataBizTests {
 	public void setup() {
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		locationRequestDao = EasyMock.createMock(LocationRequestDao.class);
-		biz = new DaoDatumMetadataBiz(metaDao, locationRequestDao);
+		biz = new DaoDatumMetadataBiz(metaDao, locationRequestDao, JsonUtils.newDatumObjectMapper());
 	}
 
 	@Test
@@ -429,7 +434,7 @@ public class DaoDatumMetadataBizTests {
 		Capture<LocationRequestCriteria> criteriaCaptor = new Capture<>();
 		net.solarnetwork.dao.FilterResults<LocationRequest, Long> bfr = BasicFilterResults
 				.filterResults(Collections.<LocationRequest> emptyList(), null, 0L, 0);
-		expect(locationRequestDao.findFiltered(EasyMock.capture(criteriaCaptor), EasyMock.isNull(),
+		expect(locationRequestDao.findFiltered(capture(criteriaCaptor), EasyMock.isNull(),
 				EasyMock.isNull(), EasyMock.isNull())).andReturn(bfr);
 
 		// WHEN
@@ -446,6 +451,38 @@ public class DaoDatumMetadataBizTests {
 		LocationRequestCriteria crit = criteriaCaptor.getValue();
 		assertThat("Copy of filter passed to DAO", crit, is(not(sameInstance(filter))));
 		assertThat("User ID added to DAO filter", crit.getUserIds(), is(arrayContaining(userId)));
+	}
+
+	@Test
+	public void submitLocationRequest() {
+		final Long userId = UUID.randomUUID().getLeastSignificantBits();
+
+		Capture<LocationRequest> reqCaptor = new Capture<>();
+		final Long reqId = UUID.randomUUID().getLeastSignificantBits();
+		expect(locationRequestDao.save(capture(reqCaptor))).andReturn(reqId);
+		expect(locationRequestDao.get(reqId)).andAnswer(new IAnswer<LocationRequest>() {
+
+			@Override
+			public LocationRequest answer() throws Throwable {
+				return reqCaptor.getValue();
+			}
+		});
+
+		// WHEN
+		replayAll();
+		LocationRequestInfo info = new LocationRequestInfo();
+		info.setFeatures(new LinkedHashSet<>(Arrays.asList("weather", "forecast")));
+		info.setLocation(new BasicLocation("Foo", "NZ", null, "Welly", "Welly City", null, null, null,
+				null, null, "Pacific/Auckland"));
+		biz.submitLocationRequest(userId, info);
+
+		// THEN
+		LocationRequest req = reqCaptor.getValue();
+		assertThat("Status configured", req.getStatus(), is(equalTo(LocationRequestStatus.Submitted)));
+		assertThat("Json generated", req.getJsonData(),
+				is(equalTo("{\"features\":[\"weather\",\"forecast\"],\"location\":"
+						+ "{\"name\":\"Foo\",\"country\":\"NZ\",\"stateOrProvince\":\"Welly\",\"locality\":\"Welly City\",\"zone\":\"Pacific/Auckland\"}"
+						+ "}")));
 	}
 
 }

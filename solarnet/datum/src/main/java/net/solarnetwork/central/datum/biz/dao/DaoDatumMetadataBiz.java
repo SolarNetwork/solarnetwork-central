@@ -41,6 +41,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
@@ -84,6 +86,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	private final DatumStreamMetadataDao metaDao;
 	private final LocationRequestDao locationRequestDao;
+	private final ObjectMapper objectMapper;
 
 	private String locationRequestSubmittedAlertEmailRecipient;
 	private MailService mailService;
@@ -97,13 +100,17 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	 *        the metadata DAO to use
 	 * @param locationRequestDao
 	 *        the location request DAO to use
+	 * @param objectMapper
+	 *        the mapper to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao, LocationRequestDao locationRequestDao) {
+	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao, LocationRequestDao locationRequestDao,
+			ObjectMapper objectMapper) {
 		super();
 		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 		this.locationRequestDao = requireNonNullArgument(locationRequestDao, "locationRequestDao");
+		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 	}
 
 	private static GeneralDatumMetadata extractGeneralDatumMetadata(
@@ -335,7 +342,11 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		entity.setUserId(requireNonNullArgument(userId, "userId"));
 		LocationRequestInfo infoToSave = normalizedInfo(info);
 		entity.setLocationId(infoToSave.getLocationId());
-		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		try {
+			entity.setJsonData(objectMapper.writeValueAsString(infoToSave));
+		} catch ( JsonProcessingException e ) {
+			throw new IllegalArgumentException("Invalid JSON data: " + e.getMessage(), e);
+		}
 		entity.setStatus(LocationRequestStatus.Submitted);
 		Long id = locationRequestDao.save(entity);
 
@@ -376,7 +387,11 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		}
 		LocationRequestInfo infoToSave = normalizedInfo(info);
 		entity.setLocationId(infoToSave.getLocationId());
-		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		try {
+			entity.setJsonData(objectMapper.writeValueAsString(infoToSave));
+		} catch ( JsonProcessingException e ) {
+			throw new RuntimeException("Error generating JSON data: " + e.getMessage(), e);
+		}
 		return locationRequestDao.get(locationRequestDao.save(entity));
 	}
 
