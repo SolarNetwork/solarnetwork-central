@@ -1,7 +1,7 @@
 /* ==================================================================
- * NodeMetadataCriteria.java - 27/10/2020 9:38:16 am
+ * LocationRequestStatus.java - 19/05/2022 1:40:59 pm
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,17 +20,42 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.domain;
 
-import net.solarnetwork.central.common.dao.NodeCriteria;
+import net.solarnetwork.domain.CodedValue;
 
 /**
- * Search criteria for node metadata.
+ * Location request status enumeration.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 1.3
  */
-public interface NodeMetadataCriteria extends NodeCriteria, ObjectMetadataCriteria {
+public enum LocationRequestStatus implements CodedValue {
+
+	/** The request has been submitted and received. */
+	Submitted('s'),
+
+	/** The request has been rejected. */
+	Rejected('r'),
+
+	/** The request was found to be a duplicate for an existing location. */
+	Duplicate('d'),
+
+	/** The location has been created. */
+	Created('c'),
+
+	;
+
+	private final int code;
+
+	private LocationRequestStatus(char code) {
+		this.code = code;
+	}
+
+	@Override
+	public int getCode() {
+		return code;
+	}
 
 }

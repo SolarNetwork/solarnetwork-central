@@ -45,6 +45,12 @@ public final class CommonSqlUtils {
 	public static final Pattern SQL_COMMENT = Pattern.compile("^\\s*--");
 
 	/**
+	 * The number of characters to drop from the start of a leading where
+	 * clause.
+	 */
+	public static final int WHERE_COMPONENT_PREFIX_LENGTH = 4;
+
+	/**
 	 * Prepare a SQL statement array parameter, optimized to a non-array
 	 * parameter if the array holds a single object.
 	 * 

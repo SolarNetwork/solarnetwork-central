@@ -26,15 +26,24 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.springframework.context.MessageSource;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.central.common.dao.LocationRequestDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
@@ -46,15 +55,22 @@ import net.solarnetwork.central.datum.domain.ObjectSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.central.domain.LocationRequest;
+import net.solarnetwork.central.domain.LocationRequestInfo;
+import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.central.mail.MailService;
+import net.solarnetwork.central.mail.support.BasicMailAddress;
+import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.BasicLocation;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
 
@@ -62,23 +78,32 @@ import net.solarnetwork.util.SearchFilter;
  * DAO-based implementation of {@link DatumMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	private final DatumStreamMetadataDao metaDao;
+	private final LocationRequestDao locationRequestDao;
+
+	private String locationRequestSubmittedAlertEmailRecipient;
+	private MailService mailService;
+	private MessageSource messageSource;
+	private TaskExecutor taskExecutor;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param metaDao
 	 *        the metadata DAO to use
+	 * @param locationRequestDao
+	 *        the location request DAO to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao) {
+	public DaoDatumMetadataBiz(DatumStreamMetadataDao metaDao, LocationRequestDao locationRequestDao) {
 		super();
 		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
+		this.locationRequestDao = requireNonNullArgument(locationRequestDao, "locationRequestDao");
 	}
 
 	private static GeneralDatumMetadata extractGeneralDatumMetadata(
@@ -260,6 +285,151 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		}
 		return StreamSupport.stream(result.spliterator(), false)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(
+			final Long userId, final LocationRequestCriteria filter,
+			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+		requireNonNullArgument(userId, "userId");
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria(filter);
+		criteria.setUserId(userId);
+		return locationRequestDao.findFiltered(criteria, sortDescriptors, offset, max);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public LocationRequest getLocationRequest(final Long userId, final Long id) {
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria();
+		criteria.setUserId(requireNonNullArgument(userId, "userId"));
+		List<LocationRequest> results = locationRequestDao.find(requireNonNullArgument(id, "id"),
+				criteria);
+		if ( results.isEmpty() ) {
+			throw new EmptyResultDataAccessException(1);
+		}
+		return results.get(0);
+	}
+
+	private LocationRequestInfo normalizedInfo(LocationRequestInfo info) {
+		LocationRequestInfo infoToSave = requireNonNullArgument(info, "info").clone();
+		if ( infoToSave.getLocationId() != null ) {
+			infoToSave.setLocation(null);
+		} else {
+			BasicLocation norm = BasicLocation
+					.normalizedLocation(requireNonNullArgument(info.getLocation(), "info.location"));
+			if ( !norm.hasLocationCriteria() || norm.getCountry() == null || norm.getTimeZoneId() == null
+					|| norm.getStateOrProvince() == null || norm.getLocality() == null ) {
+				throw new IllegalArgumentException(
+						"Location details must be provided, i.e. country, zone, stateOrProvince, locality, etc.");
+			}
+			infoToSave.setLocation(norm);
+		}
+		return infoToSave;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public LocationRequest submitLocationRequest(final Long userId, final LocationRequestInfo info) {
+		LocationRequest entity = new LocationRequest();
+		entity.setUserId(requireNonNullArgument(userId, "userId"));
+		LocationRequestInfo infoToSave = normalizedInfo(info);
+		entity.setLocationId(infoToSave.getLocationId());
+		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		entity.setStatus(LocationRequestStatus.Submitted);
+		Long id = locationRequestDao.save(entity);
+
+		if ( mailService != null && messageSource != null
+				&& locationRequestSubmittedAlertEmailRecipient != null ) {
+			Runnable task = () -> {
+				Map<String, Object> mailModel = new HashMap<>(4);
+				mailModel.put("userId", userId);
+				mailModel.put("requestId", id);
+				mailModel.put("info", infoToSave);
+				mailService.sendMail(
+						new BasicMailAddress(null, locationRequestSubmittedAlertEmailRecipient),
+						new ClasspathResourceMessageTemplateDataSource(Locale.getDefault(),
+								messageSource.getMessage("location.request.submitted.mail.subject", null,
+										Locale.getDefault()),
+								"META-INF/mail/location-request-submitted.txt", mailModel));
+			};
+			if ( taskExecutor != null ) {
+				taskExecutor.execute(task);
+			} else {
+				task.run();
+			}
+		}
+
+		return locationRequestDao.get(id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public LocationRequest updateLocationRequest(final Long userId, final Long id,
+			final LocationRequestInfo info) {
+		LocationRequest entity = getLocationRequest(userId, id);
+		if ( entity == null ) {
+			throw new EmptyResultDataAccessException("Entity not found.", 1);
+		} else if ( entity.getStatus() != LocationRequestStatus.Submitted ) {
+			throw new DataIntegrityViolationException(String.format(
+					"Only requests with status %s can be updated.", LocationRequestStatus.Submitted));
+		}
+		LocationRequestInfo infoToSave = normalizedInfo(info);
+		entity.setLocationId(infoToSave.getLocationId());
+		entity.setJsonData(JsonUtils.getJSONString(infoToSave, null));
+		return locationRequestDao.get(locationRequestDao.save(entity));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void removeLocationRequest(final Long userId, final Long id) {
+		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria();
+		criteria.setUserId(requireNonNullArgument(userId, "userId"));
+		int count = locationRequestDao.delete(requireNonNullArgument(id, "id"), criteria);
+		if ( count < 1 ) {
+			throw new EmptyResultDataAccessException("Entity not found.", 1);
+		}
+	}
+
+	/**
+	 * Set the recipient mail address for location request submission alerts.
+	 * 
+	 * @param locationRequestSubmittedAlertEmailRecipient
+	 *        the locationRequestSubmittedAlertEmailRecipient to set
+	 */
+	public void setLocationRequestSubmittedAlertEmailRecipient(
+			String locationRequestSubmittedAlertEmailRecipient) {
+		this.locationRequestSubmittedAlertEmailRecipient = locationRequestSubmittedAlertEmailRecipient;
+	}
+
+	/**
+	 * Set a mail service to send emails with.
+	 * 
+	 * @param mailService
+	 *        the service to set
+	 */
+	public void setMailService(MailService mailService) {
+		this.mailService = mailService;
+	}
+
+	/**
+	 * Set a message source.
+	 * 
+	 * @param messageSource
+	 *        the source to set
+	 */
+	public void setMessageSource(MessageSource messageSource) {
+		this.messageSource = messageSource;
+	}
+
+	/**
+	 * Set a task executor.
+	 * 
+	 * @param taskExecutor
+	 *        the taskExecutor to set
+	 */
+	public void setTaskExecutor(TaskExecutor taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 
 }

@@ -1,0 +1,12 @@
+A new SolarNetwork location request has been received:
+
+User ID:		${userId}
+Request ID:		${requestId}
+
+Source ID: 		${info.sourceId}
+
+Name:			${info.location.name}
+Country:		${info.location.country}
+Time Zone:		${info.location.timeZoneId}
+State:			${info.location.stateOrProvince}
+City:			${info.location.locality}

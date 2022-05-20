@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityTokenCriteria.java - 30/11/2020 10:40:13 am
+ * LocationRequestDaoConfig.java - 19/05/2022 4:59:25 pm
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,43 +20,31 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao;
+package net.solarnetwork.central.common.dao.config;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.LocationRequestDao;
+import net.solarnetwork.central.common.dao.jdbc.JdbcLocationRequestDao;
 
 /**
- * Search criteria for security token related data.
+ * Configuration for the {@link LocationRequestDao}.
  * 
  * @author matt
  * @version 1.0
- * @since 2.8
+ * @since 1.3
  */
-public interface SecurityTokenCriteria {
+@Configuration
+public class LocationRequestDaoConfig {
 
-	/**
-	 * Get the first token ID.
-	 * 
-	 * <p>
-	 * This returns the first available token ID from the {@link #getTokenIds()}
-	 * array, or {@literal null} if not available.
-	 * </p>
-	 * 
-	 * @return the first token ID, or {@literal null} if not available
-	 */
-	String getTokenId();
+	@Autowired
+	private JdbcOperations jdbcOperations;
 
-	/**
-	 * Get an array of token IDs.
-	 * 
-	 * @return array of token IDs (may be {@literal null})
-	 */
-	String[] getTokenIds();
-
-	/**
-	 * Test if this filter has any token criteria.
-	 * 
-	 * @return {@literal true} if the token ID is non-null
-	 */
-	default boolean hasTokenCriteria() {
-		return getTokenId() != null;
+	@Bean
+	public LocationRequestDao locationRequestDao() {
+		return new JdbcLocationRequestDao(jdbcOperations);
 	}
 
 }

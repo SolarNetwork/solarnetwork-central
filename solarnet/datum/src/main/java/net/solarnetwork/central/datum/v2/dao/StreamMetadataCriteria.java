@@ -22,6 +22,11 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import net.solarnetwork.central.common.dao.LocationCriteria;
+import net.solarnetwork.central.common.dao.SearchFilterCriteria;
+import net.solarnetwork.central.common.dao.SecurityTokenCriteria;
+import net.solarnetwork.central.common.dao.SourceCriteria;
+import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.SortCriteria;
 
 /**
