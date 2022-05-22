@@ -49,6 +49,7 @@ import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SimpleLocation;
 
 /**
  * Test cases for the {@link JdbcLocationRequestDao} class.
@@ -298,6 +299,54 @@ public class JdbcLocationRequestDaoTests extends AbstractJUnit5JdbcDaoTestSuppor
 		for ( int i = 2; i < 6; i++ ) {
 			Map<String, Object> row = rows.get(i);
 			assertThat(format("Remaining row user 2 %d", i), row, hasEntry("id", (long) (i + 6)));
+		}
+	}
+
+	@Test
+	public void find_fts() {
+		// GIVEN
+		final Instant now = Instant.now();
+		LocationRequest req = new LocationRequest(1L, now);
+		req.setModified(now);
+		req.setUserId(1L);
+		req.setStatus(LocationRequestStatus.Submitted);
+		req.setJsonData(
+				"{\"sourceId\":\"OpenWeatherMap\",\"location\":{\"name\":\"Windy\",\"country\":\"NZ\",\"region\":\"Reginold\",\"stateOrProvince\":\"Stately\",\"locality\":\"Springfield\",\"postalCode\":\"123456789\"}}");
+		jdbcTemplate.update(INSERT_SQL, req.getId(), Timestamp.from(now), Timestamp.from(now),
+				req.getUserId(), String.valueOf((char) req.getStatus().getCode()), req.getJsonData(),
+				req.getLocationId(), req.getMessage());
+
+		LocationRequest req2 = new LocationRequest(2L, now);
+		req2.setModified(now);
+		req2.setUserId(1L);
+		req2.setStatus(LocationRequestStatus.Submitted);
+		req2.setJsonData(
+				"{\"sourceId\":\"ClosedWeatherMap\",\"location\":{\"name\":\"Still\",\"country\":\"US\",\"region\":\"Benard\",\"stateOrProvince\":\"New York\",\"locality\":\"City McCityface\",\"postalCode\":\"98765\"}}");
+		jdbcTemplate.update(INSERT_SQL, req2.getId(), Timestamp.from(now), Timestamp.from(now),
+				req2.getUserId(), String.valueOf((char) req2.getStatus().getCode()), req2.getJsonData(),
+				req2.getLocationId(), req2.getMessage());
+
+		allReqData();
+
+		for ( String q : new String[] { "openweathermap", "wind", "nz", "reginold", "state",
+				"springfield", "123456789" } ) {
+			// WHEN
+			BasicLocationRequestCriteria filter = new BasicLocationRequestCriteria();
+			filter.setUserId(1L);
+			SimpleLocation loc = new SimpleLocation();
+			loc.setName(q);
+			filter.setLocation(loc);
+			FilterResults<LocationRequest, Long> result = dao.findFiltered(filter);
+
+			// THEN
+			assertThat(format("Results returned for query [%s]", q), result, is(notNullValue()));
+			assertThat(format("Matching count returned for query [%s]", q),
+					result.getReturnedResultCount(), is(equalTo(1)));
+
+			LocationRequest returned = StreamSupport.stream(result.spliterator(), false)
+					.collect(Collectors.toList()).get(0);
+
+			assertThat(format("Returned expected row for query [%s]", q), returned, is(equalTo(req)));
 		}
 	}
 }
