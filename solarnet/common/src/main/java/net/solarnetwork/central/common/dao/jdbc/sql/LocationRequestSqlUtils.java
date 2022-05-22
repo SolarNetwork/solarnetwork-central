@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
+import net.solarnetwork.domain.Location;
 
 /**
  * LocationRequest SQL support.
@@ -67,6 +68,13 @@ public final class LocationRequestSqlUtils {
 			if ( filter.hasRequestStatusCriteria() ) {
 				where.append("\tAND status = ANY(?)");
 				p++;
+			}
+			if ( filter.hasLocationCriteria() ) {
+				Location loc = filter.getLocation();
+				if ( loc.getName() != null ) {
+					where.append("\tAND fts_default @@ solarcommon.plainto_prefix_tsquery(?)");
+					p++;
+				}
 			}
 		}
 		return p;
@@ -111,6 +119,12 @@ public final class LocationRequestSqlUtils {
 				Array array = con.createArrayOf("TEXT", statuses);
 				stmt.setArray(++p, array);
 				array.free();
+			}
+			if ( filter.hasLocationCriteria() ) {
+				Location loc = filter.getLocation();
+				if ( loc.getName() != null ) {
+					stmt.setString(++p, loc.getName());
+				}
 			}
 		}
 		return p;
