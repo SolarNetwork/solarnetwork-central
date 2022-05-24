@@ -79,7 +79,7 @@ public class DatumBizDaoConfig {
 	@Autowired
 	private MessageSource messageSource;
 
-	@Autowired
+	@Autowired(required = false)
 	private MailService mailService;
 
 	@Autowired
