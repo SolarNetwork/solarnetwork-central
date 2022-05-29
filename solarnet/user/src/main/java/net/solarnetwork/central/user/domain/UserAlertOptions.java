@@ -26,23 +26,30 @@ package net.solarnetwork.central.user.domain;
  * {@link UserAlert} option constants.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserAlertOptions {
 
 	/**
 	 * An age threshold, in the form of a decimal number of seconds.
 	 */
-	static String AGE_THRESHOLD = "age";
+	String AGE_THRESHOLD = "age";
 
 	/**
 	 * A list of string datum source ID values.
 	 */
-	static String SOURCE_IDS = "sourceIds";
+	String SOURCE_IDS = "sourceIds";
 
 	/**
 	 * A list of time window objects.
 	 */
-	static String TIME_WINDOWS = "windows";
+	String TIME_WINDOWS = "windows";
+
+	/**
+	 * A list of email addresses to send the alerts to.
+	 * 
+	 * @since 1.2
+	 */
+	String EMAIL_TOS = "emails";
 
 }
