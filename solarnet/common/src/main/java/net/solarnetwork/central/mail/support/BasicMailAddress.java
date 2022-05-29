@@ -28,7 +28,7 @@ import net.solarnetwork.central.mail.MailAddress;
  * Basic implementation of {@link MailAddress}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicMailAddress implements MailAddress {
 
@@ -36,6 +36,18 @@ public class BasicMailAddress implements MailAddress {
 	private String[] cc;
 	private String[] bcc;
 	private String from;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param to
+	 *        the to email address list
+	 * @since 1.1
+	 */
+	public BasicMailAddress(String[] to) {
+		super();
+		this.to = to;
+	}
 
 	/**
 	 * Construct with a single "to" address.

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,7 +47,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </ul>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
@@ -166,6 +167,25 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 	public void setOptions(Map<String, Object> options) {
 		this.options = options;
 		optionsJson = null;
+	}
+
+	/**
+	 * Get the {@link UserAlertOptions#EMAIL_TOS} list as an array.
+	 * 
+	 * @return the email list, or {@literal null} if the option is not available
+	 * @since 2.1
+	 */
+	public String[] optionEmailTos() {
+		String[] result = null;
+		if ( options != null ) {
+			Object o = options.get(UserAlertOptions.EMAIL_TOS);
+			if ( o instanceof Collection<?> ) {
+				result = ((Collection<?>) o).stream().map(Object::toString).toArray(String[]::new);
+			} else if ( o instanceof String[] ) {
+				result = (String[]) o;
+			}
+		}
+		return result;
 	}
 
 	@Override
