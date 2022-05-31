@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserAlertOptions.java - 17/05/2015 8:24:27 pm
+ * WithMockSecurityUser.java - 30/05/2022 9:20:13 am
  * 
- * Copyright 2007-2015 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,36 +20,28 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.domain;
+package net.solarnetwork.central.reg.test;
+
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import org.springframework.security.test.context.support.WithSecurityContext;
 
 /**
- * {@link UserAlert} option constants.
+ * Annotation fo
  * 
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public interface UserAlertOptions {
+@Documented
+@Retention(RUNTIME)
+@WithSecurityContext(factory = WithMockSecurityUserContextFactory.class)
+public @interface WithMockSecurityUser {
 
-	/**
-	 * An age threshold, in the form of a decimal number of seconds.
-	 */
-	String AGE_THRESHOLD = "age";
+	String userId() default "1";
 
-	/**
-	 * A list of string datum source ID values.
-	 */
-	String SOURCE_IDS = "sourceIds";
+	String username() default "test1@localhost";
 
-	/**
-	 * A list of time window objects.
-	 */
-	String TIME_WINDOWS = "windows";
-
-	/**
-	 * A list of email addresses to send the alerts to.
-	 * 
-	 * @since 1.2
-	 */
-	String EMAIL_TOS = "emails";
+	String name() default "Tester 1";
 
 }

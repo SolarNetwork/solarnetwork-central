@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * API for invoice usage record information that has been localized.
@@ -35,7 +36,7 @@ import java.util.List;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public interface LocalizedInvoiceUsageRecordInfo {
@@ -59,6 +60,7 @@ public interface LocalizedInvoiceUsageRecordInfo {
 	 * 
 	 * @return the first usage record, or {@literal null}
 	 */
+	@JsonIgnore
 	default LocalizedInvoiceItemUsageRecordInfo getFirstLocalizedUsageRecord() {
 		List<LocalizedInvoiceItemUsageRecordInfo> records = getLocalizedUsageRecords();
 		return (records != null && !records.isEmpty() ? records.get(0) : null);

@@ -23,9 +23,9 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage.nodeUsage;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.Instant;
 import java.time.LocalDate;
 import org.junit.Before;
@@ -48,6 +48,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceRelatedPK;
  */
 public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 
+	private static final String TEST_NODE_DESCRIPTION = "My Test Node";
 	private MyBatisAddressDao addressDao;
 	private MyBatisAccountDao accountDao;
 	private MyBatisSnfInvoiceDao invoiceDao;
@@ -69,6 +70,9 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 		dao = new MyBatisSnfInvoiceNodeUsageDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 
+		setupTestNode();
+		saveNodeName(TEST_NODE_ID, TEST_NODE_DESCRIPTION);
+
 		last = null;
 	}
 
@@ -88,8 +92,8 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 	public void insert() {
 		SnfInvoice invoice = createTestInvoice();
 
-		SnfInvoiceNodeUsage entity = nodeUsage(invoice.getId().getId(), 1L, invoice.getCreated(), 2L, 3L,
-				4L);
+		SnfInvoiceNodeUsage entity = nodeUsage(invoice.getId().getId(), TEST_NODE_ID,
+				invoice.getCreated(), 2L, 3L, 4L);
 		SnfInvoiceRelatedPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, is(equalTo(entity.getId())));
 		last = entity;
@@ -103,6 +107,8 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("ID", entity.getId(), is(equalTo(last.getId())));
 		assertThat("Created", entity.getCreated(), is(equalTo(last.getCreated())));
 		assertThat("Sameness", entity.isSameAs(last), is(equalTo(true)));
+		assertThat("Description populated with node name", entity.getDescription(),
+				is(equalTo(TEST_NODE_DESCRIPTION)));
 	}
 
 }

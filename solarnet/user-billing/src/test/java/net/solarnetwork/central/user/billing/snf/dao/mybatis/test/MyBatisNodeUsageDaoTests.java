@@ -26,12 +26,12 @@ import static java.lang.Long.parseLong;
 import static java.lang.String.format;
 import static net.solarnetwork.central.user.billing.snf.domain.UsageTier.tier;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -90,6 +90,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		Long nodeId = UUID.randomUUID().getMostSignificantBits();
 		setupTestNode(nodeId, locId);
 		setupTestUserNode(userId, nodeId);
+		saveNodeName(nodeId, String.format("Test Node %d", nodeId));
 		return nodeId;
 	}
 
@@ -271,6 +272,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 			NodeUsage usage = results.get(0);
 			if ( i == 0 ) {
 				assertThat("Node ID present for node-level usage", usage.getId(), equalTo(nodeId));
+				assertThat("Node usage description is node name", usage.getDescription(),
+						equalTo(format("Test Node %d", nodeId)));
 			} else {
 				assertThat("No node ID for account-level usage", usage.getId(), nullValue());
 			}

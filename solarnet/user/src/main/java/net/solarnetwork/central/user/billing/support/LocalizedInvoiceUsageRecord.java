@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceUsageRecordI
  * @param <T>
  *        the usage record type
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public class LocalizedInvoiceUsageRecord<T>
@@ -113,7 +113,7 @@ public class LocalizedInvoiceUsageRecord<T>
 
 	@Override
 	public String getLocalizedDescription() {
-		return localizedDescription;
+		return (localizedDescription != null ? localizedDescription : usage.getDescription());
 	}
 
 	@Override

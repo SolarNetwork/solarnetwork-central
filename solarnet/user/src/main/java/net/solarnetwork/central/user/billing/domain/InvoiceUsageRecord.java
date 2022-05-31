@@ -30,7 +30,7 @@ import java.util.List;
  * @param <T>
  *        the invoice key type
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public interface InvoiceUsageRecord<T> {
@@ -45,6 +45,16 @@ public interface InvoiceUsageRecord<T> {
 	 * @return the usage key
 	 */
 	T getUsageKey();
+
+	/**
+	 * Get a description for the usage record.
+	 * 
+	 * @return the description, or {@literal null}
+	 * @since 1.1
+	 */
+	default String getDescription() {
+		return null;
+	}
 
 	/**
 	 * Get the usage records associated with the invoice.

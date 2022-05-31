@@ -591,8 +591,16 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		}
 		User user = userDao.get(alert.getUserId());
 		SolarNode node = (datum != null ? nodeCache.get(datum.getNodeId()) : null);
-		if ( user != null && node != null ) {
-			BasicMailAddress addr = new BasicMailAddress(user.getName(), user.getEmail());
+		BasicMailAddress addr = null;
+		String[] emails = alert.optionEmailTos();
+		if ( (emails == null || emails.length == 0) ) {
+			if ( user != null ) {
+				addr = new BasicMailAddress(user.getName(), user.getEmail());
+			}
+		} else if ( emails != null && emails.length > 0 ) {
+			addr = new BasicMailAddress(emails);
+		}
+		if ( user != null && node != null && addr != null ) {
 			Locale locale = Locale.US; // TODO: get Locale from User entity
 			Map<String, Object> model = new HashMap<String, Object>(4);
 			model.put("alert", alert);

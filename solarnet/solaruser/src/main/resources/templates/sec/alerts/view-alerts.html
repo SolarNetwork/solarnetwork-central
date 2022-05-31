@@ -49,6 +49,7 @@
 			<tr>
 				<th data-th-text="#{alert.nodeId.label}">Node ID</th>
 				<th data-th-text="#{alert.type.label}">Type</th>
+				<th data-th-text="#{alert.options.emails.label}">Source IDs</th>
 				<th data-th-text="#{alert.options.sourceIds.label}">Source IDs</th>
 				<th data-th-text="#{alert.options.ageMinutes.heading}">Age</th>
 				<th data-th-text="#{alert.options.window.label}">Window</th>
@@ -60,6 +61,7 @@
 			<tr class="alert-row" data-th-classappend="${alert.situation} ? 'alert-danger'"
 					data-th-each="alert : ${nodeDataAlerts}"
 					data-th-with="
+						alertEmails=${alert.options['emails'] != null ? #strings.listJoin(alert.options['emails'], ', ') : null},
 						alertSources=${#strings.listJoin(alert.options['sourceIds'], ', ')},
 						alertWindowTimeStart=${not #lists.isEmpty(alert.options['windows']) ? alert.options['windows'][0].timeStart : null},
 						alertWindowTimeEnd=${not #lists.isEmpty(alert.options['windows']) ? alert.options['windows'][0].timeEnd : null},
@@ -70,6 +72,7 @@
 				<td data-th-text="#{alert.type.__${alert.type}__.label}">
 					Stale data
 				</td>
+				<td data-th-text="${alertEmails != null ? alertEmails : #authentication.principal.username}"></td>
 				<td data-th-text="${alertSources}">
 					/src/1, /src/2
 				</td>
@@ -93,6 +96,7 @@
 						data-th-data-alert-id="${alert.id}"
 						data-th-data-alert-type="${alert.type}"
 						data-th-data-alert-status="${alert.status}"
+						data-th-data-emails="${alertEmails}"
 						data-th-data-sources="${alertSources}"
 						data-th-data-age="${alertAge}"
 						data-th-data-window-time-start="${alertWindowTimeStart}"
@@ -130,6 +134,14 @@
 		 		<div class="carousel-inner" role="listbox">
 		 			<div class="item active">
 				 		<p data-th-utext="#{alerts.node.data.create.intro}">Create an alert here.</p>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="create-node-data-alert-email" data-th-text="#{alert.options.emails.label}">Email</label>
+							<div class="col-sm-10">
+								<input name="option-emails" type="text" class="form-control" id="create-node-data-alert-emails"
+									placeholder="Comma-delimited list of emails" data-th-placeholder="#{alert.options.emails.placeholder}">
+								<span class="help-block" data-th-utext="#{alert.options.emails.caption}">If empty then alerts will be sent to the SolarNetwork account address.</span>
+							</div>
+						</div>
 						<div class="form-group">
 							<label class="col-sm-2 control-label" for="create-node-data-alert-node-id" data-th-text="#{alert.nodeId.label}">Node ID</label>
 							<div class="col-sm-10">

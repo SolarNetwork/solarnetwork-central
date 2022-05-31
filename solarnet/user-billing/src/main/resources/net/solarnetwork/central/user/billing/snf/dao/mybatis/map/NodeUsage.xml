@@ -87,6 +87,7 @@
 
 	<sql id="fragment-NodeUsage-full-result">
 		  nu.node_id AS node_usage_node_id
+		, n.node_name AS node_usage_node_name
 		, <include refid="fragment-Usage-counts-result"/>
 	</sql>
 
@@ -95,6 +96,7 @@
 			<idArg column="node_usage_node_id" javaType="long"/>
 			<arg column="node_usage_created" javaType="java.time.Instant"/>
 		</constructor>
+		<result property="description" column="node_usage_node_name"/>
 	</resultMap>
 
 	<select id="find-NodeUsage-for-account" parameterType="map" resultMap="NodeUsage-FullResult">
@@ -107,6 +109,7 @@
 				, #{startDate,jdbcType=TIMESTAMP}
 				, #{endDate,jdbcType=TIMESTAMP}
 				, #{startDate,jdbcType=TIMESTAMP}) nu
+		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nu.node_id
 		ORDER BY nu.node_id
 	</select>
 

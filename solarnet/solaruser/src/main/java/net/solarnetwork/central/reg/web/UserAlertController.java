@@ -29,6 +29,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user alerts.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/alerts")
@@ -227,7 +228,7 @@ public class UserAlertController extends ControllerSupport {
 		// reset validTo date to now, so alert re-processed
 		alert.setValidTo(Instant.now());
 
-		Map<String, Object> options = new HashMap<String, Object>();
+		Map<String, Object> options = new HashMap<>();
 		if ( model.getOptions() != null ) {
 			for ( Map.Entry<String, Object> me : model.getOptions().entrySet() ) {
 				if ( "ageMinutes".equalsIgnoreCase(me.getKey()) ) {
@@ -241,19 +242,31 @@ public class UserAlertController extends ControllerSupport {
 						log.warn("Alert option ageMinutes is not a number, setting to 1: [{}]", v);
 					}
 					options.put(UserAlertOptions.AGE_THRESHOLD, Math.round(minutes * 60.0));
+				} else if ( UserAlertOptions.EMAIL_TOS.equalsIgnoreCase(me.getKey()) ) {
+					Object val = me.getValue();
+					if ( val instanceof String[] ) {
+						options.put(UserAlertOptions.EMAIL_TOS, Arrays.asList((String[]) val));
+					} else if ( val instanceof List<?> ) {
+						options.put(UserAlertOptions.EMAIL_TOS, val);
+					} else {
+						Set<String> emails = StringUtils.commaDelimitedStringToSet(val.toString());
+						if ( emails != null ) {
+							options.put(UserAlertOptions.EMAIL_TOS, new ArrayList<>(emails));
+						}
+					}
 				} else if ( "sources".equalsIgnoreCase(me.getKey()) && me.getValue() != null ) {
 					// convert sources to List of String
 					Set<String> sources = StringUtils
 							.commaDelimitedStringToSet(me.getValue().toString());
 					if ( sources != null ) {
-						List<String> sourceList = new ArrayList<String>(sources);
+						List<String> sourceList = new ArrayList<>(sources);
 						options.put(UserAlertOptions.SOURCE_IDS, sourceList);
 					}
 				} else if ( "windows".equalsIgnoreCase(me.getKey())
 						&& me.getValue() instanceof Collection ) {
 					@SuppressWarnings("unchecked")
 					Collection<Map<String, ?>> windows = (Collection<Map<String, ?>>) me.getValue();
-					List<Map<String, Object>> windowsList = new ArrayList<Map<String, Object>>();
+					List<Map<String, Object>> windowsList = new ArrayList<>();
 					for ( Map<String, ?> window : windows ) {
 						Object timeStart = window.get("timeStart");
 						Object timeEnd = window.get("timeEnd");
@@ -262,7 +275,7 @@ public class UserAlertController extends ControllerSupport {
 							String ts = timeStart.toString();
 							String te = timeEnd.toString();
 							if ( TIME_PAT.matcher(ts).matches() && TIME_PAT.matcher(te).matches() ) {
-								Map<String, Object> win = new LinkedHashMap<String, Object>(2);
+								Map<String, Object> win = new LinkedHashMap<>(2);
 								win.put("timeStart", ts);
 								win.put("timeEnd", te);
 								windowsList.add(win);

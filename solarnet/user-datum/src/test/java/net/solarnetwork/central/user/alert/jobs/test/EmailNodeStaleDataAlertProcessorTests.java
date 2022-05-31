@@ -31,8 +31,11 @@ import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -90,7 +93,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
@@ -102,6 +105,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 	private static final Long TEST_NODE_ID_2 = -2L;
 	private static final String TEST_SOURCE_ID = "test.source";
 	private static final Long TEST_USER_ALERT_ID = -999L;
+	private static final String TEST_USER_EMAIL = "test@localhost";
+	private static final String TEST_USER_NAME = "Tester Dude";
+
 	private static final String TEST_TIME_ZONE_ID = "Pacific/Auckland";
 
 	private static final AtomicLong AlertIdCounter = new AtomicLong(TEST_USER_ALERT_ID);
@@ -168,8 +174,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		service.setMailTemplateResolvedResource(
 				EmailNodeStaleDataAlertProcessor.DEFAULT_MAIL_TEMPLATE_RESOLVED_RESOURCE);
 
-		testUser = new User(TEST_USER_ID, "test@localhost");
-		testUser.setName("Tester Dude");
+		testUser = new User(TEST_USER_ID, TEST_USER_EMAIL);
+		testUser.setName(TEST_USER_NAME);
 
 		SolarLocation testLoc = new SolarLocation();
 		testLoc.setId(TEST_LOC_ID);
@@ -286,6 +292,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				is(pendingAlerts.get(0).getId()));
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address", sentMail.getTo(),
+				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
 		assertThat("Mail subject", sentMail.getSubject(),
 				is("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale"));
 		assertThat("Mail has source ID", sentMail.getText(),
@@ -298,6 +306,66 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		Assert.assertNotNull(newSituation.getValue().getNotified());
 		Assert.assertTrue("Saved alert validTo not increased",
 				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo));
+	}
+
+	@Test
+	public void processOneAlertTrigger_customEmail() {
+		final Instant batchTime = Instant.now();
+
+		final String alertEmailTo = "custom@localhost";
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.EMAIL_TOS, new String[] { alertEmailTo });
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to custom address", sentMail.getTo(), is(arrayContaining(alertEmailTo)));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
 	}
 
 	@Test

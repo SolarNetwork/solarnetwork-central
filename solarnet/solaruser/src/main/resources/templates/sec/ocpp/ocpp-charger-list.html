@@ -51,56 +51,52 @@
 						data-th-data-rejected-label="danger"
 						></span>
 				</td>
-				<td>
-					<small>
-						<dl class="details-container dl-horizontal">
-							<dt data-th-text="#{ocpp.chargers.model.label}">Model</dt>
-							<dd data-tprop="chargePointModel"></dd>
-							<dt data-th-text="#{ocpp.chargers.serialNumber.label}">Serial Number</dt>
-							<dd data-tprop="chargePointSerialNumber"></dd>
-							<dt data-th-text="#{ocpp.chargers.vendor.label}">Vendor</dt>
-							<dd data-tprop="chargePointVendor"></dd>
-							<dt data-th-text="#{ocpp.chargers.connectorCount.label}">Vendor</dt>
-							<dd data-tprop="connectorCount"></dd>
-							<dt data-th-text="#{ocpp.chargers.firmwareVersion.label}">Firmware Version</dt>
-							<dd data-tprop="firmwareVersion"></dd>
-							<dt data-th-text="#{ocpp.chargers.chargeBoxSerialNumber.label}">Charge Box Serial Number</dt>
-							<dd data-tprop="chargeBoxSerialNumber"></dd>
-							<dt data-th-text="#{ocpp.chargers.iccid.label}">ICCID</dt>
-							<dd data-tprop="iccid"></dd>
-							<dt data-th-text="#{ocpp.chargers.imsi.label}">IMSI</dt>
-							<dd data-tprop="imsi"></dd>
-							<dt data-th-text="#{ocpp.chargers.meterType.label}">Meter Type</dt>
-							<dd data-tprop="meterType"></dd>
-							<dt data-th-text="#{ocpp.chargers.meterSerialNumber.label}">Meter Serial Number</dt>
-							<dd data-tprop="meterSerialNumber"></dd>
-						</dl>
-					</small>
+				<td class="small">
+					<dl class="details-container dl-horizontal">
+						<dt data-th-text="#{ocpp.chargers.model.label}">Model</dt>
+						<dd data-tprop="chargePointModel"></dd>
+						<dt data-th-text="#{ocpp.chargers.serialNumber.label}">Serial Number</dt>
+						<dd data-tprop="chargePointSerialNumber"></dd>
+						<dt data-th-text="#{ocpp.chargers.vendor.label}">Vendor</dt>
+						<dd data-tprop="chargePointVendor"></dd>
+						<dt data-th-text="#{ocpp.chargers.connectorCount.label}">Vendor</dt>
+						<dd data-tprop="connectorCount"></dd>
+						<dt data-th-text="#{ocpp.chargers.firmwareVersion.label}">Firmware Version</dt>
+						<dd data-tprop="firmwareVersion"></dd>
+						<dt data-th-text="#{ocpp.chargers.chargeBoxSerialNumber.label}">Charge Box Serial Number</dt>
+						<dd data-tprop="chargeBoxSerialNumber"></dd>
+						<dt data-th-text="#{ocpp.chargers.iccid.label}">ICCID</dt>
+						<dd data-tprop="iccid"></dd>
+						<dt data-th-text="#{ocpp.chargers.imsi.label}">IMSI</dt>
+						<dd data-tprop="imsi"></dd>
+						<dt data-th-text="#{ocpp.chargers.meterType.label}">Meter Type</dt>
+						<dd data-tprop="meterType"></dd>
+						<dt data-th-text="#{ocpp.chargers.meterSerialNumber.label}">Meter Serial Number</dt>
+						<dd data-tprop="meterSerialNumber"></dd>
+					</dl>
 				</td>
-				<td>
-					<small>
-						<dl class="dl-horizontal settings-container hidden">
-							<dt data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</dt>
-							<dd data-tprop="sourceIdTemplate"></dd>
-							<dt data-th-text="#{ocpp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
-							<dd><span class="label label-default" data-tprop="publishToSolarIn"
-									data-th-data-true-text="#{settings.enabled.label}"
-									data-th-data-false-text="#{settings.disabled.label}"></span></dd>
-							<dt data-th-text="#{ocpp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
-							<dd><span class="label label-default" data-tprop="publishToSolarFlux"
-									data-th-data-true-text="#{settings.enabled.label}"
-									data-th-data-false-text="#{settings.disabled.label}"></span></dd>
-						</dl>
-						<dl class="dl-horizontal">
-							<dt></dt>
-							<dd>
-								<button type="button" class="btn btn-xs btn-default edit-link" data-th-text="#{ocpp.settings.edit.label}"
-									data-edit-modal="#ocpp-settings-edit-modal">
-									Edit Settings
-								</button>
-							</dd>
-						</dl>
-					</small>
+				<td class="small">
+					<dl class="dl-horizontal settings-container hidden">
+						<dt data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</dt>
+						<dd data-tprop="sourceIdTemplate"></dd>
+						<dt data-th-text="#{ocpp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
+						<dd><span class="label label-default" data-tprop="publishToSolarIn"
+								data-th-data-true-text="#{settings.enabled.label}"
+								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
+						<dt data-th-text="#{ocpp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
+						<dd><span class="label label-default" data-tprop="publishToSolarFlux"
+								data-th-data-true-text="#{settings.enabled.label}"
+								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
+					</dl>
+					<dl class="dl-horizontal">
+						<dt></dt>
+						<dd>
+							<button type="button" class="btn btn-xs btn-default edit-link" data-th-text="#{ocpp.settings.edit.label}"
+								data-edit-modal="#ocpp-settings-edit-modal">
+								Edit Settings
+							</button>
+						</dd>
+					</dl>
 				</td>
 			</tr>
 		</thead>

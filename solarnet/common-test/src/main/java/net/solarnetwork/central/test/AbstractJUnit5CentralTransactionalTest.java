@@ -134,4 +134,34 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 				TEST_LOC_POSTAL_CODE, timeZoneId);
 	}
 
+	/**
+	 * Insert a test user into the {@literal solaruser.sn_user} table.
+	 * 
+	 * <p>
+	 * The username will be {@literal test[userId]@localhost}.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the ID of the user to create
+	 */
+	protected void setupTestUser(Long userId) {
+		jdbcTemplate.update(
+				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
+				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
+	}
+
+	/**
+	 * Insert a user-node association into the {@literal solaruser.sn_user_node}
+	 * table.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 */
+	protected void setupTestUserNode(Long userId, Long nodeId) {
+		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
+				nodeId);
+	}
+
 }

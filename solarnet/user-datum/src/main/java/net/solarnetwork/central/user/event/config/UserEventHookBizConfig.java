@@ -45,10 +45,10 @@ public class UserEventHookBizConfig {
 	@Autowired
 	private UserNodeEventHookConfigurationDao userNodeEventHookConfiguationDao;
 
-	@Autowired
+	@Autowired(required = false)
 	private List<DatumAppEventProducer> datumAppEventProducers;
 
-	@Autowired
+	@Autowired(required = false)
 	private List<UserNodeEventHookService> userNodeEventHookServices;
 
 	@Bean

@@ -58,6 +58,9 @@ $(document).ready(function() {
 			           }
 			           ]
 		};
+		if ( form.elements['option-emails'].value.trim() ) {
+			data.options.emails = form.elements['option-emails'].value;
+		}
 		$.ajax({
 			type : 'POST',
 			url : url,
@@ -191,6 +194,7 @@ $(document).ready(function() {
 			nodeId = btn.data('node-id'),
 			alertType = btn.data('alert-type'),
 			alertStatus = btn.data('alert-status'),
+			alertEmails = btn.data('emails'),
 			alertSources = btn.data('sources'),
 			alertAge = btn.data('age'),
 			alertWindowStart = btn.data('window-time-start'),
@@ -199,6 +203,7 @@ $(document).ready(function() {
 		$('#create-node-data-alert-node-id').val(nodeId);
 		$('#create-node-data-alert-type').val(alertType);
 		form.find('input[type=radio][value=' + alertStatus + ']').prop('checked', true);
+		$('#create-node-data-alert-emails').val(alertEmails);
 		$('#create-node-data-alert-sources').val(alertSources);
 		$('#create-node-data-alert-age').val(alertAge);
 		$('#create-node-data-alert-window-time-start').val(alertWindowStart);
