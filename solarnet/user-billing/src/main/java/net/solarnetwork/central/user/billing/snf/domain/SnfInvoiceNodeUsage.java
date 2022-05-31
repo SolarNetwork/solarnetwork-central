@@ -37,13 +37,14 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice node usage details.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
 
 	private static final long serialVersionUID = -2673333468313188077L;
 
+	private final String description;
 	private final BigInteger datumPropertiesIn;
 	private final BigInteger datumOut;
 	private final BigInteger datumDaysStored;
@@ -104,6 +105,34 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 * 
+	 * @param invoiceId
+	 *        the invoice ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param description
+	 *        the description
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 */
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
+				datumOut, datumDaysStored);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param created
@@ -117,7 +146,33 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 */
 	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, BigInteger datumPropertiesIn,
 			BigInteger datumOut, BigInteger datumDaysStored) {
+		this(id, created, null, datumPropertiesIn, datumOut, datumDaysStored);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID; the related ID is a node ID
+	 * @param description
+	 *        the description
+	 * @param created
+	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 */
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
 		super(id, created);
+		this.description = description;
 		this.datumPropertiesIn = (datumPropertiesIn != null ? datumPropertiesIn : BigInteger.ZERO);
 		this.datumOut = (datumOut != null ? datumOut : BigInteger.ZERO);
 		this.datumDaysStored = (datumDaysStored != null ? datumDaysStored : BigInteger.ZERO);
@@ -252,6 +307,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 */
 	public BigInteger getDatumDaysStored() {
 		return datumDaysStored;
+	}
+
+	@Override
+	public String getDescription() {
+		return description;
 	}
 
 }

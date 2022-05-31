@@ -312,7 +312,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			List<SnfInvoiceNodeUsage> invoiceNodeUsages = new ArrayList<>(nodeUsages.size());
 			for ( NodeUsage nodeUsage : nodeUsages ) {
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
-						invoice.getCreated(), nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
+						invoice.getCreated(), nodeUsage.getDescription(),
+						nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
 						nodeUsage.getDatumDaysStored());
 				invoiceNodeUsages.add(u);
 				if ( !dryRun ) {

@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -56,6 +55,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
@@ -172,6 +172,9 @@ public class SnfBillingSystem implements BillingSystem {
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
 			MimeType outputType, Locale locale) {
 		SnfInvoice invoice = createPreviewInvoice(userId, options, locale);
+		if ( invoice == null ) {
+			return null;
+		}
 		return invoicingSystem.renderInvoice(invoice, outputType, locale);
 	}
 

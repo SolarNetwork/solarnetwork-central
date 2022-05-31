@@ -56,7 +56,7 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
@@ -69,6 +69,7 @@ public class NodeUsage extends BasicLongEntity
 	 */
 	public static final Comparator<NodeUsage> SORT_BY_NODE_ID = new NodeUsageNodeIdComparator();
 
+	private String description;
 	private BigInteger datumPropertiesIn;
 	private BigInteger datumOut;
 	private BigInteger datumDaysStored;
@@ -189,6 +190,22 @@ public class NodeUsage extends BasicLongEntity
 	@Override
 	public Long getUsageKey() {
 		return getNodeId();
+	}
+
+	@Override
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Set an optional description, such as a node name.
+	 * 
+	 * @param description
+	 *        the description to set
+	 * @since 2.1
+	 */
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	@Override
