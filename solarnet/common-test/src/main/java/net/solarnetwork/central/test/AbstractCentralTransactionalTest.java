@@ -108,7 +108,33 @@ public abstract class AbstractCentralTransactionalTest
 	 *        the location ID
 	 */
 	protected void saveNodeName(Long nodeId, String name) {
-		jdbcTemplate.update("update solarnet.sn_node set node_name = ? where node_id = ?", name, nodeId);
+		jdbcTemplate.update("update solaruser.user_node set disp_name = ? where node_id = ?", name,
+				nodeId);
+	}
+
+	/**
+	 * Create a test user account in the user table.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	protected void setupTestUser(Long userId) {
+		jdbcTemplate.update(
+				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
+				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
+	}
+
+	/**
+	 * Insert a new user-node association into the user_node table.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 */
+	protected void setupTestUserNode(Long userId, Long nodeId) {
+		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
+				nodeId);
 	}
 
 	/**
