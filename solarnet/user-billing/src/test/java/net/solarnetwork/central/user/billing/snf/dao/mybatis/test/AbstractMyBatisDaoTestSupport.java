@@ -79,17 +79,6 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		getSqlSessionTemplate().flushStatements();
 	}
 
-	protected void setupTestUser(Long userId) {
-		jdbcTemplate.update(
-				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
-				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
-	}
-
-	protected void setupTestUserNode(Long userId, Long nodeId) {
-		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
-				nodeId);
-	}
-
 	/**
 	 * Get the last update statement's update count result.
 	 * 

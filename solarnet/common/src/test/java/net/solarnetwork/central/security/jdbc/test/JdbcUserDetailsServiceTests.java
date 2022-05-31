@@ -83,11 +83,9 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		service.loadUserByUsername("foobar");
 	}
 
-	private String setupTestUser(Long id) {
-		String username = id + "@localhost";
-		jdbcTemplate.update(
-				"INSERT INTO solaruser.user_user (id,disp_name,email,password) VALUES (?,?,?,?)", id,
-				"Test User " + id, username, passwordEncoder.encode(TEST_PASSWORD));
+	@Override
+	protected String setupTestUser(Long id) {
+		String username = setupTestUser(id, passwordEncoder.encode(TEST_PASSWORD));
 		jdbcTemplate.update("INSERT INTO solaruser.user_role (user_id,role_name) VALUES (?,?)", id,
 				TEST_ROLE);
 		return username;
