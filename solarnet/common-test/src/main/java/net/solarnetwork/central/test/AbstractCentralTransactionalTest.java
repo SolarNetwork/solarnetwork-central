@@ -100,6 +100,18 @@ public abstract class AbstractCentralTransactionalTest
 	}
 
 	/**
+	 * Set a node's name in the sn_node table.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to save the name for
+	 * @param locationId
+	 *        the location ID
+	 */
+	protected void saveNodeName(Long nodeId, String name) {
+		jdbcTemplate.update("update solarnet.sn_node set node_name = ? where node_id = ?", name, nodeId);
+	}
+
+	/**
 	 * Set the currently authenticated user.
 	 * 
 	 * @param auth

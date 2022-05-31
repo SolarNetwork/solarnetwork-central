@@ -67,6 +67,8 @@
 			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
 		LEFT OUTER JOIN
 			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarnet.sn_node n ON n.node_id = invu.node_id
 		WHERE
 			inv.id = #{id}
 			AND acct.user_id = #{userId}
@@ -83,6 +85,8 @@
 			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
 		LEFT OUTER JOIN
 			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarnet.sn_node n ON n.node_id = invu.node_id
 		<if test="unpaidOnly and (offset == null or max == null)">
 			INNER JOIN LATERAL (
 				WITH paid AS (
