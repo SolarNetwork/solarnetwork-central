@@ -25,7 +25,7 @@
 		  invu.inv_id 			AS bill_invoice_node_usage_inv_id
 		, invu.node_id 			AS bill_invoice_node_usage_node_id
 		, invu.created 			AS bill_invoice_node_usage_created
-		, n.node_name			AS bill_invoice_node_usage_node_name
+		, un.disp_name			AS bill_invoice_node_usage_node_name
 		, invu.prop_count 		AS bill_invoice_node_usage_prop_count
 		, invu.datum_q_count 	AS bill_invoice_node_usage_datum_q_count
 		, invu.datum_s_count 	AS bill_invoice_node_usage_datum_s_count
@@ -48,7 +48,12 @@
 			<include refid="fragment-SnfInvoiceNodeUsage-full-result"/>
 		FROM
 			solarbill.bill_invoice_node_usage invu
-		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = invu.node_id
+		INNER JOIN
+			solarbill.bill_invoice inv ON inv.id = invu.inv_id
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = inv.acct_id
+		LEFT OUTER JOIN
+			solaruser.user_node un ON un.node_id = invu.node_id AND un.user_id = acct.user_id
 		WHERE
 			invu.inv_id = #{invoiceId}
 			AND invu.node_id = #{id}

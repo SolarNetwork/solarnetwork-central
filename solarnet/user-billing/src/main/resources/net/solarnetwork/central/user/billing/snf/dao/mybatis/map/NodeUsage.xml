@@ -87,7 +87,7 @@
 
 	<sql id="fragment-NodeUsage-full-result">
 		  nu.node_id AS node_usage_node_id
-		, n.node_name AS node_usage_node_name
+		, un.disp_name AS node_usage_node_name
 		, <include refid="fragment-Usage-counts-result"/>
 	</sql>
 
@@ -109,7 +109,7 @@
 				, #{startDate,jdbcType=TIMESTAMP}
 				, #{endDate,jdbcType=TIMESTAMP}
 				, #{startDate,jdbcType=TIMESTAMP}) nu
-		LEFT OUTER JOIN solarnet.sn_node n ON n.node_id = nu.node_id
+		LEFT OUTER JOIN solaruser.user_node un ON un.node_id = nu.node_id AND un.user_id = #{userId,jdbcType=BIGINT}
 		ORDER BY nu.node_id
 	</select>
 

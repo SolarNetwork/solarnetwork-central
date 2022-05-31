@@ -71,7 +71,6 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 
 		setupTestNode();
-		saveNodeName(TEST_NODE_ID, TEST_NODE_DESCRIPTION);
 
 		last = null;
 	}
@@ -79,6 +78,11 @@ public class MyBatisSnfInvoiceNodeUsageDaoTests extends AbstractMyBatisDaoTestSu
 	private SnfInvoice createTestInvoice() {
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
+
+		setupTestUser(account.getUserId());
+		setupTestUserNode(account.getUserId(), TEST_NODE_ID);
+		saveNodeName(TEST_NODE_ID, TEST_NODE_DESCRIPTION);
+
 		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		entity.setAddress(address);
