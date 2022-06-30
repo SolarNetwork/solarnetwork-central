@@ -42,8 +42,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.CommonFilter;
@@ -61,6 +59,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -110,8 +109,6 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * @since 2.8
  */
 public final class DatumUtils {
-
-	private static final Logger log = LoggerFactory.getLogger(DatumUtils.class);
 
 	private DatumUtils() {
 		// don't construct me
@@ -223,8 +220,18 @@ public final class DatumUtils {
 				o = f.getOffset();
 			}
 		} else {
-			log.warn("Unexpected filter {} class {} != {}", filter, filter.getClass(),
-					StreamDatumFilterCommand.class);
+			if ( filter instanceof StreamDatumFilter ) {
+				StreamDatumFilter f = (StreamDatumFilter) filter;
+				c.setStreamIds(f.getStreamIds());
+				Long[] objIds = f.getObjectIds();
+				if ( objIds != null ) {
+					if ( f.getKind() == ObjectDatumKind.Location ) {
+						c.setLocationIds(objIds);
+					} else {
+						c.setNodeIds(objIds);
+					}
+				}
+			}
 			if ( filter instanceof NodeFilter ) {
 				c.setNodeIds(((NodeFilter) filter).getNodeIds());
 			}
