@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.time.Period;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -65,8 +63,6 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 @RequestMapping("/api/v1/sec/datum/stream")
 @GlobalExceptionRestController
 public class DatumStreamController {
-
-	private static final Logger log = LoggerFactory.getLogger(DatumStreamController.class);
 
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
@@ -165,7 +161,6 @@ public class DatumStreamController {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult, readingType, tolerance);
 			if ( validationResult.hasErrors() ) {
-				log.warn("Filter {} failed validation: {}", cmd, validationResult);
 				throw new ValidationException(validationResult);
 			}
 		}
