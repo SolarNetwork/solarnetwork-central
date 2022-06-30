@@ -135,7 +135,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 					}
 					String policyJson = rs.getString(8);
 					SecurityPolicy policy = null;
-					if ( policyJson != null ) {
+					if ( policyJson != null && !"{}".equals(policyJson) ) {
 						try {
 							policy = objectMapper.readValue(policyJson, BasicSecurityPolicy.class);
 						} catch ( IOException e ) {
