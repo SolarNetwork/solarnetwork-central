@@ -29,8 +29,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.commons.codec.digest.DigestUtils;
+import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
@@ -53,6 +55,13 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 	@Autowired
 	protected PlatformTransactionManager txManager;
 
+	private PasswordEncoder passwordEncoder;
+
+	@Before
+	public void setupBaseDatumJdbcTestSupport() {
+		passwordEncoder = new BCryptPasswordEncoder(12, new java.security.SecureRandom());
+	}
+
 	/**
 	 * Insert a test user into the solaruser.user_user table.
 	 *
@@ -72,10 +81,9 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 	 * @param username
 	 *        the user username
 	 */
-	protected void setupTestUser(Long id, String username) {
-		jdbcTemplate.update(
-				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
-				id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
+	@Override
+	protected String setupTestUser(Long id, String username) {
+		return setupTestUser(id, username, passwordEncoder.encode("password"));
 	}
 
 	/**

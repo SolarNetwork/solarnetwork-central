@@ -414,7 +414,13 @@ public class DaoQueryBiz implements QueryBiz {
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
 		c.setTimeTolerance(tolerance);
-		validateDatumCriteria(c);
+		try {
+			validateDatumCriteria(c);
+		} catch ( ValidationException e ) {
+			log.warn("Validation error in stream filter {} converted to criteria {}: {}", filter, c,
+					e.getErrors());
+			throw e;
+		}
 		readingDao.findFilteredStream(c, processor, sortDescriptors, offset, max);
 	}
 

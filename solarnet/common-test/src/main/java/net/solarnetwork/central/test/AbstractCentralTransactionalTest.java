@@ -118,10 +118,37 @@ public abstract class AbstractCentralTransactionalTest
 	 * @param userId
 	 *        the user ID
 	 */
-	protected void setupTestUser(Long userId) {
+	protected String setupTestUser(Long userId) {
+		String password = String.format("password-%d", userId);
+		String username = String.format("test%d@localhost", userId);
+		return setupTestUser(userId, username, password);
+	}
+
+	/**
+	 * Create a test user account in the user table.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param username
+	 *        the username to use
+	 */
+	protected String setupTestUser(Long userId, String username) {
+		String password = String.format("password-%d", userId);
+		return setupTestUser(userId, username, password);
+	}
+
+	/**
+	 * Create a test user account in the user table.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	protected String setupTestUser(Long userId, String username, String password) {
+		String dispName = String.format("Tester %d", userId);
 		jdbcTemplate.update(
-				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
-				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
+				"INSERT INTO solaruser.user_user (id,disp_name,email,password,enabled) VALUES (?,?,?,?,?)",
+				userId, dispName, username, password, Boolean.TRUE);
+		return username;
 	}
 
 	/**

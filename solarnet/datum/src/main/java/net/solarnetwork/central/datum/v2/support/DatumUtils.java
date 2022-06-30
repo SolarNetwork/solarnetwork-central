@@ -59,6 +59,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -188,7 +189,6 @@ public final class DatumUtils {
 			Long[] objIds = f.getObjectIds();
 			if ( objIds != null ) {
 				if ( f.getKind() == ObjectDatumKind.Location ) {
-
 					c.setLocationIds(objIds);
 				} else {
 					c.setNodeIds(objIds);
@@ -220,6 +220,18 @@ public final class DatumUtils {
 				o = f.getOffset();
 			}
 		} else {
+			if ( filter instanceof StreamDatumFilter ) {
+				StreamDatumFilter f = (StreamDatumFilter) filter;
+				c.setStreamIds(f.getStreamIds());
+				Long[] objIds = f.getObjectIds();
+				if ( objIds != null ) {
+					if ( f.getKind() == ObjectDatumKind.Location ) {
+						c.setLocationIds(objIds);
+					} else {
+						c.setNodeIds(objIds);
+					}
+				}
+			}
 			if ( filter instanceof NodeFilter ) {
 				c.setNodeIds(((NodeFilter) filter).getNodeIds());
 			}

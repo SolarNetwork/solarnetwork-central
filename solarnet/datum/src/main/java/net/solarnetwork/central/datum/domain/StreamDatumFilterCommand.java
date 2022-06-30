@@ -160,6 +160,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( sourceIds != null && sourceIds.length > 0 ) {
 			builder.append("sourceIds=");
 			builder.append(Arrays.toString(sourceIds));
+			builder.append(", ");
 		}
 		if ( startDate != null ) {
 			builder.append("startDate=");
