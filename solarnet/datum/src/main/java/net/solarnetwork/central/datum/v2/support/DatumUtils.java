@@ -188,7 +188,6 @@ public final class DatumUtils {
 			Long[] objIds = f.getObjectIds();
 			if ( objIds != null ) {
 				if ( f.getKind() == ObjectDatumKind.Location ) {
-
 					c.setLocationIds(objIds);
 				} else {
 					c.setNodeIds(objIds);
