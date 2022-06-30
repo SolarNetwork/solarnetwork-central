@@ -42,6 +42,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
 import net.solarnetwork.central.datum.domain.CommonFilter;
@@ -108,6 +110,8 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * @since 2.8
  */
 public final class DatumUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(DatumUtils.class);
 
 	private DatumUtils() {
 		// don't construct me
@@ -219,6 +223,8 @@ public final class DatumUtils {
 				o = f.getOffset();
 			}
 		} else {
+			log.warn("Unexpected filter {} class {} != {}", filter, filter.getClass(),
+					StreamDatumFilterCommand.class);
 			if ( filter instanceof NodeFilter ) {
 				c.setNodeIds(((NodeFilter) filter).getNodeIds());
 			}
