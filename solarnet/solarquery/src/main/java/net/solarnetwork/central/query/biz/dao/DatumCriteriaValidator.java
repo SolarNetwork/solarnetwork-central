@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.query.biz.dao;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -40,8 +38,6 @@ import net.solarnetwork.util.ArrayUtils;
  * @since 3.1
  */
 public class DatumCriteriaValidator implements Validator {
-
-	private static Logger log = LoggerFactory.getLogger(DatumCriteriaValidator.class);
 
 	@Override
 	public boolean supports(Class<?> clazz) {
@@ -64,7 +60,6 @@ public class DatumCriteriaValidator implements Validator {
 			if ( ArrayUtils.isOnlyNull(c.getNodeIds()) && ArrayUtils.isOnlyNull(c.getStreamIds()) ) {
 				errors.reject("error.filter.nodeOrStreamId.required",
 						"A node or stream ID is required.");
-				log.warn("Filter {} failed validation: {}", c, errors);
 			}
 		}
 
