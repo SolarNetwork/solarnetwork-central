@@ -110,7 +110,6 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public boolean move(DatumAuxiliaryPK from, DatumAuxiliaryEntity to) {
-		// TODO Auto-generated method stub
 		return jdbcTemplate.execute(new MoveDatumAuxiliary(from, to),
 				new CallableStatementCallback<Boolean>() {
 
