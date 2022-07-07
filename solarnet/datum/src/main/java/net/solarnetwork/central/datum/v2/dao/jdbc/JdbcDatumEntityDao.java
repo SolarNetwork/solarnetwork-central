@@ -69,6 +69,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -141,7 +142,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -312,8 +313,10 @@ public class JdbcDatumEntityDao
 		}
 		if ( filter.getPartialAggregation() != null || filter.getAggregation() == Aggregation.Year ) {
 			return new SelectDatumPartialAggregate(filter,
-					filter.getPartialAggregation() != null ? filter.getPartialAggregation()
-							: Aggregation.Month);
+					filter.getPartialAggregation() != null
+							&& filter.getPartialAggregation() != Aggregation.None
+									? filter.getPartialAggregation()
+									: Aggregation.Month);
 		} else if ( filter.getAggregation() == Aggregation.RunningTotal ) {
 			return new SelectDatumRunningTotal(filter);
 		}
@@ -752,7 +755,7 @@ public class JdbcDatumEntityDao
 		String query = getQueryForFilter(filter);
 		*/
 
-		SelectDatum sql = new SelectDatum(filter);
+		PreparedStatementCreator sql = filterSql(filter);
 		RowMapper<? extends Datum> mapper = (agg != Aggregation.None
 				? mapperForAggregate(agg, filter.getReadingType() != null)
 				: DatumEntityRowMapper.INSTANCE);
@@ -763,9 +766,10 @@ public class JdbcDatumEntityDao
 				&& (agg.getLevel() < 1 || agg.compareTo(Aggregation.Hour) >= 0)
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.RunningTotal ) {
+				&& agg != Aggregation.RunningTotal
+				&& (sql instanceof CountPreparedStatementCreatorProvider) ) {
 			totalCount = DatumJdbcUtils.executeCountQuery(jdbcTemplate,
-					sql.countPreparedStatementCreator());
+					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
 		}
 
 		callback.didBegin(totalCount);

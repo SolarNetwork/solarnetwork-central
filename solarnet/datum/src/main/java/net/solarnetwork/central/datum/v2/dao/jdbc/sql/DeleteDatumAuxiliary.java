@@ -23,12 +23,12 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
-import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
@@ -37,10 +37,10 @@ import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
  * Delete {@link DatumAuxiliaryEntity} instances by {@link DatumAuxiliaryPK} ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
-public class DeleteDatumAuxiliary implements PreparedStatementCreator, SqlProvider {
+public class DeleteDatumAuxiliary implements CallableStatementCreator, SqlProvider {
 
 	private final DatumAuxiliaryPK id;
 
@@ -59,15 +59,12 @@ public class DeleteDatumAuxiliary implements PreparedStatementCreator, SqlProvid
 
 	@Override
 	public String getSql() {
-		StringBuilder buf = new StringBuilder();
-		buf.append("DELETE FROM solardatm.da_datm_aux\n");
-		buf.append("WHERE stream_id = ? AND ts = ? AND atype = ?::solardatm.da_datm_aux_type");
-		return buf.toString();
+		return "{call solardatm.delete_datum_aux(?,?,?::solardatm.da_datm_aux_type)}";
 	}
 
 	@Override
-	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
+	public CallableStatement createCallableStatement(Connection con) throws SQLException {
+		CallableStatement stmt = con.prepareCall(getSql());
 		stmt.setObject(1, id.getStreamId(), Types.OTHER);
 		stmt.setTimestamp(2, Timestamp.from(id.getTimestamp()));
 		stmt.setString(3, id.getKind().name());

@@ -49,7 +49,7 @@ import net.solarnetwork.domain.Identity;
 public class DatumJdbcUtils {
 
 	private DatumJdbcUtils() {
-		// TODO Auto-generated constructor stub
+		// not available
 	}
 
 	/**
