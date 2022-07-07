@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link DatumAuxiliaryEntityDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
@@ -104,8 +104,16 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public void delete(DatumAuxiliaryEntity entity) {
-		jdbcTemplate.update(new DeleteDatumAuxiliary(entity.getId()));
+		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.getId()),
+				new CallableStatementCallback<Void>() {
 
+					@Override
+					public Void doInCallableStatement(CallableStatement cs)
+							throws SQLException, DataAccessException {
+						cs.execute();
+						return null;
+					}
+				});
 	}
 
 	@Override

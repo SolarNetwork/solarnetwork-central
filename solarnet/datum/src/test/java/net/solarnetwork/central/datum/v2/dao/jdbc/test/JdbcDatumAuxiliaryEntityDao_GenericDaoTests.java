@@ -26,6 +26,7 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ass
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -39,6 +40,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
+import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
+import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
+import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -46,7 +50,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Test cases for the {@link JdbcDatumAuxiliaryEntityDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -76,8 +80,15 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 	public void saveNew() {
 		DatumAuxiliaryEntity datum = testAux();
 		DatumAuxiliaryPK id = dao.save(datum);
-		assertThat("Returned ID matches given ID", id, equalTo(datum.getId()));
 		lastDatum = datum;
+
+		assertThat("Returned ID matches given ID", id, is(equalTo(datum.getId())));
+		List<StaleAggregateDatum> stale = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
+		assertThat("One stale row created", stale, hasSize(1));
+		assertThat("Stale row for deleted datum key hour", stale.get(0).getId(),
+				is(equalTo(new StreamKindPK(datum.getStreamId(),
+						datum.getTimestamp().truncatedTo(ChronoUnit.HOURS),
+						Aggregation.Hour.getKey()))));
 	}
 
 	@Test
@@ -91,6 +102,7 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 	public void update() {
 		// GIVEN
 		saveNew();
+		jdbcTemplate.update("delete from solardatm.agg_stale_datm"); // clear out to verify re-insert
 		DatumAuxiliaryEntity before = dao.get(lastDatum.getId());
 
 		DatumSamples f = lastDatum.getSamplesFinal();
@@ -112,6 +124,12 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 				after.getUpdated().isBefore(before.getUpdated()), equalTo(false));
 
 		assertDatumAuxiliary("Updated values saved", after, changed);
+		List<StaleAggregateDatum> stale = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
+		assertThat("One stale row created", stale, hasSize(1));
+		assertThat("Stale row for deleted datum key hour", stale.get(0).getId(),
+				is(equalTo(new StreamKindPK(changed.getStreamId(),
+						changed.getTimestamp().truncatedTo(ChronoUnit.HOURS),
+						Aggregation.Hour.getKey()))));
 	}
 
 	@Test
@@ -120,7 +138,7 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 		saveNew();
 		List<DatumAuxiliary> data = DatumDbUtils.listDatumAuxiliary(jdbcTemplate);
 		assertThat("Row exists in DB", data, hasSize(1));
-		assertDatumAuxiliary("Row matches saved entityt", data.get(0), lastDatum);
+		assertDatumAuxiliary("Row matches saved entity", data.get(0), lastDatum);
 
 		// WHEN
 		dao.delete(lastDatum);
@@ -128,6 +146,13 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 		// THEN
 		data = DatumDbUtils.listDatumAuxiliary(jdbcTemplate);
 		assertThat("Row removed from DB", data, hasSize(0));
+
+		List<StaleAggregateDatum> stale = DatumDbUtils.listStaleAggregateDatum(jdbcTemplate);
+		assertThat("One stale row created", stale, hasSize(1));
+		assertThat("Stale row for deleted datum key hour", stale.get(0).getId(),
+				is(equalTo(new StreamKindPK(lastDatum.getStreamId(),
+						lastDatum.getTimestamp().truncatedTo(ChronoUnit.HOURS),
+						Aggregation.Hour.getKey()))));
 	}
 
 }
