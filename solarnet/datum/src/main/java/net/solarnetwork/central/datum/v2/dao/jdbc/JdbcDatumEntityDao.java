@@ -294,7 +294,8 @@ public class JdbcDatumEntityDao
 
 	private static PreparedStatementCreator filterSql(DatumCriteria filter) {
 		DatumReadingType readingType = filter.getReadingType();
-		if ( readingType != null && filter.getAggregation() == null ) {
+		if ( readingType != null
+				&& (filter.getAggregation() == null || filter.getAggregation() == Aggregation.None) ) {
 			switch (readingType) {
 				case Difference:
 				case DifferenceWithin:
