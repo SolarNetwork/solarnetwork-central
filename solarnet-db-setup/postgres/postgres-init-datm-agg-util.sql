@@ -229,7 +229,6 @@ BEGIN
 			, min(val_min) AS val_min
 			, max(val_max) AS val_max
 		FROM wi
-		WHERE val IS NOT NULL
 		GROUP BY idx
 	)
 	, di_ary AS (
@@ -269,7 +268,6 @@ BEGIN
 			, min(val_min) AS val_min
 			, max(val_max) AS val_max
 		FROM wa
-		WHERE val IS NOT NULL
 		GROUP BY idx
 	)
 	-- join data_a and read_a property values back into arrays
