@@ -312,7 +312,9 @@ public class JdbcDatumEntityDao
 
 			}
 		}
-		if ( filter.getPartialAggregation() != null || filter.getAggregation() == Aggregation.Year ) {
+		if ( (filter.getPartialAggregation() != null
+				&& filter.getPartialAggregation() != Aggregation.None)
+				|| filter.getAggregation() == Aggregation.Year ) {
 			return new SelectDatumPartialAggregate(filter,
 					filter.getPartialAggregation() != null
 							&& filter.getPartialAggregation() != Aggregation.None
