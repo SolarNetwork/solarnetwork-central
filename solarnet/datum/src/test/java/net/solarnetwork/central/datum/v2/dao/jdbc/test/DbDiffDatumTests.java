@@ -30,8 +30,8 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.ass
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,9 +51,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 
 /**
  * Test cases for the {@literal solardatm.diff_datm} database stored procedure.
@@ -121,6 +121,23 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		// THEN
 		assertReadingDatum("Typical readings just before start/end range", result, readingWith(streamId,
 				null, start.minusMinutes(1), end.minusMinutes(1), decimalArray("30", "100", "130")));
+	}
+
+	@Test
+	public void calcDiffDatum_nullProperties() throws IOException {
+		// GIVEN
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-38.txt",
+				getClass(), "UTC");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertReadingDatum("Null properties preserved within start/end range", result,
+				readingWith(streamId, null, start.minusMinutes(1), end.minusMinutes(1),
+						decimalArray(null, null, null), decimalArray("250", "1050", "1300")));
 	}
 
 	@Test
