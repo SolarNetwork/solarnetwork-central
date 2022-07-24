@@ -23,10 +23,14 @@
 package net.solarnetwork.central.user.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.validation.Validator;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -34,14 +38,27 @@ import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
+import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
+import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.support.DelegatingValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.CentralAuthorizationValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.CentralChargePointConnectorValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.CentralChargePointValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.CentralSystemUserValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.ChargePointSettingsValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
+import net.solarnetwork.central.user.ocpp.biz.dao.UserSettingsValidator;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * Configuration for User OCPP services.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Profile(OCPP_V16)
@@ -72,10 +89,25 @@ public class UserOcppBizConfig {
 	private PasswordEncoder passwordEncoder;
 
 	@Bean
+	@Qualifier(OCPP_V16)
+	public Validator userOcppValidator() {
+		Map<String, Validator> vals = new HashMap<>(8);
+		vals.put(CentralAuthorization.class.getName(), new CentralAuthorizationValidator());
+		vals.put(CentralChargePoint.class.getName(), new CentralChargePointValidator());
+		vals.put(CentralChargePointConnector.class.getName(),
+				new CentralChargePointConnectorValidator());
+		vals.put(CentralSystemUser.class.getName(), new CentralSystemUserValidator());
+		vals.put(ChargePointSettings.class.getName(), new ChargePointSettingsValidator());
+		vals.put(UserSettings.class.getName(), new UserSettingsValidator());
+		return new DelegatingValidator(vals);
+	}
+
+	@Bean
 	public DaoUserOcppBiz userOcppBiz() {
 		DaoUserOcppBiz biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao,
 				authorizationDao, chargeSessionDao, userSettingsDao, chargePointSettingsDao,
 				passwordEncoder);
+		biz.setValidator(userOcppValidator());
 		return biz;
 	}
 
