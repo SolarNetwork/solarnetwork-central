@@ -30,6 +30,9 @@ import java.util.Collection;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Validator;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -55,7 +58,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link UserOcppBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserOcppBiz implements UserOcppBiz {
 
@@ -67,6 +70,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final UserSettingsDao userSettingsDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private final PasswordEncoder passwordEncoder;
+	private Validator validator;
 
 	/**
 	 * Constructor.
@@ -173,6 +177,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 			// encrypt password
 			systemUser.setPassword(passwordEncoder.encode(systemUser.getPassword()));
 		}
+		validateInput(systemUser, "credentials");
 		CentralSystemUser result = (CentralSystemUser) systemUserDao.get(systemUserDao.save(systemUser));
 		verifyUserRelatedEntityResult(systemUser, result);
 		if ( generatedPassword != null ) {
@@ -218,12 +223,28 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		authorizationDao.delete(userId, id);
 	}
 
+	private void validateInput(Object input, String name) {
+		if ( input == null ) {
+			return;
+		}
+		final Validator v = getValidator();
+		if ( v == null || !v.supports(input.getClass()) ) {
+			return;
+		}
+		BindException errors = new BindException(input, name);
+		v.validate(input, errors);
+		if ( errors.hasErrors() ) {
+			throw new ValidationException(errors);
+		}
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
 		if ( authorization == null ) {
 			return null;
 		}
+		validateInput(authorization, "authorization");
 		CentralAuthorization result = (CentralAuthorization) authorizationDao
 				.get(authorizationDao.save(authorization));
 		verifyUserRelatedEntityResult(authorization, result);
@@ -242,6 +263,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		if ( chargePoint == null ) {
 			return null;
 		}
+		validateInput(chargePoint, "chargePoint");
 		CentralChargePoint result = (CentralChargePoint) chargePointDao
 				.get(chargePointDao.save(chargePoint));
 		verifyUserRelatedEntityResult(chargePoint, result);
@@ -282,6 +304,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector entity) {
+		if ( entity == null ) {
+			return null;
+		}
+		validateInput(entity, "connector");
 		return (CentralChargePointConnector) connectorDao.get(connectorDao.save(entity));
 	}
 
@@ -306,6 +332,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
+		if ( settings == null ) {
+			return null;
+		}
+		validateInput(settings, "settings");
 		ChargePointSettings result = chargePointSettingsDao.get(chargePointSettingsDao.save(settings));
 		verifyUserRelatedEntityResult(settings, result);
 		return result;
@@ -326,6 +356,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public UserSettings saveSettings(UserSettings settings) {
+		if ( settings == null ) {
+			return null;
+		}
+		validateInput(settings, "settings");
 		return userSettingsDao.get(userSettingsDao.save(settings));
 	}
 
@@ -340,6 +374,25 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	public Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId,
 			Long chargePointId) {
 		return chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId);
+	}
+
+	/**
+	 * Get the validator.
+	 * 
+	 * @return the validator
+	 */
+	public Validator getValidator() {
+		return validator;
+	}
+
+	/**
+	 * Set the validator to validate model objects with.
+	 * 
+	 * @param validator
+	 *        the validator to set
+	 */
+	public void setValidator(Validator validator) {
+		this.validator = validator;
 	}
 
 }
