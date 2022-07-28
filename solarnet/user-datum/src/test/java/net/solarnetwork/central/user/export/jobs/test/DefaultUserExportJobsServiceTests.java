@@ -27,8 +27,10 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +53,7 @@ import net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService;
  * Test cases for the {@link DefaultUserExportJobsService} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DefaultUserExportJobsServiceTests {
 
@@ -167,12 +169,11 @@ public class DefaultUserExportJobsServiceTests {
 		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
 				.andReturn(configs);
 
-		Capture<UserDatumExportConfiguration> configCaptor = new Capture<>(CaptureType.ALL);
 		for ( int i = 0; i < 3; i++ ) {
 			ZonedDateTime exportDate = minExportDate.plus(i, ScheduleType.Hourly.temporalUnit());
 			UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
-			expect(taskBiz.submitDatumExportConfiguration(capture(configCaptor),
-					eq(exportDate.toInstant()))).andReturn(task);
+			expect(taskBiz.submitDatumExportConfiguration(config, exportDate.toInstant()))
+					.andReturn(task);
 
 		}
 
@@ -181,9 +182,32 @@ public class DefaultUserExportJobsServiceTests {
 		int count = service.createExportExecutionTasks(now.toInstant(), ScheduleType.Hourly);
 
 		// then
-		assertThat("Result", count, equalTo(1));
-		assertThat("Task created", configCaptor.hasCaptured(), equalTo(true));
-		assertThat("Multiple tasks created for exports", configCaptor.getValues().size(), equalTo(3));
+		assertThat("Result count of configs found", count, is(equalTo(1)));
+	}
+
+	@Test
+	public void backfill_hourly() {
+		// GIVEN
+		final int expectedHourCount = 26;
+		UserDatumExportConfiguration config = createConfiguration("Pacific/Auckland");
+		ZonedDateTime now = ZonedDateTime.now(config.zone());
+		ZonedDateTime minExportDate = now.truncatedTo(ChronoUnit.HOURS).minusHours(expectedHourCount);
+		config.setMinimumExportDate(minExportDate.toInstant());
+		expect(configurationDao.findForExecution(now.toInstant(), ScheduleType.Hourly))
+				.andReturn(Collections.singletonList(config));
+
+		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
+		for ( int i = 0; i < expectedHourCount; i++ ) {
+			expect(taskBiz.submitDatumExportConfiguration(config,
+					minExportDate.plusHours(i).toInstant())).andReturn(task);
+		}
+
+		// WHEN
+		replayAll();
+		int count = service.createExportExecutionTasks(now.toInstant(), ScheduleType.Hourly);
+
+		// THEN
+		assertThat("Result count of configs found", count, is(equalTo(1)));
 	}
 
 }
