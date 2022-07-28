@@ -44,6 +44,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -66,6 +67,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  */
 public class ConnectorStatusDatumPublisherTests {
 
+	private CentralChargePointDao chargePointDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
 	private CentralChargeSessionDao chargeSessionDao;
@@ -75,13 +77,14 @@ public class ConnectorStatusDatumPublisherTests {
 
 	@Before
 	public void setup() {
+		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		chargeSessionDao = EasyMock.createMock(CentralChargeSessionDao.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		fluxPublisher = EasyMock.createMock(DatumProcessor.class);
-		publisher = new ConnectorStatusDatumPublisher(chargePointSettingsDao, chargePointConnectorDao,
-				chargeSessionDao, datumDao);
+		publisher = new ConnectorStatusDatumPublisher(chargePointDao, chargePointSettingsDao,
+				chargePointConnectorDao, chargeSessionDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 	}
 
