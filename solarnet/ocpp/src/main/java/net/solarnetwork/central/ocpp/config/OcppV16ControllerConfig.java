@@ -41,6 +41,8 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.controller.DiagnosticsStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.controller.FirmwareStatusDatumPublisher;
 import net.solarnetwork.central.ocpp.v16.controller.OcppController;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
@@ -54,6 +56,10 @@ import ocpp.v16.cs.AuthorizeRequest;
 import ocpp.v16.cs.AuthorizeResponse;
 import ocpp.v16.cs.BootNotificationRequest;
 import ocpp.v16.cs.BootNotificationResponse;
+import ocpp.v16.cs.DiagnosticsStatusNotificationRequest;
+import ocpp.v16.cs.DiagnosticsStatusNotificationResponse;
+import ocpp.v16.cs.FirmwareStatusNotificationRequest;
+import ocpp.v16.cs.FirmwareStatusNotificationResponse;
 import ocpp.v16.cs.StatusNotificationRequest;
 import ocpp.v16.cs.StatusNotificationResponse;
 
@@ -122,14 +128,34 @@ public class OcppV16ControllerConfig {
 		controller.setChargePointActionPayloadDecoder(ocppChargePointActionPayloadDecoder);
 
 		ConnectorStatusDatumPublisher publisher = new ConnectorStatusDatumPublisher(
-				ocppChargePointSettingsDao, ocppCentralChargePointConnectorDao, ocppChargeSessionDao,
-				datumDao);
+				ocppCentralChargePointDao, ocppChargePointSettingsDao,
+				ocppCentralChargePointConnectorDao, ocppChargeSessionDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 		controller.setDatumPublisher(publisher);
 
 		controller.setInstructionHandler(ocppInstructionHandler);
 
 		return controller;
+	}
+
+	@Bean
+	@OcppCentralServiceQualifier(OCPP_V16)
+	public ActionMessageProcessor<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> ocppDiagnosticsStatusNotificationProcessor_v16() {
+		DiagnosticsStatusDatumPublisher publisher = new DiagnosticsStatusDatumPublisher(
+				ocppCentralChargePointDao, ocppChargePointSettingsDao,
+				ocppCentralChargePointConnectorDao, datumDao);
+		publisher.setFluxPublisher(fluxPublisher);
+		return publisher;
+	}
+
+	@Bean
+	@OcppCentralServiceQualifier(OCPP_V16)
+	public ActionMessageProcessor<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> ocppFirmwareStatusNotificationProcessor_v16() {
+		FirmwareStatusDatumPublisher publisher = new FirmwareStatusDatumPublisher(
+				ocppCentralChargePointDao, ocppChargePointSettingsDao,
+				ocppCentralChargePointConnectorDao, datumDao);
+		publisher.setFluxPublisher(fluxPublisher);
+		return publisher;
 	}
 
 	@Bean

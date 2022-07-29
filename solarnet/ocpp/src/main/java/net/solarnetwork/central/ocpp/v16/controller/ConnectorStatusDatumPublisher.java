@@ -23,20 +23,16 @@
 package net.solarnetwork.central.ocpp.v16.controller;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.util.StringUtils.expandTemplateString;
-import java.time.Instant;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
@@ -49,23 +45,18 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * Publish status notification updates as datum.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class ConnectorStatusDatumPublisher {
 
-	public static final String DEFAULT_SOURCE_ID_SUFFIX = "/status";
-
-	private final ChargePointSettingsDao chargePointSettingsDao;
-	private final CentralChargePointConnectorDao chargePointConnectorDao;
+	private final DatumPublisherSupport pubSupport;
 	private final ChargeSessionDao chargeSessionDao;
-	private final DatumEntityDao datumDao;
-	private DatumProcessor fluxPublisher;
-	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
-	private String sourceIdSuffix = DEFAULT_SOURCE_ID_SUFFIX;
 
 	/**
 	 * Constructor.
 	 * 
+	 * @param chargePointDao
+	 *        the charge point DAO to use
 	 * @param chargePointSettingsDao
 	 *        the settings DAO to use
 	 * @param chargePointConnectorDao
@@ -75,16 +66,14 @@ public class ConnectorStatusDatumPublisher {
 	 * @param datumDao
 	 *        the datum DAO to use
 	 */
-	public ConnectorStatusDatumPublisher(ChargePointSettingsDao chargePointSettingsDao,
+	public ConnectorStatusDatumPublisher(CentralChargePointDao chargePointDao,
+			ChargePointSettingsDao chargePointSettingsDao,
 			CentralChargePointConnectorDao chargePointConnectorDao, ChargeSessionDao chargeSessionDao,
 			DatumEntityDao datumDao) {
 		super();
-		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
-				"chargePointSettingsDao");
-		this.chargePointConnectorDao = requireNonNullArgument(chargePointConnectorDao,
-				"chargePointConnectorDao");
+		this.pubSupport = new DatumPublisherSupport(chargePointDao, chargePointSettingsDao,
+				chargePointConnectorDao, datumDao);
 		this.chargeSessionDao = requireNonNullArgument(chargeSessionDao, "chargeSessionDao");
-		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 	}
 
 	/**
@@ -152,13 +141,14 @@ public class ConnectorStatusDatumPublisher {
 	 *        the notification
 	 */
 	public void processStatusNotification(CentralChargePoint chargePoint, StatusNotification info) {
-		ChargePointSettings cps = settingsForChargePoint(chargePoint);
+		ChargePointSettings cps = pubSupport.settingsForChargePoint(chargePoint.getUserId(),
+				chargePoint.getId());
 		if ( !(cps.isPublishToSolarIn() || cps.isPublishToSolarFlux()) ) {
 			return;
 		}
 
 		if ( info.getConnectorId() == 0 ) {
-			Collection<CentralChargePointConnector> connectors = chargePointConnectorDao
+			Collection<CentralChargePointConnector> connectors = pubSupport.getChargePointConnectorDao()
 					.findByChargePointId(chargePoint.getUserId(), chargePoint.getId());
 			for ( CentralChargePointConnector cpc : connectors ) {
 				processStatusNotification(chargePoint, cps, cpc.getInfo());
@@ -166,7 +156,8 @@ public class ConnectorStatusDatumPublisher {
 		} else {
 			ChargePointConnectorKey key = new ChargePointConnectorKey(chargePoint.getId(),
 					info.getConnectorId());
-			CentralChargePointConnector cpc = chargePointConnectorDao.get(chargePoint.getUserId(), key);
+			CentralChargePointConnector cpc = pubSupport.getChargePointConnectorDao()
+					.get(chargePoint.getUserId(), key);
 			if ( cpc != null ) {
 				processStatusNotification(chargePoint, cps, cpc.getInfo());
 			}
@@ -208,57 +199,12 @@ public class ConnectorStatusDatumPublisher {
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
 		d.setNodeId(chargePoint.getNodeId());
-		d.setSourceId(sourceId(cps, chargePoint.getInfo().getId(), info.getConnectorId()));
+		d.setSourceId(pubSupport.sourceId(cps, chargePoint.getInfo().getId(), info.getConnectorId()));
 		if ( info.getTimestamp() != null ) {
 			d.setCreated(info.getTimestamp());
 		}
 		d.setSamples(s);
-
-		if ( cps.isPublishToSolarIn() ) {
-			datumDao.store(d);
-		}
-		if ( cps.isPublishToSolarFlux() ) {
-			final DatumProcessor publisher = getFluxPublisher();
-			if ( publisher != null && publisher.isConfigured() ) {
-				publisher.processDatum(d);
-			}
-		}
-	}
-
-	private ChargePointSettings settingsForChargePoint(CentralChargePoint chargePoint) {
-		ChargePointSettings cps = chargePointSettingsDao.resolveSettings(chargePoint.getUserId(),
-				chargePoint.getId());
-		if ( cps == null ) {
-			// use default fallback
-			cps = new ChargePointSettings(chargePoint.getId(), chargePoint.getUserId(), Instant.now());
-			cps.setSourceIdTemplate(sourceIdTemplate);
-		}
-		return cps;
-	}
-
-	private String sourceId(ChargePointSettings chargePointSettings, String identifier,
-			int connectorId) {
-		Map<String, Object> params = new HashMap<>(4);
-		params.put("chargerIdentifier", identifier);
-		params.put("chargePointId", chargePointSettings.getId());
-		params.put("connectorId", connectorId);
-		String template = chargePointSettings.getSourceIdTemplate() != null
-				? chargePointSettings.getSourceIdTemplate()
-				: sourceIdTemplate;
-		String suffix = getSourceIdSuffix();
-		if ( suffix != null ) {
-			template = template + suffix;
-		}
-		return UserSettings.removeEmptySourceIdSegments(expandTemplateString(template, params));
-	}
-
-	/**
-	 * Get the SolarFlux publisher.
-	 * 
-	 * @return the publisher, or {@literal null}
-	 */
-	public DatumProcessor getFluxPublisher() {
-		return fluxPublisher;
+		pubSupport.publishDatum(cps, d);
 	}
 
 	/**
@@ -268,17 +214,7 @@ public class ConnectorStatusDatumPublisher {
 	 *        the publisher to set
 	 */
 	public void setFluxPublisher(DatumProcessor fluxPublisher) {
-		this.fluxPublisher = fluxPublisher;
-	}
-
-	/**
-	 * Get the source ID template.
-	 * 
-	 * @return the template; defaults to
-	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
-	 */
-	public String getSourceIdTemplate() {
-		return sourceIdTemplate;
+		pubSupport.setFluxPublisher(fluxPublisher);
 	}
 
 	/**
@@ -299,16 +235,7 @@ public class ConnectorStatusDatumPublisher {
 	 *        the template to set
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = sourceIdTemplate;
-	}
-
-	/**
-	 * Get a suffix to append to the resolved source ID template.
-	 * 
-	 * @return the suffix; defaults to {@link #DEFAULT_SOURCE_ID_SUFFIX}
-	 */
-	public String getSourceIdSuffix() {
-		return sourceIdSuffix;
+		pubSupport.setSourceIdTemplate(sourceIdTemplate);
 	}
 
 	/**
@@ -318,7 +245,7 @@ public class ConnectorStatusDatumPublisher {
 	 *        the suffix to add
 	 */
 	public void setSourceIdSuffix(String sourceIdSuffix) {
-		this.sourceIdSuffix = sourceIdSuffix;
+		pubSupport.setSourceIdSuffix(sourceIdSuffix);
 	}
 
 }

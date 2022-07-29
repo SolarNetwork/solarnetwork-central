@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OCPP'
-version = '1.0.1'
+version = '1.1.0'
 archivesBaseName = 'solarnet-ocpp'
 
 configurations {
@@ -35,7 +35,7 @@ dependencies {
 	// SolarNetwork
 	implementation 'net.solarnetwork.external:net.solarnetwork.external.ocpp:1.1.2'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp:2.0.0'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.0'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.2'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
