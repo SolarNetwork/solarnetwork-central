@@ -28,12 +28,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
-import net.solarnetwork.ocpp.v16.cs.FirmwareStatusNotificationProcessor;
 import net.solarnetwork.ocpp.v16.cs.HeartbeatProcessor;
 import ocpp.v16.cs.DataTransferRequest;
 import ocpp.v16.cs.DataTransferResponse;
-import ocpp.v16.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.cs.FirmwareStatusNotificationResponse;
 import ocpp.v16.cs.HeartbeatRequest;
 import ocpp.v16.cs.HeartbeatResponse;
 
@@ -51,12 +48,6 @@ public class OcppV16BasicActionConfig {
 	@OcppCentralServiceQualifier(OCPP_V16)
 	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v16() {
 		return new DataTransferProcessor();
-	}
-
-	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> ocppFirmwareStatusNotification_v16() {
-		return new FirmwareStatusNotificationProcessor();
 	}
 
 	@Bean
