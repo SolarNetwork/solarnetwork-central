@@ -103,9 +103,9 @@ public abstract class BasePK implements Serializable, Cloneable {
 	}
 
 	@Override
-	protected Object clone() {
+	protected BasePK clone() {
 		try {
-			return super.clone();
+			return (BasePK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// shouldn't get here
 			throw new RuntimeException(e);
