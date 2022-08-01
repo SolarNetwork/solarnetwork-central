@@ -99,6 +99,11 @@ app:
       network-certificate-subject-format: "UID=%s,O=SolarNetwork"
       approve-csr-maximum-wait-secs: 15
       node-certificate-renewal-period-months: 3
+  user.events:
+    async-appender:
+      threads: 1
+      stat-frequency: 500
+      queue-lag-alert-threshold: 500
 
 logging:
   level:
