@@ -36,11 +36,7 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.LocationRequest;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Insert a {@link LocationRequest}.
  * 
  * @author matt
  * @version 1.0
