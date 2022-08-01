@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
@@ -64,6 +65,7 @@ public class OcppV16VendorActionConfig {
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
+	@Order(0)
 	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppVendorZjbeny_DlbMeterDataTransferDatumPublisher_v16() {
 		DlbMeterDataTransferDatumPublisher publisher = new DlbMeterDataTransferDatumPublisher(
 				ocppCentralChargePointDao, ocppChargePointSettingsDao,
