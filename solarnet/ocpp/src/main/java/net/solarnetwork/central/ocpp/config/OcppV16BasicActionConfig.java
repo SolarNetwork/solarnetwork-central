@@ -26,6 +26,8 @@ import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCP
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
 import net.solarnetwork.ocpp.v16.cs.HeartbeatProcessor;
@@ -46,6 +48,7 @@ public class OcppV16BasicActionConfig {
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
+	@Order(Ordered.LOWEST_PRECEDENCE)
 	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v16() {
 		return new DataTransferProcessor();
 	}
