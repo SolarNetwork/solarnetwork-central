@@ -161,6 +161,7 @@ public class AsyncDaoUserEventAppenderBiz
 	@Override
 	public void add(UserEvent event) {
 		queue.offer(event);
+		stats.incrementAndGet(UserEventStats.EventsAdded);
 		try {
 			executorService.execute(this);
 		} catch ( RejectedExecutionException e ) {
@@ -173,10 +174,13 @@ public class AsyncDaoUserEventAppenderBiz
 	@Override
 	public void run() {
 		final UserEvent event = queue.poll();
-		try {
-			dao.add(event);
-		} catch ( RuntimeException e ) {
-
+		if ( event != null ) {
+			try {
+				dao.add(event);
+				stats.incrementAndGet(UserEventStats.EventsStored);
+			} catch ( RuntimeException e ) {
+				log.error("Unable to add event {} to DAO: {}", event, e.getMessage(), e);
+			}
 		}
 	}
 
@@ -195,7 +199,6 @@ public class AsyncDaoUserEventAppenderBiz
 				// ignore
 			}
 		}
-
 	}
 
 	@Override
