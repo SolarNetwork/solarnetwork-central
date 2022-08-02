@@ -32,6 +32,7 @@ CREATE TRIGGER maintain_fts
   tsvector_update_trigger(fts_default, 'pg_catalog.english',
   	country, region, state_prov, locality, postal_code, address);
 
+
 /******************************************************************************
  * TABLE solarnet.sn_loc_req
  *
@@ -46,10 +47,34 @@ CREATE TABLE solarnet.sn_loc_req (
 	jdata		JSONB NOT NULL,
 	loc_id		BIGINT,
 	message		TEXT,
+	fts_default tsvector,
 	CONSTRAINT sn_loc_req_pk PRIMARY KEY (id)
 );
 
 CREATE INDEX sn_loc_req_user_idx ON solarnet.sn_loc_req (user_id, status);
+
+CREATE INDEX sn_loc_req_fts_default_idx ON solarnet.sn_loc_req USING GIN (fts_default);
+
+CREATE OR REPLACE FUNCTION solarnet.sn_loc_req_maintain_fts()
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
+BEGIN
+	NEW.fts_default :=
+		   to_tsvector('pg_catalog.english', COALESCE(NEW.jdata ->> 'sourceId',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,name}',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,country}',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,region}',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,stateOrProvince}',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,locality}',''))
+		|| to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{location,postalCode}',''));
+	RETURN NEW;
+END
+$$;
+
+CREATE TRIGGER sn_loc_req_maintain_fts
+  BEFORE INSERT OR UPDATE
+  ON solarnet.sn_loc_req
+  FOR EACH ROW
+  EXECUTE PROCEDURE solarnet.sn_loc_req_maintain_fts();
 
 
 /* =========================================================================
