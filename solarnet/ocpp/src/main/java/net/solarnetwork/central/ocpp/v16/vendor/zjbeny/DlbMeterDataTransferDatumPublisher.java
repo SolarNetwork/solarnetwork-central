@@ -58,7 +58,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	public static final String DEFAULT_SOURCE_ID_SUFFIX = "/dlb";
 
 	/** The DataTransferRequest {@code vendorId} property value. */
-	public static final String VENDOR_ID = "com.beny.dlb";
+	public static final String VENDOR_ID = "com.zjbeny.dlb";
 
 	/** The DataTransferRequest {@code messageId} property value. */
 	public static final String MESSAGE_ID = "dlbMeter";
