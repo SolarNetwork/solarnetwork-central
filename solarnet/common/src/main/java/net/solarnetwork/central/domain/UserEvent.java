@@ -41,6 +41,7 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 
 	private static final long serialVersionUID = 1867734608363358361L;
 
+	private final String kind;
 	private final String message;
 	private final String data;
 
@@ -49,15 +50,18 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 * 
 	 * @param id
 	 *        the primary key
+	 * @param kind
+	 *        the kind
 	 * @param message
 	 *        the message
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code id} or {@code kind} are {@literal null}
 	 */
-	public UserEvent(UserEventPK id, String message, String data) {
+	public UserEvent(UserEventPK id, String kind, String message, String data) {
 		super(requireNonNullArgument(id, "id"));
+		this.kind = requireNonNullArgument(kind, "kind");
 		this.message = message;
 		this.data = data;
 	}
@@ -83,7 +87,7 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 */
 	public UserEvent(Long userId, Instant created, UUID eventId, String kind, String message,
 			String data) {
-		this(new UserEventPK(userId, created, eventId, kind), message, data);
+		this(new UserEventPK(userId, created, eventId), kind, message, data);
 	}
 
 	@Override
@@ -124,6 +128,11 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	}
 
 	@Override
+	public UserEvent clone() {
+		return (UserEvent) super.clone();
+	}
+
+	@Override
 	public Long getUserId() {
 		return getId().getUserId();
 	}
@@ -148,12 +157,7 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 * @return the kind
 	 */
 	public String getKind() {
-		return getId().getKind();
-	}
-
-	@Override
-	public UserEvent clone() {
-		return (UserEvent) super.clone();
+		return kind;
 	}
 
 	/**

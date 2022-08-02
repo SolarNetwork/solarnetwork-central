@@ -37,12 +37,11 @@ import com.fasterxml.uuid.UUIDComparator;
  */
 public class UserEventPK extends BasePK implements Serializable, Cloneable, Comparable<UserEventPK> {
 
-	private static final long serialVersionUID = -3705339650905636650L;
+	private static final long serialVersionUID = -6664019893149413289L;
 
 	private final Long userId;
 	private final Instant created;
 	private final UUID eventId;
-	private final String kind;
 
 	/**
 	 * Constructor.
@@ -53,17 +52,14 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 	 *        the creation date
 	 * @param eventId
 	 *        the event ID
-	 * @param kind
-	 *        the event kind
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserEventPK(Long userId, Instant created, UUID eventId, String kind) {
+	public UserEventPK(Long userId, Instant created, UUID eventId) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.created = requireNonNullArgument(created, "created");
 		this.eventId = requireNonNullArgument(eventId, "eventId");
-		this.kind = requireNonNullArgument(kind, "kind");
 	}
 
 	@Override
@@ -83,12 +79,7 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 		}
 
 		// NOTE: JDK UUID ordering not suitable here, see UUIDComparator for more info
-		comparison = UUIDComparator.staticCompare(eventId, o.eventId);
-		if ( comparison != 0 ) {
-			return comparison;
-		}
-
-		return kind.compareTo(o.kind);
+		return UUIDComparator.staticCompare(eventId, o.eventId);
 	}
 
 	@Override
@@ -96,7 +87,6 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 		buf.append("u=").append(userId);
 		buf.append(";c=").append(created);
 		buf.append(";e=").append(eventId);
-		buf.append(";k=").append(kind);
 	}
 
 	@Override
@@ -104,7 +94,6 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 		buf.append("userId=").append(userId);
 		buf.append(", created=").append(created);
 		buf.append(", eventId=").append(eventId);
-		buf.append(", kind=").append(kind);
 	}
 
 	@Override
@@ -114,7 +103,7 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, created, eventId, kind);
+		return Objects.hash(userId, created, eventId);
 	}
 
 	@Override
@@ -127,7 +116,7 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 		}
 		UserEventPK other = (UserEventPK) obj;
 		return Objects.equals(userId, other.userId) && Objects.equals(created, other.created)
-				&& Objects.equals(eventId, other.eventId) && Objects.equals(kind, other.kind);
+				&& Objects.equals(eventId, other.eventId);
 	}
 
 	/**
@@ -155,15 +144,6 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 	 */
 	public Instant getCreated() {
 		return created;
-	}
-
-	/**
-	 * Get the event kind.
-	 * 
-	 * @return the kind
-	 */
-	public String getKind() {
-		return kind;
 	}
 
 }

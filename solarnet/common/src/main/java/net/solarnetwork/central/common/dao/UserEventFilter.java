@@ -23,7 +23,8 @@
 package net.solarnetwork.central.common.dao;
 
 import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SortCriteria;
 
 /**
  * Filter API for user events.
@@ -32,6 +33,6 @@ import net.solarnetwork.dao.LocalDateRangeCriteria;
  * @version 1.0
  */
 public interface UserEventFilter
-		extends UserCriteria, KindCriteria, DateRangeCriteria, LocalDateRangeCriteria {
+		extends UserCriteria, KindCriteria, DateRangeCriteria, PaginationCriteria, SortCriteria {
 
 }

@@ -31,6 +31,16 @@ package net.solarnetwork.central.common.dao;
 public interface KindCriteria {
 
 	/**
+	 * Test if any kind criteria exists.
+	 * 
+	 * @return {@literal true} if a kind criteria exists
+	 */
+	default boolean hasKindCriteria() {
+		String kind = getKind();
+		return (kind != null);
+	}
+
+	/**
 	 * Get an array of node IDs.
 	 * 
 	 * @return array of node IDs (may be {@literal null})

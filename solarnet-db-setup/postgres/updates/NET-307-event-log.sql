@@ -10,11 +10,14 @@ CREATE TABLE solaruser.user_event_log (
 	kind 		CHARACTER VARYING(64) NOT NULL,
 	message		TEXT,
 	jdata		JSONB,
-	CONSTRAINT user_event_log_pk PRIMARY KEY (user_id,ts,id,kind),
+	CONSTRAINT user_event_log_pk PRIMARY KEY (user_id,ts,id),
 	CONSTRAINT user_event_log_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/* Add index on kind split on '/' so we can search for components. */
+CREATE INDEX user_event_log_kind_idx ON solaruser.user_event_log USING GIN (string_to_array(kind,'/'));
 
 /**
  * TABLE solaruser.user_event_log_conf
