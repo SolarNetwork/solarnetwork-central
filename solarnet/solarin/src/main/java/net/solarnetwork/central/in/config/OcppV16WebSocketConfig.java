@@ -37,15 +37,17 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistration;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
+import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
-import net.solarnetwork.ocpp.dao.SystemUserDao;
+import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.service.PasswordEncoder;
 import ocpp.json.ActionPayloadDecoder;
 import ocpp.v16.CentralSystemAction;
@@ -70,7 +72,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	private CentralChargePointDao ocppCentralChargePointDao;
 
 	@Autowired
-	private SystemUserDao ocppSystemUserDao;
+	private CentralSystemUserDao ocppSystemUserDao;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -80,6 +82,12 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Autowired
 	private TaskScheduler taskScheduler;
+
+	@Autowired
+	private UuidGenerator uuidGenerator;
+
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Autowired
 	@Qualifier(OCPP_V16)
@@ -107,6 +115,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
+		handler.setUuidGenerator(uuidGenerator);
+		handler.setUserEventAppenderBiz(userEventAppenderBiz);
 		if ( ocppCentralServiceActions != null ) {
 			for ( ActionMessageProcessor<?, ?> processor : ocppCentralServiceActions ) {
 				handler.addActionMessageProcessor(processor);
@@ -120,9 +130,11 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		WebSocketHandlerRegistration reg = registry.addHandler(ocppWebSocketHandler_v16(),
 				"/ocpp/j/v16/**");
 
-		OcppWebSocketHandshakeInterceptor interceptor = new OcppWebSocketHandshakeInterceptor(
+		CentralOcppWebSocketHandshakeInterceptor interceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
 		interceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
+		interceptor.setUuidGenerator(uuidGenerator);
+		interceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		reg.addInterceptors(interceptor);
 	}
 

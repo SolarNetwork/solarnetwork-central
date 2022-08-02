@@ -87,6 +87,43 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UserEvent{");
+		if ( getUserId() != null ) {
+			builder.append("userId=");
+			builder.append(getUserId());
+			builder.append(", ");
+		}
+		if ( getCreated() != null ) {
+			builder.append("created=");
+			builder.append(getCreated());
+			builder.append(", ");
+		}
+		if ( getEventId() != null ) {
+			builder.append("eventId=");
+			builder.append(getEventId());
+			builder.append(", ");
+		}
+		if ( getKind() != null ) {
+			builder.append("kind=");
+			builder.append(getKind());
+			builder.append(", ");
+		}
+		if ( message != null ) {
+			builder.append("message=");
+			builder.append(message);
+			builder.append(", ");
+		}
+		if ( data != null ) {
+			builder.append("data=");
+			builder.append(data);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public Long getUserId() {
 		return getId().getUserId();
 	}

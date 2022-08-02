@@ -24,9 +24,9 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
-import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -71,7 +71,7 @@ public class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		stmt.setObject(1, event.getUserId());
-		stmt.setObject(2, event.getCreated(), JDBCType.TIMESTAMP_WITH_TIMEZONE);
+		stmt.setTimestamp(2, Timestamp.from(event.getCreated()));
 		stmt.setObject(3, event.getEventId());
 		stmt.setString(4, event.getKind());
 		if ( event.getMessage() != null ) {
