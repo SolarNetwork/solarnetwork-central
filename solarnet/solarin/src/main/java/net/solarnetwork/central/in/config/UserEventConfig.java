@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
-import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
 import net.solarnetwork.central.common.config.AsyncUserEventAppenderSettings;
@@ -66,7 +65,7 @@ public class UserEventConfig {
 	}
 
 	@Bean(destroyMethod = "serviceDidShutdown")
-	public UserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
+	public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
 			UserEventAppenderDao dao) {
 		ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
 				settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
