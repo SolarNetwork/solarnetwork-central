@@ -1,5 +1,5 @@
 /* ==================================================================
- * UuidGeneratorConfig.java - 2/08/2022 5:35:45 pm
+ * UuidTimestampExtractor.java - 3/08/2022 5:36:43 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,25 +20,28 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.biz;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.biz.UuidGenerator;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
- * Configuration for UUID generation.
+ * API for extracting a timestamp out of a UUID.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class UuidGeneratorConfig {
+@FunctionalInterface
+public interface UuidTimestampExtractor {
 
-	@Bean
-	public UuidGenerator uuidGenerator() {
-		return TimeBasedV7UuidGenerator.INSTANCE;
-	}
+	/**
+	 * Extract the timestamp out of a UUID.
+	 * 
+	 * @param uuid
+	 *        the UUID to extract
+	 * @return the timestamp, or {@literal null} if unable to extract a
+	 *         timestamp
+	 */
+	Instant extractTimestamp(UUID uuid);
 
 }

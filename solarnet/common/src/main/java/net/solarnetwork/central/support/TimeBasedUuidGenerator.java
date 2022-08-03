@@ -30,7 +30,7 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import net.solarnetwork.central.biz.UuidGenerator;
 
 /**
- * UUID generator using time-based UUIDs.
+ * UUID generator using time-based v1 UUIDs.
  * 
  * @author matt
  * @version 1.0
