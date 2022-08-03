@@ -28,6 +28,8 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.UserEventDao;
 import net.solarnetwork.central.common.dao.UserEventFilter;
+import net.solarnetwork.central.common.dao.UserEventMaintenanceDao;
+import net.solarnetwork.central.common.dao.jdbc.sql.DeleteUserEvent;
 import net.solarnetwork.central.common.dao.jdbc.sql.InsertUserEvent;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserEvent;
 import net.solarnetwork.central.domain.UserEvent;
@@ -41,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 1.0
  */
-public class JdbcUserEventDao implements UserEventDao {
+public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
 	private final JdbcOperations jdbcOps;
 
@@ -69,6 +71,12 @@ public class JdbcUserEventDao implements UserEventDao {
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		SelectUserEvent sql = new SelectUserEvent(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);
+	}
+
+	@Override
+	public long purgeEvents(UserEventPurgeFilter filter) {
+		DeleteUserEvent sql = new DeleteUserEvent(filter);
+		return jdbcOps.update(sql);
 	}
 
 }

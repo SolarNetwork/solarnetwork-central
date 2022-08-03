@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurgeFilter;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -36,7 +37,8 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicUserEventFilter extends BasicCoreCriteria implements UserEventFilter {
+public class BasicUserEventFilter extends BasicCoreCriteria
+		implements UserEventFilter, UserEventPurgeFilter {
 
 	private String[] kinds;
 	private Instant startDate;

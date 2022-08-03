@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
@@ -35,6 +37,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,11 +103,12 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	public void find_kind() {
 		// GIVEN
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
-		final int count = 4 * 4;
+		final int groupSize = 4;
+		final int count = groupSize * 4;
 		final List<UserEvent> events = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
 			String kind;
-			switch (i % 4) {
+			switch (i % groupSize) {
 				case 0:
 					kind = "a/b/c";
 					break;
@@ -136,6 +140,45 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		FilterResults<UserEvent, UserEventPK> result = dao.findFiltered(f);
 		assertThat("Results returned for query", result, is(notNullValue()));
 		assertThat("Results with a and b returned", result.getReturnedResultCount(), is(equalTo(4)));
+	}
+
+	@Test
+	public void delete_userOlderThan() {
+		// GIVEN
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final int userCount = 3;
+		final int eventCount = 5;
+		final int count = userCount * eventCount;
+		final List<UserEvent> events = new ArrayList<>(count);
+		final Long[] userIds = new Long[userCount];
+		for ( int i = 0; i < eventCount; i++ ) {
+			for ( int j = 0; j < userCount; j++ ) {
+				if ( i == 0 ) {
+					userIds[j] = CommonDbTestUtils.insertUser(jdbcTemplate);
+				}
+				UserEvent event = new UserEvent(userIds[j], start.plus(i, ChronoUnit.SECONDS),
+						uuidGenerator.generate(), "foo/bar", null, null);
+				dao.add(event);
+				events.add(event);
+			}
+		}
+
+		allUserEventData();
+
+		// WHEN
+		BasicUserEventFilter f = new BasicUserEventFilter();
+		f.setUserId(userIds[0]);
+		f.setEndDate(start.plusSeconds(eventCount - 3));
+		long result = dao.purgeEvents(f);
+
+		assertThat("Deleted count", result, is(equalTo(2L)));
+
+		UUID[] expectedUuids = events.stream().filter(e -> {
+			return (!e.getUserId().equals(userIds[0]) || !e.getCreated().isBefore(f.getEndDate()));
+		}).map(UserEvent::getEventId).toArray(UUID[]::new);
+		assertThat("Remaining event IDs",
+				allUserEventData().stream().map(e -> (UUID) e.get("id")).collect(toSet()),
+				containsInAnyOrder(expectedUuids));
 	}
 
 }
