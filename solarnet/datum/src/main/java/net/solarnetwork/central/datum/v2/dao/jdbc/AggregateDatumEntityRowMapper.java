@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils.getArray;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -150,14 +150,14 @@ public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> 
 
 	@Override
 	public AggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = CommonJdbcUtils.getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
-		BigDecimal[] data_i = getArray(rs, 3);
-		BigDecimal[] data_a = getArray(rs, 4);
-		String[] data_s = getArray(rs, 5);
-		String[] data_t = getArray(rs, 6);
-		BigDecimal[][] stat_i = getArray(rs, 7);
-		BigDecimal[][] stat_a = getArray(rs, 8);
+		BigDecimal[] data_i = CommonJdbcUtils.getArray(rs, 3);
+		BigDecimal[] data_a = CommonJdbcUtils.getArray(rs, 4);
+		String[] data_s = CommonJdbcUtils.getArray(rs, 5);
+		String[] data_t = CommonJdbcUtils.getArray(rs, 6);
+		BigDecimal[][] stat_i = CommonJdbcUtils.getArray(rs, 7);
+		BigDecimal[][] stat_a = CommonJdbcUtils.getArray(rs, 8);
 
 		DatumProperties props = DatumProperties.propertiesOf(data_i, data_a, data_s, data_t);
 		DatumPropertiesStatistics stats = DatumPropertiesStatistics.statisticsOf(stat_i, stat_a);

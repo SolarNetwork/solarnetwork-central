@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils.getArray;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,15 +32,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
-import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Map rollup virtual aggregate rows into {@link AggregateDatumEntity}
@@ -99,18 +100,18 @@ public class VirtualAggregateDatumEntityRowMapper
 
 	@Override
 	public AggregateDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
-		BigDecimal[] data_i = getArray(rs, 3);
-		BigDecimal[] data_a = getArray(rs, 4);
-		String[] data_s = getArray(rs, 5);
-		String[] data_t = getArray(rs, 6);
-		BigDecimal[][] stat_i = getArray(rs, 7);
-		BigDecimal[][] stat_a = getArray(rs, 8);
+		BigDecimal[] data_i = CommonJdbcUtils.getArray(rs, 3);
+		BigDecimal[] data_a = CommonJdbcUtils.getArray(rs, 4);
+		String[] data_s = CommonJdbcUtils.getArray(rs, 5);
+		String[] data_t = CommonJdbcUtils.getArray(rs, 6);
+		BigDecimal[][] stat_i = CommonJdbcUtils.getArray(rs, 7);
+		BigDecimal[][] stat_a = CommonJdbcUtils.getArray(rs, 8);
 
 		if ( !metadata.containsKey(streamId) ) {
-			String[] names_i = getArray(rs, 9);
-			String[] names_a = getArray(rs, 10);
+			String[] names_i = CommonJdbcUtils.getArray(rs, 9);
+			String[] names_a = CommonJdbcUtils.getArray(rs, 10);
 			Long objectId = rs.getLong(11);
 			String sourceId = rs.getString(12);
 			metadata.put(streamId, new BasicObjectDatumStreamMetadata(streamId, null, kind, objectId,

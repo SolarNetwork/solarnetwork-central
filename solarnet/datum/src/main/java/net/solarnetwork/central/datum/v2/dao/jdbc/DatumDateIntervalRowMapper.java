@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -59,7 +60,7 @@ public class DatumDateIntervalRowMapper implements RowMapper<DatumDateInterval> 
 
 	@Override
 	public DatumDateInterval mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Timestamp start = rs.getTimestamp(2);
 		Timestamp end = rs.getTimestamp(3);
 		Object objId = rs.getObject(4);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -30,8 +31,8 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Map object datum ID rows into {@link ObjectDatumStreamMetadata} instances.
@@ -86,7 +87,7 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	@Override
 	public ObjectDatumId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		Aggregation agg = Aggregation.forKey(rs.getString(3));
 		Object objId = rs.getObject(4);

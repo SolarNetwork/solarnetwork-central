@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
@@ -133,7 +134,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	@Override
 	public FilterResults<DatumAuxiliary, DatumAuxiliaryPK> findFiltered(DatumAuxiliaryCriteria filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
-		return DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
+		return executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 	}
 

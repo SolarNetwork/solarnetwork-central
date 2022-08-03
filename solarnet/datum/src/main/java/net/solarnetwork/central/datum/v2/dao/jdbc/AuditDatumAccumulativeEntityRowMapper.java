@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -57,7 +58,7 @@ public class AuditDatumAccumulativeEntityRowMapper implements RowMapper<AuditDat
 
 	@Override
 	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		return AuditDatumEntity.accumulativeAuditDatum(streamId, ts, rs.getLong(3), rs.getLong(4),
 				rs.getInt(5), rs.getInt(6));

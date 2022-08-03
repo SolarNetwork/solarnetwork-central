@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils.getArray;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -64,10 +64,10 @@ public class DatumEntityRowMapper implements RowMapper<Datum> {
 		UUID streamId = UUID.fromString(rs.getString(1));
 		Instant ts = rs.getTimestamp(2).toInstant();
 		Instant recv = rs.getTimestamp(3).toInstant();
-		BigDecimal[] data_i = getArray(rs, 4);
-		BigDecimal[] data_a = getArray(rs, 5);
-		String[] data_s = getArray(rs, 6);
-		String[] data_t = getArray(rs, 7);
+		BigDecimal[] data_i = CommonJdbcUtils.getArray(rs, 4);
+		BigDecimal[] data_a = CommonJdbcUtils.getArray(rs, 5);
+		String[] data_s = CommonJdbcUtils.getArray(rs, 6);
+		String[] data_t = CommonJdbcUtils.getArray(rs, 7);
 
 		return new DatumEntity(streamId, ts, recv,
 				DatumProperties.propertiesOf(data_i, data_a, data_s, data_t));

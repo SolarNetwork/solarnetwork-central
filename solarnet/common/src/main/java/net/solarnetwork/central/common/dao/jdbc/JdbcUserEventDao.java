@@ -22,12 +22,14 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.UserEventDao;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.sql.InsertUserEvent;
+import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserEvent;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserEventPK;
 import net.solarnetwork.dao.FilterResults;
@@ -65,8 +67,8 @@ public class JdbcUserEventDao implements UserEventDao {
 	@Override
 	public FilterResults<UserEvent, UserEventPK> findFiltered(UserEventFilter filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
-		// TODO Auto-generated method stub
-		return null;
+		SelectUserEvent sql = new SelectUserEvent(filter);
+		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);
 	}
 
 }

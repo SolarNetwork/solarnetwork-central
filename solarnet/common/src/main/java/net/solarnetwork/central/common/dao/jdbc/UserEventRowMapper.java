@@ -1,7 +1,7 @@
 /* ==================================================================
- * AuditDatumMonthlyEntityRowMapper.java - 3/11/2020 1:36:39 pm
+ * UserEventRowMapper.java - 3/08/2022 11:31:27 am
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
@@ -28,44 +28,41 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.AuditDatum;
+import net.solarnetwork.central.domain.UserEvent;
 
 /**
- * Map monthly datum audit rows into {@link AuditDatumEntity} instances.
+ * Row mapper for {@link UserEvent} entities.
  * 
  * <p>
  * The expected column order in the SQL results is:
  * </p>
  * 
  * <ol>
- * <li>stream_id</li>
- * <li>ts_start</li>
- * <li>prop_count</li>
- * <li>prop_u_count</li>
- * <li>datum_q_count</li>
- * <li>datum_count</li>
- * <li>datum_hourly_count</li>
- * <li>datum_daily_count</li>
- * <li>datum_monthly_pres</li>
+ * <li>user_id (BIGINT)</li>
+ * <li>ts (TIMESTAMP)</li>
+ * <li>id (UUID)</li>
+ * <li>kind (TEXT)</li>
+ * <li>message (TEXT)</li>
+ * <li>jdata (TEXT)</li>
  * </ol>
  * 
  * @author matt
- * @version 1.1
- * @since 3.8
+ * @version 1.0
  */
-public class AuditDatumMonthlyEntityRowMapper implements RowMapper<AuditDatum> {
+public class UserEventRowMapper implements RowMapper<UserEvent> {
 
-	/** A default mapper instance. */
-	public static final RowMapper<AuditDatum> INSTANCE = new AuditDatumMonthlyEntityRowMapper();
+	/** A default instance. */
+	public static final RowMapper<UserEvent> INSTANCE = new UserEventRowMapper();
 
 	@Override
-	public AuditDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = getUuid(rs, 1);
-		Instant ts = rs.getTimestamp(2).toInstant();
-		boolean monthPresent = rs.getBoolean(9);
-		return AuditDatumEntity.monthlyAuditDatum(streamId, ts, rs.getLong(6), rs.getLong(7),
-				rs.getInt(8), monthPresent ? 1 : 0, rs.getLong(3), rs.getLong(5), rs.getLong(4));
+	public UserEvent mapRow(ResultSet rs, int rowNum) throws SQLException {
+		Long userId = rs.getLong(1);
+		Instant created = rs.getTimestamp(2).toInstant();
+		UUID eventId = getUuid(rs, 3);
+		String kind = rs.getString(4);
+		String message = rs.getString(5);
+		String json = rs.getString(6);
+		return new UserEvent(userId, created, eventId, kind, message, json);
 	}
 
 }

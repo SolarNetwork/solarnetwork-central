@@ -96,7 +96,7 @@ public class SelectUserEvent
 			where.append("\tAND string_to_array(uel.kind,'/') @> ?\n");
 			idx += 1;
 		}
-		idx += CommonSqlUtils.whereDateRange(filter, "uel.created", where);
+		idx += CommonSqlUtils.whereDateRange(filter, "uel.ts", where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}

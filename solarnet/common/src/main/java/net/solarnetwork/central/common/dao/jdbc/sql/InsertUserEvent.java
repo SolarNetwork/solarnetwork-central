@@ -45,7 +45,7 @@ public class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
 		// @formatter:off
 		SQL =     "INSERT INTO solaruser.user_event_log (user_id,ts,id,kind,message,jdata)\n"
 				+ "VALUES (?,?,?,?,?,?::jsonb)\n"
-				+ "ON CONFLICT (user_id,ts,id,kind) DO NOTHING";
+				+ "ON CONFLICT (user_id,ts,id) DO NOTHING";
 		// @formatter:on
 	}
 
