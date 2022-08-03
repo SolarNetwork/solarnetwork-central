@@ -56,7 +56,6 @@ public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampExt
 	}
 
 	private final SecureRandom rand;
-	private final long lower;
 	private final Clock clock;
 
 	/**
@@ -68,7 +67,6 @@ public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampExt
 	public TimeBasedV7UuidGenerator(SecureRandom rand, Clock clock) {
 		super();
 		this.rand = requireNonNullArgument(rand, "rand");
-		this.lower = 0xB000000000000000L | (rand.nextLong() & 0x3FFFFFFFFFFFFFFFL);
 		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
@@ -77,12 +75,13 @@ public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampExt
 		long now = clock.millis();
 
 		// @formatter:off
+		long lower = 0xB000000000000000L | (rand.nextLong() & 0x3FFFFFFFFFFFFFFFL);
 		byte[] r = new byte[2];
 		rand.nextBytes(r);
 		long upper = (
 				((now & 0xFFFFFFFFFFFFL) << 16) // truncate epoch to 48 bits
 				| 0x7000L // variant
-				| ((r[0] << 8) & 0x0F) // rand_a 12 bits
+				| ((r[0] & 0x0F) << 8) // rand_a 12 bits
 				| (r[1] & 0xFF)
 				);
 		// @formatter:on
