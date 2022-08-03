@@ -37,3 +37,29 @@ CREATE TABLE solaruser.user_event_log_conf (
 
 /* Add index on user_id so we can show all entities for user. */
 CREATE INDEX user_event_log_conf_user_idx ON solaruser.user_event_log_conf (user_id);
+
+/**
+ * Extract the timestamp from a v7 UUID.
+ *
+ * See https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#section-5.2
+ * No validation is performed to check that the provided UUID is type 7.
+ *
+ * @param u the v7 UUID to extract the timestamp from
+ * @returns the extracted timestamp
+ */
+CREATE OR REPLACE FUNCTION solarcommon.uuid_to_timestamp_v7(u uuid)
+RETURNS TIMESTAMP WITH TIME ZONE LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	WITH b AS (
+		SELECT uuid_send(u) bu
+	)
+	SELECT to_timestamp((
+	      (get_byte(bu, 0)::BIGINT << 40)
+		+ (get_byte(bu, 1)::BIGINT << 32)
+		+ (get_byte(bu, 2)::BIGINT << 24)
+		+ (get_byte(bu, 3)::BIGINT << 16)
+		+ (get_byte(bu, 4)::BIGINT << 8)
+		+  get_byte(bu, 5)::BIGINT
+		) / 1000.0)
+	FROM b
+$$;
