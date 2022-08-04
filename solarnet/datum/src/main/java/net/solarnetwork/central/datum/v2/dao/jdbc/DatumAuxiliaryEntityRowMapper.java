@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -77,7 +78,7 @@ public class DatumAuxiliaryEntityRowMapper implements RowMapper<DatumAuxiliary> 
 
 	@Override
 	public DatumAuxiliary mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant timestamp = rs.getTimestamp(2).toInstant();
 		DatumAuxiliaryType kind = DatumAuxiliaryType.valueOf(rs.getString(3));
 		Instant updated = rs.getTimestamp(4).toInstant();

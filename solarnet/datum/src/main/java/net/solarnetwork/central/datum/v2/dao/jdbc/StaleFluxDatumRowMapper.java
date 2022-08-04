@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -53,7 +54,7 @@ public class StaleFluxDatumRowMapper implements RowMapper<StaleFluxDatum> {
 
 	@Override
 	public StaleFluxDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		String aggKind = rs.getString(2);
 		return new BasicStaleFluxDatum(streamId, Aggregation.forKey(aggKind));
 	}

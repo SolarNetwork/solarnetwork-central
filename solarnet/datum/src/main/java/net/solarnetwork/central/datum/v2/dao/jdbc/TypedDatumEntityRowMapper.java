@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -69,7 +70,7 @@ public class TypedDatumEntityRowMapper implements RowMapper<TypedDatumEntity> {
 
 	@Override
 	public TypedDatumEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		BigDecimal[] data_i = getArray(rs, 3);
 		BigDecimal[] data_a = getArray(rs, 4);

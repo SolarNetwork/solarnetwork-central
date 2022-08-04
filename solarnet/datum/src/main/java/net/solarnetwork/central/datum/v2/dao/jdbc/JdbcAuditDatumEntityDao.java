@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -61,8 +62,7 @@ public class JdbcAuditDatumEntityDao implements AuditDatumDao {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter must be provided.");
 		}
-		return DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, sql,
-				AuditDatumEntityRollupRowMapper.INSTANCE);
+		return executeFilterQuery(jdbcTemplate, filter, sql, AuditDatumEntityRollupRowMapper.INSTANCE);
 	}
 
 	@Override

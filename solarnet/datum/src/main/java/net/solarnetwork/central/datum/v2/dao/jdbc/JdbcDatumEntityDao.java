@@ -28,6 +28,8 @@ import static java.util.Collections.singletonMap;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeCountQuery;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.FindObjectStreamMetadataIds.FIND_METADATA_IDS_FOR_STREAM_ID;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
@@ -374,8 +376,7 @@ public class JdbcDatumEntityDao
 		final PreparedStatementCreator sql = filterSql(filter);
 		final RowMapper<Datum> mapper = mapper(filter);
 
-		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
-				sql, mapper);
+		FilterResults<Datum, DatumPK> results = executeFilterQuery(jdbcTemplate, filter, sql, mapper);
 
 		if ( mapper instanceof ObjectDatumStreamMetadataProvider ) {
 			// virtual streams use this
@@ -648,7 +649,7 @@ public class JdbcDatumEntityDao
 	public FilterResults<StaleAggregateDatum, StreamKindPK> findStaleAggregateDatum(
 			DatumStreamCriteria filter) {
 		final PreparedStatementCreator sql = new SelectStaleAggregateDatum(filter);
-		return DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, sql,
+		return executeFilterQuery(jdbcTemplate, filter, sql,
 				StaleAggregateDatumEntityRowMapper.INSTANCE);
 	}
 
@@ -684,8 +685,8 @@ public class JdbcDatumEntityDao
 		FilterResults<ReadingDatum, DatumPK> results;
 		if ( readingType == DatumReadingType.CalculatedAt ) {
 			// this returns Datum, not ReadingDatum... so adapt
-			FilterResults<Datum, DatumPK> datumResults = DatumJdbcUtils.executeFilterQuery(jdbcTemplate,
-					filter, sql, DatumEntityRowMapper.INSTANCE);
+			FilterResults<Datum, DatumPK> datumResults = executeFilterQuery(jdbcTemplate, filter, sql,
+					DatumEntityRowMapper.INSTANCE);
 			List<ReadingDatum> readingDatum = stream(datumResults.spliterator(), false)
 					.map(e -> new ReadingDatumEntity(e.getStreamId(), e.getTimestamp(), null, null,
 							e.getProperties(), null))
@@ -693,7 +694,7 @@ public class JdbcDatumEntityDao
 			results = new BasicFilterResults<>(readingDatum, datumResults.getTotalResults(),
 					datumResults.getStartingOffset(), datumResults.getReturnedResultCount());
 		} else {
-			results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter, sql,
+			results = executeFilterQuery(jdbcTemplate, filter, sql,
 					readingMapper(filter.getAggregation()));
 		}
 
@@ -771,7 +772,7 @@ public class JdbcDatumEntityDao
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.RunningTotal
 				&& (sql instanceof CountPreparedStatementCreatorProvider) ) {
-			totalCount = DatumJdbcUtils.executeCountQuery(jdbcTemplate,
+			totalCount = executeCountQuery(jdbcTemplate,
 					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
 		}
 

@@ -27,14 +27,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.regex.Pattern;
+import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class CommonSqlUtils {
 
@@ -66,9 +68,9 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			Long[] value) throws SQLException {
-		return prepareOptimizedArrayParameter(con, stmt, p, "bigint", value);
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, Long[] value) throws SQLException {
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "bigint", value);
 	}
 
 	/**
@@ -87,9 +89,9 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			String[] value) throws SQLException {
-		return prepareOptimizedArrayParameter(con, stmt, p, "text", value);
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, String[] value) throws SQLException {
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
 	/**
@@ -110,18 +112,88 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			String arrayType, Object[] value) throws SQLException {
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, String arrayType, Object[] value) throws SQLException {
 		if ( value != null ) {
 			if ( value.length > 1 ) {
 				Array array = con.createArrayOf(arrayType, value);
-				stmt.setArray(++p, array);
+				stmt.setArray(++parameterOffset, array);
 				array.free();
 			} else {
-				stmt.setObject(++p, value[0]);
+				stmt.setObject(++parameterOffset, value[0]);
 			}
 		}
-		return p;
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL statement array parameter.
+	 * 
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.1
+	 */
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			Long[] value) throws SQLException {
+		return prepareArrayParameter(con, stmt, parameterOffset, "bigint", value);
+	}
+
+	/**
+	 * Prepare a SQL statement array parameter.
+	 * 
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.1
+	 */
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			String[] value) throws SQLException {
+		return prepareArrayParameter(con, stmt, parameterOffset, "text", value);
+	}
+
+	/**
+	 * Prepare a SQL statement array parameter.
+	 * 
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param arrayType
+	 *        the SQL array type to use
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.1
+	 */
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			String arrayType, Object[] value) throws SQLException {
+		if ( value != null ) {
+			Array array = con.createArrayOf(arrayType, value);
+			stmt.setArray(++parameterOffset, array);
+			array.free();
+		}
+		return parameterOffset;
 	}
 
 	/**
@@ -178,6 +250,52 @@ public final class CommonSqlUtils {
 	}
 
 	/**
+	 * Prepare a SQL query limit/offset.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @see #limitOffset(PaginationCriteria, StringBuilder)
+	 * @since 2.1
+	 */
+	public static int prepareLimitOffset(PaginationCriteria filter, Connection con,
+			PreparedStatement stmt, int parameterOffset) throws SQLException {
+		if ( filter != null && filter.getMax() != null ) {
+			int max = filter.getMax();
+			if ( max > 0 ) {
+				stmt.setInt(++parameterOffset, max);
+			}
+		}
+		if ( filter != null && filter.getOffset() != null ) {
+			int offset = filter.getOffset();
+			if ( offset > 0 ) {
+				stmt.setInt(++parameterOffset, offset);
+			}
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Wrap a SQL query with a {@literal SELECT COUNT(*)} clause.
+	 * 
+	 * @param sql
+	 *        the SQL query to wrap
+	 * @return the wrapped query
+	 * @since 2.1
+	 */
+	public static String wrappedCountQuery(String sql) {
+		return "SELECT COUNT(*) FROM (" + sql + ") AS q";
+	}
+
+	/**
 	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination
 	 * where the limit and offset are generated as literal values.
 	 * 
@@ -230,6 +348,99 @@ public final class CommonSqlUtils {
 					ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		}
 		return stmt;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria for an array containment clause.
+	 * 
+	 * <p>
+	 * If {@code array} contains exactly one value, the generated SQL will use a
+	 * simple equality comparison. Otherwise an {@code ANY()} comparison will be
+	 * generated.
+	 * </p>
+	 * 
+	 * @param array
+	 *        the array value to match
+	 * @param colName
+	 *        the array SQL column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.1
+	 * @see #prepareOptimizedArrayParameter(Connection, PreparedStatement, int,
+	 *      String, Object[])
+	 */
+	public static int whereOptimizedArrayContains(Object[] array, String colName, StringBuilder buf) {
+		int paramCount = 0;
+		if ( array != null && array.length > 0 ) {
+			buf.append("\tAND ").append(colName).append(" = ");
+			if ( array.length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
+			paramCount = 1;
+		}
+		return paramCount;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria for a date range.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
+	 * each clause. The leading tab and {@literal AND} and space characters are
+	 * <b>not</b> stripped.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param column
+	 *        the date column name to use, e.g. {@code solardatum.ts}
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.1
+	 */
+	public static int whereDateRange(DateRangeCriteria filter, String colName, StringBuilder buf) {
+		int paramCount = 0;
+		if ( filter.getStartDate() != null ) {
+			buf.append("\tAND ").append(colName).append(" >= ?\n");
+			paramCount += 1;
+		}
+		if ( filter.getEndDate() != null ) {
+			buf.append("\tAND ").append(colName).append(" < ?\n");
+			paramCount += 1;
+		}
+		return paramCount;
+	}
+
+	/**
+	 * Prepare a SQL query date range filter.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.1
+	 */
+	public static int prepareDateRange(DateRangeCriteria filter, Connection con, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
+		if ( filter.getStartDate() != null ) {
+			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getStartDate()));
+		}
+		if ( filter.getEndDate() != null ) {
+			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getEndDate()));
+		}
+		return parameterOffset;
 	}
 
 }
