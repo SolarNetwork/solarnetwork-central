@@ -25,9 +25,9 @@ package net.solarnetwork.central.common.dao.jdbc;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserEvent;
 
 /**
@@ -39,9 +39,8 @@ import net.solarnetwork.central.domain.UserEvent;
  * 
  * <ol>
  * <li>user_id (BIGINT)</li>
- * <li>ts (TIMESTAMP)</li>
- * <li>id (UUID)</li>
- * <li>kind (TEXT)</li>
+ * <li>event_id (UUID)</li>
+ * <li>tags (TEXT[])</li>
  * <li>message (TEXT)</li>
  * <li>jdata (TEXT)</li>
  * </ol>
@@ -57,12 +56,11 @@ public class UserEventRowMapper implements RowMapper<UserEvent> {
 	@Override
 	public UserEvent mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Long userId = rs.getLong(1);
-		Instant created = rs.getTimestamp(2).toInstant();
-		UUID eventId = getUuid(rs, 3);
-		String kind = rs.getString(4);
-		String message = rs.getString(5);
-		String json = rs.getString(6);
-		return new UserEvent(userId, created, eventId, kind, message, json);
+		UUID eventId = getUuid(rs, 2);
+		String[] tags = CommonJdbcUtils.getArray(rs, 3);
+		String message = rs.getString(4);
+		String json = rs.getString(5);
+		return new UserEvent(userId, eventId, tags, message, json);
 	}
 
 }

@@ -40,7 +40,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 public class BasicUserEventFilter extends BasicCoreCriteria
 		implements UserEventFilter, UserEventPurgeFilter {
 
-	private String[] kinds;
+	private String[] tags;
 	private Instant startDate;
 	private Instant endDate;
 
@@ -66,12 +66,12 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicUserEventFilter ) {
 			BasicUserEventFilter c = (BasicUserEventFilter) criteria;
-			setKinds(c.getKinds());
+			setTags(c.getTags());
 			setStartDate(c.getStartDate());
 			setEndDate(c.getEndDate());
 		} else {
-			if ( criteria instanceof KindCriteria ) {
-				setKinds(((KindCriteria) criteria).getKinds());
+			if ( criteria instanceof TagCriteria ) {
+				setTags(((TagCriteria) criteria).getTags());
 			}
 			if ( criteria instanceof DateRangeCriteria ) {
 				DateRangeCriteria c = (DateRangeCriteria) criteria;
@@ -90,7 +90,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Arrays.hashCode(kinds);
+		result = prime * result + Arrays.hashCode(tags);
 		result = prime * result + Objects.hash(endDate, startDate);
 		return result;
 	}
@@ -107,40 +107,40 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 			return false;
 		}
 		BasicUserEventFilter other = (BasicUserEventFilter) obj;
-		return Objects.equals(endDate, other.endDate) && Arrays.equals(kinds, other.kinds)
+		return Objects.equals(endDate, other.endDate) && Arrays.equals(tags, other.tags)
 				&& Objects.equals(startDate, other.startDate);
 	}
 
 	@Override
-	public String[] getKinds() {
-		return kinds;
+	public String[] getTags() {
+		return tags;
 	}
 
 	/**
-	 * Set the kinds.
+	 * Set the tags.
 	 * 
-	 * @param kinds
-	 *        the kinds to set
+	 * @param tags
+	 *        the tags to set
 	 */
-	public void setKinds(String[] kinds) {
-		this.kinds = kinds;
+	public void setTags(String[] tags) {
+		this.tags = tags;
 	}
 
 	@Override
 	@JsonIgnore
-	public String getKind() {
-		return UserEventFilter.super.getKind();
+	public String getTag() {
+		return UserEventFilter.super.getTag();
 	}
 
 	/**
-	 * Set a single kind.
+	 * Set a single tag.
 	 * 
-	 * @param kind
-	 *        the kind to set
+	 * @param tag
+	 *        the tag to set
 	 */
 	@JsonSetter
-	public void setKind(String kind) {
-		setKinds(kind != null ? new String[] { kind } : null);
+	public void setTag(String kind) {
+		setTags(kind != null ? new String[] { kind } : null);
 	}
 
 	@Override

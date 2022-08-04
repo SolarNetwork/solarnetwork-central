@@ -56,8 +56,11 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 		generator.writeStartObject(event, 6);
 		generator.writeNumberField("userId", event.getUserId());
 		generator.writeObjectField("created", event.getCreated());
-		generator.writeStringField("eventId", event.getId().getEventId().toString());
-		generator.writeStringField("kind", event.getKind());
+		generator.writeStringField("eventId", event.getEventId().toString());
+
+		generator.writeFieldName("tags");
+		generator.writeArray(event.getTags(), 0, event.getTags().length);
+
 		if ( event.getMessage() != null && !event.getMessage().isBlank() ) {
 			generator.writeStringField("message", event.getMessage());
 		}

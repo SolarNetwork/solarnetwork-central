@@ -31,8 +31,9 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import java.sql.Timestamp;
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +42,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserEventPK;
-import net.solarnetwork.central.support.TimeBasedUuidGenerator;
+import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.FilterResults;
@@ -59,20 +61,22 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private MutableClock clock;
 	private JdbcUserEventDao dao;
 	private Long userId;
 	private UuidGenerator uuidGenerator;
 
 	@BeforeEach
 	public void setup() {
+		clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
 		dao = new JdbcUserEventDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-		uuidGenerator = new TimeBasedUuidGenerator();
+		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(), clock);
 	}
 
 	private List<Map<String, Object>> allUserEventData() {
 		List<Map<String, Object>> data = jdbcTemplate
-				.queryForList("select * from solaruser.user_event_log ORDER BY user_id, ts, id");
+				.queryForList("select * from solaruser.user_event_log ORDER BY user_id, event_id");
 		log.debug("solarnet.user_event_log table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
 		return data;
@@ -81,8 +85,8 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void insert() {
 		// GIVEN
-		UserEvent event = new UserEvent(userId, Instant.now(), uuidGenerator.generate(), "foo/bar/bam",
-				"Test obj", "{\"foo\":123}");
+		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
+				new String[] { "foo", "bar", "bam" }, "Test obj", "{\"foo\":123}");
 
 		// WHEN
 		dao.add(event);
@@ -92,40 +96,39 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID matches", row, hasEntry("user_id", event.getUserId()));
-		assertThat("Row creation date matches", row, hasEntry("ts", Timestamp.from(event.getCreated())));
-		assertThat("Row event ID matches", row, hasEntry("id", event.getEventId()));
+		assertThat("Row event ID matches", row, hasEntry("event_id", event.getEventId()));
 		assertThat("Row message matches", row.get("message"), is(equalTo(event.getMessage())));
 		assertThat("Row jdata matches", getStringMap(row.get("jdata").toString()),
 				is(equalTo(getStringMap(event.getData()))));
 	}
 
 	@Test
-	public void find_kind() {
+	public void find_tags() {
 		// GIVEN
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant start = clock.instant();
 		final int groupSize = 4;
 		final int count = groupSize * 4;
 		final List<UserEvent> events = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
-			String kind;
+			String[] tags;
 			switch (i % groupSize) {
 				case 0:
-					kind = "a/b/c";
+					tags = new String[] { "a", "b", "c" };
 					break;
 				case 1:
-					kind = "a/b/d";
+					tags = new String[] { "a", "b", "d" };
 					break;
 				case 2:
-					kind = "a/e/f";
+					tags = new String[] { "a", "e", "f" };
 					break;
 				default:
-					kind = "g/h/i";
+					tags = new String[] { "g", "h", "i" };
 					break;
 			}
-			UserEvent event = new UserEvent(userId, start.plus(i, ChronoUnit.SECONDS),
-					uuidGenerator.generate(), kind, null, null);
+			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null, null);
 			dao.add(event);
 			events.add(event);
+			clock.add(1, ChronoUnit.SECONDS);
 		}
 
 		allUserEventData();
@@ -136,8 +139,8 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		f.setStartDate(start.plusSeconds(4));
 		f.setEndDate(start.plusSeconds(count - 4));
 
-		f.setKinds(new String[] { "a", "b" });
-		FilterResults<UserEvent, UserEventPK> result = dao.findFiltered(f);
+		f.setTags(new String[] { "a", "b" });
+		FilterResults<UserEvent, UserUuidPK> result = dao.findFiltered(f);
 		assertThat("Results returned for query", result, is(notNullValue()));
 		assertThat("Results with a and b returned", result.getReturnedResultCount(), is(equalTo(4)));
 	}
@@ -145,7 +148,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 	@Test
 	public void delete_userOlderThan() {
 		// GIVEN
-		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant start = clock.instant();
 		final int userCount = 3;
 		final int eventCount = 5;
 		final int count = userCount * eventCount;
@@ -156,11 +159,12 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 				if ( i == 0 ) {
 					userIds[j] = CommonDbTestUtils.insertUser(jdbcTemplate);
 				}
-				UserEvent event = new UserEvent(userIds[j], start.plus(i, ChronoUnit.SECONDS),
-						uuidGenerator.generate(), "foo/bar", null, null);
+				UserEvent event = new UserEvent(userIds[j], uuidGenerator.generate(),
+						new String[] { "foo", "bar" }, null, null);
 				dao.add(event);
 				events.add(event);
 			}
+			clock.add(1, ChronoUnit.SECONDS);
 		}
 
 		allUserEventData();
@@ -177,7 +181,7 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 			return (!e.getUserId().equals(userIds[0]) || !e.getCreated().isBefore(f.getEndDate()));
 		}).map(UserEvent::getEventId).toArray(UUID[]::new);
 		assertThat("Remaining event IDs",
-				allUserEventData().stream().map(e -> (UUID) e.get("id")).collect(toSet()),
+				allUserEventData().stream().map(e -> (UUID) e.get("event_id")).collect(toSet()),
 				containsInAnyOrder(expectedUuids));
 	}
 

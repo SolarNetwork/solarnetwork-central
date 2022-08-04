@@ -5,19 +5,20 @@
  */
 CREATE TABLE solaruser.user_event_log (
 	user_id     BIGINT NOT NULL,
-	ts			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	id			UUID NOT NULL,
-	kind 		CHARACTER VARYING(64) NOT NULL,
+	event_id	UUID NOT NULL,
+	tags 		TEXT[] NOT NULL,
 	message		TEXT,
 	jdata		JSONB,
-	CONSTRAINT user_event_log_pk PRIMARY KEY (user_id,ts,id),
 	CONSTRAINT user_event_log_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-/* Add index on kind split on '/' so we can search for components. */
-CREATE INDEX user_event_log_kind_idx ON solaruser.user_event_log USING GIN (string_to_array(kind,'/'));
+/* Add primary key index */
+CREATE UNIQUE INDEX user_event_log_pk ON solaruser.user_event_log (user_id, event_id DESC);
+
+/* Add index on tags so we can search efficiently. */
+CREATE INDEX user_event_log_tags_idx ON solaruser.user_event_log USING GIN (tags);
 
 /**
  * TABLE solaruser.user_event_log_conf

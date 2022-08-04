@@ -33,7 +33,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.DeleteUserEvent;
 import net.solarnetwork.central.common.dao.jdbc.sql.InsertUserEvent;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserEvent;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserEventPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -67,7 +67,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 	}
 
 	@Override
-	public FilterResults<UserEvent, UserEventPK> findFiltered(UserEventFilter filter,
+	public FilterResults<UserEvent, UserUuidPK> findFiltered(UserEventFilter filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		SelectUserEvent sql = new SelectUserEvent(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);

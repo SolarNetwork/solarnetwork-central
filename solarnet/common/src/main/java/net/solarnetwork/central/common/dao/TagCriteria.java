@@ -1,5 +1,5 @@
 /* ==================================================================
- * KindCriteria.java - 1/08/2022 2:36:47 pm
+ * TagCriteria.java - 1/08/2022 2:36:47 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -23,42 +23,42 @@
 package net.solarnetwork.central.common.dao;
 
 /**
- * Criteria API for a "kind" qualifier.
+ * Criteria API for a "tag" qualifier.
  * 
  * @author matt
  * @version 1.0
  */
-public interface KindCriteria {
+public interface TagCriteria {
 
 	/**
-	 * Test if any kind criteria exists.
+	 * Test if any tag criteria exists.
 	 * 
-	 * @return {@literal true} if a kind criteria exists
+	 * @return {@literal true} if a tag criteria exists
 	 */
-	default boolean hasKindCriteria() {
-		String kind = getKind();
+	default boolean hasTagCriteria() {
+		String kind = getTag();
 		return (kind != null);
 	}
 
 	/**
-	 * Get an array of node IDs.
+	 * Get an array of tags.
 	 * 
-	 * @return array of node IDs (may be {@literal null})
+	 * @return array of tags (may be {@literal null})
 	 */
-	String[] getKinds();
+	String[] getTags();
 
 	/**
-	 * Get the first kind.
+	 * Get the first tag.
 	 * 
 	 * <p>
-	 * This returns the first available kind from the {@link #getKinds()} array,
+	 * This returns the first available tag from the {@link #getTags()} array,
 	 * or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the kind, or {@literal null} if not available
+	 * @return the tag, or {@literal null} if not available
 	 */
-	default String getKind() {
-		String[] kinds = getKinds();
+	default String getTag() {
+		String[] kinds = getTags();
 		return (kinds != null && kinds.length > 0 ? kinds[0] : null);
 	}
 

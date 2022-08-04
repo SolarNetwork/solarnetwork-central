@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.support.UuidUtils;
 import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
 
@@ -36,12 +38,12 @@ import net.solarnetwork.dao.Entity;
  * @author matt
  * @version 1.0
  */
-public class UserEvent extends BasicIdentity<UserEventPK>
-		implements Entity<UserEventPK>, UserRelatedEntity<UserEventPK>, Serializable, Cloneable {
+public class UserEvent extends BasicIdentity<UserUuidPK>
+		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
 
-	private static final long serialVersionUID = 1867734608363358361L;
+	private static final long serialVersionUID = -2418940464038903514L;
 
-	private final String kind;
+	private final String[] tags;
 	private final String message;
 	private final String data;
 
@@ -50,18 +52,18 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 * 
 	 * @param id
 	 *        the primary key
-	 * @param kind
-	 *        the kind
+	 * @param tags
+	 *        the tags
 	 * @param message
 	 *        the message
 	 * @param data
 	 *        the JSON data
 	 * @throws IllegalArgumentException
-	 *         if {@code id} or {@code kind} are {@literal null}
+	 *         if {@code id} or {@code tags} are {@literal null}
 	 */
-	public UserEvent(UserEventPK id, String kind, String message, String data) {
+	public UserEvent(UserUuidPK id, String[] tags, String message, String data) {
 		super(requireNonNullArgument(id, "id"));
-		this.kind = requireNonNullArgument(kind, "kind");
+		this.tags = requireNonEmptyArgument(tags, "tags");
 		this.message = message;
 		this.data = data;
 	}
@@ -85,35 +87,26 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 *         if any argument is {@literal null} other than {@code message} or
 	 *         {@code data}
 	 */
-	public UserEvent(Long userId, Instant created, UUID eventId, String kind, String message,
-			String data) {
-		this(new UserEventPK(userId, created, eventId), kind, message, data);
+	public UserEvent(Long userId, UUID eventId, String[] tags, String message, String data) {
+		this(new UserUuidPK(userId, eventId), tags, message, data);
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("UserEvent{");
-		if ( getUserId() != null ) {
-			builder.append("userId=");
-			builder.append(getUserId());
-			builder.append(", ");
-		}
-		if ( getCreated() != null ) {
-			builder.append("created=");
-			builder.append(getCreated());
-			builder.append(", ");
-		}
-		if ( getEventId() != null ) {
-			builder.append("eventId=");
-			builder.append(getEventId());
-			builder.append(", ");
-		}
-		if ( getKind() != null ) {
-			builder.append("kind=");
-			builder.append(getKind());
-			builder.append(", ");
-		}
+		builder.append("userId=");
+		builder.append(getUserId());
+		builder.append(", ");
+
+		builder.append("eventId=");
+		builder.append(getEventId());
+		builder.append(", ");
+
+		builder.append("tags=");
+		builder.append(getTags());
+		builder.append(", ");
+
 		if ( message != null ) {
 			builder.append("message=");
 			builder.append(message);
@@ -139,7 +132,7 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 
 	@Override
 	public Instant getCreated() {
-		return getId().getCreated();
+		return UuidUtils.extractTimestamp(getEventId());
 	}
 
 	/**
@@ -148,16 +141,16 @@ public class UserEvent extends BasicIdentity<UserEventPK>
 	 * @return the event ID
 	 */
 	public UUID getEventId() {
-		return getId().getEventId();
+		return getId().getUuid();
 	}
 
 	/**
-	 * Get the event kind.
+	 * Get the event tags.
 	 * 
-	 * @return the kind
+	 * @return the tags
 	 */
-	public String getKind() {
-		return kind;
+	public String[] getTags() {
+		return tags;
 	}
 
 	/**

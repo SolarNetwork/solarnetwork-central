@@ -1,5 +1,5 @@
 /* ==================================================================
- * UuidTimestampExtractor.java - 3/08/2022 5:36:43 pm
+ * UuidUtils.java - 4/08/2022 9:44:31 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,28 +20,53 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.biz;
+package net.solarnetwork.central.support;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * API for extracting a timestamp out of a UUID.
+ * Utility functions for UUIDs.
  * 
  * @author matt
  * @version 1.0
  */
-@FunctionalInterface
-public interface UuidTimestampExtractor {
+public final class UuidUtils {
+
+	private UuidUtils() {
+		// not available
+	}
 
 	/**
 	 * Extract the timestamp out of a UUID.
 	 * 
+	 * <p>
+	 * Only UUID versions 1 and 7 are supported.
+	 * </p>
+	 * 
 	 * @param uuid
-	 *        the UUID to extract
+	 *        the UUID to extract the timestamp from
 	 * @return the timestamp, or {@literal null} if unable to extract a
 	 *         timestamp
 	 */
-	Instant extractTimestamp(UUID uuid);
+	public static Instant extractTimestamp(UUID uuid) {
+		if ( uuid.version() == 7 ) {
+			// timestamp is highest 48 bits of UUID
+			return Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
+		} else if ( uuid.version() == 1 ) {
+			return Instant.ofEpochMilli(uuid.timestamp());
+		}
+		return null;
+	}
 
+	/**
+	 * Generate a UUID v7 "boundary" value that encodes a given timestamp.
+	 * 
+	 * @param ts
+	 *        the timestamp to encode
+	 * @return the UUID
+	 */
+	public static UUID createUuidV7Boundary(Instant ts) {
+		return TimeBasedV7UuidGenerator.createBoundary(ts);
+	}
 }

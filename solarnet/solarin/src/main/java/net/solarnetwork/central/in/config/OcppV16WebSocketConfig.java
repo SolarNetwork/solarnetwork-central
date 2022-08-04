@@ -38,7 +38,6 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistra
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -84,9 +83,6 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	private TaskScheduler taskScheduler;
 
 	@Autowired
-	private UuidGenerator uuidGenerator;
-
-	@Autowired
 	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Autowired
@@ -115,7 +111,6 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
-		handler.setUuidGenerator(uuidGenerator);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
 		if ( ocppCentralServiceActions != null ) {
 			for ( ActionMessageProcessor<?, ?> processor : ocppCentralServiceActions ) {
@@ -133,7 +128,6 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		CentralOcppWebSocketHandshakeInterceptor interceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
 		interceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
-		interceptor.setUuidGenerator(uuidGenerator);
 		interceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		reg.addInterceptors(interceptor);
 	}

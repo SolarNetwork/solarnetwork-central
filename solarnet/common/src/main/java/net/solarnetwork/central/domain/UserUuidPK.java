@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventPK.java - 1/08/2022 10:20:13 am
+ * UserUuidPK.java - 1/08/2022 10:20:13 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -24,46 +24,41 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.uuid.UUIDComparator;
 
 /**
- * Primary key for user events.
+ * Immutable primary key for user-related entities using a UUID primary key.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserEventPK extends BasePK implements Serializable, Cloneable, Comparable<UserEventPK> {
+public class UserUuidPK extends BasePK implements Serializable, Cloneable, Comparable<UserUuidPK> {
 
-	private static final long serialVersionUID = -6664019893149413289L;
+	private static final long serialVersionUID = 417842772182618447L;
 
 	private final Long userId;
-	private final Instant created;
-	private final UUID eventId;
+	private final UUID uuid;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param created
-	 *        the creation date
-	 * @param eventId
-	 *        the event ID
+	 * @param uuid
+	 *        the UUID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserEventPK(Long userId, Instant created, UUID eventId) {
+	public UserUuidPK(Long userId, UUID uuid) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
-		this.created = requireNonNullArgument(created, "created");
-		this.eventId = requireNonNullArgument(eventId, "eventId");
+		this.uuid = requireNonNullArgument(uuid, "uuid");
 	}
 
 	@Override
-	public int compareTo(UserEventPK o) {
+	public int compareTo(UserUuidPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -73,37 +68,30 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 			return comparison;
 		}
 
-		comparison = created.compareTo(o.created);
-		if ( comparison != 0 ) {
-			return comparison;
-		}
-
 		// NOTE: JDK UUID ordering not suitable here, see UUIDComparator for more info
-		return UUIDComparator.staticCompare(eventId, o.eventId);
+		return UUIDComparator.staticCompare(uuid, o.uuid);
 	}
 
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("u=").append(userId);
-		buf.append(";c=").append(created);
-		buf.append(";e=").append(eventId);
+		buf.append(";i=").append(uuid);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		buf.append("userId=").append(userId);
-		buf.append(", created=").append(created);
-		buf.append(", eventId=").append(eventId);
+		buf.append(", uuid=").append(uuid);
 	}
 
 	@Override
-	protected UserEventPK clone() {
-		return (UserEventPK) super.clone();
+	protected UserUuidPK clone() {
+		return (UserUuidPK) super.clone();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, created, eventId);
+		return Objects.hash(userId, uuid);
 	}
 
 	@Override
@@ -111,21 +99,11 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserEventPK) ) {
+		if ( !(obj instanceof UserUuidPK) ) {
 			return false;
 		}
-		UserEventPK other = (UserEventPK) obj;
-		return Objects.equals(userId, other.userId) && Objects.equals(created, other.created)
-				&& Objects.equals(eventId, other.eventId);
-	}
-
-	/**
-	 * Get the event ID.
-	 * 
-	 * @return the event ID
-	 */
-	public UUID getEventId() {
-		return eventId;
+		UserUuidPK other = (UserUuidPK) obj;
+		return Objects.equals(userId, other.userId) && Objects.equals(uuid, other.uuid);
 	}
 
 	/**
@@ -138,12 +116,12 @@ public class UserEventPK extends BasePK implements Serializable, Cloneable, Comp
 	}
 
 	/**
-	 * Get the event creation date.
+	 * Get the UUID.
 	 * 
-	 * @return the created
+	 * @return the UUID
 	 */
-	public Instant getCreated() {
-		return created;
+	public UUID getUuid() {
+		return uuid;
 	}
 
 }

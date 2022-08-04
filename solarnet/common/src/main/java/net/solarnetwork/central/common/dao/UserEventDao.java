@@ -23,7 +23,7 @@
 package net.solarnetwork.central.common.dao;
 
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserEventPK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.FilterableDao;
 
 /**
@@ -33,6 +33,6 @@ import net.solarnetwork.dao.FilterableDao;
  * @version 1.0
  */
 public interface UserEventDao
-		extends UserEventAppenderDao, FilterableDao<UserEvent, UserEventPK, UserEventFilter> {
+		extends UserEventAppenderDao, FilterableDao<UserEvent, UserUuidPK, UserEventFilter> {
 
 }

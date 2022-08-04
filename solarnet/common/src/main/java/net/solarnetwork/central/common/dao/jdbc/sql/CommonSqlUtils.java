@@ -68,9 +68,9 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			Long[] value) throws SQLException {
-		return prepareOptimizedArrayParameter(con, stmt, p, "bigint", value);
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, Long[] value) throws SQLException {
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "bigint", value);
 	}
 
 	/**
@@ -89,9 +89,9 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			String[] value) throws SQLException {
-		return prepareOptimizedArrayParameter(con, stmt, p, "text", value);
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, String[] value) throws SQLException {
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
 	/**
@@ -112,18 +112,18 @@ public final class CommonSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 */
-	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt, int p,
-			String arrayType, Object[] value) throws SQLException {
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, String arrayType, Object[] value) throws SQLException {
 		if ( value != null ) {
 			if ( value.length > 1 ) {
 				Array array = con.createArrayOf(arrayType, value);
-				stmt.setArray(++p, array);
+				stmt.setArray(++parameterOffset, array);
 				array.free();
 			} else {
-				stmt.setObject(++p, value[0]);
+				stmt.setObject(++parameterOffset, value[0]);
 			}
 		}
-		return p;
+		return parameterOffset;
 	}
 
 	/**
@@ -142,9 +142,9 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 * @since 2.1
 	 */
-	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int p, Long[] value)
-			throws SQLException {
-		return prepareArrayParameter(con, stmt, p, "bigint", value);
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
+			Long[] value) throws SQLException {
+		return prepareArrayParameter(con, stmt, parameterOffset, "bigint", value);
 	}
 
 	/**
@@ -163,9 +163,9 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 * @since 2.1
 	 */
-	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int p,
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
 			String[] value) throws SQLException {
-		return prepareArrayParameter(con, stmt, p, "text", value);
+		return prepareArrayParameter(con, stmt, parameterOffset, "text", value);
 	}
 
 	/**
@@ -186,14 +186,14 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 * @since 2.1
 	 */
-	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int p,
+	public static int prepareArrayParameter(Connection con, PreparedStatement stmt, int parameterOffset,
 			String arrayType, Object[] value) throws SQLException {
 		if ( value != null ) {
 			Array array = con.createArrayOf(arrayType, value);
-			stmt.setArray(++p, array);
+			stmt.setArray(++parameterOffset, array);
 			array.free();
 		}
-		return p;
+		return parameterOffset;
 	}
 
 	/**

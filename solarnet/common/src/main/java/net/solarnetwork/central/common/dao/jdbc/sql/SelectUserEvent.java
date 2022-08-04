@@ -29,8 +29,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.biz.UuidTimestampDecoder;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 
 /**
  * Select for user events.
@@ -44,6 +46,7 @@ public class SelectUserEvent
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
+	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventFilter filter;
 	private final int fetchSize;
 
@@ -54,19 +57,23 @@ public class SelectUserEvent
 	 *        the filter criteria
 	 */
 	public SelectUserEvent(UserEventFilter filter) {
-		this(filter, DEFAULT_FETCH_SIZE);
+		this(TimeBasedV7UuidGenerator.INSTANCE, filter, DEFAULT_FETCH_SIZE);
 	}
 
 	/**
 	 * Constructor.
 	 * 
+	 * @param uuidTimestampDecoder
+	 *        the UUID timestamp decoder
 	 * @param filter
 	 *        the filter criteria
 	 * @param fetchSize
 	 *        the fetch size to use, or {@literal 0} to leave unspecified
 	 */
-	public SelectUserEvent(UserEventFilter filter, int fetchSize) {
+	public SelectUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventFilter filter,
+			int fetchSize) {
 		super();
+		this.uuidTimestampDecoder = requireNonNullArgument(uuidTimestampDecoder, "uuidTimestampDecoder");
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
 	}
@@ -82,7 +89,7 @@ public class SelectUserEvent
 	}
 
 	private void sqlCore(StringBuilder buf) {
-		buf.append("SELECT uel.user_id,uel.ts,uel.id,uel.kind,uel.message,uel.jdata\n");
+		buf.append("SELECT uel.user_id,uel.event_id,uel.tags,uel.message,uel.jdata\n");
 		buf.append("FROM solaruser.user_event_log uel\n");
 	}
 
@@ -92,18 +99,19 @@ public class SelectUserEvent
 		if ( filter.hasUserCriteria() ) {
 			idx += CommonSqlUtils.whereOptimizedArrayContains(filter.getUserIds(), "uel.user_id", where);
 		}
-		if ( filter.hasKindCriteria() ) {
-			where.append("\tAND string_to_array(uel.kind,'/') @> ?\n");
+		if ( filter.hasTagCriteria() ) {
+			where.append("\tAND uel.tags @> ?\n");
 			idx += 1;
 		}
-		idx += CommonSqlUtils.whereDateRange(filter, "uel.ts", where);
+
+		idx += CommonSqlUtils.whereDateRange(filter, "uel.event_id", where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uel.user_id,uel.ts,uel.id");
+		buf.append("ORDER BY uel.user_id,uel.event_id");
 	}
 
 	@Override
@@ -122,11 +130,14 @@ public class SelectUserEvent
 		if ( filter.hasUserCriteria() ) {
 			p = CommonSqlUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}
-		if ( filter.hasKindCriteria() ) {
-			p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, filter.getKinds());
+		if ( filter.hasTagCriteria() ) {
+			p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, filter.getTags());
 		}
-		if ( filter.hasDate() ) {
-			p = CommonSqlUtils.prepareDateRange(filter, con, stmt, p);
+		if ( filter.getStartDate() != null ) {
+			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getStartDate()));
+		}
+		if ( filter.getEndDate() != null ) {
+			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getEndDate()));
 		}
 		return p;
 	}

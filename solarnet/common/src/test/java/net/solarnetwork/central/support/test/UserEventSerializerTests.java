@@ -22,20 +22,24 @@
 
 package net.solarnetwork.central.support.test;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
 
@@ -52,6 +56,7 @@ public class UserEventSerializerTests {
 			.toInstant(ZoneOffset.UTC);
 	private static final String TEST_DATE_STRING = "2021-08-11 16:45:01.234Z";
 
+	private TimeBasedV7UuidGenerator uuidGenerator;
 	private ObjectMapper mapper;
 
 	private ObjectMapper createObjectMapper() {
@@ -64,13 +69,16 @@ public class UserEventSerializerTests {
 
 	@Before
 	public void setup() {
+		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(),
+				Clock.fixed(TEST_DATE, ZoneOffset.UTC));
 		mapper = createObjectMapper();
 	}
 
 	@Test
 	public void serialize_typical() throws IOException {
 		// GIVEN
-		UserEvent event = new UserEvent(1L, TEST_DATE, UUID.randomUUID(), "foo", "test", "{\"foo\":1}");
+		UserEvent event = new UserEvent(1L, uuidGenerator.generate(), new String[] { "foo", "bar" },
+				"test", "{\"foo\":1}");
 
 		// WHEN
 		String json = mapper.writeValueAsString(event);
@@ -81,7 +89,7 @@ public class UserEventSerializerTests {
 				is(equalTo("{\"userId\":" + event.getUserId()						
 						+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 						+ ",\"eventId\":\"" + event.getEventId() + "\""
-						+ ",\"kind\":\"" + event.getKind() + "\""
+						+ ",\"tags\":" + stream(event.getTags()).collect(joining("\",\"", "[\"", "\"]"))
 						+ ",\"message\":\"" + event.getMessage() + "\""
 						+ ",\"data\":" + event.getData()
 						+ "}")));
@@ -91,7 +99,8 @@ public class UserEventSerializerTests {
 	@Test
 	public void serialize_noMessageOrData() throws IOException {
 		// GIVEN
-		UserEvent event = new UserEvent(1L, TEST_DATE, UUID.randomUUID(), "foo", null, null);
+		UserEvent event = new UserEvent(1L, uuidGenerator.generate(), new String[] { "foo", "bar" },
+				null, null);
 
 		// WHEN
 		String json = mapper.writeValueAsString(event);
@@ -102,7 +111,7 @@ public class UserEventSerializerTests {
 				is(equalTo("{\"userId\":" + event.getUserId()
 						+ ",\"created\":\"" + TEST_DATE_STRING + "\""
 						+ ",\"eventId\":\"" + event.getEventId() + "\""
-						+ ",\"kind\":\"" + event.getKind() + "\""
+						+ ",\"tags\":" + stream(event.getTags()).collect(joining("\",\"", "[\"", "\"]"))
 						+ "}")));
 		// @formatter:on
 	}

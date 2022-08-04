@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.central.support.UuidUtils;
 
 /**
  * Test cases for the {@link TimeBasedV7UuidGenerator} class.
@@ -97,7 +98,7 @@ public class TimeBasedV7UuidGeneratorTests {
 		// THEN
 		long prevTimestamp = 0;
 		for ( UUID uuid : uuids ) {
-			Instant curr = generator.extractTimestamp(uuid);
+			Instant curr = UuidUtils.extractTimestamp(uuid);
 			assertThat("UUID time is never decreasing", curr.toEpochMilli(),
 					is(greaterThanOrEqualTo(prevTimestamp)));
 			prevTimestamp = curr.toEpochMilli();

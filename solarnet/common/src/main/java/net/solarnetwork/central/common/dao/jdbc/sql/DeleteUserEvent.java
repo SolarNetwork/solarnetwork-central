@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,8 +30,10 @@ import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.biz.UuidTimestampDecoder;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurgeFilter;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 
 /**
  * Delete {@link net.solarnetwork.central.domain.UserEvent} entities matching a
@@ -41,6 +44,7 @@ import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurg
  */
 public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 
+	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventPurgeFilter filter;
 
 	/**
@@ -67,9 +71,14 @@ public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 	 *        the filter criteria
 	 */
 	public DeleteUserEvent(UserEventPurgeFilter filter) {
+		this(TimeBasedV7UuidGenerator.INSTANCE, filter);
+	}
+
+	public DeleteUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventPurgeFilter filter) {
 		super();
+		this.uuidTimestampDecoder = requireNonNullArgument(uuidTimestampDecoder, "uuidTimestampDecoder");
 		this.filter = requireNonNullArgument(filter, "filter");
-		requireNonNullArgument(filter.getUserId(), "filter.userId");
+		requireNonEmptyArgument(filter.getUserIds(), "filter.userIds");
 	}
 
 	@Override
@@ -83,7 +92,7 @@ public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 	private void sqlWhere(StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
 		CommonSqlUtils.whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
-		CommonSqlUtils.whereDateRange(filter, "ts", where);
+		CommonSqlUtils.whereDateRange(filter, "event_id", where);
 		buf.append("WHERE").append(where.substring(4));
 	}
 
@@ -92,7 +101,12 @@ public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		int p = 0;
 		p = CommonSqlUtils.prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
-		p = CommonSqlUtils.prepareDateRange(filter, con, stmt, p);
+		if ( filter.getStartDate() != null ) {
+			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getStartDate()));
+		}
+		if ( filter.getEndDate() != null ) {
+			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getEndDate()));
+		}
 		return stmt;
 	}
 

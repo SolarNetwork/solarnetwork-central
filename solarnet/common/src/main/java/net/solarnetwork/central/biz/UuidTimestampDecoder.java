@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventAppenderBiz.java - 1/08/2022 3:25:32 pm
+ * UuidTimeDecoder.java - 4/08/2022 11:33:26 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,24 +22,38 @@
 
 package net.solarnetwork.central.biz;
 
-import net.solarnetwork.central.domain.LogEventInfo;
-import net.solarnetwork.central.domain.UserEvent;
+import java.time.Instant;
+import java.util.UUID;
 
 /**
- * Service API for appending user events.
+ * API for a service that knows how to deal with time-based UUID values.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserEventAppenderBiz {
+public interface UuidTimestampDecoder {
 
 	/**
-	 * Add an event.
+	 * Decode the timestamp from a UUID.
 	 * 
-	 * @param info
-	 *        the event info to add
-	 * @return the generated event
+	 * @param uuid
+	 *        the UUID to decode the timestamp from
+	 * @return the timestamp, or {@literal null} if unable to decode one
 	 */
-	UserEvent add(Long userId, LogEventInfo info);
+	Instant decodeTimestamp(UUID uuid);
+
+	/**
+	 * Create a timestamp "boundary" value.
+	 * 
+	 * <p>
+	 * The returned UUID will have only a time component encoded in it (and the
+	 * version/variant bits). All other bits will be set to {@literal 0}.
+	 * </p>
+	 * 
+	 * @param ts
+	 *        the timestamp to encode
+	 * @return the UUID
+	 */
+	UUID createTimestampBoundary(Instant ts);
 
 }

@@ -33,6 +33,6 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  */
 public interface UserEventFilter
-		extends UserCriteria, KindCriteria, DateRangeCriteria, PaginationCriteria, SortCriteria {
+		extends UserCriteria, TagCriteria, DateRangeCriteria, PaginationCriteria, SortCriteria {
 
 }

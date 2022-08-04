@@ -26,7 +26,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -43,9 +42,9 @@ public class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
 	private static final String SQL;
 	static {
 		// @formatter:off
-		SQL =     "INSERT INTO solaruser.user_event_log (user_id,ts,id,kind,message,jdata)\n"
-				+ "VALUES (?,?,?,?,?,?::jsonb)\n"
-				+ "ON CONFLICT (user_id,ts,id) DO NOTHING";
+		SQL =     "INSERT INTO solaruser.user_event_log (user_id,event_id,tags,message,jdata)\n"
+				+ "VALUES (?,?,?,?,?::jsonb)\n"
+				+ "ON CONFLICT (user_id,event_id) DO NOTHING";
 		// @formatter:on
 	}
 
@@ -71,18 +70,19 @@ public class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		stmt.setObject(1, event.getUserId());
-		stmt.setTimestamp(2, Timestamp.from(event.getCreated()));
-		stmt.setObject(3, event.getEventId());
-		stmt.setString(4, event.getKind());
+		stmt.setObject(2, event.getEventId());
+
+		CommonSqlUtils.prepareArrayParameter(con, stmt, 2, event.getTags());
+
 		if ( event.getMessage() != null ) {
-			stmt.setString(5, event.getMessage());
+			stmt.setString(4, event.getMessage());
 		} else {
-			stmt.setNull(5, Types.VARCHAR);
+			stmt.setNull(4, Types.VARCHAR);
 		}
 		if ( event.getData() != null ) {
-			stmt.setString(6, event.getData());
+			stmt.setString(5, event.getData());
 		} else {
-			stmt.setNull(6, Types.VARCHAR);
+			stmt.setNull(5, Types.VARCHAR);
 		}
 		return stmt;
 	}

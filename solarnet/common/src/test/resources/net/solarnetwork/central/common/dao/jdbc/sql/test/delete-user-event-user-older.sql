@@ -1,3 +1,3 @@
 DELETE FROM solaruser.user_event_log
 WHERE user_id = ?
-AND ts < ?
+AND event_id < ?

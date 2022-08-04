@@ -30,7 +30,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import java.time.Instant;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -46,13 +47,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.uuid.EthernetAddress;
-import com.fasterxml.uuid.Generators;
-import com.fasterxml.uuid.impl.TimeBasedGenerator;
+import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.StatCounter;
 
@@ -66,7 +67,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private TimeBasedGenerator uuidGenerator;
+	private UuidGenerator uuidGenerator;
 	private ExecutorService executor;
 	private UserEventAppenderDao dao;
 	private PriorityBlockingQueue<UserEvent> queue;
@@ -75,15 +76,15 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 	@BeforeEach
 	public void setup() {
-		uuidGenerator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+		uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE;
 		executor = Executors.newFixedThreadPool(3);
 		dao = EasyMock.createMock(UserEventAppenderDao.class);
-		queue = new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.TIME_SORT);
+		queue = new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT);
 		stats = new StatCounter("AsyncDaoUserEventAppender",
 				"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
 				LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class), 10,
 				UserEventStats.values());
-		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, queue, stats);
+		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, queue, stats, uuidGenerator);
 	}
 
 	@AfterEach
@@ -98,18 +99,28 @@ public class AsyncDaoUserEventAppenderBizTests {
 	@Test
 	public void add() {
 		// GIVEN
-		UserEvent event = new UserEvent(randomUUID().getMostSignificantBits(), Instant.now(),
-				uuidGenerator.generate(), UUID.randomUUID().toString(), UUID.randomUUID().toString(),
-				"{\"foo\":123}");
+		Long userId = randomUUID().getMostSignificantBits();
 
-		dao.add(event);
+		Capture<UserEvent> eventCaptor = new Capture<>();
+		dao.add(capture(eventCaptor));
 
 		// WHEN
 		replayAll();
-		biz.add(event);
+		LogEventInfo info = new LogEventInfo(new String[] { "foo", UUID.randomUUID().toString() },
+				UUID.randomUUID().toString(), "{\"foo\":123}");
+		UserEvent result = biz.add(userId, info);
 
 		// THEN
 		biz.serviceDidShutdown();
+		assertThat("Result provided", result, is(notNullValue()));
+		assertThat("Result same as persisted", eventCaptor.getValue(), is(sameInstance(result)));
+		assertThat("Generated event with user ID", result.getUserId(), is(equalTo(userId)));
+		assertThat("Generated event has UUID", result.getEventId(), is(notNullValue()));
+		assertThat("Generated event took tags from info", result.getTags(),
+				arrayContaining(info.getTags()));
+		assertThat("Generated event took message from info", result.getMessage(),
+				is(equalTo(info.getMessage())));
+		assertThat("Generated event took data from info", result.getData(), is(equalTo(info.getData())));
 	}
 
 	@Test
@@ -125,16 +136,17 @@ public class AsyncDaoUserEventAppenderBizTests {
 		Queue<UserEvent> events = new ConcurrentLinkedQueue<>();
 		ExecutorService exec = Executors.newWorkStealingPool(6);
 		for ( int i = 0; i < taskCount; i++ ) {
+			long userId = i % 10;
 			exec.submit(new Runnable() {
 
 				@Override
 				public void run() {
-					UserEvent event = new UserEvent(randomUUID().getMostSignificantBits(), Instant.now(),
-							uuidGenerator.generate(), UUID.randomUUID().toString(),
+					LogEventInfo info = new LogEventInfo(
+							new String[] { "foo", UUID.randomUUID().toString() },
 							UUID.randomUUID().toString(), "{\"foo\":123}");
-					log.info("Adding event {}", event);
+					log.info("Adding event info {}", info);
+					UserEvent event = biz.add(userId, info);
 					events.add(event);
-					biz.add(event);
 				}
 			});
 		}

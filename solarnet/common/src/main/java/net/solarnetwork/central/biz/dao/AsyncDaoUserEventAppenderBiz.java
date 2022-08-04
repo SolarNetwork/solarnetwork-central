@@ -35,8 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.uuid.UUIDComparator;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -58,26 +61,18 @@ public class AsyncDaoUserEventAppenderBiz
 	private static final Logger log = LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class);
 
 	/**
-	 * A comparator for {@link UserEvent} that sorts by time first, then uesr
-	 * ID, event ID, and kind.
+	 * A comparator for {@link UserEvent} that sorts by event ID first, then
+	 * user ID.
 	 */
-	public static Comparator<UserEvent> TIME_SORT = new Comparator<UserEvent>() {
+	public static Comparator<UserEvent> EVENT_SORT = new Comparator<UserEvent>() {
 
 		@Override
 		public int compare(UserEvent o1, UserEvent o2) {
-			int comparison = o1.getCreated().compareTo(o2.getCreated());
+			int comparison = UUIDComparator.staticCompare(o1.getEventId(), o2.getEventId());
 			if ( comparison != 0 ) {
 				return comparison;
 			}
-			comparison = o1.getUserId().compareTo(o2.getUserId());
-			if ( comparison != 0 ) {
-				return comparison;
-			}
-			comparison = UUIDComparator.staticCompare(o1.getEventId(), o2.getEventId());
-			if ( comparison != 0 ) {
-				return comparison;
-			}
-			return o1.getKind().compareTo(o2.getKind());
+			return o1.getUserId().compareTo(o2.getUserId());
 		}
 	};
 
@@ -117,6 +112,7 @@ public class AsyncDaoUserEventAppenderBiz
 	private final UserEventAppenderDao dao;
 	private final StatCounter stats;
 	private final BlockingQueue<UserEvent> queue;
+	private final UuidGenerator uuidGenerator;
 	private int queueLagAlertThreshold = DEFAULT_QUEUE_LAG_ALERT_THRESHOLD;
 
 	/**
@@ -128,10 +124,11 @@ public class AsyncDaoUserEventAppenderBiz
 	 *        the DAO
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao) {
-		this(executorService, dao, new PriorityBlockingQueue<>(64, TIME_SORT),
+		this(executorService, dao, new PriorityBlockingQueue<>(64, EVENT_SORT),
 				new StatCounter("AsyncDaoUserEventAppender",
 						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz", log, 500,
-						UserEventStats.values()));
+						UserEventStats.values()),
+				TimeBasedV7UuidGenerator.INSTANCE);
 	}
 
 	/**
@@ -145,21 +142,26 @@ public class AsyncDaoUserEventAppenderBiz
 	 *        the queue
 	 * @param stats
 	 *        the stats
+	 * @param uuidGenerator
+	 *        the UUID generator to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao,
-			BlockingQueue<UserEvent> queue, StatCounter stats) {
+			BlockingQueue<UserEvent> queue, StatCounter stats, UuidGenerator uuidGenerator) {
 		super();
 		this.executorService = requireNonNullArgument(executorService, "executorService");
 		this.dao = requireNonNullArgument(dao, "datumDao");
 		this.queue = requireNonNullArgument(queue, "queue");
 		this.stats = requireNonNullArgument(stats, "stats");
+		this.uuidGenerator = requireNonNullArgument(uuidGenerator, "uuidGenerator");
 
 	}
 
 	@Override
-	public void add(UserEvent event) {
+	public UserEvent add(Long userId, LogEventInfo info) {
+		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
+				requireNonNullArgument(info, "info").getTags(), info.getMessage(), info.getData());
 		queue.offer(event);
 		stats.incrementAndGet(UserEventStats.EventsAdded);
 		try {
@@ -169,6 +171,7 @@ public class AsyncDaoUserEventAppenderBiz
 			log.warn("Discarding UserEvent {} because of RejectedExecutionException: {}", event,
 					e.getMessage());
 		}
+		return event;
 	}
 
 	@Override

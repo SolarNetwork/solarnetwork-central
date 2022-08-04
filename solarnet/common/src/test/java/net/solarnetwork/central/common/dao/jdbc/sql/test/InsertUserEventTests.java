@@ -27,14 +27,15 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_CO
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,6 +65,9 @@ public class InsertUserEventTests {
 	@Mock
 	private PreparedStatement stmt;
 
+	@Mock
+	private Array tagsArray;
+
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
 
@@ -72,25 +76,29 @@ public class InsertUserEventTests {
 	}
 
 	private UserEvent createUserEvent(Long userId) {
-		UserEvent event = new UserEvent(userId, Instant.now(), UUID.randomUUID(),
-				UUID.randomUUID().toString(), UUID.randomUUID().toString(), "{\"foo\":123}");
+		UserEvent event = new UserEvent(userId, UUID.randomUUID(),
+				new String[] { "foo", UUID.randomUUID().toString() }, UUID.randomUUID().toString(),
+				"{\"foo\":123}");
 		return event;
+	}
+
+	private void givenSetTagsArrayParameter(String[] value) throws SQLException {
+		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(tagsArray);
 	}
 
 	private void verifyPrepStatement(PreparedStatement result, UserEvent event) throws SQLException {
 		verify(result).setObject(1, event.getUserId());
-		verify(result).setTimestamp(2, Timestamp.from(event.getCreated()));
-		verify(result).setObject(3, event.getEventId());
-		verify(result).setString(4, event.getKind());
+		verify(result).setObject(2, event.getEventId());
+		verify(result).setArray(3, tagsArray);
 		if ( event.getMessage() != null ) {
-			verify(result).setString(5, event.getMessage());
+			verify(result).setString(4, event.getMessage());
 		} else {
-			verify(result).setNull(5, Types.VARCHAR);
+			verify(result).setNull(4, Types.VARCHAR);
 		}
 		if ( event.getData() != null ) {
-			verify(result).setString(6, event.getData());
+			verify(result).setString(5, event.getData());
 		} else {
-			verify(result).setNull(6, Types.VARCHAR);
+			verify(result).setNull(5, Types.VARCHAR);
 		}
 	}
 
@@ -115,6 +123,7 @@ public class InsertUserEventTests {
 
 		// GIVEN
 		givenPrepStatement();
+		givenSetTagsArrayParameter(event.getTags());
 
 		// WHEN
 		PreparedStatement result = new InsertUserEvent(event).createPreparedStatement(con);
@@ -130,11 +139,12 @@ public class InsertUserEventTests {
 	@Test
 	public void prep_nullMessageAndData() throws SQLException {
 		// GIVEN
-		UserEvent event = new UserEvent(randomUUID().getMostSignificantBits(), Instant.now(),
-				UUID.randomUUID(), UUID.randomUUID().toString(), null, null);
+		UserEvent event = new UserEvent(randomUUID().getMostSignificantBits(), UUID.randomUUID(),
+				new String[] { "foo", UUID.randomUUID().toString() }, null, null);
 
 		// GIVEN
 		givenPrepStatement();
+		givenSetTagsArrayParameter(event.getTags());
 
 		// WHEN
 		PreparedStatement result = new InsertUserEvent(event).createPreparedStatement(con);

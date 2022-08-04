@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.support.UuidUtils.createUuidV7Boundary;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
@@ -36,7 +37,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
@@ -72,7 +72,7 @@ public class SelectUserEventsTests {
 	private Array userIdsArray;
 
 	@Mock
-	private Array kindsArray;
+	private Array tagsArray;
 
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
@@ -82,12 +82,12 @@ public class SelectUserEventsTests {
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).willReturn(stmt);
 	}
 
-	private void givenSetUserIdsArrayParameter(int p, Long[] value) throws SQLException {
+	private void givenSetUserIdsArrayParameter(Long[] value) throws SQLException {
 		given(con.createArrayOf(eq("bigint"), aryEq(value))).willReturn(userIdsArray);
 	}
 
-	private void givenSetKindsArrayParameter(int p, String[] value) throws SQLException {
-		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(kindsArray);
+	private void givenSetTagsArrayParameter(String[] value) throws SQLException {
+		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(tagsArray);
 	}
 
 	private void verifyPrepStatement(PreparedStatement result, UserEventFilter filter)
@@ -100,14 +100,14 @@ public class SelectUserEventsTests {
 				verify(result).setArray(++p, userIdsArray);
 			}
 		}
-		if ( filter.hasKindCriteria() ) {
-			verify(result).setArray(++p, kindsArray);
+		if ( filter.hasTagCriteria() ) {
+			verify(result).setArray(++p, tagsArray);
 		}
 		if ( filter.hasStartDate() ) {
-			verify(result).setTimestamp(++p, Timestamp.from(filter.getStartDate()));
+			verify(result).setObject(++p, createUuidV7Boundary(filter.getStartDate()));
 		}
 		if ( filter.hasEndDate() ) {
-			verify(result).setTimestamp(++p, Timestamp.from(filter.getEndDate()));
+			verify(result).setObject(++p, createUuidV7Boundary(filter.getEndDate()));
 		}
 		if ( filter.getMax() != null ) {
 			verify(result).setInt(++p, filter.getMax());
@@ -122,7 +122,7 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserId(1L);
-		filter.setKind("A");
+		filter.setTag("A");
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 
@@ -140,12 +140,12 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserId(1L);
-		filter.setKind("A");
+		filter.setTag("A");
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 
 		givenPrepStatement();
-		givenSetKindsArrayParameter(2, filter.getKinds());
+		givenSetTagsArrayParameter(filter.getTags());
 
 		// WHEN
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
@@ -165,7 +165,7 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserId(1L);
-		filter.setKind("A");
+		filter.setTag("A");
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		filter.setMax(100);
@@ -185,14 +185,14 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserId(1L);
-		filter.setKind("A");
+		filter.setTag("A");
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		filter.setMax(100);
 		filter.setOffset(200);
 
 		givenPrepStatement();
-		givenSetKindsArrayParameter(2, filter.getKinds());
+		givenSetTagsArrayParameter(filter.getTags());
 
 		// WHEN
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
@@ -212,7 +212,7 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserIds(new Long[] { 1L, 2L });
-		filter.setKinds(new String[] { "A", "B" });
+		filter.setTags(new String[] { "A", "B" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 
@@ -230,13 +230,13 @@ public class SelectUserEventsTests {
 		// GIVEN
 		BasicUserEventFilter filter = new BasicUserEventFilter();
 		filter.setUserIds(new Long[] { 1L, 2L });
-		filter.setKinds(new String[] { "A", "B" });
+		filter.setTags(new String[] { "A", "B" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 
 		givenPrepStatement();
-		givenSetUserIdsArrayParameter(1, filter.getUserIds());
-		givenSetKindsArrayParameter(2, filter.getKinds());
+		givenSetUserIdsArrayParameter(filter.getUserIds());
+		givenSetTagsArrayParameter(filter.getTags());
 
 		// WHEN
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);

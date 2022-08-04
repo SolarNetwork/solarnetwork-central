@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
+import static net.solarnetwork.central.support.UuidUtils.createUuidV7Boundary;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
@@ -33,7 +34,6 @@ import static org.mockito.Mockito.verify;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,7 +76,7 @@ public class DeleteUserEventTests {
 		int p = 0;
 		verify(stmt).setObject(++p, f.getUserId());
 		if ( f.getEndDate() != null ) {
-			verify(stmt).setTimestamp(++p, Timestamp.from(f.getEndDate()));
+			verify(stmt).setObject(++p, createUuidV7Boundary(f.getEndDate()));
 		}
 	}
 

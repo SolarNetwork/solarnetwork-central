@@ -1,7 +1,7 @@
-SELECT uel.user_id,uel.ts,uel.id,uel.kind,uel.message,uel.jdata
+SELECT uel.user_id,uel.event_id,uel.tags,uel.message,uel.jdata
 FROM solaruser.user_event_log uel
 WHERE uel.user_id = ?
-	AND string_to_array(uel.kind,'/') @> ?
-	AND uel.ts >= ?
-	AND uel.ts < ?
-ORDER BY uel.user_id,uel.ts,uel.id
+	AND uel.tags @> ?
+	AND uel.event_id >= ?
+	AND uel.event_id < ?
+ORDER BY uel.user_id,uel.event_id

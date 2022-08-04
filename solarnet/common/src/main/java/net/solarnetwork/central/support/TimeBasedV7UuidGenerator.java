@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import net.solarnetwork.central.biz.UuidGenerator;
-import net.solarnetwork.central.biz.UuidTimestampExtractor;
+import net.solarnetwork.central.biz.UuidTimestampDecoder;
 
 /**
  * UUID generator using time-based v1 UUIDs.
@@ -38,7 +38,7 @@ import net.solarnetwork.central.biz.UuidTimestampExtractor;
  * @author matt
  * @version 1.0
  */
-public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampExtractor {
+public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampDecoder {
 
 	/**
 	 * A default instance.
@@ -89,29 +89,39 @@ public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampExt
 	}
 
 	@Override
-	public Instant extractTimestamp(UUID uuid) {
-		return extractUuidTimestamp(uuid);
+	public Instant decodeTimestamp(UUID uuid) {
+		// timestamp is highest 48 bits of UUID
+		return Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
+	}
+
+	@Override
+	public UUID createTimestampBoundary(Instant ts) {
+		return createBoundary(ts);
 	}
 
 	/**
-	 * Extract the timestamp out of a UUID.
+	 * Generate a V7 UUID "boundary" marker.
 	 * 
 	 * <p>
-	 * Only version 7 and 1 are supported.
+	 * The returned value has no random data. It only includes the timestamp
+	 * value.
 	 * </p>
 	 * 
-	 * @param uuid
-	 *        the UUID to extract
-	 * @return the timestamp, or {@literal null} if unable to extract a
-	 *         timestamp
+	 * @param ts
+	 *        the timestamp to encode
+	 * @return the UUID
 	 */
-	public static Instant extractUuidTimestamp(UUID uuid) {
-		if ( uuid.version() == 7 ) {
-			return Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
-		} else if ( uuid.version() == 1 ) {
-			return Instant.ofEpochMilli(uuid.timestamp());
-		}
-		return null;
+	public static UUID createBoundary(Instant ts) {
+		long now = ts.toEpochMilli();
+
+		// @formatter:off
+		long lower = 0xB000000000000000L;
+		long upper = (
+				((now & 0xFFFFFFFFFFFFL) << 16) // truncate epoch to 48 bits
+				| 0x7000L // variant
+				);
+		// @formatter:on
+		return new UUID(upper, lower);
 	}
 
 }
