@@ -33,7 +33,13 @@ import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.UuidTimestampDecoder;
 
 /**
- * UUID generator using time-based v1 UUIDs.
+ * UUID generator using time-based v7 UUIDs.
+ * 
+ * <p>
+ * See <a href=
+ * "https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7">the
+ * IETF working draft</a> for details.
+ * </p>
  * 
  * @author matt
  * @version 1.0
