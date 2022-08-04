@@ -121,18 +121,21 @@ public class SelectDatum
 		return (aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0);
 	}
 
+	private boolean isMetadataTimeZoneRequired() {
+		return (filter.hasLocalDate() || isDefaultLocalDateRange()
+				|| filter.getAggregation() == Aggregation.Week);
+	}
+
 	private void sqlCte(StringBuilder buf, boolean ordered) {
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
 		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
-					filter.hasLocalDate() || isDefaultLocalDateRange()
-							? DatumSqlUtils.MetadataSelectStyle.WithZone
+					isMetadataTimeZoneRequired() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
 		} else {
 			DatumSqlUtils.nodeMetadataFilterSql(filter,
-					filter.hasLocalDate() || isDefaultLocalDateRange()
-							? DatumSqlUtils.MetadataSelectStyle.WithZone
+					isMetadataTimeZoneRequired() ? DatumSqlUtils.MetadataSelectStyle.WithZone
 							: DatumSqlUtils.MetadataSelectStyle.Minimum,
 					combine, buf);
 		}
@@ -179,26 +182,33 @@ public class SelectDatum
 			buf.append("	datum.ts_start AS ts,\n");
 			DatumSqlUtils.rollupAggDataSql(buf);
 		} else {
-			if ( aggregation != Aggregation.None ) {
+			if ( aggregation == Aggregation.Week ) {
+				buf.append(
+						"	date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone AS ts,\n");
+			} else if ( aggregation != Aggregation.None ) {
 				buf.append("	datum.ts_start AS ts,\n");
 			} else {
 				buf.append("	datum.ts,\n");
 				buf.append("	datum.received,\n");
 			}
-			buf.append("	datum.data_i,\n");
-			buf.append("	datum.data_a,\n");
-			buf.append("	datum.data_s,\n");
-			buf.append("	datum.data_t");
-			if ( aggregation != Aggregation.None ) {
-				buf.append(",\n	datum.stat_i,\n");
-				if ( isMinuteAggregation() ) {
-					// reading data not available for minute aggregation
-					buf.append("	NULL::BIGINT[][] AS read_a\n");
-				} else {
-					buf.append("	datum.read_a");
+			if ( aggregation == Aggregation.Week ) {
+				DatumSqlUtils.rollupAggDataSql(buf);
+			} else {
+				buf.append("	datum.data_i,\n");
+				buf.append("	datum.data_a,\n");
+				buf.append("	datum.data_s,\n");
+				buf.append("	datum.data_t");
+				if ( aggregation != Aggregation.None ) {
+					buf.append(",\n	datum.stat_i,\n");
+					if ( isMinuteAggregation() ) {
+						// reading data not available for minute aggregation
+						buf.append("	NULL::BIGINT[][] AS read_a\n");
+					} else {
+						buf.append("	datum.read_a");
+					}
 				}
+				buf.append("\n");
 			}
-			buf.append("\n");
 		}
 	}
 
@@ -212,6 +222,7 @@ public class SelectDatum
 			case SeasonalDayOfWeek:
 			case HourOfDay:
 			case SeasonalHourOfDay:
+			case WeekOfYear:
 				return true;
 
 			default:
@@ -223,7 +234,8 @@ public class SelectDatum
 		return !filter.hasDateOrLocalDateRange() && (filter.getAggregation() == Aggregation.DayOfWeek
 				|| filter.getAggregation() == Aggregation.SeasonalDayOfWeek
 				|| filter.getAggregation() == Aggregation.HourOfDay
-				|| filter.getAggregation() == Aggregation.SeasonalHourOfDay);
+				|| filter.getAggregation() == Aggregation.SeasonalHourOfDay
+				|| filter.getAggregation() == Aggregation.WeekOfYear);
 	}
 
 	protected String sqlTableName() {
@@ -240,6 +252,7 @@ public class SelectDatum
 				return "solardatm.agg_datm_hourly";
 
 			case Day:
+			case Week:
 				return "solardatm.agg_datm_daily";
 
 			case Month:
@@ -264,6 +277,11 @@ public class SelectDatum
 				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
+
+			case WeekOfYear:
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
+						? "solardatm.find_agg_datm_woy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_woy(s.stream_id, ?, ?)";
 
 			default:
 				return "solardatm.da_datm";
@@ -342,6 +360,10 @@ public class SelectDatum
 		sqlSelect(buf);
 		sqlFrom(buf);
 		sqlWhere(buf);
+		if ( aggregation == Aggregation.Week ) {
+			buf.append(
+					"GROUP BY datum.stream_id, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
+		}
 		if ( combine != null ) {
 			if ( isMinuteAggregation() ) {
 				buf.append("	GROUP BY datum.stream_id, ts\n");

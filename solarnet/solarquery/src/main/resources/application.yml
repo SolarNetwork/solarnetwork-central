@@ -31,10 +31,11 @@ app:
     query:
       filtered-results-limit: 1000
       max-days-for-minute-aggregation: 7
-      max-days-for-hour-aggregation: 31
-      max-days-for-day-aggregation: 730
-      max-days-for-day-of-week-aggregation: 3650
-      max-days-for-hour-of-day-aggregation: 3650
+      max-days-for-hour-aggregation: 32
+      max-days-for-day-aggregation: 735
+      max-days-for-day-of-week-aggregation: 3655
+      max-days-for-hour-of-day-aggregation: 3655
+      max-days-for-week-of-year-aggregation: 3655
     query-auditor:
       update-delay: 100
       flush-delay: 10000

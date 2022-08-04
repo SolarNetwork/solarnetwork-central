@@ -99,7 +99,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -116,6 +116,7 @@ public class DaoQueryBiz implements QueryBiz {
 	private long maxDaysForDayAggregation = 730;
 	private long maxDaysForDayOfWeekAggregation = 3650;
 	private long maxDaysForHourOfDayAggregation = 3650;
+	private long maxDaysForWeekOfYearAggregation = 3650;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -291,35 +292,44 @@ public class DaoQueryBiz implements QueryBiz {
 		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
 				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
-			log.info("Restricting aggregate to Day level for filter with missing start or end date: {}",
+			log.info("Restricting aggregate to Day for filter with missing start or end date: {}",
 					filter);
 			forced = Aggregation.Day;
 		} else if ( agg == Aggregation.HourOfDay || agg == Aggregation.SeasonalHourOfDay ) {
 			if ( diffDays > maxDaysForHourOfDayAggregation ) {
-				log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
+				log.info(
+						"Restricting aggregate to Month for HourOfDay filter duration {} days (> {}): {}",
 						diffDays, maxDaysForHourOfDayAggregation, filter);
 				forced = Aggregation.Month;
 			}
 		} else if ( agg == Aggregation.DayOfWeek || agg == Aggregation.SeasonalDayOfWeek ) {
 			if ( diffDays > maxDaysForDayOfWeekAggregation ) {
-				log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
+				log.info(
+						"Restricting aggregate to Month for DayOfWeek filter duration {} days (> {}): {}",
 						diffDays, maxDaysForDayOfWeekAggregation, filter);
+				forced = Aggregation.Month;
+			}
+		} else if ( agg == Aggregation.WeekOfYear ) {
+			if ( diffDays > maxDaysForWeekOfYearAggregation ) {
+				log.info(
+						"Restricting aggregate to Month for WeekOfYear filter duration {} days (> {}): {}",
+						diffDays, maxDaysForWeekOfYearAggregation, filter);
 				forced = Aggregation.Month;
 			}
 		} else if ( maxDaysForDayAggregation > 0 && diffDays > maxDaysForDayAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Month) < 0) ) {
-			log.info("Restricting aggregate to Month level for filter duration {} days (> {}): {}",
-					diffDays, maxDaysForDayAggregation, filter);
+			log.info("Restricting aggregate to Month for filter duration {} days (> {}): {}", diffDays,
+					maxDaysForDayAggregation, filter);
 			forced = Aggregation.Month;
 		} else if ( maxDaysForHourAggregation > 0 && diffDays > maxDaysForHourAggregation
 				&& (agg == null || agg.compareLevel(Aggregation.Day) < 0) ) {
-			log.info("Restricting aggregate to Day level for filter duration {} days (> {}): {}",
-					diffDays, maxDaysForHourAggregation, filter);
+			log.info("Restricting aggregate to Day for filter duration {} days (> {}): {}", diffDays,
+					maxDaysForHourAggregation, filter);
 			forced = Aggregation.Day;
 		} else if ( diffDays > maxDaysForMinuteAggregation
 				&& (agg == null || agg.compareTo(Aggregation.Hour) < 0) ) {
-			log.info("Restricting aggregate to Hour level for filter duration {} days (> {}): {}",
-					diffDays, maxDaysForMinuteAggregation, filter);
+			log.info("Restricting aggregate to Hour for filter duration {} days (> {}): {}", diffDays,
+					maxDaysForMinuteAggregation, filter);
 			forced = Aggregation.Hour;
 		}
 		return forced;
@@ -565,14 +575,55 @@ public class DaoQueryBiz implements QueryBiz {
 		this.maxDaysForDayAggregation = maxDaysForDayAggregation;
 	}
 
+	/**
+	 * Get the maximum day time range allowed for hour-of-day aggregate queries
+	 * before a higher aggregation level (e.g. day) is enforced.
+	 * 
+	 * @return the maximum day time range; defaults to {@literal 3650}
+	 */
 	public void setMaxDaysForDayOfWeekAggregation(long maxDaysForDayOfWeekAggregation) {
 		this.maxDaysForDayOfWeekAggregation = maxDaysForDayOfWeekAggregation;
 	}
 
+	/**
+	 * Set the maximum day time range allowed for hour-of-day aggregate queries
+	 * before a higher aggregation level (e.g. day) is enforced.
+	 * 
+	 * @param maxDaysForHourOfDayAggregation
+	 *        the maximum day range
+	 */
 	public void setMaxDaysForHourOfDayAggregation(long maxDaysForHourOfDayAggregation) {
 		this.maxDaysForHourOfDayAggregation = maxDaysForHourOfDayAggregation;
 	}
 
+	/**
+	 * Get the maximum day time range allowed for week-of-year aggregate queries
+	 * before a higher aggregation level (e.g. month) is enforced.
+	 * 
+	 * @return the maximum day time range; defaults to {@literal 3650}
+	 * @since 4.2
+	 */
+	public long getMaxDaysForWeekOfYearAggregation() {
+		return maxDaysForWeekOfYearAggregation;
+	}
+
+	/**
+	 * Set the maximum day time range allowed for week-of-year aggregate queries
+	 * before a higher aggregation level (e.g. month) is enforced.
+	 * 
+	 * @param maxDaysForWeekOfYearAggregation
+	 *        the maximum day range
+	 * @since 4.2
+	 */
+	public void setMaxDaysForWeekOfYearAggregation(long maxDaysForWeekOfYearAggregation) {
+		this.maxDaysForWeekOfYearAggregation = maxDaysForWeekOfYearAggregation;
+	}
+
+	/**
+	 * Get the location DAO.
+	 * 
+	 * @return the DAO
+	 */
 	public SolarLocationDao getSolarLocationDao() {
 		return solarLocationDao;
 	}
