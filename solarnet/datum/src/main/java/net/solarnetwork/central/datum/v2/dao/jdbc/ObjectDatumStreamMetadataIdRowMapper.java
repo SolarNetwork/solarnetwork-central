@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -78,7 +79,7 @@ public class ObjectDatumStreamMetadataIdRowMapper implements RowMapper<ObjectDat
 
 	@Override
 	public ObjectDatumStreamMetadataId mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Long objId = rs.getLong(2);
 		String sourceId = rs.getString(3);
 

@@ -16,7 +16,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarQuery'
-version = '1.2.3'
+version = '1.3.0'
 archivesBaseName = 'solarquery'
 
 configurations {

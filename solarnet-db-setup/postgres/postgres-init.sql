@@ -33,6 +33,7 @@
 \i postgres-init-user-datum-expire.sql
 \i postgres-init-user-datum-import.sql
 \i postgres-init-user-event-hook.sql
+\i postgres-init-user-events.sql
 \i postgres-init-ocpp-schema.sql
 \i postgres-init-ocpp.sql
 \i postgres-init-quartz-schema.sql

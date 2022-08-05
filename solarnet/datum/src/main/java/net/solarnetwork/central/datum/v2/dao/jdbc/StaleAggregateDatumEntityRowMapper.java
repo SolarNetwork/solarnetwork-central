@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -56,7 +57,7 @@ public class StaleAggregateDatumEntityRowMapper implements RowMapper<StaleAggreg
 
 	@Override
 	public StaleAggregateDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Instant ts = rs.getTimestamp(2).toInstant();
 		String aggKind = rs.getString(3);
 		Instant created = rs.getTimestamp(4).toInstant();

@@ -81,6 +81,7 @@ public class DatumQueryBizConfig {
 		private int maxDaysForDayAggregation = 730;
 		private int maxDaysForDayOfWeekAggregation = 3650;
 		private int maxDaysForHourOfDayAggregation = 3650;
+		private int maxDaysForWeekOfYearAggregation = 3650;
 
 		public int getFilteredResultsLimit() {
 			return filteredResultsLimit;
@@ -130,6 +131,14 @@ public class DatumQueryBizConfig {
 			this.maxDaysForHourOfDayAggregation = maxDaysForHourOfDayAggregation;
 		}
 
+		public int getMaxDaysForWeekOfYearAggregation() {
+			return maxDaysForWeekOfYearAggregation;
+		}
+
+		public void setMaxDaysForWeekOfYearAggregation(int maxDaysForWeekOfYearAggregation) {
+			this.maxDaysForWeekOfYearAggregation = maxDaysForWeekOfYearAggregation;
+		}
+
 	}
 
 	@Bean
@@ -149,6 +158,7 @@ public class DatumQueryBizConfig {
 		biz.setMaxDaysForDayAggregation(settings.maxDaysForDayAggregation);
 		biz.setMaxDaysForDayOfWeekAggregation(settings.maxDaysForDayOfWeekAggregation);
 		biz.setMaxDaysForHourOfDayAggregation(settings.maxDaysForHourOfDayAggregation);
+		biz.setMaxDaysForWeekOfYearAggregation(settings.maxDaysForWeekOfYearAggregation);
 		biz.setCriteriaValidator(datumCriteriaValidator());
 		return biz;
 	}

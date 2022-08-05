@@ -26,13 +26,14 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listAuditDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -55,9 +56,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the "find missing audit datum" database stored procedure.
@@ -110,7 +110,7 @@ public class DbFindAuditDatumDailyMissing extends BaseDatumJdbcTestSupport {
 
 		@Override
 		public MissingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-			UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+			UUID streamId = getUuid(rs, 1);
 			Instant ts = rs.getTimestamp(2).toInstant();
 			return new MissingDatum(streamId, ts, rs.getString(3));
 		}

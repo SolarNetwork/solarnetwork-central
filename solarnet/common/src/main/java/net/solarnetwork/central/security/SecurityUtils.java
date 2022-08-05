@@ -46,7 +46,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
  * Security helper methods.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SecurityUtils {
 
@@ -193,7 +193,7 @@ public class SecurityUtils {
 	/**
 	 * Get the current active authentication.
 	 * 
-	 * @return the active Authentication, or <em>null</em> if none available
+	 * @return the active Authentication, or {@literal null} if none available
 	 */
 	public static Authentication getCurrentAuthentication() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -207,12 +207,25 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityActor}.
 	 * 
-	 * @return the current actor, never <em>null</em>
+	 * @return the current actor, never {@literal null}
 	 * @throws SecurityException
 	 *         if the actor is not available
 	 */
 	public static SecurityActor getCurrentActor() throws SecurityException {
-		Authentication auth = getCurrentAuthentication();
+		return getActor(getCurrentAuthentication());
+	}
+
+	/**
+	 * Get the actor for a given authentication.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @return the actor, never {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available
+	 * @since 2.1
+	 */
+	public static SecurityActor getActor(Authentication auth) {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityActor ) {
 			return (SecurityActor) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityActor ) {
@@ -225,13 +238,28 @@ public class SecurityUtils {
 	 * Get the current {@link SecurityActor}'s {@code userId}.
 	 * 
 	 * @return The user ID of the current {@link SecurityActor} (never
-	 *         <em>null</em>).
+	 *         {@literal null}).
 	 * @throws SecurityException
 	 *         If the actor is not available.
 	 * @since 1.3
 	 */
 	public static Long getCurrentActorUserId() throws SecurityException {
-		SecurityActor actor = getCurrentActor();
+		return getActorUserId(getCurrentAuthentication());
+	}
+
+	/**
+	 * Get the ID of the user associated with a given authentication.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @return the ID of the user associated with the actor, never
+	 *         {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available
+	 * @since 2.1
+	 */
+	public static Long getActorUserId(Authentication auth) throws SecurityException {
+		SecurityActor actor = getActor(auth);
 		Long userId = null;
 		if ( actor instanceof SecurityUser ) {
 			userId = ((SecurityUser) actor).getUserId();
@@ -247,12 +275,25 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityToken}.
 	 * 
-	 * @return the current actor, never <em>null</em>
+	 * @return the current actor, never {@literal null}
 	 * @throws SecurityException
 	 *         if the actor is not available
 	 */
 	public static SecurityToken getCurrentToken() throws SecurityException {
-		Authentication auth = getCurrentAuthentication();
+		return getToken(getCurrentAuthentication());
+	}
+
+	/**
+	 * Get a {@link SecurityToken} for a given authentication.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @return the token actor, never {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available or not a token
+	 * @since 2.1
+	 */
+	public static SecurityToken getToken(Authentication auth) throws SecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityToken ) {
 			return (SecurityToken) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityToken ) {
@@ -264,12 +305,25 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityUser}.
 	 * 
-	 * @return the current user, never <em>null</em>
+	 * @return the current user, never {@literal null}
 	 * @throws SecurityException
 	 *         if the user is not available
 	 */
 	public static SecurityUser getCurrentUser() throws SecurityException {
-		Authentication auth = getCurrentAuthentication();
+		return getUser(getCurrentAuthentication());
+	}
+
+	/**
+	 * Get a {@link SecurityUser} for a given authentication.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @return the user actor, never {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available or is not a user
+	 * @since 2.1
+	 */
+	public static SecurityUser getUser(Authentication auth) throws SecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityUser ) {
 			return (SecurityUser) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityUser ) {
@@ -281,12 +335,25 @@ public class SecurityUtils {
 	/**
 	 * Get the current {@link SecurityNode}.
 	 * 
-	 * @return the current node, never <em>null</em>
+	 * @return the current node, never {@literal null}
 	 * @throws SecurityException
 	 *         if the node is not available
 	 */
 	public static SecurityNode getCurrentNode() throws SecurityException {
-		Authentication auth = getCurrentAuthentication();
+		return getNode(getCurrentAuthentication());
+	}
+
+	/**
+	 * Get a {@link SecurityNode} for a given authentication.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @return the node actor, never {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available or is not a node
+	 * @since 2.1
+	 */
+	public static SecurityNode getNode(Authentication auth) throws SecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityNode ) {
 			return (SecurityNode) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityNode ) {
@@ -307,9 +374,26 @@ public class SecurityUtils {
 	 * @since 2.0
 	 */
 	public static Long[] authorizedNodeIdsForCurrentActor(SolarNodeOwnershipDao nodeOwnershipDao) {
+		return authorizedNodeIds(getCurrentAuthentication(), nodeOwnershipDao);
+	}
+
+	/**
+	 * Get all node IDs the given authentication is authorized to access.
+	 * 
+	 * @param auth
+	 *        the authentication
+	 * @param nodeOwnershipDao
+	 *        the DAO to use to fill in all available nodes for user-based
+	 *        actors, or {@code null} to not fill in nodes
+	 * @return the allowed node IDs
+	 * @throws AuthorizationException
+	 *         if no node IDs are allowed or there is no actor
+	 * @since 2.1
+	 */
+	public static Long[] authorizedNodeIds(Authentication auth, SolarNodeOwnershipDao nodeOwnershipDao) {
 		final SecurityActor actor;
 		try {
-			actor = SecurityUtils.getCurrentActor();
+			actor = getActor(auth);
 		} catch ( SecurityException e ) {
 			LOG.warn("Access DENIED to node {} for non-authenticated user");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getUuid;
 import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -30,10 +31,10 @@ import java.sql.Timestamp;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Map reading datum rows into {@link ReadingDatum} instances.
@@ -99,7 +100,7 @@ public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {
 
 	@Override
 	public ReadingDatum mapRow(ResultSet rs, int rowNum) throws SQLException {
-		UUID streamId = DatumJdbcUtils.getUuid(rs, 1);
+		UUID streamId = getUuid(rs, 1);
 		Timestamp ts = rs.getTimestamp(2);
 		Timestamp tsEnd = rs.getTimestamp(3);
 		BigDecimal[] data_i = getArray(rs, 4);

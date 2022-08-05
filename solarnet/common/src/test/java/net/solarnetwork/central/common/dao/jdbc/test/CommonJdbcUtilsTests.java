@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumJdbcUtilsTests.java - 8/12/2020 5:34:50 pm
+ * CommonJdbcUtilsTests.java - 3/08/2022 11:20:45 am
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,44 +20,45 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc.test;
+package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.same;
 import static org.easymock.EasyMock.verify;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import org.easymock.EasyMock;
 import org.junit.Test;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.jdbc.DatumJdbcUtils;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.test.DatumSqlUtilsTests.PreparedStatementCreatorWithCount;
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
+import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.dao.FilterResults;
 
 /**
- * Test cases for the {@link DatumJdbcUtils} class.
+ * Test cases for the {@link CommonJdbcUtils} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class DatumJdbcUtilsTests {
+public class CommonJdbcUtilsTests {
+
+	public static interface PreparedStatementCreatorWithCount
+			extends PreparedStatementCreator, CountPreparedStatementCreatorProvider {
+		// marker API for EasyMock
+	}
 
 	@SuppressWarnings("unchecked")
 	@Test
@@ -66,33 +67,31 @@ public class DatumJdbcUtilsTests {
 		JdbcOperations jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 		PreparedStatementCreatorWithCount sql = EasyMock
 				.createMock(PreparedStatementCreatorWithCount.class);
-		RowMapper<Datum> mapper = EasyMock.createMock(RowMapper.class);
+		RowMapper<LocationRequest> mapper = EasyMock.createMock(RowMapper.class);
 		PreparedStatementCreator countSql = EasyMock.createMock(PreparedStatementCreator.class);
-	
+
 		// execute count query
 		expect(sql.countPreparedStatementCreator()).andReturn(countSql);
 		expect(jdbcTemplate.query(same(countSql), anyObject(ResultSetExtractor.class))).andReturn(123L);
-	
+
 		// execute actual query
-		Datum datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, null);
-		List<Datum> data = Collections.singletonList(datum);
+		LocationRequest datum = new LocationRequest();
+		List<LocationRequest> data = Collections.singletonList(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
-	
+
 		// WHEN
 		replay(jdbcTemplate, sql, mapper, countSql);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setWithoutTotalResultsCount(false);
+		BasicCoreCriteria filter = new BasicCoreCriteria();
 		filter.setMax(1);
 		filter.setOffset(1);
-		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
-				sql, mapper);
-	
+		FilterResults<LocationRequest, Long> results = CommonJdbcUtils.executeFilterQuery(jdbcTemplate,
+				filter, sql, mapper);
+
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
 		assertThat("Result offset from criteria", results.getStartingOffset(), equalTo(1));
-		assertThat(
-				"Result total not available without CountPreparedStatementCreatorProvider implementation",
+		assertThat("Result total available with CountPreparedStatementCreatorProvider implementation",
 				results.getTotalResults(), equalTo(123L));
 		assertThat("Result results is data", results.getResults(), sameInstance(data));
 		verify(jdbcTemplate, sql, mapper, countSql);
@@ -104,21 +103,20 @@ public class DatumJdbcUtilsTests {
 		JdbcOperations jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 		PreparedStatementCreator sql = EasyMock.createMock(PreparedStatementCreator.class);
 		@SuppressWarnings("unchecked")
-		RowMapper<Datum> mapper = EasyMock.createMock(RowMapper.class);
-	
-		Datum datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, null);
-		List<Datum> data = Collections.singletonList(datum);
+		RowMapper<LocationRequest> mapper = EasyMock.createMock(RowMapper.class);
+
+		LocationRequest datum = new LocationRequest();
+		List<LocationRequest> data = Collections.singletonList(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
-	
+
 		// WHEN
 		replay(jdbcTemplate, sql, mapper);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setWithoutTotalResultsCount(false);
+		BasicCoreCriteria filter = new BasicCoreCriteria();
 		filter.setMax(1);
 		filter.setOffset(1);
-		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
-				sql, mapper);
-	
+		FilterResults<LocationRequest, Long> results = CommonJdbcUtils.executeFilterQuery(jdbcTemplate,
+				filter, sql, mapper);
+
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
@@ -136,55 +134,25 @@ public class DatumJdbcUtilsTests {
 		JdbcOperations jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 		PreparedStatementCreator sql = EasyMock.createMock(PreparedStatementCreator.class);
 		@SuppressWarnings("unchecked")
-		RowMapper<Datum> mapper = EasyMock.createMock(RowMapper.class);
-	
-		Datum datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, null);
-		List<Datum> data = Collections.singletonList(datum);
+		RowMapper<LocationRequest> mapper = EasyMock.createMock(RowMapper.class);
+
+		LocationRequest datum = new LocationRequest();
+		List<LocationRequest> data = Collections.singletonList(datum);
 		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
-	
+
 		// WHEN
 		replay(jdbcTemplate, sql, mapper);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setWithoutTotalResultsCount(true);
+		BasicCoreCriteria filter = new BasicCoreCriteria();
 		filter.setMax(1);
-		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
-				sql, mapper);
-	
+		FilterResults<LocationRequest, Long> results = CommonJdbcUtils.executeFilterQuery(jdbcTemplate,
+				filter, sql, mapper);
+
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
 		assertThat("Result offset", results.getStartingOffset(), equalTo(0));
 		assertThat("Result total not set given withoutTotalResultsCount", results.getTotalResults(),
 				nullValue());
-		assertThat("Result results is data", results.getResults(), sameInstance(data));
-		verify(jdbcTemplate, sql, mapper);
-	}
-
-	@Test
-	public void executeFilterQuery_withoutTotalResultsCount() throws SQLException {
-		// GIVEN
-		JdbcOperations jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
-		PreparedStatementCreator sql = EasyMock.createMock(PreparedStatementCreator.class);
-		@SuppressWarnings("unchecked")
-		RowMapper<Datum> mapper = EasyMock.createMock(RowMapper.class);
-	
-		Datum datum = new DatumEntity(UUID.randomUUID(), Instant.now(), null, null);
-		List<Datum> data = Collections.singletonList(datum);
-		expect(jdbcTemplate.query(sql, mapper)).andReturn(data);
-	
-		// WHEN
-		replay(jdbcTemplate, sql, mapper);
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setWithoutTotalResultsCount(true);
-		FilterResults<Datum, DatumPK> results = DatumJdbcUtils.executeFilterQuery(jdbcTemplate, filter,
-				sql, mapper);
-	
-		// THEN
-		assertThat("Result returned", results, notNullValue());
-		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
-		assertThat("Result offset", results.getStartingOffset(), equalTo(0));
-		assertThat("Result total set given withoutTotalResultsCount but without max",
-				results.getTotalResults(), equalTo(1L));
 		assertThat("Result results is data", results.getResults(), sameInstance(data));
 		verify(jdbcTemplate, sql, mapper);
 	}

@@ -31,7 +31,6 @@ import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,7 +69,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -1554,16 +1553,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
+	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria, Connection,
+	 *      PreparedStatement, int)
 	 */
 	public static int prepareDateRangeFilter(DateRangeCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		if ( filter.getStartDate() != null ) {
-			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getStartDate()));
-		}
-		if ( filter.getEndDate() != null ) {
-			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getEndDate()));
-		}
-		return parameterOffset;
+		return CommonSqlUtils.prepareDateRange(filter, con, stmt, parameterOffset);
 	}
 
 	/**
@@ -1606,23 +1601,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#limitOffset(PaginationCriteria, StringBuilder)
+	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria, Connection,
+	 *      PreparedStatement, int)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		if ( filter != null && filter.getMax() != null ) {
-			int max = filter.getMax();
-			if ( max > 0 ) {
-				stmt.setInt(++parameterOffset, max);
-			}
-		}
-		if ( filter != null && filter.getOffset() != null ) {
-			int offset = filter.getOffset();
-			if ( offset > 0 ) {
-				stmt.setInt(++parameterOffset, offset);
-			}
-		}
-		return parameterOffset;
+		return CommonSqlUtils.prepareLimitOffset(filter, con, stmt, parameterOffset);
 	}
 
 	/**
@@ -1631,9 +1615,10 @@ public final class DatumSqlUtils {
 	 * @param sql
 	 *        the SQL query to wrap
 	 * @return the wrapped query
+	 * @see CommonSqlUtils#wrappedCountQuery(String)
 	 */
 	public static String wrappedCountQuery(String sql) {
-		return "SELECT COUNT(*) FROM (" + sql + ") AS q";
+		return CommonSqlUtils.wrappedCountQuery(sql);
 	}
 
 	/**

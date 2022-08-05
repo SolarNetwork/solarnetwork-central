@@ -16,7 +16,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarIn'
-version = '1.3.2'
+version = '1.4.0'
 archivesBaseName = 'solarin'
 
 configurations {
@@ -56,7 +56,7 @@ dependencies {
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.2'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.1.2'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.2.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

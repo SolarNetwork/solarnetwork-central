@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumJdbcUtils.java - 8/12/2020 5:34:11 pm
+ * CommonJdbcUtils.java - 3/08/2022 11:12:21 am
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.v2.dao.jdbc;
+package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -40,16 +40,40 @@ import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.Identity;
 
 /**
- * JDBC utilities for datum DAO.
+ * Common JDBC utilities.
  * 
  * @author matt
  * @version 1.0
- * @since 3.8
  */
-public class DatumJdbcUtils {
+public final class CommonJdbcUtils {
 
-	private DatumJdbcUtils() {
-		// not available
+	private CommonJdbcUtils() {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * Get an array result column value.
+	 * 
+	 * @param <T>
+	 *        the expected array type
+	 * @param rs
+	 *        the result set
+	 * @param colNum
+	 *        the column number
+	 * @return the array
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @throws ClassCastException
+	 *         if a casting error occurs
+	 * @since 2.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
+		Array a = rs.getArray(colNum);
+		if ( a == null ) {
+			return null;
+		}
+		return (T) a.getArray();
 	}
 
 	/**
@@ -72,10 +96,34 @@ public class DatumJdbcUtils {
 	 * @throws IllegalArgumentException
 	 *         if the column value is non-null but does not conform to the
 	 *         string representation as described in {@link UUID#toString()}
+	 * @since 2.1
 	 */
 	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
 		Object sid = rs.getObject(column);
 		return (sid instanceof UUID ? (UUID) sid : sid != null ? UUID.fromString(sid.toString()) : null);
+	}
+
+	/**
+	 * Execute a query for a count result.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param creator
+	 *        the statement creator; if implements
+	 *        {@link CountPreparedStatementCreatorProvider} then
+	 *        {@link CountPreparedStatementCreatorProvider#countPreparedStatementCreator()}
+	 *        will be used
+	 * @return the result, or {@literal null} if no result count is available
+	 * @since 2.1
+	 */
+	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
+		return jdbcTemplate.query(creator, new ResultSetExtractor<Long>() {
+	
+			@Override
+			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
+				return rs.next() ? rs.getLong(1) : null;
+			}
+		});
 	}
 
 	/**
@@ -94,6 +142,7 @@ public class DatumJdbcUtils {
 	 * @param mapper
 	 *        the row mapper to use
 	 * @return the results, never {@literal null}
+	 * @since 2.1
 	 */
 	public static <M extends Identity<K>, K> FilterResults<M, K> executeFilterQuery(
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
@@ -102,64 +151,18 @@ public class DatumJdbcUtils {
 		if ( filter.getMax() != null && sql instanceof CountPreparedStatementCreatorProvider
 				&& !(filter instanceof OptimizedQueryCriteria
 						&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
-			totalCount = DatumJdbcUtils.executeCountQuery(jdbcTemplate,
+			totalCount = executeCountQuery(jdbcTemplate,
 					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
 		}
-
+	
 		List<M> results = jdbcTemplate.query(sql, mapper);
-
+	
 		if ( filter.getMax() == null ) {
 			totalCount = (long) results.size();
 		}
-
+	
 		int offset = (filter.getOffset() != null ? filter.getOffset() : 0);
 		return new BasicFilterResults<>(results, totalCount, offset, results.size());
-	}
-
-	/**
-	 * Execute a query for a count result.
-	 * 
-	 * @param jdbcTemplate
-	 *        the JDBC template to use
-	 * @param creator
-	 *        the statement creator; if implements
-	 *        {@link CountPreparedStatementCreatorProvider} then
-	 *        {@link CountPreparedStatementCreatorProvider#countPreparedStatementCreator()}
-	 *        will be used
-	 * @return the result, or {@literal null} if no result count is available
-	 */
-	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
-		return jdbcTemplate.query(creator, new ResultSetExtractor<Long>() {
-
-			@Override
-			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
-				return rs.next() ? rs.getLong(1) : null;
-			}
-		});
-	}
-
-	/**
-	 * Get an array result column value.
-	 * 
-	 * @param <T>
-	 *        the expected array type
-	 * @param rs
-	 *        the result set
-	 * @param colNum
-	 *        the column number
-	 * @return the array
-	 * @throws SQLException
-	 *         if any SQL error occurs
-	 * @throws ClassCastException
-	 *         if a casting error occurs
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
-		Array a = rs.getArray(colNum);
-		if ( a == null ) {
-			return null;
-		}
-		return (T) a.getArray();
 	}
 
 }
