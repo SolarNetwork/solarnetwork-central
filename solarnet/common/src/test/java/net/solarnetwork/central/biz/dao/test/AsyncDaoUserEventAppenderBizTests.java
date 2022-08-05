@@ -108,7 +108,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 		replayAll();
 		LogEventInfo info = new LogEventInfo(new String[] { "foo", UUID.randomUUID().toString() },
 				UUID.randomUUID().toString(), "{\"foo\":123}");
-		UserEvent result = biz.add(userId, info);
+		UserEvent result = biz.addEvent(userId, info);
 
 		// THEN
 		biz.serviceDidShutdown();
@@ -145,7 +145,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 							new String[] { "foo", UUID.randomUUID().toString() },
 							UUID.randomUUID().toString(), "{\"foo\":123}");
 					log.info("Adding event info {}", info);
-					UserEvent event = biz.add(userId, info);
+					UserEvent event = biz.addEvent(userId, info);
 					events.add(event);
 				}
 			});

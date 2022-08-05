@@ -119,7 +119,7 @@ public class AuthenticationUserEventPublisher {
 				auth.getAuthorities().stream().map(e -> e.getAuthority()).toArray(String[]::new));
 
 		LogEventInfo info = new LogEventInfo(tags, message, JsonUtils.getJSONString(data, null));
-		userEventAppenderBiz.add(userId, info);
+		userEventAppenderBiz.addEvent(userId, info);
 	}
 
 }
