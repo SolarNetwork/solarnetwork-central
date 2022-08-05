@@ -36,8 +36,10 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
+import net.solarnetwork.central.biz.dao.DaoUserEventBiz;
 import net.solarnetwork.central.common.config.AsyncUserEventAppenderSettings;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
+import net.solarnetwork.central.common.dao.UserEventDao;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.util.StatCounter;
 
@@ -57,7 +59,7 @@ public class UserEventConfig {
 	private UuidGenerator uuidGenerator;
 
 	@Bean
-	public UserEventAppenderDao userEventAppenderDao() {
+	public JdbcUserEventDao userEventAppenderDao() {
 		JdbcUserEventDao dao = new JdbcUserEventDao(jdbcOperations);
 		return dao;
 	}
@@ -84,6 +86,11 @@ public class UserEventConfig {
 				uuidGenerator);
 		biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
 		return biz;
+	}
+
+	@Bean
+	public DaoUserEventBiz userEventBiz(UserEventDao userEventDao) {
+		return new DaoUserEventBiz(userEventDao);
 	}
 
 }

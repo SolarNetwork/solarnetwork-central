@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.reg.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 
 /**
@@ -37,10 +39,29 @@ import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 @Configuration
 public class JsonConfig {
 
+	/** The {@link ObjectMapper} for CBOR handling. */
+	public static final String CBOR_MAPPER = "cbor";
+
+	/**
+	 * Get the primary {@link ObjectMapper} to use for JSON processing.
+	 * 
+	 * @return the mapper
+	 */
 	@Primary
 	@Bean
 	public ObjectMapper objectMapper() {
 		return DatumJsonUtils.newDatumObjectMapper();
+	}
+
+	/**
+	 * Get the primary {@link ObjectMapper} to use for CBOR processing.
+	 * 
+	 * @return the mapper
+	 */
+	@Bean
+	@Qualifier(CBOR_MAPPER)
+	public ObjectMapper cborObjectMapper() {
+		return DatumJsonUtils.newDatumObjectMapper(new CBORFactory());
 	}
 
 }

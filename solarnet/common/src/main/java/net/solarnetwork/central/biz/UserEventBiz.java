@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventDao.java - 1/08/2022 2:27:40 pm
+ * UserEventBiz.java - 6/08/2022 9:14:37 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,35 +20,33 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao;
+package net.solarnetwork.central.biz;
 
 import java.io.IOException;
+import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.dao.FilterableDao;
 
 /**
- * DAO API user events.
+ * Service API for managing user events.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface UserEventDao
-		extends UserEventAppenderDao, FilterableDao<UserEvent, UserUuidPK, UserEventFilter> {
+public interface UserEventBiz {
 
 	/**
-	 * API for querying for a filtered stream of {@link UserEvent} entities.
+	 * API for querying for a filtered set of user events, streaming the
+	 * results.
 	 * 
 	 * @param filter
-	 *        the filter
+	 *        the query filter
 	 * @param processor
-	 *        the stream processor
+	 *        the processor for the results
 	 * @throws IOException
 	 *         if any IO error occurs
-	 * @since 1.1
 	 */
-	void findFilteredStream(UserEventFilter filter, FilteredResultsProcessor<UserEvent> processor)
+	void findFilteredUserEvents(UserEventFilter filter, FilteredResultsProcessor<UserEvent> processor)
 			throws IOException;
 
 }

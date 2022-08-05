@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventDao.java - 1/08/2022 2:27:40 pm
+ * AbstractFilteredResultsProcessor.java - 6/08/2022 9:27:16 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,35 +20,41 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao;
+package net.solarnetwork.central.support;
 
 import java.io.IOException;
-import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserUuidPK;
-import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.dao.FilterableDao;
+import java.util.Map;
+import org.springframework.util.MimeType;
 
 /**
- * DAO API user events.
+ * Abstract convenience implementation of {@link FilteredResultsProcessor}.
  * 
+ * @param <R>
+ *        the result item type
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface UserEventDao
-		extends UserEventAppenderDao, FilterableDao<UserEvent, UserUuidPK, UserEventFilter> {
+public abstract class AbstractFilteredResultsProcessor<R> implements FilteredResultsProcessor<R> {
 
-	/**
-	 * API for querying for a filtered stream of {@link UserEvent} entities.
-	 * 
-	 * @param filter
-	 *        the filter
-	 * @param processor
-	 *        the stream processor
-	 * @throws IOException
-	 *         if any IO error occurs
-	 * @since 1.1
-	 */
-	void findFilteredStream(UserEventFilter filter, FilteredResultsProcessor<UserEvent> processor)
-			throws IOException;
+	@Override
+	public void flush() throws IOException {
+		// NO-OP
+	}
+
+	@Override
+	public void close() throws IOException {
+		// NO-OP
+	}
+
+	@Override
+	public MimeType getMimeType() {
+		return MimeType.valueOf("application/octet-stream");
+	}
+
+	@Override
+	public void start(Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
+			Map<String, ?> attributes) throws IOException {
+		// NO-OP
+	}
 
 }
