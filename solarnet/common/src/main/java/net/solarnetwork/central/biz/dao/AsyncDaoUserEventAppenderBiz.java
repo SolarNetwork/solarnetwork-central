@@ -159,7 +159,7 @@ public class AsyncDaoUserEventAppenderBiz
 	}
 
 	@Override
-	public UserEvent add(Long userId, LogEventInfo info) {
+	public UserEvent addEvent(Long userId, LogEventInfo info) {
 		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
 				requireNonNullArgument(info, "info").getTags(), info.getMessage(), info.getData());
 		queue.offer(event);

@@ -39,7 +39,8 @@ import net.solarnetwork.service.PasswordEncoder;
  * @author matt
  * @version 1.0
  */
-public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor {
+public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
+		implements CentralOcppUserEvents {
 
 	/** User event kind for OCPP connection forbidden events. */
 	public static final String[] CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS = new String[] {
@@ -67,9 +68,9 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 		if ( user instanceof CentralSystemUser ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put("username", user.getUsername());
-			data.put("error", reason);
+			data.put(ERROR_DATA_KEY, reason);
 			generateUserEvent(((CentralSystemUser) user).getUserId(),
-					CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, "Charge point forbidden", data);
+					CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
 		}
 	}
 
@@ -80,7 +81,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 		}
 		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
 		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
-		biz.add(userId, event);
+		biz.addEvent(userId, event);
 	}
 
 	/**

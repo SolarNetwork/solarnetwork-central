@@ -40,6 +40,6 @@ public interface UserEventAppenderBiz {
 	 *        the event info to add
 	 * @return the generated event
 	 */
-	UserEvent add(Long userId, LogEventInfo info);
+	UserEvent addEvent(Long userId, LogEventInfo info);
 
 }

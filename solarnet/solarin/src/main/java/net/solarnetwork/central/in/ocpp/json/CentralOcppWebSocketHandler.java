@@ -60,7 +60,6 @@ import ocpp.domain.Action;
 import ocpp.domain.ErrorCode;
 import ocpp.domain.ErrorCodeResolver;
 import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.CentralSystemAction;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
@@ -70,43 +69,7 @@ import ocpp.v16.CentralSystemAction;
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
-		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver {
-
-	/** A user event tag for OCPP. */
-	public static final String OCPP_EVENT_TAG = "ocpp";
-
-	/** A user event tag for OCPP "charger". */
-	public static final String CHARGER_EVENT_TAG = "charger";
-
-	/** A user event tag for OCPP "instruction" . */
-	public static final String INSTRUCTION_EVENT_TAG = "instruction";
-
-	/** A user event tag for OCPP "message". */
-	public static final String MESSAGE_EVENT_TAG = "message";
-
-	/** User event tags for OCPP connection established events. */
-	public static final String[] CHARGE_POINT_CONNECTED_TAGS = new String[] { OCPP_EVENT_TAG,
-			CHARGER_EVENT_TAG, "connected" };
-
-	/** User event tags for OCPP connection ended events. */
-	public static final String[] CHARGE_POINT_DISCONNECTED_TAGS = new String[] { OCPP_EVENT_TAG,
-			CHARGER_EVENT_TAG, "disconnected" };
-
-	/** User event tags for OCPP instruction success events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_SENT_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG, "sent" };
-
-	/** User event tags for OCPP instruction error events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_ERROR_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG, "error" };
-
-	/** User event tags for OCPP message received events. */
-	public static final String[] CHARGE_POINT_MESSAGE_RECEIVED_TAGS = new String[] { OCPP_EVENT_TAG,
-			MESSAGE_EVENT_TAG, "received" };
-
-	/** User event tags for OCPP message sent events. */
-	public static final String[] CHARGE_POINT_MESSAGE_SENT_TAGS = new String[] { OCPP_EVENT_TAG,
-			MESSAGE_EVENT_TAG, "sent" };
+		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver, CentralOcppUserEvents {
 
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
@@ -179,9 +142,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
 			if ( clientId.getUserIdentifier() instanceof Long ) {
-				Map<String, Object> data = singletonMap("cp", clientId.getIdentifier());
-				generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_CONNECTED_TAGS,
-						"Charger connected", data);
+				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+				generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_CONNECTED_TAGS, null,
+						data);
 			}
 			// look for instructions
 			executor.execute(new ProcessQueuedInstructionsTask(clientId));
@@ -193,9 +156,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
 			if ( clientId.getUserIdentifier() instanceof Long ) {
-				Map<String, Object> data = singletonMap("cp", clientId.getIdentifier());
+				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
 				generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_DISCONNECTED_TAGS,
-						"Charger disconnected", data);
+						null, data);
 			}
 		}
 		super.afterConnectionClosed(session, status);
@@ -204,15 +167,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	@Override
 	protected void willProcessRequest(PendingActionMessage msg) {
 		super.willProcessRequest(msg);
-		if ( msg.getMessage().getAction() != CentralSystemAction.Heartbeat
-				&& msg.getMessage().getClientId().getUserIdentifier() instanceof Long ) {
+		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("cp", msg.getMessage().getClientId().getIdentifier());
-			data.put("messageId", msg.getMessage().getMessageId());
-			data.put("action", msg.getMessage().getAction());
-			data.put("message", msg.getMessage().getMessage());
+			data.put(CHARGE_POINT_DATA_KEY, msg.getMessage().getClientId().getIdentifier());
+			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
+			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
+			data.put(MESSAGE_DATA_KEY, msg.getMessage().getMessage());
 			generateUserEvent((Long) msg.getMessage().getClientId().getUserIdentifier(),
-					CHARGE_POINT_MESSAGE_RECEIVED_TAGS, "Message received", data);
+					CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
 		}
 	}
 
@@ -222,15 +184,15 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		super.didSendCall(clientId, messageId, action, payload, json, exception);
 		if ( clientId.getUserIdentifier() instanceof Long ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("cp", clientId.getIdentifier());
-			data.put("messageId", messageId);
-			data.put("action", action);
-			data.put("message", payload);
+			data.put(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+			data.put(MESSAGE_ID_DATA_KEY, messageId);
+			data.put(ACTION_DATA_KEY, action);
+			data.put(MESSAGE_DATA_KEY, payload);
 			if ( exception != null ) {
-				data.put("error", exception.getMessage());
+				data.put(ERROR_DATA_KEY, exception.getMessage());
 			}
-			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS,
-					"Call sent", data);
+			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS, null,
+					data);
 		}
 	}
 
@@ -240,14 +202,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		super.didSendCallResult(clientId, messageId, payload, json, exception);
 		if ( clientId.getUserIdentifier() instanceof Long ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("cp", clientId.getIdentifier());
-			data.put("messageId", messageId);
-			data.put("message", payload);
+			data.put(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+			data.put(MESSAGE_ID_DATA_KEY, messageId);
+			data.put(MESSAGE_DATA_KEY, payload);
 			if ( exception != null ) {
-				data.put("error", exception.getMessage());
+				data.put(ERROR_DATA_KEY, exception.getMessage());
 			}
-			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS,
-					"Call result sent", data);
+			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS, null,
+					data);
 		}
 	}
 
@@ -258,14 +220,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 				exception);
 		if ( clientId.getUserIdentifier() instanceof Long ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("cp", clientId.getIdentifier());
-			data.put("messageId", messageId);
-			data.put("error", (exception != null ? exception.getMessage() : errorCode));
+			data.put(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+			data.put(MESSAGE_ID_DATA_KEY, messageId);
+			data.put(ERROR_DATA_KEY, (exception != null ? exception.getMessage() : errorCode));
 			data.put("errorCode", errorCode);
 			data.put("errorDescription", errorDescription);
 			data.put("errorDetails", details);
-			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS,
-					"Call error sent", data);
+			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_ERROR_TAGS,
+					null, data);
 		}
 	}
 
@@ -323,7 +285,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			Map<String, String> params = instructionParameterMap(instruction);
 			Action action = chargePointAction(params.remove(OCPP_ACTION_PARAM));
 			if ( action == null ) {
-				Map<String, Object> data = singletonMap("error",
+				Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
 						"OCPP action parameter missing or not supported.");
 				if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
 						InstructionState.Received, InstructionState.Declined, data) ) {
@@ -342,7 +304,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					return;
 				}
 			} catch ( NumberFormatException e ) {
-				Map<String, Object> data = singletonMap("error",
+				Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
 						"OCPP " + OCPP_CHARGE_POINT_ID_PARAM + " parameter invalid syntax.");
 				if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
 						InstructionState.Received, InstructionState.Declined, data) ) {
@@ -367,7 +329,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 							while ( root.getCause() != null ) {
 								root = root.getCause();
 							}
-							Map<String, Object> data = singletonMap("error",
+							Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
 									"Error decoding OCPP action message: " + root.getMessage());
 							if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
 									cp.getNodeId(), InstructionState.Received, InstructionState.Declined,
@@ -392,7 +354,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 								while ( root.getCause() != null ) {
 									root = root.getCause();
 								}
-								Map<String, Object> data = singletonMap("error", format(
+								Map<String, Object> data = singletonMap(ERROR_DATA_KEY, format(
 										"Error handling OCPP action %s: %s", action, root.getMessage()));
 								if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
 										cp.getNodeId(), InstructionState.Executing,
@@ -411,11 +373,11 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 										cp.getNodeId(), InstructionState.Executing,
 										InstructionState.Completed, resultParameters) ) {
 									Map<String, Object> data = new HashMap<>(4);
-									data.put("action", action);
-									data.put("cp", identity.getIdentifier());
-									data.put("message", resultParameters);
+									data.put(ACTION_DATA_KEY, action);
+									data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
+									data.put(MESSAGE_DATA_KEY, resultParameters);
 									generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_SENT_TAGS,
-											"Sent OCPP action", data);
+											null, data);
 								}
 							}
 							return true;
@@ -433,7 +395,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		}
 		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
 		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
-		biz.add(userId, event);
+		biz.addEvent(userId, event);
 	}
 
 	/**
