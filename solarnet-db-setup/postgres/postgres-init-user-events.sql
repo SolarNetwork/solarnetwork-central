@@ -20,21 +20,11 @@ CREATE UNIQUE INDEX user_event_log_pk ON solaruser.user_event_log (user_id, even
 /* Add index on tags so we can search efficiently. */
 CREATE INDEX user_event_log_tags_idx ON solaruser.user_event_log USING GIN (tags);
 
-/**
- * TABLE solaruser.user_event_log_conf
+/******************************************************************************
+ * VIEW solaruser.user_event_log_info
  *
- * Table for user event log configuration, such as expiration policy.
+ * View of table for events related to a user account with creation date decoded.
  */
-CREATE TABLE solaruser.user_event_log_conf (
-	id			BIGINT NOT NULL DEFAULT nextval('solaruser.user_expire_seq'),
-	created		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	user_id     BIGINT NOT NULL,
-	expire_days	INTEGER NOT NULL,
-	CONSTRAINT user_event_log_conf_pk PRIMARY KEY (id),
-	CONSTRAINT user_event_log_conf_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
-/* Add index on user_id so we can show all entities for user. */
-CREATE INDEX user_event_log_conf_user_idx ON solaruser.user_event_log_conf (user_id);
+CREATE VIEW solaruser.user_event_log_info AS
+SELECT user_id, event_id, solarcommon.uuid_to_timestamp_v7(event_id) AS ts, tags, message, jdata
+FROM solaruser.user_event_log;
