@@ -156,7 +156,7 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		Assert.assertNotNull("X.509 certificate", renewed);
 
 		// validate renewed subject the same, and has larger serial numberd
-		Assert.assertEquals(result[0].getSubjectDN(), renewed[0].getSubjectX500Principal());
+		Assert.assertEquals(result[0].getSubjectX500Principal(), renewed[0].getSubjectX500Principal());
 		Assert.assertEquals(1, renewed[0].getSerialNumber().compareTo(result[0].getSerialNumber()));
 	}
 
