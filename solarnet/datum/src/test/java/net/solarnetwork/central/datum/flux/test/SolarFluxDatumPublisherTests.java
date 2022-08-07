@@ -42,6 +42,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -104,7 +105,8 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
 				Executors.newCachedThreadPool(), scheduler);
 
-		publisher = new SolarFluxDatumPublisher(factory, datumSupportDao, objectMapper);
+		publisher = new SolarFluxDatumPublisher(factory, datumSupportDao, objectMapper,
+				Collections.emptyList());
 		publisher.getMqttConfig().setClientId(TEST_CLIENT_ID);
 		publisher.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = publisher.startup();

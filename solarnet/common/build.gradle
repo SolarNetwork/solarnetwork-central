@@ -75,6 +75,7 @@ dependencies {
 	
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common:2.8.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.2.0'
 	

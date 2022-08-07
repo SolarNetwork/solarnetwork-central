@@ -41,7 +41,6 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common.mqtt:3.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.s3:2.0.0'
 	
 	// Testing

@@ -23,11 +23,13 @@
 package net.solarnetwork.central.support;
 
 import java.io.IOException;
+import java.util.Map;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * JSON serializer for {@link UserEvent} objects.
@@ -66,7 +68,13 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 		}
 		if ( event.getData() != null && !event.getData().isBlank() ) {
 			generator.writeFieldName("data");
-			generator.writeRawValue(event.getData());
+			try {
+				generator.writeRawValue(event.getData());
+			} catch ( UnsupportedOperationException e ) {
+				// can happen with things like CBOR, so parse as Map
+				Map<String, Object> dataMap = JsonUtils.getStringMap(event.getData());
+				generator.writeObject(dataMap);
+			}
 		}
 		generator.writeEndObject();
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -45,7 +46,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionFactory;
  * Configuration for SolarFlux publishing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Profile("mqtt")
@@ -82,7 +83,7 @@ public class SolarFluxPublishingConfig {
 	@Qualifier(SOLARFLUX)
 	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
 		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(mqttConnectionFactory,
-				nodeOwnershipDao, solarFluxObjectMapper());
+				nodeOwnershipDao, solarFluxObjectMapper(), Collections.emptyList());
 		return processor;
 	}
 
