@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.config;
 
+import static net.solarnetwork.central.in.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_INSTRUCTION;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.mqtt.MqttInstructionHandler;
+import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import ocpp.v16.ChargePointAction;
 
@@ -48,6 +51,7 @@ import ocpp.v16.ChargePointAction;
 @Profile(OcppV16MqttConfig.MQTT_OCPP_V16)
 public class OcppV16MqttConfig {
 
+	/** Profile expression for MQTT with OCPP v16. */
 	public static final String MQTT_OCPP_V16 = "mqtt & " + SolarNetOcppConfiguration.OCPP_V16;
 
 	@Autowired
@@ -65,10 +69,16 @@ public class OcppV16MqttConfig {
 
 	@ConfigurationProperties(prefix = "app.ocpp.v16.mqtt.instr-handler")
 	@Bean
-	@Qualifier(OCPP_INSTRUCTION)
+	@Qualifier(SOLARQUEUE)
 	public MqttInstructionHandler<ChargePointAction> instructionHandler_v16() {
 		return new MqttInstructionHandler<>(ChargePointAction.class, nodeInstructionDao,
 				ocppCentralChargePointDao, objectMapper, ocppChargePointRouter);
+	}
+
+	@Bean
+	@Qualifier(OCPP_INSTRUCTION)
+	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v16() {
+		return instructionHandler_v16();
 	}
 
 }

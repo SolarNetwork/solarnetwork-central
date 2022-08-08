@@ -47,9 +47,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueHookStat;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
@@ -70,6 +73,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
 	private ObjectMapper objectMapper;
 	private NodeInstructionDao nodeInstructionDao;
+	private ObservableMqttConnection mqttConnection;
 	private MqttNodeInstructionQueueHook service;
 
 	@BeforeEach
@@ -85,11 +89,17 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
 				Executors.newCachedThreadPool(), scheduler);
 
-		service = new MqttNodeInstructionQueueHook(factory, objectMapper,
-				new CallingThreadExecutorService(), nodeInstructionDao, Collections.emptyList());
-		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
-		service.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
-		Future<?> f = service.startup();
+		MqttStats mqttStats = new MqttStats(1, NodeInstructionQueueHookStat.values());
+
+		service = new MqttNodeInstructionQueueHook(objectMapper, new CallingThreadExecutorService(),
+				nodeInstructionDao);
+		service.setMqttStats(mqttStats);
+
+		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
+				Collections.singletonList(service));
+		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
+		Future<?> f = mqttConnection.startup();
 		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
 	}
 
@@ -102,6 +112,12 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 
 	private void replayAll() {
 		EasyMock.replay(nodeInstructionDao);
+	}
+
+	@Override
+	public void stopMqttServer() {
+		mqttConnection.shutdown();
+		super.stopMqttServer();
 	}
 
 	@Test

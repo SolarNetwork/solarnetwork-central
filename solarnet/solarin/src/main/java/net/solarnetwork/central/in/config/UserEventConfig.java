@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.in.config;
 
-import static net.solarnetwork.central.in.config.SolarFluxPublishingConfig.SOLARFLUX;
+import static net.solarnetwork.central.in.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.common.config.AsyncUserEventAppenderSettings;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.SolarFluxPublisher;
+import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatCounter;
 
@@ -79,9 +79,10 @@ public class UserEventConfig {
 	}
 
 	@Bean
+	@ConfigurationProperties(prefix = "app.solarflux.user-events")
 	@Qualifier(SOLARFLUX)
-	public SolarFluxPublisher<UserEvent> userEventSolarFluxPublisher() {
-		return new SolarFluxPublisher<>("UserEvent", solarFluxObjectMapper,
+	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher() {
+		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 

@@ -27,16 +27,12 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
-import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttQos;
 
 /**
@@ -45,30 +41,14 @@ import net.solarnetwork.common.mqtt.MqttQos;
  * @author matt
  * @version 1.0
  */
-public class SolarFluxPublisher<T> implements Function<T, Future<?>>, MqttConnectionObserver {
+public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements Function<T, Future<?>> {
 
-	/** The default value for the {@code mqttHost} property. */
-	public static final String DEFAULT_MQTT_HOST = "mqtts://influx.solarnetwork.net:8884";
-
-	/** The default value for the {@code mqttUsername} property. */
-	public static final String DEFAULT_MQTT_USERNAME = "solarnet-pub";
-
-	private static final Logger log = LoggerFactory.getLogger(SolarFluxPublisher.class);
-
-	private final AtomicReference<MqttConnection> mqttConnection = new AtomicReference<>();
-	private final String name;
 	private final ObjectMapper objectMapper;
 	private final Function<T, String> topicFn;
-	private final boolean retained;
-	private final MqttQos publishQos;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param connectionFactory
-	 *        the MQTT connection factory
-	 * @param mqttStats
-	 *        the stats to use
 	 * @param name
 	 *        the display name to use
 	 * @param objectMapper
@@ -80,35 +60,32 @@ public class SolarFluxPublisher<T> implements Function<T, Future<?>>, MqttConnec
 	 * @param publishQos
 	 *        the publish QoS
 	 */
-	public SolarFluxPublisher(String name, ObjectMapper objectMapper, Function<T, String> topicFn,
+	public MqttJsonPublisher(String name, ObjectMapper objectMapper, Function<T, String> topicFn,
 			boolean retained, MqttQos publishQos) {
-		this.name = requireNonNullArgument(name, "name");
+		setDisplayName(requireNonNullArgument(name, "name"));
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.topicFn = requireNonNullArgument(topicFn, "topicFn");
-		this.retained = retained;
-		this.publishQos = requireNonNullArgument(publishQos, "publishQos");
-	}
-
-	@Override
-	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
-			Throwable cause) {
-		log.info("MQTT connection lost for {} publisher", name);
-		mqttConnection.compareAndSet(connection, null);
-	}
-
-	@Override
-	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
-		log.info("MQTT connection established for {} publisher.", name);
-		mqttConnection.set(connection);
+		setRetained(retained);
+		setPublishQos(requireNonNullArgument(publishQos, "publishQos"));
 	}
 
 	@Override
 	public Future<?> apply(T item) {
-		if ( item == null ) {
-			return CompletableFuture.completedFuture(null);
-		}
 		String topic = topicFn.apply(item);
-		if ( topic == null ) {
+		return publish(item, topic);
+	}
+
+	/**
+	 * Publish an item to a given topic.
+	 * 
+	 * @param item
+	 *        the item
+	 * @param topic
+	 *        the topic
+	 * @return the publish future
+	 */
+	protected Future<?> publish(T item, String topic) {
+		if ( item == null || topic == null ) {
 			return CompletableFuture.completedFuture(null);
 		}
 
@@ -129,7 +106,7 @@ public class SolarFluxPublisher<T> implements Function<T, Future<?>>, MqttConnec
 				log.trace("Publishing to MQTT topic {}\n{}", topic,
 						Base64.getEncoder().encodeToString(payload));
 			}
-			return conn.publish(new BasicMqttMessage(topic, retained, publishQos, payload));
+			return conn.publish(new BasicMqttMessage(topic, isRetained(), getPublishQos(), payload));
 		} catch ( IOException e ) {
 			Throwable root = e;
 			while ( root.getCause() != null ) {

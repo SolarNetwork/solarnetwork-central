@@ -34,10 +34,8 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -53,12 +51,13 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
+import net.solarnetwork.central.in.mqtt.SolarInCountStat;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -73,7 +72,6 @@ public class MqttDataCollectorTests_StreamDatum {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private static final String TEST_CLIENT_ID = "solarnet.test";
 	private static final Long TEST_NODE_ID = 123L;
 	private ObjectMapper objectMapper;
 	private DataCollectorBiz dataCollectorBiz;
@@ -93,12 +91,9 @@ public class MqttDataCollectorTests_StreamDatum {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.initialize();
 
-		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
-				Executors.newCachedThreadPool(), scheduler);
+		MqttStats mqttStats = new MqttStats(1, SolarInCountStat.values());
 
-		service = new MqttDataCollector(factory, objectMapper, dataCollectorBiz, nodeInstructionDao,
-				Collections.emptyList());
-		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 	}
 
 	@After

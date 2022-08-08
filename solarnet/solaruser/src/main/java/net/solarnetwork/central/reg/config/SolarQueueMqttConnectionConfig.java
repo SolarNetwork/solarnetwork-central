@@ -1,7 +1,7 @@
 /* ==================================================================
- * MqttInConfig.java - 11/11/2021 4:10:24 PM
+ * SolarQueueMqttConnectionConfig.java - 8/08/2022 5:28:27 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,54 +20,49 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.reg.config;
 
-import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import net.solarnetwork.central.in.biz.DataCollectorBiz;
-import net.solarnetwork.central.in.mqtt.MqttDataCollector;
-import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 import net.solarnetwork.common.mqtt.MqttConnectionObserver;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
- * MQTT instruction publishing configuration.
+ * SolarIn/MQTT (SolarQuery) configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
 @Profile("mqtt")
-public class MqttDataCollectorConfig {
+public class SolarQueueMqttConnectionConfig {
+
+	/** Qualifier for SolarIn MQTT (SolqrQueue). */
+	public static final String SOLARQUEUE = "solarqueue";
 
 	@Autowired
 	private MqttConnectionFactory connectionFactory;
 
-	@Autowired
-	private NodeInstructionDao nodeInstructionDao;
+	@Qualifier(SOLARQUEUE)
+	@Bean
+	public MqttStats solarQueueMqttStats() {
+		return new MqttStats("SolarQueue", 500);
+	}
 
-	@Autowired
-	private DataCollectorBiz dataCollectorBiz;
-
-	@Autowired
-	private List<MqttConnectionObserver> mqttConnectionObservers;
-
-	@ConfigurationProperties(prefix = "app.solarin.mqtt-collector")
+	@Qualifier(SOLARQUEUE)
+	@ConfigurationProperties(prefix = "app.solarqueue.connection")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public MqttDataCollector mqttDataCollector() {
-		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
-		MqttDataCollector collector = new MqttDataCollector(connectionFactory, objectMapper,
-				dataCollectorBiz, nodeInstructionDao,
-				mqttConnectionObservers != null ? mqttConnectionObservers : Collections.emptyList());
-		return collector;
+	public ObservableMqttConnection solarQueueMqttConnection(
+			@Autowired @Qualifier(SOLARQUEUE) List<MqttConnectionObserver> mqttConnectionObservers) {
+		return new ObservableMqttConnection(connectionFactory, solarQueueMqttStats(), "SolarIn MQTT",
+				mqttConnectionObservers);
 	}
 
 }

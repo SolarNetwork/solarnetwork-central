@@ -61,9 +61,13 @@ import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
+import net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
@@ -84,6 +88,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 
 	private SolarNodeOwnershipDao datumSupportDao;
 	private ObjectMapper objectMapper;
+	private ObservableMqttConnection mqttConnection;
 	private SolarFluxDatumPublisher publisher;
 
 	private ObjectMapper createObjectMapper() {
@@ -105,11 +110,15 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
 				Executors.newCachedThreadPool(), scheduler);
 
-		publisher = new SolarFluxDatumPublisher(factory, datumSupportDao, objectMapper,
-				Collections.emptyList());
-		publisher.getMqttConfig().setClientId(TEST_CLIENT_ID);
-		publisher.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
-		Future<?> f = publisher.startup();
+		MqttStats mqttStats = new MqttStats(1, SolarFluxDatumPublishCountStat.values());
+		publisher = new SolarFluxDatumPublisher(datumSupportDao, objectMapper, true, MqttQos.AtMostOnce);
+		publisher.setMqttStats(mqttStats);
+
+		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
+				Collections.singletonList(publisher));
+		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
+		Future<?> f = mqttConnection.startup();
 		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
 	}
 
@@ -126,7 +135,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 
 	@Override
 	public void stopMqttServer() {
-		publisher.shutdown();
+		mqttConnection.shutdown();
 		super.stopMqttServer();
 	}
 

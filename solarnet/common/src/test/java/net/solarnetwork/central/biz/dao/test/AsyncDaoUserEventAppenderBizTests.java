@@ -62,7 +62,7 @@ import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventSt
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.SolarFluxPublisher;
+import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.common.mqtt.MqttConnection;
@@ -88,7 +88,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 	private StatCounter stats;
 	private AsyncDaoUserEventAppenderBiz biz;
 	private ObjectMapper objectMapper;
-	private SolarFluxPublisher<UserEvent> solarFluxPublisher;
+	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
 	private MqttConnection mqttConnection;
 
 	@BeforeEach
@@ -109,7 +109,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 		objectMapper.registerModule(m);
 		objectMapper.registerModule(new JavaTimeModule());
 
-		solarFluxPublisher = new SolarFluxPublisher<>("Test", objectMapper,
+		solarFluxPublisher = new MqttJsonPublisher<>("Test", objectMapper,
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
 		mqttConnection = EasyMock.createMock(MqttConnection.class);
 	}

@@ -49,15 +49,6 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
-  instr.publish:
-    uid: "SolarInstr-${app.meta.instance-id}"
-    publish-qos-level: 0
-    mqtt-stats.log-frequency: 200
-    mqtt-config:
-      server-uri: "mqtt://queue.solarnetwork:1883"
-      client-id: "solaruser-${app.meta.instance-id}"
-      username: "USERNAME_HERE"
-      password: "PASSWORD_HERE"
   location.request:
     alert-mail: "nobody@localhost"
   job:
@@ -95,11 +86,33 @@ app:
   ocpp.v16:
     mqtt.instr-handler:
       mqtt-topic: "instr/OCPP_v16"
-      mqtt-timeout: 30
       publish-only: true
+      publish-qos-level: 1
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+  solarflux:
+    connection:
+      uid: "SolarFlux-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solaruser-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+    user-events:
+      publish-qos-level: 0
+  solarqueue:
+    connection:
+      uid: "SolarInstr-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solaruser-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+    instr-publish:
+      publish-qos-level: 0
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10

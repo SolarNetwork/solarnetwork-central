@@ -40,7 +40,7 @@ import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.SolarFluxPublisher;
+import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
@@ -124,7 +124,7 @@ public class AsyncDaoUserEventAppenderBiz
 	private final StatCounter stats;
 	private final BlockingQueue<UserEvent> queue;
 	private final UuidGenerator uuidGenerator;
-	private SolarFluxPublisher<UserEvent> solarFluxPublisher;
+	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
 	private int queueLagAlertThreshold = DEFAULT_QUEUE_LAG_ALERT_THRESHOLD;
 
 	/**
@@ -196,7 +196,7 @@ public class AsyncDaoUserEventAppenderBiz
 			} catch ( RuntimeException e ) {
 				log.error("Unable to add event {} to DAO: {}", event, e.getMessage(), e);
 			}
-			final SolarFluxPublisher<UserEvent> flux = getSolarFluxPublisher();
+			final MqttJsonPublisher<UserEvent> flux = getSolarFluxPublisher();
 			if ( flux != null ) {
 				flux.apply(event);
 			}
@@ -279,7 +279,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * 
 	 * @return the publisher
 	 */
-	public SolarFluxPublisher<UserEvent> getSolarFluxPublisher() {
+	public MqttJsonPublisher<UserEvent> getSolarFluxPublisher() {
 		return solarFluxPublisher;
 	}
 
@@ -289,7 +289,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 * @param solarFluxPublisher
 	 *        the publisher to set
 	 */
-	public void setSolarFluxPublisher(SolarFluxPublisher<UserEvent> solarFluxPublisher) {
+	public void setSolarFluxPublisher(MqttJsonPublisher<UserEvent> solarFluxPublisher) {
 		this.solarFluxPublisher = solarFluxPublisher;
 	}
 
