@@ -1,62 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-    	
-    <wb-module deploy-name="solarapp-user">
-        		
-        <property name="context-root" value="solaruser"/>
-        		
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
-        		
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
-        <wb-resource deploy-path="/WEB-INF/classes" source-path="/src/test/resources"/>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-ocpp/solarnet-user-ocpp">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-ocpp/solarnet-ocpp">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-billing/solarnet-user-billing">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-datum/solarnet-user-datum">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user/solarnet-user">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-instructor/solarnet-instructor">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        		
-        <dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">
-            			
-            <dependency-type>uses</dependency-type>
-            		
-        </dependent-module>
-        	
-    </wb-module>
-    
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="1.5.0">
+	<wb-module deploy-name="solarapp-user">
+		<property name="context-root" value="solaruser"/>
+		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/resources"/>
+		<wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-ocpp/solarnet-user-ocpp">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-ocpp/solarnet-ocpp">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-billing/solarnet-user-billing">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user-datum/solarnet-user-datum">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-datum/solarnet-datum">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-user/solarnet-user">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-instructor/solarnet-instructor">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+		<dependent-module deploy-path="/WEB-INF/lib" handle="module:/resource/solarnet-common/solarnet-common">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+	</wb-module>
 </project-modules>
