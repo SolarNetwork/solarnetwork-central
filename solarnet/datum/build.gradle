@@ -47,7 +47,7 @@ dependencies {
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'io.moquette:moquette-broker:0.15'
-    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+    testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 }
 
 jar.manifest {
