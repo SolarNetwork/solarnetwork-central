@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.uuid.UUIDComparator;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
@@ -50,7 +52,7 @@ import net.solarnetwork.util.StatCounter.Stat;
  * Asynchronous {@link UserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AsyncDaoUserEventAppenderBiz
 		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {
@@ -74,6 +76,15 @@ public class AsyncDaoUserEventAppenderBiz
 			}
 			return o1.getUserId().compareTo(o2.getUserId());
 		}
+	};
+
+	/**
+	 * A function to generate a SolarFlux MQTT topic from a user event.
+	 * 
+	 * @since 1.1
+	 */
+	public static Function<UserEvent, String> SOLARFLUX_TOPIC_FN = (event) -> {
+		return "user/" + event.getUserId() + "/event";
 	};
 
 	/**
@@ -113,6 +124,7 @@ public class AsyncDaoUserEventAppenderBiz
 	private final StatCounter stats;
 	private final BlockingQueue<UserEvent> queue;
 	private final UuidGenerator uuidGenerator;
+	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
 	private int queueLagAlertThreshold = DEFAULT_QUEUE_LAG_ALERT_THRESHOLD;
 
 	/**
@@ -183,6 +195,10 @@ public class AsyncDaoUserEventAppenderBiz
 				stats.incrementAndGet(UserEventStats.EventsStored);
 			} catch ( RuntimeException e ) {
 				log.error("Unable to add event {} to DAO: {}", event, e.getMessage(), e);
+			}
+			final MqttJsonPublisher<UserEvent> flux = getSolarFluxPublisher();
+			if ( flux != null ) {
+				flux.apply(event);
 			}
 		}
 	}
@@ -256,6 +272,25 @@ public class AsyncDaoUserEventAppenderBiz
 	 */
 	public void setQueueLagAlertThreshold(int queueLagAlertThreshold) {
 		this.queueLagAlertThreshold = queueLagAlertThreshold;
+	}
+
+	/**
+	 * Get the SolarFlux publisher.
+	 * 
+	 * @return the publisher
+	 */
+	public MqttJsonPublisher<UserEvent> getSolarFluxPublisher() {
+		return solarFluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 * 
+	 * @param solarFluxPublisher
+	 *        the publisher to set
+	 */
+	public void setSolarFluxPublisher(MqttJsonPublisher<UserEvent> solarFluxPublisher) {
+		this.solarFluxPublisher = solarFluxPublisher;
 	}
 
 }

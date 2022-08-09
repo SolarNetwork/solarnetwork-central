@@ -26,7 +26,6 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -45,11 +44,9 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
 import net.solarnetwork.common.mqtt.MqttConnection;
-import net.solarnetwork.common.mqtt.MqttConnectionFactory;
-import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
@@ -60,16 +57,14 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.StreamDatum;
-import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.2
  */
-public class MqttDataCollector extends BaseMqttConnectionService
-		implements MqttConnectionObserver, MqttMessageHandler, ServiceLifecycleObserver {
+public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
 	/** A datum tag that indicates v2 CBOR encoding. */
 	public static final String TAG_V2 = "_v2";
@@ -112,101 +107,45 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 */
 	public static final String INSTRUCTION_ID_FIELD = "instructionId";
 
-	/** The default {@code transientErrorTries} property value. */
-	public static final int DEFAULT_TRANSIENT_ERROR_TRIES = 3;
-
 	private final ObjectMapper objectMapper;
 	private final DataCollectorBiz dataCollectorBiz;
 	private final NodeInstructionDao nodeInstructionDao;
-	private final List<MqttConnectionObserver> connectionObservers;
-
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
-	private int transientErrorTries = DEFAULT_TRANSIENT_ERROR_TRIES;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param connectionFactory
-	 *        the factory to use for {@link MqttConnection} instances
 	 * @param objectMapper
 	 *        object mapper for messages
 	 * @param dataCollectorBiz
 	 *        data collector
 	 * @param nodeInstructionDao
 	 *        the node instruction DAO
-	 * @param connectionObservers
-	 *        optional connection observers
+	 * @param mqttStats
+	 *        the stats
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public MqttDataCollector(MqttConnectionFactory connectionFactory, ObjectMapper objectMapper,
-			DataCollectorBiz dataCollectorBiz, NodeInstructionDao nodeInstructionDao,
-			List<MqttConnectionObserver> connectionObservers) {
-		super(connectionFactory, new MqttStats("MqttDataCollector", 500, SolarInCountStat.values()));
+	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
+			NodeInstructionDao nodeInstructionDao, MqttStats mqttStats) {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.dataCollectorBiz = requireNonNullArgument(dataCollectorBiz, "dataCollectorBiz");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
-		this.connectionObservers = requireNonNullArgument(connectionObservers, "connectionObservers");
-	}
-
-	// TODO: need way to dynamically add observers after connection already established;
-	//       keep track of connections we've seen and if a new one is added then call
-	//       onMqttServerConnectionEstablished() methods on it; similarly do the same
-	//       when observer is de-registered
-
-	@Override
-	public void serviceDidStartup() {
-		super.init();
-	}
-
-	@Override
-	public void serviceDidShutdown() {
-		super.shutdown();
-	}
-
-	@Override
-	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
-			Throwable cause) {
-		if ( connectionObservers != null ) {
-			for ( MqttConnectionObserver o : connectionObservers ) {
-				try {
-					o.onMqttServerConnectionLost(connection, willReconnect, cause);
-				} catch ( Throwable t ) {
-					// naughty!
-					Throwable root = t;
-					while ( root.getCause() != null ) {
-						root = root.getCause();
-					}
-					log.error("Unhandled error in MQTT connection {} lost observer {}: {}",
-							getMqttConfig().getServerUri(), o, root.getMessage(), root);
-				}
-			}
-		}
+		setMqttStats(requireNonNullArgument(mqttStats, "mqttStats"));
+		setDisplayName("SolarIn MQTT");
 	}
 
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
+		super.onMqttServerConnectionEstablished(connection, reconnected);
 		final String datumTopics = String.format(nodeDatumTopicTemplate, "+");
 		try {
-			connection.subscribe(datumTopics, getSubscribeQos(), null)
-					.get(getMqttConfig().getConnectTimeoutSeconds(), TimeUnit.SECONDS);
-			log.info("Subscribed to MQTT topic {} @ {}", datumTopics, getMqttConfig().getServerUri());
+			connection.subscribe(datumTopics, getSubscribeQos(), this).get(getSubscribeTimeoutSeconds(),
+					TimeUnit.SECONDS);
+			log.info("Subscribed to MQTT topic {} @ {}", datumTopics, connection);
 		} catch ( InterruptedException | ExecutionException | TimeoutException e ) {
-			log.error("Failed to subscribe to MQTT topic {} @ {}: {}", datumTopics,
-					getMqttConfig().getServerUri(), e.toString());
-		}
-		if ( connectionObservers != null ) {
-			for ( MqttConnectionObserver o : connectionObservers ) {
-				try {
-					o.onMqttServerConnectionEstablished(connection, reconnected);
-				} catch ( Throwable t ) {
-					// naughty!
-					Throwable root = t;
-					while ( root.getCause() != null ) {
-						root = root.getCause();
-					}
-					log.error("Unhandled error in MQTT connection {} established observer {}: {}",
-							getMqttConfig().getServerUri(), o, root.getMessage(), root);
-				}
-			}
+			log.error("Failed to subscribe to MQTT topic {} @ {}: {}", datumTopics, connection,
+					e.toString());
 		}
 	}
 
@@ -242,7 +181,7 @@ public class MqttDataCollector extends BaseMqttConnectionService
 			final Long nodeId, final boolean checkVersion) throws IOException {
 		JsonNode root = objectMapper.readTree(message.getPayload());
 		if ( root.isObject() || root.isArray() ) {
-			int remainingTries = transientErrorTries;
+			int remainingTries = getTransientErrorTries();
 			while ( remainingTries > 0 ) {
 				try {
 					if ( root.isObject() ) {
@@ -388,11 +327,6 @@ public class MqttDataCollector extends BaseMqttConnectionService
 		return (child == null ? placeholder : child.asText());
 	}
 
-	@Override
-	public String getPingTestName() {
-		return "SolarIn MQTT";
-	}
-
 	/*---------------------
 	 * Accessors
 	 *------------------ */
@@ -411,37 +345,6 @@ public class MqttDataCollector extends BaseMqttConnectionService
 	 */
 	public void setNodeDatumTopicTemplate(String nodeDatumTopicTemplate) {
 		this.nodeDatumTopicTemplate = nodeDatumTopicTemplate;
-	}
-
-	/**
-	 * Get the number of times to try storing datum in the face of transient
-	 * exceptions.
-	 * 
-	 * @return the number of attempts to try storing datum; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_ERROR_TRIES}
-	 * @since 1.3
-	 */
-	public int getTransientErrorTries() {
-		return transientErrorTries;
-	}
-
-	/**
-	 * Set the number of times to try storing datum in the face of transient
-	 * exceptions.
-	 * 
-	 * <p>
-	 * If a transient exception is thrown while attempting to store a datum,
-	 * 
-	 * @param transientErrorTries
-	 *        the number of times to attempt storing datum; must be greater than
-	 *        {@literal 0}
-	 * @since 1.3
-	 */
-	public void setTransientErrorTries(int transientErrorTries) {
-		if ( transientErrorTries < 1 ) {
-			transientErrorTries = 1;
-		}
-		this.transientErrorTries = transientErrorTries;
 	}
 
 }

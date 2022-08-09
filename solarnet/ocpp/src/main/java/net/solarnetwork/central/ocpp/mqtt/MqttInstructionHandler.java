@@ -29,7 +29,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,10 +37,10 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
-import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -60,8 +59,8 @@ import ocpp.domain.Action;
  * @author matt
  * @version 2.0
  */
-public class MqttInstructionHandler<T extends Enum<T> & Action>
-		implements ActionMessageProcessor<JsonNode, Void>, MqttConnectionObserver, MqttMessageHandler {
+public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
+		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler {
 
 	/** The default {@code mqttTopic} property value. */
 	public static final String DEFAULT_MQTT_TOPIC = "instr/OCPP_v16";
@@ -73,7 +72,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	public static final boolean DEFAULT_PUBLISH_ONLY = true;
 
 	private String mqttTopic = DEFAULT_MQTT_TOPIC;
-	private int mqttTimeout = DEFAULT_MQTT_TIMEOUT;
+	//private int mqttTimeout = DEFAULT_MQTT_TIMEOUT;
 	private boolean publishOnly = DEFAULT_PUBLISH_ONLY;
 
 	private final ObjectMapper objectMapper;
@@ -81,7 +80,6 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	private final ChargePointRouter chargePointRouter;
 	private final CentralChargePointDao chargePointDao;
 	private final Class<T> actionClass;
-	private final AtomicReference<MqttConnection> mqttConnection = new AtomicReference<>();
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -108,6 +106,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 		this.chargePointDao = chargePointDao;
 		this.objectMapper = objectMapper;
 		this.chargePointRouter = chargePointRouter;
+		setDisplayName("OCPP Instructions");
 	}
 
 	@Override
@@ -146,23 +145,13 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 	}
 
 	@Override
-	public void onMqttServerConnectionLost(MqttConnection connection, boolean willReconnect,
-			Throwable cause) {
-		log.info("MQTT connection lost for {} instructions: {}", mqttTopic,
-				(cause != null ? cause.getMessage() : "unknown reason"));
-		mqttConnection.compareAndSet(connection, null);
-	}
-
-	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
-		log.info("MQTT connection established for {} instructions.", mqttTopic);
-		MqttConnection oldConnection = mqttConnection.getAndSet(connection);
-		mqttConnection.set(connection);
-		if ( publishOnly | oldConnection == connection ) {
+		super.onMqttServerConnectionEstablished(connection, reconnected);
+		if ( publishOnly ) {
 			return;
 		}
 		try {
-			connection.subscribe(mqttTopic, MqttQos.AtLeastOnce, this).get(mqttTimeout,
+			connection.subscribe(mqttTopic, MqttQos.AtLeastOnce, this).get(getSubscribeTimeoutSeconds(),
 					TimeUnit.SECONDS);
 			log.info("Subscribed to MQTT topic {} @ {}", mqttTopic, connection);
 		} catch ( InterruptedException | ExecutionException | TimeoutException e ) {
@@ -283,30 +272,6 @@ public class MqttInstructionHandler<T extends Enum<T> & Action>
 			throw new IllegalArgumentException("The mqttTopic parameter must not be null.");
 		}
 		this.mqttTopic = mqttTopic;
-	}
-
-	/**
-	 * Get the maximum time to wait for MQTT operations.
-	 * 
-	 * @return the timeout, in seconds
-	 */
-	public int getMqttTimeout() {
-		return mqttTimeout;
-	}
-
-	/**
-	 * Set the maximum time to wait for MQTT operations.
-	 * 
-	 * @param mqttTimeout
-	 *        the timeout, in seconds
-	 * @throws IllegalArgumentException
-	 *         if {@code mqttTimeout} is less than {@literal 0}
-	 */
-	public void setMqttTimeout(int mqttTimeout) {
-		if ( mqttTimeout < 0 ) {
-			throw new IllegalArgumentException("The mqttTimeout parameter must not be < 0.");
-		}
-		this.mqttTimeout = mqttTimeout;
 	}
 
 	/**

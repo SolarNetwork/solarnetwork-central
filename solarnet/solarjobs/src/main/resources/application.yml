@@ -39,15 +39,6 @@ app:
           regionName: "us-west-2"
           accessToken: "TOKEN_HERE"
           accessSecret: "SECRET_HERE"
-    solarflux-publish:
-      uid: "SolarFlux-Datum-Publisher-${app.meta.instance-id}"
-      publish-qos-level: 0
-      mqtt-stats.log-frequency: 200
-      mqtt-config:
-        server-uri: "mqtt://solarflux.solarnetwork:1883"
-        client-id: "solarjobs-${app.meta.instance-id}"
-        username: "USERNAME_HERE"
-        password: "PASSWORD_HERE"
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
@@ -205,6 +196,19 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+  solarflux:
+    connection:
+      uid: "SolarFlux-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solarjobs-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+    datum-publish:
+      publish-qos-level: 0
+    user-events:
+      publish-qos-level: 0
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10

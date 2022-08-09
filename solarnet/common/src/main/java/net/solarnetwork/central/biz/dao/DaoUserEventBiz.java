@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserEventDao.java - 1/08/2022 2:27:40 pm
+ * DaoUserEventBiz.java - 6/08/2022 10:08:54 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,35 +20,43 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao;
+package net.solarnetwork.central.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import net.solarnetwork.central.biz.UserEventBiz;
+import net.solarnetwork.central.common.dao.UserEventDao;
+import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.dao.FilterableDao;
 
 /**
- * DAO API user events.
+ * DAO implementation of {@link UserEventBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface UserEventDao
-		extends UserEventAppenderDao, FilterableDao<UserEvent, UserUuidPK, UserEventFilter> {
+public class DaoUserEventBiz implements UserEventBiz {
+
+	private final UserEventDao userEventDao;
 
 	/**
-	 * API for querying for a filtered stream of {@link UserEvent} entities.
+	 * Constructor.
 	 * 
-	 * @param filter
-	 *        the filter
-	 * @param processor
-	 *        the stream processor
-	 * @throws IOException
-	 *         if any IO error occurs
-	 * @since 1.1
+	 * @param userEventDao
+	 *        the user event DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	void findFilteredStream(UserEventFilter filter, FilteredResultsProcessor<UserEvent> processor)
-			throws IOException;
+	public DaoUserEventBiz(UserEventDao userEventDao) {
+		super();
+		this.userEventDao = requireNonNullArgument(userEventDao, "userEventDao");
+	}
+
+	@Override
+	public void findFilteredUserEvents(UserEventFilter filter,
+			FilteredResultsProcessor<UserEvent> processor) throws IOException {
+		userEventDao.findFilteredStream(filter, processor);
+	}
 
 }

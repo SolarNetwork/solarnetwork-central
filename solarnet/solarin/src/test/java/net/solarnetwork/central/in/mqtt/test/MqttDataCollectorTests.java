@@ -56,12 +56,15 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
+import net.solarnetwork.central.in.mqtt.SolarInCountStat;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.BasicInstructionStatus;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -85,6 +88,7 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 	private static final String TEST_INSTRUCTION_TOPIC = "test.topic";
 
 	private ObjectMapper objectMapper;
+	private ObservableMqttConnection mqttConnection;
 	private DataCollectorBiz dataCollectorBiz;
 	private NodeInstructionDao nodeInstructionDao;
 	private MqttDataCollector service;
@@ -107,11 +111,15 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 		NettyMqttConnectionFactory factory = new NettyMqttConnectionFactory(
 				Executors.newCachedThreadPool(), scheduler);
 
-		service = new MqttDataCollector(factory, objectMapper, dataCollectorBiz, nodeInstructionDao,
-				Collections.emptyList());
-		service.getMqttConfig().setClientId(TEST_CLIENT_ID);
-		service.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
-		Future<?> f = service.startup();
+		MqttStats mqttStats = new MqttStats(1, SolarInCountStat.values());
+
+		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
+
+		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
+				Collections.singletonList(service));
+		mqttConnection.getMqttConfig().setClientId(TEST_CLIENT_ID);
+		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
+		Future<?> f = mqttConnection.startup();
 		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
 	}
 
@@ -124,6 +132,12 @@ public class MqttDataCollectorTests extends MqttServerSupport {
 
 	private void replayAll() {
 		EasyMock.replay(dataCollectorBiz, nodeInstructionDao);
+	}
+
+	@Override
+	public void stopMqttServer() {
+		mqttConnection.shutdown();
+		super.stopMqttServer();
 	}
 
 	private String datumTopic(Long nodeId) {

@@ -179,6 +179,21 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	}
 
 	@Override
+	protected void willProcessCallResponse(PendingActionMessage msg, Object payload,
+			Throwable exception) {
+		super.willProcessCallResponse(msg, payload, exception);
+		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long ) {
+			Map<String, Object> data = new LinkedHashMap<>(4);
+			data.put(CHARGE_POINT_DATA_KEY, msg.getMessage().getClientId().getIdentifier());
+			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
+			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
+			data.put(MESSAGE_DATA_KEY, payload);
+			generateUserEvent((Long) msg.getMessage().getClientId().getUserIdentifier(),
+					CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
+		}
+	}
+
+	@Override
 	protected void didSendCall(ChargePointIdentity clientId, String messageId, Action action,
 			Object payload, String json, Throwable exception) {
 		super.didSendCall(clientId, messageId, action, payload, json, exception);

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import static net.solarnetwork.central.jobs.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -32,27 +33,26 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.scheduler.ManagedJob;
+import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 
 /**
  * Configuration for SolarFlux publishing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Profile("mqtt")
 public class SolarFluxPublishingConfig {
-
-	/** A qualifier for SolarFlux. */
-	public static final String SOLARFLUX = "solarflux";
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
@@ -64,25 +64,37 @@ public class SolarFluxPublishingConfig {
 	private DatumEntityDao datumDao;
 
 	@Autowired
-	private MqttConnectionFactory mqttConnectionFactory;
-
-	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	/**
+	 * A module for handling SolarFlux objects.
+	 * 
+	 * @since 1.1
+	 */
+	public static final com.fasterxml.jackson.databind.Module SOLARFLUX_MODULE;
+	static {
+		SimpleModule m = new SimpleModule("SolarFlux");
+		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
+		SOLARFLUX_MODULE = m;
+	}
 
 	@Bean
 	@Qualifier(SOLARFLUX)
 	public ObjectMapper solarFluxObjectMapper() {
-		return JsonUtils.createObjectMapper(new CBORFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
+		ObjectMapper mapper = JsonUtils
+				.createObjectMapper(new CBORFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
 				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 				.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
+		mapper.registerModule(SOLARFLUX_MODULE);
+		return mapper;
 	}
 
-	@ConfigurationProperties(prefix = "app.datum.solarflux-publish")
-	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	@Bean
+	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
 	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(mqttConnectionFactory,
-				nodeOwnershipDao, solarFluxObjectMapper());
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
+				solarFluxObjectMapper());
 		return processor;
 	}
 

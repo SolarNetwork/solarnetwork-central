@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarFluxPublishingConfig.java - 10/11/2021 9:22:14 PM
+ * MqttInConfig.java - 11/11/2021 4:10:24 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -22,50 +22,45 @@
 
 package net.solarnetwork.central.in.config;
 
-import static net.solarnetwork.central.in.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
+import static net.solarnetwork.central.in.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.UserEventSerializer;
+import net.solarnetwork.central.in.biz.DataCollectorBiz;
+import net.solarnetwork.central.in.mqtt.MqttDataCollector;
+import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
- * Configuration for SolarFlux publishing.
+ * MQTT instruction publishing configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 @Configuration
 @Profile("mqtt")
-public class SolarFluxPublishingConfig {
+public class SolarQueueDataCollectorConfig {
 
-	/**
-	 * A module for handling SolarFlux objects.
-	 * 
-	 * @since 1.1
-	 */
-	public static final com.fasterxml.jackson.databind.Module SOLARFLUX_MODULE;
-	static {
-		SimpleModule m = new SimpleModule("SolarFlux");
-		m.addSerializer(UserEvent.class, UserEventSerializer.INSTANCE);
-		SOLARFLUX_MODULE = m;
-	}
+	@Autowired
+	private NodeInstructionDao nodeInstructionDao;
+
+	@Autowired
+	private DataCollectorBiz dataCollectorBiz;
 
 	@Bean
-	@Qualifier(SOLARFLUX)
-	public ObjectMapper solarFluxObjectMapper() {
-		ObjectMapper mapper = JsonUtils
-				.createObjectMapper(new CBORFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
-				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-				.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
-		mapper.registerModule(SOLARFLUX_MODULE);
-		return mapper;
+	@Qualifier(SOLARQUEUE)
+	@ConfigurationProperties(prefix = "app.solarqueue.data-collector")
+	public MqttDataCollector mqttDataCollector(@Qualifier(SOLARQUEUE) MqttStats mqttStats) {
+		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
+		MqttDataCollector collector = new MqttDataCollector(objectMapper, dataCollectorBiz,
+				nodeInstructionDao, mqttStats);
+		return collector;
 	}
 
 }

@@ -90,6 +90,7 @@ subprojects {
 		checkstyleVersion = '8.34'
         javaxAnnotationVersion = '1.3.2'
         myBatisStarterVersion = '2.2.0'
+        snCommonMqttNettyVersion = '2.1.3'
         superCsvVersion = '2.4.0'
 
         libraries = [

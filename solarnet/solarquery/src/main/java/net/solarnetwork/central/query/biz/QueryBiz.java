@@ -204,7 +204,6 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 4.1
@@ -232,7 +231,6 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * @return the results, never {@literal null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @since 4.1

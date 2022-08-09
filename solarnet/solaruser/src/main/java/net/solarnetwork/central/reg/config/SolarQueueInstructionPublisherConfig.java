@@ -22,12 +22,10 @@
 
 package net.solarnetwork.central.reg.config;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +33,6 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.common.mqtt.MqttConnectionFactory;
-import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 
 /**
  * MQTT instruction publishing configuration.
@@ -46,10 +42,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
  */
 @Configuration
 @Profile("mqtt")
-public class MqttInstructionPublisherConfig {
-
-	@Autowired
-	private MqttConnectionFactory connectionFactory;
+public class SolarQueueInstructionPublisherConfig {
 
 	@Autowired
 	private Executor executor;
@@ -57,16 +50,11 @@ public class MqttInstructionPublisherConfig {
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
 
-	@Autowired(required = false)
-	private List<MqttConnectionObserver> mqttConnectionObservers;
-
-	@ConfigurationProperties(prefix = "app.instr.publish")
-	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	@ConfigurationProperties(prefix = "app.solarqueue.instr-publish")
+	@Qualifier(SolarQueueMqttConnectionConfig.SOLARQUEUE)
 	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
 		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
-		return new MqttNodeInstructionQueueHook(connectionFactory, objectMapper, executor,
-				nodeInstructionDao,
-				mqttConnectionObservers != null ? mqttConnectionObservers : Collections.emptyList());
+		return new MqttNodeInstructionQueueHook(objectMapper, executor, nodeInstructionDao);
 	}
 
 }

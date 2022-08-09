@@ -25,12 +25,15 @@ package net.solarnetwork.central.common.dao.jdbc.test;
 import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -48,6 +51,7 @@ import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -143,6 +147,60 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		FilterResults<UserEvent, UserUuidPK> result = dao.findFiltered(f);
 		assertThat("Results returned for query", result, is(notNullValue()));
 		assertThat("Results with a and b returned", result.getReturnedResultCount(), is(equalTo(4)));
+	}
+
+	@Test
+	public void find_tags_stream() throws IOException {
+		// GIVEN
+		final Instant start = clock.instant();
+		final int groupSize = 4;
+		final int count = groupSize * 4;
+		final List<UserEvent> events = new ArrayList<>(count);
+		for ( int i = 0; i < count; i++ ) {
+			String[] tags;
+			switch (i % groupSize) {
+				case 0:
+					tags = new String[] { "a", "b", "c" };
+					break;
+				case 1:
+					tags = new String[] { "a", "b", "d" };
+					break;
+				case 2:
+					tags = new String[] { "a", "e", "f" };
+					break;
+				default:
+					tags = new String[] { "g", "h", "i" };
+					break;
+			}
+			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null, null);
+			dao.add(event);
+			events.add(event);
+			clock.add(1, ChronoUnit.SECONDS);
+		}
+
+		allUserEventData();
+
+		// WHEN
+		BasicUserEventFilter f = new BasicUserEventFilter();
+		f.setUserId(userId);
+		f.setStartDate(start.plusSeconds(4));
+		f.setEndDate(start.plusSeconds(count - 4));
+
+		f.setTags(new String[] { "a", "b" });
+		List<UserEvent> results = new ArrayList<>(4);
+		dao.findFilteredStream(f, new AbstractFilteredResultsProcessor<UserEvent>() {
+
+			@Override
+			public void handleResultItem(UserEvent resultItem) throws IOException {
+				results.add(resultItem);
+			}
+
+		});
+		assertThat("Results with a and b returned", results, hasSize(4));
+		for ( UserEvent event : results ) {
+			assertThat("Results has both a and b tags", event.getTags(),
+					allOf(hasItemInArray("a"), hasItemInArray("b")));
+		}
 	}
 
 	@Test

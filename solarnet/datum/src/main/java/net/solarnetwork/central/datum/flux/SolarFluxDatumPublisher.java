@@ -22,30 +22,22 @@
 
 package net.solarnetwork.central.datum.flux;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Base64;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
-import net.solarnetwork.common.mqtt.BasicMqttMessage;
-import net.solarnetwork.common.mqtt.MqttConnection;
-import net.solarnetwork.common.mqtt.MqttConnectionConfig;
-import net.solarnetwork.common.mqtt.MqttConnectionFactory;
+import net.solarnetwork.central.support.MqttJsonPublisher;
+import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Publish datum to SolarFlux.
@@ -53,8 +45,8 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 2.0
  */
-public class SolarFluxDatumPublisher extends BaseMqttConnectionService
-		implements DatumProcessor, ServiceLifecycleObserver {
+public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
+		implements DatumProcessor {
 
 	/**
 	 * The MQTT topic template for node data publication.
@@ -72,58 +64,47 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService
 	 */
 	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "user/%d/node/%d/datum/%s/%s";
 
-	/** The default value for the {@code mqttHost} property. */
-	public static final String DEFAULT_MQTT_HOST = "mqtts://influx.solarnetwork.net:8884";
-
-	/** The default value for the {@code mqttUsername} property. */
-	public static final String DEFAULT_MQTT_USERNAME = "solarnet-ocpp";
-
 	private final SolarNodeOwnershipDao supportDao;
-	private final ObjectMapper objectMapper;
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param connectionFactory
-	 *        the MQTT connection factory
 	 * @param nodeOwnershipDao
 	 *        the support DAO
 	 * @param objectMapper
 	 *        the mapper for JSON
+	 * @param retained
+	 *        {@literal true} to publish each message as retained
+	 * @param publishQos
+	 *        the publish QoS
 	 */
-	public SolarFluxDatumPublisher(MqttConnectionFactory connectionFactory,
-			SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
-		super(connectionFactory,
-				new MqttStats("SolarFluxPublisher", 500, SolarFluxDatumPublishCountStat.values()));
-		this.supportDao = nodeOwnershipDao;
-		this.objectMapper = objectMapper;
-		getMqttConfig().setUsername(DEFAULT_MQTT_USERNAME);
-		try {
-			getMqttConfig().setServerUri(new URI(DEFAULT_MQTT_HOST));
-		} catch ( URISyntaxException e ) {
-			throw new RuntimeException(e);
-		}
+	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
+		this(nodeOwnershipDao, objectMapper, true, MqttQos.AtMostOnce);
 	}
 
-	@Override
-	public void serviceDidStartup() {
-		init();
-	}
-
-	@Override
-	public void serviceDidShutdown() {
-		shutdown();
-	}
-
-	@Override
-	public String getPingTestName() {
-		return "SolarFlux Datum Publisher";
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeOwnershipDao
+	 *        the support DAO
+	 * @param objectMapper
+	 *        the mapper for JSON
+	 * @param retained
+	 *        {@literal true} to publish each message as retained
+	 * @param publishQos
+	 *        the publish QoS
+	 */
+	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper,
+			boolean retained, MqttQos publishQos) {
+		super("SolarFlux Datum Publisher", objectMapper, (item) -> {
+			throw new UnsupportedOperationException();
+		}, retained, publishQos);
+		this.supportDao = requireNonNullArgument(nodeOwnershipDao, "supportDao");
 	}
 
 	@Override
 	public boolean isConfigured() {
-		MqttConnection conn = connection();
-		return conn != null && conn.isEstablished();
+		return isConnected();
 	}
 
 	@Override
@@ -132,67 +113,44 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService
 		if ( datum == null ) {
 			return true;
 		}
-		MqttConnection conn = connection();
-		MqttConnectionConfig mqttConfig = getMqttConfig();
-		if ( conn != null && conn.isEstablished() ) {
-			try {
-				for ( Identity<GeneralNodeDatumPK> d : datum ) {
-					final SolarNodeOwnership ownership = supportDao
-							.ownershipForNodeId(d.getId().getNodeId());
-					if ( ownership == null ) {
-						log.info("Not publishing datum {} to SolarFlux because user ID not available.",
-								d);
-						continue;
-					}
-					String topic = topicForDatum(ownership.getUserId(), aggregation, d);
-					if ( topic == null ) {
-						return false;
-					}
-					JsonNode jsonData = objectMapper.valueToTree(d);
-					byte[] payload = objectMapper.writeValueAsBytes(jsonData);
-					if ( log.isDebugEnabled() ) {
-						log.debug("Publishing to MQTT topic {} JSON:\n{}", topic, jsonData);
-					}
-					if ( log.isTraceEnabled() ) {
-						log.trace("Publishing to MQTT topic {}\n{}", topic,
-								Base64.getEncoder().encodeToString(payload));
-					}
+		try {
+			final int timeout = getPublishTimeoutSeconds();
+			for ( Identity<GeneralNodeDatumPK> d : datum ) {
+				String topic = topicForDatum(aggregation, d);
+				Future<?> f = publish(d, topic);
+				if ( timeout > 0 ) {
+					f.get(timeout, TimeUnit.SECONDS);
+				}
 
-					Future<?> f = conn
-							.publish(new BasicMqttMessage(topic, true, getPublishQos(), payload));
-					f.get(mqttConfig.getConnectTimeoutSeconds(), TimeUnit.SECONDS);
-
-					MqttStat stat = publishStat(aggregation);
-					if ( stat != null ) {
-						getMqttStats().incrementAndGet(stat);
+				MqttStat stat = publishStat(aggregation);
+				if ( stat != null ) {
+					MqttStats stats = getMqttStats();
+					if ( stats != null ) {
+						stats.incrementAndGet(stat);
 					}
 				}
-				return true;
-			} catch ( TimeoutException e ) {
-				// don't generate error for timeout; just assume the problem is transient, e.g.
-				// network connection lost, and will be resolved eventually
-				log.warn("Timeout publishing {} datum to SolarFlux @ {}", aggDisplayName(aggregation),
-						mqttConfig.getServerUri());
-			} catch ( IOException | InterruptedException | ExecutionException e ) {
-				Throwable root = e;
-				while ( root.getCause() != null ) {
-					root = root.getCause();
-				}
-				log.error("Error publishing {} datum to SolarFlux @ {}: {}", aggDisplayName(aggregation),
-						mqttConfig.getServerUri(), root.toString(), e);
 			}
-		} else {
-			log.debug("MQTT client not avaialable for publishing SolarFlux {} datum.",
-					aggDisplayName(aggregation));
+			return true;
+		} catch ( TimeoutException e ) {
+			// don't generate error for timeout; just assume the problem is transient, e.g.
+			// network connection lost, and will be resolved eventually
+			log.warn("Timeout publishing {} datum to SolarFlux", aggDisplayName(aggregation));
+		} catch ( InterruptedException | ExecutionException e ) {
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
+					root.toString(), e);
 		}
 		return false;
 	}
 
-	private String aggDisplayName(Aggregation aggregation) {
+	private static String aggDisplayName(Aggregation aggregation) {
 		return aggregation == Aggregation.None ? "Raw" : aggregation.toString();
 	}
 
-	private MqttStat publishStat(Aggregation aggregation) {
+	private static MqttStat publishStat(Aggregation aggregation) {
 		switch (aggregation) {
 			case None:
 				return SolarFluxDatumPublishCountStat.RawDatumPublished;
@@ -211,18 +169,22 @@ public class SolarFluxDatumPublisher extends BaseMqttConnectionService
 		}
 	}
 
-	private String topicForDatum(Long userId, Aggregation aggregation,
-			Identity<GeneralNodeDatumPK> datum) {
+	private String topicForDatum(Aggregation aggregation, Identity<GeneralNodeDatumPK> datum) {
+		final SolarNodeOwnership ownership = supportDao.ownershipForNodeId(datum.getId().getNodeId());
+		if ( ownership == null ) {
+			log.info("Not publishing datum {} to SolarFlux because user ID not available.", datum);
+			return null;
+		}
 		Long nodeId = datum.getId().getNodeId();
 		String sourceId = datum.getId().getSourceId();
-		if ( userId == null || nodeId == null || sourceId == null || sourceId.isEmpty() ) {
+		if ( ownership.getUserId() == null || nodeId == null || sourceId == null
+				|| sourceId.isEmpty() ) {
 			return null;
 		}
 		if ( sourceId.startsWith("/") ) {
 			sourceId = sourceId.substring(1);
 		}
-		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, userId, nodeId, aggregation.getKey(),
-				sourceId);
+		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, ownership.getUserId(), nodeId,
+				aggregation.getKey(), sourceId);
 	}
-
 }
