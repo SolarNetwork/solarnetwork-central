@@ -52,7 +52,7 @@ dependencies {
 	implementation 'org.tukaani:xz:1.9'
 
 	// SolarNetwork
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 
 	// Testing
 	testImplementation project(':solarnet-common-test')
