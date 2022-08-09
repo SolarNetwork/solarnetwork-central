@@ -120,6 +120,13 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		mqttConnection.getMqttConfig().setServerUri(new URI("mqtt://localhost:" + getMqttServerPort()));
 		Future<?> f = mqttConnection.startup();
 		f.get(MQTT_TIMEOUT, TimeUnit.SECONDS);
+
+		// give chance for onMqttServerConnection thread to complete
+		try {
+			Thread.sleep(400L);
+		} catch ( InterruptedException e ) {
+			// ignore
+		}
 	}
 
 	@After

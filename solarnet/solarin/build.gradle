@@ -53,7 +53,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 		
 	// SolarNetwork
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.2'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.3.0'
@@ -62,7 +62,7 @@ dependencies {
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'io.moquette:moquette-broker:0.15'
-    testImplementation 'net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:2.0.0'
+    testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 }
 
 eclipse {
