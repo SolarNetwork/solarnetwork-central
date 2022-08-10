@@ -92,8 +92,7 @@ public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 		MqttStats mqttStats = new MqttStats(1, NodeInstructionQueueHookStat.values());
 
 		service = new MqttNodeInstructionQueueHook(objectMapper, new CallingThreadExecutorService(),
-				nodeInstructionDao);
-		service.setMqttStats(mqttStats);
+				nodeInstructionDao, mqttStats);
 
 		mqttConnection = new ObservableMqttConnection(factory, mqttStats, "Test SolarFlux",
 				Collections.singletonList(service));
