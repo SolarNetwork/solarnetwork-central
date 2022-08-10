@@ -37,6 +37,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -76,15 +77,19 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        an executor
 	 * @param nodeInstructionDao
 	 *        node instruction DAO
+	 * @param mqttStats
+	 *        the MQTT stats to use; must support the
+	 *        {@link NodeInstructionQueueHookStat} stats
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
-			NodeInstructionDao nodeInstructionDao) {
+			NodeInstructionDao nodeInstructionDao, MqttStats mqttStats) {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
 		setDisplayName("NodeInstructionQueueHook MQTT");
+		setMqttStats(requireNonNullArgument(mqttStats, "mqttStats"));
 	}
 
 	@Override
