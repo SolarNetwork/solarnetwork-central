@@ -59,7 +59,7 @@ public class SolarQueueInstructionPublisherConfig {
 	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
 		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
 		return new MqttNodeInstructionQueueHook(objectMapper, executor, nodeInstructionDao,
-				new MqttStats("Instruction Publisher", 0, NodeInstructionQueueHookStat.values()));
+				new MqttStats("Instruction Publisher", 500, NodeInstructionQueueHookStat.values()));
 	}
 
 }
