@@ -23,11 +23,13 @@
 package net.solarnetwork.central.instructor.dao.mqtt;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -152,9 +154,15 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				log.info(
-						"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
-						instructionId, nodeId, root.toString());
+				if ( (e instanceof IOException) || (e instanceof TimeoutException) ) {
+					log.info(
+							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
+							instructionId, nodeId, root.toString());
+				} else {
+					log.error(
+							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
+							instructionId, nodeId, root.toString(), e);
+				}
 				nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId,
 						InstructionState.Queuing, InstructionState.Queued, null);
 			}
