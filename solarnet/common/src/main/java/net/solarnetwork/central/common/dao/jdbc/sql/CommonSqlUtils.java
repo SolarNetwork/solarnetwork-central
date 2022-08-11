@@ -28,7 +28,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.regex.Pattern;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -36,7 +38,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public final class CommonSqlUtils {
 
@@ -439,6 +441,35 @@ public final class CommonSqlUtils {
 		}
 		if ( filter.getEndDate() != null ) {
 			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getEndDate()));
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query JSON string parameter.
+	 * 
+	 * @param data
+	 *        the JSON data; will be serialized via
+	 *        {@link JsonUtils#getJSONString(Object, String)}
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code data} serializes
+	 *        to {@literal null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.2
+	 */
+	public static int prepareJsonString(Object data, PreparedStatement stmt, int parameterOffset,
+			boolean setNull) throws SQLException {
+		String props = JsonUtils.getJSONString(data, null);
+		if ( props != null ) {
+			stmt.setString(++parameterOffset, props);
+		} else if ( setNull ) {
+			stmt.setNull(++parameterOffset, Types.VARCHAR);
 		}
 		return parameterOffset;
 	}

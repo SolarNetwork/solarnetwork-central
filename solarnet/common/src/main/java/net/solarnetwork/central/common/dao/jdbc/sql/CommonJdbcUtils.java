@@ -26,12 +26,15 @@ import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -43,7 +46,7 @@ import net.solarnetwork.domain.Identity;
  * Common JDBC utilities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CommonJdbcUtils {
 
@@ -65,7 +68,6 @@ public final class CommonJdbcUtils {
 	 *         if any SQL error occurs
 	 * @throws ClassCastException
 	 *         if a casting error occurs
-	 * @since 2.1
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
@@ -96,7 +98,6 @@ public final class CommonJdbcUtils {
 	 * @throws IllegalArgumentException
 	 *         if the column value is non-null but does not conform to the
 	 *         string representation as described in {@link UUID#toString()}
-	 * @since 2.1
 	 */
 	public static UUID getUuid(ResultSet rs, int column) throws SQLException {
 		Object sid = rs.getObject(column);
@@ -114,11 +115,10 @@ public final class CommonJdbcUtils {
 	 *        {@link CountPreparedStatementCreatorProvider#countPreparedStatementCreator()}
 	 *        will be used
 	 * @return the result, or {@literal null} if no result count is available
-	 * @since 2.1
 	 */
 	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
 		return jdbcTemplate.query(creator, new ResultSetExtractor<Long>() {
-	
+
 			@Override
 			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
 				return rs.next() ? rs.getLong(1) : null;
@@ -142,7 +142,6 @@ public final class CommonJdbcUtils {
 	 * @param mapper
 	 *        the row mapper to use
 	 * @return the results, never {@literal null}
-	 * @since 2.1
 	 */
 	public static <M extends Identity<K>, K> FilterResults<M, K> executeFilterQuery(
 			JdbcOperations jdbcTemplate, PaginationCriteria filter, PreparedStatementCreator sql,
@@ -154,15 +153,36 @@ public final class CommonJdbcUtils {
 			totalCount = executeCountQuery(jdbcTemplate,
 					((CountPreparedStatementCreatorProvider) sql).countPreparedStatementCreator());
 		}
-	
+
 		List<M> results = jdbcTemplate.query(sql, mapper);
-	
+
 		if ( filter.getMax() == null ) {
 			totalCount = (long) results.size();
 		}
-	
+
 		int offset = (filter.getOffset() != null ? filter.getOffset() : 0);
 		return new BasicFilterResults<>(results, totalCount, offset, results.size());
 	}
 
+	/**
+	 * Perform an update operation and extract a generated {@code Long} key.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC template to use
+	 * @param sql
+	 *        the SQL to execute
+	 * @param keyColumnName
+	 *        the name of the generated key column to extract
+	 * @return the generated key value, or {@literal null} if the key is not
+	 *         returned or is not a {@code Long} instance
+	 * @since 1.1
+	 */
+	public static Long updateWithGeneratedLong(JdbcOperations jdbcTemplate, PreparedStatementCreator sql,
+			String keyColumnName) {
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		jdbcTemplate.update(sql, keyHolder);
+		Map<String, Object> keys = keyHolder.getKeys();
+		Object id = keys.get(keyColumnName);
+		return (id instanceof Long ? (Long) id : null);
+	}
 }
