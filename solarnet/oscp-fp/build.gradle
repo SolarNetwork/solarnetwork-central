@@ -6,6 +6,7 @@ buildscript {
 
 plugins {
 	id 'java'
+    id 'eclipse'
 	id 'org.springframework.boot' version '2.7.2'
 }
 
@@ -16,6 +17,9 @@ apply plugin: 'io.spring.dependency-management'
 description = 'SolarOSCP Flexibility Provider'
 version = '1.0.0'
 archivesBaseName = 'solaroscp-fp'
+
+sourceCompatibility = 17
+targetCompatibility = 17
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
