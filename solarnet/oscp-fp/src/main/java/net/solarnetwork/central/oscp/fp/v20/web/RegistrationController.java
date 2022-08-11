@@ -27,11 +27,15 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20_URL_PATH;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import javax.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import oscp.v20.Register;
+import oscp.v20.VersionUrl;
 
 /**
  * Registration web API.
@@ -55,9 +59,16 @@ public class RegistrationController {
 	 * @return the updated user
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
-	public oscp.v20.Register initiateRegistration(@Valid @RequestBody Register input) {
-		// TODO
-		return new Register();
+	public ResponseEntity<oscp.v20.Register> initiateRegistration(@Valid @RequestBody Register input) {
+		VersionUrl url = input.getVersionUrl().stream().filter(e -> "2.0".equals(e.getVersion()))
+				.findFirst().orElse(null);
+		if ( url == null ) {
+			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+					.header(OscpWebUtils.ERROR_MESSAGE_HEADER,
+							"URL version '2.0' required but not provided.")
+					.build();
+		}
+		return ResponseEntity.ok(new Register());
 	}
 
 }

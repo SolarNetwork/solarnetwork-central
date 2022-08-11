@@ -33,6 +33,9 @@ public final class OscpWebUtils {
 	/** The HTTP header for a message correlation ID. */
 	public static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
 
+	/** The HTTP header for an error message. */
+	public static final String ERROR_MESSAGE_HEADER = "X-Error-Message";
+
 	/**
 	 * The {@code Authorization} HTTP header scheme for OSCP token
 	 * authentication.
