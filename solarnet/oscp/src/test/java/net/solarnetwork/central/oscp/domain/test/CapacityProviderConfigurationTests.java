@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.UUID;
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
@@ -70,17 +71,23 @@ public class CapacityProviderConfigurationTests {
 				{"userId":%d
 				, "configId":%d
 				, "created":"%s"
+				, "modified":"%s"
+				, "enabled":%s
 				, "name":"%s"
 				, "baseUrl":"%s"
 				, "registrationStatus":"%s"
+				, "serviceProps":%s
 				}
 				""",
 				conf.getUserId(),
 				conf.getEntityId(),
 				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()),
+				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getModified()),
+				conf.isEnabled(),
 				conf.getName(),
 				conf.getBaseUrl(),
-				conf.getRegistrationStatus().name()
+				conf.getRegistrationStatus().name(),
+				JsonUtils.getJSONString(conf.getServiceProps(), "null")
 				), actualJson, true);
 		// @formatter:on
 	}
@@ -94,9 +101,12 @@ public class CapacityProviderConfigurationTests {
 		Long confId = UUID.randomUUID().getMostSignificantBits();
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, confId,
 				Instant.now());
+		conf.setModified(conf.getCreated().plusSeconds(9));
+		conf.setEnabled(true);
 		conf.setName("Howdy");
 		conf.setBaseUrl("https://localhost/" + UUID.randomUUID());
 		conf.setRegistrationStatus(RegistrationStatus.Pending);
+		conf.setServiceProps(Collections.singletonMap("foo", "bar"));
 
 		// WHEN
 		String json = mapper.writeValueAsString(conf);

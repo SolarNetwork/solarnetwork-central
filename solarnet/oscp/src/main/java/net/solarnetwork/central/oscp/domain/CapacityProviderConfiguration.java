@@ -32,7 +32,8 @@ import net.solarnetwork.central.domain.UserLongPK;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "userId", "configId", "created", "name", "token", "baseUrl", "registrationStatus" })
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
+		"registrationStatus", "serviceProps" })
 public class CapacityProviderConfiguration extends BaseOscpConfigurationEntity {
 
 	private static final long serialVersionUID = -7841722652051708665L;

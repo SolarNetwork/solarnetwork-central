@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -40,13 +41,16 @@ import net.solarnetwork.dao.Entity;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "configId", "created", "name" })
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
 public abstract class BaseOscpConfigurationEntity extends BasicEntity<UserLongPK>
 		implements Entity<UserLongPK>, UserRelatedEntity<UserLongPK>, Serializable, Cloneable {
 
-	private static final long serialVersionUID = 3413718946531052354L;
+	private static final long serialVersionUID = -4040376195754476954L;
 
+	private Instant modified;
 	private String name;
+	private boolean enabled;
+	private Map<String, Object> serviceProps;
 
 	/**
 	 * Constructor.
@@ -94,6 +98,25 @@ public abstract class BaseOscpConfigurationEntity extends BasicEntity<UserLongPK
 	}
 
 	/**
+	 * Get the last modification date.
+	 * 
+	 * @return the modified
+	 */
+	public Instant getModified() {
+		return modified;
+	}
+
+	/**
+	 * SGet the last modification date.
+	 * 
+	 * @param modified
+	 *        the modified to set
+	 */
+	public void setModified(Instant modified) {
+		this.modified = modified;
+	}
+
+	/**
 	 * Get a display name for the configuration.
 	 * 
 	 * @return the name
@@ -110,6 +133,44 @@ public abstract class BaseOscpConfigurationEntity extends BasicEntity<UserLongPK
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * Get the enabled flag.
+	 * 
+	 * @return the enabled
+	 */
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Set the enabled flag.
+	 * 
+	 * @param enabled
+	 *        the enabled to set
+	 */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	/**
+	 * Get the service properties.
+	 * 
+	 * @return the serviceProps
+	 */
+	public Map<String, Object> getServiceProps() {
+		return serviceProps;
+	}
+
+	/**
+	 * Set the service properties.
+	 * 
+	 * @param serviceProps
+	 *        the serviceProps to set
+	 */
+	public void setServiceProps(Map<String, Object> serviceProps) {
+		this.serviceProps = serviceProps;
 	}
 
 }
