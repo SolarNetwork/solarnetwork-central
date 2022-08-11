@@ -122,7 +122,7 @@ public class SelectStaleAuditDatum implements PreparedStatementCreator, SqlProvi
 			stmt.setString(++p, filter.getAggregation().getKey().substring(0, 1));
 		}
 		p = DatumSqlUtils.prepareStreamFilter(filter, con, stmt, p);
-		p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+		p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		return p;
 	}
 
