@@ -340,7 +340,7 @@ public class SelectAuditDatum
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
-			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}
 		return p;
 	}

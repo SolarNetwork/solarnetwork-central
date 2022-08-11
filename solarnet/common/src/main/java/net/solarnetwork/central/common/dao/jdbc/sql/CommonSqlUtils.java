@@ -423,8 +423,6 @@ public final class CommonSqlUtils {
 	 * 
 	 * @param filter
 	 *        the search criteria
-	 * @param con
-	 *        the JDBC connection
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -434,8 +432,7 @@ public final class CommonSqlUtils {
 	 *         if any SQL error occurs
 	 * @since 2.1
 	 */
-	public static int prepareDateRange(DateRangeCriteria filter, Connection con, PreparedStatement stmt,
-			int parameterOffset) throws SQLException {
+	public static int prepareDateRange(DateRangeCriteria filter, PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter.getStartDate() != null ) {
 			stmt.setTimestamp(++parameterOffset, Timestamp.from(filter.getStartDate()));
 		}

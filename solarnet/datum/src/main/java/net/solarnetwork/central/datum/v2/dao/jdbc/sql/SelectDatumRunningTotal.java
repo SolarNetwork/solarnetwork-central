@@ -181,7 +181,7 @@ public class SelectDatumRunningTotal implements PreparedStatementCreator, SqlPro
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else if ( filter.hasDateRange() ) {
-			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		} else {
 			// set start date to epoch, end date will be stream max date
 			stmt.setTimestamp(++p, Timestamp.from(Instant.EPOCH));

@@ -399,7 +399,7 @@ public class SelectDatum
 		} else if ( filter.hasLocalDate() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
-			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}
 		if ( aggregation != Aggregation.None && aggregation.compareLevel(Aggregation.Hour) < 0 ) {
 			// add "secs" parameter
