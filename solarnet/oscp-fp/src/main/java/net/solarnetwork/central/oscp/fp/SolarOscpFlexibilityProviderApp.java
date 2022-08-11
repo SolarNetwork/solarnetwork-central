@@ -22,14 +22,8 @@
 
 package net.solarnetwork.central.oscp.fp;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
  * Main entry point for the SolarOscp Flexibility Provider application.
@@ -44,8 +38,6 @@ import net.solarnetwork.util.ApplicationContextUtils;
 //@formatter:on
 public class SolarOscpFlexibilityProviderApp {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SolarOscpFlexibilityProviderApp.class);
-
 	/**
 	 * Command-line entry point to launching server.
 	 * 
@@ -54,20 +46,6 @@ public class SolarOscpFlexibilityProviderApp {
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(SolarOscpFlexibilityProviderApp.class, args);
-	}
-
-	/**
-	 * Get a command line argument processor.
-	 * 
-	 * @param ctx
-	 *        The application context.
-	 * @return The command line runner.
-	 */
-	@Bean
-	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-			ApplicationContextUtils.traceBeanNames(ctx, LOG);
-		};
 	}
 
 }

@@ -1,0 +1,54 @@
+app:
+  meta.name: "SolarOSCP-FP"
+  cache.persistence.path: "var/cache"
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost/solarnetwork"
+    username: "solarnet"
+    password: "solarnet"
+    platform: "postgres"
+    initialize: false
+
+debug: false
+
+logging:
+  level:
+    ROOT: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9084
+  tomcat.threads:
+    min-spare: 1
+    max: 5
+
+spring:
+  jmx.enabled: false
+  mvc.format:
+    date: iso
+    date-time: iso
+    time: iso
+
+---
+spring:
+  config.activate.on-profile: development
+
+debug: true
+
+---
+spring:
+  config.activate.on-profile: production
+
+debug: false
