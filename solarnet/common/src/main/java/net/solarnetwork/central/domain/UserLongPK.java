@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserUuidPK.java - 1/08/2022 10:20:13 am
+ * UserLongPK.java - 11/08/2022 9:50:38 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -25,41 +25,56 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.UUID;
-import com.fasterxml.uuid.UUIDComparator;
 
 /**
- * Immutable primary key for user-related entities using a UUID primary key.
+ * Immutable primary key for user-related entities using a Long entity key.
  * 
  * @author matt
  * @version 1.0
  */
-public class UserUuidPK extends BasePK
-		implements Serializable, Cloneable, Comparable<UserUuidPK>, CompositeKey2<Long, UUID> {
+public class UserLongPK extends BasePK
+		implements Serializable, Cloneable, Comparable<UserLongPK>, CompositeKey2<Long, Long> {
 
-	private static final long serialVersionUID = 417842772182618447L;
+	private static final long serialVersionUID = 2537083574768869025L;
+
+	/**
+	 * A special "not a value" instance to be used for generated entity ID
+	 * values yet to be generated.
+	 */
+	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
+
+	/**
+	 * Create a new instance using the "unassigned" entity ID value.
+	 * 
+	 * @param userId
+	 *        the ID of the user to use
+	 * @return the new key instance
+	 */
+	public static UserLongPK unassignedEntityIdKey(Long userId) {
+		return new UserLongPK(userId, UNASSIGNED_ENTITY_ID);
+	}
 
 	private final Long userId;
-	private final UUID uuid;
+	private final Long entityId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param uuid
-	 *        the UUID
+	 * @param entityId
+	 *        the entity ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserUuidPK(Long userId, UUID uuid) {
+	public UserLongPK(Long userId, Long entityId) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
-		this.uuid = requireNonNullArgument(uuid, "uuid");
+		this.entityId = requireNonNullArgument(entityId, "entityId");
 	}
 
 	@Override
-	public int compareTo(UserUuidPK o) {
+	public int compareTo(UserLongPK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -69,30 +84,29 @@ public class UserUuidPK extends BasePK
 			return comparison;
 		}
 
-		// NOTE: JDK UUID ordering not suitable here, see UUIDComparator for more info
-		return UUIDComparator.staticCompare(uuid, o.uuid);
+		return entityId.compareTo(o.entityId);
 	}
 
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("u=").append(userId);
-		buf.append(";i=").append(uuid);
+		buf.append(";i=").append(entityId);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		buf.append("userId=").append(userId);
-		buf.append(", uuid=").append(uuid);
+		buf.append(", entityId=").append(entityId);
 	}
 
 	@Override
-	protected UserUuidPK clone() {
-		return (UserUuidPK) super.clone();
+	protected UserLongPK clone() {
+		return (UserLongPK) super.clone();
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, uuid);
+		return Objects.hash(userId, entityId);
 	}
 
 	@Override
@@ -100,11 +114,11 @@ public class UserUuidPK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserUuidPK) ) {
+		if ( !(obj instanceof UserLongPK) ) {
 			return false;
 		}
-		UserUuidPK other = (UserUuidPK) obj;
-		return Objects.equals(userId, other.userId) && Objects.equals(uuid, other.uuid);
+		UserLongPK other = (UserLongPK) obj;
+		return Objects.equals(userId, other.userId) && Objects.equals(entityId, other.entityId);
 	}
 
 	/**
@@ -117,12 +131,12 @@ public class UserUuidPK extends BasePK
 	}
 
 	/**
-	 * Get the UUID.
+	 * Get the entity ID.
 	 * 
-	 * @return the UUID
+	 * @return the entity ID
 	 */
-	public final UUID getUuid() {
-		return uuid;
+	public final Long getEntityId() {
+		return entityId;
 	}
 
 	@Override
@@ -131,8 +145,26 @@ public class UserUuidPK extends BasePK
 	}
 
 	@Override
-	public final UUID keyComponent2() {
-		return getUuid();
+	public final Long keyComponent2() {
+		return getEntityId();
+	}
+
+	@Override
+	public final boolean keyComponentIsAssigned(int index) {
+		if ( index == 1 ) {
+			return (entityId != null && entityId != UNASSIGNED_ENTITY_ID);
+		}
+		return CompositeKey2.super.keyComponentIsAssigned(index);
+	}
+
+	/**
+	 * Test if the entity ID is assigned.
+	 * 
+	 * @return {@literal true} if the entity ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	public final boolean entityIdIsAssigned() {
+		return keyComponentIsAssigned(1);
 	}
 
 }
