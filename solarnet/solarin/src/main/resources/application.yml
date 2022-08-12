@@ -64,6 +64,10 @@ app:
         client-id: "solarin-datumpub-@@SOLAR_FLUX_PUB_ID@@"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
     datum-publish:
       publish-qos-level: 0
     user-events:
@@ -90,6 +94,10 @@ app:
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
         clean-session: false
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: -1
+        write-timeout-seconds: -1
     data-collector:
       node-datum-topic-template: "node/%s/datum"
       subscribe-qos-level: 1
