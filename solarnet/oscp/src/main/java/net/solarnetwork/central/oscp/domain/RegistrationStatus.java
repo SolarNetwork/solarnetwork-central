@@ -56,23 +56,43 @@ public enum RegistrationStatus implements CodedValue {
 	}
 
 	/**
+	 * Create an enum instance from a code value.
+	 * 
+	 * @param code
+	 *        the code value
+	 * @return the enum instance
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not a valid enum value
+	 */
+	public static RegistrationStatus forCode(int code) {
+		for ( RegistrationStatus e : RegistrationStatus.values() ) {
+			if ( code == e.code ) {
+				return e;
+			}
+		}
+		throw new IllegalArgumentException("Invalid RegistrationStatus code [" + code + "]");
+	}
+
+	/**
 	 * Create an enum instance from a string value.
 	 * 
 	 * @param value
 	 *        the string representation; both enum names and code values are
 	 *        supported
 	 * @return the enum instance
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not a valid enum value
 	 */
 	@JsonCreator
 	public static RegistrationStatus fromValue(String value) {
 		if ( value != null && value.length() > 0 ) {
 			final boolean coded = (value.length() == 1);
 			final char code = value.charAt(0);
-			for ( RegistrationStatus cycle : RegistrationStatus.values() ) {
-				if ( coded && code == cycle.code ) {
-					return cycle;
-				} else if ( cycle.name().equalsIgnoreCase(value) ) {
-					return cycle;
+			for ( RegistrationStatus e : RegistrationStatus.values() ) {
+				if ( coded && code == e.code ) {
+					return e;
+				} else if ( e.name().equalsIgnoreCase(value) ) {
+					return e;
 				}
 			}
 		}
