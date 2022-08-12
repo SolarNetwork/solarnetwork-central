@@ -100,6 +100,10 @@ app:
         client-id: "solaruser-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
     user-events:
       publish-qos-level: 0
   solarqueue:
@@ -111,6 +115,10 @@ app:
         client-id: "solaruser-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
     instr-publish:
       publish-qos-level: 0
   task.executor:
