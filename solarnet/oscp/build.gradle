@@ -26,6 +26,7 @@ configurations {
 }
 
 dependencies {
+	implementation project(':solarnet-common')
 	implementation project(':solarnet-user')
 
 	// Spring
