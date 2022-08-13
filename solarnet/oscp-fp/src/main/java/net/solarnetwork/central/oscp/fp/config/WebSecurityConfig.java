@@ -59,32 +59,32 @@ public class WebSecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-	// @formatter:off
-    http
-      // CSRF not needed for stateless calls
-      .csrf().disable()
-      
-      // make sure CORS honored
-      .cors().and()
-      
-      // can simply return 403 on auth failures
-      .exceptionHandling((exc) -> exc
-        .authenticationEntryPoint(unauthorizedEntryPoint()))
-      
-      // no sessions
-      .sessionManagement((sm) -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-      
-      .authorizeRequests((authz) -> authz
-        .antMatchers(OPTIONS, "/**").permitAll()
-          .antMatchers(GET, "/", "/error", "/*.html", "/ping").permitAll()
-          
-          .antMatchers("/oscp/**").permitAll()
-          
-          .anyRequest().authenticated()
-      )
-      .httpBasic()
-    ;
-    // @formatter:on
+		// @formatter:off
+		http
+			// CSRF not needed for stateless calls
+			.csrf().disable()
+			
+			// make sure CORS honored
+			.cors().and()
+			
+			// can simply return 403 on auth failures
+			.exceptionHandling((exc) -> exc
+				.authenticationEntryPoint(unauthorizedEntryPoint()))
+			
+			// no sessions
+			.sessionManagement((sm) -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			
+			.authorizeRequests((authz) -> authz
+				.antMatchers(OPTIONS, "/**").permitAll()
+					.antMatchers(GET, "/", "/error", "/*.html", "/ping").permitAll()
+					
+					.antMatchers("/oscp/**").permitAll()
+					
+					.anyRequest().authenticated()
+			)
+			.httpBasic()
+		;
+		// @formatter:on
 		return http.build();
 	}
 
