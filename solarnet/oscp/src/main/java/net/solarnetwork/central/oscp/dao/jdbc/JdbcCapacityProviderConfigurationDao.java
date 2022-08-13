@@ -78,7 +78,7 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 
 	@Override
 	public UserLongPK save(CapacityProviderConfiguration entity) {
-		if ( entity.getId().entityIdIsAssigned() ) {
+		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
 		final UpdateCapacityProviderConfiguration sql = new UpdateCapacityProviderConfiguration(

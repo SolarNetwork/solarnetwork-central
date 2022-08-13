@@ -34,7 +34,8 @@ import net.solarnetwork.central.domain.UserLongPK;
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
 		"registrationStatus", "serviceProps" })
-public class CapacityProviderConfiguration extends BaseOscpConfigurationEntity {
+public class CapacityProviderConfiguration
+		extends BaseOscpConfigurationEntity<CapacityProviderConfiguration> {
 
 	private static final long serialVersionUID = -7841722652051708665L;
 
@@ -70,6 +71,26 @@ public class CapacityProviderConfiguration extends BaseOscpConfigurationEntity {
 	 */
 	public CapacityProviderConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);
+	}
+
+	@Override
+	public CapacityProviderConfiguration clone() {
+		return (CapacityProviderConfiguration) super.clone();
+	}
+
+	@Override
+	public CapacityProviderConfiguration copyWithId(UserLongPK id) {
+		CapacityProviderConfiguration copy = new CapacityProviderConfiguration(id, getCreated());
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(CapacityProviderConfiguration entity) {
+		super.copyTo(entity);
+		entity.setBaseUrl(baseUrl);
+		entity.setRegistrationStatus(registrationStatus);
+		entity.setToken(token);
 	}
 
 	/**

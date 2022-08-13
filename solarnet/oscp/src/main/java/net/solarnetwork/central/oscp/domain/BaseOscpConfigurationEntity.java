@@ -25,10 +25,12 @@ package net.solarnetwork.central.oscp.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
@@ -42,8 +44,9 @@ import net.solarnetwork.dao.Entity;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
-public abstract class BaseOscpConfigurationEntity extends BasicEntity<UserLongPK>
-		implements Entity<UserLongPK>, UserRelatedEntity<UserLongPK>, Serializable, Cloneable {
+public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfigurationEntity<C>>
+		extends BasicEntity<UserLongPK> implements Entity<UserLongPK>, UserRelatedEntity<UserLongPK>,
+		CopyingIdentity<UserLongPK, C>, Serializable, Cloneable {
 
 	private static final long serialVersionUID = -4040376195754476954L;
 
@@ -82,9 +85,20 @@ public abstract class BaseOscpConfigurationEntity extends BasicEntity<UserLongPK
 		super(new UserLongPK(userId, entityId), created);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BaseOscpConfigurationEntity clone() {
-		return (BaseOscpConfigurationEntity) super.clone();
+	public BaseOscpConfigurationEntity<C> clone() {
+		return (BaseOscpConfigurationEntity<C>) super.clone();
+	}
+
+	@Override
+	public void copyTo(C entity) {
+		entity.setEnabled(enabled);
+		entity.setModified(modified);
+		entity.setName(name);
+		if ( serviceProps != null ) {
+			entity.setServiceProps(new LinkedHashMap<>(serviceProps));
+		}
 	}
 
 	@Override
