@@ -1,5 +1,5 @@
 /* ==================================================================
- * DeleteCapacityProviderConfiguration.java - 12/08/2022 5:33:05 pm
+ * DeleteCapacityOptimizerConfiguration.java - 12/08/2022 5:33:05 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -23,15 +23,15 @@
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 
 /**
- * Delete {@link CapacityProviderConfiguration} entities.
+ * Delete {@link CapacityOptimizerConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public class DeleteCapacityProviderConfiguration extends DeleteConfiguration {
+public class DeleteCapacityOptimizerConfiguration extends DeleteConfiguration {
 
 	/**
 	 * Constructor.
@@ -39,8 +39,8 @@ public class DeleteCapacityProviderConfiguration extends DeleteConfiguration {
 	 * @param filter
 	 *        the delete criteria
 	 */
-	public DeleteCapacityProviderConfiguration(ConfigurationFilter filter) {
-		super(filter, "solaruser.user_oscp_cp_conf");
+	public DeleteCapacityOptimizerConfiguration(ConfigurationFilter filter) {
+		super(filter, "solaruser.user_oscp_co_conf");
 	}
 
 }

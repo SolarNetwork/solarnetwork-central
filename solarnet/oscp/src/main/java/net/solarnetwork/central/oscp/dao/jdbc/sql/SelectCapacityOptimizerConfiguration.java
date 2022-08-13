@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectCapacityProviderConfiguration.java - 12/08/2022 4:41:12 pm
+ * SelectCapacityOptimizerConfiguration.java - 12/08/2022 4:41:12 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -34,15 +34,15 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 
 /**
- * Select {@link CapacityProviderConfiguration} entities.
+ * Select {@link CapacityOptimizerConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public class SelectCapacityProviderConfiguration
+public class SelectCapacityOptimizerConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -57,7 +57,7 @@ public class SelectCapacityProviderConfiguration
 	 * @param filter
 	 *        the filter criteria
 	 */
-	public SelectCapacityProviderConfiguration(ConfigurationFilter filter) {
+	public SelectCapacityOptimizerConfiguration(ConfigurationFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
 	}
 
@@ -69,7 +69,7 @@ public class SelectCapacityProviderConfiguration
 	 * @param fetchSize
 	 *        the fetch size to use, or {@literal 0} to leave unspecified
 	 */
-	public SelectCapacityProviderConfiguration(ConfigurationFilter filter, int fetchSize) {
+	public SelectCapacityOptimizerConfiguration(ConfigurationFilter filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
@@ -87,9 +87,9 @@ public class SelectCapacityProviderConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT uocp.id,uocp.created,uocp.modified,uocp.user_id,uocp.enabled
-					,uocp.reg_status,uocp.cname,uocp.url,uocp.token,uocp.sprops
-				FROM solaruser.user_oscp_cp_conf uocp
+				SELECT uoco.id,uoco.created,uoco.modified,uoco.user_id,uoco.enabled
+					,uoco.reg_status,uoco.cname,uoco.url,uoco.token,uoco.sprops
+				FROM solaruser.user_oscp_co_conf uoco
 				""");
 	}
 
@@ -97,10 +97,10 @@ public class SelectCapacityProviderConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "uocp.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "uoco.user_id", where);
 		}
 		if ( filter.hasConfigurationCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uocp.id", where);
+			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uoco.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -108,7 +108,7 @@ public class SelectCapacityProviderConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uocp.user_id,uocp.id");
+		buf.append("ORDER BY uoco.user_id,uoco.id");
 	}
 
 	@Override

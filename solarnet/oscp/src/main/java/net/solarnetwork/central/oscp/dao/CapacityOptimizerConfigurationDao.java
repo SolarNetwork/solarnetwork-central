@@ -1,5 +1,5 @@
 /* ==================================================================
- * DeleteCapacityProviderConfiguration.java - 12/08/2022 5:33:05 pm
+ * CapacityOptimizerConfigurationDao.java - 14/08/2022 7:32:46 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,27 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao.jdbc.sql;
+package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 
 /**
- * Delete {@link CapacityProviderConfiguration} entities.
+ * DAO API for {@link CapacityOptimizerConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public class DeleteCapacityProviderConfiguration extends DeleteConfiguration {
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param filter
-	 *        the delete criteria
-	 */
-	public DeleteCapacityProviderConfiguration(ConfigurationFilter filter) {
-		super(filter, "solaruser.user_oscp_cp_conf");
-	}
+public interface CapacityOptimizerConfigurationDao
+		extends GenericCompositeKey2Dao<CapacityOptimizerConfiguration, UserLongPK, Long, Long> {
 
 }

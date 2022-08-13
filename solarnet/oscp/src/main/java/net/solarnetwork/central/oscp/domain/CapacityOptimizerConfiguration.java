@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityProviderConfiguration.java - 11/08/2022 10:08:30 am
+ * CapacityOptimizerConfiguration.java - 14/08/2022 7:29:03 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -26,15 +26,15 @@ import java.time.Instant;
 import net.solarnetwork.central.domain.UserLongPK;
 
 /**
- * Configuration for capacity provider integration.
+ * Configuration for capacity optimizer integration.
  * 
  * @author matt
  * @version 1.0
  */
-public class CapacityProviderConfiguration
-		extends BaseOscpExternalSystemConfiguration<CapacityProviderConfiguration> {
+public class CapacityOptimizerConfiguration
+		extends BaseOscpExternalSystemConfiguration<CapacityOptimizerConfiguration> {
 
-	private static final long serialVersionUID = 6135235926771515625L;
+	private static final long serialVersionUID = -8075371754119696899L;
 
 	/**
 	 * Constructor.
@@ -46,7 +46,7 @@ public class CapacityProviderConfiguration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityProviderConfiguration(UserLongPK id, Instant created) {
+	public CapacityOptimizerConfiguration(UserLongPK id, Instant created) {
 		super(id, created);
 	}
 
@@ -62,18 +62,18 @@ public class CapacityProviderConfiguration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityProviderConfiguration(Long userId, Long entityId, Instant created) {
+	public CapacityOptimizerConfiguration(Long userId, Long entityId, Instant created) {
 		super(userId, entityId, created);
 	}
 
 	@Override
-	public CapacityProviderConfiguration clone() {
-		return (CapacityProviderConfiguration) super.clone();
+	public CapacityOptimizerConfiguration clone() {
+		return (CapacityOptimizerConfiguration) super.clone();
 	}
 
 	@Override
-	public CapacityProviderConfiguration copyWithId(UserLongPK id) {
-		CapacityProviderConfiguration copy = new CapacityProviderConfiguration(id, getCreated());
+	public CapacityOptimizerConfiguration copyWithId(UserLongPK id) {
+		CapacityOptimizerConfiguration copy = new CapacityOptimizerConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
 	}
