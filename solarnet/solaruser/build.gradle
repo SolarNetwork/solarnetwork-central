@@ -1,7 +1,7 @@
 plugins {
 	//id 'checkstyle'
 	id 'java'
-	id 'war'
+	id 'eclipse'
 	id 'org.springframework.boot' version '2.7.2'
 }
 
@@ -43,9 +43,6 @@ dependencies {
 	implementation 'org.springframework.webflow:spring-webflow:2.5.1.RELEASE'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
-	// allow WAR to be run from command line OR deployed in Tomcat
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 	
