@@ -28,10 +28,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
@@ -50,7 +51,8 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * @version 1.0
  */
 @Configuration
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableWebSecurity
+public class WebSecurityConfig {
 
 	private static String[] NODE_AUTHORITIES = new String[] { Role.ROLE_NODE.toString() };
 
@@ -62,7 +64,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
 	}
 
-	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		return new NodeUserDetailsService();
@@ -85,8 +86,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return source;
 	}
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// @formatter:off
 	    http
 	      // limit this configuration to specific paths
@@ -137,6 +138,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .anyRequest().authenticated()
 	    ;
 	    // @formatter:on
+		return http.build();
 	}
 
 	@Bean

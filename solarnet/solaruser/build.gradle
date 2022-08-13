@@ -1,15 +1,8 @@
-buildscript {
-	dependencies {
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.6.0"
-	}
-}
-
 plugins {
 	//id 'checkstyle'
 	id 'java'
-	id 'war'
-	id 'eclipse-wtp'
-	id 'org.springframework.boot' version '2.6.4'
+	id 'eclipse'
+	id 'org.springframework.boot' version '2.7.2'
 }
 
 //apply plugin: 'checkstyle'
@@ -50,9 +43,6 @@ dependencies {
 	implementation 'org.springframework.webflow:spring-webflow:2.5.1.RELEASE'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
-	// allow WAR to be run from command line OR deployed in Tomcat
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 	
@@ -76,15 +66,6 @@ dependencies {
     testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 }
 
-eclipse {
-	wtp {
-		facet {
-			facet name: 'jst.java', version: 11
-			facet name: 'jst.web', version: '3.1'
-		}
-	}
-}
-
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarUser',
@@ -94,6 +75,6 @@ bootJar {
 
 eclipse {
 	jdt {
-		javaRuntimeName 'JavaSE-11'
+		javaRuntimeName 'JavaSE-17'
 	}
 }

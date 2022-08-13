@@ -1,14 +1,7 @@
-buildscript {
-	dependencies {
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.6.0"
-	}
-}
-
 plugins {
 	id 'java'
-    id 'war'
-    id 'eclipse-wtp'
-	id 'org.springframework.boot' version '2.6.4'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.7.2'
 }
 
 apply plugin: 'java'
@@ -36,9 +29,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
-	// allow WAR to be run from command line OR deployed in Tomcat
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	
 	// Utilities
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
@@ -52,15 +42,6 @@ dependencies {
     
 }
 
-eclipse {
-	wtp {
-		facet {
-			facet name: 'jst.java', version: 11
-			facet name: 'jst.web', version: '3.1'
-		}
-	}
-}
-
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarQuery',
@@ -70,6 +51,6 @@ bootJar {
 
 eclipse {
 	jdt {
-		javaRuntimeName 'JavaSE-11'
+		javaRuntimeName 'JavaSE-17'
 	}
 }
