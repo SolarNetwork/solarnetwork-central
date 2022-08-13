@@ -40,8 +40,8 @@ subprojects {
 
     group = "net.solarnetwork.central"
 
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     repositories {
         mavenCentral()
@@ -82,8 +82,8 @@ subprojects {
     javadoc.options {
         encoding = 'UTF-8'
         use = true
-        links 'https://docs.oracle.com/javase/8/docs/api/'
-        source = "8"
+        links 'https://docs.oracle.com/javase/17/docs/api/'
+        source = "17"
     }
 
     ext {

@@ -1,14 +1,8 @@
-buildscript {
-	dependencies {
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.6.0"
-	}
-}
-
 plugins {
 	id 'java'
     id 'war'
     id 'eclipse-wtp'
-	id 'org.springframework.boot' version '2.6.4'
+	id 'org.springframework.boot' version '2.7.2'
 }
 
 apply plugin: 'java'
@@ -52,15 +46,6 @@ dependencies {
     
 }
 
-eclipse {
-	wtp {
-		facet {
-			facet name: 'jst.java', version: 11
-			facet name: 'jst.web', version: '3.1'
-		}
-	}
-}
-
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarQuery',
@@ -70,6 +55,6 @@ bootJar {
 
 eclipse {
 	jdt {
-		javaRuntimeName 'JavaSE-11'
+		javaRuntimeName 'JavaSE-17'
 	}
 }
