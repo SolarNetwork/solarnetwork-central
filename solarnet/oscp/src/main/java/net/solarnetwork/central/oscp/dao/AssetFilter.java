@@ -1,5 +1,5 @@
 /* ==================================================================
- * ConfigurationCriteria.java - 12/08/2022 4:44:36 pm
+ * AssetFilter.java - 15/08/2022 7:16:27 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -23,44 +23,11 @@
 package net.solarnetwork.central.oscp.dao;
 
 /**
- * Criteria API for a configuration entities.
+ * A filter for OSCP asset configuration entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ConfigurationCriteria {
-
-	/**
-	 * Test if any configuration criteria exists.
-	 * 
-	 * @return {@literal true} if a configuration criteria exists
-	 */
-	default boolean hasConfigurationCriteria() {
-		Long id = getConfigurationId();
-		return (id != null);
-	}
-
-	/**
-	 * Get an array of configuration IDs.
-	 * 
-	 * @return array of IDs (may be {@literal null})
-	 */
-	Long[] getConfigurationIds();
-
-	/**
-	 * Get the first configuration ID.
-	 * 
-	 * <p>
-	 * This returns the first available ID from the
-	 * {@link #getConfigurationIds()} array, or {@literal null} if not
-	 * available.
-	 * </p>
-	 * 
-	 * @return the configuration ID, or {@literal null} if not available
-	 */
-	default Long getConfigurationId() {
-		Long[] ids = getConfigurationIds();
-		return (ids != null && ids.length > 0 ? ids[0] : null);
-	}
+public interface AssetFilter extends ConfigurationFilter, GroupCriteria {
 
 }

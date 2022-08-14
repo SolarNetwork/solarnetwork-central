@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
+import static net.solarnetwork.central.oscp.domain.RegistrationStatus.Pending;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,7 +35,6 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.domain.UserLongPK;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
-import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 
 /**
  * Update {@link CapacityOptimizerConfiguration} entities.
@@ -89,12 +90,10 @@ public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCr
 		stmt.setTimestamp(++p,
 				Timestamp.from(entity.getModified() != null ? entity.getModified() : Instant.now()));
 		stmt.setBoolean(++p, entity.isEnabled());
-		stmt.setInt(++p, (entity.getRegistrationStatus() != null ? entity.getRegistrationStatus()
-				: RegistrationStatus.Pending).getCode());
+		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 		stmt.setString(++p, entity.getToken());
-
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		stmt.setObject(++p, id.getUserId());

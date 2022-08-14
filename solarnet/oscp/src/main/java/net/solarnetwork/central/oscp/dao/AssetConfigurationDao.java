@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.oscp.dao;
 
+import java.util.Collection;
+import java.util.List;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongPK;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * DAO API for {@link AssetConfiguration} entities.
@@ -34,5 +37,24 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
  */
 public interface AssetConfigurationDao
 		extends GenericCompositeKey2Dao<AssetConfiguration, UserLongPK, Long, Long> {
+
+	/**
+	 * Find all assets for a user and capacity group.
+	 * 
+	 * <p>
+	 * The {@code sortDescriptors} parameter can be {@literal null}, in which
+	 * case the sort order is not defined and implementation specific.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the ID of the user to restrict the results to
+	 * @param capacityGroupId
+	 *        the ID of the capacity group to restrict the results to
+	 * @param sorts
+	 *        list of sort descriptors to sort the results by
+	 * @return list of all assets, or empty list if none available
+	 */
+	Collection<AssetConfiguration> findAllForCapacityGroup(Long userId, Long capacityGroupId,
+			List<SortDescriptor> sorts);
 
 }

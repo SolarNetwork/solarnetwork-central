@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
+import static net.solarnetwork.central.oscp.domain.MeasurementPeriod.FifteenMinute;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,7 +35,6 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 
 /**
  * Insert {@link CapacityGroupConfiguration} entities.
@@ -85,8 +86,7 @@ public class InsertCapacityGroupConfiguration implements PreparedStatementCreato
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getIdentifier());
-		stmt.setInt(++p, (entity.getMeasurementPeriod() != null ? entity.getMeasurementPeriod()
-				: MeasurementPeriod.FifteenMinute).getCode());
+		p = prepareCodedValue(stmt, p, entity.getMeasurementPeriod(), FifteenMinute, false);
 		stmt.setObject(++p, entity.getCapacityProviderId());
 		stmt.setObject(++p, entity.getCapacityOptimizerId());
 

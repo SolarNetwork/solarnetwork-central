@@ -30,7 +30,6 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -68,9 +67,6 @@ public class UpdateCapacityOptimizerConfigurationTests {
 
 	@Mock
 	private PreparedStatement stmt;
-
-	@Mock
-	private Array tagsArray;
 
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;

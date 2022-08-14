@@ -32,9 +32,10 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicConfigurationFilter extends BasicCoreCriteria implements ConfigurationFilter {
+public class BasicConfigurationFilter extends BasicCoreCriteria implements AssetFilter {
 
 	private Long[] configurationIds;
+	private Long[] groupIds;
 
 	/**
 	 * Create a filter for one or more user IDs.
@@ -71,9 +72,13 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Confi
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicConfigurationFilter c ) {
 			setConfigurationIds(c.getConfigurationIds());
+			setGroupIds(c.getGroupIds());
 		} else {
 			if ( criteria instanceof ConfigurationCriteria c ) {
 				setConfigurationIds(c.getConfigurationIds());
+			}
+			if ( criteria instanceof GroupCriteria c ) {
+				setGroupIds(c.getGroupIds());
 			}
 		}
 	}
@@ -83,6 +88,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Confi
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(configurationIds);
+		result = prime * result + Arrays.hashCode(groupIds);
 		return result;
 	}
 
@@ -98,7 +104,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Confi
 			return false;
 		}
 		BasicConfigurationFilter other = (BasicConfigurationFilter) obj;
-		return Arrays.equals(configurationIds, other.configurationIds);
+		return Arrays.equals(configurationIds, other.configurationIds)
+				&& Arrays.equals(groupIds, other.groupIds);
 	}
 
 	@Override
@@ -129,6 +136,31 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Confi
 	 */
 	public void setConfigurationId(Long configurationId) {
 		setConfigurationIds(configurationId != null ? new Long[] { configurationId } : null);
+	}
+
+	@Override
+	public Long[] getGroupIds() {
+		return groupIds;
+	}
+
+	/**
+	 * Set the group IDs.
+	 * 
+	 * @param groupIds
+	 *        the group IDs to set
+	 */
+	public void setGroupIds(Long[] groupIds) {
+		this.groupIds = groupIds;
+	}
+
+	/**
+	 * Set a single group ID.
+	 * 
+	 * @param groupId
+	 *        the ID of the group to set
+	 */
+	public void setGroupId(Long groupId) {
+		setGroupIds(groupId != null ? new Long[] { groupId } : null);
 	}
 
 }

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import static java.lang.String.format;
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import net.solarnetwork.domain.CodedValue;
 import oscp.v20.EnergyMeasurement.EnergyMeasurementUnit;
@@ -58,6 +59,9 @@ public enum MeasurementUnit implements CodedValue {
 	kWh('E'),
 
 	;
+
+	/** A multiplier to convert a unit measurement into kilo-units. */
+	public static final BigDecimal KILO_MULTIPLIER = new BigDecimal("0.001");
 
 	private final char code;
 

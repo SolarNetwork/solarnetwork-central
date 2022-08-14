@@ -1,5 +1,5 @@
 /* ==================================================================
- * ConfigurationCriteria.java - 12/08/2022 4:44:36 pm
+ * GroupCriteria.java - 12/08/2022 4:44:36 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -23,43 +23,42 @@
 package net.solarnetwork.central.oscp.dao;
 
 /**
- * Criteria API for a configuration entities.
+ * Criteria API for a grouped entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ConfigurationCriteria {
+public interface GroupCriteria {
 
 	/**
-	 * Test if any configuration criteria exists.
+	 * Test if any group criteria exists.
 	 * 
-	 * @return {@literal true} if a configuration criteria exists
+	 * @return {@literal true} if a group criteria exists
 	 */
-	default boolean hasConfigurationCriteria() {
-		Long id = getConfigurationId();
+	default boolean hasGroupCriteria() {
+		Long id = getGroupId();
 		return (id != null);
 	}
 
 	/**
-	 * Get an array of configuration IDs.
+	 * Get an array of group IDs.
 	 * 
 	 * @return array of IDs (may be {@literal null})
 	 */
-	Long[] getConfigurationIds();
+	Long[] getGroupIds();
 
 	/**
-	 * Get the first configuration ID.
+	 * Get the first group ID.
 	 * 
 	 * <p>
-	 * This returns the first available ID from the
-	 * {@link #getConfigurationIds()} array, or {@literal null} if not
-	 * available.
+	 * This returns the first available ID from the {@link #getGroupIds()}
+	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the configuration ID, or {@literal null} if not available
+	 * @return the group ID, or {@literal null} if not available
 	 */
-	default Long getConfigurationId() {
-		Long[] ids = getConfigurationIds();
+	default Long getGroupId() {
+		Long[] ids = getGroupIds();
 		return (ids != null && ids.length > 0 ? ids[0] : null);
 	}
 

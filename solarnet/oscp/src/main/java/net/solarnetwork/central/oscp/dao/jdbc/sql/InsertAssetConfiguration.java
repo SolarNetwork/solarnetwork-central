@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertCapacityProviderConiguration.java - 12/08/2022 6:51:01 am
+ * InsertAssetConiguration.java - 12/08/2022 6:51:01 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,37 +22,46 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareArrayParameter;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareCodedValue;
-import static net.solarnetwork.central.oscp.domain.RegistrationStatus.Pending;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetCategory;
+import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
- * Insert {@link CapacityProviderConfiguration} entities.
+ * Insert {@link AssetConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public class InsertCapacityProviderConfiguration implements PreparedStatementCreator, SqlProvider {
+public class InsertAssetConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solaruser.user_oscp_cp_conf (
-				created,modified,user_id,enabled,reg_status,cname,url,token,sprops
+			INSERT INTO solaruser.user_oscp_asset_conf (
+				  created, modified, user_id, enabled, cname
+				, cg_id, node_id, source_id, category
+				, iprops, iprops_unit, iprops_mult, iprops_phase
+				, eprops, eprops_unit, eprops_mult, etype
+				, sprops
 			)
-			VALUES (?,?,?,?,?,?,?,?,?::jsonb)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)
 			""";
 
 	private final Long userId;
-	private final CapacityProviderConfiguration entity;
+	private final AssetConfiguration entity;
 
 	/**
 	 * Constructor.
@@ -64,7 +73,7 @@ public class InsertCapacityProviderConfiguration implements PreparedStatementCre
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public InsertCapacityProviderConfiguration(Long userId, CapacityProviderConfiguration entity) {
+	public InsertAssetConfiguration(Long userId, AssetConfiguration entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entity = requireNonNullArgument(entity, "entity");
@@ -84,11 +93,27 @@ public class InsertCapacityProviderConfiguration implements PreparedStatementCre
 		stmt.setTimestamp(++p, ts);
 		stmt.setObject(++p, userId);
 		stmt.setBoolean(++p, entity.isEnabled());
-		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
-		stmt.setString(++p, entity.getBaseUrl());
-		stmt.setString(++p, entity.getToken());
-
+		stmt.setObject(++p, entity.getCapacityGroupId());
+		stmt.setObject(++p, entity.getNodeId());
+		stmt.setString(++p, entity.getSourceId());
+		p = prepareCodedValue(stmt, p, entity.getCategory(), AssetCategory.Charging, false);
+		p = prepareArrayParameter(con, stmt, p, entity.getInstantaneousPropertyNames(), true);
+		p = prepareCodedValue(stmt, p, entity.getInstantaneousUnit(), MeasurementUnit.W, false);
+		if ( entity.getInstantaneousMultiplier() != null ) {
+			stmt.setBigDecimal(++p, entity.getInstantaneousMultiplier());
+		} else {
+			stmt.setNull(++p, Types.DECIMAL);
+		}
+		p = prepareCodedValue(stmt, p, entity.getInstantaneousPhase(), Phase.All, false);
+		p = prepareArrayParameter(con, stmt, p, entity.getEnergyPropertyNames(), true);
+		p = prepareCodedValue(stmt, p, entity.getEnergyUnit(), MeasurementUnit.Wh, false);
+		if ( entity.getEnergyMultiplier() != null ) {
+			stmt.setBigDecimal(++p, entity.getEnergyMultiplier());
+		} else {
+			stmt.setNull(++p, Types.DECIMAL);
+		}
+		p = prepareCodedValue(stmt, p, entity.getEnergyType(), EnergyType.Total, false);
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
