@@ -240,8 +240,8 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		Map<Long, CapacityProviderConfiguration> userProviders = new LinkedHashMap(userCount);
-		Map<Long, CapacityOptimizerConfiguration> userOptimizers = new LinkedHashMap(userCount);
+		Map<Long, CapacityProviderConfiguration> userProviders = new LinkedHashMap<>(userCount);
+		Map<Long, CapacityOptimizerConfiguration> userOptimizers = new LinkedHashMap<>(userCount);
 		final List<CapacityGroupConfiguration> confs = new ArrayList<>(count);
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		for ( int i = 0; i < count; i++ ) {
