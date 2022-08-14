@@ -1,0 +1,135 @@
+/* ==================================================================
+ * DaoUserOscpBizTests.java - 15/08/2022 10:41:21 am
+ * 
+ * Copyright 2022 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.user.oscp.biz.dao;
+
+import static java.util.UUID.randomUUID;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.BDDMockito.given;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+
+/**
+ * Test cases for the {@link DaoUserOscpBiz} class.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+@ExtendWith(MockitoExtension.class)
+public class DaoUserOscpBizTests {
+
+	@Mock
+	private CapacityProviderConfigurationDao capacityProviderDao;
+
+	@Mock
+	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
+
+	@Mock
+	private CapacityGroupConfigurationDao capacityGroupDao;
+
+	@Mock
+	private AssetConfigurationDao assetDao;
+
+	private DaoUserOscpBiz biz;
+
+	@BeforeEach
+	public void setup() {
+		biz = new DaoUserOscpBiz(capacityProviderDao, capacityOptimizerDao, capacityGroupDao, assetDao);
+	}
+
+	@Test
+	public void listCapacityProviders() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<CapacityProviderConfiguration> confs = new ArrayList<>();
+		given(capacityProviderDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<CapacityProviderConfiguration> results = biz.capacityProvidersForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+	@Test
+	public void listCapacityOptimizers() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<CapacityOptimizerConfiguration> confs = new ArrayList<>();
+		given(capacityOptimizerDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<CapacityOptimizerConfiguration> results = biz.capacityOptimizersForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+	@Test
+	public void listCapacityGroups() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<CapacityGroupConfiguration> confs = new ArrayList<>();
+		given(capacityGroupDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<CapacityGroupConfiguration> results = biz.capacityGroupsForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+	@Test
+	public void listAssets() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<AssetConfiguration> confs = new ArrayList<>();
+		given(assetDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<AssetConfiguration> results = biz.assetsForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+}
