@@ -12,7 +12,7 @@ CREATE TABLE solaruser.user_oscp_cp_conf (
 	url				CHARACTER VARYING(256) NOT NULL,
 	token			CHARACTER VARYING(64) NOT NULL,
 	sprops			JSONB,
-	CONSTRAINT user_oscp_cp_conf_pk PRIMARY KEY (user_id,id),
+	CONSTRAINT user_oscp_cp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT user_oscp_cp_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
@@ -32,7 +32,7 @@ CREATE TABLE solaruser.user_oscp_co_conf (
 	url				CHARACTER VARYING(256) NOT NULL,
 	token			CHARACTER VARYING(64) NOT NULL,
 	sprops			JSONB,
-	CONSTRAINT user_oscp_co_conf_pk PRIMARY KEY (user_id,id),
+	CONSTRAINT user_oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT user_oscp_co_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
@@ -53,14 +53,15 @@ CREATE TABLE solaruser.user_oscp_cg_conf (
 	cp_id			BIGINT NOT NULL,
 	co_id			BIGINT NOT NULL,
 	sprops			JSONB,
-	CONSTRAINT user_oscp_cg_conf_pk PRIMARY KEY (user_id,id),
+	CONSTRAINT user_oscp_cg_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT user_oscp_cg_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
-	CONSTRAINT user_oscp_cg_conf_cp_fk FOREIGN KEY (user_id,cp_id)
-		REFERENCES solaruser.user_oscp_cp_conf (user_id,id) MATCH SIMPLE
+	CONSTRAINT user_oscp_cg_conf_cp_fk FOREIGN KEY (user_id, cp_id)
+		REFERENCES solaruser.user_oscp_cp_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
-	CONSTRAINT user_oscp_cg_conf_co_fk FOREIGN KEY (user_id,co_id)
+	CONSTRAINT user_oscp_cg_conf_co_fk FOREIGN KEY (user_id, co_id)
 		REFERENCES solaruser.user_oscp_co_conf (user_id,id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE
+		ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT user_oscp_cg_conf_unq UNIQUE (user_id, id)
 );
