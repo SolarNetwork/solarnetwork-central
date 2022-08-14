@@ -73,7 +73,7 @@ public class CapacityOptimizerConfiguration
 
 	@Override
 	public CapacityOptimizerConfiguration copyWithId(UserLongPK id) {
-		CapacityOptimizerConfiguration copy = new CapacityOptimizerConfiguration(id, getCreated());
+		var copy = new CapacityOptimizerConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
 	}

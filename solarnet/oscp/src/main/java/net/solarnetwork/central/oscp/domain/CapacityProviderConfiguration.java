@@ -73,7 +73,7 @@ public class CapacityProviderConfiguration
 
 	@Override
 	public CapacityProviderConfiguration copyWithId(UserLongPK id) {
-		CapacityProviderConfiguration copy = new CapacityProviderConfiguration(id, getCreated());
+		var copy = new CapacityProviderConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
 	}

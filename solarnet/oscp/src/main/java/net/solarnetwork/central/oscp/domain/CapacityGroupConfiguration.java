@@ -77,7 +77,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	@Override
 	public CapacityGroupConfiguration copyWithId(UserLongPK id) {
-		CapacityGroupConfiguration copy = new CapacityGroupConfiguration(id, getCreated());
+		var copy = new CapacityGroupConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
 	}
