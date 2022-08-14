@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcCapacityOptimizerConfigurationDaoTests.java - 12/08/2022 6:33:46 pm
+ * JdbcCapacityGroupConfigurationDaoTests.java - 12/08/2022 6:33:46 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -39,41 +39,53 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
-import net.solarnetwork.central.oscp.domain.RegistrationStatus;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
- * Test cases for the {@link JdbcCapacityOptimizerConfigurationDao} class.
+ * Test cases for the {@link JdbcCapacityGroupConfigurationDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
+public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
-	private JdbcCapacityOptimizerConfigurationDao dao;
+	private JdbcCapacityProviderConfigurationDao capacityProviderDao;
+	private JdbcCapacityOptimizerConfigurationDao capacityOptimizerDao;
+
+	private JdbcCapacityGroupConfigurationDao dao;
 	private Long userId;
 
-	private CapacityOptimizerConfiguration last;
+	private CapacityProviderConfiguration lastProvider;
+	private CapacityOptimizerConfiguration lastOptimzer;
+	private CapacityGroupConfiguration last;
 
 	@BeforeEach
 	public void setup() {
-		dao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
+		capacityProviderDao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
+		capacityOptimizerDao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
+		dao = new JdbcCapacityGroupConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 	}
 
-	private List<Map<String, Object>> allCapacityOptimizerConfigurationData() {
+	private List<Map<String, Object>> allCapacityGroupConfigurationData() {
 		List<Map<String, Object>> data = jdbcTemplate
-				.queryForList("select * from solaruser.user_oscp_co_conf ORDER BY user_id, id");
-		log.debug("solaruser.user_oscp_co_conf table has {} items: [{}]", data.size(),
+				.queryForList("select * from solaruser.user_oscp_cg_conf ORDER BY user_id, id");
+		log.debug("solaruser.user_oscp_cg_conf table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
@@ -85,38 +97,49 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	 *        the user ID
 	 * @param created
 	 *        the creation date
-	 * @return the new isntacne
+	 * @param capacityProviderId
+	 *        the provider ID
+	 * @param capacityOptimizerId
+	 *        the optimizer ID
+	 * @return the instance
 	 */
-	public static CapacityOptimizerConfiguration newConf(Long userId, Instant created) {
-		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
+	public static CapacityGroupConfiguration newConf(Long userId, Instant created,
+			Long capacityProviderId, Long capacityOptimizerId) {
+		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
 				UserLongPK.unassignedEntityIdKey(userId), created);
 		conf.setModified(created);
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setIdentifier(randomUUID().toString());
+		conf.setMeasurementPeriod(MeasurementPeriod.TenMinute);
+		conf.setCapacityProviderId(capacityProviderId);
+		conf.setCapacityOptimizerId(capacityOptimizerId);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
 		return conf;
 	}
 
 	@Test
 	public void insert() {
 		// GIVEN
-		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
+		lastProvider = capacityProviderDao.get(capacityProviderDao.create(userId,
+				JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now())));
+		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
+				JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now())));
+		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
 				UserLongPK.unassignedEntityIdKey(userId), Instant.now());
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setIdentifier(randomUUID().toString());
+		conf.setMeasurementPeriod(MeasurementPeriod.TwentyMinute);
+		conf.setCapacityProviderId(lastProvider.getEntityId());
+		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
 
 		// WHEN
 		UserLongPK result = dao.create(userId, conf);
 
 		// THEN
-		List<Map<String, Object>> data = allCapacityOptimizerConfigurationData();
+		List<Map<String, Object>> data = allCapacityGroupConfigurationData();
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row ID has been generated by DB", row,
@@ -127,11 +150,12 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 				hasEntry("modified", Timestamp.from(conf.getCreated())));
 		assertThat("Row user ID matches", row, hasEntry("user_id", conf.getUserId()));
 		assertThat("Row enabled matches", row, hasEntry("enabled", conf.isEnabled()));
-		assertThat("Row reg status matches", row,
-				hasEntry("reg_status", conf.getRegistrationStatus().getCode()));
 		assertThat("Row name matches", row, hasEntry("cname", conf.getName()));
-		assertThat("Row token matches", row, hasEntry("token", conf.getToken()));
-		assertThat("Row baseUrl matches", row, hasEntry("url", conf.getBaseUrl()));
+		assertThat("Row ident matches", row, hasEntry("ident", conf.getIdentifier()));
+		assertThat("Row reg status matches", row,
+				hasEntry("meas_secs", conf.getMeasurementPeriod().getCode()));
+		assertThat("Row capacity provider ID", row, hasEntry("cp_id", conf.getCapacityProviderId()));
+		assertThat("Row capacity optimizer ID", row, hasEntry("co_id", conf.getCapacityOptimizerId()));
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
 		assertThat("Row matches returned primary key result", result,
@@ -146,7 +170,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		insert();
 
 		// WHEN
-		CapacityOptimizerConfiguration result = dao.get(last.getId());
+		CapacityGroupConfiguration result = dao.get(last.getId());
 
 		// THEN
 		assertThat("Retrieved entity matches source", result, is(equalTo(last)));
@@ -157,20 +181,26 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		// GIVEN
 		insert();
 
+		lastProvider = capacityProviderDao.get(capacityProviderDao.create(userId,
+				JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now())));
+		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
+				JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now())));
+
 		// WHEN
-		CapacityOptimizerConfiguration conf = last.copyWithId(last.getId());
-		conf.setBaseUrl(randomUUID().toString());
+		CapacityGroupConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Failed);
+		conf.setIdentifier(randomUUID().toString());
+		conf.setMeasurementPeriod(MeasurementPeriod.ThirtyMinute);
+		conf.setCapacityProviderId(lastProvider.getEntityId());
+		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
 		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
-		conf.setToken(randomUUID().toString());
 
 		UserLongPK result = dao.save(conf);
 
 		// THEN
-		List<Map<String, Object>> data = allCapacityOptimizerConfigurationData();
+		List<Map<String, Object>> data = allCapacityGroupConfigurationData();
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row ID has been generated by DB", row, hasEntry("id", conf.getEntityId()));
@@ -181,11 +211,12 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 				hasEntry("modified", Timestamp.from(conf.getModified())));
 		assertThat("Row user ID matches", row, hasEntry("user_id", conf.getUserId()));
 		assertThat("Row enabled matches", row, hasEntry("enabled", conf.isEnabled()));
-		assertThat("Row reg status matches", row,
-				hasEntry("reg_status", conf.getRegistrationStatus().getCode()));
 		assertThat("Row name matches", row, hasEntry("cname", conf.getName()));
-		assertThat("Row token matches", row, hasEntry("token", conf.getToken()));
-		assertThat("Row baseUrl matches", row, hasEntry("url", conf.getBaseUrl()));
+		assertThat("Row ident matches", row, hasEntry("ident", conf.getIdentifier()));
+		assertThat("Row meas_secs matches", row,
+				hasEntry("meas_secs", conf.getMeasurementPeriod().getCode()));
+		assertThat("Row provider ID matches", row, hasEntry("cp_id", conf.getCapacityProviderId()));
+		assertThat("Row optimizer ID matches", row, hasEntry("co_id", conf.getCapacityOptimizerId()));
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
 	}
@@ -199,7 +230,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		dao.delete(last);
 
 		// THEN
-		List<Map<String, Object>> data = allCapacityOptimizerConfigurationData();
+		List<Map<String, Object>> data = allCapacityGroupConfigurationData();
 		assertThat("Row deleted from db", data, hasSize(0));
 	}
 
@@ -209,7 +240,9 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<CapacityOptimizerConfiguration> confs = new ArrayList<>(count);
+		Map<Long, CapacityProviderConfiguration> userProviders = new LinkedHashMap(userCount);
+		Map<Long, CapacityOptimizerConfiguration> userOptimizers = new LinkedHashMap(userCount);
+		final List<CapacityGroupConfiguration> confs = new ArrayList<>(count);
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);
@@ -218,10 +251,18 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
+					userProviders.put(userId, capacityProviderDao.get(capacityProviderDao.create(userId,
+							JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now()))));
+					userOptimizers.put(userId, capacityOptimizerDao.get(capacityOptimizerDao.create(
+							userId,
+							JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now()))));
+
 				} else {
 					userId = userIds.get(u);
 				}
-				CapacityOptimizerConfiguration conf = newConf(userId, t);
+				CapacityGroupConfiguration conf = newConf(userId, t,
+						userProviders.get(userId).getEntityId(),
+						userOptimizers.get(userId).getEntityId());
 				UserLongPK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -230,12 +271,11 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 		// WHEN
 		final Long userId = userIds.get(1);
-		Collection<CapacityOptimizerConfiguration> results = dao.findAll(userId, null);
+		Collection<CapacityGroupConfiguration> results = dao.findAll(userId, null);
 
 		// THEN
-		CapacityOptimizerConfiguration[] expected = confs.stream()
-				.filter(e -> userId.equals(e.getUserId()))
-				.toArray(CapacityOptimizerConfiguration[]::new);
+		CapacityGroupConfiguration[] expected = confs.stream().filter(e -> userId.equals(e.getUserId()))
+				.toArray(CapacityGroupConfiguration[]::new);
 		assertThat("Results for single user returned", results, contains(expected));
 	}
 

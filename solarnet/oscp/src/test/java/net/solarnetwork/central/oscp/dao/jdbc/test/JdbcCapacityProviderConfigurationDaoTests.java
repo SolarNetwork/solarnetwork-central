@@ -78,7 +78,16 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		return data;
 	}
 
-	private CapacityProviderConfiguration newConf(Long userId, Instant created) {
+	/**
+	 * Create a new configuration instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the creation date
+	 * @return the new instance
+	 */
+	public static CapacityProviderConfiguration newConf(Long userId, Instant created) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
 				UserLongPK.unassignedEntityIdKey(userId), created);
 		conf.setModified(created);
