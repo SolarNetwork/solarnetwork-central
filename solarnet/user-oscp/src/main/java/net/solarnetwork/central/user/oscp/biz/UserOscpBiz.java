@@ -42,6 +42,114 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
 public interface UserOscpBiz {
 
 	/**
+	 * Get a capacity provider configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @return the configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	CapacityProviderConfiguration capacityProviderForUser(Long userId, Long entityId);
+
+	/**
+	 * Get a capacity optimizer configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @return the configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	CapacityOptimizerConfiguration capacityOptimizerForUser(Long userId, Long entityId);
+
+	/**
+	 * Get a capacity group configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @return the configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	CapacityGroupConfiguration capacityGroupForUser(Long userId, Long entityId);
+
+	/**
+	 * Get an asset configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @return the configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	AssetConfiguration assetForUser(Long userId, Long entityId);
+
+	/**
+	 * Delete a capacity provider configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	void deleteCapacityProvider(Long userId, Long entityId);
+
+	/**
+	 * Get a capacity optimizer configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	void deleteCapacityOptimizer(Long userId, Long entityId);
+
+	/**
+	 * Delete a capacity group configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	void deleteCapacityGroup(Long userId, Long entityId);
+
+	/**
+	 * Delete an asset configuration for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to get
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         configuration with the given IDs does not exist
+	 */
+	void deleteAsset(Long userId, Long entityId);
+
+	/**
 	 * List the available capacity provider configurations for a given user.
 	 * 
 	 * @param userId
@@ -76,6 +184,15 @@ public interface UserOscpBiz {
 	 * @return all available configurations; never {@literal null}
 	 */
 	Collection<AssetConfiguration> assetsForUser(Long userId);
+
+	/**
+	 * List the available asset configurations for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @return all available configurations; never {@literal null}
+	 */
+	Collection<AssetConfiguration> assetsForUserCapacityGroup(Long userId, Long groupId);
 
 	/**
 	 * Create a new capacity provider configuration.

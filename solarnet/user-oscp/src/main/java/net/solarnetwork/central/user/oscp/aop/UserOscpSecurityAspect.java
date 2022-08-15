@@ -56,12 +56,12 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.*ForUser(..)) && args(userId,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.*ForUser*(..)) && args(userId,..)")
 	public void readForUser(Long userId) {
 	}
 
 	/**
-	 * Match methods like {@code create*(userId, entity, ...)}.
+	 * Match methods like {@code create*(userId, ...)}.
 	 * 
 	 * @param userId
 	 *        the user ID
@@ -71,7 +71,7 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Match methods like {@code update*(userId, entity, ...)}.
+	 * Match methods like {@code update*(userId, ...)}.
 	 * 
 	 * @param userId
 	 *        the user ID
@@ -80,12 +80,22 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	public void updateUserRelatedEntity(Long userId) {
 	}
 
+	/**
+	 * Match methods like {@code delete*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.delete*(..)) && args(userId,..)")
+	public void deleteUserRelatedEntity(Long userId) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("createUserRelatedEntity(userId) || updateUserRelatedEntity(userId)")
+	@Before("createUserRelatedEntity(userId) || updateUserRelatedEntity(userId) || deleteUserRelatedEntity(userId)")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}

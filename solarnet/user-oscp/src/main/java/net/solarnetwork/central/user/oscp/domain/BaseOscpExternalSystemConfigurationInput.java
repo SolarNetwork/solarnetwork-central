@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.net.URI;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.util.ObjectUtils;
@@ -39,6 +41,9 @@ import net.solarnetwork.util.ObjectUtils;
 public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOscpExternalSystemConfiguration<T>>
 		extends BaseOscpConfigurationInput<T> {
 
+	@NotNull
+	@NotBlank
+	@Size(max = 64)
 	private String token;
 
 	@NotNull

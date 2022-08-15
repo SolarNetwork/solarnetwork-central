@@ -82,26 +82,81 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
+	public CapacityProviderConfiguration capacityProviderForUser(Long userId, Long entityId) {
+		return capacityProviderDao.get(new UserLongCompositePK(userId, entityId));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CapacityOptimizerConfiguration capacityOptimizerForUser(Long userId, Long entityId) {
+		return capacityOptimizerDao.get(new UserLongCompositePK(userId, entityId));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CapacityGroupConfiguration capacityGroupForUser(Long userId, Long entityId) {
+		return capacityGroupDao.get(new UserLongCompositePK(userId, entityId));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public AssetConfiguration assetForUser(Long userId, Long entityId) {
+		return assetDao.get(new UserLongCompositePK(userId, entityId));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteCapacityProvider(Long userId, Long entityId) {
+		capacityProviderDao.delete(new CapacityProviderConfiguration(userId, entityId, null));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteCapacityOptimizer(Long userId, Long entityId) {
+		capacityOptimizerDao.delete(new CapacityOptimizerConfiguration(userId, entityId, null));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteCapacityGroup(Long userId, Long entityId) {
+		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, null));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteAsset(Long userId, Long entityId) {
+		assetDao.delete(new AssetConfiguration(userId, entityId, null));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
 	public Collection<CapacityProviderConfiguration> capacityProvidersForUser(Long userId) {
-		return capacityProviderDao.findAll(userId, null);
+		return capacityProviderDao.findAll(requireNonNullArgument(userId, "userId"), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CapacityOptimizerConfiguration> capacityOptimizersForUser(Long userId) {
-		return capacityOptimizerDao.findAll(userId, null);
+		return capacityOptimizerDao.findAll(requireNonNullArgument(userId, "userId"), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CapacityGroupConfiguration> capacityGroupsForUser(Long userId) {
-		return capacityGroupDao.findAll(userId, null);
+		return capacityGroupDao.findAll(requireNonNullArgument(userId, "userId"), null);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<AssetConfiguration> assetsForUser(Long userId) {
-		return assetDao.findAll(userId, null);
+		return assetDao.findAll(requireNonNullArgument(userId, "userId"), null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Collection<AssetConfiguration> assetsForUserCapacityGroup(Long userId, Long groupId) {
+		return assetDao.findAllForCapacityGroup(requireNonNullArgument(userId, "userId"),
+				requireNonNullArgument(groupId, "groupId"), null);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -178,8 +233,8 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public AssetConfiguration updateAsset(Long userId, Long entityId, AssetConfigurationInput input)
 			throws AuthorizationException {
-		AssetConfiguration conf = input.toEntity(new UserLongCompositePK(requireNonNullArgument(userId, "userId"),
-				requireNonNullArgument(entityId, "entityId")));
+		AssetConfiguration conf = input.toEntity(new UserLongCompositePK(
+				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = assetDao.create(userId, conf);
 		return assetDao.get(pk);
 	}
