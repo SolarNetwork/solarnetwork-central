@@ -26,10 +26,12 @@ dependencies {
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
+	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-ocpp')
+	implementation project(':solarnet-user-oscp')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'

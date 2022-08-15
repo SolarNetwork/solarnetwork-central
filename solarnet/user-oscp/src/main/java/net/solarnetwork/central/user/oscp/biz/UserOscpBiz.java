@@ -27,6 +27,11 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityGroupConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityOptimizerConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
 
 /**
  * Service API for SolarUser OSCP support.
@@ -71,5 +76,137 @@ public interface UserOscpBiz {
 	 * @return all available configurations; never {@literal null}
 	 */
 	Collection<AssetConfiguration> assetsForUser(Long userId);
+
+	/**
+	 * Create a new capacity provider configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to create the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist
+	 */
+	CapacityProviderConfiguration createCapacityProvider(Long userId,
+			CapacityProviderConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Create a new capacity optimizer configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to create the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist
+	 */
+	CapacityOptimizerConfiguration createCapacityOptimizer(Long userId,
+			CapacityOptimizerConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Create a new capacity group configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to create the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist
+	 */
+	CapacityGroupConfiguration createCapacityGroup(Long userId, CapacityGroupConfigurationInput input)
+			throws AuthorizationException;
+
+	/**
+	 * Create a new asset configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to create the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if
+	 *         {@code userId} does not exist
+	 */
+	AssetConfiguration createAsset(Long userId, AssetConfigurationInput input)
+			throws AuthorizationException;
+
+	/**
+	 * Update an existing capacity provider configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to update the configuration for
+	 * @param entityId
+	 *        the entity ID to update the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the updated configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         entity matching {@code userId} and {@code entityId} does not
+	 *         exist
+	 */
+	CapacityProviderConfiguration updateCapacityProvider(Long userId, Long entityId,
+			CapacityProviderConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Update an existing capacity optimizer configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to update the configuration for
+	 * @param entityId
+	 *        the entity ID to update the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the updated configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         entity matching {@code userId} and {@code entityId} does not
+	 *         exist
+	 */
+	CapacityOptimizerConfiguration updateCapacityOptimizer(Long userId, Long entityId,
+			CapacityOptimizerConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Update an existing capacity group configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to update the configuration for
+	 * @param entityId
+	 *        the entity ID to update the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the updated configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         entity matching {@code userId} and {@code entityId} does not
+	 *         exist
+	 */
+	CapacityGroupConfiguration updateCapacityGroup(Long userId, Long entityId,
+			CapacityGroupConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Update an existing asset configuration.
+	 * 
+	 * @param userId
+	 *        the user ID to update the configuration for
+	 * @param entityId
+	 *        the entity ID to update the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the updated configuration entity
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         entity matching {@code userId} and {@code entityId} does not
+	 *         exist
+	 */
+	AssetConfiguration updateAsset(Long userId, Long entityId, AssetConfigurationInput input)
+			throws AuthorizationException;
 
 }

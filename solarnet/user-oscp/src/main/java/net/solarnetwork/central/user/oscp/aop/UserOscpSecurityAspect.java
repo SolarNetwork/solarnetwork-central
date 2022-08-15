@@ -51,7 +51,7 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Match methods like {@code *ForUser(userId)}.
+	 * Match methods like {@code *ForUser(userId, ...)}.
 	 * 
 	 * @param userId
 	 *        the user ID
@@ -60,9 +60,34 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	public void readForUser(Long userId) {
 	}
 
+	/**
+	 * Match methods like {@code create*(userId, entity, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.create*(..)) && args(userId,..)")
+	public void createUserRelatedEntity(Long userId) {
+	}
+
+	/**
+	 * Match methods like {@code update*(userId, entity, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.update*(..)) && args(userId,..)")
+	public void updateUserRelatedEntity(Long userId) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
+	}
+
+	@Before("createUserRelatedEntity(userId) || updateUserRelatedEntity(userId)")
+	public void userWriteAccessCheck(Long userId) {
+		requireUserWriteAccess(userId);
 	}
 
 }

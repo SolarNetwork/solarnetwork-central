@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.user.oscp.biz.dao;
 
+import static net.solarnetwork.central.domain.UserLongPK.unassignedEntityIdKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.domain.UserLongPK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -34,7 +36,12 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
+import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityGroupConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityOptimizerConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
 
 /**
  * DAO implementation of {@link UserOscpBiz}.
@@ -95,6 +102,86 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public Collection<AssetConfiguration> assetsForUser(Long userId) {
 		return assetDao.findAll(userId, null);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityProviderConfiguration createCapacityProvider(Long userId,
+			CapacityProviderConfigurationInput input) throws AuthorizationException {
+		CapacityProviderConfiguration conf = input
+				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongPK pk = capacityProviderDao.create(userId, conf);
+		return capacityProviderDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityOptimizerConfiguration createCapacityOptimizer(Long userId,
+			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
+		CapacityOptimizerConfiguration conf = input
+				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongPK pk = capacityOptimizerDao.create(userId, conf);
+		return capacityOptimizerDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityGroupConfiguration createCapacityGroup(Long userId,
+			CapacityGroupConfigurationInput input) throws AuthorizationException {
+		CapacityGroupConfiguration conf = input
+				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongPK pk = capacityGroupDao.create(userId, conf);
+		return capacityGroupDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public AssetConfiguration createAsset(Long userId, AssetConfigurationInput input)
+			throws AuthorizationException {
+		AssetConfiguration conf = input
+				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongPK pk = assetDao.create(userId, conf);
+		return assetDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityProviderConfiguration updateCapacityProvider(Long userId, Long entityId,
+			CapacityProviderConfigurationInput input) throws AuthorizationException {
+		CapacityProviderConfiguration conf = input.toEntity(new UserLongPK(
+				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
+		UserLongPK pk = capacityProviderDao.save(conf);
+		return capacityProviderDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityOptimizerConfiguration updateCapacityOptimizer(Long userId, Long entityId,
+			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
+		CapacityOptimizerConfiguration conf = input.toEntity(new UserLongPK(
+				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
+		UserLongPK pk = capacityOptimizerDao.create(userId, conf);
+		return capacityOptimizerDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityGroupConfiguration updateCapacityGroup(Long userId, Long entityId,
+			CapacityGroupConfigurationInput input) throws AuthorizationException {
+		CapacityGroupConfiguration conf = input.toEntity(new UserLongPK(
+				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
+		UserLongPK pk = capacityGroupDao.create(userId, conf);
+		return capacityGroupDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public AssetConfiguration updateAsset(Long userId, Long entityId, AssetConfigurationInput input)
+			throws AuthorizationException {
+		AssetConfiguration conf = input.toEntity(new UserLongPK(requireNonNullArgument(userId, "userId"),
+				requireNonNullArgument(entityId, "entityId")));
+		UserLongPK pk = assetDao.create(userId, conf);
+		return assetDao.get(pk);
 	}
 
 }

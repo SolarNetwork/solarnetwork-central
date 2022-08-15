@@ -1,5 +1,5 @@
 /* ==================================================================
- * AssetConfiguration.java - 14/08/2022 5:47:15 pm
+ * AssetConfigurationInput.java - 15/08/2022 12:54:42 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,99 +20,93 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.domain;
+package net.solarnetwork.central.user.oscp.domain;
 
-import static java.util.Arrays.copyOf;
+import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
-import java.time.Instant;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.oscp.domain.AssetCategory;
+import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
- * Configuration for an asset.
+ * DTO for asset configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfiguration> {
+public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetConfiguration> {
 
-	private static final long serialVersionUID = -2971097342677332165L;
-
+	@NotNull
 	private Long capacityGroupId;
+
+	@NotNull
 	private Long nodeId;
+
+	@NotNull
+	@NotBlank
+	@Size(max = 64)
 	private String sourceId;
+
+	@NotNull
 	private AssetCategory category;
+
+	@NotNull
+	@NotEmpty
 	private String[] instantaneousPropertyNames;
+
+	@NotNull
 	private MeasurementUnit instantaneousUnit;
+
+	@NotNull
 	private BigDecimal instantaneousMultiplier;
+
+	@NotNull
 	private Phase instantaneousPhase;
+
+	@NotNull
+	@NotEmpty
 	private String[] energyPropertyNames;
+
+	@NotNull
 	private MeasurementUnit energyUnit;
+
+	@NotNull
 	private BigDecimal energyMultiplier;
+
+	@NotNull
 	private EnergyType energyType;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param id
-	 *        the ID
-	 * @param created
-	 *        the creation date
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public AssetConfiguration(UserLongPK id, Instant created) {
-		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
-	 * @param entityId
-	 *        the entity ID
-	 * @param created
-	 *        the creation date
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public AssetConfiguration(Long userId, Long entityId, Instant created) {
-		super(new UserLongPK(userId, entityId), created);
+	@Override
+	public AssetConfiguration toEntity(UserLongPK id) {
+		AssetConfiguration conf = new AssetConfiguration(requireNonNullArgument(id, "id"), now());
+		populateConfiguration(conf);
+		return conf;
 	}
 
 	@Override
-	public AssetConfiguration copyWithId(UserLongPK id) {
-		var copy = new AssetConfiguration(id, getCreated());
-		copyTo(copy);
-		return copy;
-	}
-
-	@Override
-	public AssetConfiguration clone() {
-		return (AssetConfiguration) super.clone();
-	}
-
-	@Override
-	public void copyTo(AssetConfiguration entity) {
-		super.copyTo(entity);
-		entity.setCapacityGroupId(capacityGroupId);
-		entity.setNodeId(nodeId);
-		entity.setSourceId(sourceId);
-		entity.setCategory(category);
-		if ( instantaneousPropertyNames != null ) {
-			entity.setInstantaneousPropertyNames(
-					copyOf(instantaneousPropertyNames, instantaneousPropertyNames.length));
-		}
-		entity.setInstantaneousUnit(instantaneousUnit);
-		entity.setInstantaneousMultiplier(instantaneousMultiplier);
-		entity.setInstantaneousPhase(instantaneousPhase);
-		if ( energyPropertyNames != null ) {
-			entity.setEnergyPropertyNames(copyOf(energyPropertyNames, energyPropertyNames.length));
-		}
-		entity.setEnergyUnit(energyUnit);
-		entity.setEnergyMultiplier(energyMultiplier);
-		entity.setEnergyType(energyType);
+	protected void populateConfiguration(AssetConfiguration conf) {
+		super.populateConfiguration(conf);
+		conf.setCapacityGroupId(capacityGroupId);
+		conf.setNodeId(nodeId);
+		conf.setSourceId(sourceId);
+		conf.setCategory(category);
+		conf.setInstantaneousPropertyNames(instantaneousPropertyNames);
+		conf.setInstantaneousUnit(instantaneousUnit);
+		conf.setInstantaneousMultiplier(instantaneousMultiplier);
+		conf.setInstantaneousPhase(instantaneousPhase);
+		conf.setEnergyPropertyNames(energyPropertyNames);
+		conf.setEnergyUnit(energyUnit);
+		conf.setEnergyMultiplier(energyMultiplier);
+		conf.setEnergyType(energyType);
 	}
 
 	/**
