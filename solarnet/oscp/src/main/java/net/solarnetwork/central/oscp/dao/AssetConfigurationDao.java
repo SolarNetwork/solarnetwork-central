@@ -25,7 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import java.util.Collection;
 import java.util.List;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.0
  */
 public interface AssetConfigurationDao
-		extends GenericCompositeKey2Dao<AssetConfiguration, UserLongPK, Long, Long> {
+		extends GenericCompositeKey2Dao<AssetConfiguration, UserLongCompositePK, Long, Long> {
 
 	/**
 	 * Find all assets for a user and capacity group.

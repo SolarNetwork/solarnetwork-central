@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
 
@@ -45,8 +45,8 @@ import net.solarnetwork.dao.Entity;
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
 public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfigurationEntity<C>>
-		extends BasicEntity<UserLongPK> implements Entity<UserLongPK>, UserRelatedEntity<UserLongPK>,
-		CopyingIdentity<UserLongPK, C>, Serializable, Cloneable {
+		extends BasicEntity<UserLongCompositePK> implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
+		CopyingIdentity<UserLongCompositePK, C>, Serializable, Cloneable {
 
 	private static final long serialVersionUID = -4040376195754476954L;
 
@@ -65,7 +65,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BaseOscpConfigurationEntity(UserLongPK id, Instant created) {
+	public BaseOscpConfigurationEntity(UserLongCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 
@@ -82,7 +82,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	 *         if any argument is {@literal null}
 	 */
 	public BaseOscpConfigurationEntity(Long userId, Long entityId, Instant created) {
-		super(new UserLongPK(userId, entityId), created);
+		super(new UserLongCompositePK(userId, entityId), created);
 	}
 
 	@SuppressWarnings("unchecked")

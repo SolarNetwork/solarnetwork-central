@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
@@ -111,7 +111,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	 * @return the instance
 	 */
 	public static AssetConfiguration newConf(Long userId, Instant created, Long capacitGroupId) {
-		AssetConfiguration conf = new AssetConfiguration(UserLongPK.unassignedEntityIdKey(userId),
+		AssetConfiguration conf = new AssetConfiguration(UserLongCompositePK.unassignedEntityIdKey(userId),
 				created);
 		conf.setModified(created);
 		conf.setEnabled(true);
@@ -145,7 +145,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		AssetConfiguration conf = newConf(userId, Instant.now(), lastGroup.getEntityId());
 
 		// WHEN
-		UserLongPK result = dao.create(userId, conf);
+		UserLongCompositePK result = dao.create(userId, conf);
 
 		// THEN
 		List<Map<String, Object>> data = allAssetConfigurationData();
@@ -169,7 +169,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		assertThat("Row serviceProps", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
 		assertThat("Row matches returned primary key result", result,
-				is(equalTo(new UserLongPK(userId, (Long) row.get("id")))));
+				is(equalTo(new UserLongCompositePK(userId, (Long) row.get("id")))));
 
 		last = conf.copyWithId(result);
 	}
@@ -218,7 +218,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		conf.setEnergyType(EnergyType.Total);
 		conf.setServiceProps(Collections.singletonMap("bim", randomUUID().toString()));
 
-		UserLongPK result = dao.save(conf);
+		UserLongCompositePK result = dao.save(conf);
 		AssetConfiguration updated = dao.get(result);
 
 		// THEN
@@ -256,9 +256,9 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					UserLongPK providerId = capacityProviderDao.create(userId,
+					UserLongCompositePK providerId = capacityProviderDao.create(userId,
 							JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now()));
-					UserLongPK optimizerId = capacityOptimizerDao.create(userId,
+					UserLongCompositePK optimizerId = capacityOptimizerDao.create(userId,
 							JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now()));
 					userGroups.put(userId,
 							capacityGroupDao.get(capacityGroupDao.create(userId,
@@ -269,7 +269,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					userId = userIds.get(u);
 				}
 				AssetConfiguration conf = newConf(userId, t, userGroups.get(userId).getEntityId());
-				UserLongPK id = dao.create(userId, conf);
+				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
 			}
@@ -301,9 +301,9 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					UserLongPK providerId = capacityProviderDao.create(userId,
+					UserLongCompositePK providerId = capacityProviderDao.create(userId,
 							JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now()));
-					UserLongPK optimizerId = capacityOptimizerDao.create(userId,
+					UserLongCompositePK optimizerId = capacityOptimizerDao.create(userId,
 							JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now()));
 					userGroups.put(userId,
 							capacityGroupDao.get(capacityGroupDao.create(userId,
@@ -314,7 +314,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					userId = userIds.get(u);
 				}
 				AssetConfiguration conf = newConf(userId, t, userGroups.get(userId).getEntityId());
-				UserLongPK id = dao.create(userId, conf);
+				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
 			}

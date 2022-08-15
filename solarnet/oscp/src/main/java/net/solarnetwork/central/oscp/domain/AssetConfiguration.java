@@ -26,7 +26,7 @@ import static java.util.Arrays.copyOf;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for an asset.
@@ -61,7 +61,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AssetConfiguration(UserLongPK id, Instant created) {
+	public AssetConfiguration(UserLongCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 
@@ -78,11 +78,11 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 *         if any argument is {@literal null}
 	 */
 	public AssetConfiguration(Long userId, Long entityId, Instant created) {
-		super(new UserLongPK(userId, entityId), created);
+		super(new UserLongCompositePK(userId, entityId), created);
 	}
 
 	@Override
-	public AssetConfiguration copyWithId(UserLongPK id) {
+	public AssetConfiguration copyWithId(UserLongCompositePK id) {
 		var copy = new AssetConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;

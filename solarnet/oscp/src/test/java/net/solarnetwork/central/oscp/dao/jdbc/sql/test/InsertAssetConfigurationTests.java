@@ -50,7 +50,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
@@ -98,7 +98,7 @@ public class InsertAssetConfigurationTests {
 	}
 
 	private AssetConfiguration createAssetConfiguration(Long userId, Long providerId, Long optimizerId) {
-		AssetConfiguration conf = new AssetConfiguration(UserLongPK.unassignedEntityIdKey(userId),
+		AssetConfiguration conf = new AssetConfiguration(UserLongCompositePK.unassignedEntityIdKey(userId),
 				Instant.now());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());

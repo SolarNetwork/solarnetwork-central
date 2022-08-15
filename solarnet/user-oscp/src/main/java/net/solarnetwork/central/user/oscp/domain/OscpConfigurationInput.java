@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * API for OSCP configuration input.
@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.UserLongPK;
  * @author matt
  * @version 1.0
  */
-public interface OscpConfigurationInput<T extends UserRelatedEntity<UserLongPK>> {
+public interface OscpConfigurationInput<T extends UserRelatedEntity<UserLongCompositePK>> {
 
 	/**
 	 * Create an entity from the
@@ -39,6 +39,6 @@ public interface OscpConfigurationInput<T extends UserRelatedEntity<UserLongPK>>
 	 * @param userId
 	 * @return
 	 */
-	T toEntity(UserLongPK id);
+	T toEntity(UserLongCompositePK id);
 
 }

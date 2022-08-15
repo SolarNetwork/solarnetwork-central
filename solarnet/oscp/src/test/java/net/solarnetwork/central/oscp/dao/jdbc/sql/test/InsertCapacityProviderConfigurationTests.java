@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
@@ -79,7 +79,7 @@ public class InsertCapacityProviderConfigurationTests {
 
 	private CapacityProviderConfiguration createCapacityProviderConfiguration(Long userId) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongPK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());

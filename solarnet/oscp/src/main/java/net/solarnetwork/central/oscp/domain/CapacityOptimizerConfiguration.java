@@ -23,7 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for capacity optimizer integration.
@@ -46,7 +46,7 @@ public class CapacityOptimizerConfiguration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityOptimizerConfiguration(UserLongPK id, Instant created) {
+	public CapacityOptimizerConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
 	}
 
@@ -72,7 +72,7 @@ public class CapacityOptimizerConfiguration
 	}
 
 	@Override
-	public CapacityOptimizerConfiguration copyWithId(UserLongPK id) {
+	public CapacityOptimizerConfiguration copyWithId(UserLongCompositePK id) {
 		var copy = new CapacityOptimizerConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;

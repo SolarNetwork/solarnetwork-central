@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteAssetConfiguration;
@@ -69,14 +69,14 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 	}
 
 	@Override
-	public UserLongPK create(Long userId, AssetConfiguration entity) {
+	public UserLongCompositePK create(Long userId, AssetConfiguration entity) {
 		final InsertAssetConfiguration sql = new InsertAssetConfiguration(userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongPK(userId, id) : null);
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
-	public UserLongPK save(AssetConfiguration entity) {
+	public UserLongCompositePK save(AssetConfiguration entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
@@ -106,7 +106,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 	}
 
 	@Override
-	public AssetConfiguration get(UserLongPK id) {
+	public AssetConfiguration get(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));

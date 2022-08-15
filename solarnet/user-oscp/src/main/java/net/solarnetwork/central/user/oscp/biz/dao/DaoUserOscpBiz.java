@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.user.oscp.biz.dao;
 
-import static net.solarnetwork.central.domain.UserLongPK.unassignedEntityIdKey;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -110,7 +110,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
 		CapacityProviderConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
-		UserLongPK pk = capacityProviderDao.create(userId, conf);
+		UserLongCompositePK pk = capacityProviderDao.create(userId, conf);
 		return capacityProviderDao.get(pk);
 	}
 
@@ -120,7 +120,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
 		CapacityOptimizerConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
-		UserLongPK pk = capacityOptimizerDao.create(userId, conf);
+		UserLongCompositePK pk = capacityOptimizerDao.create(userId, conf);
 		return capacityOptimizerDao.get(pk);
 	}
 
@@ -130,7 +130,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityGroupConfigurationInput input) throws AuthorizationException {
 		CapacityGroupConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
-		UserLongPK pk = capacityGroupDao.create(userId, conf);
+		UserLongCompositePK pk = capacityGroupDao.create(userId, conf);
 		return capacityGroupDao.get(pk);
 	}
 
@@ -140,7 +140,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			throws AuthorizationException {
 		AssetConfiguration conf = input
 				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
-		UserLongPK pk = assetDao.create(userId, conf);
+		UserLongCompositePK pk = assetDao.create(userId, conf);
 		return assetDao.get(pk);
 	}
 
@@ -148,9 +148,9 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public CapacityProviderConfiguration updateCapacityProvider(Long userId, Long entityId,
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
-		CapacityProviderConfiguration conf = input.toEntity(new UserLongPK(
+		CapacityProviderConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongPK pk = capacityProviderDao.save(conf);
+		UserLongCompositePK pk = capacityProviderDao.save(conf);
 		return capacityProviderDao.get(pk);
 	}
 
@@ -158,9 +158,9 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public CapacityOptimizerConfiguration updateCapacityOptimizer(Long userId, Long entityId,
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
-		CapacityOptimizerConfiguration conf = input.toEntity(new UserLongPK(
+		CapacityOptimizerConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongPK pk = capacityOptimizerDao.create(userId, conf);
+		UserLongCompositePK pk = capacityOptimizerDao.create(userId, conf);
 		return capacityOptimizerDao.get(pk);
 	}
 
@@ -168,9 +168,9 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public CapacityGroupConfiguration updateCapacityGroup(Long userId, Long entityId,
 			CapacityGroupConfigurationInput input) throws AuthorizationException {
-		CapacityGroupConfiguration conf = input.toEntity(new UserLongPK(
+		CapacityGroupConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongPK pk = capacityGroupDao.create(userId, conf);
+		UserLongCompositePK pk = capacityGroupDao.create(userId, conf);
 		return capacityGroupDao.get(pk);
 	}
 
@@ -178,9 +178,9 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public AssetConfiguration updateAsset(Long userId, Long entityId, AssetConfigurationInput input)
 			throws AuthorizationException {
-		AssetConfiguration conf = input.toEntity(new UserLongPK(requireNonNullArgument(userId, "userId"),
+		AssetConfiguration conf = input.toEntity(new UserLongCompositePK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(entityId, "entityId")));
-		UserLongPK pk = assetDao.create(userId, conf);
+		UserLongCompositePK pk = assetDao.create(userId, conf);
 		return assetDao.get(pk);
 	}
 

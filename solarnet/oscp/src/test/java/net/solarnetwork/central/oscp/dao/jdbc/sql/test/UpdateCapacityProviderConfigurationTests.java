@@ -45,7 +45,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
@@ -88,7 +88,7 @@ public class UpdateCapacityProviderConfigurationTests {
 		return conf;
 	}
 
-	private void thenPrepStatement(PreparedStatement result, UserLongPK id,
+	private void thenPrepStatement(PreparedStatement result, UserLongCompositePK id,
 			CapacityProviderConfiguration conf) throws SQLException {
 		Timestamp ts = Timestamp.from(conf.getModified());
 		then(result).should().setTimestamp(1, ts);

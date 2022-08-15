@@ -33,7 +33,7 @@ import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 
 /**
@@ -56,7 +56,7 @@ public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCr
 			WHERE user_id = ? AND id = ?
 			""";
 
-	private final UserLongPK id;
+	private final UserLongCompositePK id;
 	private final CapacityOptimizerConfiguration entity;
 
 	/**
@@ -69,7 +69,7 @@ public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCr
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpdateCapacityOptimizerConfiguration(UserLongPK id, CapacityOptimizerConfiguration entity) {
+	public UpdateCapacityOptimizerConfiguration(UserLongCompositePK id, CapacityOptimizerConfiguration entity) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");

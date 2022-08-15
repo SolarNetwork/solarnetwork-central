@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserLongPK.java - 11/08/2022 9:50:38 am
+ * UserLongCompositePK.java - 11/08/2022 9:50:38 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -32,8 +32,8 @@ import java.util.Objects;
  * @author matt
  * @version 1.0
  */
-public class UserLongPK extends BasePK
-		implements Serializable, Cloneable, Comparable<UserLongPK>, CompositeKey2<Long, Long> {
+public class UserLongCompositePK extends BasePK
+		implements Serializable, Cloneable, Comparable<UserLongCompositePK>, CompositeKey2<Long, Long> {
 
 	private static final long serialVersionUID = 2537083574768869025L;
 
@@ -50,8 +50,8 @@ public class UserLongPK extends BasePK
 	 *        the ID of the user to use
 	 * @return the new key instance
 	 */
-	public static UserLongPK unassignedEntityIdKey(Long userId) {
-		return new UserLongPK(userId, UNASSIGNED_ENTITY_ID);
+	public static UserLongCompositePK unassignedEntityIdKey(Long userId) {
+		return new UserLongCompositePK(userId, UNASSIGNED_ENTITY_ID);
 	}
 
 	private final Long userId;
@@ -67,14 +67,14 @@ public class UserLongPK extends BasePK
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserLongPK(Long userId, Long entityId) {
+	public UserLongCompositePK(Long userId, Long entityId) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entityId = requireNonNullArgument(entityId, "entityId");
 	}
 
 	@Override
-	public int compareTo(UserLongPK o) {
+	public int compareTo(UserLongCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
@@ -100,8 +100,8 @@ public class UserLongPK extends BasePK
 	}
 
 	@Override
-	protected UserLongPK clone() {
-		return (UserLongPK) super.clone();
+	protected UserLongCompositePK clone() {
+		return (UserLongCompositePK) super.clone();
 	}
 
 	@Override
@@ -114,10 +114,10 @@ public class UserLongPK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserLongPK) ) {
+		if ( !(obj instanceof UserLongCompositePK) ) {
 			return false;
 		}
-		UserLongPK other = (UserLongPK) obj;
+		UserLongCompositePK other = (UserLongCompositePK) obj;
 		return Objects.equals(userId, other.userId) && Objects.equals(entityId, other.entityId);
 	}
 

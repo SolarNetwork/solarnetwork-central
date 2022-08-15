@@ -34,7 +34,7 @@ import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
@@ -70,7 +70,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 			WHERE user_id = ? AND id = ?
 			""";
 
-	private final UserLongPK id;
+	private final UserLongCompositePK id;
 	private final AssetConfiguration entity;
 
 	/**
@@ -83,7 +83,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpdateAssetConfiguration(UserLongPK id, AssetConfiguration entity) {
+	public UpdateAssetConfiguration(UserLongCompositePK id, AssetConfiguration entity) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");

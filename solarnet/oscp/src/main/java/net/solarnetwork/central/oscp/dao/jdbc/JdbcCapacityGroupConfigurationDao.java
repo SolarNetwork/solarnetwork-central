@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityGroupConfiguration;
@@ -69,15 +69,15 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public UserLongPK create(Long userId, CapacityGroupConfiguration entity) {
+	public UserLongCompositePK create(Long userId, CapacityGroupConfiguration entity) {
 		final InsertCapacityGroupConfiguration sql = new InsertCapacityGroupConfiguration(userId,
 				entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongPK(userId, id) : null);
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
-	public UserLongPK save(CapacityGroupConfiguration entity) {
+	public UserLongCompositePK save(CapacityGroupConfiguration entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
@@ -98,7 +98,7 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
-	public CapacityGroupConfiguration get(UserLongPK id) {
+	public CapacityGroupConfiguration get(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));

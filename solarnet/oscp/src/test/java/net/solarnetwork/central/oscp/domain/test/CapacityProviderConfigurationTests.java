@@ -35,7 +35,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.codec.JsonUtils;
@@ -56,7 +56,7 @@ public class CapacityProviderConfigurationTests {
 
 		// WHEN
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
-				UserLongPK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 
 		// THEN
 		assertThat("Entity key component not null", conf.getId().getEntityId(), is(notNullValue()));

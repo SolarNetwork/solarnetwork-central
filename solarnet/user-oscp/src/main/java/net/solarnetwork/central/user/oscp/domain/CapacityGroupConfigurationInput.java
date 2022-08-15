@@ -26,7 +26,7 @@ import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
@@ -56,7 +56,7 @@ public class CapacityGroupConfigurationInput
 	private Long capacityOptimizerId;
 
 	@Override
-	public CapacityGroupConfiguration toEntity(UserLongPK id) {
+	public CapacityGroupConfiguration toEntity(UserLongCompositePK id) {
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(id, Instant.now());
 		populateConfiguration(conf);
 		return conf;

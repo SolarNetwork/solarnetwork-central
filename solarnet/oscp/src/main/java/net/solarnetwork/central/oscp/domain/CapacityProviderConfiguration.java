@@ -23,7 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for capacity provider integration.
@@ -46,7 +46,7 @@ public class CapacityProviderConfiguration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityProviderConfiguration(UserLongPK id, Instant created) {
+	public CapacityProviderConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
 	}
 
@@ -72,7 +72,7 @@ public class CapacityProviderConfiguration
 	}
 
 	@Override
-	public CapacityProviderConfiguration copyWithId(UserLongPK id) {
+	public CapacityProviderConfiguration copyWithId(UserLongCompositePK id) {
 		var copy = new CapacityProviderConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;

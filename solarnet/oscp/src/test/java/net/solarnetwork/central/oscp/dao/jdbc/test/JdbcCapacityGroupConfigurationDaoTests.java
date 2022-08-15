@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
@@ -106,7 +106,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 	public static CapacityGroupConfiguration newConf(Long userId, Instant created,
 			Long capacityProviderId, Long capacityOptimizerId) {
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongPK.unassignedEntityIdKey(userId), created);
+				UserLongCompositePK.unassignedEntityIdKey(userId), created);
 		conf.setModified(created);
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
@@ -126,7 +126,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
 				JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now())));
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongPK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setIdentifier(randomUUID().toString());
@@ -136,7 +136,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 
 		// WHEN
-		UserLongPK result = dao.create(userId, conf);
+		UserLongCompositePK result = dao.create(userId, conf);
 
 		// THEN
 		List<Map<String, Object>> data = allCapacityGroupConfigurationData();
@@ -159,7 +159,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
 		assertThat("Row matches returned primary key result", result,
-				is(equalTo(new UserLongPK(userId, (Long) row.get("id")))));
+				is(equalTo(new UserLongCompositePK(userId, (Long) row.get("id")))));
 
 		last = conf.copyWithId(result);
 	}
@@ -197,7 +197,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setCapacityOptimizerId(lastOptimzer.getEntityId());
 		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
 
-		UserLongPK result = dao.save(conf);
+		UserLongCompositePK result = dao.save(conf);
 
 		// THEN
 		List<Map<String, Object>> data = allCapacityGroupConfigurationData();
@@ -263,7 +263,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				CapacityGroupConfiguration conf = newConf(userId, t,
 						userProviders.get(userId).getEntityId(),
 						userOptimizers.get(userId).getEntityId());
-				UserLongPK id = dao.create(userId, conf);
+				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
 			}

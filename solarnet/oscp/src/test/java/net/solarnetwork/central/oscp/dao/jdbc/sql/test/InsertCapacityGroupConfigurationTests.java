@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
@@ -80,7 +80,7 @@ public class InsertCapacityGroupConfigurationTests {
 	private CapacityGroupConfiguration createCapacityGroupConfiguration(Long userId, Long providerId,
 			Long optimizerId) {
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongPK.unassignedEntityIdKey(userId), Instant.now());
+				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setIdentifier(randomUUID().toString());

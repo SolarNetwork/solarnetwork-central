@@ -23,7 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for capacity groups.
@@ -50,7 +50,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityGroupConfiguration(UserLongPK id, Instant created) {
+	public CapacityGroupConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
 	}
 
@@ -76,7 +76,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	}
 
 	@Override
-	public CapacityGroupConfiguration copyWithId(UserLongPK id) {
+	public CapacityGroupConfiguration copyWithId(UserLongCompositePK id) {
 		var copy = new CapacityGroupConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;

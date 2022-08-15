@@ -24,7 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Base OSCP configuration entity.
@@ -53,7 +53,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BaseOscpExternalSystemConfiguration(UserLongPK id, Instant created) {
+	public BaseOscpExternalSystemConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
 	}
 

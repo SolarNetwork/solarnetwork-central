@@ -29,7 +29,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
@@ -86,7 +86,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	private EnergyType energyType;
 
 	@Override
-	public AssetConfiguration toEntity(UserLongPK id) {
+	public AssetConfiguration toEntity(UserLongCompositePK id) {
 		AssetConfiguration conf = new AssetConfiguration(requireNonNullArgument(id, "id"), now());
 		populateConfiguration(conf);
 		return conf;

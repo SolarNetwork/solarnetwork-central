@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.time.Instant;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 
 /**
@@ -36,7 +36,7 @@ public class CapacityProviderConfigurationInput
 		extends BaseOscpExternalSystemConfigurationInput<CapacityProviderConfiguration> {
 
 	@Override
-	public CapacityProviderConfiguration toEntity(UserLongPK id) {
+	public CapacityProviderConfiguration toEntity(UserLongCompositePK id) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(id, Instant.now());
 		populateConfiguration(conf);
 		return conf;

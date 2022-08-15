@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityOptimizerConfiguration;
@@ -69,15 +69,15 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	}
 
 	@Override
-	public UserLongPK create(Long userId, CapacityOptimizerConfiguration entity) {
+	public UserLongCompositePK create(Long userId, CapacityOptimizerConfiguration entity) {
 		final InsertCapacityOptimizerConfiguration sql = new InsertCapacityOptimizerConfiguration(userId,
 				entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongPK(userId, id) : null);
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
-	public UserLongPK save(CapacityOptimizerConfiguration entity) {
+	public UserLongCompositePK save(CapacityOptimizerConfiguration entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
@@ -98,7 +98,7 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	}
 
 	@Override
-	public CapacityOptimizerConfiguration get(UserLongPK id) {
+	public CapacityOptimizerConfiguration get(UserLongCompositePK id) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));

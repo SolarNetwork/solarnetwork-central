@@ -23,7 +23,7 @@
 package net.solarnetwork.central.oscp.dao;
 
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.domain.UserLongPK;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 
 /**
@@ -33,6 +33,6 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
  * @version 1.0
  */
 public interface CapacityGroupConfigurationDao
-		extends GenericCompositeKey2Dao<CapacityGroupConfiguration, UserLongPK, Long, Long> {
+		extends GenericCompositeKey2Dao<CapacityGroupConfiguration, UserLongCompositePK, Long, Long> {
 
 }
