@@ -1,4 +1,4 @@
-UPDATE solaruser.user_oscp_co_conf SET
+UPDATE solaroscp.oscp_co_conf SET
 	  modified = ?
 	, enabled = ?
 	, reg_status = ?

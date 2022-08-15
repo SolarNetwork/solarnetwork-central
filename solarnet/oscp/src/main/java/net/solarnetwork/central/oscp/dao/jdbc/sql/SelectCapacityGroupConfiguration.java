@@ -87,9 +87,9 @@ public class SelectCapacityGroupConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT uocg.id,uocg.created,uocg.modified,uocg.user_id,uocg.enabled,uocg.cname
-					,uocg.ident,uocg.meas_secs,uocg.cp_id,uocg.co_id,uocg.sprops
-				FROM solaruser.user_oscp_cg_conf uocg
+				SELECT ocg.id,ocg.created,ocg.modified,ocg.user_id,ocg.enabled,ocg.cname
+					,ocg.ident,ocg.meas_secs,ocg.cp_id,ocg.co_id,ocg.sprops
+				FROM solaroscp.oscp_cg_conf ocg
 				""");
 	}
 
@@ -97,10 +97,10 @@ public class SelectCapacityGroupConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "uocg.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "ocg.user_id", where);
 		}
 		if ( filter.hasConfigurationCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uocg.id", where);
+			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "ocg.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -108,7 +108,7 @@ public class SelectCapacityGroupConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uocg.user_id,uocg.id");
+		buf.append("ORDER BY ocg.user_id,ocg.id");
 	}
 
 	@Override

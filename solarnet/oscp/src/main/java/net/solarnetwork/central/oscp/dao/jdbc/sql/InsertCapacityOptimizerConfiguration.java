@@ -45,7 +45,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 public class InsertCapacityOptimizerConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solaruser.user_oscp_co_conf (
+			INSERT INTO solaroscp.oscp_co_conf (
 				created,modified,user_id,enabled,reg_status,cname,url,token,sprops
 			)
 			VALUES (?,?,?,?,?,?,?,?,?::jsonb)

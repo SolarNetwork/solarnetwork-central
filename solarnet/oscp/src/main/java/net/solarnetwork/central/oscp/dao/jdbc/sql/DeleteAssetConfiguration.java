@@ -40,7 +40,7 @@ public class DeleteAssetConfiguration extends DeleteConfiguration {
 	 *        the delete criteria
 	 */
 	public DeleteAssetConfiguration(ConfigurationFilter filter) {
-		super(filter, "solaruser.user_oscp_asset_conf");
+		super(filter, "solaroscp.oscp_asset_conf");
 	}
 
 }

@@ -87,9 +87,9 @@ public class SelectCapacityOptimizerConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT uoco.id,uoco.created,uoco.modified,uoco.user_id,uoco.enabled
-					,uoco.reg_status,uoco.cname,uoco.url,uoco.token,uoco.sprops
-				FROM solaruser.user_oscp_co_conf uoco
+				SELECT oco.id,oco.created,oco.modified,oco.user_id,oco.enabled
+					,oco.reg_status,oco.cname,oco.url,oco.token,oco.sprops
+				FROM solaroscp.oscp_co_conf oco
 				""");
 	}
 
@@ -97,10 +97,10 @@ public class SelectCapacityOptimizerConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "uoco.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "oco.user_id", where);
 		}
 		if ( filter.hasConfigurationCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uoco.id", where);
+			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "oco.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -108,7 +108,7 @@ public class SelectCapacityOptimizerConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uoco.user_id,uoco.id");
+		buf.append("ORDER BY oco.user_id,oco.id");
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-UPDATE solaruser.user_oscp_asset_conf SET
+UPDATE solaroscp.oscp_asset_conf SET
 	  modified = ?
 	, enabled = ?
 	, cname = ?

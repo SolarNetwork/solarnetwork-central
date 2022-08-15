@@ -87,12 +87,12 @@ public class SelectAssetConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT uoa.id, uoa.created, uoa.modified, uoa.user_id, uoa.enabled, uoa.cname
-					, uoa.cg_id, uoa.node_id, uoa.source_id, uoa.category
-					, uoa.iprops, uoa.iprops_unit, uoa.iprops_mult, uoa.iprops_phase
-					, uoa.eprops, uoa.eprops_unit, uoa.eprops_mult, uoa.etype
-					, uoa.sprops
-				FROM solaruser.user_oscp_asset_conf uoa
+				SELECT oac.id, oac.created, oac.modified, oac.user_id, oac.enabled, oac.cname
+					, oac.cg_id, oac.node_id, oac.source_id, oac.category
+					, oac.iprops, oac.iprops_unit, oac.iprops_mult, oac.iprops_phase
+					, oac.eprops, oac.eprops_unit, oac.eprops_mult, oac.etype
+					, oac.sprops
+				FROM solaroscp.oscp_asset_conf oac
 				""");
 	}
 
@@ -100,13 +100,13 @@ public class SelectAssetConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "uoa.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "oac.user_id", where);
 		}
 		if ( filter.hasConfigurationCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uoa.id", where);
+			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "oac.id", where);
 		}
 		if ( filter.hasGroupCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getGroupIds(), "uoa.cg_id", where);
+			idx += whereOptimizedArrayContains(filter.getGroupIds(), "oac.cg_id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -114,7 +114,7 @@ public class SelectAssetConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uoa.user_id, uoa.id");
+		buf.append("ORDER BY oac.user_id, oac.id");
 	}
 
 	@Override

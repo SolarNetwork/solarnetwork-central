@@ -45,7 +45,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solaruser.user_oscp_co_conf SET
+			UPDATE solaroscp.oscp_co_conf SET
 				  modified = ?
 				, enabled = ?
 				, reg_status = ?

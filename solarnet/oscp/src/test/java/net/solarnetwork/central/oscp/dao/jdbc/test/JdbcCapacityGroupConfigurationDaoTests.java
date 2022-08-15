@@ -84,8 +84,8 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 	private List<Map<String, Object>> allCapacityGroupConfigurationData() {
 		List<Map<String, Object>> data = jdbcTemplate
-				.queryForList("select * from solaruser.user_oscp_cg_conf ORDER BY user_id, id");
-		log.debug("solaruser.user_oscp_cg_conf table has {} items: [{}]", data.size(),
+				.queryForList("select * from solaroscp.oscp_cg_conf ORDER BY user_id, id");
+		log.debug("solaroscp.oscp_cg_conf table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

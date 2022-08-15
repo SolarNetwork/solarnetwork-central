@@ -40,7 +40,7 @@ public class DeleteCapacityOptimizerConfiguration extends DeleteConfiguration {
 	 *        the delete criteria
 	 */
 	public DeleteCapacityOptimizerConfiguration(ConfigurationFilter filter) {
-		super(filter, "solaruser.user_oscp_co_conf");
+		super(filter, "solaroscp.oscp_co_conf");
 	}
 
 }

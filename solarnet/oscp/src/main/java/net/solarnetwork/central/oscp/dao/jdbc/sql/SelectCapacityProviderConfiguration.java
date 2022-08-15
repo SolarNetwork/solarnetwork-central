@@ -87,9 +87,9 @@ public class SelectCapacityProviderConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT uocp.id,uocp.created,uocp.modified,uocp.user_id,uocp.enabled
-					,uocp.reg_status,uocp.cname,uocp.url,uocp.token,uocp.sprops
-				FROM solaruser.user_oscp_cp_conf uocp
+				SELECT ocp.id,ocp.created,ocp.modified,ocp.user_id,ocp.enabled
+					,ocp.reg_status,ocp.cname,ocp.url,ocp.token,ocp.sprops
+				FROM solaroscp.oscp_cp_conf ocp
 				""");
 	}
 
@@ -97,10 +97,10 @@ public class SelectCapacityProviderConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "uocp.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "ocp.user_id", where);
 		}
 		if ( filter.hasConfigurationCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "uocp.id", where);
+			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "ocp.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -108,7 +108,7 @@ public class SelectCapacityProviderConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY uocp.user_id,uocp.id");
+		buf.append("ORDER BY ocp.user_id,ocp.id");
 	}
 
 	@Override

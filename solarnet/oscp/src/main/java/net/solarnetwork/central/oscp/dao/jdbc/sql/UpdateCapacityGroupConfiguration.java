@@ -45,7 +45,7 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 public class UpdateCapacityGroupConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solaruser.user_oscp_cg_conf SET
+			UPDATE solaroscp.oscp_cg_conf SET
 				  modified = ?
 				, enabled = ?
 				, cname = ?

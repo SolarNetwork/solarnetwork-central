@@ -1,3 +1,3 @@
-DELETE FROM solaruser.user_oscp_co_conf
+DELETE FROM solaroscp.oscp_co_conf
 WHERE user_id = ?
 AND id = ?

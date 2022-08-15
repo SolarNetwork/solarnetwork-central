@@ -1,4 +1,4 @@
-UPDATE solaruser.user_oscp_cg_conf SET
+UPDATE solaroscp.oscp_cg_conf SET
 	  modified = ?
 	, enabled = ?
 	, cname = ?

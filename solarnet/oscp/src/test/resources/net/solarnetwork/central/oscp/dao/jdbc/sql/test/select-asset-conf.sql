@@ -1,9 +1,9 @@
-SELECT uoa.id, uoa.created, uoa.modified, uoa.user_id, uoa.enabled, uoa.cname
-	, uoa.cg_id, uoa.node_id, uoa.source_id, uoa.category
-	, uoa.iprops, uoa.iprops_unit, uoa.iprops_mult, uoa.iprops_phase
-	, uoa.eprops, uoa.eprops_unit, uoa.eprops_mult, uoa.etype
-	, uoa.sprops
-FROM solaruser.user_oscp_asset_conf uoa
-WHERE uoa.user_id = ANY(?)
-AND uoa.id = ANY(?)
-ORDER BY uoa.user_id, uoa.id
+SELECT oac.id, oac.created, oac.modified, oac.user_id, oac.enabled, oac.cname
+	, oac.cg_id, oac.node_id, oac.source_id, oac.category
+	, oac.iprops, oac.iprops_unit, oac.iprops_mult, oac.iprops_phase
+	, oac.eprops, oac.eprops_unit, oac.eprops_mult, oac.etype
+	, oac.sprops
+FROM solaroscp.oscp_asset_conf oac
+WHERE oac.user_id = ANY(?)
+AND oac.id = ANY(?)
+ORDER BY oac.user_id, oac.id

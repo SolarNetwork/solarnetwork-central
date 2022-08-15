@@ -50,7 +50,7 @@ import net.solarnetwork.central.oscp.domain.Phase;
 public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solaruser.user_oscp_asset_conf SET
+			UPDATE solaroscp.oscp_asset_conf SET
 				  modified = ?
 				, enabled = ?
 				, cname = ?

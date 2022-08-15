@@ -1,6 +1,6 @@
-SELECT uocp.id,uocp.created,uocp.modified,uocp.user_id,uocp.enabled
-	,uocp.reg_status,uocp.cname,uocp.url,uocp.token,uocp.sprops
-FROM solaruser.user_oscp_cp_conf uocp
-WHERE uocp.user_id = ANY(?)
-AND uocp.id = ANY(?)
-ORDER BY uocp.user_id,uocp.id
+SELECT ocp.id,ocp.created,ocp.modified,ocp.user_id,ocp.enabled
+	,ocp.reg_status,ocp.cname,ocp.url,ocp.token,ocp.sprops
+FROM solaroscp.oscp_cp_conf ocp
+WHERE ocp.user_id = ANY(?)
+AND ocp.id = ANY(?)
+ORDER BY ocp.user_id,ocp.id
