@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
@@ -45,6 +46,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -386,12 +388,13 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
-			WebRequest request, Locale locale) {
+			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
 		log.error("DataIntegrityViolationException in request {}: {}", requestDescription(request),
 				e.toString());
 		String msg;
 		String msgKey;
 		String code;
+		Object[] params = new Object[] { e.getMostSpecificCause().getMessage() };
 		if ( e instanceof DuplicateKeyException ) {
 			msg = "Duplicate key";
 			msgKey = "error.dao.duplicateKey";
@@ -410,6 +413,7 @@ public final class WebServiceControllerSupport {
 			if ( sqlEx != null ) {
 				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
 				sqlState = sqlEx.getSQLState();
+				params[0] = sqlEx.getMessage();
 			}
 			if ( sqlState != null && sqlState.startsWith("22") ) {
 				// Class 22 — Data Exception
@@ -420,6 +424,9 @@ public final class WebServiceControllerSupport {
 				msg = "Integrity constraint violation";
 				if ( sqlState.equals("23503") ) {
 					msgKey = "error.dao.sqlState.class.23503";
+					if ( HttpMethod.DELETE.matches(servletRequest.getMethod()) ) {
+						msgKey += ".delete";
+					}
 					code = "DAO.00105";
 				} else {
 					msgKey = "error.dao.sqlState.class.23";
@@ -432,8 +439,7 @@ public final class WebServiceControllerSupport {
 			}
 		}
 		if ( messageSource != null ) {
-			msg = messageSource.getMessage(msgKey,
-					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+			msg = messageSource.getMessage(msgKey, params, msg, locale);
 		}
 		return new Response<Object>(Boolean.FALSE, code, msg, null);
 	}

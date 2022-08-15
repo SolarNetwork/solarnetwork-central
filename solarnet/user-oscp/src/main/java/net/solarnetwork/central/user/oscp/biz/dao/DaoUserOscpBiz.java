@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.oscp.biz.dao;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import org.springframework.transaction.annotation.Propagation;
@@ -83,25 +84,28 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public CapacityProviderConfiguration capacityProviderForUser(Long userId, Long entityId) {
-		return capacityProviderDao.get(new UserLongCompositePK(userId, entityId));
+		return requireNonNullObject(capacityProviderDao.get(new UserLongCompositePK(userId, entityId)),
+				entityId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public CapacityOptimizerConfiguration capacityOptimizerForUser(Long userId, Long entityId) {
-		return capacityOptimizerDao.get(new UserLongCompositePK(userId, entityId));
+		return requireNonNullObject(capacityOptimizerDao.get(new UserLongCompositePK(userId, entityId)),
+				entityId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public CapacityGroupConfiguration capacityGroupForUser(Long userId, Long entityId) {
-		return capacityGroupDao.get(new UserLongCompositePK(userId, entityId));
+		return requireNonNullObject(capacityGroupDao.get(new UserLongCompositePK(userId, entityId)),
+				entityId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public AssetConfiguration assetForUser(Long userId, Long entityId) {
-		return assetDao.get(new UserLongCompositePK(userId, entityId));
+		return requireNonNullObject(assetDao.get(new UserLongCompositePK(userId, entityId)), entityId);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -205,7 +209,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
 		CapacityProviderConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongCompositePK pk = capacityProviderDao.save(conf);
+		UserLongCompositePK pk = requireNonNullObject(capacityProviderDao.save(conf), entityId);
 		return capacityProviderDao.get(pk);
 	}
 
@@ -215,7 +219,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
 		CapacityOptimizerConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongCompositePK pk = capacityOptimizerDao.create(userId, conf);
+		UserLongCompositePK pk = requireNonNullObject(capacityOptimizerDao.save(conf), entityId);
 		return capacityOptimizerDao.get(pk);
 	}
 
@@ -225,7 +229,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			CapacityGroupConfigurationInput input) throws AuthorizationException {
 		CapacityGroupConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongCompositePK pk = capacityGroupDao.create(userId, conf);
+		UserLongCompositePK pk = requireNonNullObject(capacityGroupDao.save(conf), entityId);
 		return capacityGroupDao.get(pk);
 	}
 
@@ -235,7 +239,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 			throws AuthorizationException {
 		AssetConfiguration conf = input.toEntity(new UserLongCompositePK(
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
-		UserLongCompositePK pk = assetDao.create(userId, conf);
+		UserLongCompositePK pk = requireNonNullObject(assetDao.save(conf), entityId);
 		return assetDao.get(pk);
 	}
 
