@@ -89,22 +89,22 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			CapacityProviderConfiguration cp = stream(cpResults.spliterator(), false).findFirst()
 					.orElse(null);
 			if ( cp.getRegistrationStatus() != RegistrationStatus.Registered ) {
-				// TODO UserEvent
 				cp.setRegistrationStatus(RegistrationStatus.Registered);
+				capacityProviderDao.save(cp);
 			}
-			cp.setToken(externalSystemToken);
-			capacityProviderDao.save(cp);
+			// TODO UserEvent
+			capacityProviderDao.saveAuthToken(cp.getId(), externalSystemToken);
 		} else {
 			var coResults = capacityOptimizerDao.findFiltered(filter);
 			if ( coResults.getReturnedResultCount() > 0 ) {
 				CapacityOptimizerConfiguration co = stream(coResults.spliterator(), false).findFirst()
 						.orElse(null);
 				if ( co.getRegistrationStatus() != RegistrationStatus.Registered ) {
-					// TODO UserEvent
 					co.setRegistrationStatus(RegistrationStatus.Registered);
+					capacityOptimizerDao.save(co);
 				}
-				co.setToken(externalSystemToken);
-				capacityOptimizerDao.save(co);
+				// TODO UserEvent
+				capacityOptimizerDao.saveAuthToken(co.getId(), externalSystemToken);
 			} else {
 				// TODO UserEvent (in exception handler method)
 				throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, token);
