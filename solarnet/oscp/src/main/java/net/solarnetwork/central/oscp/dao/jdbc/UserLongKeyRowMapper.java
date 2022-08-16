@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenDao.java - 16/08/2022 4:08:49 pm
+ * UserLongKeyRowMapper.java - 16/08/2022 5:54:44 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,29 +20,33 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao;
+package net.solarnetwork.central.oscp.dao.jdbc;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * API for an OSCP authorization token DAO.
+ * Row mapper for {@link UserLongCompositePK} instances.
  * 
- * @author matt
- * @version 1.0
+ * <p>
+ * The expected column order in the SQL results is:
+ * </p>
+ * 
+ * <ol>
+ * <li>user_id (BIGINT)</li>
+ * <li>entity_id (BIGINT)</li>
+ * </ol>
  */
-public interface AuthTokenDao {
+public class UserLongKeyRowMapper implements RowMapper<UserLongCompositePK> {
 
-	/**
-	 * Create an authorization token for a given ID.
-	 * 
-	 * <p>
-	 * Calling this will replace any existing token for the given {@code id}, or
-	 * create a new one if none already exists.
-	 * </p>
-	 * 
-	 * @param id
-	 *        the ID to create the authorization token for
-	 * @return the new token
-	 */
-	String createAuthToken(UserLongCompositePK id);
+	/** A default instance. */
+	public static final RowMapper<UserLongCompositePK> INSTANCE = new UserLongKeyRowMapper();
+
+	@Override
+	public UserLongCompositePK mapRow(ResultSet rs, int rowNum) throws SQLException {
+		return new UserLongCompositePK(rs.getLong(1), rs.getLong(2));
+	}
+
 }

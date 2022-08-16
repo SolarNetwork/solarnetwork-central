@@ -33,6 +33,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.CreateAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityProviderConfiguration;
@@ -78,7 +79,7 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 
 	@Override
 	public String createAuthToken(UserLongCompositePK id) {
-		final var sql = new CreateAuthToken(CreateAuthToken.TokenType.CapacityProvider, id);
+		final var sql = new CreateAuthToken(AuthTokenType.CapacityProvider, id);
 		return jdbcOps.execute(sql, (cs) -> {
 			cs.execute();
 			return cs.getString(1);

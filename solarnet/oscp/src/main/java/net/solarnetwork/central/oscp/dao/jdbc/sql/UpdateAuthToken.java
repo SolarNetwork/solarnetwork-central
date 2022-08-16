@@ -32,12 +32,12 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * Create or update an authorization token.
+ * Update an authorization token.
  * 
  * @author matt
  * @version 1.0
  */
-public class CreateAuthToken implements CallableStatementCreator, SqlProvider {
+public class UpdateAuthToken implements CallableStatementCreator, SqlProvider {
 
 	private final AuthTokenType type;
 	private final UserLongCompositePK id;
@@ -51,20 +51,20 @@ public class CreateAuthToken implements CallableStatementCreator, SqlProvider {
 	 *        the ID associated with the token
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null} or the {@code id} is not
-	 *         assigned (except for Flexibility Provider type)
+	 *         assigned
 	 */
-	public CreateAuthToken(AuthTokenType type, UserLongCompositePK id) {
+	public UpdateAuthToken(AuthTokenType type, UserLongCompositePK id) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");
-		if ( type != AuthTokenType.FlexibilityProvider && !id.entityIdIsAssigned() ) {
+		if ( !id.entityIdIsAssigned() ) {
 			throw new IllegalArgumentException("The entity ID must be assigned.");
 		}
 	}
 
 	@Override
 	public String getSql() {
-		return String.format("{? = call solaroscp.create_%s_token(?, ?)}", type.getAlias());
+		return String.format("{? = call solaroscp.update_%s_token(?, ?)}", type.getAlias());
 	}
 
 	@Override

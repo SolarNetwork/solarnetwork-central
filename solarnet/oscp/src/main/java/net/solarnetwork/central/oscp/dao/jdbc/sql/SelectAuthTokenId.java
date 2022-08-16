@@ -23,56 +23,53 @@
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Types;
-import org.springframework.jdbc.core.CallableStatementCreator;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * Create or update an authorization token.
+ * Select an authorization token.
+ * 
+ * <p>
+ * This query only returns a row if the given token filter matches and is not
+ * disabled.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public class CreateAuthToken implements CallableStatementCreator, SqlProvider {
+public class SelectAuthTokenId implements PreparedStatementCreator, SqlProvider {
 
 	private final AuthTokenType type;
-	private final UserLongCompositePK id;
+	private final String token;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param type
 	 *        the type of token to create
-	 * @param id
-	 *        the ID associated with the token
+	 * @param token
+	 *        the token to get the ID for
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null} or the {@code id} is not
-	 *         assigned (except for Flexibility Provider type)
+	 *         if any argument is {@literal null}
 	 */
-	public CreateAuthToken(AuthTokenType type, UserLongCompositePK id) {
+	public SelectAuthTokenId(AuthTokenType type, String token) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
-		this.id = requireNonNullArgument(id, "id");
-		if ( type != AuthTokenType.FlexibilityProvider && !id.entityIdIsAssigned() ) {
-			throw new IllegalArgumentException("The entity ID must be assigned.");
-		}
+		this.token = requireNonNullArgument(token, "token");
 	}
 
 	@Override
 	public String getSql() {
-		return String.format("{? = call solaroscp.create_%s_token(?, ?)}", type.getAlias());
+		return String.format("SELECT user_id, id FROM solaroscp.%s_id_for_token(?)", type.getAlias());
 	}
 
 	@Override
-	public CallableStatement createCallableStatement(Connection con) throws SQLException {
-		CallableStatement stmt = con.prepareCall(getSql());
-		stmt.registerOutParameter(1, Types.VARCHAR);
-		stmt.setObject(2, id.getUserId(), Types.BIGINT);
-		stmt.setObject(3, id.getEntityId(), Types.BIGINT);
+	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+		PreparedStatement stmt = con.prepareStatement(getSql());
+		stmt.setString(1, token);
 		return stmt;
 	}
 

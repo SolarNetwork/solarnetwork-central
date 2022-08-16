@@ -33,14 +33,15 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
-		"registrationStatus", "serviceProps" })
+		"flexibilityProviderId", "registrationStatus", "serviceProps" })
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
 		extends BaseOscpConfigurationEntity<C> {
 
-	private static final long serialVersionUID = 3118803203919045189L;
+	private static final long serialVersionUID = -5344913355391188463L;
 
 	private String token;
 	private String baseUrl;
+	private Long flexibilityProviderId;
 	private RegistrationStatus registrationStatus;
 
 	/**
@@ -141,6 +142,27 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 */
 	public void setRegistrationStatus(RegistrationStatus registrationStatus) {
 		this.registrationStatus = registrationStatus;
+	}
+
+	/**
+	 * Get the ID of the Flexibility Provider token associated with this
+	 * configuration.
+	 * 
+	 * @return the flexibility provider ID
+	 */
+	public Long getFlexibilityProviderId() {
+		return flexibilityProviderId;
+	}
+
+	/**
+	 * Set the ID of the Flexibility Provider token associated with this
+	 * configuration.
+	 * 
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID to set
+	 */
+	public void setFlexibilityProviderId(Long flexibilityProviderId) {
+		this.flexibilityProviderId = flexibilityProviderId;
 	}
 
 }

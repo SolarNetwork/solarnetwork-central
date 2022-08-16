@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenDao.java - 16/08/2022 4:08:49 pm
+ * FlexibilityProviderBiz.java - 16/08/2022 5:17:58 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,29 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao;
+package net.solarnetwork.central.oscp.fp.biz;
 
-import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.security.AuthorizationException;
 
 /**
- * API for an OSCP authorization token DAO.
+ * Business service API for Flexibility Provider.
  * 
  * @author matt
  * @version 1.0
  */
-public interface AuthTokenDao {
+public interface FlexibilityProviderBiz {
 
 	/**
-	 * Create an authorization token for a given ID.
+	 * Register an external system using an authorization token created in
+	 * SolarNetwork and shared with the system through an external process (e.g.
+	 * email, phone, etc).
 	 * 
-	 * <p>
-	 * Calling this will replace any existing token for the given {@code id}, or
-	 * create a new one if none already exists.
-	 * </p>
-	 * 
-	 * @param id
-	 *        the ID to create the authorization token for
-	 * @return the new token
+	 * @param token
+	 *        the authorization token to register
+	 * @return the resulting new authorization token to give to the external
+	 *         system and use going forward
+	 * @throws AuthorizationException
+	 *         with
+	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
+	 *         if the authorization token does not exist
 	 */
-	String createAuthToken(UserLongCompositePK id);
+	String register(String token) throws AuthorizationException;
+
 }

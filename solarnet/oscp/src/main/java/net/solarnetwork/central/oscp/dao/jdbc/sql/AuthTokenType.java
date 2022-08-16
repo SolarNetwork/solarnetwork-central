@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenDao.java - 16/08/2022 4:08:49 pm
+ * AuthTokenType.java - 16/08/2022 5:47:13 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,29 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao;
-
-import net.solarnetwork.central.domain.UserLongCompositePK;
+package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
 /**
- * API for an OSCP authorization token DAO.
+ * An authorization token type for SQL queries.
  * 
  * @author matt
  * @version 1.0
  */
-public interface AuthTokenDao {
+public enum AuthTokenType {
+
+	/** A Capacity Optimizer token. */
+	CapacityOptimizer("co"),
+
+	/** A Capacity Provider token. */
+	CapacityProvider("cp"),
+
+	/** A Flexibility Provider token. */
+	FlexibilityProvider("fp"),
+
+	;
+
+	private final String alias;
+
+	private AuthTokenType(String alias) {
+		this.alias = alias;
+	}
 
 	/**
-	 * Create an authorization token for a given ID.
+	 * Get the token type alias.
 	 * 
-	 * <p>
-	 * Calling this will replace any existing token for the given {@code id}, or
-	 * create a new one if none already exists.
-	 * </p>
-	 * 
-	 * @param id
-	 *        the ID to create the authorization token for
-	 * @return the new token
+	 * @return the alias
 	 */
-	String createAuthToken(UserLongCompositePK id);
+	public String getAlias() {
+		return alias;
+	}
+
 }

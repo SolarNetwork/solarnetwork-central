@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenDao.java - 16/08/2022 4:08:49 pm
+ * FlexibilityProviderDao.java - 16/08/2022 5:28:23 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -25,24 +25,20 @@ package net.solarnetwork.central.oscp.dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * API for an OSCP authorization token DAO.
+ * DAO API for {@link FlexibilityProviderConfiguration} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface AuthTokenDao {
+public interface FlexibilityProviderDao extends AuthTokenDao {
 
 	/**
-	 * Create an authorization token for a given ID.
+	 * Get a valid flexibility provider ID for a given token.
 	 * 
-	 * <p>
-	 * Calling this will replace any existing token for the given {@code id}, or
-	 * create a new one if none already exists.
-	 * </p>
-	 * 
-	 * @param id
-	 *        the ID to create the authorization token for
-	 * @return the new token
+	 * @param token
+	 *        the token to get the ID for
+	 * @return the token, or {@literal null} if not available (or disabled)
 	 */
-	String createAuthToken(UserLongCompositePK id);
+	UserLongCompositePK idForToken(String token);
+
 }
