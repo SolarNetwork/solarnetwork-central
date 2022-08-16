@@ -67,9 +67,9 @@ public class InsertCapacityOptimizerConfiguration implements PreparedStatementCr
 	public String getSql() {
 		return """
 				INSERT INTO solaroscp.oscp_co_conf (
-					created, modified, user_id, enabled, reg_status, cname, url, sprops
+					created, modified, user_id, enabled, fp_id, reg_status, cname, url, sprops
 				)
-				VALUES (?,?,?,?,?,?,?,?::jsonb)
+				VALUES (?,?,?,?,?,?,?,?,?::jsonb)
 				""";
 	}
 
@@ -82,6 +82,7 @@ public class InsertCapacityOptimizerConfiguration implements PreparedStatementCr
 		stmt.setTimestamp(++p, ts);
 		stmt.setObject(++p, userId);
 		stmt.setBoolean(++p, entity.isEnabled());
+		stmt.setObject(++p, entity.getFlexibilityProviderId());
 		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());

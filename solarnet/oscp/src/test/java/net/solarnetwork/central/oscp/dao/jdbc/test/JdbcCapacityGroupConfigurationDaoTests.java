@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -49,6 +50,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
@@ -64,11 +66,13 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
  */
 public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private JdbcFlexibilityProviderDao flexibilityProviderDao;
 	private JdbcCapacityProviderConfigurationDao capacityProviderDao;
 	private JdbcCapacityOptimizerConfigurationDao capacityOptimizerDao;
 
 	private JdbcCapacityGroupConfigurationDao dao;
 	private Long userId;
+	private Long flexibilityProviderId;
 
 	private CapacityProviderConfiguration lastProvider;
 	private CapacityOptimizerConfiguration lastOptimzer;
@@ -76,10 +80,14 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 
 	@BeforeEach
 	public void setup() {
+		flexibilityProviderDao = new JdbcFlexibilityProviderDao(jdbcTemplate);
 		capacityProviderDao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
 		capacityOptimizerDao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
 		dao = new JdbcCapacityGroupConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		flexibilityProviderId = flexibilityProviderDao
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.getEntityId();
 	}
 
 	private List<Map<String, Object>> allCapacityGroupConfigurationData() {
@@ -121,10 +129,12 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 	@Test
 	public void insert() {
 		// GIVEN
-		lastProvider = capacityProviderDao.get(capacityProviderDao.create(userId,
-				JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now())));
-		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
-				JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now())));
+		lastProvider = capacityProviderDao
+				.get(capacityProviderDao.create(userId, JdbcCapacityProviderConfigurationDaoTests
+						.newConf(userId, flexibilityProviderId, Instant.now())));
+		lastOptimzer = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, JdbcCapacityOptimizerConfigurationDaoTests
+						.newConf(userId, flexibilityProviderId, Instant.now())));
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
 				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 		conf.setEnabled(true);
@@ -181,10 +191,12 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		// GIVEN
 		insert();
 
-		lastProvider = capacityProviderDao.get(capacityProviderDao.create(userId,
-				JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now())));
-		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
-				JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now())));
+		lastProvider = capacityProviderDao
+				.get(capacityProviderDao.create(userId, JdbcCapacityProviderConfigurationDaoTests
+						.newConf(userId, flexibilityProviderId, Instant.now())));
+		lastOptimzer = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, JdbcCapacityOptimizerConfigurationDaoTests
+						.newConf(userId, flexibilityProviderId, Instant.now())));
 
 		// WHEN
 		CapacityGroupConfiguration conf = last.copyWithId(last.getId());
@@ -251,11 +263,17 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					userProviders.put(userId, capacityProviderDao.get(capacityProviderDao.create(userId,
-							JdbcCapacityProviderConfigurationDaoTests.newConf(userId, Instant.now()))));
-					userOptimizers.put(userId, capacityOptimizerDao.get(capacityOptimizerDao.create(
-							userId,
-							JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId, Instant.now()))));
+					Long flexibilityProviderId = flexibilityProviderDao.idForToken(
+							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+							.getEntityId();
+					userProviders.put(userId,
+							capacityProviderDao.get(capacityProviderDao.create(userId,
+									JdbcCapacityProviderConfigurationDaoTests.newConf(userId,
+											flexibilityProviderId, Instant.now()))));
+					userOptimizers.put(userId,
+							capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
+									JdbcCapacityOptimizerConfigurationDaoTests.newConf(userId,
+											flexibilityProviderId, Instant.now()))));
 
 				} else {
 					userId = userIds.get(u);

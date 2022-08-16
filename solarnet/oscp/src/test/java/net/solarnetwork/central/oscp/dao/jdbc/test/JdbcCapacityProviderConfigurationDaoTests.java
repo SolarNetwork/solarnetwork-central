@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -46,6 +47,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
@@ -59,15 +61,21 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
  */
 public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private JdbcFlexibilityProviderDao flexibilityProviderDao;
 	private JdbcCapacityProviderConfigurationDao dao;
 	private Long userId;
+	private Long flexibilityProviderId;
 
 	private CapacityProviderConfiguration last;
 
 	@BeforeEach
 	public void setup() {
+		flexibilityProviderDao = new JdbcFlexibilityProviderDao(jdbcTemplate);
 		dao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		flexibilityProviderId = flexibilityProviderDao
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.getEntityId();
 	}
 
 	private List<Map<String, Object>> allCapacityProviderConfigurationData() {
@@ -91,16 +99,20 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 	 * 
 	 * @param userId
 	 *        the user ID
+	 * @param flexibilityProviderId
+	 *        the flexibility provider ID
 	 * @param created
 	 *        the creation date
 	 * @return the new instance
 	 */
-	public static CapacityProviderConfiguration newConf(Long userId, Instant created) {
+	public static CapacityProviderConfiguration newConf(Long userId, Long flexibilityProviderId,
+			Instant created) {
 		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(
 				UserLongCompositePK.unassignedEntityIdKey(userId), created);
 		conf.setModified(created);
 		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
+		conf.setFlexibilityProviderId(flexibilityProviderId);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
@@ -111,7 +123,7 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 	@Test
 	public void insert() {
 		// GIVEN
-		CapacityProviderConfiguration conf = newConf(userId, Instant.now());
+		CapacityProviderConfiguration conf = newConf(userId, flexibilityProviderId, Instant.now());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -229,19 +241,26 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
+		final List<Long> flexibilityProviderIds = new ArrayList<>(userCount);
 		final List<CapacityProviderConfiguration> confs = new ArrayList<>(count);
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
 		for ( int i = 0; i < count; i++ ) {
 			Instant t = start.plusSeconds(i);
 			for ( int u = 0; u < userCount; u++ ) {
 				Long userId;
+				Long flexibilityProviderId;
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
+					flexibilityProviderId = flexibilityProviderDao.idForToken(
+							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+							.getEntityId();
+					flexibilityProviderIds.add(flexibilityProviderId);
 				} else {
 					userId = userIds.get(u);
+					flexibilityProviderId = flexibilityProviderIds.get(u);
 				}
-				CapacityProviderConfiguration conf = newConf(userId, t);
+				CapacityProviderConfiguration conf = newConf(userId, flexibilityProviderId, t);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);

@@ -82,6 +82,7 @@ public class InsertCapacityOptimizerConfigurationTests {
 				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
 		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
+		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
@@ -95,13 +96,14 @@ public class InsertCapacityOptimizerConfigurationTests {
 		then(result).should().setTimestamp(2, ts);
 		then(result).should().setObject(3, userId);
 		then(result).should().setBoolean(4, conf.isEnabled());
-		then(result).should().setInt(5, conf.getRegistrationStatus().getCode());
-		then(result).should().setString(6, conf.getName());
-		then(result).should().setString(7, conf.getBaseUrl());
+		then(result).should().setObject(5, conf.getFlexibilityProviderId());
+		then(result).should().setInt(6, conf.getRegistrationStatus().getCode());
+		then(result).should().setString(7, conf.getName());
+		then(result).should().setString(8, conf.getBaseUrl());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(8, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(9, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(8, Types.VARCHAR);
+			then(result).should().setNull(9, Types.VARCHAR);
 		}
 	}
 
