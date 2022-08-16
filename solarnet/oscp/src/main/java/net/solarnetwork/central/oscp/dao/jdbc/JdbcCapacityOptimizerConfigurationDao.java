@@ -33,6 +33,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.CreateAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityOptimizerConfiguration;
@@ -70,10 +71,18 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 
 	@Override
 	public UserLongCompositePK create(Long userId, CapacityOptimizerConfiguration entity) {
-		final InsertCapacityOptimizerConfiguration sql = new InsertCapacityOptimizerConfiguration(userId,
-				entity);
+		final var sql = new InsertCapacityOptimizerConfiguration(userId, entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
 		return (id != null ? new UserLongCompositePK(userId, id) : null);
+	}
+
+	@Override
+	public String createAuthToken(UserLongCompositePK id) {
+		final var sql = new CreateAuthToken(CreateAuthToken.TokenType.CapacityOptimizer, id);
+		return jdbcOps.execute(sql, (cs) -> {
+			cs.execute();
+			return cs.getString(1);
+		});
 	}
 
 	@Override

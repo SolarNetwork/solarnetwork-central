@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityProviderConfigDao.java - 11/08/2022 9:38:40 am
+ * AuthTokenDao.java - 16/08/2022 4:08:49 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,26 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 
 /**
- * DAO API for {@link CapacityProviderConfiguration} entities.
+ * API for an OSCP authorization token DAO.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CapacityProviderConfigurationDao
-		extends GenericCompositeKey2Dao<CapacityProviderConfiguration, UserLongCompositePK, Long, Long>,
-		AuthTokenDao {
+public interface AuthTokenDao {
 
+	/**
+	 * Create an authorization token for a given ID.
+	 * <p>
+	 * Calling this will replace any existing token for the given {@code id}, or
+	 * create a new one if none already exists.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID to create the authorization token for
+	 * @return the new token
+	 */
+	String createAuthToken(UserLongCompositePK id);
 }

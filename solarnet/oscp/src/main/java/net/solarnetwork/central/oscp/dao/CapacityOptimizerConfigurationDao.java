@@ -33,6 +33,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
  * @version 1.0
  */
 public interface CapacityOptimizerConfigurationDao
-		extends GenericCompositeKey2Dao<CapacityOptimizerConfiguration, UserLongCompositePK, Long, Long> {
+		extends GenericCompositeKey2Dao<CapacityOptimizerConfiguration, UserLongCompositePK, Long, Long>,
+		AuthTokenDao {
 
 }

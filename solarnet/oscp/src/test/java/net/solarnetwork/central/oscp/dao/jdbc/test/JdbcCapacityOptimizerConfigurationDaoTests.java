@@ -78,6 +78,14 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		return data;
 	}
 
+	private List<Map<String, Object>> allCapacityOptimizerTokenData() {
+		List<Map<String, Object>> data = jdbcTemplate
+				.queryForList("select * from solaroscp.oscp_co_token ORDER BY user_id, id");
+		log.debug("solaroscp.oscp_co_token table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
 	/**
 	 * Create a new instance.
 	 * 
@@ -85,7 +93,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	 *        the user ID
 	 * @param created
 	 *        the creation date
-	 * @return the new isntacne
+	 * @return the new instance
 	 */
 	public static CapacityOptimizerConfiguration newConf(Long userId, Instant created) {
 		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
@@ -130,6 +138,28 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 				is(equalTo(new UserLongCompositePK(userId, (Long) row.get("id")))));
 
 		last = conf.copyWithId(result);
+	}
+
+	@Test
+	public void insert_authToken() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		String result = dao.createAuthToken(last.getId());
+
+		// THEN
+		assertThat("New token returned", result, is(notNullValue()));
+
+		List<Map<String, Object>> data = allCapacityOptimizerTokenData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID has been assigned", row, hasEntry("user_id", last.getUserId()));
+		assertThat("Row ID has been assigned", row, hasEntry("id", last.getEntityId()));
+		assertThat("Row creation date assigned", row, hasEntry(equalTo("created"), notNullValue()));
+		assertThat("Row modification date is creation date", row,
+				hasEntry("modified", row.get("created")));
+		assertThat("Row token matches return value", row, hasEntry("token", result));
 	}
 
 	@Test

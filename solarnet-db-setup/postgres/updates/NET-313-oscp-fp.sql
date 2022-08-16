@@ -9,13 +9,30 @@ CREATE TABLE solaroscp.oscp_fp_conf (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	token			CHARACTER VARYING(64) NOT NULL,
+	sprops			JSONB,
 	CONSTRAINT oscp_fp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_fp_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
-	CONSTRAINT oscp_fp_conf_token_unq UNIQUE (token)
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/**
+ * OSCP Flexibility Provider tokens.
+ */
+CREATE TABLE solaroscp.oscp_fp_token (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	token			CHARACTER VARYING(64) NOT NULL,
+	CONSTRAINT oscp_fp_token_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_fp_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_fp_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT oscp_fp_token_unq UNIQUE (token)
+);
+
+CREATE UNIQUE INDEX oscp_fp_token_idx ON solaroscp.oscp_fp_token (token);
 
 /**
  * OSCP Capacity Provider configuration.
@@ -29,13 +46,27 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	reg_status		SMALLINT NOT NULL,
 	cname			CHARACTER VARYING(64) NOT NULL,
 	url				CHARACTER VARYING(256) NOT NULL,
-	token			CHARACTER VARYING(64) NOT NULL,
 	sprops			JSONB,
 	CONSTRAINT oscp_cp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_cp_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_cp_conf_url_unq UNIQUE (user_id, url)
+);
+
+/**
+ * OSCP Capacity Provider tokens.
+ */
+CREATE TABLE solaroscp.oscp_cp_token (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	token			CHARACTER VARYING(64) NOT NULL,
+	CONSTRAINT oscp_cp_token_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_cp_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_cp_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
@@ -50,13 +81,27 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	reg_status		SMALLINT NOT NULL,
 	cname			CHARACTER VARYING(64) NOT NULL,
 	url				CHARACTER VARYING(256) NOT NULL,
-	token			CHARACTER VARYING(64) NOT NULL,
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
+);
+
+/**
+ * OSCP Capacity Optimizer tokens.
+ */
+CREATE TABLE solaroscp.oscp_co_token (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	token			CHARACTER VARYING(64) NOT NULL,
+	CONSTRAINT oscp_co_token_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_co_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_co_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
@@ -129,3 +174,70 @@ CREATE TABLE solaroscp.oscp_asset_conf (
 		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/**
+ * Create or update a Flexibility Provider token.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Flexibility Provider (solaroscp.oscp_fp_conf) ID
+ * @return		the generated token
+ */
+CREATE OR REPLACE FUNCTION solaroscp.create_fp_token(uid BIGINT, cid BIGINT)
+RETURNS CHARACTER VARYING(64) LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaroscp.oscp_fp_token (user_id, id, token)
+	VALUES (uid, cid, encode(gen_random_bytes(48), 'base64'))
+	ON CONFLICT (user_id, id) DO UPDATE SET
+		token = EXCLUDED.token
+	RETURNING token
+$$;
+
+/**
+ * Find a Flexibility Provider configuration for a given token.
+ *
+ * @param tok 	the token to get the configuration for
+ * @return		the matching configuration rows (at most 1)
+ */
+CREATE OR REPLACE FUNCTION solaroscp.fp_for_token(tok TEXT)
+RETURNS SETOF solaroscp.oscp_fp_conf LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT c.*
+	FROM solaroscp.oscp_fp_conf c
+	INNER JOIN solaroscp.oscp_fp_token t ON t.user_id = c.user_id AND t.id = c.id
+	WHERE t.token = tok AND c.enabled = TRUE
+$$;
+
+/**
+ * Create or update a Capacity Provider token.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Capacity Provider (solaroscp.oscp_cp_conf) ID
+ * @return		the generated token
+ */
+CREATE OR REPLACE FUNCTION solaroscp.create_cp_token(uid BIGINT, cid BIGINT)
+RETURNS CHARACTER VARYING(64) LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaroscp.oscp_cp_token (user_id, id, token)
+	VALUES (uid, cid, encode(gen_random_bytes(48), 'base64'))
+	ON CONFLICT (user_id, id) DO UPDATE SET
+		token = EXCLUDED.token
+	RETURNING token
+$$;
+
+/**
+ * Create or update a Capacity Optimizer token.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Capacity Optimizer (solaroscp.oscp_co_conf) ID
+ * @return		the generated token
+ */
+CREATE OR REPLACE FUNCTION solaroscp.create_co_token(uid BIGINT, cid BIGINT)
+RETURNS CHARACTER VARYING(64) LANGUAGE SQL VOLATILE AS
+$$
+	INSERT INTO solaroscp.oscp_co_token (user_id, id, token)
+	VALUES (uid, cid, encode(gen_random_bytes(48), 'base64'))
+	ON CONFLICT (user_id, id) DO UPDATE SET
+		token = EXCLUDED.token
+	RETURNING token
+$$;
+
