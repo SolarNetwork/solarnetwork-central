@@ -103,14 +103,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	@Test
 	public void insert() {
 		// GIVEN
-		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), Instant.now());
-		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
-		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setRegistrationStatus(RegistrationStatus.Registered);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		conf.setToken(randomUUID().toString());
+		CapacityOptimizerConfiguration conf = newConf(userId, Instant.now());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -130,7 +123,6 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		assertThat("Row reg status matches", row,
 				hasEntry("reg_status", conf.getRegistrationStatus().getCode()));
 		assertThat("Row name matches", row, hasEntry("cname", conf.getName()));
-		assertThat("Row token matches", row, hasEntry("token", conf.getToken()));
 		assertThat("Row baseUrl matches", row, hasEntry("url", conf.getBaseUrl()));
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
@@ -165,7 +157,6 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Failed);
 		conf.setServiceProps(Collections.singletonMap("bim", "bam"));
-		conf.setToken(randomUUID().toString());
 
 		UserLongCompositePK result = dao.save(conf);
 
@@ -184,7 +175,6 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		assertThat("Row reg status matches", row,
 				hasEntry("reg_status", conf.getRegistrationStatus().getCode()));
 		assertThat("Row name matches", row, hasEntry("cname", conf.getName()));
-		assertThat("Row token matches", row, hasEntry("token", conf.getToken()));
 		assertThat("Row baseUrl matches", row, hasEntry("url", conf.getBaseUrl()));
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));

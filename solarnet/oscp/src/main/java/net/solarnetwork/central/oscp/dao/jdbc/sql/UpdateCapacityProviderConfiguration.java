@@ -44,18 +44,6 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
  */
 public class UpdateCapacityProviderConfiguration implements PreparedStatementCreator, SqlProvider {
 
-	private static final String SQL = """
-			UPDATE solaroscp.oscp_cp_conf SET
-				  modified = ?
-				, enabled = ?
-				, reg_status = ?
-				, cname = ?
-				, url = ?
-				, token = ?
-				, sprops = ?::jsonb
-			WHERE user_id = ? AND id = ?
-			""";
-
 	private final UserLongCompositePK id;
 	private final CapacityProviderConfiguration entity;
 
@@ -69,7 +57,8 @@ public class UpdateCapacityProviderConfiguration implements PreparedStatementCre
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpdateCapacityProviderConfiguration(UserLongCompositePK id, CapacityProviderConfiguration entity) {
+	public UpdateCapacityProviderConfiguration(UserLongCompositePK id,
+			CapacityProviderConfiguration entity) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");
@@ -80,7 +69,16 @@ public class UpdateCapacityProviderConfiguration implements PreparedStatementCre
 
 	@Override
 	public String getSql() {
-		return SQL;
+		return """
+				UPDATE solaroscp.oscp_cp_conf SET
+					  modified = ?
+					, enabled = ?
+					, reg_status = ?
+					, cname = ?
+					, url = ?
+					, sprops = ?::jsonb
+				WHERE user_id = ? AND id = ?
+				""";
 	}
 
 	@Override
@@ -93,7 +91,6 @@ public class UpdateCapacityProviderConfiguration implements PreparedStatementCre
 		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
-		stmt.setString(++p, entity.getToken());
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		stmt.setObject(++p, id.getUserId());

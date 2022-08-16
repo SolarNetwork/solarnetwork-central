@@ -98,11 +98,10 @@ public class InsertCapacityProviderConfigurationTests {
 		then(result).should().setInt(5, conf.getRegistrationStatus().getCode());
 		then(result).should().setString(6, conf.getName());
 		then(result).should().setString(7, conf.getBaseUrl());
-		then(result).should().setString(8, conf.getToken());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(9, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(8, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(9, Types.VARCHAR);
+			then(result).should().setNull(8, Types.VARCHAR);
 		}
 	}
 

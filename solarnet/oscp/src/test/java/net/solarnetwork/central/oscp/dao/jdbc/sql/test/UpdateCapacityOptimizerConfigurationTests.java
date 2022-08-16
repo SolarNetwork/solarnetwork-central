@@ -96,14 +96,13 @@ public class UpdateCapacityOptimizerConfigurationTests {
 		then(result).should().setInt(3, conf.getRegistrationStatus().getCode());
 		then(result).should().setString(4, conf.getName());
 		then(result).should().setString(5, conf.getBaseUrl());
-		then(result).should().setString(6, conf.getToken());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(7, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(6, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(7, Types.VARCHAR);
+			then(result).should().setNull(6, Types.VARCHAR);
 		}
-		then(result).should().setObject(8, id.getUserId());
-		then(result).should().setObject(9, id.getEntityId());
+		then(result).should().setObject(7, id.getUserId());
+		then(result).should().setObject(8, id.getEntityId());
 	}
 
 	@Test

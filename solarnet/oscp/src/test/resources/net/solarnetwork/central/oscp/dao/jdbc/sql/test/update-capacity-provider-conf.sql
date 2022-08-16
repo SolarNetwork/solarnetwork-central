@@ -4,6 +4,5 @@ UPDATE solaroscp.oscp_cp_conf SET
 	, reg_status = ?
 	, cname = ?
 	, url = ?
-	, token = ?
 	, sprops = ?::jsonb
 WHERE user_id = ? AND id = ?

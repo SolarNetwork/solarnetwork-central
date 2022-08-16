@@ -44,13 +44,6 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
  */
 public class InsertCapacityProviderConfiguration implements PreparedStatementCreator, SqlProvider {
 
-	private static final String SQL = """
-			INSERT INTO solaroscp.oscp_cp_conf (
-				created,modified,user_id,enabled,reg_status,cname,url,token,sprops
-			)
-			VALUES (?,?,?,?,?,?,?,?,?::jsonb)
-			""";
-
 	private final Long userId;
 	private final CapacityProviderConfiguration entity;
 
@@ -72,7 +65,12 @@ public class InsertCapacityProviderConfiguration implements PreparedStatementCre
 
 	@Override
 	public String getSql() {
-		return SQL;
+		return """
+				INSERT INTO solaroscp.oscp_cp_conf (
+					created, modified, user_id, enabled, reg_status, cname, url, sprops
+				)
+				VALUES (?,?,?,?,?,?,?,?::jsonb)
+				""";
 	}
 
 	@Override
@@ -87,7 +85,6 @@ public class InsertCapacityProviderConfiguration implements PreparedStatementCre
 		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
-		stmt.setString(++p, entity.getToken());
 
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
