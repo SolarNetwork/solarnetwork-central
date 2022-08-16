@@ -71,6 +71,9 @@ public class SelectCapacityProviderConfigurationTests {
 	@Mock
 	private Array configurationIdsArray;
 
+	@Mock
+	private Array providerIdsArray;
+
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
 
@@ -85,6 +88,10 @@ public class SelectCapacityProviderConfigurationTests {
 
 	private void givenSetConfigurationIdsArrayParameter(Long[] value) throws SQLException {
 		given(con.createArrayOf(eq("bigint"), aryEq(value))).willReturn(configurationIdsArray);
+	}
+
+	private void givenSetProviderIdsArrayParameter(Long[] value) throws SQLException {
+		given(con.createArrayOf(eq("bigint"), aryEq(value))).willReturn(providerIdsArray);
 	}
 
 	private void thenPrepStatement(PreparedStatement result, ConfigurationFilter filter)
@@ -102,6 +109,13 @@ public class SelectCapacityProviderConfigurationTests {
 				then(result).should().setObject(++p, filter.getConfigurationId());
 			} else {
 				then(result).should().setArray(++p, configurationIdsArray);
+			}
+		}
+		if ( filter.hasProviderCriteria() ) {
+			if ( filter.getProviderIds().length == 1 ) {
+				then(result).should().setObject(++p, filter.getProviderId());
+			} else {
+				then(result).should().setArray(++p, providerIdsArray);
 			}
 		}
 		if ( filter.getMax() != null ) {
@@ -191,4 +205,85 @@ public class SelectCapacityProviderConfigurationTests {
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, filter);
 	}
+
+	@Test
+	public void flexibilityProvider_single_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+
+		// WHEN
+		String sql = new SelectCapacityProviderConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-capacity-provider-conf-fp-one.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void flexibilityProvider_single_prep() throws SQLException {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+
+		givenPrepStatement();
+
+		// WHEN
+		PreparedStatement result = new SelectCapacityProviderConfiguration(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-provider-conf-fp-one.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
+	@Test
+	public void flexibilityProvider_multi_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setProviderIds(new Long[] { 3L, 4L });
+
+		// WHEN
+		String sql = new SelectCapacityProviderConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-capacity-provider-conf-fp.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void flexibilityProvider_multi_prep() throws SQLException {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserIds(new Long[] { 1L, 2L });
+		filter.setProviderIds(new Long[] { 3L, 4L });
+
+		givenPrepStatement();
+		givenSetUserIdsArrayParameter(filter.getUserIds());
+		givenSetProviderIdsArrayParameter(filter.getProviderIds());
+
+		// WHEN
+		PreparedStatement result = new SelectCapacityProviderConfiguration(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-provider-conf-fp.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
 }

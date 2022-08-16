@@ -36,6 +36,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 
 	private Long[] configurationIds;
 	private Long[] groupIds;
+	private Long[] providerIds;
 
 	/**
 	 * Create a filter for one or more user IDs.
@@ -73,12 +74,16 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		if ( criteria instanceof BasicConfigurationFilter c ) {
 			setConfigurationIds(c.getConfigurationIds());
 			setGroupIds(c.getGroupIds());
+			setProviderIds(c.getProviderIds());
 		} else {
 			if ( criteria instanceof ConfigurationCriteria c ) {
 				setConfigurationIds(c.getConfigurationIds());
 			}
 			if ( criteria instanceof GroupCriteria c ) {
 				setGroupIds(c.getGroupIds());
+			}
+			if ( criteria instanceof ProviderCriteria c ) {
+				setProviderIds(c.getProviderIds());
 			}
 		}
 	}
@@ -89,6 +94,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(configurationIds);
 		result = prime * result + Arrays.hashCode(groupIds);
+		result = prime * result + Arrays.hashCode(providerIds);
 		return result;
 	}
 
@@ -105,7 +111,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		}
 		BasicConfigurationFilter other = (BasicConfigurationFilter) obj;
 		return Arrays.equals(configurationIds, other.configurationIds)
-				&& Arrays.equals(groupIds, other.groupIds);
+				&& Arrays.equals(groupIds, other.groupIds)
+				&& Arrays.equals(providerIds, other.providerIds);
 	}
 
 	@Override
@@ -163,4 +170,28 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		setGroupIds(groupId != null ? new Long[] { groupId } : null);
 	}
 
+	@Override
+	public Long[] getProviderIds() {
+		return providerIds;
+	}
+
+	/**
+	 * Set the provider IDs.
+	 * 
+	 * @param providerIds
+	 *        the provider IDs to set
+	 */
+	public void setProviderIds(Long[] providerIds) {
+		this.providerIds = providerIds;
+	}
+
+	/**
+	 * Set a single provider ID.
+	 * 
+	 * @param providerId
+	 *        the ID of the provider to set
+	 */
+	public void setProviderId(Long providerId) {
+		setProviderIds(providerId != null ? new Long[] { providerId } : null);
+	}
 }

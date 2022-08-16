@@ -104,6 +104,9 @@ public class SelectCapacityOptimizerConfiguration
 		if ( filter.hasConfigurationCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "oco.id", where);
 		}
+		if ( filter.hasProviderCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getProviderIds(), "oco.fp_id", where);
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -131,6 +134,9 @@ public class SelectCapacityOptimizerConfiguration
 		}
 		if ( filter.hasConfigurationCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getConfigurationIds());
+		}
+		if ( filter.hasProviderCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getProviderIds());
 		}
 		return p;
 	}

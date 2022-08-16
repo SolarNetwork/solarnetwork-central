@@ -1,5 +1,5 @@
 /* ==================================================================
- * ConfigurationFilter.java - 11/08/2022 11:24:53 am
+ * ProviderCriteria.java - 16/08/2022 9:40:43 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,17 +22,44 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * A basic filter for OSCP configuration entities.
+ * Criteria API for a provider entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ConfigurationFilter
-		extends UserCriteria, ConfigurationCriteria, ProviderCriteria, PaginationCriteria, SortCriteria {
+public interface ProviderCriteria {
+
+	/**
+	 * Test if any provider criteria exists.
+	 * 
+	 * @return {@literal true} if a provider criteria exists
+	 */
+	default boolean hasProviderCriteria() {
+		Long id = getProviderId();
+		return (id != null);
+	}
+
+	/**
+	 * Get an array of provider IDs.
+	 * 
+	 * @return array of IDs (may be {@literal null})
+	 */
+	Long[] getProviderIds();
+
+	/**
+	 * Get the first provider ID.
+	 * 
+	 * <p>
+	 * This returns the first available ID from the {@link #getProviderIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the provider ID, or {@literal null} if not available
+	 */
+	default Long getProviderId() {
+		Long[] ids = getProviderIds();
+		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
 
 }
