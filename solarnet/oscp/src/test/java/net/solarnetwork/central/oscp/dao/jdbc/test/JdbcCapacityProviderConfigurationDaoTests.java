@@ -158,11 +158,10 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		insert();
 
 		// WHEN
-		String result = dao.createAuthToken(last.getId());
+		String token = randomUUID().toString();
+		dao.saveAuthToken(last.getId(), token);
 
 		// THEN
-		assertThat("New token returned", result, is(notNullValue()));
-
 		List<Map<String, Object>> data = allCapacityProviderTokenData();
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
@@ -171,7 +170,7 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		assertThat("Row creation date assigned", row, hasEntry(equalTo("created"), notNullValue()));
 		assertThat("Row modification date is creation date", row,
 				hasEntry("modified", row.get("created")));
-		assertThat("Row token matches return value", row, hasEntry("token", result));
+		assertThat("Row token matches return value", row, hasEntry("token", token));
 	}
 
 	@Test

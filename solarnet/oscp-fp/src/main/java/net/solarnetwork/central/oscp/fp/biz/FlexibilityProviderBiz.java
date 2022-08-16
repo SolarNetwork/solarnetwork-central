@@ -39,13 +39,16 @@ public interface FlexibilityProviderBiz {
 	 * 
 	 * @param token
 	 *        the authorization token to register
+	 * @param externalSystemToken
+	 *        the authorization token to use when making requests to the
+	 *        external system
 	 * @return the resulting new authorization token to give to the external
-	 *         system and use going forward
+	 *         system form them to use when making requests to us going forward
 	 * @throws AuthorizationException
 	 *         with
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
 	 *         if the authorization token does not exist
 	 */
-	String register(String token) throws AuthorizationException;
+	String register(String token, String externalSystemToken) throws AuthorizationException;
 
 }

@@ -22,11 +22,18 @@
 
 package net.solarnetwork.central.oscp.fp.biz.dao;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
+import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -40,31 +47,69 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	private final FlexibilityProviderDao flexibilityProviderDao;
+	private final CapacityProviderConfigurationDao capacityProviderDao;
+	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param flexibilityProviderDao
 	 *        the flexibility provider DAO
+	 * @param capacityProviderDao
+	 *        the capacity provider configuration DAO
+	 * @param capacityOptimizerDao
+	 *        the capacity optimizer configuration DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoFlexibilityProviderBiz(FlexibilityProviderDao flexibilityProviderDao) {
+	public DaoFlexibilityProviderBiz(FlexibilityProviderDao flexibilityProviderDao,
+			CapacityProviderConfigurationDao capacityProviderDao,
+			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
 		super();
 		this.flexibilityProviderDao = requireNonNullArgument(flexibilityProviderDao,
 				"flexibilityProviderDao");
+		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
+		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public String register(String token) throws AuthorizationException {
+	public String register(String token, String externalSystemToken) throws AuthorizationException {
 		UserLongCompositePK id = flexibilityProviderDao
 				.idForToken(requireNonNullArgument(token, "token"));
 		if ( id == null ) {
+			// TODO UserEvent (in exception handler method)
 			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, token);
 		}
 
-		// TODO: the CapacityProvider/Optimizer Configuration RegistrationStatus must be updated
+		BasicConfigurationFilter filter = BasicConfigurationFilter.filterForUsers(id.getUserId());
+		filter.setProviderId(id.getEntityId());
+		var cpResults = capacityProviderDao.findFiltered(filter);
+		if ( cpResults.getReturnedResultCount() > 0 ) {
+			CapacityProviderConfiguration cp = stream(cpResults.spliterator(), false).findFirst()
+					.orElse(null);
+			if ( cp.getRegistrationStatus() != RegistrationStatus.Registered ) {
+				// TODO UserEvent
+				cp.setRegistrationStatus(RegistrationStatus.Registered);
+			}
+			cp.setToken(externalSystemToken);
+			capacityProviderDao.save(cp);
+		} else {
+			var coResults = capacityOptimizerDao.findFiltered(filter);
+			if ( coResults.getReturnedResultCount() > 0 ) {
+				CapacityOptimizerConfiguration co = stream(coResults.spliterator(), false).findFirst()
+						.orElse(null);
+				if ( co.getRegistrationStatus() != RegistrationStatus.Registered ) {
+					// TODO UserEvent
+					co.setRegistrationStatus(RegistrationStatus.Registered);
+				}
+				co.setToken(externalSystemToken);
+				capacityOptimizerDao.save(co);
+			} else {
+				// TODO UserEvent (in exception handler method)
+				throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, token);
+			}
+		}
 
 		// generate new token and return that
 		return flexibilityProviderDao.createAuthToken(id);

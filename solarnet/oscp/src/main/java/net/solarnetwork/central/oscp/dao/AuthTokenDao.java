@@ -33,7 +33,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public interface AuthTokenDao {
 
 	/**
-	 * Create an authorization token for a given ID.
+	 * Save an authorization token for a given ID.
 	 * 
 	 * <p>
 	 * Calling this will replace any existing token for the given {@code id}, or
@@ -41,8 +41,9 @@ public interface AuthTokenDao {
 	 * </p>
 	 * 
 	 * @param id
-	 *        the ID to create the authorization token for
-	 * @return the new token
+	 *        the ID to save the authorization token for
+	 * @param token
+	 *        the authorization token to save
 	 */
-	String createAuthToken(UserLongCompositePK id);
+	void saveAuthToken(UserLongCompositePK id, String token);
 }

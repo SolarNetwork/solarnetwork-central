@@ -218,16 +218,15 @@ $$;
  *
  * @param uid 	the user ID
  * @param cid 	the Capacity Provider (solaroscp.oscp_cp_conf) ID
- * @return		the generated token
+ * @param tok   the token to save
  */
-CREATE OR REPLACE FUNCTION solaroscp.create_cp_token(uid BIGINT, cid BIGINT)
-RETURNS CHARACTER VARYING(64) LANGUAGE SQL VOLATILE AS
+CREATE OR REPLACE FUNCTION solaroscp.save_cp_token(uid BIGINT, cid BIGINT, tok TEXT)
+RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
 	INSERT INTO solaroscp.oscp_cp_token (user_id, id, token)
-	VALUES (uid, cid, encode(gen_random_bytes(48), 'base64'))
+	VALUES (uid, cid, tok)
 	ON CONFLICT (user_id, id) DO UPDATE SET
 		token = EXCLUDED.token
-	RETURNING token
 $$;
 
 /**
@@ -235,15 +234,14 @@ $$;
  *
  * @param uid 	the user ID
  * @param cid 	the Capacity Optimizer (solaroscp.oscp_co_conf) ID
- * @return		the generated token
+ * @param tok   the token to save
  */
-CREATE OR REPLACE FUNCTION solaroscp.create_co_token(uid BIGINT, cid BIGINT)
-RETURNS CHARACTER VARYING(64) LANGUAGE SQL VOLATILE AS
+CREATE OR REPLACE FUNCTION solaroscp.save_co_token(uid BIGINT, cid BIGINT, tok TEXT)
+RETURNS VOID LANGUAGE SQL VOLATILE AS
 $$
 	INSERT INTO solaroscp.oscp_co_token (user_id, id, token)
-	VALUES (uid, cid, encode(gen_random_bytes(48), 'base64'))
+	VALUES (uid, cid, tok)
 	ON CONFLICT (user_id, id) DO UPDATE SET
 		token = EXCLUDED.token
-	RETURNING token
 $$;
 

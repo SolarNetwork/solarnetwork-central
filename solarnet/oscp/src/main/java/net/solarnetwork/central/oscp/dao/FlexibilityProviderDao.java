@@ -30,10 +30,24 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public interface FlexibilityProviderDao extends AuthTokenDao {
+public interface FlexibilityProviderDao {
 
 	/**
-	 * Get a valid flexibility provider ID for a given token.
+	 * Create an authorization token for a given ID.
+	 * 
+	 * <p>
+	 * Calling this will replace any existing token for the given {@code id}, or
+	 * create a new one if none already exists.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID to create the authorization token for
+	 * @return the new token
+	 */
+	String createAuthToken(UserLongCompositePK id);
+
+	/**
+	 * Get a valid flexibility provider ID for a given authorization token.
 	 * 
 	 * @param token
 	 *        the token to get the ID for

@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
  * DAO API for {@link CapacityOptimizerConfiguration} entities.
@@ -34,6 +35,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
  */
 public interface CapacityOptimizerConfigurationDao
 		extends GenericCompositeKey2Dao<CapacityOptimizerConfiguration, UserLongCompositePK, Long, Long>,
+		FilterableDao<CapacityOptimizerConfiguration, UserLongCompositePK, ConfigurationFilter>,
 		AuthTokenDao {
 
 }

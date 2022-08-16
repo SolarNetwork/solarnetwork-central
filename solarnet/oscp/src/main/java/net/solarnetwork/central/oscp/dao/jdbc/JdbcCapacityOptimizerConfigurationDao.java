@@ -33,13 +33,15 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.CreateAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -78,11 +80,11 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	}
 
 	@Override
-	public String createAuthToken(UserLongCompositePK id) {
-		final var sql = new CreateAuthToken(AuthTokenType.CapacityOptimizer, id);
-		return jdbcOps.execute(sql, (cs) -> {
+	public void saveAuthToken(UserLongCompositePK id, String token) {
+		final var sql = new InsertAuthToken(AuthTokenType.CapacityOptimizer, id, token);
+		jdbcOps.execute(sql, (cs) -> {
 			cs.execute();
-			return cs.getString(1);
+			return null;
 		});
 	}
 
@@ -101,9 +103,7 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	public Collection<CapacityOptimizerConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
-		SelectCapacityOptimizerConfiguration sql = new SelectCapacityOptimizerConfiguration(filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql,
-				CapacityOptimizerConfigurationRowMapper.INSTANCE);
+		var results = findFiltered(filter);
 		return stream(results.spliterator(), false).collect(toList());
 	}
 
@@ -113,10 +113,16 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
 		filter.setConfigurationId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
-		SelectCapacityOptimizerConfiguration sql = new SelectCapacityOptimizerConfiguration(filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql,
-				CapacityOptimizerConfigurationRowMapper.INSTANCE);
+		var results = findFiltered(filter);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	@Override
+	public FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> findFiltered(
+			ConfigurationFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+		SelectCapacityOptimizerConfiguration sql = new SelectCapacityOptimizerConfiguration(filter);
+		return executeFilterQuery(jdbcOps, filter, sql,
+				CapacityOptimizerConfigurationRowMapper.INSTANCE);
 	}
 
 	@Override
