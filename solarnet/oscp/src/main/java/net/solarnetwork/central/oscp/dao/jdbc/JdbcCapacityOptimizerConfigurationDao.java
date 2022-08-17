@@ -80,7 +80,7 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	}
 
 	@Override
-	public void saveAuthToken(UserLongCompositePK id, String token) {
+	public void saveExternalSystemAuthToken(UserLongCompositePK id, String token) {
 		final var sql = new InsertAuthToken(OscpRole.CapacityOptimizer, id, token);
 		jdbcOps.execute(sql, (cs) -> {
 			cs.execute();

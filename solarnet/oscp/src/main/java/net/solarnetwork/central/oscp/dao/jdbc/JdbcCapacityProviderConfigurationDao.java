@@ -80,7 +80,7 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 	}
 
 	@Override
-	public void saveAuthToken(UserLongCompositePK id, String token) {
+	public void saveExternalSystemAuthToken(UserLongCompositePK id, String token) {
 		final var sql = new InsertAuthToken(OscpRole.CapacityProvider, id, token);
 		jdbcOps.execute(sql, (cs) -> {
 			cs.execute();

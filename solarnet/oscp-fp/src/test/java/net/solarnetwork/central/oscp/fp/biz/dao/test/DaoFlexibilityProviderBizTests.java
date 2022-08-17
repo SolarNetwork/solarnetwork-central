@@ -193,7 +193,7 @@ public class DaoFlexibilityProviderBizTests {
 				is(equalTo(RegistrationStatus.Registered)));
 		assertThat("New auth token returned", result, is(notNullValue()));
 
-		then(capacityProviderDao).should().saveAuthToken(eq(cp.getId()), tokenCaptor.capture());
+		then(capacityProviderDao).should().saveExternalSystemAuthToken(eq(cp.getId()), tokenCaptor.capture());
 		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
 	}
 
@@ -236,7 +236,7 @@ public class DaoFlexibilityProviderBizTests {
 				is(equalTo(RegistrationStatus.Registered)));
 		assertThat("New auth token returned and different from input token", result, is(notNullValue()));
 
-		then(capacityOptimizerDao).should().saveAuthToken(eq(co.getId()), tokenCaptor.capture());
+		then(capacityOptimizerDao).should().saveExternalSystemAuthToken(eq(co.getId()), tokenCaptor.capture());
 		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
 	}
 

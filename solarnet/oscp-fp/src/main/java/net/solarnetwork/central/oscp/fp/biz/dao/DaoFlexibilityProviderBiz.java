@@ -105,7 +105,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 					capacityProviderDao.save(cp);
 				}
 				// TODO UserEvent
-				capacityProviderDao.saveAuthToken(cp.getId(), externalSystemToken);
+				capacityProviderDao.saveExternalSystemAuthToken(cp.getId(), externalSystemToken);
 				flexibilityProviderId = cp.getFlexibilityProviderId();
 			} else {
 				// TODO UserEvent (in exception handler method)
@@ -121,7 +121,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 					capacityOptimizerDao.save(co);
 				}
 				// TODO UserEvent
-				capacityOptimizerDao.saveAuthToken(co.getId(), externalSystemToken);
+				capacityOptimizerDao.saveExternalSystemAuthToken(co.getId(), externalSystemToken);
 				flexibilityProviderId = co.getFlexibilityProviderId();
 			} else {
 				// TODO UserEvent (in exception handler method)

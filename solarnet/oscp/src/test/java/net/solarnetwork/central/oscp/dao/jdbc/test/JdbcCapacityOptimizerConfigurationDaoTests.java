@@ -159,7 +159,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 		// WHEN
 		String token = randomUUID().toString();
-		dao.saveAuthToken(last.getId(), token);
+		dao.saveExternalSystemAuthToken(last.getId(), token);
 
 		// THEN
 		List<Map<String, Object>> data = allCapacityOptimizerTokenData();

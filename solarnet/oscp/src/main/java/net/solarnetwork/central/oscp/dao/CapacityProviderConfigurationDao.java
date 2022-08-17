@@ -36,6 +36,6 @@ import net.solarnetwork.dao.FilterableDao;
 public interface CapacityProviderConfigurationDao
 		extends GenericCompositeKey2Dao<CapacityProviderConfiguration, UserLongCompositePK, Long, Long>,
 		FilterableDao<CapacityProviderConfiguration, UserLongCompositePK, ConfigurationFilter>,
-		AuthTokenDao {
+		ExternalSystemAuthTokenDao {
 
 }
