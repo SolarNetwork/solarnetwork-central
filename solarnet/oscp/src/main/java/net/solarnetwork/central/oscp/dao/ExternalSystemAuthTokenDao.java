@@ -44,8 +44,8 @@ public interface ExternalSystemAuthTokenDao {
 	 * Save an external authorization token for a given configuration ID.
 	 * 
 	 * <p>
-	 * Calling this will replace any existing token for the given {@code id}, or
-	 * create a new one if none already exists.
+	 * Calling this will replace any existing token for the given
+	 * {@code configurationId}, or create a new one if none already exists.
 	 * </p>
 	 * 
 	 * @param configurationId
