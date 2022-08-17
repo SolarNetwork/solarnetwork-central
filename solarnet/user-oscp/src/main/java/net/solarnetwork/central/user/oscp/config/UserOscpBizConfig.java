@@ -31,6 +31,7 @@ import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.user.oscp.biz.dao.DaoUserOscpBiz;
 
 /**
@@ -42,6 +43,9 @@ import net.solarnetwork.central.user.oscp.biz.dao.DaoUserOscpBiz;
 @Configuration(proxyBeanMethods = false)
 @Profile(OSCP_V20)
 public class UserOscpBizConfig {
+
+	@Autowired
+	private FlexibilityProviderDao flexibilityProviderDao;
 
 	@Autowired
 	private CapacityProviderConfigurationDao capacityProviderDao;
@@ -57,7 +61,8 @@ public class UserOscpBizConfig {
 
 	@Bean
 	public DaoUserOscpBiz userOscpBiz() {
-		return new DaoUserOscpBiz(capacityProviderDao, capacityOptimizerDao, capacityGroupDao, assetDao);
+		return new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
+				capacityGroupDao, assetDao);
 	}
 
 }
