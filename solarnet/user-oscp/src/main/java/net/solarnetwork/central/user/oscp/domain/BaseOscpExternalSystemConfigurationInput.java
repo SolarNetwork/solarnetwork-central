@@ -23,9 +23,7 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.net.URI;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.util.ObjectUtils;
@@ -42,11 +40,6 @@ public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOsc
 		extends BaseOscpConfigurationInput<T> {
 
 	@NotNull
-	@NotBlank
-	@Size(max = 64)
-	private String token;
-
-	@NotNull
 	private URI baseUrl;
 
 	private RegistrationStatus registrationStatus;
@@ -54,28 +47,8 @@ public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOsc
 	@Override
 	protected void populateConfiguration(T conf) {
 		super.populateConfiguration(conf);
-		conf.setToken(token);
 		conf.setBaseUrl(ObjectUtils.requireNonNullArgument(baseUrl, "baseUrl").toString());
 		conf.setRegistrationStatus(registrationStatus);
-	}
-
-	/**
-	 * Get the authentication token.
-	 * 
-	 * @return the token the token
-	 */
-	public String getToken() {
-		return token;
-	}
-
-	/**
-	 * Set the authentication token.
-	 * 
-	 * @param token
-	 *        the token to set
-	 */
-	public void setToken(String token) {
-		this.token = token;
 	}
 
 	/**

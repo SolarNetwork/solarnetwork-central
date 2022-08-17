@@ -33,6 +33,7 @@ import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
@@ -52,6 +53,7 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
  */
 public class DaoUserOscpBiz implements UserOscpBiz {
 
+	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
@@ -60,6 +62,8 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	/**
 	 * Constructor.
 	 * 
+	 * @param flexibilityProviderDao
+	 *        the flexibility provider DAO
 	 * @param capacityProviderDao
 	 *        the capacity provider DAO
 	 * @param capcityOptimizerDao
@@ -71,10 +75,13 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserOscpBiz(CapacityProviderConfigurationDao capacityProviderDao,
+	public DaoUserOscpBiz(FlexibilityProviderDao flexibilityProviderDao,
+			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
 			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao) {
 		super();
+		this.flexibilityProviderDao = requireNonNullArgument(flexibilityProviderDao,
+				"flexibilityProviderDao");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
@@ -167,20 +174,44 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public CapacityProviderConfiguration createCapacityProvider(Long userId,
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
-		CapacityProviderConfiguration conf = input
-				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongCompositePK unassignedId = unassignedEntityIdKey(
+				requireNonNullArgument(userId, "userId"));
+
+		// create auth token
+		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
+				"token");
+		UserLongCompositePK authId = requireNonNullObject(flexibilityProviderDao.idForToken(token),
+				"authId");
+
+		CapacityProviderConfiguration conf = input.toEntity(unassignedId);
+		conf.setFlexibilityProviderId(authId.getEntityId());
 		UserLongCompositePK pk = capacityProviderDao.create(userId, conf);
-		return capacityProviderDao.get(pk);
+
+		CapacityProviderConfiguration result = capacityProviderDao.get(pk);
+		result.setToken(token);
+		return result;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityOptimizerConfiguration createCapacityOptimizer(Long userId,
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
-		CapacityOptimizerConfiguration conf = input
-				.toEntity(unassignedEntityIdKey(requireNonNullArgument(userId, "userId")));
+		UserLongCompositePK unassignedId = unassignedEntityIdKey(
+				requireNonNullArgument(userId, "userId"));
+
+		// create auth token
+		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
+				"token");
+		UserLongCompositePK authId = requireNonNullObject(flexibilityProviderDao.idForToken(token),
+				"authId");
+
+		CapacityOptimizerConfiguration conf = input.toEntity(unassignedId);
+		conf.setFlexibilityProviderId(authId.getEntityId());
 		UserLongCompositePK pk = capacityOptimizerDao.create(userId, conf);
-		return capacityOptimizerDao.get(pk);
+
+		CapacityOptimizerConfiguration result = capacityOptimizerDao.get(pk);
+		result.setToken(token);
+		return result;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

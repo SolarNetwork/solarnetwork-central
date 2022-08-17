@@ -24,25 +24,37 @@ package net.solarnetwork.central.user.oscp.biz.dao;
 
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
+import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
 
 /**
  * Test cases for the {@link DaoUserOscpBiz} class.
@@ -52,6 +64,9 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
  */
 @ExtendWith(MockitoExtension.class)
 public class DaoUserOscpBizTests {
+
+	@Mock
+	private FlexibilityProviderDao flexibilityProviderDao;
 
 	@Mock
 	private CapacityProviderConfigurationDao capacityProviderDao;
@@ -65,11 +80,15 @@ public class DaoUserOscpBizTests {
 	@Mock
 	private AssetConfigurationDao assetDao;
 
+	@Captor
+	private ArgumentCaptor<CapacityProviderConfiguration> cpConfCaptor;
+
 	private DaoUserOscpBiz biz;
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserOscpBiz(capacityProviderDao, capacityOptimizerDao, capacityGroupDao, assetDao);
+		biz = new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
+				capacityGroupDao, assetDao);
 	}
 
 	@Test
@@ -130,6 +149,42 @@ public class DaoUserOscpBizTests {
 
 		// THEN
 		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+	@Test
+	public void createCapacityProvider() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		// create new auth token
+		String newToken = randomUUID().toString();
+		given(flexibilityProviderDao.createAuthToken(UserLongCompositePK.unassignedEntityIdKey(userId)))
+				.willReturn(newToken);
+		UserLongCompositePK authId = new UserLongCompositePK(userId,
+				randomUUID().getMostSignificantBits());
+		given(flexibilityProviderDao.idForToken(newToken)).willReturn(authId);
+
+		final CapacityProviderConfiguration entity = new CapacityProviderConfiguration(userId,
+				randomUUID().getMostSignificantBits(), Instant.now());
+		given(capacityProviderDao.create(eq(userId), any())).willReturn(entity.getId());
+		given(capacityProviderDao.get(entity.getId())).willReturn(entity);
+
+		// WHEN
+		final CapacityProviderConfigurationInput input = new CapacityProviderConfigurationInput();
+		input.setBaseUrl(URI.create("http://example.com/oscp/cp/2.0"));
+		input.setEnabled(true);
+		input.setName("Test CP");
+		input.setRegistrationStatus(RegistrationStatus.Pending);
+
+		CapacityProviderConfiguration result = biz.createCapacityProvider(userId, input);
+
+		// THEN
+		assertThat("Conf returned from DAO", result, is(sameInstance(entity)));
+		assertThat("Token returned", result.getToken(), is(equalTo(newToken)));
+
+		then(capacityProviderDao).should().create(eq(userId), cpConfCaptor.capture());
+		CapacityProviderConfiguration saved = cpConfCaptor.getValue();
+		assertThat("Saved FP ID", saved.getFlexibilityProviderId(), is(equalTo(authId.getEntityId())));
 	}
 
 }

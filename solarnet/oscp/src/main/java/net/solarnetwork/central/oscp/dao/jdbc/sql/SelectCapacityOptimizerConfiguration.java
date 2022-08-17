@@ -88,10 +88,8 @@ public class SelectCapacityOptimizerConfiguration
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT oco.id, oco.created, oco.modified, oco.user_id, oco.enabled
-					, oco.fp_id, oco.reg_status, oco.cname, oco.url, ocot.token, oco.sprops
+					, oco.fp_id, oco.reg_status, oco.cname, oco.url, oco.sprops
 				FROM solaroscp.oscp_co_conf oco
-				LEFT OUTER JOIN solaroscp.oscp_co_token ocot
-					ON ocot.user_id = oco.user_id AND ocot.id = oco.id
 				""");
 	}
 
