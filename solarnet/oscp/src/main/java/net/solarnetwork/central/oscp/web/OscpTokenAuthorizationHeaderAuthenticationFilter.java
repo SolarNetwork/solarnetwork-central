@@ -42,6 +42,7 @@ public class OscpTokenAuthorizationHeaderAuthenticationFilter extends RequestHea
 	public OscpTokenAuthorizationHeaderAuthenticationFilter() {
 		super();
 		setPrincipalRequestHeader(HttpHeaders.AUTHORIZATION);
+		setExceptionIfHeaderMissing(false);
 	}
 
 	@Override
