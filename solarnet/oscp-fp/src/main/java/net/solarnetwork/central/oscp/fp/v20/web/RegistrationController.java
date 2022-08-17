@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.oscp.fp.v20.web;
 
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.FLEXIBILITY_PROVIDER_URL_PATH;
+import static java.lang.String.format;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.security.Principal;
+import java.util.Collections;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +37,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
+import net.solarnetwork.central.oscp.security.OscpSecurityUtils;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import oscp.v20.Register;
 import oscp.v20.VersionUrl;
@@ -49,8 +55,23 @@ import oscp.v20.VersionUrl;
 public class RegistrationController {
 
 	/** The base URL path to this controller. */
-	public static final String URL_PATH = FLEXIBILITY_PROVIDER_URL_PATH + V20_URL_PATH
-			+ REGISTER_URL_PATH;
+	public static final String URL_PATH = FLEXIBILITY_PROVIDER_V20_URL_PATH + REGISTER_URL_PATH;
+
+	private final FlexibilityProviderBiz flexibilityProviderBiz;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param flexibilityProviderBiz
+	 *        the flexibility provider service
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public RegistrationController(FlexibilityProviderBiz flexibilityProviderBiz) {
+		super();
+		this.flexibilityProviderBiz = requireNonNullArgument(flexibilityProviderBiz,
+				"flexibilityProviderBiz");
+	}
 
 	/**
 	 * Initiate registration.
@@ -60,17 +81,23 @@ public class RegistrationController {
 	 * @return the updated user
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<oscp.v20.Register> initiateRegistration(@Valid @RequestBody Register input,
+	public ResponseEntity<Register> initiateRegistration(@Valid @RequestBody Register input,
 			Principal principal) {
-		VersionUrl url = input.getVersionUrl().stream().filter(e -> "2.0".equals(e.getVersion()))
+		VersionUrl url = input.getVersionUrl().stream().filter(e -> V20.equals(e.getVersion()))
 				.findFirst().orElse(null);
 		if ( url == null ) {
 			return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
 					.header(OscpWebUtils.ERROR_MESSAGE_HEADER,
-							"URL version '2.0' required but not provided.")
+							format("URL version '%s' required but not provided.", V20))
 					.build();
 		}
-		return ResponseEntity.ok(new Register());
+
+		AuthRoleInfo actor = OscpSecurityUtils.authRoleInfoForPrincipal(principal);
+
+		String newToken = flexibilityProviderBiz.register(actor, input.getToken());
+
+		return ResponseEntity.ok(new Register(newToken,
+				Collections.singletonList(new VersionUrl(V20, FLEXIBILITY_PROVIDER_V20_URL_PATH))));
 	}
 
 }

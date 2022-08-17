@@ -28,8 +28,7 @@ import static org.springframework.security.core.authority.AuthorityUtils.createA
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 
 /**
  * An OSCP authenticated token.
@@ -39,10 +38,9 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  */
 public class OscpAuthenticatedToken implements UserDetails {
 
-	private static final long serialVersionUID = -7620143560573481000L;
+	private static final long serialVersionUID = -2822991208596742973L;
 
-	private final OscpRole role;
-	private final UserLongCompositePK authId;
+	private final AuthRoleInfo info;
 	private final Collection<? extends GrantedAuthority> authorities;
 
 	/**
@@ -53,15 +51,13 @@ public class OscpAuthenticatedToken implements UserDetails {
 	 * given {@code role}.
 	 * </p>
 	 * 
-	 * @param role
-	 *        the role
-	 * @param authId
-	 *        the authentication ID
+	 * @param info
+	 *        the auth role info
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OscpAuthenticatedToken(OscpRole role, UserLongCompositePK authId) {
-		this(role, authId, createAuthorityList(format("ROLE_%s", role.toString().toUpperCase())));
+	public OscpAuthenticatedToken(AuthRoleInfo info) {
+		this(info, createAuthorityList(format("ROLE_%s", info.role().toString().toUpperCase())));
 	}
 
 	/**
@@ -76,30 +72,20 @@ public class OscpAuthenticatedToken implements UserDetails {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OscpAuthenticatedToken(OscpRole role, UserLongCompositePK authId,
+	public OscpAuthenticatedToken(AuthRoleInfo info,
 			Collection<? extends GrantedAuthority> authorities) {
 		super();
-		this.role = requireNonNullArgument(role, "role");
-		this.authId = requireNonNullArgument(authId, "authId");
+		this.info = requireNonNullArgument(info, "info");
 		this.authorities = requireNonNullArgument(authorities, "authorities");
 	}
 
 	/**
-	 * Get the OSCP role.
+	 * Get authorization info.
 	 * 
-	 * @return the role
+	 * @return the info
 	 */
-	public OscpRole getRole() {
-		return role;
-	}
-
-	/**
-	 * Get the OSCP authentication ID.
-	 * 
-	 * @return the authentication ID
-	 */
-	public UserLongCompositePK getAuthId() {
-		return authId;
+	public AuthRoleInfo getInfo() {
+		return info;
 	}
 
 	@Override

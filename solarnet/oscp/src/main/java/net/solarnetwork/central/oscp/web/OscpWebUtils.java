@@ -51,11 +51,29 @@ public final class OscpWebUtils {
 	 */
 	public static final String REGISTER_URL_PATH = "/register";
 
+	/**
+	 * Create a path to the Flexibility Provider API.
+	 * 
+	 * @param path
+	 *        the path, relative to the Flexibility Provider base path
+	 * @return the URL path
+	 */
+	public static String fpUrlPath(String path) {
+		return FLEXIBILITY_PROVIDER_URL_PATH + path;
+	}
+
 	/** URL paths for OSCP 2.0. */
 	public static final class UrlPaths_20 {
 
+		/** The 2.0 version constant. */
+		public static final String V20 = "2.0";
+
 		/** The URL path for the version 2.0 API. */
-		public static final String V20_URL_PATH = "/2.0";
+		public static final String V20_URL_PATH = "/" + V20;
+
+		/** The URL path for the Flexibility Provider version 2.0 API. */
+		public static final String FLEXIBILITY_PROVIDER_V20_URL_PATH = FLEXIBILITY_PROVIDER_URL_PATH
+				+ V20_URL_PATH;
 
 		/** The URL path to the handshake endpoint. */
 		public static final String HANDSHAKE_URL_PATH = "/handshake";
@@ -89,7 +107,7 @@ public final class OscpWebUtils {
 		 * @return the URL path
 		 */
 		public static String fpUrlPath(String path) {
-			return FLEXIBILITY_PROVIDER_URL_PATH + path;
+			return FLEXIBILITY_PROVIDER_V20_URL_PATH + path;
 		}
 
 		private UrlPaths_20() {

@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthRoleInfo.java - 17/08/2022 11:06:41 am
+ * WithMockSecurityUser.java - 30/05/2022 9:20:13 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,38 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.domain;
+package net.solarnetwork.central.oscp.fp.test;
 
-import net.solarnetwork.central.domain.UserLongCompositePK;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import org.springframework.security.test.context.support.WithSecurityContext;
 
 /**
- * Authenticated role information.
+ * Annotation fo
  * 
- * @param actorId
- *        the actor key
- * @param role
- *        the role
  * @author matt
  * @version 1.0
  */
-public record AuthRoleInfo(UserLongCompositePK id, OscpRole role) {
+@Documented
+@Retention(RUNTIME)
+@WithSecurityContext(factory = WithMockAuthenticatedTokenContextFactory.class)
+public @interface WithMockAuthenticatedToken {
 
-	/**
-	 * Get the user ID.
-	 * 
-	 * @return the uesr ID
-	 */
-	public Long userId() {
-		return id().getUserId();
-	}
+	String userId() default "1";
 
-	/**
-	 * Get the entity ID.
-	 * 
-	 * @return the entity ID
-	 */
-	public Long entityId() {
-		return id().getEntityId();
-	}
+	String entityId() default "1";
+
+	String token() default "abc123";
+
+	String role() default "cp";
 
 }

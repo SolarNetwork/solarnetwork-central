@@ -66,7 +66,7 @@ public class OscpTokenAuthenticationProvider implements AuthenticationProvider {
 		if ( info == null ) {
 			throw new BadCredentialsException("Invalid OSCP token.");
 		}
-		OscpAuthenticatedToken details = new OscpAuthenticatedToken(info.role(), info.id());
+		OscpAuthenticatedToken details = new OscpAuthenticatedToken(info);
 		PreAuthenticatedAuthenticationToken result = new PreAuthenticatedAuthenticationToken(token,
 				"N/A", null);
 		result.setDetails(details);

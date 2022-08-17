@@ -43,6 +43,7 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>modified (TIMESTAMP)</li>
  * <li>user_id (BIGINT)</li>
  * <li>enabled (BOOLEAN)</li>
+ * <li>fp_id (BIGINT)</li>
  * <li>reg_status (SMALLINT)</li>
  * <li>cname (TEXT)</li>
  * <li>url (TEXT)</li>
@@ -68,11 +69,12 @@ public class CapacityProviderConfigurationRowMapper implements RowMapper<Capacit
 				created.toInstant());
 		conf.setModified(rs.getTimestamp(3).toInstant());
 		conf.setEnabled(rs.getBoolean(5));
-		conf.setRegistrationStatus(RegistrationStatus.forCode(rs.getInt(6)));
-		conf.setName(rs.getString(7));
-		conf.setBaseUrl(rs.getString(8));
-		conf.setToken(rs.getString(9));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(10)));
+		conf.setFlexibilityProviderId(rs.getLong(6));
+		conf.setRegistrationStatus(RegistrationStatus.forCode(rs.getInt(7)));
+		conf.setName(rs.getString(8));
+		conf.setBaseUrl(rs.getString(9));
+		conf.setToken(rs.getString(10));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(11)));
 		return conf;
 	}
 

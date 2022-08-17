@@ -92,18 +92,22 @@ public class InsertCapacityProviderConfigurationTests {
 	private void thenPrepStatement(PreparedStatement result, Long userId,
 			CapacityProviderConfiguration conf) throws SQLException {
 		Timestamp ts = Timestamp.from(conf.getCreated());
-		then(result).should().setTimestamp(1, ts);
-		then(result).should().setTimestamp(2, ts);
-		then(result).should().setObject(3, userId);
-		then(result).should().setBoolean(4, conf.isEnabled());
-		then(result).should().setObject(5, conf.getFlexibilityProviderId());
-		then(result).should().setInt(6, conf.getRegistrationStatus().getCode());
-		then(result).should().setString(7, conf.getName());
-		then(result).should().setString(8, conf.getBaseUrl());
+		int p = 0;
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setObject(++p, userId);
+		if ( conf.getId().entityIdIsAssigned() ) {
+			then(result).should().setObject(++p, conf.getId().getEntityId());
+		}
+		then(result).should().setBoolean(++p, conf.isEnabled());
+		then(result).should().setObject(++p, conf.getFlexibilityProviderId());
+		then(result).should().setInt(++p, conf.getRegistrationStatus().getCode());
+		then(result).should().setString(++p, conf.getName());
+		then(result).should().setString(++p, conf.getBaseUrl());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(9, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(9, Types.VARCHAR);
+			then(result).should().setNull(++p, Types.VARCHAR);
 		}
 	}
 
@@ -142,6 +146,49 @@ public class InsertCapacityProviderConfigurationTests {
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
 				"insert-capacity-provider-conf.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, userId, conf);
+	}
+
+	@Test
+	public void assigned_sql() {
+		// GIVEN
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
+				randomUUID().getMostSignificantBits())
+						.copyWithId(new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+								randomUUID().getMostSignificantBits()));
+
+		// WHEN
+		Long userId = randomUUID().getMostSignificantBits();
+		String sql = new InsertCapacityProviderConfiguration(userId, conf).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("insert-capacity-provider-conf-assigned.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void assigned_prep() throws SQLException {
+		// GIVEN
+		CapacityProviderConfiguration conf = createCapacityProviderConfiguration(
+				randomUUID().getMostSignificantBits())
+						.copyWithId(new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+								randomUUID().getMostSignificantBits()));
+
+		// GIVEN
+		givenPrepStatement();
+
+		// WHEN
+		Long userId = randomUUID().getMostSignificantBits();
+		PreparedStatement result = new InsertCapacityProviderConfiguration(userId, conf)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(Statement.RETURN_GENERATED_KEYS));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"insert-capacity-provider-conf-assigned.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, userId, conf);
 	}

@@ -31,8 +31,10 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -74,27 +76,42 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public String register(String token, String externalSystemToken) throws AuthorizationException {
-		UserLongCompositePK id = flexibilityProviderDao
-				.idForToken(requireNonNullArgument(token, "token"));
-		if ( id == null ) {
-			// TODO UserEvent (in exception handler method)
-			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, token);
+	public String register(AuthRoleInfo authInfo, String externalSystemToken)
+			throws AuthorizationException {
+		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null
+				|| externalSystemToken == null ) {
+			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
 		}
 
-		BasicConfigurationFilter filter = BasicConfigurationFilter.filterForUsers(id.getUserId());
-		filter.setProviderId(id.getEntityId());
-		var cpResults = capacityProviderDao.findFiltered(filter);
-		if ( cpResults.getReturnedResultCount() > 0 ) {
-			CapacityProviderConfiguration cp = stream(cpResults.spliterator(), false).findFirst()
-					.orElse(null);
-			if ( cp.getRegistrationStatus() != RegistrationStatus.Registered ) {
-				cp.setRegistrationStatus(RegistrationStatus.Registered);
-				capacityProviderDao.save(cp);
+		OscpRole systemRole = authInfo.role();
+		if ( systemRole == OscpRole.FlexibilityProvider ) {
+			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
+		}
+
+		// the flex provider ID for the CP/CO
+		Long flexibilityProviderId = null;
+
+		BasicConfigurationFilter filter = BasicConfigurationFilter
+				.filterForUsers(authInfo.id().getUserId());
+		filter.setConfigurationId(authInfo.id().getEntityId());
+
+		if ( systemRole == OscpRole.CapacityProvider ) {
+			var cpResults = capacityProviderDao.findFiltered(filter);
+			if ( cpResults.getReturnedResultCount() > 0 ) {
+				CapacityProviderConfiguration cp = stream(cpResults.spliterator(), false).findFirst()
+						.orElse(null);
+				if ( cp.getRegistrationStatus() != RegistrationStatus.Registered ) {
+					cp.setRegistrationStatus(RegistrationStatus.Registered);
+					capacityProviderDao.save(cp);
+				}
+				// TODO UserEvent
+				capacityProviderDao.saveAuthToken(cp.getId(), externalSystemToken);
+				flexibilityProviderId = cp.getFlexibilityProviderId();
+			} else {
+				// TODO UserEvent (in exception handler method)
+				throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
 			}
-			// TODO UserEvent
-			capacityProviderDao.saveAuthToken(cp.getId(), externalSystemToken);
-		} else {
+		} else if ( systemRole == OscpRole.CapacityOptimizer ) {
 			var coResults = capacityOptimizerDao.findFiltered(filter);
 			if ( coResults.getReturnedResultCount() > 0 ) {
 				CapacityOptimizerConfiguration co = stream(coResults.spliterator(), false).findFirst()
@@ -105,14 +122,18 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				}
 				// TODO UserEvent
 				capacityOptimizerDao.saveAuthToken(co.getId(), externalSystemToken);
+				flexibilityProviderId = co.getFlexibilityProviderId();
 			} else {
 				// TODO UserEvent (in exception handler method)
-				throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, token);
+				throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
 			}
+		} else {
+			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
 		}
 
-		// generate new token and return that
-		return flexibilityProviderDao.createAuthToken(id);
+		// generate new FP token for the system to use, and return it
+		var fpId = new UserLongCompositePK(authInfo.userId(), flexibilityProviderId);
+		return flexibilityProviderDao.createAuthToken(fpId);
 	}
 
 }

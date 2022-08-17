@@ -26,10 +26,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,8 +48,10 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -94,45 +94,22 @@ public class DaoFlexibilityProviderBizTests {
 	}
 
 	@Test
-	public void register_tokenNotFound() {
+	public void register_cp_configurationNotFound() {
 		// GIVEN
-		final String authToken = randomUUID().toString();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
-
-		given(flexibilityProviderDao.idForToken(authToken)).willReturn(null);
-
-		// WHEN
-		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authToken, sysToken);
-		}, "Exception thrown when auth token not found");
-
-		// THEN
-		assertThat("Reason is Registration Not Confirmed", ex.getReason(),
-				is(equalTo(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED)));
-	}
-
-	@Test
-	public void register_configurationNotFound() {
-		// GIVEN
-		final String authToken = randomUUID().toString();
-		final String sysToken = randomUUID().toString();
-		final UserLongCompositePK fpId = new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits());
-
-		given(flexibilityProviderDao.idForToken(authToken)).willReturn(fpId);
 
 		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				emptyList());
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
 
-		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> coResults = new BasicFilterResults<>(
-				emptyList());
-		given(capacityOptimizerDao.findFiltered(any())).willReturn(coResults);
-
 		// WHEN
 		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authToken, sysToken);
-		}, "Exception thrown when auth token not found");
+			biz.register(authInfo, sysToken);
+		}, "Exception thrown when CP configuration not found");
 
 		// THEN
 		assertThat("Reason is Registration Not Confirmed", ex.getReason(),
@@ -140,33 +117,56 @@ public class DaoFlexibilityProviderBizTests {
 
 		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
 		ConfigurationFilter cpFilter = cpFilterCaptor.getValue();
-		assertThat("CP filter included user criteria from FP ID", cpFilter.getUserId(),
-				is(equalTo(fpId.getUserId())));
-		assertThat("CP filter included entity criteria from FP ID", cpFilter.getProviderId(),
-				is(equalTo(fpId.getEntityId())));
+		assertThat("CP filter included user criteria from auth info", cpFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
+
+	}
+
+	@Test
+	public void register_co_configurationNotFound() {
+		// GIVEN
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityOptimizer);
+		final String sysToken = randomUUID().toString();
+
+		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
+				emptyList());
+		given(capacityOptimizerDao.findFiltered(any())).willReturn(cpResults);
+
+		// WHEN
+		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
+			biz.register(authInfo, sysToken);
+		}, "Exception thrown when CP configuration not found");
+
+		// THEN
+		assertThat("Reason is Registration Not Confirmed", ex.getReason(),
+				is(equalTo(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED)));
 
 		then(capacityOptimizerDao).should().findFiltered(coFilterCaptor.capture());
 		ConfigurationFilter coFilter = coFilterCaptor.getValue();
-		assertThat("CO filter included user criteria from FP ID", coFilter.getUserId(),
-				is(equalTo(fpId.getUserId())));
-		assertThat("CO filter included entity criteria from FP ID", coFilter.getProviderId(),
-				is(equalTo(fpId.getEntityId())));
+		assertThat("CO filter included user criteria from auth info", coFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CO filter included conf criteria from auth info", coFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
 	}
 
 	@Test
 	public void register_cp() {
 		// GIVEN
-		final String authToken = randomUUID().toString();
-		final String sysToken = randomUUID().toString();
 		final Long userId = randomUUID().getMostSignificantBits();
-		final UserLongCompositePK fpId = new UserLongCompositePK(userId,
-				randomUUID().getMostSignificantBits());
-
-		given(flexibilityProviderDao.idForToken(authToken)).willReturn(fpId);
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final String sysToken = randomUUID().toString();
 
 		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(userId,
 				randomUUID().getMostSignificantBits(), Instant.now());
 		cp.setRegistrationStatus(RegistrationStatus.Pending);
+		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				singleton(cp));
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
@@ -175,23 +175,23 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityProviderDao.save(same(cp))).willReturn(cp.getId());
 
 		// generate new auth token
+		final UserLongCompositePK fpId = new UserLongCompositePK(userId, cp.getFlexibilityProviderId());
 		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(randomUUID().toString());
 
 		// WHEN
-		String result = biz.register(authToken, sysToken);
+		String result = biz.register(authInfo, sysToken);
 
 		// THEN
 		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
 		ConfigurationFilter cpFilter = cpFilterCaptor.getValue();
-		assertThat("CP filter included user criteria from FP ID", cpFilter.getUserId(),
-				is(equalTo(userId)));
-		assertThat("CP filter included entity criteria from FP ID", cpFilter.getProviderId(),
-				is(equalTo(fpId.getEntityId())));
+		assertThat("CP filter included user criteria from auth info", cpFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
 
 		assertThat("CP reg status changed to Registered", cp.getRegistrationStatus(),
 				is(equalTo(RegistrationStatus.Registered)));
-		assertThat("New auth token returned and different from input token", result,
-				is(allOf(notNullValue(), not(equalTo(authToken)))));
+		assertThat("New auth token returned", result, is(notNullValue()));
 
 		then(capacityProviderDao).should().saveAuthToken(eq(cp.getId()), tokenCaptor.capture());
 		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
@@ -200,21 +200,16 @@ public class DaoFlexibilityProviderBizTests {
 	@Test
 	public void register_co() {
 		// GIVEN
-		final String authToken = randomUUID().toString();
-		final String sysToken = randomUUID().toString();
 		final Long userId = randomUUID().getMostSignificantBits();
-		final UserLongCompositePK fpId = new UserLongCompositePK(userId,
-				randomUUID().getMostSignificantBits());
-
-		given(flexibilityProviderDao.idForToken(authToken)).willReturn(fpId);
-
-		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
-				emptyList());
-		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityOptimizer);
+		final String sysToken = randomUUID().toString();
 
 		final CapacityOptimizerConfiguration co = new CapacityOptimizerConfiguration(userId,
 				randomUUID().getMostSignificantBits(), Instant.now());
 		co.setRegistrationStatus(RegistrationStatus.Pending);
+		co.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
 		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> coResults = new BasicFilterResults<>(
 				singleton(co));
 		given(capacityOptimizerDao.findFiltered(any())).willReturn(coResults);
@@ -223,30 +218,23 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityOptimizerDao.save(same(co))).willReturn(co.getId());
 
 		// generate new auth token
+		final UserLongCompositePK fpId = new UserLongCompositePK(userId, co.getFlexibilityProviderId());
 		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(randomUUID().toString());
 
 		// WHEN
-		String result = biz.register(authToken, sysToken);
+		String result = biz.register(authInfo, sysToken);
 
 		// THEN
-		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
-		ConfigurationFilter cpFilter = cpFilterCaptor.getValue();
-		assertThat("CP filter included user criteria from FP ID", cpFilter.getUserId(),
-				is(equalTo(userId)));
-		assertThat("CP filter included entity criteria from FP ID", cpFilter.getProviderId(),
-				is(equalTo(fpId.getEntityId())));
-
 		then(capacityOptimizerDao).should().findFiltered(coFilterCaptor.capture());
 		ConfigurationFilter coFilter = coFilterCaptor.getValue();
-		assertThat("CO filter included user criteria from FP ID", coFilter.getUserId(),
-				is(equalTo(userId)));
-		assertThat("CO filter included entity criteria from FP ID", coFilter.getProviderId(),
-				is(equalTo(fpId.getEntityId())));
+		assertThat("CO filter included user criteria from auth info", coFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CO filter included conf criteria from auth info", coFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
 
 		assertThat("CO reg status changed to Registered", co.getRegistrationStatus(),
 				is(equalTo(RegistrationStatus.Registered)));
-		assertThat("New auth token returned and different from input token", result,
-				is(allOf(notNullValue(), not(equalTo(authToken)))));
+		assertThat("New auth token returned and different from input token", result, is(notNullValue()));
 
 		then(capacityOptimizerDao).should().saveAuthToken(eq(co.getId()), tokenCaptor.capture());
 		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
