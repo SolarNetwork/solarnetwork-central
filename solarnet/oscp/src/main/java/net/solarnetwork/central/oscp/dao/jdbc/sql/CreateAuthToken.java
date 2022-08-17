@@ -30,6 +30,7 @@ import java.sql.Types;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * Create or update an authorization token.
@@ -39,7 +40,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class CreateAuthToken implements CallableStatementCreator, SqlProvider {
 
-	private final AuthTokenType type;
+	private final OscpRole type;
 	private final UserLongCompositePK id;
 
 	/**
@@ -53,11 +54,11 @@ public class CreateAuthToken implements CallableStatementCreator, SqlProvider {
 	 *         if any argument is {@literal null} or the {@code id} is not
 	 *         assigned (except for Flexibility Provider type)
 	 */
-	public CreateAuthToken(AuthTokenType type, UserLongCompositePK id) {
+	public CreateAuthToken(OscpRole type, UserLongCompositePK id) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");
-		if ( type != AuthTokenType.FlexibilityProvider && !id.entityIdIsAssigned() ) {
+		if ( type != OscpRole.FlexibilityProvider && !id.entityIdIsAssigned() ) {
 			throw new IllegalArgumentException("The entity ID must be assigned.");
 		}
 	}

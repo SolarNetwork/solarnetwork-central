@@ -245,3 +245,28 @@ $$
 		token = EXCLUDED.token
 $$;
 
+/**
+ * Find configuration information for a flexibility provider ID.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Flexibility Provider (solaroscp.oscp_fp_token) ID
+ * @return		the matching identifier rows (at most 1)
+ */
+CREATE OR REPLACE FUNCTION solaroscp.conf_id_for_fp_id(uid BIGINT, fid BIGINT)
+RETURNS TABLE (
+	user_id 	BIGINT,
+	entity_id	BIGINT,
+	role_alias	TEXT
+) LANGUAGE SQL STABLE STRICT ROWS 1 AS
+$$
+	SELECT c.user_id, c.id, 'cp' AS ROLE
+	FROM solaroscp.oscp_fp_token f
+	INNER JOIN solaroscp.oscp_cp_conf c ON c.user_id = f.user_id AND c.fp_id = f.id
+	WHERE f.user_id = uid AND f.id = fid AND f.enabled = TRUE
+	UNION ALL
+	SELECT c.user_id, c.id, 'co' AS ROLE
+	FROM solaroscp.oscp_fp_token f
+	INNER JOIN solaroscp.oscp_co_conf c ON c.user_id = f.user_id AND c.fp_id = f.id
+	WHERE f.user_id = uid AND f.id = fid AND f.enabled = TRUE
+$$;
+

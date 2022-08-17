@@ -1,5 +1,5 @@
 /* ==================================================================
- * CreateAuthToken.java - 16/08/2022 3:54:27 pm
+ * SelectAuthRoleInfo.java - 17/08/2022 11:15:08 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,55 +22,58 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
+import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Select an authorization token.
- * 
- * <p>
- * This query only returns a row if the given token filter matches and is not
- * disabled.
- * </p>
+ * Select authorization role information.
  * 
  * @author matt
  * @version 1.0
  */
-public class SelectAuthTokenId implements PreparedStatementCreator, SqlProvider {
+public class SelectAuthRoleInfo implements PreparedStatementCreator, SqlProvider {
 
 	private final OscpRole type;
-	private final String token;
+	private final UserLongCompositePK authId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param type
-	 *        the type of token to create
-	 * @param token
-	 *        the token to get the ID for
+	 *        the type of configuration to search in
+	 * @param authId
+	 *        the authorization ID to search for
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SelectAuthTokenId(OscpRole type, String token) {
+	public SelectAuthRoleInfo(OscpRole type, UserLongCompositePK authId) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
-		this.token = requireNonNullArgument(token, "token");
+		this.authId = requireNonNullArgument(authId, "authId");
+		if ( !authId.entityIdIsAssigned() ) {
+			throw new IllegalArgumentException("The entity ID must be assigned.");
+		}
 	}
 
 	@Override
 	public String getSql() {
-		return String.format("SELECT user_id, id FROM solaroscp.%s_id_for_token(?)", type.getAlias());
+		return format("SELECT user_id, entity_id, role_alias FROM solaroscp.conf_id_for_%s_id(?, ?)",
+				type.getAlias());
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		stmt.setString(1, token);
+		stmt.setObject(1, authId.getUserId(), Types.BIGINT);
+		stmt.setObject(2, authId.getEntityId(), Types.BIGINT);
 		return stmt;
 	}
 

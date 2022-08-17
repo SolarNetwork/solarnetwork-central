@@ -63,7 +63,6 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>sprops (TEXT)</li>
  * </ol>
  * 
- * 
  * @author matt
  * @version 1.0
  */

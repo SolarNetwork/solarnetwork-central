@@ -30,6 +30,7 @@ import java.sql.Types;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * Update an authorization token.
@@ -39,7 +40,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class UpdateAuthToken implements CallableStatementCreator, SqlProvider {
 
-	private final AuthTokenType type;
+	private final OscpRole type;
 	private final UserLongCompositePK id;
 
 	/**
@@ -53,7 +54,7 @@ public class UpdateAuthToken implements CallableStatementCreator, SqlProvider {
 	 *         if any argument is {@literal null} or the {@code id} is not
 	 *         assigned
 	 */
-	public UpdateAuthToken(AuthTokenType type, UserLongCompositePK id) {
+	public UpdateAuthToken(OscpRole type, UserLongCompositePK id) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");

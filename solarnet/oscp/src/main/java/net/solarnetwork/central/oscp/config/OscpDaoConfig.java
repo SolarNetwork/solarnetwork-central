@@ -30,10 +30,12 @@ import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 
 /**
  * OSCP DAO configuration.
@@ -46,6 +48,16 @@ public class OscpDaoConfig {
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
+
+	/**
+	 * The OSCP flexibility provider DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public FlexibilityProviderDao oscpFlexibilityProviderDao() {
+		return new JdbcFlexibilityProviderDao(jdbcOperations);
+	}
 
 	/**
 	 * The OSCP asset configuration DAO.

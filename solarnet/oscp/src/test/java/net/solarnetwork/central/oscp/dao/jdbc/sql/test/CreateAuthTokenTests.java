@@ -28,8 +28,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.CreateAuthToken;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * Test cases for the {@link CreateAuthToken} class.
@@ -46,7 +46,7 @@ public class CreateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new CreateAuthToken(AuthTokenType.FlexibilityProvider, id).getSql();
+		String sql = new CreateAuthToken(OscpRole.FlexibilityProvider, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.create_fp_token(?, ?)}")));
@@ -59,7 +59,7 @@ public class CreateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new CreateAuthToken(AuthTokenType.CapacityProvider, id).getSql();
+		String sql = new CreateAuthToken(OscpRole.CapacityProvider, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.create_cp_token(?, ?)}")));
@@ -72,7 +72,7 @@ public class CreateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new CreateAuthToken(AuthTokenType.CapacityOptimizer, id).getSql();
+		String sql = new CreateAuthToken(OscpRole.CapacityOptimizer, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.create_co_token(?, ?)}")));

@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectAuthTokenIdTests.java - 16/08/2022 6:00:24 pm
+ * SelectAuthRoleInfoTests.java - 17/08/2022 11:27:22 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -33,27 +33,29 @@ import static org.mockito.BDDMockito.then;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthTokenId;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Test cases for the {@link SelectAuthTokenId} class.
+ * FIXME
+ * 
+ * <p>
+ * TODO
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
 @ExtendWith(MockitoExtension.class)
-public class SelectAuthTokenIdTests {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
+public class SelectAuthRoleInfoTests {
 
 	@Mock
 	private Connection con;
@@ -68,66 +70,43 @@ public class SelectAuthTokenIdTests {
 		given(con.prepareStatement(any())).willReturn(stmt);
 	}
 
-	private void thenPrepStatement(PreparedStatement result, String token) throws SQLException {
-		then(result).should().setString(1, token);
+	private void thenPrepStatement(PreparedStatement result, UserLongCompositePK authId)
+			throws SQLException {
+		then(result).should().setObject(1, authId.getUserId(), Types.BIGINT);
+		then(result).should().setObject(2, authId.getEntityId(), Types.BIGINT);
 	}
 
 	@Test
-	public void selectFlexibilityProvider_sql() {
+	public void flexibilityProvider_sql() {
 		// GIVEN
-		String token = randomUUID().toString();
+		UserLongCompositePK authId = new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token).getSql();
+		String sql = new SelectAuthRoleInfo(OscpRole.FlexibilityProvider, authId).getSql();
 
 		// THEN
-		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?)")));
+		assertThat("SQL generated", sql, is(equalTo(
+				"SELECT user_id, entity_id, role_alias FROM solaroscp.conf_id_for_fp_id(?, ?)")));
 	}
 
 	@Test
-	public void selectFlexibilityProvider_prep() throws SQLException {
+	public void flexibilityProvider_prep() throws SQLException {
 		// GIVEN
-		String token = randomUUID().toString();
+		UserLongCompositePK authId = new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits());
 		givenPrepStatement();
 
 		// WHEN
-		PreparedStatement result = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token)
+		PreparedStatement result = new SelectAuthRoleInfo(OscpRole.FlexibilityProvider, authId)
 				.createPreparedStatement(con);
 
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
-		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
-		assertThat("Generated SQL", sqlCaptor.getValue(),
-				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?)")));
+		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo(
+				"SELECT user_id, entity_id, role_alias FROM solaroscp.conf_id_for_fp_id(?, ?)")));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		thenPrepStatement(result, token);
-	}
-
-	@Test
-	public void selectCapacityProvider() {
-		// GIVEN
-		String token = randomUUID().toString();
-
-		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.CapacityProvider, token).getSql();
-
-		// THEN
-		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.cp_id_for_token(?)")));
-	}
-
-	@Test
-	public void selectCapacityOptimizer() {
-		// GIVEN
-		String token = randomUUID().toString();
-
-		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.CapacityOptimizer, token).getSql();
-
-		// THEN
-		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.co_id_for_token(?)")));
+		thenPrepStatement(result, authId);
 	}
 
 }

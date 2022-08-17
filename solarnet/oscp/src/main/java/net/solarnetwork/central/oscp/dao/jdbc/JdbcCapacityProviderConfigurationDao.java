@@ -34,13 +34,13 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -81,7 +81,7 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 
 	@Override
 	public void saveAuthToken(UserLongCompositePK id, String token) {
-		final var sql = new InsertAuthToken(AuthTokenType.CapacityProvider, id, token);
+		final var sql = new InsertAuthToken(OscpRole.CapacityProvider, id, token);
 		jdbcOps.execute(sql, (cs) -> {
 			cs.execute();
 			return null;

@@ -22,18 +22,24 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.OPTIONS;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
+import net.solarnetwork.central.oscp.security.Role;
+import net.solarnetwork.central.oscp.web.OscpTokenAuthorizationHeaderAuthenticationFilter;
 
 /**
  * Web security configuration.
@@ -46,46 +52,110 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 public class WebSecurityConfig {
 
 	@Bean
-	public UserDetailsService userDetailsService() {
-		InMemoryUserDetailsManager service = new InMemoryUserDetailsManager();
-		return service;
-	}
-
-	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		// we can simply return 403 because of expected credentials supplied with each request
 		return new Http403ForbiddenEntryPoint();
 	}
 
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		// @formatter:off
-		http
-			// CSRF not needed for stateless calls
-			.csrf().disable()
-			
-			// make sure CORS honored
-			.cors().and()
-			
-			// can simply return 403 on auth failures
-			.exceptionHandling((exc) -> exc
-				.authenticationEntryPoint(unauthorizedEntryPoint()))
-			
-			// no sessions
-			.sessionManagement((sm) -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			
-			.authorizeRequests((authz) -> authz
-				.antMatchers(OPTIONS, "/**").permitAll()
-					.antMatchers(GET, "/", "/error", "/*.html", "/ping").permitAll()
-					
-					.antMatchers("/oscp/**").permitAll()
-					
-					.anyRequest().authenticated()
-			)
-			.httpBasic()
-		;
-		// @formatter:on
-		return http.build();
+	/**
+	 * API security rules, for stateless REST access.
+	 */
+	@Configuration
+	@Order(2)
+	public static class ApiWebSecurityConfig {
+
+		@Autowired
+		private FlexibilityProviderDao flexibilityProviderDao;
+
+		@Bean
+		public OscpTokenAuthenticationProvider tokenAuthenticationProvider() {
+			return new OscpTokenAuthenticationProvider(flexibilityProviderDao);
+		}
+
+		@Bean
+		public AuthenticationManager authenticationManager() {
+			return new ProviderManager(tokenAuthenticationProvider());
+		}
+
+		@Bean
+		public OscpTokenAuthorizationHeaderAuthenticationFilter tokenAuthenticationFilter() {
+			OscpTokenAuthorizationHeaderAuthenticationFilter filter = new OscpTokenAuthorizationHeaderAuthenticationFilter();
+			filter.setAuthenticationManager(authenticationManager());
+			return filter;
+		}
+
+		@Order(2)
+		@Bean
+		public SecurityFilterChain filterChainApi(HttpSecurity http,
+				AuthenticationEntryPoint unauthorizedEntryPoint) throws Exception {
+			// @formatter:off
+			http
+				// limit this configuration to specific paths
+				.requestMatchers()
+					.antMatchers("/oscp/**")
+					.and()
+
+				// CSRF not needed for stateless calls
+				.csrf().disable()
+				  
+				// make sure CORS honored
+				.cors().and()
+		      
+				// can simply return 403 on auth failures
+				.exceptionHandling((exc) -> exc.authenticationEntryPoint(unauthorizedEntryPoint))
+		      
+				// no sessions
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      
+				// token auth filter
+				.addFilterBefore(tokenAuthenticationFilter(),
+						UsernamePasswordAuthenticationFilter.class)
+		      
+				.authorizeRequests()
+					.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+					.antMatchers("/oscp/fp/**").hasAnyAuthority(
+						Role.ROLE_CAPACITYOPTIMIZER.toString(),
+						Role.ROLE_CAPACITYPROVIDER.toString())
+					.anyRequest().denyAll()
+		    ;   
+		    // @formatter:on
+			return http.build();
+		}
+	}
+
+	/**
+	 * Last set of security rules, for public resources else deny all others.
+	 */
+	@Configuration
+	@Order(3)
+	public static class PublicWebSecurityConfig {
+
+		@Order(3)
+		@Bean
+		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
+			// @formatter:off
+		    http
+		      // CSRF not needed for stateless calls
+		      .csrf().disable()
+		      
+		      // make sure CORS honored
+		      .cors().and()
+		      
+		      // no sessions
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      
+		      .authorizeRequests()
+		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .antMatchers(HttpMethod.GET, 
+		        		"/", 
+		        		"/error",
+		        		"/*.html",
+		        		"/ping").permitAll()
+		        .anyRequest().denyAll();
+		    // @formatter:on
+			return http.build();
+		}
+
 	}
 
 }

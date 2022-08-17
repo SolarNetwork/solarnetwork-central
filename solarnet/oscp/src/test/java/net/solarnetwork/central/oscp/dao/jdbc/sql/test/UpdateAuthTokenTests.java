@@ -42,8 +42,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAuthToken;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * Test cases for the {@link UpdateAuthToken} class.
@@ -81,7 +81,7 @@ public class UpdateAuthTokenTests {
 
 		// WHEN
 		assertThrows(IllegalArgumentException.class, () -> {
-			new UpdateAuthToken(AuthTokenType.CapacityProvider, id).getSql();
+			new UpdateAuthToken(OscpRole.CapacityProvider, id).getSql();
 		});
 	}
 
@@ -92,7 +92,7 @@ public class UpdateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new UpdateAuthToken(AuthTokenType.FlexibilityProvider, id).getSql();
+		String sql = new UpdateAuthToken(OscpRole.FlexibilityProvider, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.update_fp_token(?, ?)}")));
@@ -107,7 +107,7 @@ public class UpdateAuthTokenTests {
 		givenPrepCall();
 
 		// WHEN
-		CallableStatement result = new UpdateAuthToken(AuthTokenType.FlexibilityProvider, id)
+		CallableStatement result = new UpdateAuthToken(OscpRole.FlexibilityProvider, id)
 				.createCallableStatement(con);
 
 		// THEN
@@ -125,7 +125,7 @@ public class UpdateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new UpdateAuthToken(AuthTokenType.CapacityProvider, id).getSql();
+		String sql = new UpdateAuthToken(OscpRole.CapacityProvider, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.update_cp_token(?, ?)}")));
@@ -140,7 +140,7 @@ public class UpdateAuthTokenTests {
 		givenPrepCall();
 
 		// WHEN
-		CallableStatement result = new UpdateAuthToken(AuthTokenType.CapacityProvider, id)
+		CallableStatement result = new UpdateAuthToken(OscpRole.CapacityProvider, id)
 				.createCallableStatement(con);
 
 		// THEN
@@ -158,7 +158,7 @@ public class UpdateAuthTokenTests {
 				randomUUID().getMostSignificantBits());
 
 		// WHEN
-		String sql = new UpdateAuthToken(AuthTokenType.CapacityOptimizer, id).getSql();
+		String sql = new UpdateAuthToken(OscpRole.CapacityOptimizer, id).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{? = call solaroscp.update_co_token(?, ?)}")));
@@ -173,7 +173,7 @@ public class UpdateAuthTokenTests {
 		givenPrepCall();
 
 		// WHEN
-		CallableStatement result = new UpdateAuthToken(AuthTokenType.CapacityOptimizer, id)
+		CallableStatement result = new UpdateAuthToken(OscpRole.CapacityOptimizer, id)
 				.createCallableStatement(con);
 
 		// THEN

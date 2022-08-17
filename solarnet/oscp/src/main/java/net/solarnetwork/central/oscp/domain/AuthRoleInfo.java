@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarOscpFlexibilityProviderApp.java - 10/08/2022 5:11:01 pm
+ * AuthRoleInfo.java - 17/08/2022 11:06:41 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,34 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.fp;
+package net.solarnetwork.central.oscp.domain;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * Main entry point for the SolarOscp Flexibility Provider application.
+ * Authenticated role information.
  * 
+ * @param id
+ *        the entity key
+ * @param role
+ *        the role
  * @author matt
  * @version 1.0
  */
-//@formatter:off
-@SpringBootApplication(scanBasePackageClasses = {
-		SolarNetOscpConfiguration.class,
-		SolarOscpFlexibilityProviderApp.class,
-})
-//@formatter:on
-public class SolarOscpFlexibilityProviderApp {
-
-	/**
-	 * Command-line entry point to launching server.
-	 * 
-	 * @param args
-	 *        command line arguments
-	 */
-	public static void main(String[] args) {
-		SpringApplication.run(SolarOscpFlexibilityProviderApp.class, args);
-	}
+public record AuthRoleInfo(UserLongCompositePK id, OscpRole role) {
 
 }

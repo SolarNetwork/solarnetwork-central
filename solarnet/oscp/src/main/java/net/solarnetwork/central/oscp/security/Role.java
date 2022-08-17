@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuthTokenType.java - 16/08/2022 5:47:13 pm
+ * Role.java - 17/08/2022 11:57:09 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,40 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao.jdbc.sql;
+package net.solarnetwork.central.oscp.security;
 
 /**
- * An authorization token type for SQL queries.
+ * Security roles.
  * 
  * @author matt
  * @version 1.0
  */
-public enum AuthTokenType {
+public enum Role {
 
-	/** A Capacity Optimizer token. */
-	CapacityOptimizer("co"),
+	ROLE_FLEXIBILITYPROVIDER,
 
-	/** A Capacity Provider token. */
-	CapacityProvider("cp"),
+	ROLE_CAPACITYPROVIDER,
 
-	/** A Flexibility Provider token. */
-	FlexibilityProvider("fp"),
-
-	;
-
-	private final String alias;
-
-	private AuthTokenType(String alias) {
-		this.alias = alias;
-	}
-
-	/**
-	 * Get the token type alias.
-	 * 
-	 * @return the alias
-	 */
-	public String getAlias() {
-		return alias;
-	}
+	ROLE_CAPACITYOPTIMIZER,
 
 }

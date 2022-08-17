@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarOscpFlexibilityProviderApp.java - 10/08/2022 5:11:01 pm
+ * AuthTokenAuthorizationDao.java - 17/08/2022 10:05:19 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,34 +20,36 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.fp;
+package net.solarnetwork.central.oscp.dao;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 
 /**
- * Main entry point for the SolarOscp Flexibility Provider application.
+ * DAO API for token authorization support.
  * 
  * @author matt
  * @version 1.0
  */
-//@formatter:off
-@SpringBootApplication(scanBasePackageClasses = {
-		SolarNetOscpConfiguration.class,
-		SolarOscpFlexibilityProviderApp.class,
-})
-//@formatter:on
-public class SolarOscpFlexibilityProviderApp {
+public interface AuthTokenAuthorizationDao {
 
 	/**
-	 * Command-line entry point to launching server.
+	 * Get a valid authorization ID for a given authorization token.
 	 * 
-	 * @param args
-	 *        command line arguments
+	 * @param token
+	 *        the token to get the ID for
+	 * @return the ID, or {@literal null} if not available (or disabled)
 	 */
-	public static void main(String[] args) {
-		SpringApplication.run(SolarOscpFlexibilityProviderApp.class, args);
-	}
+	UserLongCompositePK idForToken(String token);
+
+	/**
+	 * Get the role associated with an authorization ID.
+	 * 
+	 * @param authId
+	 *        the authorization ID to get the role for, as previously returned
+	 *        from {@link #idForToken(String)}
+	 * @return the role, or {@literal null} if not available (or disabled)
+	 */
+	AuthRoleInfo roleForAuthorization(UserLongCompositePK authId);
 
 }

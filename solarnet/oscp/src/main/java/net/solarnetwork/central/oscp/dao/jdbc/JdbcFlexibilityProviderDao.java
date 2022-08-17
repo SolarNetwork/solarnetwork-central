@@ -28,10 +28,12 @@ import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.CreateAuthToken;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthRoleInfo;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthTokenId;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAuthToken;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * JDBC implementation of {@link FlexibilityProviderDao}.
@@ -60,9 +62,9 @@ public class JdbcFlexibilityProviderDao implements FlexibilityProviderDao {
 	public String createAuthToken(UserLongCompositePK id) {
 		final CallableStatementCreator sql;
 		if ( id.entityIdIsAssigned() ) {
-			sql = new UpdateAuthToken(AuthTokenType.FlexibilityProvider, id);
+			sql = new UpdateAuthToken(OscpRole.FlexibilityProvider, id);
 		} else {
-			sql = new CreateAuthToken(AuthTokenType.FlexibilityProvider, id);
+			sql = new CreateAuthToken(OscpRole.FlexibilityProvider, id);
 		}
 		return jdbcOps.execute(sql, (cs) -> {
 			cs.execute();
@@ -72,8 +74,15 @@ public class JdbcFlexibilityProviderDao implements FlexibilityProviderDao {
 
 	@Override
 	public UserLongCompositePK idForToken(String token) {
-		final var sql = new SelectAuthTokenId(AuthTokenType.FlexibilityProvider, token);
+		final var sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token);
 		Collection<UserLongCompositePK> results = jdbcOps.query(sql, UserLongKeyRowMapper.INSTANCE);
+		return results.stream().findFirst().orElse(null);
+	}
+
+	@Override
+	public AuthRoleInfo roleForAuthorization(UserLongCompositePK authId) {
+		final var sql = new SelectAuthRoleInfo(OscpRole.FlexibilityProvider, authId);
+		Collection<AuthRoleInfo> results = jdbcOps.query(sql, AuthRoleInfoRowMapper.INSTANCE);
 		return results.stream().findFirst().orElse(null);
 	}
 

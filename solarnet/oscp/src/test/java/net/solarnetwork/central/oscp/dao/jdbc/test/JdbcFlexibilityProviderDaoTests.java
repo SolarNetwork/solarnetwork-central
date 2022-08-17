@@ -23,19 +23,28 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
@@ -47,13 +56,19 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
  */
 public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private JdbcCapacityProviderConfigurationDao capacityProviderDao;
+	private JdbcCapacityOptimizerConfigurationDao capacityOptimizerDao;
+
 	private JdbcFlexibilityProviderDao dao;
 	private Long userId;
 
 	private String lastToken;
+	private UserLongCompositePK lastAuthId;
 
 	@BeforeEach
 	public void setup() {
+		capacityProviderDao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
+		capacityOptimizerDao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
 		dao = new JdbcFlexibilityProviderDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 	}
@@ -81,13 +96,15 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID has been assigned", row, hasEntry("user_id", userId));
-		assertThat("Row ID has been assigned", row, hasEntry(equalTo("id"), notNullValue()));
+		assertThat("Row ID has been assigned", row,
+				hasEntry(equalTo("id"), allOf(instanceOf(Long.class), notNullValue())));
 		assertThat("Row creation date assigned", row, hasEntry(equalTo("created"), notNullValue()));
 		assertThat("Row modification date is creation date", row,
 				hasEntry("modified", row.get("created")));
 		assertThat("Row enabled assigned", row, hasEntry("enabled", true));
 		assertThat("Row token matches return value", row, hasEntry("token", result));
 		lastToken = result;
+		lastAuthId = new UserLongCompositePK(userId, (Long) row.get("id"));
 	}
 
 	@Test
@@ -132,6 +149,54 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 
 		// THEN
 		assertThat("Result NOT returned for unmatched token", result, is(nullValue()));
+	}
+
+	@Test
+	public void roleForAuthorization_noConfiguration() {
+		// GIVEN
+		insert_authToken();
+
+		// WHEN
+		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
+
+		// THEN
+		assertThat("Info not returned when no configuration exists", info, is(nullValue()));
+	}
+
+	@Test
+	public void roleForAuthorization_cp() {
+		// GIVEN
+		insert_authToken();
+
+		CapacityProviderConfiguration cp = capacityProviderDao
+				.get(capacityProviderDao.create(userId, JdbcCapacityProviderConfigurationDaoTests
+						.newConf(userId, lastAuthId.getEntityId(), Instant.now())));
+
+		// WHEN
+		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
+
+		// THEN
+		assertThat("Info returned", info, is(notNullValue()));
+		assertThat("Role is Capacity Provider", info.role(), is(equalTo(OscpRole.CapacityProvider)));
+		assertThat("Info ID is for Capacity Provider", info.id(), is(equalTo(cp.getId())));
+	}
+
+	@Test
+	public void roleForAuthorization_co() {
+		// GIVEN
+		insert_authToken();
+
+		CapacityOptimizerConfiguration co = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, JdbcCapacityOptimizerConfigurationDaoTests
+						.newConf(userId, lastAuthId.getEntityId(), Instant.now())));
+
+		// WHEN
+		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
+
+		// THEN
+		assertThat("Info returned", info, is(notNullValue()));
+		assertThat("Role is Capacity Provider", info.role(), is(equalTo(OscpRole.CapacityOptimizer)));
+		assertThat("Info ID is for Capacity Provider", info.id(), is(equalTo(co.getId())));
 	}
 
 }

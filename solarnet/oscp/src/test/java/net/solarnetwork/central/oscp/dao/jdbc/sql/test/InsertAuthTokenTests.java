@@ -42,8 +42,8 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.AuthTokenType;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * Test case for the {@link InsertAuthToken} class.
@@ -83,7 +83,7 @@ public class InsertAuthTokenTests {
 
 		// WHEN
 		assertThrows(IllegalArgumentException.class, () -> {
-			new InsertAuthToken(AuthTokenType.FlexibilityProvider, id, token).getSql();
+			new InsertAuthToken(OscpRole.FlexibilityProvider, id, token).getSql();
 		});
 	}
 
@@ -96,7 +96,7 @@ public class InsertAuthTokenTests {
 
 		// WHEN
 		assertThrows(IllegalArgumentException.class, () -> {
-			new InsertAuthToken(AuthTokenType.CapacityProvider, id, token).getSql();
+			new InsertAuthToken(OscpRole.CapacityProvider, id, token).getSql();
 		});
 	}
 
@@ -108,7 +108,7 @@ public class InsertAuthTokenTests {
 		String token = randomUUID().toString();
 
 		// WHEN
-		String sql = new InsertAuthToken(AuthTokenType.CapacityProvider, id, token).getSql();
+		String sql = new InsertAuthToken(OscpRole.CapacityProvider, id, token).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{call solaroscp.save_cp_token(?, ?, ?)}")));
@@ -124,7 +124,7 @@ public class InsertAuthTokenTests {
 		givenPrepCall();
 
 		// WHEN
-		CallableStatement result = new InsertAuthToken(AuthTokenType.CapacityProvider, id, token)
+		CallableStatement result = new InsertAuthToken(OscpRole.CapacityProvider, id, token)
 				.createCallableStatement(con);
 
 		// THEN
@@ -143,7 +143,7 @@ public class InsertAuthTokenTests {
 		String token = randomUUID().toString();
 
 		// WHEN
-		String sql = new InsertAuthToken(AuthTokenType.CapacityOptimizer, id, token).getSql();
+		String sql = new InsertAuthToken(OscpRole.CapacityOptimizer, id, token).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("{call solaroscp.save_co_token(?, ?, ?)}")));
@@ -159,7 +159,7 @@ public class InsertAuthTokenTests {
 		givenPrepCall();
 
 		// WHEN
-		CallableStatement result = new InsertAuthToken(AuthTokenType.CapacityOptimizer, id, token)
+		CallableStatement result = new InsertAuthToken(OscpRole.CapacityOptimizer, id, token)
 				.createCallableStatement(con);
 
 		// THEN

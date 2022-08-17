@@ -26,6 +26,7 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.FLEXIBILITY_PROVIDE
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20_URL_PATH;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import java.security.Principal;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,8 @@ public class RegistrationController {
 	 * @return the updated user
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<oscp.v20.Register> initiateRegistration(@Valid @RequestBody Register input) {
+	public ResponseEntity<oscp.v20.Register> initiateRegistration(@Valid @RequestBody Register input,
+			Principal principal) {
 		VersionUrl url = input.getVersionUrl().stream().filter(e -> "2.0".equals(e.getVersion()))
 				.findFirst().orElse(null);
 		if ( url == null ) {
