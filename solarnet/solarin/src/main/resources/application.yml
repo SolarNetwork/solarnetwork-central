@@ -61,7 +61,7 @@ app:
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://solarflux.solarnetwork:1883"
-        client-id: "solarin-datumpub-@@SOLAR_FLUX_PUB_ID@@"
+        client-id: "solarin-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
         connect-timeout-seconds: 10
