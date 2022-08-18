@@ -141,7 +141,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
 		} else {
-			p = DatumSqlUtils.prepareDateRangeFilter(filter, con, stmt, p);
+			p = DatumSqlUtils.prepareDateRangeFilter(filter, stmt, p);
 		}
 		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, kind, con, stmt, p);
 		if ( p > 0 && searchFilter != null ) {

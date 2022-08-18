@@ -27,6 +27,7 @@ import java.util.Map;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.ocpp.domain.SystemUser;

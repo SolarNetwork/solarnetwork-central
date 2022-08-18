@@ -26,13 +26,16 @@ import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueHookStat;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
  * MQTT instruction publishing configuration.
@@ -50,11 +53,13 @@ public class SolarQueueInstructionPublisherConfig {
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
 
+	@Bean
 	@ConfigurationProperties(prefix = "app.solarqueue.instr-publish")
 	@Qualifier(SolarQueueMqttConnectionConfig.SOLARQUEUE)
 	public MqttNodeInstructionQueueHook mqttNodeInstructionQueueHook() {
 		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
-		return new MqttNodeInstructionQueueHook(objectMapper, executor, nodeInstructionDao);
+		return new MqttNodeInstructionQueueHook(objectMapper, executor, nodeInstructionDao,
+				new MqttStats("Instruction Publisher", 500, NodeInstructionQueueHookStat.values()));
 	}
 
 }

@@ -23,11 +23,13 @@
 package net.solarnetwork.central.instructor.dao.mqtt;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -37,6 +39,7 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -76,15 +79,19 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *        an executor
 	 * @param nodeInstructionDao
 	 *        node instruction DAO
+	 * @param mqttStats
+	 *        the MQTT stats to use; must support the
+	 *        {@link NodeInstructionQueueHookStat} stats
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
-			NodeInstructionDao nodeInstructionDao) {
+			NodeInstructionDao nodeInstructionDao, MqttStats mqttStats) {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
 		setDisplayName("NodeInstructionQueueHook MQTT");
+		setMqttStats(requireNonNullArgument(mqttStats, "mqttStats"));
 	}
 
 	@Override
@@ -147,9 +154,15 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				log.info(
-						"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
-						instructionId, nodeId, root.toString());
+				if ( (e instanceof IOException) || (e instanceof TimeoutException) ) {
+					log.info(
+							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
+							instructionId, nodeId, root.toString());
+				} else {
+					log.error(
+							"Failed to publish MQTT instruction {} to node {}, falling back to batch mode: {}",
+							instructionId, nodeId, root.toString(), e);
+				}
 				nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId,
 						InstructionState.Queuing, InstructionState.Queued, null);
 			}

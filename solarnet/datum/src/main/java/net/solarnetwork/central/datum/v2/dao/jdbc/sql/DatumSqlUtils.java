@@ -1544,8 +1544,6 @@ public final class DatumSqlUtils {
 	 * 
 	 * @param filter
 	 *        the search criteria
-	 * @param con
-	 *        the JDBC connection
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -1553,12 +1551,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria, PreparedStatement,
+	 *      int)
 	 */
-	public static int prepareDateRangeFilter(DateRangeCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		return CommonSqlUtils.prepareDateRange(filter, con, stmt, parameterOffset);
+	public static int prepareDateRangeFilter(DateRangeCriteria filter, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
+		return CommonSqlUtils.prepareDateRange(filter, stmt, parameterOffset);
 	}
 
 	/**
