@@ -47,6 +47,7 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>reg_status (SMALLINT)</li>
  * <li>cname (TEXT)</li>
  * <li>url (TEXT)</li>
+ * <li>oscp_ver (TEXT)</li>
  * <li>sprops (TEXT)</li>
  * </ol>
  * 
@@ -73,7 +74,8 @@ public class CapacityOptimizerConfigurationRowMapper
 		conf.setRegistrationStatus(RegistrationStatus.forCode(rs.getInt(7)));
 		conf.setName(rs.getString(8));
 		conf.setBaseUrl(rs.getString(9));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(10)));
+		conf.setOscpVersion(rs.getString(10));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(11)));
 		return conf;
 	}
 

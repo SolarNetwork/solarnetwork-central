@@ -29,7 +29,6 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.security.Principal;
-import java.util.Collections;
 import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +40,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.security.OscpSecurityUtils;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
+import net.solarnetwork.domain.KeyValuePair;
 import oscp.v20.Register;
 import oscp.v20.VersionUrl;
 
@@ -81,7 +81,7 @@ public class RegistrationController {
 	 * @return the updated user
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Register> initiateRegistration(@Valid @RequestBody Register input,
+	public ResponseEntity<Void> initiateRegistration(@Valid @RequestBody Register input,
 			Principal principal) {
 		VersionUrl url = input.getVersionUrl().stream().filter(e -> V20.equals(e.getVersion()))
 				.findFirst().orElse(null);
@@ -92,12 +92,13 @@ public class RegistrationController {
 					.build();
 		}
 
+		KeyValuePair versionUrl = new KeyValuePair(url.getVersion(), url.getBaseUrl());
+
 		AuthRoleInfo actor = OscpSecurityUtils.authRoleInfoForPrincipal(principal);
 
-		String newToken = flexibilityProviderBiz.register(actor, input.getToken());
+		flexibilityProviderBiz.register(actor, input.getToken(), versionUrl);
 
-		return ResponseEntity.ok(new Register(newToken,
-				Collections.singletonList(new VersionUrl(V20, FLEXIBILITY_PROVIDER_V20_URL_PATH))));
+		return ResponseEntity.noContent().build();
 	}
 
 }

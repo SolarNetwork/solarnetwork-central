@@ -28,14 +28,21 @@ import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map.Entry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +50,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
@@ -55,8 +69,14 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.KeyValuePair;
+import net.solarnetwork.test.CallingThreadExecutorService;
+import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import oscp.v20.Register;
+import oscp.v20.VersionUrl;
 
 /**
  * Test cases for the {@link DaoFlexibilityProviderBiz} class.
@@ -85,12 +105,29 @@ public class DaoFlexibilityProviderBizTests {
 	@Captor
 	private ArgumentCaptor<String> tokenCaptor;
 
+	private ObjectMapper objectMapper;
+	private CallingThreadExecutorService executor;
+	private RestTemplate restTemplate;
+	private MockRestServiceServer mockExternalSystem;
 	private DaoFlexibilityProviderBiz biz;
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoFlexibilityProviderBiz(flexibilityProviderDao, capacityProviderDao,
-				capacityOptimizerDao);
+		objectMapper = JsonUtils.newObjectMapper();
+		executor = new CallingThreadExecutorService();
+		restTemplate = new RestTemplate(
+				new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
+		restTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+
+		mockExternalSystem = MockRestServiceServer.bindTo(restTemplate).build();
+		biz = new DaoFlexibilityProviderBiz(executor, restTemplate, flexibilityProviderDao,
+				capacityProviderDao, capacityOptimizerDao);
+		// no biz.setTxTemplate(tt); to use test transaction
+	}
+
+	@AfterEach
+	public void teardown() {
+		mockExternalSystem.verify();
 	}
 
 	@Test
@@ -101,6 +138,7 @@ public class DaoFlexibilityProviderBizTests {
 						randomUUID().getMostSignificantBits()),
 				OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
+		final KeyValuePair versionUrl = new KeyValuePair("2.0", "http://localhost:9991/oscp/cp/2.0");
 
 		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				emptyList());
@@ -108,7 +146,7 @@ public class DaoFlexibilityProviderBizTests {
 
 		// WHEN
 		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authInfo, sysToken);
+			biz.register(authInfo, sysToken, versionUrl);
 		}, "Exception thrown when CP configuration not found");
 
 		// THEN
@@ -121,7 +159,6 @@ public class DaoFlexibilityProviderBizTests {
 				is(equalTo(authInfo.id().getUserId())));
 		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
 				is(equalTo(authInfo.id().getEntityId())));
-
 	}
 
 	@Test
@@ -132,6 +169,7 @@ public class DaoFlexibilityProviderBizTests {
 						randomUUID().getMostSignificantBits()),
 				OscpRole.CapacityOptimizer);
 		final String sysToken = randomUUID().toString();
+		final KeyValuePair versionUrl = new KeyValuePair("2.0", "http://localhost:9991/oscp/co/2.0");
 
 		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
 				emptyList());
@@ -139,7 +177,7 @@ public class DaoFlexibilityProviderBizTests {
 
 		// WHEN
 		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authInfo, sysToken);
+			biz.register(authInfo, sysToken, versionUrl);
 		}, "Exception thrown when CP configuration not found");
 
 		// THEN
@@ -155,13 +193,15 @@ public class DaoFlexibilityProviderBizTests {
 	}
 
 	@Test
-	public void register_cp() {
+	public void register_cp() throws Exception {
 		// GIVEN
 		final Long userId = randomUUID().getMostSignificantBits();
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
 				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
 				OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
+		final KeyValuePair sysVersionUrl = new KeyValuePair("2.0",
+				"http://oscp.example.com/oscp/cp/2.0");
 
 		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(userId,
 				randomUUID().getMostSignificantBits(), Instant.now());
@@ -171,15 +211,39 @@ public class DaoFlexibilityProviderBizTests {
 				singleton(cp));
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
 
-		// save reg status
+		// save system versionUrl details
 		given(capacityProviderDao.save(same(cp))).willReturn(cp.getId());
 
 		// generate new auth token
 		final UserLongCompositePK fpId = new UserLongCompositePK(userId, cp.getFlexibilityProviderId());
-		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(randomUUID().toString());
+		final String fpToken = randomUUID().toString();
+		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(fpToken);
+
+		// the rest happens in async task (but we have forced to calling thread here)
+
+		// get the conf for updating
+		final CapacityProviderConfiguration cp2 = cp.clone();
+		cp2.setOscpVersion(sysVersionUrl.getKey());
+		cp2.setBaseUrl(sysVersionUrl.getValue());
+		given(capacityProviderDao.getForUpdate(cp2.getId())).willReturn(cp2);
+
+		given(capacityProviderDao.getExternalSystemAuthToken(cp2.getId())).willReturn(sysToken);
+
+		// call out to the external system registration endpoint
+		Entry<String, String> fpVersionUrl = biz.getVersionUrlMap().entrySet().iterator().next();
+		Register expectedPost = new Register(fpToken, Collections
+				.singletonList(new VersionUrl(fpVersionUrl.getKey(), fpVersionUrl.getValue())));
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
+				.andExpect(method(HttpMethod.POST))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// save system versionUrl details
+		given(capacityProviderDao.save(same(cp2))).willReturn(cp2.getId());
 
 		// WHEN
-		String result = biz.register(authInfo, sysToken);
+		biz.register(authInfo, sysToken, sysVersionUrl);
 
 		// THEN
 		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
@@ -189,22 +253,23 @@ public class DaoFlexibilityProviderBizTests {
 		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
 				is(equalTo(authInfo.id().getEntityId())));
 
-		assertThat("CP reg status changed to Registered", cp.getRegistrationStatus(),
-				is(equalTo(RegistrationStatus.Registered)));
-		assertThat("New auth token returned", result, is(notNullValue()));
+		// save system auth token
+		then(capacityProviderDao).should().saveExternalSystemAuthToken(cp.getId(), sysToken);
 
-		then(capacityProviderDao).should().saveExternalSystemAuthToken(eq(cp.getId()), tokenCaptor.capture());
-		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
+		assertThat("Configuration status updated", cp2.getRegistrationStatus(),
+				is(equalTo(RegistrationStatus.Registered)));
 	}
 
 	@Test
-	public void register_co() {
+	public void register_co() throws Exception {
 		// GIVEN
 		final Long userId = randomUUID().getMostSignificantBits();
 		final AuthRoleInfo authInfo = new AuthRoleInfo(
 				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
 				OscpRole.CapacityOptimizer);
 		final String sysToken = randomUUID().toString();
+		final KeyValuePair sysVersionUrl = new KeyValuePair("2.0",
+				"http://oscp.example.com/oscp/co/2.0");
 
 		final CapacityOptimizerConfiguration co = new CapacityOptimizerConfiguration(userId,
 				randomUUID().getMostSignificantBits(), Instant.now());
@@ -219,10 +284,34 @@ public class DaoFlexibilityProviderBizTests {
 
 		// generate new auth token
 		final UserLongCompositePK fpId = new UserLongCompositePK(userId, co.getFlexibilityProviderId());
-		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(randomUUID().toString());
+		final String fpToken = randomUUID().toString();
+		given(flexibilityProviderDao.createAuthToken(fpId)).willReturn(fpToken);
+
+		// the rest happens in async task (but we have forced to calling thread here)
+
+		// get the conf for updating
+		final CapacityOptimizerConfiguration co2 = co.clone();
+		co2.setOscpVersion(sysVersionUrl.getKey());
+		co2.setBaseUrl(sysVersionUrl.getValue());
+		given(capacityOptimizerDao.getForUpdate(co2.getId())).willReturn(co2);
+
+		given(capacityOptimizerDao.getExternalSystemAuthToken(co2.getId())).willReturn(sysToken);
+
+		// call out to the external system registration endpoint
+		Entry<String, String> fpVersionUrl = biz.getVersionUrlMap().entrySet().iterator().next();
+		Register expectedPost = new Register(fpToken, Collections
+				.singletonList(new VersionUrl(fpVersionUrl.getKey(), fpVersionUrl.getValue())));
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
+				.andExpect(method(HttpMethod.POST))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// save system versionUrl details
+		given(capacityOptimizerDao.save(same(co2))).willReturn(co2.getId());
 
 		// WHEN
-		String result = biz.register(authInfo, sysToken);
+		biz.register(authInfo, sysToken, sysVersionUrl);
 
 		// THEN
 		then(capacityOptimizerDao).should().findFiltered(coFilterCaptor.capture());
@@ -232,12 +321,11 @@ public class DaoFlexibilityProviderBizTests {
 		assertThat("CO filter included conf criteria from auth info", coFilter.getConfigurationId(),
 				is(equalTo(authInfo.id().getEntityId())));
 
-		assertThat("CO reg status changed to Registered", co.getRegistrationStatus(),
-				is(equalTo(RegistrationStatus.Registered)));
-		assertThat("New auth token returned and different from input token", result, is(notNullValue()));
+		// save system auth token
+		then(capacityOptimizerDao).should().saveExternalSystemAuthToken(co.getId(), sysToken);
 
-		then(capacityOptimizerDao).should().saveExternalSystemAuthToken(eq(co.getId()), tokenCaptor.capture());
-		assertThat("System token saved to database", tokenCaptor.getValue(), is(equalTo(sysToken)));
+		assertThat("Configuration status updated", co2.getRegistrationStatus(),
+				is(equalTo(RegistrationStatus.Registered)));
 	}
 
 }

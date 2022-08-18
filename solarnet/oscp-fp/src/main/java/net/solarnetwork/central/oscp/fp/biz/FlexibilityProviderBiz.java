@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.fp.biz;
 
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.domain.KeyValuePair;
 
 /**
  * Business service API for Flexibility Provider.
@@ -43,13 +44,14 @@ public interface FlexibilityProviderBiz {
 	 * @param externalSystemToken
 	 *        the authorization token to use when making requests to the
 	 *        external system
-	 * @return the resulting new authorization token to give to the external
-	 *         system form them to use when making requests to us going forward
+	 * @param versionUrl
+	 *        the external system's OSCP version and base URL to use
 	 * @throws AuthorizationException
 	 *         with
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
 	 *         if the authorization token does not exist
 	 */
-	String register(AuthRoleInfo authInfo, String externalSystemToken) throws AuthorizationException;
+	void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl)
+			throws AuthorizationException;
 
 }

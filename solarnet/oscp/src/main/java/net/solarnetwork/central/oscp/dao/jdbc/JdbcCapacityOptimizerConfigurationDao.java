@@ -140,4 +140,16 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 		jdbcOps.update(sql);
 	}
 
+	@Override
+	public CapacityOptimizerConfiguration getForUpdate(UserLongCompositePK id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getExternalSystemAuthToken(UserLongCompositePK configurationId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

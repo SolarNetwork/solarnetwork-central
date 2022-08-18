@@ -62,6 +62,17 @@ public final class OscpWebUtils {
 		return FLEXIBILITY_PROVIDER_URL_PATH + path;
 	}
 
+	/**
+	 * Create an OSCP {@code Token} HTTP {@code Authorization} header value.
+	 * 
+	 * @param token
+	 *        the token value
+	 * @return the header value
+	 */
+	public static String tokenAuthorizationHeader(String token) {
+		return OSCP_TOKEN_AUTHORIZATION_SCHEME + " " + token;
+	}
+
 	/** URL paths for OSCP 2.0. */
 	public static final class UrlPaths_20 {
 

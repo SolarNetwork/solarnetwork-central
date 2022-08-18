@@ -13,6 +13,13 @@ app:
     password: "solarnet"
     platform: "postgres"
     initialize: false
+  task.executor:
+    thread-name-prefix: "SolarOSCP-FP-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarOSCP-FP-Sched-"
+    pool-size: 5  
 
 debug: false
 

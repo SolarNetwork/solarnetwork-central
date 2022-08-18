@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityProviderConfigDao.java - 11/08/2022 9:38:40 am
+ * ExternalSystemConfigurationDao.java - 18/08/2022 8:32:15 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,15 +22,29 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
- * DAO API for {@link CapacityProviderConfiguration} entities.
+ * DAO API for external system configuration DAOs.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CapacityProviderConfigurationDao
-		extends ExternalSystemConfigurationDao<CapacityProviderConfiguration> {
+public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystemConfiguration<C>>
+		extends GenericCompositeKey2Dao<C, UserLongCompositePK, Long, Long>,
+		FilterableDao<C, UserLongCompositePK, ConfigurationFilter>, ExternalSystemAuthTokenDao {
+
+	/**
+	 * Get a persisted entity by its primary key, locking the row for updates
+	 * within the current transaction.
+	 * 
+	 * @param id
+	 *        the primary key to retrieve
+	 * @return the domain object, or {@literal null} if not available
+	 */
+	C getForUpdate(UserLongCompositePK id);
 
 }

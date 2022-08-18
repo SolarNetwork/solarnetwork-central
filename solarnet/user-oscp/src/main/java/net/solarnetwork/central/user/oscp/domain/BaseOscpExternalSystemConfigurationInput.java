@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.net.URI;
-import javax.validation.constraints.NotNull;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.util.ObjectUtils;
@@ -39,8 +38,9 @@ import net.solarnetwork.util.ObjectUtils;
 public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOscpExternalSystemConfiguration<T>>
 		extends BaseOscpConfigurationInput<T> {
 
-	@NotNull
 	private URI baseUrl;
+
+	private String oscpVersion;
 
 	private RegistrationStatus registrationStatus;
 
@@ -68,6 +68,25 @@ public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOsc
 	 */
 	public void setBaseUrl(URI baseUrl) {
 		this.baseUrl = baseUrl;
+	}
+
+	/**
+	 * Get the OSCP version.
+	 * 
+	 * @return the version
+	 */
+	public String getOscpVersion() {
+		return oscpVersion;
+	}
+
+	/**
+	 * Set the OSCP version.
+	 * 
+	 * @param oscpVersion
+	 *        the version to set
+	 */
+	public void setOscpVersion(String oscpVersion) {
+		this.oscpVersion = oscpVersion;
 	}
 
 	/**

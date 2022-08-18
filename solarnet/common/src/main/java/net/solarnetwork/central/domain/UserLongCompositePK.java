@@ -122,6 +122,19 @@ public class UserLongCompositePK extends BasePK
 	}
 
 	/**
+	 * Get a short identifier string.
+	 * 
+	 * <p>
+	 * The format of the returned string is {@code (userId,entityId)}.
+	 * </p>
+	 * 
+	 * @return the identifier
+	 */
+	public String ident() {
+		return String.format("(%d,%d)", userId, entityId);
+	}
+
+	/**
 	 * Get the user ID.
 	 * 
 	 * @return the user ID

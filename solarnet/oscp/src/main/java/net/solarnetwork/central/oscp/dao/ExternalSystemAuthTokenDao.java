@@ -56,4 +56,15 @@ public interface ExternalSystemAuthTokenDao {
 	 *        the authorization token to save
 	 */
 	void saveExternalSystemAuthToken(UserLongCompositePK configurationId, String token);
+
+	/**
+	 * Get an external authorization token for a given configuration ID.
+	 * 
+	 * @param configurationId
+	 *        the ID of the external system configuration to get the
+	 *        authorization token for
+	 * @return the authorization token, or {@literal null} if one is not
+	 *         available
+	 */
+	String getExternalSystemAuthToken(UserLongCompositePK configurationId);
 }

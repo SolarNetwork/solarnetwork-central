@@ -31,13 +31,8 @@ import static net.solarnetwork.central.oscp.fp.test.FlexibilityProviderTestUtils
 import static net.solarnetwork.central.oscp.fp.test.FlexibilityProviderTestUtils.newCapacityProvider;
 import static net.solarnetwork.central.oscp.fp.test.FlexibilityProviderTestUtils.saveUserAndFlexibilityProviderAuthIdForCurrentActor;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.fpUrlPath;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,10 +141,7 @@ public class RegistrationControllerTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(inputJson)
 				)
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.token", is(notNullValue())))
-			.andExpect(jsonPath("$.version_url[0].version", is(V20)))
-			.andExpect(jsonPath("$.version_url[0].base_url", is(FLEXIBILITY_PROVIDER_V20_URL_PATH)))
+			.andExpect(status().isNoContent())
 			;		
 		// @formatter:on
 	}
@@ -176,10 +168,7 @@ public class RegistrationControllerTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(inputJson)
 				)
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.token", is(notNullValue())))
-			.andExpect(jsonPath("$.version_url[0].version", is(V20)))
-			.andExpect(jsonPath("$.version_url[0].base_url", is(FLEXIBILITY_PROVIDER_V20_URL_PATH)))
+			.andExpect(status().isNoContent())
 			;		
 		// @formatter:on
 	}

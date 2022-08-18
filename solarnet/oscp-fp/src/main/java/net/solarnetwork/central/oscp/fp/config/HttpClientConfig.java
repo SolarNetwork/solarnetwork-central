@@ -1,5 +1,5 @@
 /* ==================================================================
- * ServiceConfig.java - 17/08/2022 2:47:46 pm
+ * HttpClientConfig.java - 18/08/2022 10:55:37 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,49 +22,47 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.web.client.RestOperations;
-import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
-import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
-import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
-import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
+import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
 
 /**
- * Service configuration.
+ * HTTP client configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-public class ServiceConfig {
-
-	@Autowired
-	private FlexibilityProviderDao flexibilityProviderDao;
-
-	@Autowired
-	private CapacityProviderConfigurationDao capacityProviderDao;
-
-	@Autowired
-	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
-
-	@Autowired
-	private AsyncTaskExecutor executor;
-
-	@Autowired
-	private RestOperations restOps;
+public class HttpClientConfig {
 
 	/**
-	 * Get the flexibility provider service.
+	 * Get a REST client for production.
 	 * 
 	 * @return the service
 	 */
+	@Profile("production")
 	@Bean
-	public DaoFlexibilityProviderBiz flexibilityProviderBiz() {
-		return new DaoFlexibilityProviderBiz(executor, restOps, flexibilityProviderDao,
-				capacityProviderDao, capacityOptimizerDao);
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
+
+	/**
+	 * Get a REST client for non-production use, with logging enabled.
+	 * 
+	 * @return the non-production service
+	 */
+	@Profile("!production")
+	@Bean
+	public RestTemplate testingSolarNetworkServicet() {
+		RestTemplate debugTemplate = new RestTemplate(
+				new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
+		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+		return debugTemplate;
 	}
 
 }

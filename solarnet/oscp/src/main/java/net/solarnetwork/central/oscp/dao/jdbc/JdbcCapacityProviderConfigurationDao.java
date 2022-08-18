@@ -139,4 +139,16 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 		jdbcOps.update(sql);
 	}
 
+	@Override
+	public CapacityProviderConfiguration getForUpdate(UserLongCompositePK id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getExternalSystemAuthToken(UserLongCompositePK configurationId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

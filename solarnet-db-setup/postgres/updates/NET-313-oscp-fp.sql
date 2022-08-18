@@ -1,3 +1,13 @@
+/*
+DROP TABLE solaroscp.oscp_fp_token CASCADE;
+DROP TABLE solaroscp.oscp_cp_conf CASCADE;
+DROP TABLE solaroscp.oscp_cp_token CASCADE;
+DROP TABLE solaroscp.oscp_co_conf CASCADE;
+DROP TABLE solaroscp.oscp_co_token CASCADE;
+DROP TABLE solaroscp.oscp_cg_conf CASCADE;
+DROP TABLE solaroscp.oscp_asset_conf CASCADE;
+*/
+
 CREATE SCHEMA IF NOT EXISTS solaroscp;
 
 /**
@@ -28,7 +38,8 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	fp_id			BIGINT NOT NULL,
 	reg_status		SMALLINT NOT NULL,
 	cname			CHARACTER VARYING(64) NOT NULL,
-	url				CHARACTER VARYING(256) NOT NULL,
+	url				CHARACTER VARYING(256),
+	oscp_ver		CHARACTER VARYING(8),
 	sprops			JSONB,
 	CONSTRAINT oscp_cp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_cp_conf_user_fk FOREIGN KEY (user_id)
@@ -36,7 +47,7 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_cp_conf_fp_fk FOREIGN KEY (user_id, fp_id)
 		REFERENCES solaroscp.oscp_fp_token (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT oscp_cp_conf_url_unq UNIQUE (user_id, url)
 );
 
@@ -67,7 +78,8 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	fp_id			BIGINT NOT NULL,
 	reg_status		SMALLINT NOT NULL,
 	cname			CHARACTER VARYING(64) NOT NULL,
-	url				CHARACTER VARYING(256) NOT NULL,
+	url				CHARACTER VARYING(256),
+	oscp_ver		CHARACTER VARYING(8),
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)
@@ -75,7 +87,7 @@ CREATE TABLE solaroscp.oscp_co_conf (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_co_conf_fp_fk FOREIGN KEY (user_id, fp_id)
 		REFERENCES solaroscp.oscp_fp_token (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
 );
 

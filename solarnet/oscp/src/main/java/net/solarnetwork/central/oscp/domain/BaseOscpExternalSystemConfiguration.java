@@ -33,14 +33,15 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
-		"flexibilityProviderId", "registrationStatus", "serviceProps" })
+		"oscpVersion", "flexibilityProviderId", "registrationStatus", "serviceProps" })
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
 		extends BaseOscpConfigurationEntity<C> {
 
-	private static final long serialVersionUID = -5344913355391188463L;
+	private static final long serialVersionUID = 2657431353983332547L;
 
 	private String token;
 	private String baseUrl;
+	private String oscpVersion;
 	private Long flexibilityProviderId;
 	private RegistrationStatus registrationStatus;
 
@@ -83,12 +84,18 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	public void copyTo(C entity) {
 		super.copyTo(entity);
 		entity.setBaseUrl(baseUrl);
+		entity.setOscpVersion(oscpVersion);
 		entity.setRegistrationStatus(registrationStatus);
 		entity.setToken(token);
 	}
 
 	/**
 	 * Get the authentication token.
+	 * 
+	 * <p>
+	 * Note this is normally only included when creating a configuration entity;
+	 * afterwards the token is omitted.
+	 * </p>
 	 * 
 	 * @return the token the token
 	 */
@@ -123,6 +130,25 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 */
 	public void setBaseUrl(String baseUrl) {
 		this.baseUrl = baseUrl;
+	}
+
+	/**
+	 * Get the OSCP version.
+	 * 
+	 * @return the version
+	 */
+	public String getOscpVersion() {
+		return oscpVersion;
+	}
+
+	/**
+	 * Set the OSCP version.
+	 * 
+	 * @param oscpVersion
+	 *        the version to set
+	 */
+	public void setOscpVersion(String oscpVersion) {
+		this.oscpVersion = oscpVersion;
 	}
 
 	/**
