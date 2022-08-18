@@ -41,6 +41,7 @@ dependencies {
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	
 	// Utilities
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing
