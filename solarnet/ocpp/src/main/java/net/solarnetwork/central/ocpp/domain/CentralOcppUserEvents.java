@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.ocpp.json;
+package net.solarnetwork.central.ocpp.domain;
 
 /**
  * Constants for central OCPP user events.

@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -64,6 +65,9 @@ public class OcppV16MqttConfig {
 	private ChargePointRouter ocppChargePointRouter;
 
 	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Autowired
 	@Qualifier(OCPP_V16)
 	private ObjectMapper objectMapper;
 
@@ -71,8 +75,11 @@ public class OcppV16MqttConfig {
 	@Bean
 	@Qualifier(SOLARQUEUE)
 	public MqttInstructionHandler<ChargePointAction> instructionHandler_v16() {
-		return new MqttInstructionHandler<>(ChargePointAction.class, nodeInstructionDao,
-				ocppCentralChargePointDao, objectMapper, ocppChargePointRouter);
+		MqttInstructionHandler<ChargePointAction> handler = new MqttInstructionHandler<>(
+				ChargePointAction.class, nodeInstructionDao, ocppCentralChargePointDao, objectMapper,
+				ocppChargePointRouter);
+		handler.setUserEventAppenderBiz(userEventAppenderBiz);
+		return handler;
 	}
 
 	@Bean
