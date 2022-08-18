@@ -68,7 +68,7 @@ public class OscpTokenAuthenticationProvider implements AuthenticationProvider {
 		}
 		OscpAuthenticatedToken details = new OscpAuthenticatedToken(info);
 		PreAuthenticatedAuthenticationToken result = new PreAuthenticatedAuthenticationToken(token,
-				"N/A", null);
+				"N/A", details.getAuthorities());
 		result.setDetails(details);
 		return result;
 	}
