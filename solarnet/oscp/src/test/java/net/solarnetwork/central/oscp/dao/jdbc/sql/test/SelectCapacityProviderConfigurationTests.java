@@ -286,4 +286,21 @@ public class SelectCapacityProviderConfigurationTests {
 		thenPrepStatement(result, filter);
 	}
 
+	@Test
+	public void forUpdate_single_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setConfigurationId(2L);
+		filter.setLockResults(true);
+
+		// WHEN
+		String sql = new SelectCapacityProviderConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-capacity-provider-conf-locked-one.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
 }

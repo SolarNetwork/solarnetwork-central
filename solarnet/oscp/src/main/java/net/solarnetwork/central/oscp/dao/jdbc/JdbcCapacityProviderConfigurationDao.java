@@ -35,7 +35,6 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityProviderConfiguration;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityProviderConfiguration;
@@ -50,9 +49,9 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 1.0
  */
-public class JdbcCapacityProviderConfigurationDao implements CapacityProviderConfigurationDao {
-
-	private final JdbcOperations jdbcOps;
+public class JdbcCapacityProviderConfigurationDao
+		extends BaseJdbcExternalSystemConfigurationDao<CapacityProviderConfiguration>
+		implements CapacityProviderConfigurationDao {
 
 	/**
 	 * Constructor.
@@ -63,13 +62,7 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 	 *         if any argument is {@literal null}
 	 */
 	public JdbcCapacityProviderConfigurationDao(JdbcOperations jdbcOps) {
-		super();
-		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
-	}
-
-	@Override
-	public Class<? extends CapacityProviderConfiguration> getObjectType() {
-		return CapacityProviderConfiguration.class;
+		super(jdbcOps, OscpRole.CapacityProvider, CapacityProviderConfiguration.class);
 	}
 
 	@Override
@@ -80,21 +73,11 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 	}
 
 	@Override
-	public void saveExternalSystemAuthToken(UserLongCompositePK id, String token) {
-		final var sql = new InsertAuthToken(OscpRole.CapacityProvider, id, token);
-		jdbcOps.execute(sql, (cs) -> {
-			cs.execute();
-			return null;
-		});
-	}
-
-	@Override
 	public UserLongCompositePK save(CapacityProviderConfiguration entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
-		final UpdateCapacityProviderConfiguration sql = new UpdateCapacityProviderConfiguration(
-				entity.getId(), entity);
+		final var sql = new UpdateCapacityProviderConfiguration(entity.getId(), entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? entity.getId() : null);
 	}
@@ -109,10 +92,15 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 
 	@Override
 	public CapacityProviderConfiguration get(UserLongCompositePK id) {
-		BasicConfigurationFilter filter = new BasicConfigurationFilter();
-		filter.setUserId(
-				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
-		filter.setConfigurationId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
+		BasicConfigurationFilter filter = filterForGet(id);
+		var results = findFiltered(filter);
+		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	@Override
+	public CapacityProviderConfiguration getForUpdate(UserLongCompositePK id) {
+		BasicConfigurationFilter filter = filterForGet(id);
+		filter.setLockResults(true);
 		var results = findFiltered(filter);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
@@ -120,13 +108,8 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 	@Override
 	public FilterResults<CapacityProviderConfiguration, UserLongCompositePK> findFiltered(
 			ConfigurationFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
-		SelectCapacityProviderConfiguration sql = new SelectCapacityProviderConfiguration(filter);
+		var sql = new SelectCapacityProviderConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CapacityProviderConfigurationRowMapper.INSTANCE);
-	}
-
-	@Override
-	public Collection<CapacityProviderConfiguration> getAll(List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -135,20 +118,8 @@ public class JdbcCapacityProviderConfigurationDao implements CapacityProviderCon
 		filter.setUserId(requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId"));
 		filter.setConfigurationId(requireNonNullArgument(entity.getEntityId(), "entity.entityId"));
-		DeleteCapacityProviderConfiguration sql = new DeleteCapacityProviderConfiguration(filter);
+		var sql = new DeleteCapacityProviderConfiguration(filter);
 		jdbcOps.update(sql);
-	}
-
-	@Override
-	public CapacityProviderConfiguration getForUpdate(UserLongCompositePK id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getExternalSystemAuthToken(UserLongCompositePK configurationId) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

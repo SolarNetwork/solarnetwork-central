@@ -1,5 +1,5 @@
 /* ==================================================================
- * ConfigurationFilter.java - 11/08/2022 11:24:53 am
+ * LockingCriteria.java - 18/08/2022 1:09:44 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,17 +22,32 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * A basic filter for OSCP configuration entities.
+ * A result-locking criteria.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ConfigurationFilter extends UserCriteria, ConfigurationCriteria, ProviderCriteria,
-		LockingCriteria, PaginationCriteria, SortCriteria {
+public interface LockingCriteria {
+
+	/**
+	 * Test if locked results are desired.
+	 * 
+	 * @return {@literal true} if the results of the query should be locked such
+	 *         that other transactions are not allowed to update them until the
+	 *         current transaction completes
+	 */
+	boolean isLockResults();
+
+	/**
+	 * Test if already locked results should be skipped when querying, or wait
+	 * for the lock(s) to be released..
+	 * 
+	 * @return {@literal true} if the results of the query should ignore any
+	 *         already-locked rows that other transactions have already locked,
+	 *         {@literal false} if this query should wait for the locks to be
+	 *         released before continuing
+	 */
+	boolean isSkipLockedResults();
 
 }

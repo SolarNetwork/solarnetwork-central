@@ -42,9 +42,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
@@ -60,6 +68,9 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
  * @version 1.0
  */
 public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
+
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	private JdbcFlexibilityProviderDao flexibilityProviderDao;
 	private JdbcCapacityOptimizerConfigurationDao dao;
@@ -174,6 +185,20 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	}
 
 	@Test
+	public void get_authToken() {
+		// GIVEN
+		insert();
+
+		final String token = randomUUID().toString();
+		dao.saveExternalSystemAuthToken(last.getId(), token);
+
+		// WHEN
+		String result = dao.getExternalSystemAuthToken(last.getId());
+
+		assertThat("Result token matches saved value", result, is(equalTo(token)));
+	}
+
+	@Test
 	public void get() {
 		// GIVEN
 		insert();
@@ -183,6 +208,50 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 
 		// THEN
 		assertThat("Retrieved entity matches source", result, is(equalTo(last)));
+	}
+
+	@Test
+	public void getForUpdate() throws InterruptedException {
+		// GIVEN
+		insert();
+
+		// WHEN
+		AtomicBoolean updateFailed = new AtomicBoolean();
+
+		try {
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+
+			TransactionTemplate tt = new TransactionTemplate(txManager);
+
+			tt.executeWithoutResult((ts) -> {
+				CapacityOptimizerConfiguration result = dao.getForUpdate(last.getId());
+				Thread t = new Thread(() -> {
+					tt.executeWithoutResult((ts2) -> {
+						try {
+							jdbcTemplate.queryForList(
+									"SELECT * FROM solaroscp.oscp_co_conf WHERE user_id = ? AND id = ? FOR UPDATE NOWAIT",
+									result.getUserId(), result.getEntityId());
+						} catch ( ConcurrencyFailureException e ) {
+							updateFailed.set(true);
+						}
+						log.info("Update 2 signaling");
+					});
+				}, "Update 2");
+				t.start();
+				try {
+					t.join(5000L);
+				} catch ( InterruptedException e ) {
+					// ignore
+				}
+			});
+		} finally {
+			JdbcTestUtils.deleteFromTables((JdbcTemplate) jdbcTemplate, "solaruser.user_user",
+					"solaroscp.oscp_co_conf", "solaroscp.oscp_fp_token");
+		}
+
+		// THEN
+		assertThat("Update 2 failed", updateFailed.get(), is(equalTo(true)));
 	}
 
 	@Test

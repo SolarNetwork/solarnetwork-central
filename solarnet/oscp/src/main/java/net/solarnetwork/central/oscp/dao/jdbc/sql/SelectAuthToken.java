@@ -23,15 +23,17 @@
 package net.solarnetwork.central.oscp.dao.jdbc.sql;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import org.springframework.jdbc.core.PreparedStatementCreator;
+import java.sql.Types;
+import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Select an authorization token ID for a given token.
+ * Select an authorization token for a configuration ID.
  * 
  * <p>
  * This query only returns a row if the given token filter matches and is not
@@ -41,36 +43,38 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  * @author matt
  * @version 1.0
  */
-public class SelectAuthTokenId implements PreparedStatementCreator, SqlProvider {
+public class SelectAuthToken implements CallableStatementCreator, SqlProvider {
 
 	private final OscpRole type;
-	private final String token;
+	private final UserLongCompositePK configId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param type
 	 *        the type of token
-	 * @param token
-	 *        the token to get the ID for
+	 * @param configId
+	 *        the ID of the configuration to get
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SelectAuthTokenId(OscpRole type, String token) {
+	public SelectAuthToken(OscpRole type, UserLongCompositePK configId) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
-		this.token = requireNonNullArgument(token, "token");
+		this.configId = requireNonNullArgument(configId, "configId");
 	}
 
 	@Override
 	public String getSql() {
-		return String.format("SELECT user_id, id FROM solaroscp.%s_id_for_token(?)", type.getAlias());
+		return String.format("{? = call solaroscp.get_%s_token(?, ?)}", type.getAlias());
 	}
 
 	@Override
-	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
-		stmt.setString(1, token);
+	public CallableStatement createCallableStatement(Connection con) throws SQLException {
+		CallableStatement stmt = con.prepareCall(getSql());
+		stmt.registerOutParameter(1, Types.VARCHAR);
+		stmt.setObject(2, configId.getUserId(), Types.BIGINT);
+		stmt.setObject(3, configId.getEntityId(), Types.BIGINT);
 		return stmt;
 	}
 

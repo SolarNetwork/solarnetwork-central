@@ -82,6 +82,9 @@ public class SelectCapacityOptimizerConfiguration
 		sqlWhere(buf);
 		sqlOrderBy(buf);
 		CommonSqlUtils.limitOffset(filter, buf);
+		if ( filter.isLockResults() ) {
+			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), buf);
+		}
 		return buf.toString();
 	}
 

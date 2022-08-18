@@ -285,4 +285,22 @@ public class SelectCapacityOptimizerConfigurationTests {
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, filter);
 	}
+
+	@Test
+	public void forUpdate_single_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setConfigurationId(2L);
+		filter.setLockResults(true);
+
+		// WHEN
+		String sql = new SelectCapacityOptimizerConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-capacity-optimizer-conf-locked-one.sql", TestSqlResources.class, SQL_COMMENT));
+	}
+
 }

@@ -242,6 +242,19 @@ $$
 $$;
 
 /**
+ * Get a Capacity Provider token.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Capacity Provider (solaroscp.oscp_cp_conf) ID
+ * @return the token
+ */
+CREATE OR REPLACE FUNCTION solaroscp.get_cp_token(uid BIGINT, cid BIGINT)
+RETURNS TEXT LANGUAGE SQL STABLE AS
+$$
+	SELECT token FROM solaroscp.oscp_cp_token WHERE user_id = uid AND id = cid
+$$;
+
+/**
  * Create or update a Capacity Optimizer token.
  *
  * @param uid 	the user ID
@@ -255,6 +268,19 @@ $$
 	VALUES (uid, cid, tok)
 	ON CONFLICT (user_id, id) DO UPDATE SET
 		token = EXCLUDED.token
+$$;
+
+/**
+ * Get a Capacity Optimizer token.
+ *
+ * @param uid 	the user ID
+ * @param cid 	the Capacity Optimizer (solaroscp.oscp_co_conf) ID
+ * @return the token
+ */
+CREATE OR REPLACE FUNCTION solaroscp.get_co_token(uid BIGINT, cid BIGINT)
+RETURNS TEXT LANGUAGE SQL STABLE AS
+$$
+	SELECT token FROM solaroscp.oscp_co_token WHERE user_id = uid AND id = cid
 $$;
 
 /**

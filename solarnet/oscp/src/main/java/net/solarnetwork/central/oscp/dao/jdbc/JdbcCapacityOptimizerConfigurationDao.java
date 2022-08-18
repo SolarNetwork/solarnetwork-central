@@ -35,7 +35,6 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityOptimizerConfiguration;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityOptimizerConfiguration;
@@ -50,9 +49,9 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 1.0
  */
-public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerConfigurationDao {
-
-	private final JdbcOperations jdbcOps;
+public class JdbcCapacityOptimizerConfigurationDao
+		extends BaseJdbcExternalSystemConfigurationDao<CapacityOptimizerConfiguration>
+		implements CapacityOptimizerConfigurationDao {
 
 	/**
 	 * Constructor.
@@ -63,13 +62,7 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	 *         if any argument is {@literal null}
 	 */
 	public JdbcCapacityOptimizerConfigurationDao(JdbcOperations jdbcOps) {
-		super();
-		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
-	}
-
-	@Override
-	public Class<? extends CapacityOptimizerConfiguration> getObjectType() {
-		return CapacityOptimizerConfiguration.class;
+		super(jdbcOps, OscpRole.CapacityOptimizer, CapacityOptimizerConfiguration.class);
 	}
 
 	@Override
@@ -80,21 +73,11 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	}
 
 	@Override
-	public void saveExternalSystemAuthToken(UserLongCompositePK id, String token) {
-		final var sql = new InsertAuthToken(OscpRole.CapacityOptimizer, id, token);
-		jdbcOps.execute(sql, (cs) -> {
-			cs.execute();
-			return null;
-		});
-	}
-
-	@Override
 	public UserLongCompositePK save(CapacityOptimizerConfiguration entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
-		final UpdateCapacityOptimizerConfiguration sql = new UpdateCapacityOptimizerConfiguration(
-				entity.getId(), entity);
+		final var sql = new UpdateCapacityOptimizerConfiguration(entity.getId(), entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? entity.getId() : null);
 	}
@@ -109,10 +92,15 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 
 	@Override
 	public CapacityOptimizerConfiguration get(UserLongCompositePK id) {
-		BasicConfigurationFilter filter = new BasicConfigurationFilter();
-		filter.setUserId(
-				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
-		filter.setConfigurationId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
+		BasicConfigurationFilter filter = filterForGet(id);
+		var results = findFiltered(filter);
+		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	@Override
+	public CapacityOptimizerConfiguration getForUpdate(UserLongCompositePK id) {
+		BasicConfigurationFilter filter = filterForGet(id);
+		filter.setLockResults(true);
 		var results = findFiltered(filter);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
@@ -120,14 +108,9 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 	@Override
 	public FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> findFiltered(
 			ConfigurationFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
-		SelectCapacityOptimizerConfiguration sql = new SelectCapacityOptimizerConfiguration(filter);
+		var sql = new SelectCapacityOptimizerConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
 				CapacityOptimizerConfigurationRowMapper.INSTANCE);
-	}
-
-	@Override
-	public Collection<CapacityOptimizerConfiguration> getAll(List<SortDescriptor> sorts) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -136,20 +119,8 @@ public class JdbcCapacityOptimizerConfigurationDao implements CapacityOptimizerC
 		filter.setUserId(requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId"));
 		filter.setConfigurationId(requireNonNullArgument(entity.getEntityId(), "entity.entityId"));
-		DeleteCapacityOptimizerConfiguration sql = new DeleteCapacityOptimizerConfiguration(filter);
+		var sql = new DeleteCapacityOptimizerConfiguration(filter);
 		jdbcOps.update(sql);
-	}
-
-	@Override
-	public CapacityOptimizerConfiguration getForUpdate(UserLongCompositePK id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getExternalSystemAuthToken(UserLongCompositePK configurationId) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

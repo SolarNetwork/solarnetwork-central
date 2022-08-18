@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao;
 
 import java.util.Arrays;
+import java.util.Objects;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -34,6 +35,8 @@ import net.solarnetwork.dao.PaginationCriteria;
  */
 public class BasicConfigurationFilter extends BasicCoreCriteria implements AssetFilter {
 
+	private boolean lockResults;
+	private boolean skipLockedResults;
 	private Long[] configurationIds;
 	private Long[] groupIds;
 	private Long[] providerIds;
@@ -72,10 +75,16 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicConfigurationFilter c ) {
+			setLockResults(c.isLockResults());
+			setSkipLockedResults(c.isSkipLockedResults());
 			setConfigurationIds(c.getConfigurationIds());
 			setGroupIds(c.getGroupIds());
 			setProviderIds(c.getProviderIds());
 		} else {
+			if ( criteria instanceof LockingCriteria c ) {
+				setLockResults(c.isLockResults());
+				setSkipLockedResults(c.isSkipLockedResults());
+			}
 			if ( criteria instanceof ConfigurationCriteria c ) {
 				setConfigurationIds(c.getConfigurationIds());
 			}
@@ -92,6 +101,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + Objects.hash(lockResults);
+		result = prime * result + Objects.hash(skipLockedResults);
 		result = prime * result + Arrays.hashCode(configurationIds);
 		result = prime * result + Arrays.hashCode(groupIds);
 		result = prime * result + Arrays.hashCode(providerIds);
@@ -110,7 +121,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 			return false;
 		}
 		BasicConfigurationFilter other = (BasicConfigurationFilter) obj;
-		return Arrays.equals(configurationIds, other.configurationIds)
+		return lockResults == other.lockResults && skipLockedResults == other.skipLockedResults
+				&& Arrays.equals(configurationIds, other.configurationIds)
 				&& Arrays.equals(groupIds, other.groupIds)
 				&& Arrays.equals(providerIds, other.providerIds);
 	}
@@ -194,4 +206,35 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 	public void setProviderId(Long providerId) {
 		setProviderIds(providerId != null ? new Long[] { providerId } : null);
 	}
+
+	@Override
+	public boolean isLockResults() {
+		return lockResults;
+	}
+
+	/**
+	 * Set the lock results flag.
+	 * 
+	 * @param lockResults
+	 *        {@literal true} to request locked results
+	 */
+	public void setLockResults(boolean lockResults) {
+		this.lockResults = lockResults;
+	}
+
+	@Override
+	public boolean isSkipLockedResults() {
+		return skipLockedResults;
+	}
+
+	/**
+	 * Set the "skip locked results" flag.
+	 * 
+	 * @param skipLockedResults
+	 *        {@literal true} to skip locked results
+	 */
+	public void setSkipLockedResults(boolean skipLockedResults) {
+		this.skipLockedResults = skipLockedResults;
+	}
+
 }
