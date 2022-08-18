@@ -26,10 +26,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
+import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.service.PingTest;
 
 /**
@@ -38,6 +42,8 @@ import net.solarnetwork.service.PingTest;
  * @author matt
  * @version 1.0
  */
+@Configuration
+@Import({ WebServiceErrorAttributes.class })
 public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired(required = false)
@@ -48,6 +54,11 @@ public class WebConfig implements WebMvcConfigurer {
 		PingController controller = new PingController();
 		controller.setTests(pingTests);
 		return controller;
+	}
+
+	@RequestMapping("/ping")
+	static class SolarOscpFpPingController extends PingController {
+		// nothing new
 	}
 
 	@Override

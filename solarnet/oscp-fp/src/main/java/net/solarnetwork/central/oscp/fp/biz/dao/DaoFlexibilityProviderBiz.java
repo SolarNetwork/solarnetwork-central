@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -72,6 +73,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	private final Executor executor;
 	private final RestOperations restOps;
+	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
@@ -95,6 +97,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the executor to use
 	 * @param restOps
 	 *        the REST operations to use
+	 * @param userEventAppenderBiz
+	 *        the user event appender
 	 * @param flexibilityProviderDao
 	 *        the flexibility provider DAO
 	 * @param capacityProviderDao
@@ -105,12 +109,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *         if any argument is {@literal null}
 	 */
 	public DaoFlexibilityProviderBiz(Executor executor, RestOperations restOps,
-			FlexibilityProviderDao flexibilityProviderDao,
+			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.flexibilityProviderDao = requireNonNullArgument(flexibilityProviderDao,
 				"flexibilityProviderDao");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");

@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.client.RestOperations;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
@@ -40,6 +41,9 @@ import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
  */
 @Configuration
 public class ServiceConfig {
+
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Autowired
 	private FlexibilityProviderDao flexibilityProviderDao;
@@ -63,8 +67,8 @@ public class ServiceConfig {
 	 */
 	@Bean
 	public DaoFlexibilityProviderBiz flexibilityProviderBiz() {
-		return new DaoFlexibilityProviderBiz(executor, restOps, flexibilityProviderDao,
-				capacityProviderDao, capacityOptimizerDao);
+		return new DaoFlexibilityProviderBiz(executor, restOps, userEventAppenderBiz,
+				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
 	}
 
 }

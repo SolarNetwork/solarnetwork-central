@@ -57,6 +57,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
@@ -86,6 +87,9 @@ import oscp.v20.VersionUrl;
  */
 @ExtendWith(MockitoExtension.class)
 public class DaoFlexibilityProviderBizTests {
+
+	@Mock
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Mock
 	private FlexibilityProviderDao flexibilityProviderDao;
@@ -120,8 +124,8 @@ public class DaoFlexibilityProviderBizTests {
 		restTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
 
 		mockExternalSystem = MockRestServiceServer.bindTo(restTemplate).build();
-		biz = new DaoFlexibilityProviderBiz(executor, restTemplate, flexibilityProviderDao,
-				capacityProviderDao, capacityOptimizerDao);
+		biz = new DaoFlexibilityProviderBiz(executor, restTemplate, userEventAppenderBiz,
+				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
 		// no biz.setTxTemplate(tt); to use test transaction
 	}
 

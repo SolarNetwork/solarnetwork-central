@@ -24,6 +24,8 @@ package net.solarnetwork.central.oscp.fp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 
 /**
@@ -36,6 +38,9 @@ import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 @SpringBootApplication(scanBasePackageClasses = {
 		SolarNetOscpConfiguration.class,
 		SolarOscpFlexibilityProviderApp.class,
+})
+@Import({
+	SolarNetCommonConfiguration.class
 })
 //@formatter:on
 public class SolarOscpFlexibilityProviderApp {
