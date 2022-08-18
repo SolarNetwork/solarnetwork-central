@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -78,6 +79,9 @@ public class OcppV16ControllerConfig {
 
 	@Autowired
 	private TransactionTemplate transactionTemplate;
+
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Autowired
 	private UserNodeDao userNodeDao;
@@ -132,7 +136,7 @@ public class OcppV16ControllerConfig {
 				ocppCentralChargePointConnectorDao, ocppChargeSessionDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 		controller.setDatumPublisher(publisher);
-
+		controller.setUserEventAppenderBiz(userEventAppenderBiz);
 		controller.setInstructionHandler(ocppInstructionHandler);
 
 		return controller;

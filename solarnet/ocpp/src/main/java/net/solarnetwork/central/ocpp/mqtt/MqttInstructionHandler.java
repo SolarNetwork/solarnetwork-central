@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.ocpp.mqtt;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -33,10 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
@@ -57,10 +62,10 @@ import ocpp.domain.Action;
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
-		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler {
+		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler, CentralOcppUserEvents {
 
 	/** The default {@code mqttTopic} property value. */
 	public static final String DEFAULT_MQTT_TOPIC = "instr/OCPP_v16";
@@ -80,6 +85,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	private final ChargePointRouter chargePointRouter;
 	private final CentralChargePointDao chargePointDao;
 	private final Class<T> actionClass;
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -212,10 +218,17 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 										"Failed to send instruction {} action {} to charge point {}: {}",
 										instructionId, actionMessage.getAction(),
 										actionMessage.getClientId(), root.getMessage());
-								instructionDao.compareAndUpdateInstructionState(instructionId,
+								Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
+										format("Error handling OCPP action %s: %s",
+												actionMessage.getAction(), root.getMessage()));
+								if ( instructionDao.compareAndUpdateInstructionState(instructionId,
 										cp.getNodeId(), InstructionState.Executing,
-										InstructionState.Declined, singletonMap("error",
-												"Error handling OCPP action: " + root.getMessage()));
+										InstructionState.Declined, data) ) {
+									generateUserEvent(cp.getUserId(),
+											CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
+											"Error handling OCPP action", data);
+
+								}
 							} else {
 								Map<String, Object> resultParameters = null;
 								if ( res != null ) {
@@ -225,12 +238,19 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 								log.info("Sent instruction {} action {} to charge point {}.",
 										instructionId, actionMessage.getAction(),
 										actionMessage.getClientId());
-								instructionDao.compareAndUpdateInstructionState(instructionId,
+								if ( instructionDao.compareAndUpdateInstructionState(instructionId,
 										cp.getNodeId(), InstructionState.Executing,
 										InstructionState.Completed,
 										resultParameters != null && !resultParameters.isEmpty()
 												? resultParameters
-												: null);
+												: null) ) {
+									Map<String, Object> data = new HashMap<>(4);
+									data.put(ACTION_DATA_KEY, actionMessage.getAction());
+									data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
+									data.put(MESSAGE_DATA_KEY, resultParameters);
+									generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_SENT_TAGS,
+											null, data);
+								}
 							}
 							return true;
 						});
@@ -248,6 +268,16 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 		} catch ( Exception e ) {
 			log.error("Error processing MQTT message on topic {}: {}", mqttTopic, e.getMessage());
 		}
+	}
+
+	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
+		if ( biz == null ) {
+			return;
+		}
+		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		biz.addEvent(userId, event);
 	}
 
 	/**
@@ -292,6 +322,27 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	 */
 	public void setPublishOnly(boolean publishOnly) {
 		this.publishOnly = publishOnly;
+	}
+
+	/**
+	 * Get the user event appender service.
+	 * 
+	 * @return the service
+	 * @since 2.1
+	 */
+	public UserEventAppenderBiz getUserEventAppenderBiz() {
+		return userEventAppenderBiz;
+	}
+
+	/**
+	 * Set the user event appender service.
+	 * 
+	 * @param userEventAppenderBiz
+	 *        the service to set
+	 * @since 2.1
+	 */
+	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }

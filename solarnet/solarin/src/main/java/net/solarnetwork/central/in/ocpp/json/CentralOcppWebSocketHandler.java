@@ -47,6 +47,7 @@ import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.ocpp.domain.ActionMessage;

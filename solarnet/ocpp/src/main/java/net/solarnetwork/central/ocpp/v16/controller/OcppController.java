@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.v16.controller;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
@@ -45,6 +46,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.InstructionState;
@@ -53,6 +56,7 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
+import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -93,10 +97,10 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public class OcppController extends BasicIdentifiable
-		implements ChargePointManager, AuthorizationService, NodeInstructionQueueHook {
+public class OcppController extends BasicIdentifiable implements ChargePointManager,
+		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
 
 	/** The default {@code initialRegistrationStatus} value. */
 	public static final RegistrationStatus DEFAULT_INITIAL_REGISTRATION_STATUS = RegistrationStatus.Pending;
@@ -114,6 +118,7 @@ public class OcppController extends BasicIdentifiable
 	private ObjectMapper objectMapper;
 	private ConnectorStatusDatumPublisher datumPublisher;
 	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -366,7 +371,10 @@ public class OcppController extends BasicIdentifiable
 		if ( !(instruction instanceof OcppNodeInstruction) ) {
 			return;
 		}
-		OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
+		final OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
+		final Long userId = (instr.chargePointIdentity.getUserIdentifier() instanceof Long
+				? (Long) instr.chargePointIdentity.getUserIdentifier()
+				: null);
 
 		final ActionMessageProcessor<JsonNode, Void> handler = getInstructionHandler();
 		if ( handler != null ) {
@@ -379,9 +387,10 @@ public class OcppController extends BasicIdentifiable
 					while ( root.getCause() != null ) {
 						root = root.getCause();
 					}
+					Map<String, Object> data = singletonMap(ERROR_DATA_KEY, format(
+							"Error handling OCPP action %s: %s", instr.action, root.getMessage()));
 					instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-							instr.getState(), InstructionState.Declined,
-							singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
+							instr.getState(), InstructionState.Declined, data);
 				}
 				return true;
 			});
@@ -397,9 +406,14 @@ public class OcppController extends BasicIdentifiable
 				}
 				log.info("Failed to send OCPPv16 {} to charge point {}: {}", instr.action,
 						instr.chargePointIdentity, root.getMessage());
+				Map<String, Object> data = singletonMap("error",
+						"Error handling OCPP action: " + root.getMessage());
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
-						instr.getState(), InstructionState.Declined,
-						singletonMap("error", "Error handling OCPP action: " + root.getMessage()));
+						instr.getState(), InstructionState.Declined, data);
+				if ( userId != null ) {
+					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
+							data);
+				}
 			} else {
 				Map<String, Object> resultParameters = null;
 				if ( res != null ) {
@@ -408,6 +422,13 @@ public class OcppController extends BasicIdentifiable
 				log.info("Sent OCPPv16 {} to charge point {}", instr.action, instr.chargePointIdentity);
 				instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 						instr.getState(), InstructionState.Completed, resultParameters);
+				if ( userId != null ) {
+					Map<String, Object> data = new HashMap<>(4);
+					data.put(ACTION_DATA_KEY, instr.action);
+					data.put(CHARGE_POINT_DATA_KEY, instr.chargePointIdentity.getIdentifier());
+					data.put(MESSAGE_DATA_KEY, resultParameters);
+					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_SENT_TAGS, null, data);
+				}
 			}
 			return true;
 		});
@@ -481,6 +502,16 @@ public class OcppController extends BasicIdentifiable
 			handler.handleActionMessageResult(msg, null,
 					new ErrorCodeException(ActionErrorCode.GenericError, "Client not available."));
 		});
+	}
+
+	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
+		if ( biz == null ) {
+			return;
+		}
+		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
+		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		biz.addEvent(userId, event);
 	}
 
 	/**
@@ -611,6 +642,27 @@ public class OcppController extends BasicIdentifiable
 	 */
 	public void setInstructionHandler(ActionMessageProcessor<JsonNode, Void> instructionHandler) {
 		this.instructionHandler = instructionHandler;
+	}
+
+	/**
+	 * Get the user event appender service.
+	 * 
+	 * @return the service
+	 * @since 2.2
+	 */
+	public UserEventAppenderBiz getUserEventAppenderBiz() {
+		return userEventAppenderBiz;
+	}
+
+	/**
+	 * Set the user event appender service.
+	 * 
+	 * @param userEventAppenderBiz
+	 *        the service to set
+	 * @since 2.2
+	 */
+	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }
