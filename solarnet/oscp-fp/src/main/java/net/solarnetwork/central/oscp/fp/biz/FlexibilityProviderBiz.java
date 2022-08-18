@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.fp.biz;
 
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.domain.KeyValuePair;
 
@@ -32,7 +33,15 @@ import net.solarnetwork.domain.KeyValuePair;
  * @author matt
  * @version 1.0
  */
-public interface FlexibilityProviderBiz {
+public interface FlexibilityProviderBiz extends OscpUserEvents {
+
+	/** User event tags for Capacity Provider registration events. */
+	String[] CAPACITY_PROVIDER_REGISTER_TAGS = new String[] { OSCP_EVENT_TAG, CAPACITY_PROVIDER_TAG,
+			REGISTER_TAG };
+
+	/** User event tags for Capacity Provider registration error events. */
+	String[] CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_PROVIDER_TAG, REGISTER_TAG, ERROR_TAG };
 
 	/**
 	 * Register an external system using an authorization token created in

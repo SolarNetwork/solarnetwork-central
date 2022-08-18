@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -58,7 +60,13 @@ public class ServiceConfig {
 	private AsyncTaskExecutor executor;
 
 	@Autowired
+	private TaskScheduler taskScheduler;
+
+	@Autowired
 	private RestOperations restOps;
+
+	@Autowired
+	private TransactionTemplate transactionTemplate;
 
 	/**
 	 * Get the flexibility provider service.
@@ -67,8 +75,11 @@ public class ServiceConfig {
 	 */
 	@Bean
 	public DaoFlexibilityProviderBiz flexibilityProviderBiz() {
-		return new DaoFlexibilityProviderBiz(executor, restOps, userEventAppenderBiz,
+		var biz = new DaoFlexibilityProviderBiz(executor, restOps, userEventAppenderBiz,
 				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
+		biz.setTxTemplate(transactionTemplate);
+		biz.setTaskScheduler(taskScheduler);
+		return biz;
 	}
 
 }

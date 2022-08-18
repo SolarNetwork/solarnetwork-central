@@ -83,6 +83,7 @@ public class UpdateCapacityProviderConfigurationTests {
 		conf.setBaseUrl("http://example.com/" + randomUUID().toString());
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
+		conf.setOscpVersion("2.0");
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 		return conf;
@@ -91,18 +92,20 @@ public class UpdateCapacityProviderConfigurationTests {
 	private void thenPrepStatement(PreparedStatement result, UserLongCompositePK id,
 			CapacityProviderConfiguration conf) throws SQLException {
 		Timestamp ts = Timestamp.from(conf.getModified());
-		then(result).should().setTimestamp(1, ts);
-		then(result).should().setBoolean(2, conf.isEnabled());
-		then(result).should().setInt(3, conf.getRegistrationStatus().getCode());
-		then(result).should().setString(4, conf.getName());
-		then(result).should().setString(5, conf.getBaseUrl());
+		int p = 0;
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setBoolean(++p, conf.isEnabled());
+		then(result).should().setInt(++p, conf.getRegistrationStatus().getCode());
+		then(result).should().setString(++p, conf.getName());
+		then(result).should().setString(++p, conf.getBaseUrl());
+		then(result).should().setString(++p, conf.getOscpVersion());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(6, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(6, Types.VARCHAR);
+			then(result).should().setNull(++p, Types.VARCHAR);
 		}
-		then(result).should().setObject(7, id.getUserId());
-		then(result).should().setObject(8, id.getEntityId());
+		then(result).should().setObject(++p, id.getUserId());
+		then(result).should().setObject(++p, id.getEntityId());
 	}
 
 	@Test

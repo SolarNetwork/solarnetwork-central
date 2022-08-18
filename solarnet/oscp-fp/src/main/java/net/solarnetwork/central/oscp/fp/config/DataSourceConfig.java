@@ -32,6 +32,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import com.zaxxer.hikari.HikariDataSource;
 
 /**
@@ -68,6 +69,11 @@ public class DataSourceConfig {
 	@Primary
 	public JdbcOperations jdbcOperations(DataSource dataSource) {
 		return new JdbcTemplate(dataSource);
+	}
+
+	@Bean
+	public TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
+		return new TransactionTemplate(txManager);
 	}
 
 }

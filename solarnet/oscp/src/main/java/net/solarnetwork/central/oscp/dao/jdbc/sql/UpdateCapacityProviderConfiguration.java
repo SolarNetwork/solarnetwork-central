@@ -76,6 +76,7 @@ public class UpdateCapacityProviderConfiguration implements PreparedStatementCre
 					, reg_status = ?
 					, cname = ?
 					, url = ?
+					, oscp_ver = ?
 					, sprops = ?::jsonb
 				WHERE user_id = ? AND id = ?
 				""";
@@ -91,6 +92,7 @@ public class UpdateCapacityProviderConfiguration implements PreparedStatementCre
 		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
+		stmt.setString(++p, entity.getOscpVersion());
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		stmt.setObject(++p, id.getUserId());

@@ -37,6 +37,40 @@ public class LogEventInfo {
 	private final String data;
 
 	/**
+	 * Create a new event.
+	 * 
+	 * <p>
+	 * This method will merge the base and extra tags into the resulting event.
+	 * </p>
+	 * 
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param data
+	 *        the data
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the event
+	 */
+	public static LogEventInfo event(String[] baseTags, String message, String data,
+			String... extraTags) {
+		String[] tags = null;
+		boolean hasBaseTags = (baseTags != null && baseTags.length > 0);
+		boolean hasExtraTags = (extraTags != null && extraTags.length > 0);
+		if ( hasBaseTags && hasExtraTags ) {
+			tags = new String[baseTags.length + extraTags.length];
+			System.arraycopy(baseTags, 0, tags, 0, baseTags.length);
+			System.arraycopy(extraTags, 0, tags, baseTags.length, extraTags.length);
+		} else if ( hasBaseTags ) {
+			tags = baseTags;
+		} else if ( hasExtraTags ) {
+			tags = extraTags;
+		}
+		return new LogEventInfo(tags, message, data);
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * @param tags
