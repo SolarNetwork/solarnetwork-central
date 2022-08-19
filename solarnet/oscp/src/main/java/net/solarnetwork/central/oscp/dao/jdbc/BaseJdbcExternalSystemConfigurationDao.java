@@ -31,13 +31,17 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthToken;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateSystemSettings;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Base implementation of ExternalSystemConfigurationDao.
  * 
+ * @param <C>
+ *        the configuration type
  * @author matt
  * @version 1.0
  */
@@ -97,6 +101,12 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	@Override
 	public Collection<C> getAll(List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void saveSettings(UserLongCompositePK id, SystemSettings settings) {
+		final var sql = new UpdateSystemSettings(role, id, settings);
+		jdbcOps.update(sql);
 	}
 
 	@Override

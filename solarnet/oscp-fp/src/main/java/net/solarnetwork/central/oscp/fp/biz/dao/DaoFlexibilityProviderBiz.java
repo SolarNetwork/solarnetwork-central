@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.biz.dao;
 import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
+import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
@@ -60,8 +61,10 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -131,6 +134,27 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 	}
 
+	private ExternalSystemConfigurationDao<?> configurationDaoForRole(OscpRole systemRole) {
+		ExternalSystemConfigurationDao<?> dao;
+		if ( systemRole == OscpRole.CapacityProvider ) {
+			dao = capacityProviderDao;
+		} else if ( systemRole == OscpRole.CapacityOptimizer ) {
+			dao = capacityOptimizerDao;
+		} else {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		return dao;
+	}
+
+	private static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> conf,
+			String[] baseTags, String message) {
+		return event(baseTags, message,
+				getJSONString(Map.of(CONFIG_ID_DATA_KEY, conf.getEntityId(),
+						REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode(),
+						VERSION_DATA_KEY, conf.getOscpVersion(), URL_DATA_KEY, conf.getBaseUrl()),
+						null));
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
@@ -141,14 +165,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 
 		OscpRole systemRole = authInfo.role();
-		ExternalSystemConfigurationDao<?> dao;
-		if ( systemRole == OscpRole.CapacityProvider ) {
-			dao = capacityProviderDao;
-		} else if ( systemRole == OscpRole.CapacityOptimizer ) {
-			dao = capacityOptimizerDao;
-		} else {
-			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
-		}
+		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		BaseOscpExternalSystemConfiguration<?> conf = handleRegistration(authInfo, externalSystemToken,
 				versionUrl, dao);
 
@@ -163,39 +180,54 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private <C extends BaseOscpExternalSystemConfiguration<C>> C handleRegistration(
 			AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
 			ExternalSystemConfigurationDao<C> dao) {
-		BasicConfigurationFilter filter = BasicConfigurationFilter.filterForUsers(authInfo.userId());
+		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
 		filter.setConfigurationId(authInfo.entityId());
 		var filterResults = dao.findFiltered(filter);
-		if ( filterResults.getReturnedResultCount() > 0 ) {
-			C conf = stream(filterResults.spliterator(), false).findFirst().orElse(null);
-			conf.setOscpVersion(versionUrl.getKey());
-			conf.setBaseUrl(versionUrl.getValue());
-			if ( conf.getRegistrationStatus() != RegistrationStatus.Pending ) {
-				conf.setRegistrationStatus(RegistrationStatus.Pending);
-			}
-
-			userEventAppenderBiz.addEvent(authInfo.userId(), event(CAPACITY_PROVIDER_REGISTER_TAGS, null,
-					getJSONString(Map.of(CONFIG_ID_DATA_KEY, conf.getEntityId(),
-							REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode(),
-							VERSION_DATA_KEY, versionUrl.getKey(), URL_DATA_KEY, versionUrl.getValue()),
-							null)));
-
-			dao.save(conf);
-			dao.saveExternalSystemAuthToken(conf.getId(), externalSystemToken);
-			return conf;
-		} else {
+		if ( filterResults.getReturnedResultCount() < 1 ) {
 			// TODO UserEvent (in exception handler method)
 			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
 		}
-	}
+		C conf = stream(filterResults.spliterator(), false).findFirst().orElse(null);
+		conf.setOscpVersion(versionUrl.getKey());
+		conf.setBaseUrl(versionUrl.getValue());
+		if ( conf.getRegistrationStatus() != RegistrationStatus.Pending ) {
+			conf.setRegistrationStatus(RegistrationStatus.Pending);
+		}
 
-	private static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> conf,
-			String[] baseTags, String message) {
-		return event(baseTags, message,
+		userEventAppenderBiz.addEvent(authInfo.userId(), event(CAPACITY_PROVIDER_REGISTER_TAGS, null,
 				getJSONString(Map.of(CONFIG_ID_DATA_KEY, conf.getEntityId(),
 						REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode(),
-						VERSION_DATA_KEY, conf.getOscpVersion(), URL_DATA_KEY, conf.getBaseUrl()),
-						null));
+						VERSION_DATA_KEY, versionUrl.getKey(), URL_DATA_KEY, versionUrl.getValue()),
+						null)));
+
+		dao.save(conf);
+		dao.saveExternalSystemAuthToken(conf.getId(), externalSystemToken);
+		return conf;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void handshake(AuthRoleInfo authInfo, SystemSettings settings,
+			Future<?> externalSystemReady) {
+		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null || settings == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		OscpRole systemRole = authInfo.role();
+		if ( systemRole != OscpRole.CapacityProvider ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+
+		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
+		filter.setConfigurationId(authInfo.entityId());
+		filter.setLockResults(true);
+		var filterResults = capacityProviderDao.findFiltered(filter);
+		if ( filterResults.getReturnedResultCount() < 1 ) {
+			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
+		}
+		CapacityProviderConfiguration conf = stream(filterResults.spliterator(), false).findFirst()
+				.orElse(null);
+		// TODO conf.set
+
 	}
 
 	private class RegisterExternalSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>

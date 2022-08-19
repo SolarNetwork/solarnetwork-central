@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.biz;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.domain.KeyValuePair;
 
@@ -69,9 +70,27 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * @throws AuthorizationException
 	 *         with
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
-	 *         if the authorization token does not exist
+	 *         if the system configuration associated with {@code authInfo} does
+	 *         not exist
 	 */
 	void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
 			Future<?> externalSystemReady) throws AuthorizationException;
+
+	/**
+	 * Initiate a handshake to provide desired system settings.
+	 * 
+	 * @param authInfo
+	 *        the authorization info to register
+	 * @param settings
+	 *        the desired settings
+	 * @param externalSystemReady
+	 *        a future that will be completed when it is OK to initiate the
+	 *        registration callback to the external system
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void handshake(AuthRoleInfo authInfo, SystemSettings settings, Future<?> externalSystemReady);
 
 }

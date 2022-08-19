@@ -25,8 +25,10 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -40,6 +42,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.domain.CodedValue;
 import net.solarnetwork.domain.Identity;
 
 /**
@@ -185,4 +188,39 @@ public final class CommonJdbcUtils {
 		Object id = keys.get(keyColumnName);
 		return (id instanceof Long ? (Long) id : null);
 	}
+
+	/**
+	 * Get a set of enumerated coded values from a JDBC array.
+	 * 
+	 * @param <T>
+	 *        the coded value type
+	 * @param rs
+	 *        the result set
+	 * @param colNum
+	 *        the column number
+	 * @param clazz
+	 *        the enum class
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 1.1
+	 */
+	public static <T extends Enum<T> & CodedValue> Set<T> getCodedValueSet(ResultSet rs, int colNum,
+			Class<T> clazz) throws SQLException {
+		Number[] codes = getArray(rs, colNum);
+		if ( codes == null ) {
+			return null;
+		}
+		Set<T> result = new LinkedHashSet<>(codes.length);
+		for ( Number code : codes ) {
+			int c = code.intValue();
+			for ( T e : clazz.getEnumConstants() ) {
+				if ( c == e.getCode() ) {
+					result.add(e);
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 }

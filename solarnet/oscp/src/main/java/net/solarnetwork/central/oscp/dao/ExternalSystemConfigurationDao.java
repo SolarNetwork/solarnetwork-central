@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.dao.FilterableDao;
 
 /**
@@ -46,5 +47,19 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 * @return the domain object, or {@literal null} if not available
 	 */
 	C getForUpdate(UserLongCompositePK id);
+
+	/**
+	 * Save system settings for a given configuration.
+	 * 
+	 * <p>
+	 * The configuration must exist prior to saving any settings for it.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the primary key to save the settings for
+	 * @param settings
+	 *        the settings to save
+	 */
+	void saveSettings(UserLongCompositePK id, SystemSettings settings);
 
 }

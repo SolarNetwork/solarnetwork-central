@@ -33,17 +33,20 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
-		"oscpVersion", "flexibilityProviderId", "registrationStatus", "serviceProps" })
+		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "lastHeartbeat",
+		"serviceProps" })
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
 		extends BaseOscpConfigurationEntity<C> {
 
-	private static final long serialVersionUID = 2657431353983332547L;
+	private static final long serialVersionUID = -4978008213172335157L;
 
 	private String token;
 	private String baseUrl;
 	private String oscpVersion;
 	private Long flexibilityProviderId;
 	private RegistrationStatus registrationStatus;
+	private SystemSettings settings;
+	private Instant lastHeartbeat;
 
 	/**
 	 * Constructor.
@@ -85,8 +88,11 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 		super.copyTo(entity);
 		entity.setBaseUrl(baseUrl);
 		entity.setOscpVersion(oscpVersion);
+		entity.setFlexibilityProviderId(flexibilityProviderId);
 		entity.setRegistrationStatus(registrationStatus);
 		entity.setToken(token);
+		entity.setSettings(settings);
+		entity.setLastHeartbeat(lastHeartbeat);
 	}
 
 	/**
@@ -189,6 +195,44 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 */
 	public void setFlexibilityProviderId(Long flexibilityProviderId) {
 		this.flexibilityProviderId = flexibilityProviderId;
+	}
+
+	/**
+	 * Get the system settings.
+	 * 
+	 * @return the settings
+	 */
+	public SystemSettings getSettings() {
+		return settings;
+	}
+
+	/**
+	 * Set the system settings.
+	 * 
+	 * @param settings
+	 *        the settings to set
+	 */
+	public void setSettings(SystemSettings settings) {
+		this.settings = settings;
+	}
+
+	/**
+	 * Get the last heartbeat time.
+	 * 
+	 * @return the lastHeartbeat
+	 */
+	public Instant getLastHeartbeat() {
+		return lastHeartbeat;
+	}
+
+	/**
+	 * Set the last heartbeat time.
+	 * 
+	 * @param lastHeartbeat
+	 *        the lastHeartbeat to set
+	 */
+	public void setLastHeartbeat(Instant lastHeartbeat) {
+		this.lastHeartbeat = lastHeartbeat;
 	}
 
 }

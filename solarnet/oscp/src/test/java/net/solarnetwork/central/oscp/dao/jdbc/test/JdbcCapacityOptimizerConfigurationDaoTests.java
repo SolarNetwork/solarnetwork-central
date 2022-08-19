@@ -40,6 +40,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,7 +58,9 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
@@ -78,6 +81,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 	private Long flexibilityProviderId;
 
 	private CapacityOptimizerConfiguration last;
+	private SystemSettings lastSettings;
 
 	@BeforeEach
 	public void setup() {
@@ -207,7 +211,18 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		CapacityOptimizerConfiguration result = dao.get(last.getId());
 
 		// THEN
-		assertThat("Retrieved entity matches source", result, is(equalTo(last)));
+		assertThat("Retrieved entity ID matches source", result, is(equalTo(last)));
+		assertThat("Retrieved enabled matches", result.isEnabled(), is(equalTo(last.isEnabled())));
+		assertThat("Retrieved name matches", result.getName(), is(equalTo(last.getName())));
+		assertThat("Retrieved oscpVersion matches", result.getOscpVersion(),
+				is(equalTo(last.getOscpVersion())));
+		assertThat("Retrieved baseUrl matches", result.getBaseUrl(), is(equalTo(last.getBaseUrl())));
+		assertThat("Retrieved reg status matches", result.getRegistrationStatus(),
+				is(equalTo(last.getRegistrationStatus())));
+		assertThat("Retrieved flexibilityProviderId matches", result.getFlexibilityProviderId(),
+				is(equalTo(last.getFlexibilityProviderId())));
+		assertThat("Retrieved serviceProps matches", result.getServiceProps(),
+				is(equalTo(last.getServiceProps())));
 	}
 
 	@Test
@@ -288,6 +303,51 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		assertThat("Row baseUrl matches", row, hasEntry("url", conf.getBaseUrl()));
 		assertThat("Row serviceProps matches", getStringMap(row.get("sprops").toString()),
 				is(equalTo(conf.getServiceProps())));
+	}
+
+	@Test
+	public void saveSettings() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		SystemSettings settings = new SystemSettings(123,
+				EnumSet.of(MeasurementStyle.Continuous, MeasurementStyle.Intermittent));
+		dao.saveSettings(last.getId(), settings);
+
+		// THEN
+		List<Map<String, Object>> data = allCapacityOptimizerConfigurationData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row heartbeat matches return value", row,
+				hasEntry("heartbeat_secs", settings.heartbeatSeconds()));
+		lastSettings = settings;
+	}
+
+	@Test
+	public void get_settings() {
+		// GIVEN
+		saveSettings();
+
+		// WHEN
+		CapacityOptimizerConfiguration result = dao.get(last.getId());
+
+		// THEN
+		assertThat("Retrieved entity ID matches source", result, is(equalTo(last)));
+		assertThat("Retrieved enabled matches", result.isEnabled(), is(equalTo(last.isEnabled())));
+		assertThat("Retrieved name matches", result.getName(), is(equalTo(last.getName())));
+		assertThat("Retrieved oscpVersion matches", result.getOscpVersion(),
+				is(equalTo(last.getOscpVersion())));
+		assertThat("Retrieved baseUrl matches", result.getBaseUrl(), is(equalTo(last.getBaseUrl())));
+		assertThat("Retrieved reg status matches", result.getRegistrationStatus(),
+				is(equalTo(last.getRegistrationStatus())));
+		assertThat("Retrieved flexibilityProviderId matches", result.getFlexibilityProviderId(),
+				is(equalTo(last.getFlexibilityProviderId())));
+		assertThat("Retrieved settings matches", result.getSettings(), is(equalTo(lastSettings)));
+		assertThat("Retrieved settings matches", result.getLastHeartbeat(),
+				is(equalTo(last.getLastHeartbeat())));
+		assertThat("Retrieved serviceProps matches", result.getServiceProps(),
+				is(equalTo(last.getServiceProps())));
 	}
 
 	@Test

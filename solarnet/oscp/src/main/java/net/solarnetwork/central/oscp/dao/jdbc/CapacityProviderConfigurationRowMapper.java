@@ -22,60 +22,26 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
-import net.solarnetwork.central.oscp.domain.RegistrationStatus;
-import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Row mapper for {@link CapacityProviderConfiguration} entities.
  * 
- * <p>
- * The expected column order in the SQL results is:
- * </p>
- * 
- * <ol>
- * <li>id (BIGINT)</li>
- * <li>created (TIMESTAMP)</li>
- * <li>modified (TIMESTAMP)</li>
- * <li>user_id (BIGINT)</li>
- * <li>enabled (BOOLEAN)</li>
- * <li>fp_id (BIGINT)</li>
- * <li>reg_status (SMALLINT)</li>
- * <li>cname (TEXT)</li>
- * <li>url (TEXT)</li>
- * <li>oscp_ver (TEXT)</li>
- * <li>sprops (TEXT)</li>
- * </ol>
- * 
- * 
  * @author matt
  * @version 1.0
  */
-public class CapacityProviderConfigurationRowMapper implements RowMapper<CapacityProviderConfiguration> {
+public class CapacityProviderConfigurationRowMapper
+		extends BaseExternalSystemConfigurationRowMapper<CapacityProviderConfiguration> {
 
 	/** A default instance. */
 	public static final RowMapper<CapacityProviderConfiguration> INSTANCE = new CapacityProviderConfigurationRowMapper();
 
 	@Override
-	public CapacityProviderConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
-		Long entityId = rs.getLong(1);
-		Timestamp created = rs.getTimestamp(2);
-		Long userId = rs.getLong(4);
-		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId, entityId,
-				created.toInstant());
-		conf.setModified(rs.getTimestamp(3).toInstant());
-		conf.setEnabled(rs.getBoolean(5));
-		conf.setFlexibilityProviderId(rs.getLong(6));
-		conf.setRegistrationStatus(RegistrationStatus.forCode(rs.getInt(7)));
-		conf.setName(rs.getString(8));
-		conf.setBaseUrl(rs.getString(9));
-		conf.setOscpVersion(rs.getString(10));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(11)));
-		return conf;
+	protected CapacityProviderConfiguration createConfiguration(Long userId, Long entityId,
+			Instant created) {
+		return new CapacityProviderConfiguration(userId, entityId, created);
 	}
 
 }

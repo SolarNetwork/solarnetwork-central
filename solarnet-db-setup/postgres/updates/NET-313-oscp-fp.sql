@@ -40,6 +40,9 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	cname			CHARACTER VARYING(64) NOT NULL,
 	url				CHARACTER VARYING(256),
 	oscp_ver		CHARACTER VARYING(8),
+	heartbeat_secs	SMALLINT,                 -- requested
+	meas_styles		SMALLINT[],               -- requested
+	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
 	sprops			JSONB,
 	CONSTRAINT oscp_cp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_cp_conf_user_fk FOREIGN KEY (user_id)
@@ -80,6 +83,9 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	cname			CHARACTER VARYING(64) NOT NULL,
 	url				CHARACTER VARYING(256),
 	oscp_ver		CHARACTER VARYING(8),
+	heartbeat_secs	SMALLINT,                 -- required
+	meas_styles		SMALLINT[],               -- required
+	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last received
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)
@@ -89,6 +95,21 @@ CREATE TABLE solaroscp.oscp_co_conf (
 		REFERENCES solaroscp.oscp_fp_token (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
+);
+
+/**
+ * OSCP Capacity Optimizer settings.
+ */
+CREATE TABLE solaroscp.oscp_co_setting (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	heartbeat_at	TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT oscp_co_setting_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_co_setting_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_co_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
