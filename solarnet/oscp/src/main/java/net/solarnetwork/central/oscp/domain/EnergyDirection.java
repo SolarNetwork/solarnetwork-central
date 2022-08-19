@@ -28,7 +28,7 @@ import net.solarnetwork.domain.CodedValue;
 import oscp.v20.EnergyMeasurement.EnergyFlowDirection;
 
 /**
- * An enumeration of category types for an asset.
+ * An enumeration of energy directions for a measurement.
  * 
  * @author matt
  * @version 1.0
