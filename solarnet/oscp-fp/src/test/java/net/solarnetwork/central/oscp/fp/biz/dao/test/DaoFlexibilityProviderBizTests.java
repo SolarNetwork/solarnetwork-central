@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -149,8 +150,9 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
 
 		// WHEN
+		CompletableFuture<Void> sysReady = new CompletableFuture<>();
 		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authInfo, sysToken, versionUrl);
+			biz.register(authInfo, sysToken, versionUrl, sysReady);
 		}, "Exception thrown when CP configuration not found");
 
 		// THEN
@@ -180,8 +182,9 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityOptimizerDao.findFiltered(any())).willReturn(cpResults);
 
 		// WHEN
+		CompletableFuture<Void> sysReady = new CompletableFuture<>();
 		AuthorizationException ex = assertThrows(AuthorizationException.class, () -> {
-			biz.register(authInfo, sysToken, versionUrl);
+			biz.register(authInfo, sysToken, versionUrl, sysReady);
 		}, "Exception thrown when CP configuration not found");
 
 		// THEN
@@ -247,7 +250,8 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityProviderDao.save(same(cp2))).willReturn(cp2.getId());
 
 		// WHEN
-		biz.register(authInfo, sysToken, sysVersionUrl);
+		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
+		biz.register(authInfo, sysToken, sysVersionUrl, sysReady);
 
 		// THEN
 		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
@@ -315,7 +319,8 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityOptimizerDao.save(same(co2))).willReturn(co2.getId());
 
 		// WHEN
-		biz.register(authInfo, sysToken, sysVersionUrl);
+		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
+		biz.register(authInfo, sysToken, sysVersionUrl, sysReady);
 
 		// THEN
 		then(capacityOptimizerDao).should().findFiltered(coFilterCaptor.capture());

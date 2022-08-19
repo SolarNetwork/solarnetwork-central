@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import static net.solarnetwork.central.oscp.fp.web.FlexibilityProviderWebUtils.RESPONSE_SENT;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.handler.MappedInterceptor;
+import net.solarnetwork.central.oscp.web.ThreadLocalCompletableHandlerInterceptor;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.service.PingTest;
@@ -72,6 +75,12 @@ public class WebConfig implements WebMvcConfigurer {
 			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest")
 			;
 		// @formatter:on
+	}
+
+	@Bean
+	public MappedInterceptor responseSentInterceptor() {
+		return new MappedInterceptor(new String[] { "/oscp/**" },
+				new ThreadLocalCompletableHandlerInterceptor<Void>(RESPONSE_SENT, null));
 	}
 
 }

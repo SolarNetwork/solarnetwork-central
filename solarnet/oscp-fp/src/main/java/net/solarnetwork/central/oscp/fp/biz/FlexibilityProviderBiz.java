@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.biz;
 
+import java.util.concurrent.Future;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -48,6 +49,13 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * SolarNetwork and shared with the system through an external process (e.g.
 	 * email, phone, etc).
 	 * 
+	 * <p>
+	 * The {@code externalSystemReady} parameter allows the calling code to
+	 * signal to the registration process that the external system is ready to
+	 * receive the corresponding registration callback to complete the
+	 * registration process.
+	 * </p>
+	 * 
 	 * @param authInfo
 	 *        the authorization info to register
 	 * @param externalSystemToken
@@ -55,12 +63,15 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *        external system
 	 * @param versionUrl
 	 *        the external system's OSCP version and base URL to use
+	 * @param externalSystemReady
+	 *        a future that will be completed when it is OK to initiate the
+	 *        registration callback to the external system
 	 * @throws AuthorizationException
 	 *         with
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
 	 *         if the authorization token does not exist
 	 */
-	void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl)
-			throws AuthorizationException;
+	void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
+			Future<?> externalSystemReady) throws AuthorizationException;
 
 }

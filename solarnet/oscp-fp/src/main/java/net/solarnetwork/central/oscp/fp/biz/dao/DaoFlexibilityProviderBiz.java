@@ -36,6 +36,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -131,8 +133,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl)
-			throws AuthorizationException {
+	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
+			Future<?> externalSystemReady) throws AuthorizationException {
 		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null
 				|| externalSystemToken == null ) {
 			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
@@ -154,7 +156,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		var fpId = new UserLongCompositePK(authInfo.userId(), conf.getFlexibilityProviderId());
 		String newToken = flexibilityProviderDao.createAuthToken(fpId);
 
-		executor.execute(new RegisterExternalSystemTask<>(systemRole, conf.getId(), newToken, dao));
+		executor.execute(new RegisterExternalSystemTask<>(systemRole, conf.getId(), newToken,
+				externalSystemReady, dao));
 	}
 
 	private <C extends BaseOscpExternalSystemConfiguration<C>> C handleRegistration(
@@ -201,25 +204,30 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		private final OscpRole role;
 		private final UserLongCompositePK configId;
 		private final String token;
+		private final Future<?> externalSystemReady;
 		private final ExternalSystemConfigurationDao<C> dao;
 
 		private int tries = 0;
 		private int remainingTries = 3; // TODO: make configurable
 
 		private RegisterExternalSystemTask(OscpRole role, UserLongCompositePK configId, String token,
-				ExternalSystemConfigurationDao<C> dao) {
+				Future<?> externalSystemReady, ExternalSystemConfigurationDao<C> dao) {
 			super();
 			this.role = requireNonNullArgument(role, "role");
 			this.configId = requireNonNullArgument(configId, "configId");
 			this.token = requireNonNullArgument(token, "token");
+			this.externalSystemReady = requireNonNullArgument(externalSystemReady,
+					"externalSystemReady");
 			this.dao = requireNonNullArgument(dao, "dao");
 		}
 
 		@Override
 		public void run() {
-			log.info("Registering with {} {}", role, configId.ident());
 			final TransactionTemplate tt = getTxTemplate();
 			try {
+				log.debug("Waiting for external system ready signal");
+				externalSystemReady.get(1, TimeUnit.MINUTES); // TODO make configurable
+				log.info("Registering with {} {}", role, configId.ident());
 				if ( tt != null ) {
 					tt.executeWithoutResult((t) -> {
 						doWork();
@@ -228,9 +236,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 					doWork();
 				}
 			} catch ( Exception e ) {
-				if ( remainingTries-- > 0 ) {
+				if ( --remainingTries > 0 ) {
 					log.warn("Error registering with {} {}; will re-try up to {} more times: {}", role,
-							configId.ident(), remainingTries, e.getMessage(), e);
+							configId.ident(), remainingTries, e.getMessage());
 					final TaskScheduler scheduler = getTaskScheduler();
 					if ( scheduler != null ) {
 						scheduler.schedule(() -> {
