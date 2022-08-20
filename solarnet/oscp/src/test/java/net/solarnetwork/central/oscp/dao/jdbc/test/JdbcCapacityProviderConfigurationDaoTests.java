@@ -82,6 +82,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 
 	private CapacityProviderConfiguration last;
 	private SystemSettings lastSettings;
+	private Instant lastOfflineDate;
+	private Instant lastHeartbeatDate;
 
 	@BeforeEach
 	public void setup() {
@@ -344,8 +346,8 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		assertThat("Retrieved flexibilityProviderId matches", result.getFlexibilityProviderId(),
 				is(equalTo(last.getFlexibilityProviderId())));
 		assertThat("Retrieved settings matches", result.getSettings(), is(equalTo(lastSettings)));
-		assertThat("Retrieved settings matches", result.getLastHeartbeat(),
-				is(equalTo(last.getLastHeartbeat())));
+		assertThat("Retrieved settings matches", result.getHeartbeatDate(),
+				is(equalTo(last.getHeartbeatDate())));
 		assertThat("Retrieved serviceProps matches", result.getServiceProps(),
 				is(equalTo(last.getServiceProps())));
 	}
@@ -403,6 +405,105 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		CapacityProviderConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId())).toArray(CapacityProviderConfiguration[]::new);
 		assertThat("Results for single user returned", results, contains(expected));
+	}
+
+	@Test
+	public void updateOfflineDate() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		Instant offline = Instant.now();
+		dao.updateOfflineDate(last.getId(), offline);
+
+		// THEN
+		List<Map<String, Object>> data = allCapacityProviderConfigurationData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row offline date matches set value", row,
+				hasEntry("offline_at", Timestamp.from(offline)));
+		lastOfflineDate = offline;
+	}
+
+	@Test
+	public void get_offline() {
+		// GIVEN
+		updateOfflineDate();
+
+		// WHEN
+		CapacityProviderConfiguration result = dao.get(last.getId());
+
+		// THEN
+		assertThat("Offline date returned", result.getOfflineDate(), is(equalTo(lastOfflineDate)));
+	}
+
+	@Test
+	public void updateHeartbeatDate_fromNull() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		Instant ts = Instant.now();
+		boolean result = dao.compareAndSetHeartbeat(last.getId(), null, ts);
+
+		// THEN
+		assertThat("Heartbeat is set", result, is(equalTo(true)));
+		List<Map<String, Object>> data = allCapacityProviderConfigurationData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row heartbeat date matches set value", row,
+				hasEntry("heartbeat_at", Timestamp.from(ts)));
+		lastHeartbeatDate = ts;
+	}
+
+	@Test
+	public void updateHeartbeatDate() {
+		// GIVEN
+		updateHeartbeatDate_fromNull();
+
+		// WHEN
+		Instant ts = Instant.now().plusSeconds(10);
+		boolean result = dao.compareAndSetHeartbeat(last.getId(), lastHeartbeatDate, ts);
+
+		// THEN
+		assertThat("Heartbeat is set", result, is(equalTo(true)));
+		List<Map<String, Object>> data = allCapacityProviderConfigurationData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row heartbeat date matches set value", row,
+				hasEntry("heartbeat_at", Timestamp.from(ts)));
+		lastHeartbeatDate = ts;
+	}
+
+	@Test
+	public void updateHeartbeatDate_noMatch() {
+		// GIVEN
+		updateHeartbeatDate_fromNull();
+
+		// WHEN
+		Instant expected = Instant.now().plusSeconds(5);
+		Instant ts = Instant.now().plusSeconds(10);
+		boolean result = dao.compareAndSetHeartbeat(last.getId(), expected, ts);
+
+		// THEN
+		assertThat("Heartbeat is not set", result, is(equalTo(false)));
+		List<Map<String, Object>> data = allCapacityProviderConfigurationData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row heartbeat date matches previous value", row,
+				hasEntry("heartbeat_at", Timestamp.from(lastHeartbeatDate)));
+	}
+
+	@Test
+	public void get_heartbeat() {
+		// GIVEN
+		updateHeartbeatDate_fromNull();
+
+		// WHEN
+		CapacityProviderConfiguration result = dao.get(last.getId());
+
+		// THEN
+		assertThat("Heartbeat date returned", result.getHeartbeatDate(), is(equalTo(lastHeartbeatDate)));
 	}
 
 }

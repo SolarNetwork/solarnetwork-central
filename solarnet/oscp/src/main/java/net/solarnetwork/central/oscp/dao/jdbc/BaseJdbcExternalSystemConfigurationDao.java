@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -31,6 +32,8 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthToken;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateHeartbeatDate;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateOfflineDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateSystemSettings;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -125,6 +128,17 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			stmt.execute();
 			return stmt.getString(1);
 		});
+	}
+
+	@Override
+	public boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts) {
+		int count = jdbcOps.update(new UpdateHeartbeatDate(role, id, expected, ts));
+		return (count > 0);
+	}
+
+	@Override
+	public void updateOfflineDate(UserLongCompositePK id, Instant ts) {
+		jdbcOps.update(new UpdateOfflineDate(role, id, ts));
 	}
 
 }

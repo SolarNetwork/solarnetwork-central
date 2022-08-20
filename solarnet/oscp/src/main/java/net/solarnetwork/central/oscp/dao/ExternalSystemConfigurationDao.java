@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao;
 
+import java.time.Instant;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
@@ -61,5 +62,27 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 *        the settings to save
 	 */
 	void saveSettings(UserLongCompositePK id, SystemSettings settings);
+
+	/**
+	 * Compare and update the heartbeat date.
+	 * 
+	 * @param id
+	 *        the primary key to save the settings for
+	 * @param expected
+	 *        the expected value
+	 * @param ts
+	 *        the timestamp to set of {@code expected} matches the current value
+	 */
+	boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts);
+
+	/**
+	 * Update the offline date.
+	 * 
+	 * @param id
+	 *        the primary key to save the settings for
+	 * @param ts
+	 *        the
+	 */
+	void updateOfflineDate(UserLongCompositePK id, Instant ts);
 
 }

@@ -43,6 +43,7 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	heartbeat_secs	SMALLINT,                 -- requested
 	meas_styles		SMALLINT[],               -- requested
 	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
+	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
 	sprops			JSONB,
 	CONSTRAINT oscp_cp_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_cp_conf_user_fk FOREIGN KEY (user_id)
@@ -85,7 +86,8 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	oscp_ver		CHARACTER VARYING(8),
 	heartbeat_secs	SMALLINT,                 -- required
 	meas_styles		SMALLINT[],               -- required
-	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last received
+	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
+	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)

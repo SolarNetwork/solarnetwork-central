@@ -56,6 +56,7 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>heartbeat_secs (SMALLINT)</li>
  * <li>meas_styles (SMALLINT[])</li>
  * <li>heartbeat_at (TIMESTAMP)</li>
+ * <li>offline_at (TIMESTAMP)</li>
  * <li>sprops (TEXT)</li>
  * </ol>
  * 
@@ -117,10 +118,14 @@ public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOsc
 
 		Timestamp ts = rs.getTimestamp(13);
 		if ( ts != null ) {
-			conf.setLastHeartbeat(ts.toInstant());
+			conf.setHeartbeatDate(ts.toInstant());
+		}
+		ts = rs.getTimestamp(14);
+		if ( ts != null ) {
+			conf.setOfflineDate(ts.toInstant());
 		}
 
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(14)));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(15)));
 	}
 
 }

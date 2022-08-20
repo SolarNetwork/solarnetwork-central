@@ -344,8 +344,8 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		assertThat("Retrieved flexibilityProviderId matches", result.getFlexibilityProviderId(),
 				is(equalTo(last.getFlexibilityProviderId())));
 		assertThat("Retrieved settings matches", result.getSettings(), is(equalTo(lastSettings)));
-		assertThat("Retrieved settings matches", result.getLastHeartbeat(),
-				is(equalTo(last.getLastHeartbeat())));
+		assertThat("Retrieved settings matches", result.getHeartbeatDate(),
+				is(equalTo(last.getHeartbeatDate())));
 		assertThat("Retrieved serviceProps matches", result.getServiceProps(),
 				is(equalTo(last.getServiceProps())));
 	}

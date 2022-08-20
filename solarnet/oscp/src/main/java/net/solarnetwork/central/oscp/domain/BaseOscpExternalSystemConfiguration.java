@@ -33,12 +33,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
-		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "lastHeartbeat",
-		"serviceProps" })
+		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "heartbeatDate",
+		"offlineDate", "serviceProps" })
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
 		extends BaseOscpConfigurationEntity<C> {
 
-	private static final long serialVersionUID = -4978008213172335157L;
+	private static final long serialVersionUID = -8141405629193101978L;
 
 	private String token;
 	private String baseUrl;
@@ -46,7 +46,8 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	private Long flexibilityProviderId;
 	private RegistrationStatus registrationStatus;
 	private SystemSettings settings;
-	private Instant lastHeartbeat;
+	private Instant heartbeatDate;
+	private Instant offlineDate;
 
 	/**
 	 * Constructor.
@@ -92,7 +93,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 		entity.setRegistrationStatus(registrationStatus);
 		entity.setToken(token);
 		entity.setSettings(settings);
-		entity.setLastHeartbeat(lastHeartbeat);
+		entity.setHeartbeatDate(heartbeatDate);
 	}
 
 	/**
@@ -219,20 +220,39 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	/**
 	 * Get the last heartbeat time.
 	 * 
-	 * @return the lastHeartbeat
+	 * @return the heartbeat date
 	 */
-	public Instant getLastHeartbeat() {
-		return lastHeartbeat;
+	public Instant getHeartbeatDate() {
+		return heartbeatDate;
 	}
 
 	/**
 	 * Set the last heartbeat time.
 	 * 
-	 * @param lastHeartbeat
-	 *        the lastHeartbeat to set
+	 * @param heartbeatDate
+	 *        the heartbeat date to set
 	 */
-	public void setLastHeartbeat(Instant lastHeartbeat) {
-		this.lastHeartbeat = lastHeartbeat;
+	public void setHeartbeatDate(Instant lastHeartbeat) {
+		this.heartbeatDate = lastHeartbeat;
+	}
+
+	/**
+	 * Get the date after which the system should be considered "offline".
+	 * 
+	 * @return the the offline date
+	 */
+	public Instant getOfflineDate() {
+		return offlineDate;
+	}
+
+	/**
+	 * Set the date after which the system should be considered "offline".
+	 * 
+	 * @param offlineDate
+	 *        the offline date to set
+	 */
+	public void setOfflineDate(Instant offlineDate) {
+		this.offlineDate = offlineDate;
 	}
 
 }
