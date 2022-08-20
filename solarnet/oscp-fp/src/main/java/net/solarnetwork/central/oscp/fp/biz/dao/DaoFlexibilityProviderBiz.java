@@ -22,18 +22,15 @@
 
 package net.solarnetwork.central.oscp.fp.biz.dao;
 
-import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,17 +38,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -171,7 +164,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		executor.execute(new RegisterExternalSystemTask<>(externalSystemReady, systemRole, conf.getId(),
 				dao, newToken).withConditionTimeout(taskConditionTimeout).withStartDelay(taskStartDelay)
-						.withRetryDelay(taskRetryDelay));
+						.withRetryDelay(taskRetryDelay)
+						.withSuccessEventTags(CAPACITY_PROVIDER_REGISTER_TAGS));
 	}
 
 	private <C extends BaseOscpExternalSystemConfiguration<C>> C handleRegistration(
@@ -228,7 +222,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		SystemSettings ackSettings = new SystemSettings(null, null);
 		executor.execute(new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
 				capacityProviderDao, ackSettings).withConditionTimeout(taskConditionTimeout)
-						.withStartDelay(taskStartDelay).withRetryDelay(taskRetryDelay));
+						.withStartDelay(taskStartDelay).withRetryDelay(taskRetryDelay)
+						.withSuccessEventTags(CAPACITY_PROVIDER_HANDSHAKE_TAGS));
 	}
 
 	private class HandshakeAckTask<C extends BaseOscpExternalSystemConfiguration<C>>
@@ -260,37 +255,15 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			}
 
 			verifySystemOscpVersion(singleton(V20));
-			URI uri = systemUri();
-			String authToken = authToken();
-			doWork20(config, uri, authToken);
+			doWork20(config);
 		}
 
-		private void doWork20(C conf, URI uri, String authToken) {
+		private void doWork20(C conf) {
 			HandshakeAcknowledge ack = new HandshakeAcknowledge();
 			if ( settings != null ) {
 				ack.setRequiredBehaviour(settings.toOscp20Value());
 			}
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
-			HttpEntity<HandshakeAcknowledge> req = new HttpEntity<>(ack, headers);
-
-			ResponseEntity<?> result = restOps.postForEntity(uri, req, null);
-			if ( result.getStatusCode() == HttpStatus.NO_CONTENT ) {
-				log.info("Successfully handshake acknowledged with {} {} at: {}", role, configId.ident(),
-						uri);
-				userEventAppenderBiz.addEvent(conf.getUserId(),
-						eventForConfiguration(conf, CAPACITY_PROVIDER_HANDSHAKE_TAGS, "Acknowledged"));
-			} else {
-				log.warn(
-						"Unable to handshake acknowledge with {} {} at [{}] because the HTTP status {} was returned (expected {}).",
-						role, configId.ident(), uri, result.getStatusCodeValue(),
-						HttpStatus.NO_CONTENT.value());
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS,
-						format("Invalid HTTP status returned: %d", result.getStatusCodeValue())));
-			}
+			post(restOps, ack);
 		}
 
 	}
@@ -321,9 +294,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 			try {
 				verifySystemOscpVersion(singleton(V20));
-				URI uri = systemUri();
-				String authToken = authToken();
-				doWork20(config, uri, authToken);
+				doWork20(config);
 			} catch ( ExternalSystemConfigurationException confEx ) {
 				config.setRegistrationStatus(RegistrationStatus.Failed);
 				dao.save(config);
@@ -331,46 +302,20 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			}
 		}
 
-		private void doWork20(C conf, URI uri, String authToken) {
+		private void doWork20(C conf) {
 			String url = versionUrlMap.get(V20);
 			if ( url == null ) {
-				log.error(
-						"Unable to register with {} {} because the Flexibility Provider URL for version {} is not configured.",
-						role, configId.ident(), V20);
-
-				conf.setRegistrationStatus(RegistrationStatus.Failed);
-
-				userEventAppenderBiz.addEvent(conf.getUserId(),
-						eventForConfiguration(conf, CAPACITY_PROVIDER_REGISTER_ERROR_TAGS,
-								"Flexibility Provider URL for version not configured"));
-
-				dao.save(conf);
-				return;
+				var msg = "[%s] task with %s %s failed because the Flexibility Provider URL for version %s is not configured."
+						.formatted(name, role, configId.ident(), V20);
+				LogEventInfo event = eventForConfiguration(conf, CAPACITY_PROVIDER_REGISTER_ERROR_TAGS,
+						"Flexibility Provider URL for version not configured");
+				throw new ExternalSystemConfigurationException(role, conf, event, msg);
 			}
 			List<VersionUrl> versions = Collections.singletonList(new VersionUrl(V20, url));
 			Register register = new Register(token, versions);
+			post(restOps, register);
 
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
-			HttpEntity<Register> req = new HttpEntity<>(register, headers);
-
-			ResponseEntity<?> result = restOps.postForEntity(uri, req, null);
-			if ( result.getStatusCode() == HttpStatus.NO_CONTENT ) {
-				log.info("Successfully registered with {} {} at: {}", role, configId.ident(), uri);
-				conf.setRegistrationStatus(RegistrationStatus.Registered);
-				userEventAppenderBiz.addEvent(conf.getUserId(),
-						eventForConfiguration(conf, CAPACITY_PROVIDER_REGISTER_TAGS, null));
-			} else {
-				log.error(
-						"Unable to register with {} {} at [{}] because the HTTP status {} was returned (expected {}).",
-						role, configId.ident(), uri, result.getStatusCodeValue(),
-						HttpStatus.NO_CONTENT.value());
-				conf.setRegistrationStatus(RegistrationStatus.Failed);
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_REGISTER_ERROR_TAGS,
-						format("Invalid HTTP status returned: %d", result.getStatusCodeValue())));
-			}
+			conf.setRegistrationStatus(RegistrationStatus.Registered);
 			dao.save(conf);
 		}
 

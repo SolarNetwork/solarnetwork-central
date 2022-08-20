@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.oscp.util;
 
+import static java.lang.String.format;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.Instant;
@@ -32,8 +34,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -64,6 +72,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final TaskScheduler taskScheduler;
 	protected final TransactionTemplate txTemplate;
 
+	private String[] successTags;
 	private long conditionTimeout = 60_000L;
 	private long startDelay = 1_000L;
 	private long retryDelay = 5_000L;
@@ -153,6 +162,18 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		return this;
 	}
 
+	/**
+	 * Set the user event success tags.
+	 * 
+	 * @param succesTags
+	 *        the user event tags to use for a success event
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withSuccessEventTags(String[] successTags) {
+		this.successTags = successTags;
+		return this;
+	}
+
 	@Override
 	public final void run() {
 		tries++;
@@ -192,7 +213,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			}
 		} catch ( Exception e ) {
 			if ( --remainingTries > 0 && executor != null ) {
-				var msg = "[%s] task with {} {} failed; will re-try up to {} more times: {}"
+				var msg = "[%s] task with %s %s failed; will re-try up to %d more times: %s"
 						.formatted(name, role, configId.ident(), remainingTries, e.getMessage());
 				log.warn(msg);
 				if ( userEventAppenderBiz != null ) {
@@ -212,7 +233,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 					executor.execute(this);
 				}
 			} else {
-				var msg = "[%s] task with {} {} failed; tried {} times: {}".formatted(name, role,
+				var msg = "[%s] task with %s %s failed; tried %d times: %s".formatted(name, role,
 						configId.ident(), tries, e.getMessage());
 				log.warn(msg, e);
 				if ( userEventAppenderBiz != null ) {
@@ -249,7 +270,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		}
 		C config = (lock ? dao.getForUpdate(configId) : dao.get(configId));
 		if ( config == null ) {
-			var msg = "[%s] task with {} {} failed because the configuration does not exist; perhaps it was deleted."
+			var msg = "[%s] task with %s %s failed because the configuration does not exist; perhaps it was deleted."
 					.formatted(role, configId.ident());
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Configuration not found");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
@@ -272,7 +293,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		try {
 			return URI.create(config.getBaseUrl());
 		} catch ( IllegalArgumentException | NullPointerException e ) {
-			var msg = "[%s] task with {} {} failed because the OSCP URL [{}] is not valid: {}"
+			var msg = "[%s] task with %s %s failed because the OSCP URL [%s] is not valid: %s"
 					.formatted(name, role, configId.ident(), config.getBaseUrl(), e.getMessage());
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Invalid URL", extraErrorTags);
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
@@ -290,7 +311,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected void verifySystemOscpVersion(Set<String> supportedVersions, String... extraErrorTags) {
 		C config = configuration(true);
 		if ( !supportedVersions.contains(config.getOscpVersion()) ) {
-			var msg = "[%s] task with {} {} failed because the OSCP version {} is not supported."
+			var msg = "[%s] task with %s %s failed because the OSCP version %s is not supported."
 					.formatted(role, configId.ident(), config.getOscpVersion());
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Unsupported OSCP version");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
@@ -307,13 +328,50 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected String authToken(String... extraErrorTags) {
 		String authToken = dao.getExternalSystemAuthToken(configId);
 		if ( authToken == null ) {
-			var msg = "[%s] task with {} {} failed because the authorization token is not available."
+			var msg = "[%s] task with %s %s failed because the authorization token is not available."
 					.formatted(role, configId.ident());
 			C config = configuration(true);
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Missing authorization token");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
 		return authToken;
+	}
+
+	/**
+	 * Make a HTTP post to the external system.
+	 * 
+	 * @param restOps
+	 *        the REST template
+	 * @param body
+	 *        the HTTP post body
+	 * @param extraErrorTags
+	 *        error tags to include in a user event if an error occurs
+	 */
+	protected void post(RestOperations restOps, Object body, String... extraErrorTags) {
+		C config = configuration(true);
+		URI uri = systemUri(extraErrorTags);
+		String authToken = authToken(extraErrorTags);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+		HttpEntity<Object> req = new HttpEntity<>(body, headers);
+
+		ResponseEntity<?> result = restOps.postForEntity(uri, req, null);
+		if ( result.getStatusCode() == HttpStatus.NO_CONTENT ) {
+			log.info("[{}] with {} {} successful at: {}", name, role, configId.ident(), uri);
+			if ( userEventAppenderBiz != null && successTags != null ) {
+				userEventAppenderBiz.addEvent(configId.getUserId(),
+						eventForConfiguration(config, successTags, "Success"));
+			}
+		} else {
+			log.warn(
+					"[{}] with{} {} failed at [{}] because the HTTP status {} was returned (expected {}).",
+					role, configId.ident(), uri, result.getStatusCodeValue(),
+					HttpStatus.NO_CONTENT.value());
+			userEventAppenderBiz.addEvent(configId.getUserId(), eventForConfiguration(config, errorTags,
+					format("Invalid HTTP status returned: %d", result.getStatusCodeValue())));
+		}
+
 	}
 
 }
