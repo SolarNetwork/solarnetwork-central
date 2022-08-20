@@ -1,0 +1,319 @@
+/* ==================================================================
+ * DeferredTask.java - 19/08/2022 9:27:30 pm
+ * 
+ * Copyright 2022 SolarNetwork.net Dev Team
+ * 
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as 
+ * published by the Free Software Foundation; either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.oscp.util;
+
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
+import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
+import net.solarnetwork.central.oscp.domain.OscpRole;
+
+/**
+ * Abstract {@link Runnable} to help with OSCP system related task execution.
+ * 
+ * @author matt
+ * @version 1.0
+ */
+public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
+		implements Runnable {
+
+	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	protected final Future<?> condition;
+	protected final String name;
+	protected final OscpRole role;
+	protected final UserLongCompositePK configId;
+	protected final ExternalSystemConfigurationDao<C> dao;
+	protected final UserEventAppenderBiz userEventAppenderBiz;
+	protected final String[] errorTags;
+	protected final Executor executor;
+	protected final TaskScheduler taskScheduler;
+	protected final TransactionTemplate txTemplate;
+
+	private long conditionTimeout = 60_000L;
+	private long startDelay = 1_000L;
+	private long retryDelay = 5_000L;
+	private int remainingTries;
+	private int tries = 0;
+	private C configuration;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param name
+	 *        a display name for events and logs
+	 * @param condition
+	 *        the starting condition, that must complete before the task work
+	 *        begins
+	 * @param role
+	 *        the OSCP role
+	 * @param configId
+	 *        the system configuration ID
+	 * @param tries
+	 *        the number of attempts to make (the {@code executor} must also be
+	 *        provided)
+	 * @param dao
+	 *        the system configuration DAO
+	 * @param userEventAppenderBiz
+	 *        the optional user event service
+	 * @param errorTags
+	 *        base user event tags to use for error events
+	 * @param executor
+	 *        an optional executor, required for re-trying
+	 * @param taskScheduler
+	 *        an optional task scheduler for delaying retries with
+	 * @param txTemplate
+	 *        an optional transaction template to run the task in
+	 */
+	public DeferredSystemTask(String name, Future<?> condition, OscpRole role,
+			UserLongCompositePK configId, int tries, ExternalSystemConfigurationDao<C> dao,
+			UserEventAppenderBiz userEventAppenderBiz, String[] errorTags, Executor executor,
+			TaskScheduler taskScheduler, TransactionTemplate txTemplate) {
+		super();
+		this.name = requireNonNullArgument(name, "name");
+		this.condition = requireNonNullArgument(condition, "condition");
+		this.role = requireNonNullArgument(role, "role");
+		this.configId = requireNonNullArgument(configId, "configId");
+		this.dao = requireNonNullArgument(dao, "dao");
+		this.userEventAppenderBiz = userEventAppenderBiz;
+		this.errorTags = errorTags;
+		this.remainingTries = tries;
+		this.executor = executor;
+		this.taskScheduler = taskScheduler;
+		this.txTemplate = txTemplate;
+	}
+
+	/**
+	 * Set the condition timeout.
+	 * 
+	 * @param ms
+	 *        the millisecond condition timeout, or {@code 0} to wait forever
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withConditionTimeout(long ms) {
+		this.conditionTimeout = ms;
+		return this;
+	}
+
+	/**
+	 * Set the start delay.
+	 * 
+	 * @param ms
+	 *        the millisecond start delay (after the condition completes)
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withStartDelay(long ms) {
+		this.startDelay = ms;
+		return this;
+	}
+
+	/**
+	 * Set the retry delay.
+	 * 
+	 * @param ms
+	 *        the millisecond retry delay
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withRetryDelay(long ms) {
+		this.retryDelay = ms;
+		return this;
+	}
+
+	@Override
+	public final void run() {
+		tries++;
+		final TransactionTemplate tt = this.txTemplate;
+		try {
+			log.debug("Waiting for external system ready signal");
+			try {
+				if ( conditionTimeout > 0 ) {
+					condition.get(conditionTimeout, TimeUnit.MILLISECONDS);
+				} else {
+					condition.get();
+				}
+				if ( startDelay > 0 ) {
+					Thread.sleep(startDelay);
+				}
+			} catch ( InterruptedException e ) {
+				// ignore
+			}
+			if ( tt != null ) {
+				tt.executeWithoutResult((t) -> {
+					try {
+						doWork();
+					} catch ( Exception e ) {
+						if ( e instanceof RuntimeException r ) {
+							throw r;
+						}
+						throw new RuntimeException(e);
+					}
+				});
+			} else {
+				doWork();
+			}
+		} catch ( ExternalSystemConfigurationException e ) {
+			log.warn(e.getMessage());
+			if ( userEventAppenderBiz != null ) {
+				userEventAppenderBiz.addEvent(e.getConfig().getUserId(), e.getEvent());
+			}
+		} catch ( Exception e ) {
+			if ( --remainingTries > 0 && executor != null ) {
+				var msg = "[%s] task with {} {} failed; will re-try up to {} more times: {}"
+						.formatted(name, role, configId.ident(), remainingTries, e.getMessage());
+				log.warn(msg);
+				if ( userEventAppenderBiz != null ) {
+					LogEventInfo event;
+					if ( configuration != null ) {
+						event = eventForConfiguration(configuration, errorTags, msg);
+					} else {
+						event = eventForConfiguration(configId, errorTags, msg);
+					}
+					userEventAppenderBiz.addEvent(configId.getUserId(), event);
+				}
+				if ( taskScheduler != null && retryDelay > 0 ) {
+					taskScheduler.schedule(() -> {
+						executor.execute(DeferredSystemTask.this);
+					}, Instant.now().plusMillis(tries * retryDelay));
+				} else {
+					executor.execute(this);
+				}
+			} else {
+				var msg = "[%s] task with {} {} failed; tried {} times: {}".formatted(name, role,
+						configId.ident(), tries, e.getMessage());
+				log.warn(msg, e);
+				if ( userEventAppenderBiz != null ) {
+					LogEventInfo event = eventForConfiguration(configId, errorTags, msg);
+					userEventAppenderBiz.addEvent(configId.getUserId(), event);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Perform the task.
+	 * 
+	 * @throws Exception
+	 *         if an error occurs
+	 */
+	protected abstract void doWork() throws Exception;
+
+	/**
+	 * Load the configuration entity.
+	 * 
+	 * @param lock
+	 *        {@literal true} to lock the configuration in the current
+	 *        transaction
+	 * @param errorTags
+	 *        error tags to include in a user event if an error occurs
+	 * @return the configuration
+	 * @throws ExternalSystemConfigurationException
+	 *         if the configuration is not found
+	 */
+	protected C configuration(boolean lock) {
+		if ( this.configuration != null ) {
+			return this.configuration;
+		}
+		C config = (lock ? dao.getForUpdate(configId) : dao.get(configId));
+		if ( config == null ) {
+			var msg = "[%s] task with {} {} failed because the configuration does not exist; perhaps it was deleted."
+					.formatted(role, configId.ident());
+			LogEventInfo event = eventForConfiguration(config, errorTags, "Configuration not found");
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
+		}
+		this.configuration = config;
+		return config;
+	}
+
+	/**
+	 * Get a URI for the configuration URL.
+	 * 
+	 * @param extraErrorTags
+	 *        error tags to include in a user event if an error occurs
+	 * @return the URI
+	 * @throws ExternalSystemConfigurationException
+	 *         if an error occurs
+	 */
+	protected URI systemUri(String... extraErrorTags) {
+		C config = configuration(true);
+		try {
+			return URI.create(config.getBaseUrl());
+		} catch ( IllegalArgumentException | NullPointerException e ) {
+			var msg = "[%s] task with {} {} failed because the OSCP URL [{}] is not valid: {}"
+					.formatted(name, role, configId.ident(), config.getBaseUrl(), e.getMessage());
+			LogEventInfo event = eventForConfiguration(config, errorTags, "Invalid URL", extraErrorTags);
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
+		}
+	}
+
+	/**
+	 * Verify the external system uses a supported version.
+	 * 
+	 * @param supportedVersions
+	 *        the supported OSCP versions
+	 * @param extraErrorTags
+	 *        error tags to include in a user event if an error occurs
+	 */
+	protected void verifySystemOscpVersion(Set<String> supportedVersions, String... extraErrorTags) {
+		C config = configuration(true);
+		if ( !supportedVersions.contains(config.getOscpVersion()) ) {
+			var msg = "[%s] task with {} {} failed because the OSCP version {} is not supported."
+					.formatted(role, configId.ident(), config.getOscpVersion());
+			LogEventInfo event = eventForConfiguration(config, errorTags, "Unsupported OSCP version");
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
+		}
+	}
+
+	/**
+	 * Get the configuration authorization token.
+	 * 
+	 * @param extraErrorTags
+	 *        error tags to include in a user event if an error occurs
+	 * @return the token
+	 */
+	protected String authToken(String... extraErrorTags) {
+		String authToken = dao.getExternalSystemAuthToken(configId);
+		if ( authToken == null ) {
+			var msg = "[%s] task with {} {} failed because the authorization token is not available."
+					.formatted(role, configId.ident());
+			C config = configuration(true);
+			LogEventInfo event = eventForConfiguration(config, errorTags, "Missing authorization token");
+			throw new ExternalSystemConfigurationException(role, config, event, msg);
+		}
+		return authToken;
+	}
+
+}

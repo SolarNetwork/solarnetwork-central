@@ -45,6 +45,14 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	String[] CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
 			CAPACITY_PROVIDER_TAG, REGISTER_TAG, ERROR_TAG };
 
+	/** User event tags for Capacity Provider handshake events. */
+	String[] CAPACITY_PROVIDER_HANDSHAKE_TAGS = new String[] { OSCP_EVENT_TAG, CAPACITY_PROVIDER_TAG,
+			HANDSHAKE_TAG };
+
+	/** User event tags for Capacity Provider handshake error events. */
+	String[] CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_PROVIDER_TAG, HANDSHAKE_TAG, ERROR_TAG };
+
 	/**
 	 * Register an external system using an authorization token created in
 	 * SolarNetwork and shared with the system through an external process (e.g.

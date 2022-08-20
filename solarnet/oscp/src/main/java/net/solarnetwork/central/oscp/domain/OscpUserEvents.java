@@ -22,6 +22,12 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static net.solarnetwork.central.domain.LogEventInfo.event;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import java.util.Map;
+import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+
 /**
  * Constants and helpers for OSCP user event handling.
  * 
@@ -45,6 +51,9 @@ public interface OscpUserEvents {
 	/** A user event tag for OSCP registration . */
 	String REGISTER_TAG = "reg";
 
+	/** A user event tag for OSCP handshake . */
+	String HANDSHAKE_TAG = "handshake";
+
 	/** A user event tag for OSCP "error" . */
 	String ERROR_TAG = "error";
 
@@ -62,4 +71,47 @@ public interface OscpUserEvents {
 
 	/** User event data key for a version. */
 	String VERSION_DATA_KEY = "v";
+
+	/**
+	 * Get a user log event for a configuration ID.
+	 * 
+	 * @param configId
+	 *        the configuration ID
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the log event
+	 */
+	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, String[] baseTags,
+			String message, String... extraTags) {
+		return event(baseTags, message,
+				getJSONString(Map.of(CONFIG_ID_DATA_KEY, configId.getEntityId()), null), extraTags);
+	}
+
+	/**
+	 * Get a user log event for a configuration.
+	 * 
+	 * @param config
+	 *        the configuration
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the log event
+	 */
+	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
+			String[] baseTags, String message, String... extraTags) {
+		return event(baseTags, message,
+				getJSONString(Map.of(CONFIG_ID_DATA_KEY, config.getEntityId(),
+						REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode(),
+						VERSION_DATA_KEY, config.getOscpVersion(), URL_DATA_KEY, config.getBaseUrl()),
+						null),
+				extraTags);
+	}
+
 }

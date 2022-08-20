@@ -127,6 +127,7 @@ public class DaoFlexibilityProviderBizTests {
 		mockExternalSystem = MockRestServiceServer.bindTo(restTemplate).build();
 		biz = new DaoFlexibilityProviderBiz(executor, restTemplate, userEventAppenderBiz,
 				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
+		biz.setTaskStartDelay(0);
 		// no biz.setTxTemplate(tt); to use test transaction
 	}
 

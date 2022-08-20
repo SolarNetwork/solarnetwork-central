@@ -23,22 +23,22 @@
 package net.solarnetwork.central.oscp.fp.biz.dao;
 
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -52,7 +52,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -62,13 +61,16 @@ import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
+import net.solarnetwork.central.oscp.util.DeferredSystemTask;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.KeyValuePair;
+import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.VersionUrl;
 
@@ -91,6 +93,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
 	private TransactionTemplate txTemplate;
 	private TaskScheduler taskScheduler;
+	private long taskConditionTimeout = 60_000L;
+	private long taskStartDelay = 1_000L;
+	private long taskRetryDelay = 5_000L;
 
 	/**
 	 * The default version URL map supported by this service.
@@ -146,15 +151,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		return dao;
 	}
 
-	private static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> conf,
-			String[] baseTags, String message) {
-		return event(baseTags, message,
-				getJSONString(Map.of(CONFIG_ID_DATA_KEY, conf.getEntityId(),
-						REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode(),
-						VERSION_DATA_KEY, conf.getOscpVersion(), URL_DATA_KEY, conf.getBaseUrl()),
-						null));
-	}
-
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
@@ -173,8 +169,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		var fpId = new UserLongCompositePK(authInfo.userId(), conf.getFlexibilityProviderId());
 		String newToken = flexibilityProviderDao.createAuthToken(fpId);
 
-		executor.execute(new RegisterExternalSystemTask<>(systemRole, conf.getId(), newToken,
-				externalSystemReady, dao));
+		executor.execute(new RegisterExternalSystemTask<>(externalSystemReady, systemRole, conf.getId(),
+				dao, newToken).withConditionTimeout(taskConditionTimeout).withStartDelay(taskStartDelay)
+						.withRetryDelay(taskRetryDelay));
 	}
 
 	private <C extends BaseOscpExternalSystemConfiguration<C>> C handleRegistration(
@@ -226,131 +223,111 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 		CapacityProviderConfiguration conf = stream(filterResults.spliterator(), false).findFirst()
 				.orElse(null);
-		// TODO conf.set
+		capacityProviderDao.saveSettings(conf.getId(), settings);
+
+		SystemSettings ackSettings = new SystemSettings(null, null);
+		executor.execute(new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
+				capacityProviderDao, ackSettings).withConditionTimeout(taskConditionTimeout)
+						.withStartDelay(taskStartDelay).withRetryDelay(taskRetryDelay));
+	}
+
+	private class HandshakeAckTask<C extends BaseOscpExternalSystemConfiguration<C>>
+			extends DeferredSystemTask<C> {
+
+		private final SystemSettings settings;
+
+		private HandshakeAckTask(Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
+				SystemSettings settings) {
+			super("Handshake", externalSystemReady, role, configId, 3, dao,
+					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
+					CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS, DaoFlexibilityProviderBiz.this.executor,
+					DaoFlexibilityProviderBiz.this.taskScheduler,
+					DaoFlexibilityProviderBiz.this.txTemplate);
+			this.settings = requireNonNullArgument(settings, "settings");
+		}
+
+		@Override
+		protected void doWork() {
+			C config = configuration(true);
+			if ( config.getRegistrationStatus() != RegistrationStatus.Registered ) {
+				var msg = "[%s] task with {} {} failed because the registration status is not Registered."
+						.formatted(name, role, configId.ident());
+				log.info(msg);
+				userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config,
+						CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS, "Not registered"));
+				return;
+			}
+
+			verifySystemOscpVersion(singleton(V20));
+			URI uri = systemUri();
+			String authToken = authToken();
+			doWork20(config, uri, authToken);
+		}
+
+		private void doWork20(C conf, URI uri, String authToken) {
+			HandshakeAcknowledge ack = new HandshakeAcknowledge();
+			if ( settings != null ) {
+				ack.setRequiredBehaviour(settings.toOscp20Value());
+			}
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+			HttpEntity<HandshakeAcknowledge> req = new HttpEntity<>(ack, headers);
+
+			ResponseEntity<?> result = restOps.postForEntity(uri, req, null);
+			if ( result.getStatusCode() == HttpStatus.NO_CONTENT ) {
+				log.info("Successfully handshake acknowledged with {} {} at: {}", role, configId.ident(),
+						uri);
+				userEventAppenderBiz.addEvent(conf.getUserId(),
+						eventForConfiguration(conf, CAPACITY_PROVIDER_HANDSHAKE_TAGS, "Acknoledged"));
+			} else {
+				log.warn(
+						"Unable to handshake acknowledge with {} {} at [{}] because the HTTP status {} was returned (expected {}).",
+						role, configId.ident(), uri, result.getStatusCodeValue(),
+						HttpStatus.NO_CONTENT.value());
+				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
+						CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS,
+						format("Invalid HTTP status returned: %d", result.getStatusCodeValue())));
+			}
+		}
 
 	}
 
 	private class RegisterExternalSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
-			implements Runnable {
+			extends DeferredSystemTask<C> {
 
-		private final OscpRole role;
-		private final UserLongCompositePK configId;
 		private final String token;
-		private final Future<?> externalSystemReady;
-		private final ExternalSystemConfigurationDao<C> dao;
 
-		private int tries = 0;
-		private int remainingTries = 3; // TODO: make configurable
-
-		private RegisterExternalSystemTask(OscpRole role, UserLongCompositePK configId, String token,
-				Future<?> externalSystemReady, ExternalSystemConfigurationDao<C> dao) {
-			super();
-			this.role = requireNonNullArgument(role, "role");
-			this.configId = requireNonNullArgument(configId, "configId");
+		private RegisterExternalSystemTask(Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao, String token) {
+			super("Register", externalSystemReady, role, configId, 3, dao,
+					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
+					CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, DaoFlexibilityProviderBiz.this.executor,
+					DaoFlexibilityProviderBiz.this.taskScheduler,
+					DaoFlexibilityProviderBiz.this.txTemplate);
 			this.token = requireNonNullArgument(token, "token");
-			this.externalSystemReady = requireNonNullArgument(externalSystemReady,
-					"externalSystemReady");
-			this.dao = requireNonNullArgument(dao, "dao");
 		}
 
 		@Override
-		public void run() {
-			final TransactionTemplate tt = getTxTemplate();
-			try {
-				log.debug("Waiting for external system ready signal");
-				externalSystemReady.get(1, TimeUnit.MINUTES); // TODO make configurable
-				log.info("Registering with {} {}", role, configId.ident());
-				if ( tt != null ) {
-					tt.executeWithoutResult((t) -> {
-						doWork();
-					});
-				} else {
-					doWork();
-				}
-			} catch ( Exception e ) {
-				if ( --remainingTries > 0 ) {
-					log.warn("Error registering with {} {}; will re-try up to {} more times: {}", role,
-							configId.ident(), remainingTries, e.getMessage());
-					final TaskScheduler scheduler = getTaskScheduler();
-					if ( scheduler != null ) {
-						scheduler.schedule(() -> {
-							executor.execute(RegisterExternalSystemTask.this);
-						}, Instant.now().plusSeconds(tries * 5));
-					} else {
-						executor.execute(this);
-					}
-				} else {
-					log.error("Error registering with {} {}; tried {} times: {}", role, configId.ident(),
-							tries, e.getMessage(), e);
-				}
-			}
-		}
-
-		private void doWork() {
-			tries++;
-			C conf = dao.getForUpdate(configId);
-			if ( conf == null ) {
-				log.warn(
-						"Unable to register with {} {} because the configuration does not exist; perhaps it was deleted.",
-						role, configId.ident());
-				return;
-			}
-
-			if ( conf.getRegistrationStatus() != RegistrationStatus.Pending ) {
+		protected void doWork() {
+			C config = configuration(true);
+			if ( config.getRegistrationStatus() != RegistrationStatus.Pending ) {
 				log.info("Unable to register with {} {} because the registration status is not Pending.",
 						role, configId.ident());
 				return;
 			}
 
-			if ( !V20.equals(conf.getOscpVersion()) ) {
-				log.error("Unable to register with {} {} because the OSCP version {} is not supported.",
-						role, configId.ident(), conf.getOscpVersion());
-
-				conf.setRegistrationStatus(RegistrationStatus.Failed);
-
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, "Unsupported OSCP version"));
-
-				dao.save(conf);
-				return;
-			}
-
-			URI uri;
 			try {
-				uri = URI.create(conf.getBaseUrl());
-			} catch ( IllegalArgumentException | NullPointerException e ) {
-				log.error("Unable to register with {} {} because the OSCP URL [{}] is not valid: {}",
-						role, configId.ident(), conf.getBaseUrl(), e.getMessage());
-
-				conf.setRegistrationStatus(RegistrationStatus.Failed);
-
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, "Invalid URL"));
-
-				dao.save(conf);
-				return;
-			}
-
-			String authToken = dao.getExternalSystemAuthToken(configId);
-			if ( authToken == null ) {
-				log.error(
-						"Unable to register with {} {} because the authorization token is not available.",
-						role, configId.ident());
-				conf.setRegistrationStatus(RegistrationStatus.Failed);
-
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, "Missing authorization token"));
-
-				dao.save(conf);
-				return;
-			}
-
-			try {
-				doWork20(conf, uri, authToken);
-			} catch ( RuntimeException e ) {
-				userEventAppenderBiz.addEvent(conf.getUserId(), eventForConfiguration(conf,
-						CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, e.getMessage()));
-				throw e;
+				verifySystemOscpVersion(singleton(V20));
+				URI uri = systemUri();
+				String authToken = authToken();
+				doWork20(config, uri, authToken);
+			} catch ( ExternalSystemConfigurationException confEx ) {
+				config.setRegistrationStatus(RegistrationStatus.Failed);
+				dao.save(config);
+				throw confEx;
 			}
 		}
 
@@ -460,6 +437,63 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 */
 	public void setTaskScheduler(TaskScheduler taskScheduler) {
 		this.taskScheduler = taskScheduler;
+	}
+
+	/**
+	 * Get the task start condition timeout.
+	 * 
+	 * @return the timeout, in milliseconds
+	 */
+	public long getTaskConditionTimeout() {
+		return taskConditionTimeout;
+	}
+
+	/**
+	 * Set the task start condition timeout.
+	 * 
+	 * @param taskConditionTimeout
+	 *        the timeout to set, in milliseconds
+	 */
+	public void setTaskConditionTimeout(long taskConditionTimeout) {
+		this.taskConditionTimeout = taskConditionTimeout;
+	}
+
+	/**
+	 * Get the task start delay.
+	 * 
+	 * @return the delay, in milliseconds
+	 */
+	public long getTaskStartDelay() {
+		return taskStartDelay;
+	}
+
+	/**
+	 * Set the task start delay.
+	 * 
+	 * @param taskStartDelay
+	 *        the delay to set, in milliseconds
+	 */
+	public void setTaskStartDelay(long taskStartDelay) {
+		this.taskStartDelay = taskStartDelay;
+	}
+
+	/**
+	 * Get the task retry delay.
+	 * 
+	 * @return the delay, in milliseconds
+	 */
+	public long getTaskRetryDelay() {
+		return taskRetryDelay;
+	}
+
+	/**
+	 * Set the task retry delay.
+	 * 
+	 * @param taskRetryDelay
+	 *        the delay to set, in milliseconds
+	 */
+	public void setTaskRetryDelay(long taskRetryDelay) {
+		this.taskRetryDelay = taskRetryDelay;
 	}
 
 }
