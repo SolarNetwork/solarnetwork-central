@@ -281,7 +281,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				log.info("Successfully handshake acknowledged with {} {} at: {}", role, configId.ident(),
 						uri);
 				userEventAppenderBiz.addEvent(conf.getUserId(),
-						eventForConfiguration(conf, CAPACITY_PROVIDER_HANDSHAKE_TAGS, "Acknoledged"));
+						eventForConfiguration(conf, CAPACITY_PROVIDER_HANDSHAKE_TAGS, "Acknowledged"));
 			} else {
 				log.warn(
 						"Unable to handshake acknowledge with {} {} at [{}] because the HTTP status {} was returned (expected {}).",
