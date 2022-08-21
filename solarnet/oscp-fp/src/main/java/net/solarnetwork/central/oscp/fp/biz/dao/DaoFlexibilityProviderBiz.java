@@ -86,9 +86,10 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
 	private TransactionTemplate txTemplate;
 	private TaskScheduler taskScheduler;
-	private long taskConditionTimeout = 60_000L;
-	private long taskStartDelay = 1_000L;
-	private long taskRetryDelay = 5_000L;
+	private long taskConditionTimeout = DeferredSystemTask.DEFAULT_CONDITION_TIMEOUT;
+	private long taskStartDelay = DeferredSystemTask.DEFAULT_START_DELAY;
+	private long taskStartDelayRandomness = DeferredSystemTask.DEFAULT_START_DELAY_RANDOMNESS;
+	private long taskRetryDelay = DeferredSystemTask.DEFAULT_RETRY_DELAY;
 
 	/**
 	 * The default version URL map supported by this service.
@@ -154,6 +155,10 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 
 		OscpRole systemRole = authInfo.role();
+
+		log.info("Register for {} {} with version URL: {}", systemRole, authInfo.id().ident(),
+				versionUrl);
+
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		BaseOscpExternalSystemConfiguration<?> conf = handleRegistration(authInfo, externalSystemToken,
 				versionUrl, dao);
@@ -162,10 +167,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		var fpId = new UserLongCompositePK(authInfo.userId(), conf.getFlexibilityProviderId());
 		String newToken = flexibilityProviderDao.createAuthToken(fpId);
 
-		executor.execute(new RegisterExternalSystemTask<>(externalSystemReady, systemRole, conf.getId(),
-				dao, newToken).withConditionTimeout(taskConditionTimeout).withStartDelay(taskStartDelay)
-						.withRetryDelay(taskRetryDelay)
-						.withSuccessEventTags(CAPACITY_PROVIDER_REGISTER_TAGS));
+		var task = new RegisterExternalSystemTask<>(externalSystemReady, systemRole, conf.getId(), dao,
+				newToken);
+		executor.execute(task);
 	}
 
 	private <C extends BaseOscpExternalSystemConfiguration<C>> C handleRegistration(
@@ -208,6 +212,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
 		}
 
+		log.info("Handshake for {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
+
 		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
 		filter.setConfigurationId(authInfo.entityId());
 		filter.setLockResults(true);
@@ -220,26 +226,41 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		capacityProviderDao.saveSettings(conf.getId(), settings);
 
 		SystemSettings ackSettings = new SystemSettings(null, null);
-		executor.execute(new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
-				capacityProviderDao, ackSettings).withConditionTimeout(taskConditionTimeout)
-						.withStartDelay(taskStartDelay).withRetryDelay(taskRetryDelay)
-						.withSuccessEventTags(CAPACITY_PROVIDER_HANDSHAKE_TAGS));
+		var task = new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
+				capacityProviderDao, ackSettings);
+		executor.execute(task);
+	}
+
+	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
+			extends DeferredSystemTask<C> {
+
+		private BaseDeferredSystemTask(String name, Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao) {
+			super(name, externalSystemReady, role, configId, dao,
+					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
+					DaoFlexibilityProviderBiz.this.executor,
+					DaoFlexibilityProviderBiz.this.taskScheduler,
+					DaoFlexibilityProviderBiz.this.txTemplate);
+			withConditionTimeout(taskConditionTimeout);
+			withStartDelay(taskStartDelay);
+			withStartDelayRandomness(taskStartDelayRandomness);
+			withRetryDelay(taskRetryDelay);
+		}
+
 	}
 
 	private class HandshakeAckTask<C extends BaseOscpExternalSystemConfiguration<C>>
-			extends DeferredSystemTask<C> {
+			extends BaseDeferredSystemTask<C> {
 
 		private final SystemSettings settings;
 
 		private HandshakeAckTask(Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
 				SystemSettings settings) {
-			super("Handshake", externalSystemReady, role, configId, 3, dao,
-					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
-					CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS, DaoFlexibilityProviderBiz.this.executor,
-					DaoFlexibilityProviderBiz.this.taskScheduler,
-					DaoFlexibilityProviderBiz.this.txTemplate);
+			super("Handshake", externalSystemReady, role, configId, dao);
 			this.settings = requireNonNullArgument(settings, "settings");
+			withErrorEventTags(CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS);
+			withSuccessEventTags(CAPACITY_PROVIDER_HANDSHAKE_TAGS);
 		}
 
 		@Override
@@ -269,18 +290,16 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	}
 
 	private class RegisterExternalSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
-			extends DeferredSystemTask<C> {
+			extends BaseDeferredSystemTask<C> {
 
 		private final String token;
 
 		private RegisterExternalSystemTask(Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao, String token) {
-			super("Register", externalSystemReady, role, configId, 3, dao,
-					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
-					CAPACITY_PROVIDER_REGISTER_ERROR_TAGS, DaoFlexibilityProviderBiz.this.executor,
-					DaoFlexibilityProviderBiz.this.taskScheduler,
-					DaoFlexibilityProviderBiz.this.txTemplate);
+			super("Register", externalSystemReady, role, configId, dao);
 			this.token = requireNonNullArgument(token, "token");
+			withErrorEventTags(CAPACITY_PROVIDER_REGISTER_ERROR_TAGS);
+			withSuccessEventTags(CAPACITY_PROVIDER_REGISTER_TAGS);
 		}
 
 		@Override
@@ -420,6 +439,25 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 */
 	public void setTaskStartDelay(long taskStartDelay) {
 		this.taskStartDelay = taskStartDelay;
+	}
+
+	/**
+	 * Get the task start delay randomness.
+	 * 
+	 * @return the delay, in milliseconds
+	 */
+	public long getTaskStartDelayRandomness() {
+		return taskStartDelayRandomness;
+	}
+
+	/**
+	 * Set the task start delay randomness.
+	 * 
+	 * @param taskStartDelayRandomness
+	 *        the delay to set, in milliseconds
+	 */
+	public void setTaskStartDelayRandomness(long taskStartDelayRandomness) {
+		this.taskStartDelayRandomness = taskStartDelayRandomness;
 	}
 
 	/**

@@ -27,6 +27,8 @@ import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfig
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -59,6 +61,21 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements Runnable {
 
+	/** The {@code conditionTimeout} property default value. */
+	public static final long DEFAULT_CONDITION_TIMEOUT = 60_000L;
+
+	/** The {@code startDelay} property default value. */
+	public static final long DEFAULT_START_DELAY = 1_000L;
+
+	/** The {@code startDelayRandomness} property default value. */
+	public static final long DEFAULT_START_DELAY_RANDOMNESS = 1_000L;
+
+	/** The {@code retryDelay} property default value. */
+	public static final long DEFAULT_RETRY_DELAY = 5_000L;
+
+	/** The {@code remainingTries} property default value. */
+	public static final int DEFAULT_TRIES = 3;
+
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	protected final Future<?> condition;
@@ -67,16 +84,17 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final UserLongCompositePK configId;
 	protected final ExternalSystemConfigurationDao<C> dao;
 	protected final UserEventAppenderBiz userEventAppenderBiz;
-	protected final String[] errorTags;
 	protected final Executor executor;
 	protected final TaskScheduler taskScheduler;
 	protected final TransactionTemplate txTemplate;
 
+	private String[] errorTags;
 	private String[] successTags;
-	private long conditionTimeout = 60_000L;
-	private long startDelay = 1_000L;
-	private long retryDelay = 5_000L;
-	private int remainingTries;
+	private long conditionTimeout = DEFAULT_CONDITION_TIMEOUT;
+	private long startDelay = DEFAULT_START_DELAY;
+	private long startDelayRandomness = DEFAULT_START_DELAY_RANDOMNESS;
+	private long retryDelay = DEFAULT_RETRY_DELAY;
+	private int remainingTries = DEFAULT_TRIES;
 	private int tries = 0;
 	private C configuration;
 
@@ -92,15 +110,10 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        the OSCP role
 	 * @param configId
 	 *        the system configuration ID
-	 * @param tries
-	 *        the number of attempts to make (the {@code executor} must also be
-	 *        provided)
 	 * @param dao
 	 *        the system configuration DAO
 	 * @param userEventAppenderBiz
 	 *        the optional user event service
-	 * @param errorTags
-	 *        base user event tags to use for error events
 	 * @param executor
 	 *        an optional executor, required for re-trying
 	 * @param taskScheduler
@@ -109,9 +122,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 *        an optional transaction template to run the task in
 	 */
 	public DeferredSystemTask(String name, Future<?> condition, OscpRole role,
-			UserLongCompositePK configId, int tries, ExternalSystemConfigurationDao<C> dao,
-			UserEventAppenderBiz userEventAppenderBiz, String[] errorTags, Executor executor,
-			TaskScheduler taskScheduler, TransactionTemplate txTemplate) {
+			UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
+			UserEventAppenderBiz userEventAppenderBiz, Executor executor, TaskScheduler taskScheduler,
+			TransactionTemplate txTemplate) {
 		super();
 		this.name = requireNonNullArgument(name, "name");
 		this.condition = requireNonNullArgument(condition, "condition");
@@ -119,11 +132,21 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		this.configId = requireNonNullArgument(configId, "configId");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.userEventAppenderBiz = userEventAppenderBiz;
-		this.errorTags = errorTags;
-		this.remainingTries = tries;
 		this.executor = executor;
 		this.taskScheduler = taskScheduler;
 		this.txTemplate = txTemplate;
+	}
+
+	/**
+	 * Set the remaining tries count.
+	 * 
+	 * @param tries
+	 *        the number of tries remaining
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withRemainingTries(int tries) {
+		this.remainingTries = tries;
+		return this;
 	}
 
 	/**
@@ -151,6 +174,19 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	}
 
 	/**
+	 * Set the start delay randomness.
+	 * 
+	 * @param ms
+	 *        a maximum random millisecond start delay added to the configured
+	 *        {@code startDelay},
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withStartDelayRandomness(long ms) {
+		this.startDelayRandomness = ms;
+		return this;
+	}
+
+	/**
 	 * Set the retry delay.
 	 * 
 	 * @param ms
@@ -159,6 +195,18 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	public DeferredSystemTask<C> withRetryDelay(long ms) {
 		this.retryDelay = ms;
+		return this;
+	}
+
+	/**
+	 * Set the user event error tags.
+	 * 
+	 * @param errorTags
+	 *        the user event tags to use for an error event
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withErrorEventTags(String[] errorTags) {
+		this.errorTags = errorTags;
 		return this;
 	}
 
@@ -186,8 +234,19 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 				} else {
 					condition.get();
 				}
-				if ( startDelay > 0 ) {
-					Thread.sleep(startDelay);
+				if ( startDelay > 0 || startDelayRandomness > 0 ) {
+					long delay = startDelay;
+					if ( startDelayRandomness > 0 ) {
+						SecureRandom rng;
+						try {
+							rng = SecureRandom.getInstance("SHA1PRNG");
+						} catch ( NoSuchAlgorithmException e ) {
+							rng = new SecureRandom();
+						}
+						delay += rng.nextLong(startDelayRandomness);
+					}
+					log.debug("[{}] task sleeping for {}ms before start...", name, delay);
+					Thread.sleep(delay);
 				}
 			} catch ( InterruptedException e ) {
 				// ignore
