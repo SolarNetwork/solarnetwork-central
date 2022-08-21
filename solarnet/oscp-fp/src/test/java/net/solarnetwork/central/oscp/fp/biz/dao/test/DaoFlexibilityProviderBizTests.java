@@ -339,4 +339,36 @@ public class DaoFlexibilityProviderBizTests {
 				is(equalTo(RegistrationStatus.Registered)));
 	}
 
+	@Test
+	public void heartbeat_cp() {
+		// GIVEN
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final Instant expires = Instant.now().plusSeconds(1);
+
+		// WHEN
+		biz.heartbeat(authInfo, expires);
+
+		// THEN
+		then(capacityProviderDao).should().updateOfflineDate(authInfo.id(), expires);
+	}
+
+	@Test
+	public void heartbeat_co() {
+		// GIVEN
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityOptimizer);
+		final Instant expires = Instant.now().plusSeconds(1);
+
+		// WHEN
+		biz.heartbeat(authInfo, expires);
+
+		// THEN
+		then(capacityOptimizerDao).should().updateOfflineDate(authInfo.id(), expires);
+	}
+
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.biz;
 
+import java.time.Instant;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
@@ -66,7 +67,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * </p>
 	 * 
 	 * @param authInfo
-	 *        the authorization info to register
+	 *        the authorization info of the external system
 	 * @param externalSystemToken
 	 *        the authorization token to use when making requests to the
 	 *        external system
@@ -74,7 +75,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *        the external system's OSCP version and base URL to use
 	 * @param externalSystemReady
 	 *        a future that will be completed when it is OK to initiate the
-	 *        registration callback to the external system
+	 *        response callback to the external system
 	 * @throws AuthorizationException
 	 *         with
 	 *         {@link AuthorizationException.Reason#REGISTRATION_NOT_CONFIRMED}
@@ -88,12 +89,12 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * Initiate a handshake to provide desired system settings.
 	 * 
 	 * @param authInfo
-	 *        the authorization info to register
+	 *        the authorization info of the external system
 	 * @param settings
 	 *        the desired settings
 	 * @param externalSystemReady
 	 *        a future that will be completed when it is OK to initiate the
-	 *        registration callback to the external system
+	 *        response callback to the external system
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
 	 *         system configuration associated with {@code authInfo} does not
@@ -101,4 +102,18 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 */
 	void handshake(AuthRoleInfo authInfo, SystemSettings settings, Future<?> externalSystemReady);
 
+	/**
+	 * Handle a heartbeat from an external system.
+	 * 
+	 * @param authInfo
+	 *        the authorization info of the external system
+	 * @param expiresDate
+	 *        the date after which the external system "liveness" expires (i.e.
+	 *        another heartbeat from the system is expected before this date)
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void heartbeat(AuthRoleInfo authInfo, Instant expiresDate);
 }

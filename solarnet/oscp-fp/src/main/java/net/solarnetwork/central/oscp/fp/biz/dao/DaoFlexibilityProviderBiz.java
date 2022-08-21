@@ -26,14 +26,19 @@ import static java.util.Collections.singleton;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
+import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
+import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
@@ -135,9 +140,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	private ExternalSystemConfigurationDao<?> configurationDaoForRole(OscpRole systemRole) {
 		ExternalSystemConfigurationDao<?> dao;
-		if ( systemRole == OscpRole.CapacityProvider ) {
+		if ( systemRole == CapacityProvider ) {
 			dao = capacityProviderDao;
-		} else if ( systemRole == OscpRole.CapacityOptimizer ) {
+		} else if ( systemRole == CapacityOptimizer ) {
 			dao = capacityOptimizerDao;
 		} else {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
@@ -145,16 +150,24 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		return dao;
 	}
 
+	private OscpRole verifyRole(AuthRoleInfo authInfo, Set<OscpRole> allowedRoles) {
+		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		OscpRole role = authInfo.role();
+		if ( !allowedRoles.contains(role) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		return role;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
 			Future<?> externalSystemReady) throws AuthorizationException {
-		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null
-				|| externalSystemToken == null ) {
-			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, null);
-		}
-
-		OscpRole systemRole = authInfo.role();
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
+		requireNonNullArgument(externalSystemToken, "externalSystemToken");
+		requireNonNullArgument(versionUrl, "versionUrl");
 
 		log.info("Register for {} {} with version URL: {}", systemRole, authInfo.id().ident(),
 				versionUrl);
@@ -204,13 +217,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	@Override
 	public void handshake(AuthRoleInfo authInfo, SystemSettings settings,
 			Future<?> externalSystemReady) {
-		if ( authInfo == null || authInfo.id() == null || authInfo.role() == null || settings == null ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
-		}
-		OscpRole systemRole = authInfo.role();
-		if ( systemRole != OscpRole.CapacityProvider ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
-		}
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider));
+		requireNonNullArgument(settings, "settings");
 
 		log.info("Handshake for {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
 
@@ -229,6 +237,19 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		var task = new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
 				capacityProviderDao, ackSettings);
 		executor.execute(task);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void heartbeat(AuthRoleInfo authInfo, Instant expiresDate) {
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
+		requireNonNullArgument(expiresDate, "expiresDate");
+
+		log.info("Heartbeat for {} {} with epiration: {}", systemRole, authInfo.id().ident(),
+				expiresDate);
+
+		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
+		dao.updateOfflineDate(authInfo.id(), expiresDate);
 	}
 
 	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
