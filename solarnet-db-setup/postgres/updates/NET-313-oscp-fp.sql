@@ -1,4 +1,5 @@
 /*
+DROP VIEW solaroscp.oscp_system_conf CASCADE;
 DROP TABLE solaroscp.oscp_fp_token CASCADE;
 DROP TABLE solaroscp.oscp_cp_conf CASCADE;
 DROP TABLE solaroscp.oscp_cp_token CASCADE;
@@ -55,7 +56,12 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	CONSTRAINT oscp_cp_conf_url_unq UNIQUE (user_id, url)
 );
 
-CREATE INDEX oscp_cp_conf_heartbeat_idx ON solaroscp.oscp_cp_conf (heartbeat_at);
+-- Add partial index on heartbeat_at to support efficient heartbeat job execution
+CREATE INDEX oscp_cp_conf_heartbeat_idx ON solaroscp.oscp_cp_conf (heartbeat_at)
+WHERE enabled = TRUE
+	AND reg_status = ascii('c')
+	AND heartbeat_secs IS NOT NULL;
+
 CREATE INDEX oscp_cp_conf_offline_idx ON solaroscp.oscp_cp_conf (offline_at);
 
 /**
@@ -102,8 +108,30 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
 );
 
-CREATE INDEX oscp_co_conf_heartbeat_idx ON solaroscp.oscp_co_conf (heartbeat_at);
+-- Add partial index on heartbeat_at to support efficient heartbeat job execution
+CREATE INDEX oscp_co_conf_heartbeat_idx ON solaroscp.oscp_co_conf (heartbeat_at)
+WHERE enabled = TRUE
+	AND reg_status = ascii('c')
+	AND heartbeat_secs IS NOT NULL;
+
 CREATE INDEX oscp_co_conf_offline_idx ON solaroscp.oscp_co_conf (offline_at);
+
+/**
+ * A combined view of both Capacity Provider and Capacity Optimizer configurations,
+ * to support common tasks on both systems.
+ *
+CREATE VIEW solaroscp.oscp_system_conf AS
+	SELECT 'cp' AS role_alias, user_id, id, created, modified, enabled, fp_id, reg_status
+		, cname, url, oscp_ver, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+		, sprops
+	FROM solaroscp.oscp_cp_conf
+	UNION ALL
+	SELECT 'co' AS role_alias, user_id, id, created, modified, enabled, fp_id, reg_status
+		, cname, url, oscp_ver, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+		, sprops
+	FROM solaroscp.oscp_co_conf
+;
+*/
 
 /**
  * OSCP Capacity Optimizer settings.
@@ -326,14 +354,13 @@ RETURNS TABLE (
 	role_alias	TEXT
 ) LANGUAGE SQL STABLE STRICT ROWS 1 AS
 $$
-	SELECT c.user_id, c.id, 'cp' AS ROLE
+	SELECT c.user_id, c.id, 'cp' AS role_alias
 	FROM solaroscp.oscp_fp_token f
 	INNER JOIN solaroscp.oscp_cp_conf c ON c.user_id = f.user_id AND c.fp_id = f.id
 	WHERE f.user_id = uid AND f.id = fid AND f.enabled = TRUE
 	UNION ALL
-	SELECT c.user_id, c.id, 'co' AS ROLE
+	SELECT c.user_id, c.id, 'co' AS role_alias
 	FROM solaroscp.oscp_fp_token f
 	INNER JOIN solaroscp.oscp_co_conf c ON c.user_id = f.user_id AND c.fp_id = f.id
 	WHERE f.user_id = uid AND f.id = fid AND f.enabled = TRUE
 $$;
-

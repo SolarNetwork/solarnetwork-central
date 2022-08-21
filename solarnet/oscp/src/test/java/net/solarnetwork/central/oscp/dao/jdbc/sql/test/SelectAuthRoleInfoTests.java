@@ -45,11 +45,7 @@ import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Test cases for the {@link SelectAuthRoleInfo} class.
  * 
  * @author matt
  * @version 1.0
