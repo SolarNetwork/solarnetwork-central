@@ -22,28 +22,19 @@
 
 package net.solarnetwork.central.oscp.util;
 
-import static java.lang.String.format;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -51,6 +42,7 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 
 /**
  * Abstract {@link Runnable} to help with OSCP system related task execution.
@@ -83,6 +75,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final OscpRole role;
 	protected final UserLongCompositePK configId;
 	protected final ExternalSystemConfigurationDao<C> dao;
+	protected final ExternalSystemClient systemBiz;
 	protected final UserEventAppenderBiz userEventAppenderBiz;
 	protected final Executor executor;
 	protected final TaskScheduler taskScheduler;
@@ -97,6 +90,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	private int remainingTries = DEFAULT_TRIES;
 	private int tries = 0;
 	private C configuration;
+	private SystemTaskContext<C> context;
 
 	/**
 	 * Constructor.
@@ -111,7 +105,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 * @param configId
 	 *        the system configuration ID
 	 * @param dao
-	 *        the system configuration DAO
+	 *        the DAO
+	 * @param systemBiz
+	 *        the system service
 	 * @param userEventAppenderBiz
 	 *        the optional user event service
 	 * @param executor
@@ -123,14 +119,15 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	public DeferredSystemTask(String name, Future<?> condition, OscpRole role,
 			UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
-			UserEventAppenderBiz userEventAppenderBiz, Executor executor, TaskScheduler taskScheduler,
-			TransactionTemplate txTemplate) {
+			ExternalSystemClient systemBiz, UserEventAppenderBiz userEventAppenderBiz, Executor executor,
+			TaskScheduler taskScheduler, TransactionTemplate txTemplate) {
 		super();
 		this.name = requireNonNullArgument(name, "name");
 		this.condition = requireNonNullArgument(condition, "condition");
 		this.role = requireNonNullArgument(role, "role");
 		this.configId = requireNonNullArgument(configId, "configId");
 		this.dao = requireNonNullArgument(dao, "dao");
+		this.systemBiz = requireNonNullArgument(systemBiz, "systemBiz");
 		this.userEventAppenderBiz = userEventAppenderBiz;
 		this.executor = executor;
 		this.taskScheduler = taskScheduler;
@@ -339,61 +336,22 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	}
 
 	/**
-	 * Get a URI for the configuration URL.
+	 * Get the task context.
 	 * 
-	 * @param extraErrorTags
+	 * @param errorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the URI
+	 * @return the context
 	 * @throws ExternalSystemConfigurationException
-	 *         if an error occurs
+	 *         if the configuration is not found
 	 */
-	protected URI systemUri(String... extraErrorTags) {
-		C config = configuration(true);
-		try {
-			return URI.create(config.getBaseUrl());
-		} catch ( IllegalArgumentException | NullPointerException e ) {
-			var msg = "[%s] task with %s %s failed because the OSCP URL [%s] is not valid: %s"
-					.formatted(name, role, configId.ident(), config.getBaseUrl(), e.getMessage());
-			LogEventInfo event = eventForConfiguration(config, errorTags, "Invalid URL", extraErrorTags);
-			throw new ExternalSystemConfigurationException(role, config, event, msg);
+	protected SystemTaskContext<C> context(String... extraErrorTags) {
+		if ( this.context != null ) {
+			return context;
 		}
-	}
-
-	/**
-	 * Verify the external system uses a supported version.
-	 * 
-	 * @param supportedVersions
-	 *        the supported OSCP versions
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
-	 */
-	protected void verifySystemOscpVersion(Set<String> supportedVersions, String... extraErrorTags) {
-		C config = configuration(true);
-		if ( !supportedVersions.contains(config.getOscpVersion()) ) {
-			var msg = "[%s] task with %s %s failed because the OSCP version %s is not supported."
-					.formatted(name, role, configId.ident(), config.getOscpVersion());
-			LogEventInfo event = eventForConfiguration(config, errorTags, "Unsupported OSCP version");
-			throw new ExternalSystemConfigurationException(role, config, event, msg);
-		}
-	}
-
-	/**
-	 * Get the configuration authorization token.
-	 * 
-	 * @param extraErrorTags
-	 *        error tags to include in a user event if an error occurs
-	 * @return the token
-	 */
-	protected String authToken(String... extraErrorTags) {
-		String authToken = dao.getExternalSystemAuthToken(configId);
-		if ( authToken == null ) {
-			var msg = "[%s] task with %s %s failed because the authorization token is not available."
-					.formatted(name, role, configId.ident());
-			C config = configuration(true);
-			LogEventInfo event = eventForConfiguration(config, errorTags, "Missing authorization token");
-			throw new ExternalSystemConfigurationException(role, config, event, msg);
-		}
-		return authToken;
+		SystemTaskContext<C> ctx = new SystemTaskContext<>(name, role, configuration(true), errorTags,
+				successTags, dao);
+		this.context = ctx;
+		return ctx;
 	}
 
 	/**
@@ -401,36 +359,16 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 * 
 	 * @param restOps
 	 *        the REST template
+	 * @param path
+	 *        the URL path
 	 * @param body
 	 *        the HTTP post body
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
 	 */
-	protected void post(RestOperations restOps, Object body, String... extraErrorTags) {
-		C config = configuration(true);
-		URI uri = systemUri(extraErrorTags);
-		String authToken = authToken(extraErrorTags);
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
-		HttpEntity<Object> req = new HttpEntity<>(body, headers);
-
-		ResponseEntity<?> result = restOps.postForEntity(uri, req, null);
-		if ( result.getStatusCode() == HttpStatus.NO_CONTENT ) {
-			log.info("[{}] with {} {} successful at: {}", name, role, configId.ident(), uri);
-			if ( userEventAppenderBiz != null && successTags != null ) {
-				userEventAppenderBiz.addEvent(configId.getUserId(),
-						eventForConfiguration(config, successTags, "Success"));
-			}
-		} else {
-			log.warn(
-					"[{}] with{} {} failed at [{}] because the HTTP status {} was returned (expected {}).",
-					role, configId.ident(), uri, result.getStatusCodeValue(),
-					HttpStatus.NO_CONTENT.value());
-			userEventAppenderBiz.addEvent(configId.getUserId(), eventForConfiguration(config, errorTags,
-					format("Invalid HTTP status returned: %d", result.getStatusCodeValue())));
-		}
-
+	protected void post(String path, Object body, String... extraErrorTags) {
+		SystemTaskContext<C> ctx = context(extraErrorTags);
+		systemBiz.systemExchange(ctx, HttpMethod.POST, path, body);
 	}
 
 }

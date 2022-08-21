@@ -25,7 +25,9 @@ package net.solarnetwork.central.oscp.fp.biz.dao.test;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -78,6 +80,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
+import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.BasicFilterResults;
@@ -134,8 +137,9 @@ public class DaoFlexibilityProviderBizTests {
 		restTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
 
 		mockExternalSystem = MockRestServiceServer.bindTo(restTemplate).build();
-		biz = new DaoFlexibilityProviderBiz(executor, restTemplate, userEventAppenderBiz,
-				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
+		biz = new DaoFlexibilityProviderBiz(executor,
+				new RestOpsExternalSystemClient(restTemplate, userEventAppenderBiz),
+				userEventAppenderBiz, flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
 		biz.setTaskStartDelay(0);
 		biz.setTaskStartDelayRandomness(0);
 		// no biz.setTxTemplate(tt); to use test transaction
@@ -252,7 +256,7 @@ public class DaoFlexibilityProviderBizTests {
 		Register expectedPost = new Register(fpToken, Collections
 				.singletonList(new VersionUrl(fpVersionUrl.getKey(), fpVersionUrl.getValue())));
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
-		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
+		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue() + REGISTER_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -322,7 +326,7 @@ public class DaoFlexibilityProviderBizTests {
 		Register expectedPost = new Register(fpToken, Collections
 				.singletonList(new VersionUrl(fpVersionUrl.getKey(), fpVersionUrl.getValue())));
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
-		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
+		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue() + REGISTER_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -383,7 +387,8 @@ public class DaoFlexibilityProviderBizTests {
 		// call out to the external system handshake endpoint
 		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
-		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl())).andExpect(method(HttpMethod.POST))
+		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl() + HANDSHAKE_ACK_URL_PATH))
+				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
@@ -436,7 +441,8 @@ public class DaoFlexibilityProviderBizTests {
 		// call out to the external system handshake endpoint
 		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
-		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl())).andExpect(method(HttpMethod.POST))
+		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl() + HANDSHAKE_ACK_URL_PATH))
+				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());

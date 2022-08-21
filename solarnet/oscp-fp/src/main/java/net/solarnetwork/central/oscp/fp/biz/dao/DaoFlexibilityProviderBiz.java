@@ -29,7 +29,9 @@ import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterF
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -47,7 +49,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -63,6 +64,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
+import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.util.DeferredSystemTask;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -82,7 +84,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private static final Logger log = LoggerFactory.getLogger(DaoFlexibilityProviderBiz.class);
 
 	private final Executor executor;
-	private final RestOperations restOps;
+	private final ExternalSystemClient externalSystemClient;
 	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
@@ -110,8 +112,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * 
 	 * @param executor
 	 *        the executor to use
-	 * @param restOps
-	 *        the REST operations to use
+	 * @param externalSystemClient
+	 *        the external system service
 	 * @param userEventAppenderBiz
 	 *        the user event appender
 	 * @param flexibilityProviderDao
@@ -123,13 +125,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoFlexibilityProviderBiz(Executor executor, RestOperations restOps,
+	public DaoFlexibilityProviderBiz(Executor executor, ExternalSystemClient externalSystemClient,
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
-		this.restOps = requireNonNullArgument(restOps, "restOps");
+		this.externalSystemClient = requireNonNullArgument(externalSystemClient, "externalSystemClient");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.flexibilityProviderDao = requireNonNullArgument(flexibilityProviderDao,
 				"flexibilityProviderDao");
@@ -257,7 +259,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		private BaseDeferredSystemTask(String name, Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao) {
-			super(name, externalSystemReady, role, configId, dao,
+			super(name, externalSystemReady, role, configId, dao, externalSystemClient,
 					DaoFlexibilityProviderBiz.this.userEventAppenderBiz,
 					DaoFlexibilityProviderBiz.this.executor,
 					DaoFlexibilityProviderBiz.this.taskScheduler,
@@ -296,7 +298,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				return;
 			}
 
-			verifySystemOscpVersion(singleton(V20));
+			context().verifySystemOscpVersion(singleton(V20));
 			doWork20(config);
 		}
 
@@ -305,7 +307,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			if ( settings != null ) {
 				ack.setRequiredBehaviour(settings.toOscp20Value());
 			}
-			post(restOps, ack);
+			post(HANDSHAKE_ACK_URL_PATH, ack);
 		}
 
 	}
@@ -333,7 +335,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			}
 
 			try {
-				verifySystemOscpVersion(singleton(V20));
+				context().verifySystemOscpVersion(singleton(V20));
 				doWork20(config);
 			} catch ( ExternalSystemConfigurationException confEx ) {
 				config.setRegistrationStatus(RegistrationStatus.Failed);
@@ -353,7 +355,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			}
 			List<VersionUrl> versions = Collections.singletonList(new VersionUrl(V20, url));
 			Register register = new Register(token, versions);
-			post(restOps, register);
+			post(REGISTER_URL_PATH, register);
 
 			conf.setRegistrationStatus(RegistrationStatus.Registered);
 			dao.save(conf);

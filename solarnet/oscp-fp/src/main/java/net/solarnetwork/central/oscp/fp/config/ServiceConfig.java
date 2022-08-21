@@ -34,6 +34,8 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
+import net.solarnetwork.central.oscp.http.ExternalSystemClient;
+import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 
 /**
  * Service configuration.
@@ -41,7 +43,7 @@ import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class ServiceConfig {
 
 	@Autowired
@@ -68,14 +70,19 @@ public class ServiceConfig {
 	@Autowired
 	private TransactionTemplate transactionTemplate;
 
+	@Bean
+	public RestOpsExternalSystemClient externalSystemClient() {
+		return new RestOpsExternalSystemClient(restOps, userEventAppenderBiz);
+	}
+
 	/**
 	 * Get the flexibility provider service.
 	 * 
 	 * @return the service
 	 */
 	@Bean
-	public DaoFlexibilityProviderBiz flexibilityProviderBiz() {
-		var biz = new DaoFlexibilityProviderBiz(executor, restOps, userEventAppenderBiz,
+	public DaoFlexibilityProviderBiz flexibilityProviderBiz(ExternalSystemClient client) {
+		var biz = new DaoFlexibilityProviderBiz(executor, client, userEventAppenderBiz,
 				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
 		biz.setTxTemplate(transactionTemplate);
 		biz.setTaskScheduler(taskScheduler);
