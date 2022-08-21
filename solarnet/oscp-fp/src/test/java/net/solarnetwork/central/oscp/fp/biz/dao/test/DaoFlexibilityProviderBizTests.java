@@ -25,23 +25,29 @@ package net.solarnetwork.central.oscp.fp.biz.dao.test;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,8 +73,10 @@ import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.codec.JsonUtils;
@@ -77,6 +85,7 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.VersionUrl;
 
@@ -245,6 +254,7 @@ public class DaoFlexibilityProviderBizTests {
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
 		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
 				.andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
@@ -314,6 +324,7 @@ public class DaoFlexibilityProviderBizTests {
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
 		mockExternalSystem.expect(once(), requestTo(sysVersionUrl.getValue()))
 				.andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
@@ -337,6 +348,112 @@ public class DaoFlexibilityProviderBizTests {
 
 		assertThat("Configuration status updated", co2.getRegistrationStatus(),
 				is(equalTo(RegistrationStatus.Registered)));
+	}
+
+	@Test
+	public void handshake_cp() throws Exception {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final SystemSettings settings = new SystemSettings(123, EnumSet.of(MeasurementStyle.Continuous));
+
+		// load the configuration
+		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(authInfo.id(),
+				Instant.now());
+		cp.setOscpVersion("2.0");
+		cp.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		cp.setRegistrationStatus(RegistrationStatus.Registered);
+		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		final FilterResults<CapacityProviderConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
+				singleton(cp));
+		given(capacityProviderDao.findFiltered(any())).willReturn(cpResults);
+
+		// the rest happens in async task (but we have forced to calling thread here)
+
+		// get the conf, not for updating
+		final CapacityProviderConfiguration cp2 = cp.clone();
+		given(capacityProviderDao.get(cp2.getId())).willReturn(cp2);
+
+		// get the system auth token
+		final String sysToken = randomUUID().toString();
+		given(capacityProviderDao.getExternalSystemAuthToken(cp2.getId())).willReturn(sysToken);
+
+		// call out to the external system handshake endpoint
+		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl())).andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// WHEN
+		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
+		biz.handshake(authInfo, settings, sysReady);
+
+		// THEN
+		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
+		ConfigurationFilter cpFilter = cpFilterCaptor.getValue();
+		assertThat("CP filter included user criteria from auth info", cpFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
+
+		then(capacityProviderDao).should().saveSettings(eq(authInfo.id()), same(settings));
+	}
+
+	@Test
+	public void handshake_co() throws Exception {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityOptimizer);
+		final SystemSettings settings = new SystemSettings(123, EnumSet.of(MeasurementStyle.Continuous));
+
+		// load the configuration
+		final CapacityOptimizerConfiguration cp = new CapacityOptimizerConfiguration(authInfo.id(),
+				Instant.now());
+		cp.setOscpVersion("2.0");
+		cp.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		cp.setRegistrationStatus(RegistrationStatus.Registered);
+		cp.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		final FilterResults<CapacityOptimizerConfiguration, UserLongCompositePK> cpResults = new BasicFilterResults<>(
+				singleton(cp));
+		given(capacityOptimizerDao.findFiltered(any())).willReturn(cpResults);
+
+		// the rest happens in async task (but we have forced to calling thread here)
+
+		// get the conf, not for updating
+		final CapacityOptimizerConfiguration cp2 = cp.clone();
+		given(capacityOptimizerDao.get(cp2.getId())).willReturn(cp2);
+
+		// get the system auth token
+		final String sysToken = randomUUID().toString();
+		given(capacityOptimizerDao.getExternalSystemAuthToken(cp2.getId())).willReturn(sysToken);
+
+		// call out to the external system handshake endpoint
+		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl())).andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// WHEN
+		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
+		biz.handshake(authInfo, settings, sysReady);
+
+		// THEN
+		then(capacityOptimizerDao).should().findFiltered(cpFilterCaptor.capture());
+		ConfigurationFilter cpFilter = cpFilterCaptor.getValue();
+		assertThat("CP filter included user criteria from auth info", cpFilter.getUserId(),
+				is(equalTo(authInfo.id().getUserId())));
+		assertThat("CP filter included conf criteria from auth info", cpFilter.getConfigurationId(),
+				is(equalTo(authInfo.id().getEntityId())));
+
+		then(capacityOptimizerDao).should().saveSettings(eq(authInfo.id()), same(settings));
 	}
 
 	@Test

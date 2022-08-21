@@ -55,6 +55,9 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	CONSTRAINT oscp_cp_conf_url_unq UNIQUE (user_id, url)
 );
 
+CREATE INDEX oscp_cp_conf_heartbeat_idx ON solaroscp.oscp_cp_conf (heartbeat_at);
+CREATE INDEX oscp_cp_conf_offline_idx ON solaroscp.oscp_cp_conf (offline_at);
+
 /**
  * OSCP Capacity Provider tokens.
  */
@@ -98,6 +101,9 @@ CREATE TABLE solaroscp.oscp_co_conf (
 		ON UPDATE NO ACTION ON DELETE NO ACTION,
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
 );
+
+CREATE INDEX oscp_co_conf_heartbeat_idx ON solaroscp.oscp_co_conf (heartbeat_at);
+CREATE INDEX oscp_co_conf_offline_idx ON solaroscp.oscp_co_conf (offline_at);
 
 /**
  * OSCP Capacity Optimizer settings.

@@ -58,7 +58,6 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
-import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
@@ -217,25 +216,26 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	@Override
 	public void handshake(AuthRoleInfo authInfo, SystemSettings settings,
 			Future<?> externalSystemReady) {
-		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider));
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(settings, "settings");
 
 		log.info("Handshake for {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
 
+		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
 		filter.setConfigurationId(authInfo.entityId());
 		filter.setLockResults(true);
-		var filterResults = capacityProviderDao.findFiltered(filter);
+		var filterResults = dao.findFiltered(filter);
 		if ( filterResults.getReturnedResultCount() < 1 ) {
-			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
+			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
 		}
-		CapacityProviderConfiguration conf = stream(filterResults.spliterator(), false).findFirst()
-				.orElse(null);
-		capacityProviderDao.saveSettings(conf.getId(), settings);
+		BaseOscpExternalSystemConfiguration<?> conf = stream(filterResults.spliterator(), false)
+				.findFirst().orElse(null);
+		dao.saveSettings(conf.getId(), settings);
 
 		SystemSettings ackSettings = new SystemSettings(null, null);
-		var task = new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(),
-				capacityProviderDao, ackSettings);
+		var task = new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(), dao,
+				ackSettings);
 		executor.execute(task);
 	}
 
@@ -286,7 +286,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		@Override
 		protected void doWork() {
-			C config = configuration(true);
+			C config = configuration(false);
 			if ( config.getRegistrationStatus() != RegistrationStatus.Registered ) {
 				var msg = "[%s] task with {} {} failed because the registration status is not Registered."
 						.formatted(name, role, configId.ident());

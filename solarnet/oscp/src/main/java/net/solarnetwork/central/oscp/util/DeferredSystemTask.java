@@ -330,7 +330,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		C config = (lock ? dao.getForUpdate(configId) : dao.get(configId));
 		if ( config == null ) {
 			var msg = "[%s] task with %s %s failed because the configuration does not exist; perhaps it was deleted."
-					.formatted(role, configId.ident());
+					.formatted(name, role, configId.ident());
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Configuration not found");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
@@ -371,7 +371,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		C config = configuration(true);
 		if ( !supportedVersions.contains(config.getOscpVersion()) ) {
 			var msg = "[%s] task with %s %s failed because the OSCP version %s is not supported."
-					.formatted(role, configId.ident(), config.getOscpVersion());
+					.formatted(name, role, configId.ident(), config.getOscpVersion());
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Unsupported OSCP version");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
@@ -388,7 +388,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		String authToken = dao.getExternalSystemAuthToken(configId);
 		if ( authToken == null ) {
 			var msg = "[%s] task with %s %s failed because the authorization token is not available."
-					.formatted(role, configId.ident());
+					.formatted(name, role, configId.ident());
 			C config = configuration(true);
 			LogEventInfo event = eventForConfiguration(config, errorTags, "Missing authorization token");
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
