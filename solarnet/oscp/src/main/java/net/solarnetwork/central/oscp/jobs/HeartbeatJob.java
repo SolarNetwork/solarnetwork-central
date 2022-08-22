@@ -40,6 +40,18 @@ import net.solarnetwork.central.scheduler.JobSupport;
 /**
  * Job to post OSCP heartbeat messages to configured systems.
  * 
+ * <p>
+ * This job is designed to support parallel execution, across multiple runtime
+ * instances. The
+ * {@link ExternalSystemSupportDao#processExternalSystemWithExpiredHeartbeat(java.util.function.Function)}
+ * method is used to exclusively process individual pending external system
+ * heartbeats by locking the heartbeat table row, making the heartbeat request,
+ * and updating the locked row with the execution time. When querying for
+ * pending heartbeat rows to process, locked rows are skipped. Thus the parallel
+ * tasks compete for rows to process, until none remain or the maximum iteration
+ * count is reached.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
