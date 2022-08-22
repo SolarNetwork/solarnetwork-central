@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -53,6 +54,9 @@ public interface OscpUserEvents {
 
 	/** A user event tag for OSCP handshake . */
 	String HANDSHAKE_TAG = "handshake";
+
+	/** A user event tag for OSCP heartbeat . */
+	String HEARTBEAT_TAG = "heartbeat";
 
 	/** A user event tag for OSCP "error" . */
 	String ERROR_TAG = "error";
@@ -87,8 +91,9 @@ public interface OscpUserEvents {
 	 */
 	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, String[] baseTags,
 			String message, String... extraTags) {
-		return event(baseTags, message,
-				getJSONString(Map.of(CONFIG_ID_DATA_KEY, configId.getEntityId()), null), extraTags);
+		Map<String, Object> data = new HashMap<>(4);
+		data.put(CONFIG_ID_DATA_KEY, configId.getEntityId());
+		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
 
 	/**
@@ -106,12 +111,12 @@ public interface OscpUserEvents {
 	 */
 	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
 			String[] baseTags, String message, String... extraTags) {
-		return event(baseTags, message,
-				getJSONString(Map.of(CONFIG_ID_DATA_KEY, config.getEntityId(),
-						REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode(),
-						VERSION_DATA_KEY, config.getOscpVersion(), URL_DATA_KEY, config.getBaseUrl()),
-						null),
-				extraTags);
+		Map<String, Object> data = new HashMap<>(4);
+		data.put(CONFIG_ID_DATA_KEY, config.getEntityId());
+		data.put(REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode());
+		data.put(VERSION_DATA_KEY, config.getOscpVersion());
+		data.put(URL_DATA_KEY, config.getBaseUrl());
+		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
 
 }

@@ -88,7 +88,11 @@ public class SelectExternalSystemForHeartbeatTests {
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("""
-				SELECT user_id, id, heartbeat_at FROM solaroscp.oscp_cp_conf
+				SELECT id, created, modified, user_id, enabled
+					, fp_id, reg_status, cname, url, oscp_ver
+					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+					, sprops
+				FROM solaroscp.oscp_cp_conf
 				WHERE reg_status = ascii('r')
 					AND heartbeat_secs IS NOT NULL
 					AND (heartbeat_at IS NULL OR heartbeat_at
@@ -111,7 +115,11 @@ public class SelectExternalSystemForHeartbeatTests {
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				SELECT user_id, id, heartbeat_at FROM solaroscp.oscp_cp_conf
+				SELECT id, created, modified, user_id, enabled
+					, fp_id, reg_status, cname, url, oscp_ver
+					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+					, sprops
+				FROM solaroscp.oscp_cp_conf
 				WHERE reg_status = ascii('r')
 					AND heartbeat_secs IS NOT NULL
 					AND (heartbeat_at IS NULL OR heartbeat_at
@@ -133,7 +141,11 @@ public class SelectExternalSystemForHeartbeatTests {
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("""
-				SELECT user_id, id, heartbeat_at FROM solaroscp.oscp_co_conf
+				SELECT id, created, modified, user_id, enabled
+					, fp_id, reg_status, cname, url, oscp_ver
+					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+					, sprops
+				FROM solaroscp.oscp_co_conf
 				WHERE reg_status = ascii('r')
 					AND heartbeat_secs IS NOT NULL
 					AND (heartbeat_at IS NULL OR heartbeat_at
@@ -156,7 +168,11 @@ public class SelectExternalSystemForHeartbeatTests {
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				SELECT user_id, id, heartbeat_at FROM solaroscp.oscp_co_conf
+				SELECT id, created, modified, user_id, enabled
+					, fp_id, reg_status, cname, url, oscp_ver
+					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+					, sprops
+				FROM solaroscp.oscp_co_conf
 				WHERE reg_status = ascii('r')
 					AND heartbeat_secs IS NOT NULL
 					AND (heartbeat_at IS NULL OR heartbeat_at

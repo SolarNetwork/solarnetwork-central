@@ -29,14 +29,15 @@ import java.util.List;
 import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForHeartbeat;
-import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
-import net.solarnetwork.central.oscp.domain.UserLongKeyTimestamp;
+import net.solarnetwork.central.oscp.util.SystemTaskContext;
 
 /**
  * JDBC implementation of {@link ExternalSystemSupportDao}.
@@ -72,24 +73,32 @@ public class JdbcExternalSystemSupportDao implements ExternalSystemSupportDao {
 	}
 
 	@Override
-	public boolean processExternalSystemWithExpiredHeartbeat(Function<AuthRoleInfo, Instant> handler) {
+	public boolean processExternalSystemWithExpiredHeartbeat(
+			Function<SystemTaskContext<?>, Instant> handler) {
 		requireNonNullArgument(handler, "handler");
 
-		if ( executeQuery(OscpRole.CapacityProvider, capacityProviderDao, handler) ) {
+		if ( executeQuery(OscpRole.CapacityProvider, capacityProviderDao,
+				CapacityProviderConfigurationRowMapper.INSTANCE, CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS,
+				CAPACITY_PROVIDER_HEARTBEAT_TAGS, handler) ) {
 			return true;
 		}
-		return executeQuery(OscpRole.CapacityOptimizer, capacityOptimizerDao, handler);
+		return executeQuery(OscpRole.CapacityOptimizer, capacityOptimizerDao,
+				CapacityOptimizerConfigurationRowMapper.INSTANCE,
+				CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS, CAPACITY_OPTIMIZER_HEARTBEAT_TAGS, handler);
 	}
 
-	private boolean executeQuery(OscpRole role, ExternalSystemConfigurationDao<?> dao,
-			Function<AuthRoleInfo, Instant> handler) {
+	private <C extends BaseOscpExternalSystemConfiguration<C>> boolean executeQuery(OscpRole role,
+			ExternalSystemConfigurationDao<C> dao, RowMapper<C> rowMapper, String[] errorTags,
+			String[] successTags, Function<SystemTaskContext<?>, Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
-		List<UserLongKeyTimestamp> rows = jdbcOps.query(sql, UserLongKeyTimestampRowMapper.INSTANCE);
+		List<C> rows = jdbcOps.query(sql, rowMapper);
 		if ( !rows.isEmpty() ) {
-			UserLongKeyTimestamp row = rows.get(0);
-			Instant ts = handler.apply(new AuthRoleInfo(row.id(), OscpRole.CapacityProvider));
+			C row = rows.get(0);
+			SystemTaskContext<C> context = new SystemTaskContext<C>("Heartbeat", role, row, errorTags,
+					successTags, dao);
+			Instant ts = handler.apply(context);
 			if ( ts != null ) {
-				dao.compareAndSetHeartbeat(row.id(), row.timestamp(), ts);
+				dao.compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
 			}
 			return (ts != null);
 		}

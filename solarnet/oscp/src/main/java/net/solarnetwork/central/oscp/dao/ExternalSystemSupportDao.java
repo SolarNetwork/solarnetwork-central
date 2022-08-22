@@ -24,7 +24,8 @@ package net.solarnetwork.central.oscp.dao;
 
 import java.time.Instant;
 import java.util.function.Function;
-import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.OscpUserEvents;
+import net.solarnetwork.central.oscp.util.SystemTaskContext;
 
 /**
  * DAO API for supporting external system processes.
@@ -33,6 +34,24 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
  * @version 1.0
  */
 public interface ExternalSystemSupportDao {
+
+	/** User event tags for Capacity Provider heartbeat events. */
+	String[] CAPACITY_PROVIDER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.HEARTBEAT_TAG };
+
+	/** User event tags for Capacity Provider heartbeat error events. */
+	String[] CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.HEARTBEAT_TAG,
+			OscpUserEvents.ERROR_TAG };
+
+	/** User event tags for Capacity Optimizer heartbeat events. */
+	String[] CAPACITY_OPTIMIZER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.HEARTBEAT_TAG };
+
+	/** User event tags for Capacity Optimizer heartbeat error events. */
+	String[] CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.HEARTBEAT_TAG,
+			OscpUserEvents.ERROR_TAG };
 
 	/**
 	 * Lay claim to an external system who needs to have a heartbeat sent.
@@ -45,6 +64,6 @@ public interface ExternalSystemSupportDao {
 	 * @return {@literal true} if the heartbeat date was updated with the value
 	 *         returned from {@code handler}
 	 */
-	boolean processExternalSystemWithExpiredHeartbeat(Function<AuthRoleInfo, Instant> handler);
+	boolean processExternalSystemWithExpiredHeartbeat(Function<SystemTaskContext<?>, Instant> handler);
 
 }

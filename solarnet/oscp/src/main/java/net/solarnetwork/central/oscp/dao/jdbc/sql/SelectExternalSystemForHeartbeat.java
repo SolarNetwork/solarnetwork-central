@@ -62,7 +62,13 @@ public class SelectExternalSystemForHeartbeat implements PreparedStatementCreato
 
 	@Override
 	public String getSql() {
-		StringBuilder buf = new StringBuilder("SELECT user_id, id, heartbeat_at FROM solaroscp.oscp_");
+		StringBuilder buf = new StringBuilder("""
+				SELECT id, created, modified, user_id, enabled
+					, fp_id, reg_status, cname, url, oscp_ver
+					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
+					, sprops
+				""");
+		buf.append("FROM solaroscp.oscp_");
 		buf.append(type.getAlias()).append("_conf\n");
 		buf.append("""
 				WHERE reg_status = ascii('r')

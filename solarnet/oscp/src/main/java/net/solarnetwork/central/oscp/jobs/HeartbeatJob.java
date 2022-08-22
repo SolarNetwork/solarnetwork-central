@@ -22,10 +22,17 @@
 
 package net.solarnetwork.central.oscp.jobs;
 
+import static java.util.Collections.singleton;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HEARTBEAT_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.commons.lang3.mutable.MutableInt;
+import org.springframework.http.HttpMethod;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
+import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
 
 /**
@@ -37,6 +44,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
 public class HeartbeatJob extends JobSupport {
 
 	private final ExternalSystemSupportDao systemSupportDao;
+	private final ExternalSystemClient client;
 
 	/**
 	 * Construct with properties.
@@ -46,9 +54,10 @@ public class HeartbeatJob extends JobSupport {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public HeartbeatJob(ExternalSystemSupportDao systemSupportDao) {
+	public HeartbeatJob(ExternalSystemSupportDao systemSupportDao, ExternalSystemClient client) {
 		super();
 		this.systemSupportDao = requireNonNullArgument(systemSupportDao, "systemSupportDao");
+		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
 		setId("Heartbeat");
 		setMaximumWaitMs(1800000L);
@@ -61,15 +70,20 @@ public class HeartbeatJob extends JobSupport {
 
 	@Override
 	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
-		int processedCount = 0;
-		MutableBoolean invoked = new MutableBoolean(false);
+		int totalProcessedCount = 0;
+		Set<String> supportedOscpVersions = singleton(V20);
+		MutableInt processedCount = new MutableInt();
 		do {
-			systemSupportDao.processExternalSystemWithExpiredHeartbeat((info) -> {
-
-				return null;
+			processedCount.setValue(0);
+			systemSupportDao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+				processedCount.increment();
+				ctx.verifySystemOscpVersion(supportedOscpVersions);
+				client.systemExchange(ctx, HttpMethod.POST, HEARTBEAT_URL_PATH, null);
+				return Instant.now();
 			});
-		} while ( invoked.booleanValue() && remainingIterataions.get() > 0 );
-		return processedCount;
+			totalProcessedCount += processedCount.intValue();
+		} while ( processedCount.intValue() > 0 && remainingIterataions.get() > 0 );
+		return totalProcessedCount;
 	}
 
 }

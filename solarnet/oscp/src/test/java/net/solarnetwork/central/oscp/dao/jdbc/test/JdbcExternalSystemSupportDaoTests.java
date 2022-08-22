@@ -108,9 +108,9 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// WHEN
 		Instant newTs = Instant.now();
-		boolean result = dao.processExternalSystemWithExpiredHeartbeat((info) -> {
-			assertThat("Role is provider", info.role(), is(equalTo(OscpRole.CapacityProvider)));
-			assertThat("Found provider row", info.id(), is(equalTo(lastProvider.getId())));
+		boolean result = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+			assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+			assertThat("Found provider row", ctx.config().getId(), is(equalTo(lastProvider.getId())));
 			return newTs;
 		});
 
@@ -150,8 +150,8 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 			CountDownLatch latch = new CountDownLatch(1);
 
 			tt.executeWithoutResult((ts) -> {
-				boolean b = dao.processExternalSystemWithExpiredHeartbeat((info) -> {
-					log.info("Locked ID: {}", info.id());
+				boolean b = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+					log.info("Locked ID: {}", ctx.config().getId());
 
 					Thread t = new Thread(() -> {
 						tt.executeWithoutResult((ts2) -> {
@@ -174,8 +174,9 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 					} catch ( InterruptedException e ) {
 						// ignore
 					}
-					assertThat("Role is provider", info.role(), is(equalTo(OscpRole.CapacityProvider)));
-					assertThat("Found provider row", info.id(), is(equalTo(lastProvider.getId())));
+					assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+					assertThat("Found provider row", ctx.config().getId(),
+							is(equalTo(lastProvider.getId())));
 					return newTs;
 				});
 				result.set(b);
