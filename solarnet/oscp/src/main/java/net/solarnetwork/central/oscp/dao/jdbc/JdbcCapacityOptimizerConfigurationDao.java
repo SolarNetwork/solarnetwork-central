@@ -29,7 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -66,10 +66,8 @@ public class JdbcCapacityOptimizerConfigurationDao
 	}
 
 	@Override
-	public UserLongCompositePK create(Long userId, CapacityOptimizerConfiguration entity) {
-		final var sql = new InsertCapacityOptimizerConfiguration(userId, entity);
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+	protected PreparedStatementCreator createSql(Long userId, CapacityOptimizerConfiguration entity) {
+		return new InsertCapacityOptimizerConfiguration(userId, entity);
 	}
 
 	@Override

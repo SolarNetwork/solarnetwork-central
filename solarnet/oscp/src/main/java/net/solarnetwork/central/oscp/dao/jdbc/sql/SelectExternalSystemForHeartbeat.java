@@ -41,6 +41,8 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  */
 public class SelectExternalSystemForHeartbeat implements PreparedStatementCreator, SqlProvider {
 
+	private static final String[] LOCK_TABLE_NAMES = new String[] { "h" };
+
 	private final OscpRole type;
 	private final LockingFilter filter;
 
@@ -63,22 +65,24 @@ public class SelectExternalSystemForHeartbeat implements PreparedStatementCreato
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder("""
-				SELECT id, created, modified, user_id, enabled
-					, fp_id, reg_status, cname, url, oscp_ver
-					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-					, sprops
+				SELECT c.id, c.created, c.modified, c.user_id, c.enabled
+					, c.fp_id, c.reg_status, c.cname, c.url, c.oscp_ver
+					, c.heartbeat_secs, c.meas_styles, h.heartbeat_at, c.offline_at
+					, c.sprops
 				""");
 		buf.append("FROM solaroscp.oscp_");
-		buf.append(type.getAlias()).append("_conf\n");
+		buf.append(type.getAlias()).append("_conf c\n");
+		buf.append("INNER JOIN solaroscp.oscp_").append(type.getAlias()).append("_heartbeat h\n");
+		buf.append("\tON c.user_id = h.user_id AND c.id = h.id\n");
 		buf.append("""
-				WHERE reg_status = ascii('r')
-					AND heartbeat_secs IS NOT NULL
-					AND (heartbeat_at IS NULL OR heartbeat_at
-						+ (heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
-					AND enabled = TRUE""");
+				WHERE c.reg_status = ascii('r')
+					AND c.heartbeat_secs IS NOT NULL
+					AND (h.heartbeat_at IS NULL OR heartbeat_at
+						+ (c.heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
+					AND c.enabled = TRUE""");
 		CommonSqlUtils.limitOffset(filter, buf);
 		if ( filter.isLockResults() ) {
-			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), buf);
+			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), LOCK_TABLE_NAMES, buf);
 		}
 		return buf.toString();
 	}

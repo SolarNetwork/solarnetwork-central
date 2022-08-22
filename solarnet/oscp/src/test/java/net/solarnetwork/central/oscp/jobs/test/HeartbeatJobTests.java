@@ -41,8 +41,7 @@ import org.mockito.stubbing.Answer;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
-import net.solarnetwork.central.oscp.dao.jdbc.test.JdbcCapacityOptimizerConfigurationDaoTests;
-import net.solarnetwork.central.oscp.dao.jdbc.test.JdbcCapacityProviderConfigurationDaoTests;
+import net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
@@ -86,16 +85,16 @@ public class HeartbeatJobTests {
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
 		final var confs = new ArrayList<BaseOscpExternalSystemConfiguration<?>>(rows);
-		CapacityProviderConfiguration c1 = JdbcCapacityProviderConfigurationDaoTests
-				.newConf(randomUUID().getMostSignificantBits(), 1L, start);
+		CapacityProviderConfiguration c1 = OscpJdbcTestUtils
+				.newCapacityProviderConf(randomUUID().getMostSignificantBits(), 1L, start);
 		c1.setOscpVersion(V20);
 		c1.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
-		CapacityOptimizerConfiguration c2 = JdbcCapacityOptimizerConfigurationDaoTests
-				.newConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(1));
+		CapacityOptimizerConfiguration c2 = OscpJdbcTestUtils
+				.newCapacityOptimizerConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(1));
 		c2.setOscpVersion(V20);
 		c2.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
-		CapacityProviderConfiguration c3 = JdbcCapacityProviderConfigurationDaoTests
-				.newConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(2));
+		CapacityProviderConfiguration c3 = OscpJdbcTestUtils
+				.newCapacityProviderConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(2));
 		c3.setOscpVersion(V20);
 		c3.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
 		confs.add(c1);

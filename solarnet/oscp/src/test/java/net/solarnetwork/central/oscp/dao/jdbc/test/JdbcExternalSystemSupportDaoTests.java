@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -35,7 +36,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,18 +88,10 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 				.getEntityId();
 	}
 
-	private List<Map<String, Object>> allCapacityProviderConfigurationData() {
-		List<Map<String, Object>> data = jdbcTemplate
-				.queryForList("select * from solaroscp.oscp_cp_conf ORDER BY user_id, id");
-		log.debug("solaroscp.oscp_cp_conf table has {} items: [{}]", data.size(),
-				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
-		return data;
-	}
-
 	@Test
 	public void capacityProvider_updateHeartbeat() {
 		// GIVEN
-		CapacityProviderConfiguration conf = JdbcCapacityProviderConfigurationDaoTests.newConf(userId,
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
 				flexibilityProviderId, Instant.now());
 		UserLongCompositePK id = capacityProviderDao.create(userId, conf);
 		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
@@ -116,7 +108,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// THEN
 		assertThat("Result 'true' when Instant returned from callback", result, is(equalTo(result)));
-		List<Map<String, Object>> data = allCapacityProviderConfigurationData();
+		List<Map<String, Object>> data = allHeartbeatData(jdbcTemplate, OscpRole.CapacityProvider);
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID matches", row, hasEntry("user_id", lastProvider.getUserId()));
@@ -127,7 +119,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 	@Test
 	public void capacityProvider_updateHeartbeat_skipLocked() {
 		// GIVEN
-		CapacityProviderConfiguration conf = JdbcCapacityProviderConfigurationDaoTests.newConf(userId,
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
 				flexibilityProviderId, Instant.now());
 		UserLongCompositePK id = capacityProviderDao.create(userId, conf);
 		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
@@ -157,7 +149,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 						tt.executeWithoutResult((ts2) -> {
 							try {
 								jdbcTemplate.queryForList(
-										"SELECT * FROM solaroscp.oscp_cp_conf LIMIT 1 FOR UPDATE NOWAIT");
+										"SELECT * FROM solaroscp.oscp_cp_heartbeat LIMIT 1 FOR UPDATE NOWAIT");
 							} catch ( ConcurrencyFailureException e ) {
 								updateFailed.set(true);
 							} finally {

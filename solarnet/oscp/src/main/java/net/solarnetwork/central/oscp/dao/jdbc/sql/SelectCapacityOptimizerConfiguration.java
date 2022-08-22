@@ -48,6 +48,8 @@ public class SelectCapacityOptimizerConfiguration
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
+	private static final String[] LOCK_TABLE_NAMES = new String[] { "oco" };
+
 	private final ConfigurationFilter filter;
 	private final int fetchSize;
 
@@ -83,7 +85,7 @@ public class SelectCapacityOptimizerConfiguration
 		sqlOrderBy(buf);
 		CommonSqlUtils.limitOffset(filter, buf);
 		if ( filter.isLockResults() ) {
-			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), buf);
+			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), LOCK_TABLE_NAMES, buf);
 		}
 		return buf.toString();
 	}
@@ -92,9 +94,11 @@ public class SelectCapacityOptimizerConfiguration
 		buf.append("""
 				SELECT oco.id, oco.created, oco.modified, oco.user_id, oco.enabled
 					, oco.fp_id, oco.reg_status, oco.cname, oco.url, oco.oscp_ver
-					, oco.heartbeat_secs, oco.meas_styles, oco.heartbeat_at, oco.offline_at
+					, oco.heartbeat_secs, oco.meas_styles, ocoh.heartbeat_at, oco.offline_at
 					, oco.sprops
 				FROM solaroscp.oscp_co_conf oco
+				LEFT OUTER JOIN solaroscp.oscp_co_heartbeat ocoh
+					ON ocoh.user_id = oco.user_id AND ocoh.id = oco.id
 				""");
 	}
 

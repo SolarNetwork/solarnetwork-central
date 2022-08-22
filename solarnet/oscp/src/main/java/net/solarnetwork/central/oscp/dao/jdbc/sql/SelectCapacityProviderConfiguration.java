@@ -48,6 +48,8 @@ public class SelectCapacityProviderConfiguration
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
+	private static final String[] LOCK_TABLE_NAMES = new String[] { "ocp" };
+
 	private final ConfigurationFilter filter;
 	private final int fetchSize;
 
@@ -83,7 +85,7 @@ public class SelectCapacityProviderConfiguration
 		sqlOrderBy(buf);
 		CommonSqlUtils.limitOffset(filter, buf);
 		if ( filter.isLockResults() ) {
-			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), buf);
+			CommonSqlUtils.forUpdate(filter.isSkipLockedResults(), LOCK_TABLE_NAMES, buf);
 		}
 		return buf.toString();
 	}
@@ -92,9 +94,11 @@ public class SelectCapacityProviderConfiguration
 		buf.append("""
 				SELECT ocp.id, ocp.created, ocp.modified, ocp.user_id, ocp.enabled
 					, ocp.fp_id, ocp.reg_status, ocp.cname, ocp.url, ocp.oscp_ver
-					, ocp.heartbeat_secs, ocp.meas_styles, ocp.heartbeat_at, ocp.offline_at
+					, ocp.heartbeat_secs, ocp.meas_styles, ocph.heartbeat_at, ocp.offline_at
 					, ocp.sprops
 				FROM solaroscp.oscp_cp_conf ocp
+				LEFT OUTER JOIN solaroscp.oscp_cp_heartbeat ocph
+					ON ocph.user_id = ocp.user_id AND ocph.id = ocp.id
 				""");
 	}
 

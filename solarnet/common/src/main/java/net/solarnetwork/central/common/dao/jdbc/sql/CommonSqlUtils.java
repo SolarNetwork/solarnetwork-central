@@ -438,7 +438,35 @@ public final class CommonSqlUtils {
 	 *        the buffer to append the SQL to
 	 */
 	public static void forUpdate(boolean skipLocked, StringBuilder buf) {
+		forUpdate(skipLocked, null, buf);
+	}
+
+	/**
+	 * Generate SQL {@literal FOR UPDATE SKIP LOCKED} criteria to support
+	 * locking.
+	 * 
+	 * @param skipLocked
+	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
+	 * @param tableNames
+	 *        explicit table names to lock, or {@literal null} for default (all
+	 *        referenced tables)
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @since 2.2
+	 */
+	public static void forUpdate(boolean skipLocked, String[] tableNames, StringBuilder buf) {
 		buf.append("\nFOR UPDATE");
+		if ( tableNames != null && tableNames.length > 0 ) {
+			buf.append(" OF");
+			int i = 0;
+			for ( String tableName : tableNames ) {
+				if ( i++ > 0 ) {
+					buf.append(',');
+				}
+				buf.append(' ');
+				buf.append(tableName);
+			}
+		}
 		if ( skipLocked ) {
 			buf.append(" SKIP LOCKED");
 		}

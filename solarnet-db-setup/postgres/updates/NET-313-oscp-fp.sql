@@ -43,7 +43,6 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	oscp_ver		CHARACTER VARYING(8),
 	heartbeat_secs	SMALLINT,                 -- requested
 	meas_styles		SMALLINT[],               -- requested
-	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
 	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
 	sprops			JSONB,
 	CONSTRAINT oscp_cp_conf_pk PRIMARY KEY (user_id, id),
@@ -56,13 +55,24 @@ CREATE TABLE solaroscp.oscp_cp_conf (
 	CONSTRAINT oscp_cp_conf_url_unq UNIQUE (user_id, url)
 );
 
--- Add partial index on heartbeat_at to support efficient heartbeat job execution
-CREATE INDEX oscp_cp_conf_heartbeat_idx ON solaroscp.oscp_cp_conf (heartbeat_at)
-WHERE enabled = TRUE
-	AND reg_status = ascii('c')
-	AND heartbeat_secs IS NOT NULL;
-
 CREATE INDEX oscp_cp_conf_offline_idx ON solaroscp.oscp_cp_conf (offline_at);
+
+/**
+ * OSCP Capacity Provider heartbeat.
+ */
+CREATE TABLE solaroscp.oscp_cp_heartbeat (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
+	CONSTRAINT oscp_cp_heartbeat_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_cp_heartbeat_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_cp_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+-- Add index on heartbeat_at to support efficient heartbeat job execution
+CREATE INDEX oscp_cp_heartbeat_idx ON solaroscp.oscp_cp_heartbeat (heartbeat_at);
 
 /**
  * OSCP Capacity Provider tokens.
@@ -74,7 +84,7 @@ CREATE TABLE solaroscp.oscp_cp_token (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	token			CHARACTER VARYING(64) NOT NULL,
 	CONSTRAINT oscp_cp_token_pk PRIMARY KEY (user_id, id),
-	CONSTRAINT oscp_cp_conf_fk FOREIGN KEY (user_id, id)
+	CONSTRAINT oscp_cp_token_conf_fk FOREIGN KEY (user_id, id)
 		REFERENCES solaroscp.oscp_cp_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
@@ -95,7 +105,6 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	oscp_ver		CHARACTER VARYING(8),
 	heartbeat_secs	SMALLINT,                 -- required
 	meas_styles		SMALLINT[],               -- required
-	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
 	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
@@ -108,13 +117,24 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	CONSTRAINT oscp_co_conf_url_unq UNIQUE (user_id, url)
 );
 
--- Add partial index on heartbeat_at to support efficient heartbeat job execution
-CREATE INDEX oscp_co_conf_heartbeat_idx ON solaroscp.oscp_co_conf (heartbeat_at)
-WHERE enabled = TRUE
-	AND reg_status = ascii('c')
-	AND heartbeat_secs IS NOT NULL;
-
 CREATE INDEX oscp_co_conf_offline_idx ON solaroscp.oscp_co_conf (offline_at);
+
+/**
+ * OSCP Capacity Provider heartbeat.
+ */
+CREATE TABLE solaroscp.oscp_co_heartbeat (
+	user_id			BIGINT NOT NULL,
+	id				BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	heartbeat_at	TIMESTAMP WITH TIME ZONE, -- last sent
+	CONSTRAINT oscp_co_heartbeat_pk PRIMARY KEY (user_id, id),
+	CONSTRAINT oscp_co_heartbeat_conf_fk FOREIGN KEY (user_id, id)
+		REFERENCES solaroscp.oscp_co_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+-- Add index on heartbeat_at to support efficient heartbeat job execution
+CREATE INDEX oscp_co_heartbeat_idx ON solaroscp.oscp_co_heartbeat (heartbeat_at);
 
 /**
  * A combined view of both Capacity Provider and Capacity Optimizer configurations,
@@ -158,7 +178,7 @@ CREATE TABLE solaroscp.oscp_co_token (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	token			CHARACTER VARYING(64) NOT NULL,
 	CONSTRAINT oscp_co_token_pk PRIMARY KEY (user_id, id),
-	CONSTRAINT oscp_co_conf_fk FOREIGN KEY (user_id, id)
+	CONSTRAINT oscp_co_token_conf_fk FOREIGN KEY (user_id, id)
 		REFERENCES solaroscp.oscp_co_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );

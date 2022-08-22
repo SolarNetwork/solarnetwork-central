@@ -27,10 +27,13 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateOfflineDate;
@@ -100,6 +103,30 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 		filter.setConfigurationId(requireNonNullArgument(configId.getEntityId(), "configId.entityId"));
 		return filter;
 	}
+
+	@Override
+	public final UserLongCompositePK create(Long userId, C entity) {
+		final var sql = createSql(userId, entity);
+		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
+		if ( id == null ) {
+			return null;
+		}
+		UserLongCompositePK pk = new UserLongCompositePK(userId, id);
+		// make sure heartbeat row created at same time
+		jdbcOps.update(new InsertHeartbeatDate(role, pk, null));
+		return pk;
+	}
+
+	/**
+	 * Create the SQL to create a new entity.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param entity
+	 *        the new entity to insert
+	 * @return the SQL
+	 */
+	protected abstract PreparedStatementCreator createSql(Long userId, C entity);
 
 	@Override
 	public Collection<C> getAll(List<SortDescriptor> sorts) {

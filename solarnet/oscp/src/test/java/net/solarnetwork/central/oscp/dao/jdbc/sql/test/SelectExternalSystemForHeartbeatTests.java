@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.sql.test;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDATE_SKIP;
+import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,6 +41,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.oscp.dao.LockingFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForHeartbeat;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -53,6 +55,8 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectExternalSystemForHeartbeatTests {
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Mock
 	private Connection con;
@@ -87,19 +91,9 @@ public class SelectExternalSystemForHeartbeatTests {
 				.getSql();
 
 		// THEN
-		assertThat("SQL generated", sql, is(equalTo("""
-				SELECT id, created, modified, user_id, enabled
-					, fp_id, reg_status, cname, url, oscp_ver
-					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-					, sprops
-				FROM solaroscp.oscp_cp_conf
-				WHERE reg_status = ascii('r')
-					AND heartbeat_secs IS NOT NULL
-					AND (heartbeat_at IS NULL OR heartbeat_at
-						+ (heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
-					AND enabled = TRUE
-				LIMIT ?
-				FOR UPDATE SKIP LOCKED""")));
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-capacity-provider-heartbeat-locked.sql", TestSqlResources.class, SQL_COMMENT));
 	}
 
 	@Test
@@ -114,19 +108,9 @@ public class SelectExternalSystemForHeartbeatTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				SELECT id, created, modified, user_id, enabled
-					, fp_id, reg_status, cname, url, oscp_ver
-					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-					, sprops
-				FROM solaroscp.oscp_cp_conf
-				WHERE reg_status = ascii('r')
-					AND heartbeat_secs IS NOT NULL
-					AND (heartbeat_at IS NULL OR heartbeat_at
-						+ (heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
-					AND enabled = TRUE
-				LIMIT ?
-				FOR UPDATE SKIP LOCKED""")));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-provider-heartbeat-locked.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, ONE_FOR_UPDATE_SKIP);
 	}
@@ -140,19 +124,9 @@ public class SelectExternalSystemForHeartbeatTests {
 				ONE_FOR_UPDATE_SKIP).getSql();
 
 		// THEN
-		assertThat("SQL generated", sql, is(equalTo("""
-				SELECT id, created, modified, user_id, enabled
-					, fp_id, reg_status, cname, url, oscp_ver
-					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-					, sprops
-				FROM solaroscp.oscp_co_conf
-				WHERE reg_status = ascii('r')
-					AND heartbeat_secs IS NOT NULL
-					AND (heartbeat_at IS NULL OR heartbeat_at
-						+ (heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
-					AND enabled = TRUE
-				LIMIT ?
-				FOR UPDATE SKIP LOCKED""")));
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"select-capacity-optimizer-heartbeat-locked.sql", TestSqlResources.class, SQL_COMMENT));
 	}
 
 	@Test
@@ -167,19 +141,9 @@ public class SelectExternalSystemForHeartbeatTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				SELECT id, created, modified, user_id, enabled
-					, fp_id, reg_status, cname, url, oscp_ver
-					, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-					, sprops
-				FROM solaroscp.oscp_co_conf
-				WHERE reg_status = ascii('r')
-					AND heartbeat_secs IS NOT NULL
-					AND (heartbeat_at IS NULL OR heartbeat_at
-						+ (heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
-					AND enabled = TRUE
-				LIMIT ?
-				FOR UPDATE SKIP LOCKED""")));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-optimizer-heartbeat-locked.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, ONE_FOR_UPDATE_SKIP);
 	}

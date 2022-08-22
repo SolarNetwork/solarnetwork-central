@@ -106,7 +106,7 @@ public class UpdateHeartbeatDateTests {
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("""
-				UPDATE solaroscp.oscp_cp_conf
+				UPDATE solaroscp.oscp_cp_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at = ?
 				""")));
@@ -125,7 +125,7 @@ public class UpdateHeartbeatDateTests {
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("""
-				UPDATE solaroscp.oscp_cp_conf
+				UPDATE solaroscp.oscp_cp_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at IS NULL
 				""")));
@@ -148,7 +148,7 @@ public class UpdateHeartbeatDateTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				UPDATE solaroscp.oscp_cp_conf
+				UPDATE solaroscp.oscp_cp_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at IS NULL
 				""")));
@@ -173,7 +173,7 @@ public class UpdateHeartbeatDateTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				UPDATE solaroscp.oscp_cp_conf
+				UPDATE solaroscp.oscp_cp_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at = ?
 				""")));
@@ -194,7 +194,7 @@ public class UpdateHeartbeatDateTests {
 
 		// THEN
 		assertThat("SQL generated", sql, is(equalTo("""
-				UPDATE solaroscp.oscp_co_conf
+				UPDATE solaroscp.oscp_co_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at = ?
 				""")));
@@ -217,7 +217,7 @@ public class UpdateHeartbeatDateTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				UPDATE solaroscp.oscp_co_conf
+				UPDATE solaroscp.oscp_co_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at IS NULL
 				""")));
@@ -242,7 +242,7 @@ public class UpdateHeartbeatDateTests {
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
 		assertThat("Generated SQL", sqlCaptor.getValue(), is(equalTo("""
-				UPDATE solaroscp.oscp_co_conf
+				UPDATE solaroscp.oscp_co_heartbeat
 				SET heartbeat_at = ?
 				WHERE user_id = ? AND id = ? AND heartbeat_at IS NULL
 				""")));

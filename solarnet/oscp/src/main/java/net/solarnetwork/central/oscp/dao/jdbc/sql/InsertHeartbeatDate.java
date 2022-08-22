@@ -1,5 +1,5 @@
 /* ==================================================================
- * UpdateHeartbeatDate.java - 21/08/2022 7:36:23 am
+ * InsertHeartbeatDate.java - 22/08/2022 2:09:42 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -35,16 +35,15 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Update the heartbeat date of an external system configuration.
+ * Insert a heartbeat date.
  * 
  * @author matt
  * @version 1.0
  */
-public class UpdateHeartbeatDate implements PreparedStatementCreator, SqlProvider {
+public class InsertHeartbeatDate implements PreparedStatementCreator, SqlProvider {
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;
-	private final Instant expected;
 	private final Instant ts;
 
 	/**
@@ -59,37 +58,37 @@ public class UpdateHeartbeatDate implements PreparedStatementCreator, SqlProvide
 	 * @param ts
 	 *        the value to set of the expectation matches
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code expected} is {@literal null} or the
+	 *         if any argument except {@code ts} is {@literal null} or the
 	 *         {@code id} is not assigned
 	 */
-	public UpdateHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant expected, Instant ts) {
+	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant ts) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");
 		if ( !id.entityIdIsAssigned() ) {
 			throw new IllegalArgumentException("The entity ID must be assigned.");
 		}
-		this.expected = expected;
-		this.ts = requireNonNullArgument(ts, "ts");
+		this.ts = ts;
 	}
 
 	@Override
 	public String getSql() {
 		return """
-				UPDATE solaroscp.oscp_%s_heartbeat
-				SET heartbeat_at = ?
-				WHERE user_id = ? AND id = ? AND heartbeat_at %s
-				""".formatted(type.getAlias(), expected != null ? "= ?" : "IS NULL");
+				INSERT INTO solaroscp.oscp_%s_heartbeat (user_id, id, heartbeat_at)
+				VALUES (?, ?, ?)
+				ON CONFLICT (user_id, id) DO NOTHING
+				""".formatted(type.getAlias());
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		stmt.setTimestamp(1, Timestamp.from(ts));
-		stmt.setObject(2, id.getUserId(), Types.BIGINT);
-		stmt.setObject(3, id.getEntityId(), Types.BIGINT);
-		if ( expected != null ) {
-			stmt.setTimestamp(4, Timestamp.from(expected));
+		stmt.setObject(1, id.getUserId(), Types.BIGINT);
+		stmt.setObject(2, id.getEntityId(), Types.BIGINT);
+		if ( ts == null ) {
+			stmt.setNull(3, Types.TIMESTAMP);
+		} else {
+			stmt.setTimestamp(3, Timestamp.from(ts));
 		}
 		return stmt;
 	}

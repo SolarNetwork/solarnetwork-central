@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
+import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,7 +35,6 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -73,14 +73,6 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 	}
 
-	private List<Map<String, Object>> allFlexibilityProviderTokenData() {
-		List<Map<String, Object>> data = jdbcTemplate
-				.queryForList("select * from solaroscp.oscp_fp_token ORDER BY user_id, id");
-		log.debug("solaroscp.oscp_fp_token table has {} items: [{}]", data.size(),
-				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
-		return data;
-	}
-
 	@Test
 	public void insert_authToken() {
 		// GIVEN
@@ -92,7 +84,7 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		// THEN
 		assertThat("New token returned", result, is(notNullValue()));
 
-		List<Map<String, Object>> data = allFlexibilityProviderTokenData();
+		List<Map<String, Object>> data = allTokenData(jdbcTemplate, OscpRole.FlexibilityProvider);
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID has been assigned", row, hasEntry("user_id", userId));
@@ -119,7 +111,7 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		assertThat("Result returned", result, is(notNullValue()));
 		assertThat("Result user ID matches", result.getUserId(), is(equalTo(userId)));
 
-		List<Map<String, Object>> data = allFlexibilityProviderTokenData();
+		List<Map<String, Object>> data = allTokenData(jdbcTemplate, OscpRole.FlexibilityProvider);
 		assertThat("Table has 1 row", data, hasSize(1));
 		Map<String, Object> row = data.get(0);
 		assertThat("Row entity ID matches returned value", result.getEntityId(),
@@ -169,8 +161,8 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		insert_authToken();
 
 		CapacityProviderConfiguration cp = capacityProviderDao
-				.get(capacityProviderDao.create(userId, JdbcCapacityProviderConfigurationDaoTests
-						.newConf(userId, lastAuthId.getEntityId(), Instant.now())));
+				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
+						lastAuthId.getEntityId(), Instant.now())));
 
 		// WHEN
 		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
@@ -187,8 +179,8 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		insert_authToken();
 
 		CapacityOptimizerConfiguration co = capacityOptimizerDao
-				.get(capacityOptimizerDao.create(userId, JdbcCapacityOptimizerConfigurationDaoTests
-						.newConf(userId, lastAuthId.getEntityId(), Instant.now())));
+				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
+						.newCapacityOptimizerConf(userId, lastAuthId.getEntityId(), Instant.now())));
 
 		// WHEN
 		AuthRoleInfo info = dao.roleForAuthorization(lastAuthId);
