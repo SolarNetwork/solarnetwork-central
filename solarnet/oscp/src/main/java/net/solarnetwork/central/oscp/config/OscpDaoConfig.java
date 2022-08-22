@@ -30,11 +30,13 @@ import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 
 /**
@@ -97,6 +99,23 @@ public class OscpDaoConfig {
 	@Bean
 	public CapacityProviderConfigurationDao oscpCapacityProviderConfigurationDao() {
 		return new JdbcCapacityProviderConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The OSCP external system support DAO.
+	 * 
+	 * @param capacityProviderDao
+	 *        the capacity provider DAO
+	 * @param capacityOptimizerDao
+	 *        the capacity optimizer DAO
+	 * @return the DAO
+	 */
+	@Bean
+	public ExternalSystemSupportDao externalSystemSupportDao(
+			CapacityProviderConfigurationDao capacityProviderDao,
+			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
+		return new JdbcExternalSystemSupportDao(jdbcOperations, capacityProviderDao,
+				capacityOptimizerDao);
 	}
 
 }

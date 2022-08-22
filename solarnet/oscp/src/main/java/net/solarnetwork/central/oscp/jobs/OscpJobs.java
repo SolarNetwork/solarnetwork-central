@@ -1,5 +1,5 @@
 /* ==================================================================
- * ExternalSystemClient.java - 22/08/2022 8:40:21 am
+ * OscpJobs.java - 22/08/2022 3:42:31 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,38 +20,17 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.http;
-
-import java.util.function.Supplier;
-import org.springframework.http.HttpMethod;
-import net.solarnetwork.central.oscp.util.SystemTaskContext;
+package net.solarnetwork.central.oscp.jobs;
 
 /**
- * Service API for integration with external systems.
+ * Marker interface for OSCP job constants.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ExternalSystemClient {
+public interface OscpJobs {
 
-	/**
-	 * Make an exchange with an external system, expecting a HTTP 204 (No
-	 * Content) response.
-	 * 
-	 * <p>
-	 * A JSON content type is assumed.
-	 * </p>
-	 * 
-	 * @param context
-	 *        the task context
-	 * @param method
-	 *        the HTTP method to perform
-	 * @param path
-	 *        the URL path supplier, relative to the external system's base URL
-	 * @param body
-	 *        the HTTP body content
-	 */
-	void systemExchange(SystemTaskContext<?> context, HttpMethod method, Supplier<String> path,
-			Object body);
+	/** An OSCP jobs profile name. */
+	String JOBS_PROFILE = "oscp-jobs";
 
 }

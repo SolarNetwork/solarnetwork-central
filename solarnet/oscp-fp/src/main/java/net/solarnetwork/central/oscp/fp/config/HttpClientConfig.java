@@ -58,7 +58,7 @@ public class HttpClientConfig {
 	 */
 	@Profile("!production")
 	@Bean
-	public RestTemplate testingSolarNetworkServicet() {
+	public RestTemplate testingSolarNetworkService() {
 		RestTemplate debugTemplate = new RestTemplate(
 				new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory()));
 		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));

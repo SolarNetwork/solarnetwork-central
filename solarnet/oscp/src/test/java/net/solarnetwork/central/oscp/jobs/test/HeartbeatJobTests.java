@@ -89,12 +89,12 @@ public class HeartbeatJobTests {
 				.newCapacityProviderConf(randomUUID().getMostSignificantBits(), 1L, start);
 		c1.setOscpVersion(V20);
 		c1.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
-		CapacityOptimizerConfiguration c2 = OscpJdbcTestUtils
-				.newCapacityOptimizerConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(1));
+		CapacityOptimizerConfiguration c2 = OscpJdbcTestUtils.newCapacityOptimizerConf(
+				randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(1));
 		c2.setOscpVersion(V20);
 		c2.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
-		CapacityProviderConfiguration c3 = OscpJdbcTestUtils
-				.newCapacityProviderConf(randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(2));
+		CapacityProviderConfiguration c3 = OscpJdbcTestUtils.newCapacityProviderConf(
+				randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(2));
 		c3.setOscpVersion(V20);
 		c3.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
 		confs.add(c1);

@@ -29,9 +29,11 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.springframework.http.HttpMethod;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
 
@@ -45,6 +47,7 @@ public class HeartbeatJob extends JobSupport {
 
 	private final ExternalSystemSupportDao systemSupportDao;
 	private final ExternalSystemClient client;
+	private TransactionTemplate txTemplate;
 
 	/**
 	 * Construct with properties.
@@ -63,6 +66,20 @@ public class HeartbeatJob extends JobSupport {
 		setMaximumWaitMs(1800000L);
 	}
 
+	/**
+	 * Configure a transaction template.
+	 * 
+	 * @param txTemplate
+	 *        the template
+	 * @return this instance for method chaining
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public HeartbeatJob withTxTemplate(TransactionTemplate txTemplate) {
+		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");
+		return this;
+	}
+
 	@Override
 	public void run() {
 		executeParallelJob("Heartbeat");
@@ -72,18 +89,37 @@ public class HeartbeatJob extends JobSupport {
 	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		int totalProcessedCount = 0;
 		Set<String> supportedOscpVersions = singleton(V20);
-		MutableInt processedCount = new MutableInt();
+		final TransactionTemplate txTemplate = this.txTemplate;
+		boolean processed = false;
 		do {
-			processedCount.setValue(0);
-			systemSupportDao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
-				processedCount.increment();
-				ctx.verifySystemOscpVersion(supportedOscpVersions);
-				client.systemExchange(ctx, HttpMethod.POST, HEARTBEAT_URL_PATH, null);
-				return Instant.now();
-			});
-			totalProcessedCount += processedCount.intValue();
-		} while ( processedCount.intValue() > 0 && remainingIterataions.get() > 0 );
+			processed = false;
+			if ( txTemplate != null ) {
+				processed = txTemplate.execute((tx) -> {
+					return exchange(supportedOscpVersions, remainingIterataions);
+				});
+			} else {
+				processed = exchange(supportedOscpVersions, remainingIterataions);
+			}
+			if ( processed ) {
+				totalProcessedCount += 1;
+			}
+		} while ( processed && remainingIterataions.get() > 0 );
 		return totalProcessedCount;
+	}
+
+	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterataions) {
+		return systemSupportDao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+			remainingIterataions.decrementAndGet();
+			try {
+				client.systemExchange(ctx, HttpMethod.POST, () -> {
+					ctx.verifySystemOscpVersion(supportedOscpVersions);
+					return HEARTBEAT_URL_PATH;
+				}, null);
+			} catch ( RestClientException | ExternalSystemConfigurationException e ) {
+				// ignore and continue; assume event logged in client.systemExchange()
+			}
+			return Instant.now();
+		});
 	}
 
 }

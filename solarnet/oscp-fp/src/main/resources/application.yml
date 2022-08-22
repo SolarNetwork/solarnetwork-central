@@ -13,6 +13,12 @@ app:
     password: "solarnet"
     platform: "postgres"
     initialize: false
+  job.oscp:
+    heartbeat:
+      maximum-iterations: 1000
+      maximum-wait-ms: 240000
+      parallelism: 1
+      schedule: "0 * * * * *"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false

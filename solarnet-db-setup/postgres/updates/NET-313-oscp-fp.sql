@@ -1,12 +1,15 @@
 /*
-DROP VIEW solaroscp.oscp_system_conf CASCADE;
-DROP TABLE solaroscp.oscp_fp_token CASCADE;
-DROP TABLE solaroscp.oscp_cp_conf CASCADE;
-DROP TABLE solaroscp.oscp_cp_token CASCADE;
-DROP TABLE solaroscp.oscp_co_conf CASCADE;
-DROP TABLE solaroscp.oscp_co_token CASCADE;
-DROP TABLE solaroscp.oscp_cg_conf CASCADE;
-DROP TABLE solaroscp.oscp_asset_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_fp_token CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cp_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cp_heartbeat CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cp_setting CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cp_token CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_co_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_co_heartbeat CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_co_setting CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_co_token CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cg_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_asset_conf CASCADE;
 */
 
 CREATE SCHEMA IF NOT EXISTS solaroscp;
@@ -135,23 +138,6 @@ CREATE TABLE solaroscp.oscp_co_heartbeat (
 
 -- Add index on heartbeat_at to support efficient heartbeat job execution
 CREATE INDEX oscp_co_heartbeat_idx ON solaroscp.oscp_co_heartbeat (heartbeat_at);
-
-/**
- * A combined view of both Capacity Provider and Capacity Optimizer configurations,
- * to support common tasks on both systems.
- *
-CREATE VIEW solaroscp.oscp_system_conf AS
-	SELECT 'cp' AS role_alias, user_id, id, created, modified, enabled, fp_id, reg_status
-		, cname, url, oscp_ver, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-		, sprops
-	FROM solaroscp.oscp_cp_conf
-	UNION ALL
-	SELECT 'co' AS role_alias, user_id, id, created, modified, enabled, fp_id, reg_status
-		, cname, url, oscp_ver, heartbeat_secs, meas_styles, heartbeat_at, offline_at
-		, sprops
-	FROM solaroscp.oscp_co_conf
-;
-*/
 
 /**
  * OSCP Capacity Optimizer settings.
