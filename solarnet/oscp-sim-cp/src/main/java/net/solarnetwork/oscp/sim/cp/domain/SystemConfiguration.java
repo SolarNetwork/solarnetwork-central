@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.dao.BasicUuidEntity;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A system configuration entity.
@@ -38,12 +39,15 @@ import net.solarnetwork.dao.BasicUuidEntity;
 public class SystemConfiguration extends BasicUuidEntity
 		implements Cloneable, CopyingIdentity<UUID, SystemConfiguration> {
 
-	private static final long serialVersionUID = -9139184149203641821L;
+	private static final long serialVersionUID = -5541156004809570137L;
 
 	private String inToken;
 	private String outToken;
 	private String oscpVersion;
 	private String baseUrl;
+	private Integer heartbeatSecs;
+	private Instant heartbeatDate;
+	private Instant offlineDate;
 
 	/**
 	 * Constructor.
@@ -56,6 +60,35 @@ public class SystemConfiguration extends BasicUuidEntity
 	@JsonCreator
 	public SystemConfiguration(@JsonProperty("id") UUID id, @JsonProperty("created") Instant created) {
 		super(id, created);
+	}
+
+	/**
+	 * Test if the heartbeat date is expired now.
+	 * 
+	 * @return {@literal true} if {@code heartbeatSecs} is configured and
+	 *         {@code heartbeatDate} is {@literal null} or expired right now
+	 */
+	public boolean isHeartbeatExpired() {
+		return isHeartbeatExpired(Instant.now());
+	}
+
+	/**
+	 * Test if the heartbeat date is expired.
+	 * 
+	 * @param at
+	 *        the date at which to test if the heartbeat has expired
+	 * @return {@literal true} if {@code heartbeatSecs} is configured and
+	 *         {@code heartbeatDate} is {@literal null} or expired at the given
+	 *         date
+	 */
+	public boolean isHeartbeatExpired(Instant at) {
+		ObjectUtils.requireNonNullArgument(at, "at");
+		final long secs = (heartbeatSecs != null ? heartbeatSecs.longValue() : 0L);
+		if ( secs < 1 ) {
+			return false;
+		}
+		final Instant lastHeartbeat = (heartbeatDate != null ? heartbeatDate : null);
+		return (lastHeartbeat == null || lastHeartbeat.plusSeconds(secs).isBefore(at));
 	}
 
 	@Override
@@ -108,6 +141,30 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	public void setBaseUrl(String baseUrl) {
 		this.baseUrl = baseUrl;
+	}
+
+	public Integer getHeartbeatSecs() {
+		return heartbeatSecs;
+	}
+
+	public void setHeartbeatSecs(Integer heartbeatSecs) {
+		this.heartbeatSecs = heartbeatSecs;
+	}
+
+	public Instant getHeartbeatDate() {
+		return heartbeatDate;
+	}
+
+	public void setHeartbeatDate(Instant heartbeatDate) {
+		this.heartbeatDate = heartbeatDate;
+	}
+
+	public Instant getOfflineDate() {
+		return offlineDate;
+	}
+
+	public void setOfflineDate(Instant offlineDate) {
+		this.offlineDate = offlineDate;
 	}
 
 }

@@ -22,7 +22,9 @@
 
 package net.solarnetwork.oscp.sim.cp.dao;
 
+import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Function;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 
 /**
@@ -58,5 +60,16 @@ public interface CapacityProviderDao {
 	 *        the configuration to save
 	 */
 	void saveSystemConfiguration(SystemConfiguration conf);
+
+	/**
+	 * Lay claim to an external system who needs to have a heartbeat sent.
+	 * 
+	 * @param handler
+	 *        a function that will be passed an external system that needs to
+	 *        have a heartbeat sent, and returns a new heartbeat date if a
+	 *        heartbeat was successfully sent, or {@literal null} otherwise
+	 * @return the number of heartbeat dates updated
+	 */
+	int processExpiredHeartbeats(Function<SystemConfiguration, Instant> handler);
 
 }

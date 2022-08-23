@@ -27,9 +27,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 import net.solarnetwork.security.AuthorizationException;
@@ -44,6 +48,8 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @version 1.0
  */
 public class SimpleCapacityProviderDao implements CapacityProviderDao, ServiceLifecycleObserver {
+
+	private static final Logger log = LoggerFactory.getLogger(SimpleCapacityProviderDao.class);
 
 	private static final String SYSTEMS_FILENAME = "systems";
 
@@ -110,6 +116,31 @@ public class SimpleCapacityProviderDao implements CapacityProviderDao, ServiceLi
 	public synchronized void saveSystemConfiguration(SystemConfiguration conf) {
 		systems.put(requireNonNullArgument(conf, "conf").getId(), conf);
 		saveData(SYSTEMS_FILENAME, systems.values());
+	}
+
+	@Override
+	public synchronized int processExpiredHeartbeats(Function<SystemConfiguration, Instant> handler) {
+		requireNonNullArgument(handler, "handler");
+		final Instant now = Instant.now();
+		int updated = 0;
+		for ( SystemConfiguration conf : systems.values() ) {
+			synchronized ( conf ) {
+				if ( conf.isHeartbeatExpired(now) ) {
+					try {
+						Instant result = handler.apply(conf);
+						if ( result != null ) {
+							conf.setHeartbeatDate(result);
+							saveSystemConfiguration(conf);
+							updated++;
+						}
+					} catch ( Exception e ) {
+						log.error("Heartbeat handler threw exception processing system {}: {}",
+								conf.getId(), e.getMessage(), e);
+					}
+				}
+			}
+		}
+		return updated;
 	}
 
 	/**

@@ -5,6 +5,14 @@ app:
     connection-timeout: "5s"
     idle-timeout: "60s"
     max-http-connections: 4
+  job.oscp:
+    heartbeat:
+      maximum-iterations: 1000
+      maximum-wait-ms: 240000
+      schedule: "0 * * * * *"
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
   task:
     executor:
       thread-name-prefix: "OSCP-Sim-CP-"

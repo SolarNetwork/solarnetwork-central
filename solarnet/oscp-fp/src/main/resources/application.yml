@@ -22,6 +22,9 @@ app:
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"

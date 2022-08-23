@@ -39,11 +39,7 @@ import net.solarnetwork.central.oscp.security.OscpSecurityUtils;
 import oscp.v20.Heartbeat;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * OSCP 2.0 Heartbeat web API.
  * 
  * @author matt
  * @version 1.0
