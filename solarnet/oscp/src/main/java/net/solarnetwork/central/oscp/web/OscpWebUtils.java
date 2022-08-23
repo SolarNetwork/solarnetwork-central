@@ -22,6 +22,12 @@
 
 package net.solarnetwork.central.oscp.web;
 
+import java.util.concurrent.CompletableFuture;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.context.request.WebRequest;
+import net.solarnetwork.security.AuthorizationException;
+import net.solarnetwork.security.AuthorizationException.Reason;
+
 /**
  * Web-related utilities for OSCP.
  * 
@@ -42,6 +48,9 @@ public final class OscpWebUtils {
 	 */
 	public static final String OSCP_TOKEN_AUTHORIZATION_SCHEME = "Token";
 
+	/** The URL path to the Capacity Provider API. */
+	public static final String CAPACITY_PROVIDER_URL_PATH = "/oscp/cp";
+
 	/** The URL path to the Flexibility Provider API. */
 	public static final String FLEXIBILITY_PROVIDER_URL_PATH = "/oscp/fp";
 
@@ -50,6 +59,30 @@ public final class OscpWebUtils {
 	 * versions).
 	 */
 	public static final String REGISTER_URL_PATH = "/register";
+
+	/**
+	 * A thread-local for dealing with "do something after returning response to
+	 * client" pattern in OSCP.
+	 */
+	public static final ThreadLocal<CompletableFuture<Void>> RESPONSE_SENT = new ThreadLocal<>();
+
+	/**
+	 * Get the OSCP authorization token used in a request.
+	 * 
+	 * @param request
+	 *        the request
+	 * @return the token
+	 * @throws AuthorizationException
+	 *         if the token cannot be extracted
+	 */
+	public static String authorizationTokenFromRequest(WebRequest request) {
+		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+		String[] comp = (header != null ? header.split(" ", 2) : null);
+		if ( comp == null || comp.length != 2 || !OSCP_TOKEN_AUTHORIZATION_SCHEME.equals(comp[0]) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
+		return comp[1];
+	}
 
 	/**
 	 * Create a path to the Flexibility Provider API.
@@ -81,6 +114,10 @@ public final class OscpWebUtils {
 
 		/** The URL path for the version 2.0 API. */
 		public static final String V20_URL_PATH = "/" + V20;
+
+		/** The URL path for the Capacity Provider version 2.0 API. */
+		public static final String CAPACITY_PROVIDER_V20_URL_PATH = CAPACITY_PROVIDER_URL_PATH
+				+ V20_URL_PATH;
 
 		/** The URL path for the Flexibility Provider version 2.0 API. */
 		public static final String FLEXIBILITY_PROVIDER_V20_URL_PATH = FLEXIBILITY_PROVIDER_URL_PATH

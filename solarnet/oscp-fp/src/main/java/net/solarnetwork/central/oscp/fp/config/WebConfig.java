@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import static net.solarnetwork.central.oscp.fp.web.FlexibilityProviderWebUtils.RESPONSE_SENT;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.RESPONSE_SENT;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;

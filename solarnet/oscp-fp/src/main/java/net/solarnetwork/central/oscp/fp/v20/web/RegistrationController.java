@@ -23,8 +23,8 @@
 package net.solarnetwork.central.oscp.fp.v20.web;
 
 import static java.lang.String.format;
-import static net.solarnetwork.central.oscp.fp.web.FlexibilityProviderWebUtils.RESPONSE_SENT;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.RESPONSE_SENT;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;

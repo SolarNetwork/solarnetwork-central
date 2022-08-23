@@ -36,7 +36,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.Role;
 import net.solarnetwork.central.oscp.web.OscpTokenAuthorizationHeaderAuthenticationFilter;
@@ -65,11 +65,11 @@ public class WebSecurityConfig {
 	public static class ApiWebSecurityConfig {
 
 		@Autowired
-		private FlexibilityProviderDao flexibilityProviderDao;
+		private AuthTokenAuthorizationDao authTokenAuthorizationDao;
 
 		@Bean
 		public OscpTokenAuthenticationProvider tokenAuthenticationProvider() {
-			return new OscpTokenAuthenticationProvider(flexibilityProviderDao);
+			return new OscpTokenAuthenticationProvider(authTokenAuthorizationDao);
 		}
 
 		@Bean

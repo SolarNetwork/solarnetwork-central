@@ -28,8 +28,6 @@ CREATE TABLE solaroscp.oscp_fp_token (
 	CONSTRAINT oscp_fp_token_unq UNIQUE (token)
 );
 
-CREATE UNIQUE INDEX oscp_fp_token_idx ON solaroscp.oscp_fp_token (token);
-
 /**
  * OSCP Capacity Provider configuration.
  */
