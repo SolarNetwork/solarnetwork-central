@@ -115,9 +115,8 @@ public class RegistrationController {
 			URI loc = fromController(getClass()).path(CAPACITY_PROVIDER_V20_URL_PATH).build().toUri();
 
 			Register req = new Register(newInToken, asList(new VersionUrl(V20, loc.toString())));
-			executor.execute(
-					new SystemHttpTask<Register>("Register", restOps, newResponseSentCondition(),
-							HttpMethod.POST, uri, req, tokenAuthorizer(input.getOutToken())));
+			executor.execute(new SystemHttpTask<>("Register", restOps, newResponseSentCondition(),
+					HttpMethod.POST, uri, req, tokenAuthorizer(input.getOutToken())));
 		}
 		SystemConfiguration copy = conf.copyWithId(UUID.randomUUID());
 		capacityProviderDao.saveSystemConfiguration(copy);
@@ -128,7 +127,7 @@ public class RegistrationController {
 	public ResponseEntity<Void> register20(@RequestBody Register input, WebRequest request) {
 		log.info("Processing {} request: {}", REG_20_URL_PATH, input);
 
-		requireNonNullArgument(input.getVersionUrl(), "input.version_url");
+		requireNonNullArgument(input.getVersionUrl(), "version_url");
 		VersionUrl url = input.getVersionUrl().stream().filter(e -> V20.equals(e.getVersion()))
 				.findFirst().orElse(null);
 		if ( url == null ) {

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.CopyingIdentity;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.dao.BasicUuidEntity;
 import net.solarnetwork.util.ObjectUtils;
 
@@ -40,13 +41,13 @@ import net.solarnetwork.util.ObjectUtils;
 public class SystemConfiguration extends BasicUuidEntity
 		implements Cloneable, CopyingIdentity<UUID, SystemConfiguration> {
 
-	private static final long serialVersionUID = -5541156004809570137L;
+	private static final long serialVersionUID = 7911753153368818260L;
 
 	private String inToken;
 	private String outToken;
 	private String oscpVersion;
 	private String baseUrl;
-	private Integer heartbeatSecs;
+	private SystemSettings settings;
 	private Instant heartbeatDate;
 	private Instant offlineDate;
 
@@ -85,7 +86,10 @@ public class SystemConfiguration extends BasicUuidEntity
 	 */
 	public boolean isHeartbeatExpired(Instant at) {
 		ObjectUtils.requireNonNullArgument(at, "at");
-		final long secs = (heartbeatSecs != null ? heartbeatSecs.longValue() : 0L);
+
+		final long secs = (settings != null && settings.heartbeatSeconds() != null
+				? settings.heartbeatSeconds().longValue()
+				: 0L);
 		if ( secs < 1 ) {
 			return false;
 		}
@@ -170,12 +174,12 @@ public class SystemConfiguration extends BasicUuidEntity
 		this.baseUrl = baseUrl;
 	}
 
-	public Integer getHeartbeatSecs() {
-		return heartbeatSecs;
+	public SystemSettings getSettings() {
+		return settings;
 	}
 
-	public void setHeartbeatSecs(Integer heartbeatSecs) {
-		this.heartbeatSecs = heartbeatSecs;
+	public void setSettings(SystemSettings settings) {
+		this.settings = settings;
 	}
 
 	public Instant getHeartbeatDate() {

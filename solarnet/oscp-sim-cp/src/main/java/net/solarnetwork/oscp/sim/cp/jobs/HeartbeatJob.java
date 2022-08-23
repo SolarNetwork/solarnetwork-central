@@ -88,7 +88,8 @@ public class HeartbeatJob extends JobSupport {
 			}
 
 			URI uri = URI.create(conf.getBaseUrl() + OscpWebUtils.UrlPaths_20.HEARTBEAT_URL_PATH);
-			Heartbeat req = new Heartbeat(Instant.now().plusSeconds(conf.getHeartbeatSecs()));
+			Heartbeat req = new Heartbeat(
+					Instant.now().plusSeconds(conf.getSettings().heartbeatSeconds()));
 			log.info("Sending heartbeat for {} to [{}]: {}", conf.getId(), uri, req);
 			Future<?> f = taskExecutor.submit(new SystemHttpTask<>("Heartbeat", restOps, null,
 					HttpMethod.POST, uri, req, tokenAuthorizer(conf.getOutToken())));
