@@ -55,7 +55,7 @@ import oscp.v20.Register;
 import oscp.v20.VersionUrl;
 
 /**
- * Registration API.
+ * Registration web API.
  * 
  * @author matt
  * @version 1.0
@@ -126,7 +126,7 @@ public class RegistrationController {
 
 	@PostMapping(path = REG_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> register20(@RequestBody Register input, WebRequest request) {
-		log.info("Processing /register request: {}", input);
+		log.info("Processing {} request: {}", REG_20_URL_PATH, input);
 
 		requireNonNullArgument(input.getVersionUrl(), "input.version_url");
 		VersionUrl url = input.getVersionUrl().stream().filter(e -> V20.equals(e.getVersion()))

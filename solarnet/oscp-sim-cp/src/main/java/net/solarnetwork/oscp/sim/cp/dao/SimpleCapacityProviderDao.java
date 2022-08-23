@@ -28,9 +28,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +43,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
@@ -47,7 +54,8 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 1.0
  */
-public class SimpleCapacityProviderDao implements CapacityProviderDao, ServiceLifecycleObserver {
+public class SimpleCapacityProviderDao
+		implements CapacityProviderDao, ServiceLifecycleObserver, PingTest {
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleCapacityProviderDao.class);
 
@@ -75,6 +83,39 @@ public class SimpleCapacityProviderDao implements CapacityProviderDao, ServiceLi
 	@Override
 	public void serviceDidShutdown() {
 		// nothing
+	}
+
+	@Override
+	public String getPingTestId() {
+		return "net.solarnetwork.oscp.sim.cp.systems";
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Systems";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 2_000L;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		Set<UUID> offlineIds = new LinkedHashSet<>();
+		int offlineCount = processExpiredOfflines((conf) -> {
+			offlineIds.add(conf.getId());
+		});
+		Map<String, Object> props = new LinkedHashMap<>(4);
+		props.put("OfflineCount", offlineCount);
+		if ( !offlineIds.isEmpty() ) {
+			props.put("OfflineIds", offlineIds);
+		}
+		if ( offlineCount > 0 ) {
+			return new PingTestResult(false, "%d offline systems detected.".formatted(offlineCount),
+					props);
+		}
+		return new PingTestResult(true, "No offline systems detected.", props);
 	}
 
 	private <T> T loadData(String name, Class<T> type) {
@@ -141,6 +182,27 @@ public class SimpleCapacityProviderDao implements CapacityProviderDao, ServiceLi
 			}
 		}
 		return updated;
+	}
+
+	@Override
+	public int processExpiredOfflines(Consumer<SystemConfiguration> handler) {
+		requireNonNullArgument(handler, "handler");
+		final Instant now = Instant.now();
+		int processed = 0;
+		for ( SystemConfiguration conf : systems.values() ) {
+			synchronized ( conf ) {
+				if ( conf.isOffline(now) ) {
+					processed++;
+					try {
+						handler.accept(conf);
+					} catch ( Exception e ) {
+						log.error("Offline handler threw exception processing system {}: {}",
+								conf.getId(), e.getMessage(), e);
+					}
+				}
+			}
+		}
+		return processed;
 	}
 
 	/**

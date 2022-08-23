@@ -33,6 +33,7 @@ import net.solarnetwork.central.oscp.jobs.OscpJobs;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.oscp.sim.cp.dao.CapacityProviderDao;
 import net.solarnetwork.oscp.sim.cp.jobs.HeartbeatJob;
+import net.solarnetwork.oscp.sim.cp.jobs.OfflineAlertJob;
 
 /**
  * Configuration for jobs.
@@ -62,8 +63,18 @@ public class JobConfig {
 	@Bean
 	public ManagedJob heartbeatJob() {
 		HeartbeatJob job = new HeartbeatJob(capacityProviderDao, taskExecutor, restOps);
-		job.setId("DatumDeleteJobInfoCleaner");
-		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	/**
+	 * The OSCP Offline Alert job for external systems.
+	 * 
+	 * @return the job
+	 */
+	@ConfigurationProperties(prefix = "app.job.oscp.offline-alert")
+	@Bean
+	public ManagedJob offlienAlertJob() {
+		OfflineAlertJob job = new OfflineAlertJob(capacityProviderDao);
 		return job;
 	}
 

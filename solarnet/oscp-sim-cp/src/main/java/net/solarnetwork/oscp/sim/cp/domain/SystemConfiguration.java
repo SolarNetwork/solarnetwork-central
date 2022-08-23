@@ -91,6 +91,30 @@ public class SystemConfiguration extends BasicUuidEntity
 		return (lastHeartbeat == null || lastHeartbeat.plusSeconds(secs).isBefore(at));
 	}
 
+	/**
+	 * Test if the offline date is expired now.
+	 * 
+	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
+	 *         expired right now
+	 */
+	public boolean isOffline() {
+		return isOffline(Instant.now());
+	}
+
+	/**
+	 * Test if the offline date is expired.
+	 * 
+	 * @param at
+	 *        the date at which to test if the offline date has expired
+	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
+	 *         expired right now
+	 */
+	public boolean isOffline(Instant at) {
+		ObjectUtils.requireNonNullArgument(at, "at");
+		final Instant offline = getOfflineDate();
+		return (offline != null && offline.isBefore(at));
+	}
+
 	@Override
 	public SystemConfiguration clone() {
 		return (SystemConfiguration) super.clone();

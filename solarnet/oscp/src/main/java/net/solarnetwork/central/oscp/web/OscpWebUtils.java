@@ -201,6 +201,17 @@ public final class OscpWebUtils {
 		public static final String UPDATE_ASSET_MEASUREMENTS_URL_PATH = "/update_asset_measurements";
 
 		/**
+		 * Create a path to the Capacity Provider API.
+		 * 
+		 * @param path
+		 *        the path, relative to the Capacity Provider base path
+		 * @return the URL path
+		 */
+		public static String cpUrlPath(String path) {
+			return CAPACITY_PROVIDER_V20_URL_PATH + path;
+		}
+
+		/**
 		 * Create a path to the Flexibility Provider API.
 		 * 
 		 * @param path
