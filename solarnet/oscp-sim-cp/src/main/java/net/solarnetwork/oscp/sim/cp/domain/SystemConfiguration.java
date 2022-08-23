@@ -25,6 +25,7 @@ package net.solarnetwork.oscp.sim.cp.domain;
 import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.dao.BasicUuidEntity;
@@ -68,6 +69,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	 * @return {@literal true} if {@code heartbeatSecs} is configured and
 	 *         {@code heartbeatDate} is {@literal null} or expired right now
 	 */
+	@JsonIgnore
 	public boolean isHeartbeatExpired() {
 		return isHeartbeatExpired(Instant.now());
 	}
@@ -97,6 +99,7 @@ public class SystemConfiguration extends BasicUuidEntity
 	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
 	 *         expired right now
 	 */
+	@JsonIgnore
 	public boolean isOffline() {
 		return isOffline(Instant.now());
 	}
