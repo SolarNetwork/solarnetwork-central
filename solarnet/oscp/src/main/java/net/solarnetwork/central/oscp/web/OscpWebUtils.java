@@ -22,7 +22,11 @@
 
 package net.solarnetwork.central.oscp.web;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.security.AuthorizationException;
@@ -67,6 +71,18 @@ public final class OscpWebUtils {
 	public static final ThreadLocal<CompletableFuture<Void>> RESPONSE_SENT = new ThreadLocal<>();
 
 	/**
+	 * Create a new "response sent" condition and save it in
+	 * {@link #RESPONSE_SENT}.
+	 * 
+	 * @return the new condition
+	 */
+	public static CompletableFuture<Void> newResponseSentCondition() {
+		CompletableFuture<Void> condition = new CompletableFuture<>();
+		RESPONSE_SENT.set(condition);
+		return condition;
+	}
+
+	/**
 	 * Get the OSCP authorization token used in a request.
 	 * 
 	 * @param request
@@ -82,6 +98,43 @@ public final class OscpWebUtils {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
 		}
 		return comp[1];
+	}
+
+	/**
+	 * Generate a new random token.
+	 * 
+	 * <p>
+	 * The token will generated from 48 random bytes and then base 64 encoded.
+	 * </p>
+	 * 
+	 * @return the new token value
+	 */
+	public static String generateToken() {
+		SecureRandom rng;
+		try {
+			rng = SecureRandom.getInstanceStrong();
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new RuntimeException("Cannot generate new token value", e);
+		}
+		byte[] bytes = new byte[48];
+		rng.nextBytes(bytes);
+		return Base64.getUrlEncoder().encodeToString(bytes);
+	}
+
+	/**
+	 * HTTP headers customizer that sets an OSCP token authorization header
+	 * value.
+	 * 
+	 * @param <T>
+	 *        the consumer type
+	 * @param token
+	 *        the authorization token
+	 * @return the customizer
+	 */
+	public static <T> BiConsumer<T, HttpHeaders> tokenAuthorizer(String token) {
+		return (body, headers) -> {
+			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(token));
+		};
 	}
 
 	/**

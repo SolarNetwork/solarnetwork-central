@@ -23,19 +23,25 @@
 package net.solarnetwork.oscp.sim.cp.v20.web;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.authorizationTokenFromRequest;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.newResponseSentCondition;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizer;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.CAPACITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromController;
 import java.net.URI;
-import java.time.Instant;
-import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.TaskScheduler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +50,7 @@ import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.oscp.sim.cp.dao.CapacityProviderDao;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
-import net.solarnetwork.oscp.sim.cp.web.OscpCapacityProviderWebUtils;
+import net.solarnetwork.oscp.sim.cp.web.SystemHttpTask;
 import oscp.v20.Register;
 import oscp.v20.VersionUrl;
 
@@ -60,20 +66,59 @@ public class RegistrationController {
 	/** The base URL path to this controller. */
 	public static final String REG_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH + REGISTER_URL_PATH;
 
-	private final TaskScheduler taskScheduler;
+	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+
+	private final Executor executor;
 	private final CapacityProviderDao capacityProviderDao;
 	private final RestOperations restOps;
 
-	public RegistrationController(TaskScheduler taskScheduler, CapacityProviderDao capacityProviderDao,
+	public RegistrationController(Executor executor, CapacityProviderDao capacityProviderDao,
 			RestOperations restOps) {
 		super();
-		this.taskScheduler = requireNonNullArgument(taskScheduler, "taskScheduler");
+		this.executor = requireNonNullArgument(executor, "executor");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
 	}
 
 	@PostMapping(path = "/sim/system", consumes = APPLICATION_JSON_VALUE)
-	public SystemConfiguration createSystem(@RequestBody SystemConfiguration conf) {
+	public SystemConfiguration createSystem(@RequestBody SystemConfiguration input) {
+		SystemConfiguration copy = input.copyWithId(UUID.randomUUID());
+		capacityProviderDao.saveSystemConfiguration(copy);
+		return copy;
+	}
+
+	@PostMapping(path = "/sim/system/{systemId}/register", consumes = APPLICATION_JSON_VALUE)
+	public SystemConfiguration createSystem(@PathVariable("systemId") UUID systemId,
+			@RequestBody SystemConfiguration input) {
+		if ( !V20.equals(input.getOscpVersion()) ) {
+			throw new IllegalArgumentException("OSCP version [%s] is not supported (must be %s)."
+					.formatted(input.getOscpVersion(), V20));
+		}
+		requireNonNullArgument(input.getBaseUrl(), "baseUrl");
+		requireNonNullArgument(input.getOutToken(), "outToken");
+
+		SystemConfiguration conf = capacityProviderDao.systemConfiguration(systemId);
+		synchronized ( conf ) {
+			conf.setOscpVersion(input.getOscpVersion());
+			conf.setBaseUrl(input.getBaseUrl());
+			conf.setOutToken(input.getOutToken());
+
+			URI uri = URI.create(input.getBaseUrl() + OscpWebUtils.REGISTER_URL_PATH);
+			log.info("Initiating system registration for {} to [{}]", systemId, uri);
+
+			// generate new in token for system to use
+			String newInToken = OscpWebUtils.generateToken();
+			conf.setInToken(newInToken);
+			capacityProviderDao.saveSystemConfiguration(conf);
+
+			// build a URL to ourselves to give to the system
+			URI loc = fromController(getClass()).path(CAPACITY_PROVIDER_V20_URL_PATH).build().toUri();
+
+			Register req = new Register(newInToken, asList(new VersionUrl(V20, loc.toString())));
+			executor.execute(
+					new SystemHttpTask<Register>("Register", restOps, newResponseSentCondition(),
+							HttpMethod.POST, uri, req, tokenAuthorizer(input.getOutToken())));
+		}
 		SystemConfiguration copy = conf.copyWithId(UUID.randomUUID());
 		capacityProviderDao.saveSystemConfiguration(copy);
 		return copy;
@@ -81,6 +126,8 @@ public class RegistrationController {
 
 	@PostMapping(path = REG_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> register20(@RequestBody Register input, WebRequest request) {
+		log.info("Processing /register request: {}", input);
+
 		requireNonNullArgument(input.getVersionUrl(), "input.version_url");
 		VersionUrl url = input.getVersionUrl().stream().filter(e -> V20.equals(e.getVersion()))
 				.findFirst().orElse(null);
@@ -91,29 +138,15 @@ public class RegistrationController {
 					.build();
 		}
 
-		String token = OscpWebUtils.authorizationTokenFromRequest(request);
-
-		// build a URL to ourselves to give to the FP
-		URI loc = fromController(getClass()).path(CAPACITY_PROVIDER_V20_URL_PATH).build().toUri();
-
-		SystemConfiguration system = capacityProviderDao.verifyAuthToken(token);
-		SystemConfiguration copy;
+		SystemConfiguration system = capacityProviderDao
+				.verifyAuthToken(authorizationTokenFromRequest(request));
 		synchronized ( system ) {
-			copy = system.copyWithId(system.getId());
-			copy.setBaseUrl(url.getBaseUrl());
-			copy.setOscpVersion(url.getVersion());
-			copy.setInToken(OscpCapacityProviderWebUtils.generateToken());
-			capacityProviderDao.saveSystemConfiguration(copy.clone());
-
-			// Give the new token to the FP to complete the registration
-			taskScheduler.schedule(() -> {
-				String uri = copy.getBaseUrl() + OscpWebUtils.REGISTER_URL_PATH;
-
-				Register resp = new Register(copy.getInToken(),
-						Arrays.asList(new VersionUrl(OscpWebUtils.UrlPaths_20.V20, loc.toString())));
-				restOps.postForEntity(uri, resp, Void.class);
-
-			}, Instant.now().plusSeconds(5));
+			system.setOutToken(input.getToken());
+			/*- Ignoring the acknowledged URL/version for now and keeping what we started with
+			system.setBaseUrl(url.getBaseUrl());
+			system.setOscpVersion(url.getVersion());
+			*/
+			capacityProviderDao.saveSystemConfiguration(system);
 		}
 
 		return ResponseEntity.noContent().build();

@@ -66,6 +66,13 @@ public class ThreadLocalCompletableHandlerInterceptor<T> implements HandlerInter
 	}
 
 	@Override
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+			throws Exception {
+		threadLocal.remove();
+		return true;
+	}
+
+	@Override
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
 			Exception ex) throws Exception {
 		CompletableFuture<T> sent = threadLocal.get();
