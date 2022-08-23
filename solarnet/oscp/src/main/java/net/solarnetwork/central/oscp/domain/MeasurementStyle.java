@@ -77,7 +77,7 @@ public enum MeasurementStyle implements CodedValue {
 	/**
 	 * Get an instance for an OSCP 2.0 value.
 	 * 
-	 * @param direction
+	 * @param configuration
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance
 	 */
