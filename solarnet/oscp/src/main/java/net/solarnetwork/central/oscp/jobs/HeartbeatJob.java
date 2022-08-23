@@ -36,6 +36,7 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
+import oscp.v20.Heartbeat;
 
 /**
  * Job to post OSCP heartbeat messages to configured systems.
@@ -122,11 +123,16 @@ public class HeartbeatJob extends JobSupport {
 	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterataions) {
 		return systemSupportDao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
 			remainingIterataions.decrementAndGet();
+			Integer secs = ctx.config().getSettings().heartbeatSeconds();
+			if ( secs == null ) {
+				return null;
+			}
+			Instant expires = Instant.now().plusSeconds(secs.longValue() * 2L);
 			try {
 				client.systemExchange(ctx, HttpMethod.POST, () -> {
 					ctx.verifySystemOscpVersion(supportedOscpVersions);
 					return HEARTBEAT_URL_PATH;
-				}, null);
+				}, new Heartbeat(expires));
 			} catch ( RestClientException | ExternalSystemConfigurationException e ) {
 				// ignore and continue; assume event logged in client.systemExchange()
 			}
