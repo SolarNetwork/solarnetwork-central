@@ -1,0 +1,54 @@
+app:
+  meta.name: "OSCP-Sim-CP"
+  cache.persistence.path: "var/cache"
+  httpclient:
+    connection-timeout: "5s"
+    idle-timeout: "60s"
+    max-http-connections: 4
+  task:
+    executor:
+      thread-name-prefix: "OSCP-Sim-CP-"
+      core-pool-size: 5
+      allow-core-thread-time-out: true
+    scheduler:
+      thread-name-prefix: "OSCP-Sim-CP-"
+      pool-size: 5
+
+logging:
+  level:
+    ROOT: "INFO"
+    net.solarnetwork: "DEBUG"
+    org.springframework.jdbc: "DEBUG"
+  pattern:
+    console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9930
+  servlet:
+    context-path: "/"
+    session:
+      cookie:
+        http-only: true
+      timeout: "15m"
+      tracking-modes: "COOKIE"
+  tomcat:
+    max-swallow-size: -1
+    threads:
+      min-spare: 1
+      max: 50
+
+---
+spring:
+  config.activate.on-profile: "development"
+
+debug: true
+
+logging:
+  level:
+    net.solarnetwork: "DEBUG"
