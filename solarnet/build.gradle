@@ -90,6 +90,7 @@ subprojects {
 		checkstyleVersion = '8.34'
 		javaxAnnotationVersion = '1.3.2'
 		myBatisStarterVersion = '2.2.0'
+		snCommonVersion = '2.9.1'
 		snCommonMqttVersion = '3.2.0'
 		snCommonMqttNettyVersion = '2.2.0'
 		superCsvVersion = '2.4.0'
