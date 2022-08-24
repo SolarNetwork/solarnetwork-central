@@ -47,7 +47,7 @@ import oscp.v20.Heartbeat;
 @RestController
 public class HeartbeatController {
 
-	/** The base URL path to this controller. */
+	/** The URL path for 2.0 Heartbeat. */
 	public static final String HB_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH + HEARTBEAT_URL_PATH;
 
 	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);

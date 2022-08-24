@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import net.solarnetwork.domain.CodedValue;
 import oscp.v20.EnergyMeasurement.EnergyMeasurementUnit;
+import oscp.v20.ForecastedBlock.ForecastedBlockUnit;
 import oscp.v20.InstantaneousMeasurement.InstantaneousMeasurementUnit;
 
 /**
@@ -131,6 +132,40 @@ public enum MeasurementUnit implements CodedValue {
 		return switch (unit) {
 			case WH -> Wh;
 			case KWH -> kWh;
+		};
+	}
+
+	/**
+	 * Get an instance for an OSCP 2.0 forecast block value.
+	 * 
+	 * @param unit
+	 *        the OSCP 2.0 value to get an instance for
+	 * @return the instance
+	 */
+	public static MeasurementUnit forOscp20Value(ForecastedBlockUnit unit) {
+		return switch (unit) {
+			case A -> A;
+			case W -> W;
+			case KW -> kW;
+			case WH -> Wh;
+			case KWH -> kWh;
+		};
+	}
+
+	/**
+	 * Get an OSCP 2.0 forecast block unit value for this instance.
+	 * 
+	 * @return the OSCP 2.0 forecast block value
+	 */
+	public ForecastedBlockUnit toOscp20ForecastValue() {
+		return switch (this) {
+			case A -> ForecastedBlockUnit.A;
+			case W -> ForecastedBlockUnit.W;
+			case kW -> ForecastedBlockUnit.KW;
+			case Wh -> ForecastedBlockUnit.WH;
+			case kWh -> ForecastedBlockUnit.KWH;
+			default -> throw new IllegalArgumentException(format(
+					"The [%s] MeasurementUnit cannot be represented as a ForecastedBlockUnit", this));
 		};
 	}
 

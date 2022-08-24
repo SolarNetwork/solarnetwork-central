@@ -63,7 +63,7 @@ import oscp.v20.VersionUrl;
 @RestController
 public class RegistrationController {
 
-	/** The base URL path to this controller. */
+	/** The URL path for 2.0 Register. */
 	public static final String REG_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH + REGISTER_URL_PATH;
 
 	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);

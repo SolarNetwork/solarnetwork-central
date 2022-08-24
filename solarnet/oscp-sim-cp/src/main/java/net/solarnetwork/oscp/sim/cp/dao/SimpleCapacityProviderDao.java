@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -199,6 +200,25 @@ public class SimpleCapacityProviderDao
 						log.error("Offline handler threw exception processing system {}: {}",
 								conf.getId(), e.getMessage(), e);
 					}
+				}
+			}
+		}
+		return processed;
+	}
+
+	@Override
+	public int processCapacityGroup(String groupId, BiConsumer<String, SystemConfiguration> handler) {
+		requireNonNullArgument(handler, "handler");
+		int processed = 0;
+		// a real system would associate group IDs with systems... we just assume all systems support all groups here
+		for ( SystemConfiguration conf : systems.values() ) {
+			synchronized ( conf ) {
+				processed++;
+				try {
+					handler.accept(groupId, conf);
+				} catch ( Exception e ) {
+					log.error("Capacity group handler threw exception processing group {} system {}: {}",
+							groupId, conf.getId(), e.getMessage(), e);
 				}
 			}
 		}

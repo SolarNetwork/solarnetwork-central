@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -85,7 +84,7 @@ public class JdbcCapacityProviderConfigurationDao
 		BasicConfigurationFilter filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var results = findFiltered(filter);
-		return stream(results.spliterator(), false).collect(toList());
+		return stream(results.spliterator(), false).toList();
 	}
 
 	@Override

@@ -1,5 +1,5 @@
 /* ==================================================================
- * HandshakeController.java - 24/08/2022 10:42:41 am
+ * CapacityForecastController.java - 24/08/2022 11:25:01 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,13 +22,11 @@
 
 package net.solarnetwork.oscp.sim.cp.v20.web;
 
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.authorizationTokenFromRequest;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.newResponseSentCondition;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizer;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.CAPACITY_PROVIDER_V20_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.net.URI;
@@ -38,33 +36,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestOperations;
-import org.springframework.web.context.request.WebRequest;
-import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.oscp.sim.cp.dao.CapacityProviderDao;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 import net.solarnetwork.oscp.sim.cp.web.SystemHttpTask;
-import oscp.v20.Handshake;
-import oscp.v20.HandshakeAcknowledge;
+import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
- * Handshake web API.
+ * Web API for capacity forecasts.
  * 
  * @author matt
  * @version 1.0
  */
 @RestController
-public class HandshakeController {
-
-	/** The URL path for 2.0 Handshake Acknowledge. */
-	public static final String HS_ACK_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH
-			+ HANDSHAKE_ACK_URL_PATH;
+public class CapacityForecastController {
 
 	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
 
@@ -72,7 +63,7 @@ public class HandshakeController {
 	private final CapacityProviderDao capacityProviderDao;
 	private final RestOperations restOps;
 
-	public HandshakeController(Executor executor, CapacityProviderDao capacityProviderDao,
+	public CapacityForecastController(Executor executor, CapacityProviderDao capacityProviderDao,
 			RestOperations restOps) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
@@ -80,48 +71,25 @@ public class HandshakeController {
 		this.restOps = requireNonNullArgument(restOps, "restOps");
 	}
 
-	@PostMapping(path = HS_ACK_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> register20(@RequestBody HandshakeAcknowledge input, WebRequest request) {
-		log.info("Processing {} request: {}", HS_ACK_20_URL_PATH, input);
-
-		@SuppressWarnings("unused")
-		SystemSettings settings = SystemSettings.forOscp20Value(
-				requireNonNullArgument(input.getRequiredBehaviour(), "required_behaviour"));
-
-		SystemConfiguration system = capacityProviderDao
-				.verifyAuthToken(authorizationTokenFromRequest(request));
-		synchronized ( system ) {
-			/*- could verify response settings here, but ignore for now
-			system.setSettings(settings);
-			capacityProviderDao.saveSystemConfiguration(system);
-			*/
-		}
-
-		return ResponseEntity.noContent().build();
-	}
-
-	@PostMapping(path = "/sim/system/{systemId}/handshake", consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = "/sim/system/{systemId}/group/{groupId}/capacity-forecast", consumes = APPLICATION_JSON_VALUE)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void initiateHandshake(@PathVariable("systemId") UUID systemId,
-			@RequestBody SystemSettings input) {
-		requireNonNullArgument(input.measurementStyles(), "measurementStyles");
+	public void updateGroupCapcityForecast(@PathVariable("systemId") UUID systemId,
+			@PathVariable("groupId") String groupId, @RequestBody CapacityForecast input) {
+		requireNonNullArgument(input.type(), "type");
+		requireNonEmptyArgument(input.blocks(), "blocks");
 		SystemConfiguration conf = capacityProviderDao.systemConfiguration(systemId);
+		UpdateGroupCapacityForecast req = input.toOscp20GroupCapacityValue(groupId);
 		synchronized ( conf ) {
 			if ( !V20.equals(conf.getOscpVersion()) ) {
 				throw new IllegalArgumentException("OSCP version [%s] is not supported (must be %s)."
 						.formatted(conf.getOscpVersion(), V20));
 			}
+			URI uri = URI.create(conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH);
+			log.info("Initiating group {} capacity update for {} to [{}]", groupId, systemId, uri);
 
-			conf.setSettings(input);
-			capacityProviderDao.saveSystemConfiguration(conf);
-
-			URI uri = URI.create(conf.getBaseUrl() + HANDSHAKE_URL_PATH);
-			log.info("Initiating handshake for {} to [{}]", systemId, uri);
-
-			Handshake req = new Handshake();
-			req.setRequiredBehaviour(input.toOscp20Value());
-			executor.execute(new SystemHttpTask<>("Handshake", restOps, newResponseSentCondition(),
-					HttpMethod.POST, uri, req, tokenAuthorizer(conf.getOutToken())));
+			executor.execute(
+					new SystemHttpTask<>("GroupCapacityUpdate", restOps, newResponseSentCondition(),
+							HttpMethod.POST, uri, req, tokenAuthorizer(conf.getOutToken())));
 		}
 	}
 

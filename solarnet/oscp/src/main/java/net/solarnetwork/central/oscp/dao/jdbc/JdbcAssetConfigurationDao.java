@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -91,7 +90,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		SelectAssetConfiguration sql = new SelectAssetConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql, AssetConfigurationRowMapper.INSTANCE);
-		return stream(results.spliterator(), false).collect(toList());
+		return stream(results.spliterator(), false).toList();
 	}
 
 	@Override
@@ -102,7 +101,7 @@ public class JdbcAssetConfigurationDao implements AssetConfigurationDao {
 		filter.setGroupId(requireNonNullArgument(capacityGroupId, "capacityGroupId"));
 		SelectAssetConfiguration sql = new SelectAssetConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql, AssetConfigurationRowMapper.INSTANCE);
-		return stream(results.spliterator(), false).collect(toList());
+		return stream(results.spliterator(), false).toList();
 	}
 
 	@Override
