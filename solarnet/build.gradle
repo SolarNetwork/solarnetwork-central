@@ -1,179 +1,179 @@
 // the following is included to work with local Ivy repo during SN development
 // see https://docs.gradle.org/current/userguide/variant_model.html#sub:ivy-mapping-to-variants
 abstract class IvyVariantDerivationRule implements ComponentMetadataRule {
-    @Inject abstract ObjectFactory getObjects()
+	@Inject abstract ObjectFactory getObjects()
 
-    void execute(ComponentMetadataContext context) {
-        // This filters out any non Ivy module
-        if(context.getDescriptor(IvyModuleDescriptor) == null) {
-            return
-        }
+	void execute(ComponentMetadataContext context) {
+		// This filters out any non Ivy module
+		if(context.getDescriptor(IvyModuleDescriptor) == null) {
+			return
+		}
 
-        context.details.addVariant("runtimeElements", "runtime") {
-            attributes {
-                attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, getObjects().named(LibraryElements, LibraryElements.JAR))
-                attribute(Category.CATEGORY_ATTRIBUTE, getObjects().named(Category, Category.LIBRARY))
-                attribute(Usage.USAGE_ATTRIBUTE, getObjects().named(Usage, Usage.JAVA_RUNTIME))
-            }
-        }
-        context.details.addVariant("apiElements", "compile") {
-            attributes {
-                attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, getObjects().named(LibraryElements, LibraryElements.JAR))
-                attribute(Category.CATEGORY_ATTRIBUTE, getObjects().named(Category, Category.LIBRARY))
-                attribute(Usage.USAGE_ATTRIBUTE, getObjects().named(Usage, Usage.JAVA_API))
-            }
-        }
-    }
+		context.details.addVariant("runtimeElements", "runtime") {
+			attributes {
+				attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, getObjects().named(LibraryElements, LibraryElements.JAR))
+				attribute(Category.CATEGORY_ATTRIBUTE, getObjects().named(Category, Category.LIBRARY))
+				attribute(Usage.USAGE_ATTRIBUTE, getObjects().named(Usage, Usage.JAVA_RUNTIME))
+			}
+		}
+		context.details.addVariant("apiElements", "compile") {
+			attributes {
+				attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, getObjects().named(LibraryElements, LibraryElements.JAR))
+				attribute(Category.CATEGORY_ATTRIBUTE, getObjects().named(Category, Category.LIBRARY))
+				attribute(Usage.USAGE_ATTRIBUTE, getObjects().named(Usage, Usage.JAVA_API))
+			}
+		}
+	}
 }
 
 buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		maven { url "https://plugins.gradle.org/m2/" }
+	}
 }
 
 subprojects {
-    //apply plugin: "checkstyle"
-    apply plugin: "java"
+	//apply plugin: "checkstyle"
+	apply plugin: "java"
 
-    group = "net.solarnetwork.central"
+	group = "net.solarnetwork.central"
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+	sourceCompatibility = 17
+	targetCompatibility = 17
 
-    repositories {
-        mavenCentral()
-        maven { url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage" }
-    }
+	repositories {
+		mavenCentral()
+		maven { url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage" }
+	}
 
-    [
-        compileJava,
-        compileTestJava
-    ].each() {
-        it.options.compilerArgs += [
-            "-Xlint:all",
-            "-Xlint:-options",
-            "-Xlint:-path",
-            "-Xlint:-try"
-        ]
-        it.options.encoding = "UTF-8"
-        if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
-            it.options.compilerArgs += ["-Werror"]
-        }
-    }
+	[
+		compileJava,
+		compileTestJava
+	].each() {
+		it.options.compilerArgs += [
+			"-Xlint:all",
+			"-Xlint:-options",
+			"-Xlint:-path",
+			"-Xlint:-try"
+		]
+		it.options.encoding = "UTF-8"
+		if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
+			it.options.compilerArgs += ["-Werror"]
+		}
+	}
 
-    compileTestJava {
-        options.compilerArgs += [
-            "-Xlint:-serial"
-        ]
-    }
+	compileTestJava {
+		options.compilerArgs += [
+			"-Xlint:-serial"
+		]
+	}
 
-    jar.manifest {
-        attributes('Implementation-Title': name,
-        'Implementation-Version': version,
-        'Built-By': System.getProperty('user.name'),
-        'Built-JDK': System.getProperty('java.version'),
-        'Source-Compatibility': sourceCompatibility,
-        'Target-Compatibility': targetCompatibility)
-    }
+	jar.manifest {
+		attributes('Implementation-Title': name,
+		'Implementation-Version': version,
+		'Built-By': System.getProperty('user.name'),
+		'Built-JDK': System.getProperty('java.version'),
+		'Source-Compatibility': sourceCompatibility,
+		'Target-Compatibility': targetCompatibility)
+	}
 
-    javadoc.options {
-        encoding = 'UTF-8'
-        use = true
-        links 'https://docs.oracle.com/javase/17/docs/api/'
-        source = "17"
-    }
+	javadoc.options {
+		encoding = 'UTF-8'
+		use = true
+		links 'https://docs.oracle.com/javase/17/docs/api/'
+		source = "17"
+	}
 
-    ext {
+	ext {
 		checkstyleVersion = '8.34'
-        javaxAnnotationVersion = '1.3.2'
-        myBatisStarterVersion = '2.2.0'
-        snCommonMqttVersion = '3.2.0'
-        snCommonMqttNettyVersion = '2.2.0'
-        superCsvVersion = '2.4.0'
+		javaxAnnotationVersion = '1.3.2'
+		myBatisStarterVersion = '2.2.0'
+		snCommonMqttVersion = '3.2.0'
+		snCommonMqttNettyVersion = '2.2.0'
+		superCsvVersion = '2.4.0'
 
-        libraries = [
-            // Test dependencies.
-            easymock: 'org.easymock:easymock:3.1',
-            hamcrest: 'org.hamcrest:hamcrest-library:2.2',
-            junit: 'org.junit.jupiter:junit-jupiter:5.8.0',
-            junit4: 'org.junit.vintage:junit-vintage-engine:5.8.0',
-            mockito: 'org.mockito:mockito-core:3.9.0',
-            mockitoJupiter: 'org.mockito:mockito-junit-jupiter:3.9.0'
-        ]
-    }
-    
-    ext['netty.version'] = '4.1.63.Final'
+		libraries = [
+			// Test dependencies.
+			easymock: 'org.easymock:easymock:3.1',
+			hamcrest: 'org.hamcrest:hamcrest-library:2.2',
+			junit: 'org.junit.jupiter:junit-jupiter:5.8.0',
+			junit4: 'org.junit.vintage:junit-vintage-engine:5.8.0',
+			mockito: 'org.mockito:mockito-core:3.9.0',
+			mockitoJupiter: 'org.mockito:mockito-junit-jupiter:3.9.0'
+		]
+	}
+	
+	ext['netty.version'] = '4.1.63.Final'
 
-    dependencies {
-    	components { all(IvyVariantDerivationRule) }
-        testImplementation libraries.junit,
-        		libraries.junit4,
-        		libraries.hamcrest,
-                libraries.mockito,
-                libraries.mockitoJupiter,
-                libraries.easymock
-    }
+	dependencies {
+		components { all(IvyVariantDerivationRule) }
+		testImplementation libraries.junit,
+				libraries.junit4,
+				libraries.hamcrest,
+				libraries.mockito,
+				libraries.mockitoJupiter,
+				libraries.easymock
+	}
 
-    // Disable JavaDoc doclint on Java 8. It's annoying.
-    if (JavaVersion.current().isJava8Compatible()) {
-        allprojects {
-            tasks.withType(Javadoc) {
-                options.addStringOption('Xdoclint:none', '-quiet')
-            }
-        }
-    }
+	// Disable JavaDoc doclint on Java 8. It's annoying.
+	if (JavaVersion.current().isJava8Compatible()) {
+		allprojects {
+			tasks.withType(Javadoc) {
+				options.addStringOption('Xdoclint:none', '-quiet')
+			}
+		}
+	}
 
-    // For jdk10 we must explicitly choose between html4 and html5, otherwise we get a warning
-    if (JavaVersion.current().isJava10Compatible()) {
-        allprojects {
-            tasks.withType(Javadoc) {
-                options.addBooleanOption('html5', true)
-            }
-        }
-    }
+	// For jdk10 we must explicitly choose between html4 and html5, otherwise we get a warning
+	if (JavaVersion.current().isJava10Compatible()) {
+		allprojects {
+			tasks.withType(Javadoc) {
+				options.addBooleanOption('html5', true)
+			}
+		}
+	}
 
-    /*checkstyle {
-        toolVersion = "8.34"
+	/*checkstyle {
+		toolVersion = "8.34"
 		configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-        ignoreFailures = false
-        if (rootProject.hasProperty("checkstyle.ignoreFailures")) {
-            ignoreFailures = rootProject.properties["checkstyle.ignoreFailures"].toBoolean()
-        }
-    }*/
+		ignoreFailures = false
+		if (rootProject.hasProperty("checkstyle.ignoreFailures")) {
+			ignoreFailures = rootProject.properties["checkstyle.ignoreFailures"].toBoolean()
+		}
+	}*/
 
-    //checkstyleMain {
-    //    source = fileTree(dir: "src/main", include: "**/*.java")
-    //}
+	//checkstyleMain {
+	//	  source = fileTree(dir: "src/main", include: "**/*.java")
+	//}
 
-    //checkstyleTest {
-    //    source = fileTree(dir: "src/test", include: "**/*.java")
-    //}
+	//checkstyleTest {
+	//	  source = fileTree(dir: "src/test", include: "**/*.java")
+	//}
 
-    task javadocJar(type: Jar) {
-        from javadoc
-        classifier = 'javadoc'
-        archiveClassifier = 'javadoc'
-    }
+	task javadocJar(type: Jar) {
+		from javadoc
+		classifier = 'javadoc'
+		archiveClassifier = 'javadoc'
+	}
 
-    task sourcesJar(type: Jar) {
-        from sourceSets.main.allSource
-        classifier = 'sources'
-        archiveClassifier = 'sources'
-    }
+	task sourcesJar(type: Jar) {
+		from sourceSets.main.allSource
+		classifier = 'sources'
+		archiveClassifier = 'sources'
+	}
 
-    // At a test failure, log the stack trace to the console so that we don't
-    // have to open the HTML in a browser.
-    test {
-        testLogging {
-            exceptionFormat = 'full'
-            showExceptions true
-            showCauses true
-            showStackTraces true
-        }
-        maxHeapSize = '1500m'
-    }
-    
+	// At a test failure, log the stack trace to the console so that we don't
+	// have to open the HTML in a browser.
+	test {
+		testLogging {
+			exceptionFormat = 'full'
+			showExceptions true
+			showCauses true
+			showStackTraces true
+		}
+		maxHeapSize = '1500m'
+	}
+	
 }
