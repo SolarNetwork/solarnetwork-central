@@ -30,6 +30,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
@@ -51,6 +52,9 @@ public class ServiceConfig {
 
 	@Autowired
 	private FlexibilityProviderDao flexibilityProviderDao;
+
+	@Autowired
+	private CapacityGroupConfigurationDao capacityGroupDao;
 
 	@Autowired
 	private CapacityProviderConfigurationDao capacityProviderDao;
@@ -83,7 +87,7 @@ public class ServiceConfig {
 	@Bean
 	public DaoFlexibilityProviderBiz flexibilityProviderBiz(ExternalSystemClient client) {
 		var biz = new DaoFlexibilityProviderBiz(executor, client, userEventAppenderBiz,
-				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
+				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao, capacityGroupDao);
 		biz.setTxTemplate(transactionTemplate);
 		biz.setTaskScheduler(taskScheduler);
 		return biz;

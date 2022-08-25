@@ -88,9 +88,9 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	@Override
 	public Collection<CapacityGroupConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
-		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		var filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
-		SelectCapacityGroupConfiguration sql = new SelectCapacityGroupConfiguration(filter);
+		var sql = new SelectCapacityGroupConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
 				CapacityGroupConfigurationRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).toList();
@@ -98,11 +98,11 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	@Override
 	public CapacityGroupConfiguration get(UserLongCompositePK id) {
-		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		var filter = new BasicConfigurationFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
 		filter.setConfigurationId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
-		SelectCapacityGroupConfiguration sql = new SelectCapacityGroupConfiguration(filter);
+		var sql = new SelectCapacityGroupConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
 				CapacityGroupConfigurationRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
@@ -115,12 +115,24 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 
 	@Override
 	public void delete(CapacityGroupConfiguration entity) {
-		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		var filter = new BasicConfigurationFilter();
 		filter.setUserId(requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId"));
 		filter.setConfigurationId(requireNonNullArgument(entity.getEntityId(), "entity.entityId"));
-		DeleteCapacityGroupConfiguration sql = new DeleteCapacityGroupConfiguration(filter);
+		var sql = new DeleteCapacityGroupConfiguration(filter);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
+			String groupIdentifier) {
+		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
+		filter.setProviderId(capacityProviderId);
+		filter.setIdentifier(groupIdentifier);
+		var sql = new SelectCapacityGroupConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql,
+				CapacityGroupConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
 }

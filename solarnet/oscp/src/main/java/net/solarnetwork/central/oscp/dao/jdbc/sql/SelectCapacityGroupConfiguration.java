@@ -33,6 +33,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.oscp.dao.CapacityGroupFilter;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 
@@ -49,13 +50,15 @@ public class SelectCapacityGroupConfiguration
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
 	private final ConfigurationFilter filter;
+	private final CapacityGroupFilter groupFilter;
 	private final int fetchSize;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param filter
-	 *        the filter criteria
+	 *        the filter criteria; {@link CapacityGroupFilter} instances are
+	 *        supported as well
 	 */
 	public SelectCapacityGroupConfiguration(ConfigurationFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
@@ -65,13 +68,15 @@ public class SelectCapacityGroupConfiguration
 	 * Constructor.
 	 * 
 	 * @param filter
-	 *        the filter criteria
+	 *        the filter criteria; {@link CapacityGroupFilter} instances are
+	 *        supported as well
 	 * @param fetchSize
 	 *        the fetch size to use, or {@literal 0} to leave unspecified
 	 */
 	public SelectCapacityGroupConfiguration(ConfigurationFilter filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
+		this.groupFilter = (filter instanceof CapacityGroupFilter f) ? f : null;
 		this.fetchSize = fetchSize;
 	}
 
@@ -102,6 +107,12 @@ public class SelectCapacityGroupConfiguration
 		if ( filter.hasConfigurationCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getConfigurationIds(), "ocg.id", where);
 		}
+		if ( filter.hasProviderCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getProviderIds(), "ocg.cp_id", where);
+		}
+		if ( groupFilter != null && groupFilter.hasIdentifierCriteria() ) {
+			idx += whereOptimizedArrayContains(groupFilter.getIdentifiers(), "ocg.ident", where);
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -129,6 +140,12 @@ public class SelectCapacityGroupConfiguration
 		}
 		if ( filter.hasConfigurationCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getConfigurationIds());
+		}
+		if ( filter.hasProviderCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getProviderIds());
+		}
+		if ( groupFilter != null && groupFilter.hasIdentifierCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, groupFilter.getIdentifiers());
 		}
 		return p;
 	}

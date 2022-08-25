@@ -285,4 +285,57 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		assertThat("Results for single user returned", results, contains(expected));
 	}
 
+	@Test
+	public void findForCapacityGroupAndIdentifier() {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final List<Long> userIds = new ArrayList<>(userCount);
+		Map<Long, CapacityProviderConfiguration> userProviders = new LinkedHashMap<>(userCount);
+		Map<Long, CapacityOptimizerConfiguration> userOptimizers = new LinkedHashMap<>(userCount);
+		final List<CapacityGroupConfiguration> confs = new ArrayList<>(count);
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		for ( int i = 0; i < count; i++ ) {
+			Instant t = start.plusSeconds(i);
+			for ( int u = 0; u < userCount; u++ ) {
+				Long userId;
+				if ( i == 0 ) {
+					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+					userIds.add(userId);
+					Long flexibilityProviderId = flexibilityProviderDao.idForToken(
+							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+							.getEntityId();
+					userProviders.put(userId,
+							capacityProviderDao.get(capacityProviderDao.create(userId,
+									OscpJdbcTestUtils.newCapacityProviderConf(userId,
+											flexibilityProviderId, Instant.now()))));
+					userOptimizers.put(userId,
+							capacityOptimizerDao.get(capacityOptimizerDao.create(userId,
+									OscpJdbcTestUtils.newCapacityOptimizerConf(userId,
+											flexibilityProviderId, Instant.now()))));
+
+				} else {
+					userId = userIds.get(u);
+				}
+				CapacityGroupConfiguration conf = newConf(userId, t,
+						userProviders.get(userId).getEntityId(),
+						userOptimizers.get(userId).getEntityId());
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		// WHEN
+		final Long userId = userIds.get(1);
+		final Long providerId = userProviders.get(userId).getEntityId();
+		final CapacityGroupConfiguration expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId())).findFirst().orElse(null);
+		CapacityGroupConfiguration result = dao.findForCapacityProvider(userId, providerId,
+				expected.getIdentifier());
+
+		// THEN
+		assertThat("Results returned", result, is(equalTo(expected)));
+	}
+
 }

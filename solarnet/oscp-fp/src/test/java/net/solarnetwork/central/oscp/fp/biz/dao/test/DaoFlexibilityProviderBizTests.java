@@ -68,6 +68,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
@@ -113,6 +114,9 @@ public class DaoFlexibilityProviderBizTests {
 	@Mock
 	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
 
+	@Mock
+	private CapacityGroupConfigurationDao capacityGroupDao;
+
 	@Captor
 	private ArgumentCaptor<ConfigurationFilter> cpFilterCaptor;
 
@@ -139,7 +143,8 @@ public class DaoFlexibilityProviderBizTests {
 		mockExternalSystem = MockRestServiceServer.bindTo(restTemplate).build();
 		biz = new DaoFlexibilityProviderBiz(executor,
 				new RestOpsExternalSystemClient(restTemplate, userEventAppenderBiz),
-				userEventAppenderBiz, flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao);
+				userEventAppenderBiz, flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
+				capacityGroupDao);
 		biz.setTaskStartDelay(0);
 		biz.setTaskStartDelayRandomness(0);
 		// no biz.setTxTemplate(tt); to use test transaction

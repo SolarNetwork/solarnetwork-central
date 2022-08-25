@@ -53,12 +53,15 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityForecast;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
@@ -89,6 +92,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
+	private final CapacityGroupConfigurationDao capacityGroupDao;
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
 	private TransactionTemplate txTemplate;
 	private TaskScheduler taskScheduler;
@@ -122,13 +126,16 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the capacity provider configuration DAO
 	 * @param capacityOptimizerDao
 	 *        the capacity optimizer configuration DAO
+	 * @param capacityGroupDao
+	 *        the capacity group configuration DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoFlexibilityProviderBiz(Executor executor, ExternalSystemClient externalSystemClient,
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
-			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
+			CapacityOptimizerConfigurationDao capacityOptimizerDao,
+			CapacityGroupConfigurationDao capacityGroupDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.externalSystemClient = requireNonNullArgument(externalSystemClient, "externalSystemClient");
@@ -137,6 +144,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				"flexibilityProviderDao");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
+		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
 	}
 
 	private ExternalSystemConfigurationDao<?> configurationDaoForRole(OscpRole systemRole) {
@@ -247,11 +255,31 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(expiresDate, "expiresDate");
 
-		log.info("Heartbeat for {} {} with epiration: {}", systemRole, authInfo.id().ident(),
+		log.info("Heartbeat for {} {} with expiration: {}", systemRole, authInfo.id().ident(),
 				expiresDate);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		dao.updateOfflineDate(authInfo.id(), expiresDate);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
+			CapacityForecast forecast) {
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider));
+		requireNonNullArgument(groupIdentifier, "groupIdentifier");
+		requireNonNullArgument(forecast, "forecast");
+
+		log.info("Update Group Capacity Forecast for {} {} with forecast: {}", systemRole,
+				authInfo.id().ident(), forecast);
+
+		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityProvider(authInfo.userId(),
+				authInfo.entityId(), groupIdentifier);
+		if ( group == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
+		}
+
+		// TODO
 	}
 
 	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>

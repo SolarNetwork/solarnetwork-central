@@ -45,7 +45,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
-import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityGroupConfiguration;
 
 /**
@@ -71,6 +70,12 @@ public class SelectCapacityGroupConfigurationTests {
 	@Mock
 	private Array configurationIdsArray;
 
+	@Mock
+	private Array providerIdsArray;
+
+	@Mock
+	private Array identifiersArray;
+
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
 
@@ -87,7 +92,7 @@ public class SelectCapacityGroupConfigurationTests {
 		given(con.createArrayOf(eq("bigint"), aryEq(value))).willReturn(configurationIdsArray);
 	}
 
-	private void thenPrepStatement(PreparedStatement result, ConfigurationFilter filter)
+	private void thenPrepStatement(PreparedStatement result, BasicConfigurationFilter filter)
 			throws SQLException {
 		int p = 0;
 		if ( filter.hasUserCriteria() ) {
@@ -102,6 +107,20 @@ public class SelectCapacityGroupConfigurationTests {
 				then(result).should().setObject(++p, filter.getConfigurationId());
 			} else {
 				then(result).should().setArray(++p, configurationIdsArray);
+			}
+		}
+		if ( filter.hasProviderCriteria() ) {
+			if ( filter.getProviderIds().length == 1 ) {
+				then(result).should().setObject(++p, filter.getProviderId());
+			} else {
+				then(result).should().setArray(++p, providerIdsArray);
+			}
+		}
+		if ( filter.hasIdentifierCriteria() ) {
+			if ( filter.getIdentifiers().length == 1 ) {
+				then(result).should().setObject(++p, filter.getIdentifier());
+			} else {
+				then(result).should().setArray(++p, identifiersArray);
 			}
 		}
 		if ( filter.getMax() != null ) {
@@ -191,4 +210,46 @@ public class SelectCapacityGroupConfigurationTests {
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, filter);
 	}
+
+	@Test
+	public void findForCapacityProviderAndIdentifier_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+		filter.setIdentifier("foo");
+
+		// WHEN
+		String sql = new SelectCapacityGroupConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-capacity-group-conf-cp-ident-one.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void findForCapacityProviderAndIdentifier_prep() throws SQLException {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+		filter.setIdentifier("foo");
+
+		givenPrepStatement();
+
+		// WHEN
+		PreparedStatement result = new SelectCapacityGroupConfiguration(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-group-conf-cp-ident-one.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
 }

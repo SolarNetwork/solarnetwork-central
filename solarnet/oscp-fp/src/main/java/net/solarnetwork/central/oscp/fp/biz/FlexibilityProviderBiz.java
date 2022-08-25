@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.biz;
 import java.time.Instant;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -116,4 +117,22 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *         exist
 	 */
 	void heartbeat(AuthRoleInfo authInfo, Instant expiresDate);
+
+	/**
+	 * Process an update group capacity forecast from an external system, by
+	 * forwarding the request to associated Capacity Optimizer systems.
+	 * 
+	 * @param authInfo
+	 *        the authorization info of the external system
+	 * @param groupIdentifier
+	 *        the OSCP group identifier
+	 * @param forecast
+	 *        the forecast
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
+			CapacityForecast forecast);
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityOptimizerConfigurationDao.java - 14/08/2022 7:32:46 am
+ * CapacityGroupFilter.java - 25/08/2022 4:14:01 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,31 +22,17 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.dao.SortCriteria;
 
 /**
- * DAO API for {@link CapacityGroupConfiguration} entities.
+ * A basic filter for OSCP capacity group entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CapacityGroupConfigurationDao
-		extends GenericCompositeKey2Dao<CapacityGroupConfiguration, UserLongCompositePK, Long, Long> {
-
-	/**
-	 * Find a group for a given capacity provider and group identifier.
-	 * 
-	 * @param userId
-	 *        the ID of the user to get the group for
-	 * @param capacityProviderId
-	 *        the ID of the Capacity Provider to get the group for
-	 * @param groupIdentifier
-	 *        the identifier of the group to get
-	 * @return the configuration, or {@literal null} if not found
-	 */
-	CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
-			String groupIdentifier);
+public interface CapacityGroupFilter extends UserCriteria, ConfigurationCriteria, GroupCriteria,
+		ProviderCriteria, IdentifierCriteria, LockingCriteria, PaginationCriteria, SortCriteria {
 
 }

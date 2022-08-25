@@ -33,13 +33,15 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicConfigurationFilter extends BasicCoreCriteria implements AssetFilter {
+public class BasicConfigurationFilter extends BasicCoreCriteria
+		implements AssetFilter, CapacityGroupFilter {
 
 	private boolean lockResults;
 	private boolean skipLockedResults;
 	private Long[] configurationIds;
 	private Long[] groupIds;
 	private Long[] providerIds;
+	private String[] identifiers;
 
 	/**
 	 * Create a filter for one or more user IDs.
@@ -80,6 +82,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 			setConfigurationIds(c.getConfigurationIds());
 			setGroupIds(c.getGroupIds());
 			setProviderIds(c.getProviderIds());
+			setIdentifiers(getIdentifiers());
 		} else {
 			if ( criteria instanceof LockingCriteria c ) {
 				setLockResults(c.isLockResults());
@@ -94,6 +97,9 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 			if ( criteria instanceof ProviderCriteria c ) {
 				setProviderIds(c.getProviderIds());
 			}
+			if ( criteria instanceof IdentifierCriteria c ) {
+				setIdentifiers(c.getIdentifiers());
+			}
 		}
 	}
 
@@ -106,6 +112,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		result = prime * result + Arrays.hashCode(configurationIds);
 		result = prime * result + Arrays.hashCode(groupIds);
 		result = prime * result + Arrays.hashCode(providerIds);
+		result = prime * result + Arrays.hashCode(identifiers);
 		return result;
 	}
 
@@ -124,7 +131,8 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 		return lockResults == other.lockResults && skipLockedResults == other.skipLockedResults
 				&& Arrays.equals(configurationIds, other.configurationIds)
 				&& Arrays.equals(groupIds, other.groupIds)
-				&& Arrays.equals(providerIds, other.providerIds);
+				&& Arrays.equals(providerIds, other.providerIds)
+				&& Arrays.equals(identifiers, other.identifiers);
 	}
 
 	@Override
@@ -205,6 +213,31 @@ public class BasicConfigurationFilter extends BasicCoreCriteria implements Asset
 	 */
 	public void setProviderId(Long providerId) {
 		setProviderIds(providerId != null ? new Long[] { providerId } : null);
+	}
+
+	@Override
+	public String[] getIdentifiers() {
+		return identifiers;
+	}
+
+	/**
+	 * Set the provider IDs.
+	 * 
+	 * @param identifiers
+	 *        the identifiers to set
+	 */
+	public void setIdentifiers(String[] identifiers) {
+		this.identifiers = identifiers;
+	}
+
+	/**
+	 * Set a single identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	public void setIdentifier(String identifier) {
+		setIdentifiers(identifier != null ? new String[] { identifier } : null);
 	}
 
 	@Override

@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityOptimizerConfigurationDao.java - 14/08/2022 7:32:46 am
+ * IdentifierCriteria.java - 12/08/2022 4:44:36 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,31 +22,44 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-
 /**
- * DAO API for {@link CapacityGroupConfiguration} entities.
+ * Criteria API for a identified entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CapacityGroupConfigurationDao
-		extends GenericCompositeKey2Dao<CapacityGroupConfiguration, UserLongCompositePK, Long, Long> {
+public interface IdentifierCriteria {
 
 	/**
-	 * Find a group for a given capacity provider and group identifier.
+	 * Test if any identifier criteria exists.
 	 * 
-	 * @param userId
-	 *        the ID of the user to get the group for
-	 * @param capacityProviderId
-	 *        the ID of the Capacity Provider to get the group for
-	 * @param groupIdentifier
-	 *        the identifier of the group to get
-	 * @return the configuration, or {@literal null} if not found
+	 * @return {@literal true} if an identifier criteria exists
 	 */
-	CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
-			String groupIdentifier);
+	default boolean hasIdentifierCriteria() {
+		String id = getIdentifier();
+		return (id != null);
+	}
+
+	/**
+	 * Get an array of identifiers.
+	 * 
+	 * @return array of identifiers (may be {@literal null})
+	 */
+	String[] getIdentifiers();
+
+	/**
+	 * Get the first group ID.
+	 * 
+	 * <p>
+	 * This returns the first available value from the {@link #getIdentifiers()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the identifier, or {@literal null} if not available
+	 */
+	default String getIdentifier() {
+		String[] ids = getIdentifiers();
+		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
 
 }
