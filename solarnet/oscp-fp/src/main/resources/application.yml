@@ -74,6 +74,11 @@ spring:
     date: iso
     date-time: iso
     time: iso
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://localhost/idp/path"
 
 ---
 spring:
