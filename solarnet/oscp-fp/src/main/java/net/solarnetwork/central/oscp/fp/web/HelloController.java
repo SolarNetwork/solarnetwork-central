@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.oscp.fp.web;
 
+import java.security.Principal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.JwtClaimAccessor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,9 +39,13 @@ import net.solarnetwork.domain.Result;
 @RestController
 public class HelloController {
 
-	@RequestMapping(method = RequestMethod.GET, path = { "/oscp/hello", "/bearer/hello" })
-	public Result<String> hello(@AuthenticationPrincipal Object principal) {
-		return Result.success("Hi there, %s".formatted(principal));
+	@RequestMapping(method = RequestMethod.GET, path = "/oscp/hello")
+	public Result<String> helloOscp(@AuthenticationPrincipal Object principal, Principal p) {
+		String name = principal.toString();
+		if ( principal instanceof JwtClaimAccessor jwt ) {
+			name = jwt.getClaimAsString("scope");
+		}
+		return Result.success("Hi there, %s".formatted(name));
 	}
 
 }

@@ -32,11 +32,13 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
+import net.solarnetwork.central.oscp.fp.web.JwtScopeGrantedAuthoritiesConverter;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.Role;
 import net.solarnetwork.central.oscp.web.OscpTokenAuthorizationHeaderAuthenticationFilter;
@@ -57,8 +59,15 @@ public class WebSecurityConfig {
 		return new Http403ForbiddenEntryPoint();
 	}
 
+	@Bean
+	public JwtAuthenticationConverter jwtAuthenticationConverter() {
+		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+		converter.setJwtGrantedAuthoritiesConverter(new JwtScopeGrantedAuthoritiesConverter());
+		return converter;
+	}
+
 	/**
-	 * API security rules, for stateless OSCP Token REST access.
+	 * API security rules, for stateless OSCP Token and JWT REST access.
 	 */
 	@Configuration
 	@Order(2)
@@ -117,47 +126,9 @@ public class WebSecurityConfig {
 						Role.ROLE_CAPACITYPROVIDER.toString())
 					.anyRequest().authenticated()
 					.and()
-				
+
 				.oauth2ResourceServer().jwt();
-		    ;   
-		    // @formatter:on
-			return http.build();
-		}
-	}
 
-	/**
-	 * API security rules, for stateless OAuth JWT REST access.
-	 */
-	@Configuration
-	@Order(3)
-	public static class ApiOauthWebSecurityConfig {
-
-		@Order(3)
-		@Bean
-		public SecurityFilterChain filterChainApiOauth(HttpSecurity http,
-				AuthenticationEntryPoint unauthorizedEntryPoint) throws Exception {
-			// @formatter:off
-			http
-				// limit this configuration to specific paths
-				.requestMatchers()
-					.antMatchers("/bearer/**")
-					.and()
-
-				// CSRF not needed for stateless calls
-				.csrf().disable()
-				  
-				// make sure CORS honored
-				.cors().and()
-		      
-				// can simply return 403 on auth failures
-				.exceptionHandling((exc) -> exc.authenticationEntryPoint(unauthorizedEntryPoint))
-		      
-				// no sessions
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-				.authorizeRequests().anyRequest().authenticated().and()
-				
-				.oauth2ResourceServer().jwt();
 		    ;   
 		    // @formatter:on
 			return http.build();
@@ -168,10 +139,10 @@ public class WebSecurityConfig {
 	 * Last set of security rules, for public resources else deny all others.
 	 */
 	@Configuration
-	@Order(4)
+	@Order(Integer.MAX_VALUE)
 	public static class PublicWebSecurityConfig {
 
-		@Order(4)
+		@Order(Integer.MAX_VALUE)
 		@Bean
 		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
