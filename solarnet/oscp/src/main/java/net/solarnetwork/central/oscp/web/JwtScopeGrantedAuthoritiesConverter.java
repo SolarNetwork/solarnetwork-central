@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.fp.web;
+package net.solarnetwork.central.oscp.web;
 
 import java.util.ArrayList;
 import java.util.Collection;

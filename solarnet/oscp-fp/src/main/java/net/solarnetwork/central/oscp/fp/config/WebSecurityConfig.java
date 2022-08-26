@@ -38,9 +38,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
-import net.solarnetwork.central.oscp.fp.web.JwtScopeGrantedAuthoritiesConverter;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.Role;
+import net.solarnetwork.central.oscp.web.JwtScopeGrantedAuthoritiesConverter;
 import net.solarnetwork.central.oscp.web.OscpTokenAuthorizationHeaderAuthenticationFilter;
 
 /**
