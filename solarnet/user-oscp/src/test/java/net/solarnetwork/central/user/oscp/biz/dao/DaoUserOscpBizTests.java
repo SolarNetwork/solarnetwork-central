@@ -162,7 +162,7 @@ public class DaoUserOscpBizTests {
 				.willReturn(newToken);
 		UserLongCompositePK authId = new UserLongCompositePK(userId,
 				randomUUID().getMostSignificantBits());
-		given(flexibilityProviderDao.idForToken(newToken)).willReturn(authId);
+		given(flexibilityProviderDao.idForToken(newToken, false)).willReturn(authId);
 
 		final CapacityProviderConfiguration entity = new CapacityProviderConfiguration(userId,
 				randomUUID().getMostSignificantBits(), Instant.now());

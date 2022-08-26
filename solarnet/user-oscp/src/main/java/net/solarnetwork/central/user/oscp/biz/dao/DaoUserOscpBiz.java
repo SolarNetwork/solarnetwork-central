@@ -180,8 +180,8 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		// create auth token
 		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
 				"token");
-		UserLongCompositePK authId = requireNonNullObject(flexibilityProviderDao.idForToken(token),
-				"authId");
+		UserLongCompositePK authId = requireNonNullObject(
+				flexibilityProviderDao.idForToken(token, false), "authId");
 
 		CapacityProviderConfiguration conf = input.toEntity(unassignedId);
 		conf.setFlexibilityProviderId(authId.getEntityId());
@@ -202,8 +202,8 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		// create auth token
 		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
 				"token");
-		UserLongCompositePK authId = requireNonNullObject(flexibilityProviderDao.idForToken(token),
-				"authId");
+		UserLongCompositePK authId = requireNonNullObject(
+				flexibilityProviderDao.idForToken(token, false), "authId");
 
 		CapacityOptimizerConfiguration conf = input.toEntity(unassignedId);
 		conf.setFlexibilityProviderId(authId.getEntityId());
