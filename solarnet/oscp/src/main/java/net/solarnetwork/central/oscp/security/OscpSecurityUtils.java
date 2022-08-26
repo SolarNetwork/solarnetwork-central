@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.security;
 
 import java.security.Principal;
 import org.springframework.security.core.Authentication;
+import net.solarnetwork.central.oscp.domain.AuthRoleContainer;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -81,12 +82,18 @@ public final class OscpSecurityUtils {
 		if ( auth == null ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
 		}
-		Object details = auth.getDetails();
-		if ( details == null ) {
+		AuthRoleContainer container = null;
+		if ( auth instanceof AuthRoleContainer c ) {
+			container = c;
+		} else if ( auth.getDetails() instanceof AuthRoleContainer c ) {
+			container = c;
+		}
+		if ( container == null ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
 		}
-		if ( details instanceof OscpAuthenticatedToken token ) {
-			return token.getInfo();
+		AuthRoleInfo info = container.getAuthRole();
+		if ( info != null ) {
+			return info;
 		}
 		throw new AuthorizationException(Reason.ACCESS_DENIED, auth.getPrincipal());
 	}

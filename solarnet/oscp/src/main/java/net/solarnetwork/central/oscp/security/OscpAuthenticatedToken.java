@@ -28,6 +28,7 @@ import static org.springframework.security.core.authority.AuthorityUtils.createA
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import net.solarnetwork.central.oscp.domain.AuthRoleContainer;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 
 /**
@@ -36,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
  * @author matt
  * @version 1.0
  */
-public class OscpAuthenticatedToken implements UserDetails {
+public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
 	private static final long serialVersionUID = -2822991208596742973L;
 
@@ -79,12 +80,8 @@ public class OscpAuthenticatedToken implements UserDetails {
 		this.authorities = requireNonNullArgument(authorities, "authorities");
 	}
 
-	/**
-	 * Get authorization info.
-	 * 
-	 * @return the info
-	 */
-	public AuthRoleInfo getInfo() {
+	@Override
+	public AuthRoleInfo getAuthRole() {
 		return info;
 	}
 

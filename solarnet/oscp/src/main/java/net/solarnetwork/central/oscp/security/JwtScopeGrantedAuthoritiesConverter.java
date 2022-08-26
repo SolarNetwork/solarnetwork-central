@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.web;
+package net.solarnetwork.central.oscp.security;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +30,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import net.solarnetwork.central.oscp.security.Role;
 
 /**
  * Convert JWT scopes to Flexibility Provider authorities.

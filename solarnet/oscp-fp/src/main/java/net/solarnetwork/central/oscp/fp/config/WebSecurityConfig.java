@@ -32,16 +32,15 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
+import net.solarnetwork.central.oscp.security.ExternalSystemJwtAuthenticationConverter;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
+import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthenticationFilter;
 import net.solarnetwork.central.oscp.security.Role;
-import net.solarnetwork.central.oscp.web.JwtScopeGrantedAuthoritiesConverter;
-import net.solarnetwork.central.oscp.web.OscpTokenAuthorizationHeaderAuthenticationFilter;
 
 /**
  * Web security configuration.
@@ -57,13 +56,6 @@ public class WebSecurityConfig {
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		// we can simply return 403 because of expected credentials supplied with each request
 		return new Http403ForbiddenEntryPoint();
-	}
-
-	@Bean
-	public JwtAuthenticationConverter jwtAuthenticationConverter() {
-		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-		converter.setJwtGrantedAuthoritiesConverter(new JwtScopeGrantedAuthoritiesConverter());
-		return converter;
 	}
 
 	/**
@@ -91,6 +83,13 @@ public class WebSecurityConfig {
 			OscpTokenAuthorizationHeaderAuthenticationFilter filter = new OscpTokenAuthorizationHeaderAuthenticationFilter();
 			filter.setAuthenticationManager(authenticationManager());
 			return filter;
+		}
+
+		@Bean
+		public ExternalSystemJwtAuthenticationConverter jwtAuthenticationConverter() {
+			ExternalSystemJwtAuthenticationConverter converter = new ExternalSystemJwtAuthenticationConverter(
+					authTokenAuthorizationDao);
+			return converter;
 		}
 
 		@Order(2)
@@ -127,7 +126,9 @@ public class WebSecurityConfig {
 					.anyRequest().authenticated()
 					.and()
 
-				.oauth2ResourceServer().jwt();
+				.oauth2ResourceServer()
+					.jwt().jwtAuthenticationConverter(jwtAuthenticationConverter()).and()
+					.authenticationEntryPoint(unauthorizedEntryPoint)
 
 		    ;   
 		    // @formatter:on

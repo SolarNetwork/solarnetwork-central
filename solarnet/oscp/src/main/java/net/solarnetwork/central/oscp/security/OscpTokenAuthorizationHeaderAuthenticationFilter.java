@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.web;
+package net.solarnetwork.central.oscp.security;
 
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.OSCP_TOKEN_AUTHORIZATION_SCHEME;
 import javax.servlet.http.HttpServletRequest;
