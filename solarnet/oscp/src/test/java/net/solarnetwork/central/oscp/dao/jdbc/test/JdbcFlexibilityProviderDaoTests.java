@@ -105,7 +105,27 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		insert_authToken();
 
 		// WHEN
-		UserLongCompositePK result = dao.idForToken(lastToken);
+		UserLongCompositePK result = dao.idForToken(lastToken, false);
+
+		// THEN
+		assertThat("Result returned", result, is(notNullValue()));
+		assertThat("Result user ID matches", result.getUserId(), is(equalTo(userId)));
+
+		List<Map<String, Object>> data = allTokenData(jdbcTemplate, OscpRole.FlexibilityProvider);
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row entity ID matches returned value", result.getEntityId(),
+				is(equalTo(row.get("id"))));
+	}
+
+	@Test
+	public void idForToken_oauth() {
+		// GIVEN
+		insert_authToken();
+		jdbcTemplate.update("UPDATE solaroscp.oscp_fp_token SET oauth = TRUE");
+
+		// WHEN
+		UserLongCompositePK result = dao.idForToken(lastToken, true);
 
 		// THEN
 		assertThat("Result returned", result, is(notNullValue()));
@@ -125,7 +145,7 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		jdbcTemplate.update("UPDATE solaroscp.oscp_fp_token SET enabled = FALSE");
 
 		// WHEN
-		UserLongCompositePK result = dao.idForToken(lastToken);
+		UserLongCompositePK result = dao.idForToken(lastToken, false);
 
 		// THEN
 		assertThat("Result NOT returned for disabled row", result, is(nullValue()));
@@ -137,7 +157,7 @@ public class JdbcFlexibilityProviderDaoTests extends AbstractJUnit5JdbcDaoTestSu
 		insert_authToken();
 
 		// WHEN
-		UserLongCompositePK result = dao.idForToken(lastToken + "_NOT");
+		UserLongCompositePK result = dao.idForToken(lastToken + "_NOT", false);
 
 		// THEN
 		assertThat("Result NOT returned for unmatched token", result, is(nullValue()));

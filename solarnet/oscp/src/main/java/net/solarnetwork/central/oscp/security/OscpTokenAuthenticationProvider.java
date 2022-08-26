@@ -58,7 +58,7 @@ public class OscpTokenAuthenticationProvider implements AuthenticationProvider {
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		String token = authentication.getPrincipal().toString();
-		UserLongCompositePK authId = dao.idForToken(token);
+		UserLongCompositePK authId = dao.idForToken(token, false);
 		if ( authId == null ) {
 			throw new BadCredentialsException("Invalid OSCP token.");
 		}

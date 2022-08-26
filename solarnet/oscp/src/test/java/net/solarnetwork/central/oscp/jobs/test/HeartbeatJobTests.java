@@ -31,6 +31,7 @@ import static org.mockito.BDDMockito.will;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,9 @@ import net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.jobs.HeartbeatJob;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
@@ -89,14 +92,17 @@ public class HeartbeatJobTests {
 				.newCapacityProviderConf(randomUUID().getMostSignificantBits(), 1L, start);
 		c1.setOscpVersion(V20);
 		c1.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
+		c1.setSettings(new SystemSettings(60, EnumSet.of(MeasurementStyle.Continuous)));
 		CapacityOptimizerConfiguration c2 = OscpJdbcTestUtils.newCapacityOptimizerConf(
 				randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(1));
 		c2.setOscpVersion(V20);
 		c2.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
+		c2.setSettings(new SystemSettings(61, EnumSet.of(MeasurementStyle.Continuous)));
 		CapacityProviderConfiguration c3 = OscpJdbcTestUtils.newCapacityProviderConf(
 				randomUUID().getMostSignificantBits(), 1L, start.plusSeconds(2));
 		c3.setOscpVersion(V20);
 		c3.setBaseUrl("http://" + randomUUID().toString() + ".example.com/oscp/2.0");
+		c3.setSettings(new SystemSettings(62, EnumSet.of(MeasurementStyle.Continuous)));
 		confs.add(c1);
 		confs.add(c2);
 		confs.add(c3);

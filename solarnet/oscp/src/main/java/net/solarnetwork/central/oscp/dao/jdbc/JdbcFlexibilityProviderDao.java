@@ -73,8 +73,8 @@ public class JdbcFlexibilityProviderDao implements FlexibilityProviderDao {
 	}
 
 	@Override
-	public UserLongCompositePK idForToken(String token) {
-		final var sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token);
+	public UserLongCompositePK idForToken(String token, boolean oauth) {
+		final var sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token, oauth);
 		Collection<UserLongCompositePK> results = jdbcOps.query(sql, UserLongKeyRowMapper.INSTANCE);
 		return results.stream().findFirst().orElse(null);
 	}

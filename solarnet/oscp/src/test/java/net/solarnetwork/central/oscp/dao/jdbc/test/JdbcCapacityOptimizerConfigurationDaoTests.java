@@ -95,7 +95,7 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 		dao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
-				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 	}
 
@@ -353,8 +353,9 @@ public class JdbcCapacityOptimizerConfigurationDaoTests extends AbstractJUnit5Jd
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					flexibilityProviderId = flexibilityProviderDao.idForToken(
-							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+					flexibilityProviderId = flexibilityProviderDao
+							.idForToken(flexibilityProviderDao
+									.createAuthToken(unassignedEntityIdKey(userId)), false)
 							.getEntityId();
 					flexibilityProviderIds.add(flexibilityProviderId);
 				} else {

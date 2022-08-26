@@ -38,9 +38,12 @@ public interface AuthTokenAuthorizationDao {
 	 * 
 	 * @param token
 	 *        the token to get the ID for
+	 * @param oauth
+	 *        {@literal true} if the token is an OAuth value, {@literal false}
+	 *        if OSCP
 	 * @return the ID, or {@literal null} if not available (or disabled)
 	 */
-	UserLongCompositePK idForToken(String token);
+	UserLongCompositePK idForToken(String token, boolean oauth);
 
 	/**
 	 * Get the role associated with an authorization ID.

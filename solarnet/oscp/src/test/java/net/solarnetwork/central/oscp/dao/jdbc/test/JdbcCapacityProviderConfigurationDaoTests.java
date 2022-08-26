@@ -94,15 +94,15 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		dao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
-				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 	}
 
 	@Test
 	public void insert() {
 		// GIVEN
-		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId, flexibilityProviderId,
-				Instant.now());
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
+				flexibilityProviderId, Instant.now());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -352,8 +352,9 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					flexibilityProviderId = flexibilityProviderDao.idForToken(
-							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+					flexibilityProviderId = flexibilityProviderDao
+							.idForToken(flexibilityProviderDao
+									.createAuthToken(unassignedEntityIdKey(userId)), false)
 							.getEntityId();
 					flexibilityProviderIds.add(flexibilityProviderId);
 				} else {

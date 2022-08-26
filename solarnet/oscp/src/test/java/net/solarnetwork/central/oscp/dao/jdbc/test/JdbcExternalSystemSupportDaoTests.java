@@ -84,7 +84,7 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 		dao = new JdbcExternalSystemSupportDao(jdbcTemplate, capacityProviderDao, capacityOptimizerDao);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
-				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 	}
 

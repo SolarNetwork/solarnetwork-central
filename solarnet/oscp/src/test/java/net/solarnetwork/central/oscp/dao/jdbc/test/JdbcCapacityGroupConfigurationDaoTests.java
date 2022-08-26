@@ -86,7 +86,7 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		dao = new JdbcCapacityGroupConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
-				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 	}
 
@@ -251,8 +251,9 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					Long flexibilityProviderId = flexibilityProviderDao.idForToken(
-							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+					Long flexibilityProviderId = flexibilityProviderDao
+							.idForToken(flexibilityProviderDao
+									.createAuthToken(unassignedEntityIdKey(userId)), false)
 							.getEntityId();
 					userProviders.put(userId,
 							capacityProviderDao.get(capacityProviderDao.create(userId,
@@ -302,8 +303,9 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				if ( i == 0 ) {
 					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 					userIds.add(userId);
-					Long flexibilityProviderId = flexibilityProviderDao.idForToken(
-							flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)))
+					Long flexibilityProviderId = flexibilityProviderDao
+							.idForToken(flexibilityProviderDao
+									.createAuthToken(unassignedEntityIdKey(userId)), false)
 							.getEntityId();
 					userProviders.put(userId,
 							capacityProviderDao.get(capacityProviderDao.create(userId,

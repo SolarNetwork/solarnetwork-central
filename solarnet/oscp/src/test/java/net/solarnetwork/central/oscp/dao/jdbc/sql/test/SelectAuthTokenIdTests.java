@@ -68,8 +68,10 @@ public class SelectAuthTokenIdTests {
 		given(con.prepareStatement(any())).willReturn(stmt);
 	}
 
-	private void thenPrepStatement(PreparedStatement result, String token) throws SQLException {
+	private void thenPrepStatement(PreparedStatement result, String token, boolean oauth)
+			throws SQLException {
 		then(result).should().setString(1, token);
+		then(result).should().setBoolean(2, oauth);
 	}
 
 	@Test
@@ -78,11 +80,11 @@ public class SelectAuthTokenIdTests {
 		String token = randomUUID().toString();
 
 		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token).getSql();
+		String sql = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token, false).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?)")));
+				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?,?)")));
 	}
 
 	@Test
@@ -92,16 +94,16 @@ public class SelectAuthTokenIdTests {
 		givenPrepStatement();
 
 		// WHEN
-		PreparedStatement result = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token)
+		PreparedStatement result = new SelectAuthTokenId(OscpRole.FlexibilityProvider, token, false)
 				.createPreparedStatement(con);
 
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(),
-				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?)")));
+				is(equalTo("SELECT user_id, id FROM solaroscp.fp_id_for_token(?,?)")));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		thenPrepStatement(result, token);
+		thenPrepStatement(result, token, false);
 	}
 
 	@Test
@@ -110,11 +112,11 @@ public class SelectAuthTokenIdTests {
 		String token = randomUUID().toString();
 
 		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.CapacityProvider, token).getSql();
+		String sql = new SelectAuthTokenId(OscpRole.CapacityProvider, token, false).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.cp_id_for_token(?)")));
+				is(equalTo("SELECT user_id, id FROM solaroscp.cp_id_for_token(?,?)")));
 	}
 
 	@Test
@@ -123,11 +125,11 @@ public class SelectAuthTokenIdTests {
 		String token = randomUUID().toString();
 
 		// WHEN
-		String sql = new SelectAuthTokenId(OscpRole.CapacityOptimizer, token).getSql();
+		String sql = new SelectAuthTokenId(OscpRole.CapacityOptimizer, token, false).getSql();
 
 		// THEN
 		assertThat("SQL generated", sql,
-				is(equalTo("SELECT user_id, id FROM solaroscp.co_id_for_token(?)")));
+				is(equalTo("SELECT user_id, id FROM solaroscp.co_id_for_token(?,?)")));
 	}
 
 }

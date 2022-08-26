@@ -86,7 +86,7 @@ public class ExternalSystemJwtAuthenticationConverter
 
 		String token = "%s/%s".formatted(jwt.getIssuer(), principalClaimValue);
 
-		UserLongCompositePK authId = dao.idForToken(token);
+		UserLongCompositePK authId = dao.idForToken(token, true);
 		if ( authId == null ) {
 			throw new BadCredentialsException("Invalid JWT token.");
 		}

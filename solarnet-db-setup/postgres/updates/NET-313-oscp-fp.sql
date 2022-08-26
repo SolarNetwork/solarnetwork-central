@@ -23,7 +23,8 @@ CREATE TABLE solaroscp.oscp_fp_token (
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT TRUE,
-	token			CHARACTER VARYING(128) NOT NULL,
+	token			CHARACTER VARYING(128),
+	oauth			BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT oscp_fp_token_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_fp_token_unq UNIQUE (token)
 );
@@ -272,10 +273,11 @@ $$;
 /**
  * Find a Flexibility Provider identifier for a given token.
  *
- * @param tok 	the token to get the data for
- * @return		the matching identifier rows (at most 1)
+ * @param tok 		the token to get the data for
+ * @param is_oauth 	TRUE if the token is OAuth, FALSE if OSCP
+ * @return			the matching identifier rows (at most 1)
  */
-CREATE OR REPLACE FUNCTION solaroscp.fp_id_for_token(tok TEXT)
+CREATE OR REPLACE FUNCTION solaroscp.fp_id_for_token(tok TEXT, is_oauth BOOLEAN DEFAULT FALSE)
 RETURNS TABLE (
 	user_id BIGINT,
 	id		BIGINT
@@ -283,7 +285,9 @@ RETURNS TABLE (
 $$
 	SELECT user_id, id
 	FROM solaroscp.oscp_fp_token
-	WHERE token = tok AND enabled = TRUE
+	WHERE token = tok
+		AND oauth = is_oauth
+		AND enabled = TRUE
 $$;
 
 /**

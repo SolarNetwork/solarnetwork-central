@@ -45,6 +45,7 @@ public class SelectAuthTokenId implements PreparedStatementCreator, SqlProvider 
 
 	private final OscpRole type;
 	private final String token;
+	private final boolean oauth;
 
 	/**
 	 * Constructor.
@@ -53,24 +54,28 @@ public class SelectAuthTokenId implements PreparedStatementCreator, SqlProvider 
 	 *        the type of token
 	 * @param token
 	 *        the token to get the ID for
+	 * @param oauth
+	 *        {@literal true} if the token is OAuth, {@literal false} if OSCP
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SelectAuthTokenId(OscpRole type, String token) {
+	public SelectAuthTokenId(OscpRole type, String token, boolean oauth) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.token = requireNonNullArgument(token, "token");
+		this.oauth = oauth;
 	}
 
 	@Override
 	public String getSql() {
-		return String.format("SELECT user_id, id FROM solaroscp.%s_id_for_token(?)", type.getAlias());
+		return String.format("SELECT user_id, id FROM solaroscp.%s_id_for_token(?,?)", type.getAlias());
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
 		stmt.setString(1, token);
+		stmt.setBoolean(2, oauth);
 		return stmt;
 	}
 
