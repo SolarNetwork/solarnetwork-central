@@ -91,9 +91,13 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		HttpHeaders headers = new HttpHeaders();
 
 		// add auth token header
-		String authToken = context.authToken();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+		if ( context.config().hasOauthClientSettings() ) {
+			// TODO
+		} else {
+			String authToken = context.authToken();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+		}
 
 		try {
 			HttpEntity<Object> req = new HttpEntity<>(body, headers);

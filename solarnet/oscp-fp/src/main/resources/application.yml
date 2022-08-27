@@ -25,6 +25,15 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+  secrets:
+    aws:
+      region: "us-west-2"
+      access-token: "TOKEN_HERE"
+      access-secret: "SECRET_HERE"
+    cache:
+      ttl: 900
+      heap-max-entries: 500
+      disk-max-size-mb: 50
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"

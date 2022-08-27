@@ -62,6 +62,7 @@ dependencies {
 	// Utilities
 	implementation 'com.amazonaws:aws-java-sdk-ec2:1.11.1034'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation 'software.amazon.awssdk:secretsmanager:2.17+'
 	implementation 'com.cronutils:cron-utils:9.1.5'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'commons-codec:commons-codec'

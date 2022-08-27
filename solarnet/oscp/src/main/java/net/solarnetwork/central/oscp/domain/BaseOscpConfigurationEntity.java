@@ -45,7 +45,8 @@ import net.solarnetwork.dao.Entity;
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
 public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfigurationEntity<C>>
-		extends BasicEntity<UserLongCompositePK> implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
+		extends BasicEntity<UserLongCompositePK>
+		implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
 		CopyingIdentity<UserLongCompositePK, C>, Serializable, Cloneable {
 
 	private static final long serialVersionUID = -4040376195754476954L;
@@ -99,6 +100,42 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 		if ( serviceProps != null ) {
 			entity.setServiceProps(new LinkedHashMap<>(serviceProps));
 		}
+	}
+
+	/**
+	 * Get OAuth client settings, if available.
+	 * 
+	 * @return the OAuth client settings, or {@literal null} if not available
+	 */
+	public OAuthClientSettings oauthClientSettings() {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null ) {
+			return null;
+		}
+		Object tokenUrl = props.get(ExternalSystemServiceProperties.OAUTH_TOKEN_URL);
+		if ( tokenUrl == null ) {
+			return null;
+		}
+		Object clientId = props.get(ExternalSystemServiceProperties.OAUTH_CLIENT_ID);
+		if ( clientId == null ) {
+			return null;
+		}
+		return new OAuthClientSettings(tokenUrl.toString(), clientId.toString());
+	}
+
+	/**
+	 * Test if OAuth client settings are available.
+	 * 
+	 * @return {@literal true} if {@link #oauthClientSettings()} would return a
+	 *         non-{@literal null} instance
+	 */
+	public boolean hasOauthClientSettings() {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null ) {
+			return false;
+		}
+		return props.containsKey(ExternalSystemServiceProperties.OAUTH_TOKEN_URL)
+				&& props.containsKey(ExternalSystemServiceProperties.OAUTH_CLIENT_ID);
 	}
 
 	@Override
