@@ -23,15 +23,19 @@
 package net.solarnetwork.central.oscp.fp.config;
 
 import static net.solarnetwork.central.biz.SecretsBiz.SECRETS;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.biz.SecretsBiz;
+import net.solarnetwork.central.biz.SimpleSecretsBiz;
 import net.solarnetwork.central.cloud.aws.biz.AwsSecretsBiz;
 import net.solarnetwork.central.cloud.domain.CloudAccessSettings;
 import net.solarnetwork.central.support.CacheSettings;
@@ -89,9 +93,15 @@ public class SecretsConfig {
 	@Profile("!aws-secrets")
 	public static class SimpleSecretsConfig {
 
+		@Value("${app.secrets.simple.dir:var/secrets}")
+		private Path dir = Paths.get("var/secrets");
+
+		@Value("${app.secrets.simple.password:Secret.123}")
+		private String password = "Secret.123";
+
 		@Bean
 		public SecretsBiz simpleSecretsBiz() {
-			throw new IllegalStateException("TODO: not implemented yet.");
+			return new SimpleSecretsBiz(dir, password);
 		}
 
 	}

@@ -34,6 +34,9 @@ app:
       ttl: 900
       heap-max-entries: 500
       disk-max-size-mb: 50
+    simple:
+      dir: "var/secrets"
+      password: "Secret.123"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
