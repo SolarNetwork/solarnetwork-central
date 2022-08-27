@@ -22,12 +22,46 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * OAuth client settings.
  * 
+ * @param tokenUrl
+ *        the OAuth token URL
+ * @param clientId
+ *        the client ID to use
+ * @param clientSecret
+ *        the client secret, which may be {@literal null} if stored in some
+ *        other context
  * @author matt
  * @version 1.0
  */
-public record OAuthClientSettings(String tokenUrl, String clientId) {
+public record OAuthClientSettings(String tokenUrl, String clientId, String clientSecret) {
+
+	/**
+	 * Get the settings as a Map.
+	 * 
+	 * <p>
+	 * The various constants defined in {@link ExternalSystemServiceProperties}
+	 * are used as the map keys.
+	 * </p>
+	 * 
+	 * @return the settings as a Map
+	 */
+	public Map<String, String> asMap() {
+		var map = new LinkedHashMap<String, String>();
+		if ( tokenUrl != null ) {
+			map.put(ExternalSystemServiceProperties.OAUTH_TOKEN_URL, tokenUrl);
+		}
+		if ( clientId != null ) {
+			map.put(ExternalSystemServiceProperties.OAUTH_CLIENT_ID, clientId);
+		}
+		if ( clientSecret != null ) {
+			map.put(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET, clientSecret);
+		}
+		return map;
+	}
 
 }

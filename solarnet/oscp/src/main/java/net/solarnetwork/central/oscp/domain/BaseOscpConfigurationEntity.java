@@ -120,7 +120,12 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 		if ( clientId == null ) {
 			return null;
 		}
-		return new OAuthClientSettings(tokenUrl.toString(), clientId.toString());
+		Object clientSecret = props.get(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+		if ( clientSecret == null ) {
+			return null;
+		}
+		return new OAuthClientSettings(tokenUrl.toString(), clientId.toString(),
+				clientSecret.toString());
 	}
 
 	/**

@@ -88,6 +88,18 @@ app:
       mqtt-topic: "instr/OCPP_v16"
       publish-only: true
       publish-qos-level: 1
+  secrets:
+    aws:
+      region: "us-west-2"
+      access-token: "TOKEN_HERE"
+      access-secret: "SECRET_HERE"
+    cache:
+      ttl: 900
+      heap-max-entries: 500
+      disk-max-size-mb: 50
+    simple:
+      dir: "var/secrets"
+      password: "Secret.123"
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000

@@ -31,15 +31,21 @@ package net.solarnetwork.central.oscp.domain;
 public interface ExternalSystemServiceProperties {
 
 	/**
+	 * A service property that configures an OAuth token URL to use for outgoing
+	 * system requests.
+	 */
+	String OAUTH_TOKEN_URL = "oauth-token-url";
+
+	/**
 	 * A service property that configures an OAuth client ID to use for outgoing
 	 * system requests.
 	 */
 	String OAUTH_CLIENT_ID = "oauth-client-id";
 
 	/**
-	 * A service property that configures an OAuth token URL to use for outgoing
-	 * system requests.
+	 * A service property that configures an OAuth client secret to use for
+	 * outgoing system requests.
 	 */
-	String OAUTH_TOKEN_URL = "oauth-token-url";
+	String OAUTH_CLIENT_SECRET = "oauth-client-secret";
 
 }

@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -59,10 +60,15 @@ public class UserOscpBizConfig {
 	@Autowired
 	private AssetConfigurationDao assetDao;
 
+	@Autowired
+	private SecretsBiz secretsBiz;
+
 	@Bean
 	public DaoUserOscpBiz userOscpBiz() {
-		return new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
+		var biz = new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
 				capacityGroupDao, assetDao);
+		biz.setSecretsBiz(secretsBiz);
+		return biz;
 	}
 
 }

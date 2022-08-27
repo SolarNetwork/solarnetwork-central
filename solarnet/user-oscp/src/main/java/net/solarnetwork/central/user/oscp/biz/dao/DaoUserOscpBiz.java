@@ -25,9 +25,12 @@ package net.solarnetwork.central.user.oscp.biz.dao;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.util.Collection;
+import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
@@ -38,6 +41,9 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties;
+import net.solarnetwork.central.oscp.domain.OAuthClientSettings;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
 import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
@@ -53,11 +59,17 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
  */
 public class DaoUserOscpBiz implements UserOscpBiz {
 
+	/** A template pattern for configuration secret names. */
+	public static final String DEFAULT_CONFIG_SECRETS_NAME_TEMPLATE = "oscp/config/role/{role}/user/{userId}/id/{configId}";
+
 	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
 	private final AssetConfigurationDao assetDao;
+
+	private SecretsBiz secretsBiz;
+	private String configSecretsNameTemplate = DEFAULT_CONFIG_SECRETS_NAME_TEMPLATE;
 
 	/**
 	 * Constructor.
@@ -177,15 +189,32 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		UserLongCompositePK unassignedId = unassignedEntityIdKey(
 				requireNonNullArgument(userId, "userId"));
 
+		CapacityProviderConfiguration conf = input.toEntity(unassignedId);
+
+		OAuthClientSettings oauthSettings = null;
+		if ( conf.hasOauthClientSettings() ) {
+			oauthSettings = conf.oauthClientSettings();
+			if ( oauthSettings.clientSecret() != null && secretsBiz != null ) {
+				// have to save this in SecretsBiz so clear from props
+				conf.getServiceProps().remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+			}
+		}
+
 		// create auth token
 		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
 				"token");
 		UserLongCompositePK authId = requireNonNullObject(
 				flexibilityProviderDao.idForToken(token, false), "authId");
 
-		CapacityProviderConfiguration conf = input.toEntity(unassignedId);
 		conf.setFlexibilityProviderId(authId.getEntityId());
 		UserLongCompositePK pk = capacityProviderDao.create(userId, conf);
+
+		if ( oauthSettings != null && oauthSettings.clientSecret() != null && secretsBiz != null ) {
+			Map<String, Object> params = Map.of("role", OscpRole.CapacityProvider.getAlias(), "userId",
+					userId, "configId", pk.getEntityId());
+			String secretName = expandTemplateString(configSecretsNameTemplate, params);
+			secretsBiz.putSecret(secretName, oauthSettings.asMap());
+		}
 
 		CapacityProviderConfiguration result = capacityProviderDao.get(pk);
 		result.setToken(token);
@@ -199,15 +228,32 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		UserLongCompositePK unassignedId = unassignedEntityIdKey(
 				requireNonNullArgument(userId, "userId"));
 
+		CapacityOptimizerConfiguration conf = input.toEntity(unassignedId);
+
+		OAuthClientSettings oauthSettings = null;
+		if ( conf.hasOauthClientSettings() ) {
+			oauthSettings = conf.oauthClientSettings();
+			if ( oauthSettings.clientSecret() != null && secretsBiz != null ) {
+				// have to save this in SecretsBiz so clear from props
+				conf.getServiceProps().remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+			}
+		}
+
 		// create auth token
 		String token = requireNonNullObject(flexibilityProviderDao.createAuthToken(unassignedId),
 				"token");
 		UserLongCompositePK authId = requireNonNullObject(
 				flexibilityProviderDao.idForToken(token, false), "authId");
 
-		CapacityOptimizerConfiguration conf = input.toEntity(unassignedId);
 		conf.setFlexibilityProviderId(authId.getEntityId());
 		UserLongCompositePK pk = capacityOptimizerDao.create(userId, conf);
+
+		if ( oauthSettings != null && oauthSettings.clientSecret() != null && secretsBiz != null ) {
+			Map<String, Object> params = Map.of("role", OscpRole.CapacityOptimizer.getAlias(), "userId",
+					userId, "configId", pk.getEntityId());
+			String secretName = expandTemplateString(configSecretsNameTemplate, params);
+			secretsBiz.putSecret(secretName, oauthSettings.asMap());
+		}
 
 		CapacityOptimizerConfiguration result = capacityOptimizerDao.get(pk);
 		result.setToken(token);
@@ -272,6 +318,40 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = requireNonNullObject(assetDao.save(conf), entityId);
 		return assetDao.get(pk);
+	}
+
+	/**
+	 * Configure a {@link SecretsBiz} to use for storing OAuth client secrets.
+	 * 
+	 * @param secretsBiz
+	 *        the service to use
+	 */
+	public void setSecretsBiz(SecretsBiz secretsBiz) {
+		this.secretsBiz = secretsBiz;
+	}
+
+	/**
+	 * Set the configuration secret key name template to use.
+	 * 
+	 * <p>
+	 * The template accepts the following parameters:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li><b>role</b> - the auth role alias, e.g. {@code cp}</li>
+	 * <li><b>userId</b> - the user ID</li>
+	 * <li><b>configId</b> - the configuration ID</li>
+	 * </ul>
+	 * 
+	 * @param configSecretsNameTemplate
+	 *        the template; defaults to
+	 *        {@link #DEFAULT_CONFIG_SECRETS_NAME_TEMPLATE}
+	 */
+	public void setConfigSecretsNameTemplate(String configSecretsNameTemplate) {
+		if ( configSecretsNameTemplate == null ) {
+			configSecretsNameTemplate = DEFAULT_CONFIG_SECRETS_NAME_TEMPLATE;
+		}
+		this.configSecretsNameTemplate = configSecretsNameTemplate;
 	}
 
 }
