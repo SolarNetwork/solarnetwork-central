@@ -49,8 +49,6 @@ import net.solarnetwork.central.support.CacheSettings;
 @Configuration
 public class SecretsConfig {
 
-	// oscp/config/role/cp/user/147/id/1
-
 	@Autowired
 	private CacheManager cacheManager;
 
@@ -65,7 +63,6 @@ public class SecretsConfig {
 	public Cache<String, String> secretsCache() {
 		CacheSettings settings = secretsCacheSettings();
 		return settings.createCache(cacheManager, String.class, String.class, SECRETS);
-
 	}
 
 	@Configuration

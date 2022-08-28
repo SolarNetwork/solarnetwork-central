@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Authenticated role information.
@@ -52,6 +53,39 @@ public record AuthRoleInfo(UserLongCompositePK id, OscpRole role) {
 	 */
 	public Long entityId() {
 		return id().getEntityId();
+	}
+
+	/**
+	 * Get a unique identifier for this instance.
+	 * 
+	 * @return the identifier
+	 */
+	public String asIdentifier() {
+		return "%s:%d:%d".formatted(role.getAlias(), userId(), entityId());
+	}
+
+	/**
+	 * Get an instance for an identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier, as in the form returned from
+	 *        {@link #asIdentifier()}
+	 * @return the instance
+	 * @throws IllegalArgumentException
+	 *         if the identifier cannot be parsed
+	 */
+	public static AuthRoleInfo forIdentifier(String identifier) {
+		String[] components = ObjectUtils.requireNonNullArgument(identifier, "identifier").split(":", 3);
+		if ( components.length < 3 ) {
+			throw new IllegalArgumentException("Invalid identifier [%s]".formatted(identifier));
+		}
+		try {
+			return new AuthRoleInfo(
+					new UserLongCompositePK(Long.valueOf(components[1]), Long.valueOf(components[2])),
+					OscpRole.forAlias(components[0]));
+		} catch ( NumberFormatException e ) {
+			throw new IllegalArgumentException("Invalid identifier [%s]".formatted(identifier));
+		}
 	}
 
 }

@@ -36,9 +36,9 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "heartbeatDate",
 		"offlineDate", "serviceProps" })
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
-		extends BaseOscpConfigurationEntity<C> {
+		extends BaseOscpConfigurationEntity<C> implements ExternalSystemConfiguration {
 
-	private static final long serialVersionUID = -8141405629193101978L;
+	private static final long serialVersionUID = 2484734886666757050L;
 
 	private String token;
 	private String baseUrl;

@@ -33,10 +33,13 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
+import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
+import software.amazon.awssdk.services.secretsmanager.model.InvalidRequestException;
 import software.amazon.awssdk.services.secretsmanager.model.PutSecretValueRequest;
 import software.amazon.awssdk.services.secretsmanager.model.ResourceExistsException;
+import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundException;
 
 /**
  * Implementation of {@link SecretsBiz} using AWS Secrets Manager.
@@ -121,6 +124,22 @@ public class AwsSecretsBiz implements SecretsBiz {
 				cache.put(secretName, result);
 			}
 			return result;
+		} catch ( SdkException e ) {
+			throw new RemoteServiceException("Error retrieving secret [%s]".formatted(secretName), e);
+		}
+	}
+
+	@Override
+	public void deleteSecret(String secretName) {
+		final Cache<String, String> cache = this.secretCache;
+		if ( cache != null ) {
+			cache.remove(secretName);
+		}
+		try {
+			DeleteSecretRequest req = DeleteSecretRequest.builder().secretId(secretName).build();
+			client.deleteSecret(req);
+		} catch ( ResourceNotFoundException | InvalidRequestException e ) {
+			// we can simply ignore this
 		} catch ( SdkException e ) {
 			throw new RemoteServiceException("Error retrieving secret [%s]".formatted(secretName), e);
 		}

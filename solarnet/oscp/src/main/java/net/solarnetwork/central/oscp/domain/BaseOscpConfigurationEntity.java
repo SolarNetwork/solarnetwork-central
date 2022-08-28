@@ -27,8 +27,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
@@ -121,11 +121,8 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 			return null;
 		}
 		Object clientSecret = props.get(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
-		if ( clientSecret == null ) {
-			return null;
-		}
 		return new OAuthClientSettings(tokenUrl.toString(), clientId.toString(),
-				clientSecret.toString());
+				clientSecret != null ? clientSecret.toString() : null);
 	}
 
 	/**
@@ -148,8 +145,17 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 		return getId().getUserId();
 	}
 
-	@JsonProperty("configId")
+	@JsonIgnore
 	public Long getEntityId() {
+		return getId().getEntityId();
+	}
+
+	/**
+	 * Get the configuration ID (the entity ID).
+	 * 
+	 * @return the configuration ID
+	 */
+	public Long getConfigId() {
 		return getId().getEntityId();
 	}
 

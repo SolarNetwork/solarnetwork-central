@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.security;
 
+import java.net.URL;
 import java.security.Principal;
 import org.springframework.security.core.Authentication;
 import net.solarnetwork.central.oscp.domain.AuthRoleContainer;
@@ -96,6 +97,32 @@ public final class OscpSecurityUtils {
 			return info;
 		}
 		throw new AuthorizationException(Reason.ACCESS_DENIED, auth.getPrincipal());
+	}
+
+	/**
+	 * Get a JWT token identifier value.
+	 * 
+	 * @param issuer
+	 *        the issuer
+	 * @param principal
+	 *        the principal
+	 * @return the identifier
+	 */
+	public static String jwtTokenIdentifier(URL issuer, String principal) {
+		return jwtTokenIdentifier(issuer.toString(), principal);
+	}
+
+	/**
+	 * Get a JWT token identifier value.
+	 * 
+	 * @param issuer
+	 *        the issuer
+	 * @param principal
+	 *        the principal
+	 * @return the identifier
+	 */
+	public static String jwtTokenIdentifier(String issuer, String principal) {
+		return "%s/%s".formatted(issuer, principal);
 	}
 
 }

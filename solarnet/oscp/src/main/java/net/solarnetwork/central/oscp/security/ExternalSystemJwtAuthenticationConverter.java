@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.security;
 
+import static net.solarnetwork.central.oscp.security.OscpSecurityUtils.jwtTokenIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import org.springframework.core.convert.converter.Converter;
@@ -84,7 +85,7 @@ public class ExternalSystemJwtAuthenticationConverter
 		Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
 		String principalClaimValue = jwt.getClaimAsString(this.principalClaimName);
 
-		String token = "%s/%s".formatted(jwt.getIssuer(), principalClaimValue);
+		String token = jwtTokenIdentifier(jwt.getIssuer(), principalClaimValue);
 
 		UserLongCompositePK authId = dao.idForToken(token, true);
 		if ( authId == null ) {

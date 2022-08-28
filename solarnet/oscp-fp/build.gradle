@@ -33,6 +33,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'org.apache.httpcomponents:httpclient'
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing

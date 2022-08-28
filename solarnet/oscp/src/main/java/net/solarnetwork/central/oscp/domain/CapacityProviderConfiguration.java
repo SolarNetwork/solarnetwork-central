@@ -78,4 +78,9 @@ public class CapacityProviderConfiguration
 		return copy;
 	}
 
+	@Override
+	public AuthRoleInfo getAuthRole() {
+		return new AuthRoleInfo(getId(), OscpRole.CapacityProvider);
+	}
+
 }

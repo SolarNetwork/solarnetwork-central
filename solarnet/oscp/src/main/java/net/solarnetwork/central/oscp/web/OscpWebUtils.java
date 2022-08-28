@@ -24,11 +24,16 @@ package net.solarnetwork.central.oscp.web;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.text.ParseException;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.context.request.WebRequest;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
+import net.solarnetwork.central.oscp.security.OscpSecurityUtils;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
 
@@ -51,6 +56,12 @@ public final class OscpWebUtils {
 	 * authentication.
 	 */
 	public static final String OSCP_TOKEN_AUTHORIZATION_SCHEME = "Token";
+
+	/**
+	 * The {@code Authorization} HTTP header scheme for OAuth token
+	 * authentication.
+	 */
+	public static final String OAUTH_TOKEN_AUTHORIZATION_SCHEME = "Bearer";
 
 	/** The URL path to the Capacity Provider API. */
 	public static final String CAPACITY_PROVIDER_URL_PATH = "/oscp/cp";
@@ -83,7 +94,11 @@ public final class OscpWebUtils {
 	}
 
 	/**
-	 * Get the OSCP authorization token used in a request.
+	 * Get the OSCP or OAuth authorization token used in a request.
+	 * 
+	 * <p>
+	 * Note that OAuth tokens are <b>not</b> verified by this method.
+	 * </p>
 	 * 
 	 * @param request
 	 *        the request
@@ -94,10 +109,24 @@ public final class OscpWebUtils {
 	public static String authorizationTokenFromRequest(WebRequest request) {
 		String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 		String[] comp = (header != null ? header.split(" ", 2) : null);
-		if ( comp == null || comp.length != 2 || !OSCP_TOKEN_AUTHORIZATION_SCHEME.equals(comp[0]) ) {
+		if ( comp == null || comp.length != 2 ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
 		}
-		return comp[1];
+		if ( OSCP_TOKEN_AUTHORIZATION_SCHEME.equalsIgnoreCase(comp[0]) ) {
+			return comp[1];
+		} else if ( OAUTH_TOKEN_AUTHORIZATION_SCHEME.equalsIgnoreCase(comp[0]) ) {
+			try {
+				JWT jwt = JWTParser.parse(comp[1]);
+				JWTClaimsSet claims = jwt.getJWTClaimsSet();
+				String issuer = claims.getIssuer();
+				String subject = claims.getSubject();
+				return OscpSecurityUtils.jwtTokenIdentifier(issuer, subject);
+			} catch ( ParseException pe ) {
+				throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+			}
+		} else {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, null);
+		}
 	}
 
 	/**

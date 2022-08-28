@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class CapacityOptimizerConfiguration
 		extends BaseOscpExternalSystemConfiguration<CapacityOptimizerConfiguration> {
 
-	private static final long serialVersionUID = -8075371754119696899L;
+	private static final long serialVersionUID = 8184628006786027922L;
 
 	/**
 	 * Constructor.
@@ -76,6 +76,11 @@ public class CapacityOptimizerConfiguration
 		var copy = new CapacityOptimizerConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
+	}
+
+	@Override
+	public AuthRoleInfo getAuthRole() {
+		return new AuthRoleInfo(getId(), OscpRole.CapacityOptimizer);
 	}
 
 }

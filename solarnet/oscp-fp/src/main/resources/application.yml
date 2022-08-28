@@ -13,6 +13,8 @@ app:
     password: "solarnet"
     platform: "postgres"
     initialize: false
+  http.client.connections:
+    max-total: 20
   job.oscp:
     heartbeat:
       maximum-iterations: 1000
@@ -22,6 +24,12 @@ app:
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
+  oauth:
+    client:
+      registration-cache:
+        ttl: 21600
+        heap-max-entries: 50
+        disk-max-size-mb: 10
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
@@ -64,7 +72,7 @@ debug: false
 
 logging:
   level:
-    ROOT: INFO
+    ROOT: "INFO"
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

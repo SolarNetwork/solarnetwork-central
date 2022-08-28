@@ -135,6 +135,16 @@ public class SimpleSecretsBiz implements SecretsBiz {
 	@Override
 	public synchronized void putSecret(String secretName, String secretValue) {
 		data.put(secretName, secretValue);
+		saveData();
+	}
+
+	@Override
+	public synchronized void deleteSecret(String secretName) {
+		data.remove(secretName);
+		saveData();
+	}
+
+	private void saveData() {
 		Path dataPath = dir.resolve(SECRETS_DATA);
 		try {
 			String json = JsonUtils.getJSONString(data, "{}");

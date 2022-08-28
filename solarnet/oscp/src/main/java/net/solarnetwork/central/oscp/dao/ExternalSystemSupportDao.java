@@ -24,6 +24,9 @@ package net.solarnetwork.central.oscp.dao;
 
 import java.time.Instant;
 import java.util.function.Function;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 
@@ -65,5 +68,17 @@ public interface ExternalSystemSupportDao {
 	 *         returned from {@code handler}
 	 */
 	boolean processExternalSystemWithExpiredHeartbeat(Function<SystemTaskContext<?>, Instant> handler);
+
+	/**
+	 * Get an external system configuration.
+	 * 
+	 * @param role
+	 *        the role of the configuration to get
+	 * @param id
+	 *        the ID of the configuration to get
+	 * @return the configuration, or {@literal null} if one does not exist for
+	 *         the given values
+	 */
+	ExternalSystemConfiguration externalSystemConfiguration(OscpRole role, UserLongCompositePK id);
 
 }

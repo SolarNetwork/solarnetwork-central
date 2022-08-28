@@ -30,12 +30,14 @@ import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForHeartbeat;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 
@@ -70,6 +72,16 @@ public class JdbcExternalSystemSupportDao implements ExternalSystemSupportDao {
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
+	}
+
+	@Override
+	public ExternalSystemConfiguration externalSystemConfiguration(OscpRole role,
+			UserLongCompositePK id) {
+		return switch (role) {
+			case CapacityProvider -> capacityProviderDao.get(id);
+			case CapacityOptimizer -> capacityOptimizerDao.get(id);
+			default -> throw new UnsupportedOperationException("Role %s not supported".formatted(role));
+		};
 	}
 
 	@Override

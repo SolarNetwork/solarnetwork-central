@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.http;
 import static java.lang.String.format;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.function.Supplier;
@@ -35,11 +36,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 
@@ -55,6 +61,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
 	private final RestOperations restOps;
 	private final UserEventAppenderBiz userEventAppenderBiz;
+	private OAuth2AuthorizedClientManager oauthClientManager;
 
 	/**
 	 * Constructor.
@@ -89,13 +96,23 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		}
 
 		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		// add auth token header
-		if ( context.config().hasOauthClientSettings() ) {
-			// TODO
+		// add appropriate authorization header
+		if ( context.config().hasOauthClientSettings() && oauthClientManager != null ) {
+			AuthRoleInfo role = context.config().getAuthRole();
+			OAuth2AuthorizeRequest authReq = OAuth2AuthorizeRequest
+					.withClientRegistrationId(role.asIdentifier())
+					.principal("%s %s %s".formatted(context.role(), context.config().getId().ident(),
+							context.config().getName()))
+					.build();
+
+			OAuth2AuthorizedClient oauthClient = requireNonNullObject(
+					oauthClientManager.authorize(authReq), "oauthClient");
+			OAuth2AccessToken accessToken = oauthClient.getAccessToken();
+			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
 		} else {
 			String authToken = context.authToken();
-			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
 		}
 
@@ -160,6 +177,16 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			}
 			throw e;
 		}
+	}
+
+	/**
+	 * Set the OAuth client manager.
+	 * 
+	 * @param oauthClientManager
+	 *        the manager
+	 */
+	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthManager) {
+		this.oauthClientManager = oauthManager;
 	}
 
 }

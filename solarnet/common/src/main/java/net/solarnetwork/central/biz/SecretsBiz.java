@@ -65,6 +65,14 @@ public interface SecretsBiz {
 	void putSecret(String secretName, String secretValue);
 
 	/**
+	 * Delete a secret.
+	 * 
+	 * @param secretName
+	 *        the name of the secret to delete
+	 */
+	void deleteSecret(String secretName);
+
+	/**
 	 * Get a secret value that is a JSON object string.
 	 * 
 	 * <p>

@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -74,9 +75,14 @@ public class ServiceConfig {
 	@Autowired
 	private TransactionTemplate transactionTemplate;
 
+	@Autowired
+	private OAuth2AuthorizedClientManager oauthClientManager;
+
 	@Bean
 	public RestOpsExternalSystemClient externalSystemClient() {
-		return new RestOpsExternalSystemClient(restOps, userEventAppenderBiz);
+		var service = new RestOpsExternalSystemClient(restOps, userEventAppenderBiz);
+		service.setOauthClientManager(oauthClientManager);
+		return service;
 	}
 
 	/**
