@@ -42,10 +42,10 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.header.HeaderWriter;
@@ -145,10 +145,11 @@ public class WebSecurityConfig {
 	 */
 	@Configuration
 	@Order(1)
-	public static class BrowserWebSecurityConfig extends WebSecurityConfigurerAdapter {
+	public static class BrowserWebSecurityConfig {
 
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
+		@Order(1)
+		@Bean
+		public SecurityFilterChain filterChainBrowser(HttpSecurity http) throws Exception {
 			// Add a special header to the login page, so JavaScript can reliably detect when redirected there
 			HeaderWriter loginHeaderWriter = new DelegatingRequestMatcherHeaderWriter(
 					new AntPathRequestMatcher("/login"),
@@ -201,6 +202,7 @@ public class WebSecurityConfig {
 		        
 		    ;
 		    // @formatter:on
+			return http.build();
 		}
 	}
 
@@ -209,7 +211,7 @@ public class WebSecurityConfig {
 	 */
 	@Configuration
 	@Order(2)
-	public static class ApiWebSecurityConfig extends WebSecurityConfigurerAdapter {
+	public static class ApiWebSecurityConfig {
 
 		@Autowired
 		private DataSource dataSource;
@@ -265,8 +267,9 @@ public class WebSecurityConfig {
 			return new UserDetailsAuthenticationTokenService(tokenUserDetailsService());
 		}
 
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
+		@Order(2)
+		@Bean
+		public SecurityFilterChain filterChainApi(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
@@ -305,6 +308,7 @@ public class WebSecurityConfig {
 		        .anyRequest().denyAll()
 		    ;   
 		    // @formatter:on
+			return http.build();
 		}
 	}
 
@@ -313,10 +317,11 @@ public class WebSecurityConfig {
 	 */
 	@Configuration
 	@Order(3)
-	public static class PublicWebSecurityConfig extends WebSecurityConfigurerAdapter {
+	public static class PublicWebSecurityConfig {
 
-		@Override
-		protected void configure(HttpSecurity http) throws Exception {
+		@Order(3)
+		@Bean
+		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
 		      // CSRF not needed for stateless calls
@@ -347,6 +352,7 @@ public class WebSecurityConfig {
 		        		"/associate.*").permitAll()
 		        .anyRequest().denyAll();
 		    // @formatter:on
+			return http.build();
 		}
 
 	}

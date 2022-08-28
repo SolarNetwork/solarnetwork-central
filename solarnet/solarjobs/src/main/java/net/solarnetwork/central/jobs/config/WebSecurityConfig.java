@@ -30,9 +30,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -54,7 +55,8 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * @version 1.0
  */
 @Configuration
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+@EnableWebSecurity
+public class WebSecurityConfig {
 
 	private static String[] ACCESS_AUTHORITIES = new String[] { Role.ROLE_OPS.toString() };
 
@@ -64,7 +66,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
 
-	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		JdbcUserDetailsService service = new JdbcUserDetailsService();
@@ -122,8 +123,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return source;
 	}
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// @formatter:off
 	    http
 	      // CSRF not needed for stateless calls
@@ -156,6 +157,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .anyRequest().authenticated()
 	    ;
 	    // @formatter:on
+		return http.build();
 	}
 
 }

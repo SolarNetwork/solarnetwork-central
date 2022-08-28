@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>solarnet-common-test</name>
-	<comment>Project solarnet-common-test created by Buildship.</comment>
+	<comment>Shared test resources.</comment>
 	<projects>
 	</projects>
 	<buildSpec>
