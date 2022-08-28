@@ -26,6 +26,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 
 /**
  * Main entry point for the SolarOscp Flexibility Provider application.
@@ -39,6 +40,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerA
 }, exclude = {
 	DataSourceAutoConfiguration.class,
 	DataSourceTransactionManagerAutoConfiguration.class,
+	SecurityAutoConfiguration.class,
 })
 // @formatter:on
 public class CapacityProviderApp {
