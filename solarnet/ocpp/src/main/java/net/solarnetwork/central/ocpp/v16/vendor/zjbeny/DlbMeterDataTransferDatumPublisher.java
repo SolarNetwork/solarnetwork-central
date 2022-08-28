@@ -36,6 +36,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.v16.controller.DatumPublisherSupport;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
@@ -49,8 +50,16 @@ import ocpp.v16.cs.DataTransferStatus;
 /**
  * Publish ZJBENY data transfer DLB meter messages as a datum stream.
  * 
+ * <p>
+ * The ZJBENY chargers publish {@code DataTransfer} messages with metering data
+ * that this processor converts into a datum stream. The datum stream will have
+ * a source ID based on the source ID template configured on the associated
+ * charger configuration entity in SolarNetwork, with {@code /dlb} appended to
+ * the end.
+ * </p>
+ * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -159,14 +168,16 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
 		DatumSamples s = new DatumSamples();
 
-		// data is a comma-delimited list of colon-delimited key-value pairs
-		Map<String, String> map = StringUtils.delimitedStringToMap(req.getData(), ",", ":");
-		for ( Entry<String, String> e : map.entrySet() ) {
+		// data is a JSON object or a comma-delimited list of colon-delimited key-value pairs
+		data = data.trim();
+		Map<String, ?> map = (data.startsWith("{") ? JsonUtils.getStringMap(data)
+				: StringUtils.delimitedStringToMap(data, ",", ":"));
+		for ( Entry<String, ?> e : map.entrySet() ) {
 			final String key = e.getKey();
 			if ( DLB_MODE_KEY.equals(key) ) {
 				s.putStatusSampleValue("mode", e.getValue());
 			} else {
-				Number amps = ampValue(e.getValue());
+				Number amps = ampValue(e.getValue().toString());
 				if ( amps != null ) {
 					String propName = null;
 					if ( CURRENT_HOME_LOAD.equals(key) ) {

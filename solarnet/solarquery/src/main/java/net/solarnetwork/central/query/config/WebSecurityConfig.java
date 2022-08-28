@@ -30,9 +30,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.util.AntPathMatcher;
@@ -54,7 +54,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  */
 @Configuration
 @EnableWebSecurity
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+public class WebSecurityConfig {
 
 	private static String[] READ_AUTHORITIES = new String[] { Role.ROLE_USER.toString(),
 			Role.ROLE_NODE.toString(), Role.ROLE_READNODEDATA.toString(), };
@@ -73,7 +73,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
 	}
 
-	@Override
 	@Bean
 	public UserDetailsService userDetailsService() {
 		JdbcUserDetailsService service = new JdbcUserDetailsService();
@@ -119,8 +118,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return new UserDetailsAuthenticationTokenService(userDetailsService());
 	}
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// @formatter:off
 	    http
 	      // CSRF not needed for stateless calls
@@ -157,6 +156,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	        .anyRequest().authenticated()
 	    ;
 	    // @formatter:on
+		return http.build();
 	}
 
 }

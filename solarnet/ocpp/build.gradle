@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.6.4' apply false
+	id 'org.springframework.boot' version '2.7.2' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OCPP'
-version = '1.3.1'
+version = '1.3.2'
 archivesBaseName = 'solarnet-ocpp'
 
 configurations {
@@ -48,6 +48,6 @@ jar.manifest {
 
 eclipse {
 	jdt {
-		javaRuntimeName 'JavaSE-11'
+		javaRuntimeName 'JavaSE-17'
 	}
 }
