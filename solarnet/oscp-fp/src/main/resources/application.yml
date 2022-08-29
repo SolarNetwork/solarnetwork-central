@@ -108,6 +108,22 @@ debug: true
 
 ---
 spring:
-  config.activate.on-profile: production
+  config.activate.on-profile: staging
+  thymeleaf.cache: true
+  web.resources.cache.period: "1d"
 
 debug: false
+
+server:
+  forward-headers-strategy: "NATIVE"
+
+---
+spring:
+  config.activate.on-profile: production
+  thymeleaf.cache: true
+  web.resources.cache.period: "1d"
+
+debug: false
+
+server:
+  forward-headers-strategy: "NATIVE"
