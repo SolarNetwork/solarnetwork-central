@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,10 +65,6 @@ public class UserEventConfig {
 	@Autowired
 	private UuidGenerator uuidGenerator;
 
-	@Autowired
-	@Qualifier(SOLARFLUX)
-	private ObjectMapper solarFluxObjectMapper;
-
 	@Bean
 	public JdbcUserEventDao userEventAppenderDao() {
 		JdbcUserEventDao dao = new JdbcUserEventDao(jdbcOperations);
@@ -78,14 +75,6 @@ public class UserEventConfig {
 	@ConfigurationProperties(prefix = "app.user.events.async-appender")
 	public AsyncUserEventAppenderSettings asyncUserEventAppenderSettings() {
 		return new AsyncUserEventAppenderSettings();
-	}
-
-	@Bean
-	@ConfigurationProperties(prefix = "app.solarflux.user-events")
-	@Qualifier(SOLARFLUX)
-	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher() {
-		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 
 	@Bean(destroyMethod = "serviceDidShutdown")
@@ -103,13 +92,33 @@ public class UserEventConfig {
 						settings.getStatFrequency(), UserEventStats.values()),
 				uuidGenerator);
 		biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
-		biz.setSolarFluxPublisher(userEventSolarFluxPublisher());
 		return biz;
 	}
 
 	@Bean
 	public DaoUserEventBiz userEventBiz(UserEventDao userEventDao) {
 		return new DaoUserEventBiz(userEventDao);
+	}
+
+	@Profile("mqtt")
+	@Configuration
+	public static class MqttUserEventConfig {
+
+		@Autowired
+		@Qualifier(SOLARFLUX)
+		private ObjectMapper solarFluxObjectMapper;
+
+		@Bean
+		@ConfigurationProperties(prefix = "app.solarflux.user-events")
+		@Qualifier(SOLARFLUX)
+		public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
+				AsyncDaoUserEventAppenderBiz appender) {
+			var publisher = new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
+					AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
+			appender.setSolarFluxPublisher(publisher);
+			return publisher;
+		}
+
 	}
 
 }
