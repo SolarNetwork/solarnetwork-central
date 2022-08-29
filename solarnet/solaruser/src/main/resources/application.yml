@@ -241,6 +241,39 @@ debug: false
 
 ---
 spring:
+  config.activate.on-profile: staging
+  mail:
+    host: "localhost"
+    port: 587
+    username: "mailuser"
+    password: "mailpass"
+    properties:
+      "[mail.smtp.auth]": true
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": true
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 5000
+  thymeleaf.cache: true
+  web.resources.cache.period: "1d"
+
+app:
+  billing:
+    invoice.mail.from: "accounts@stage.solarnetwork.net"
+  user.reg:
+    mail.template.from: "system@stage.solarnetwork.net"
+
+debug: false
+
+server:
+  forward-headers-strategy: "NATIVE"
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+---
+spring:
   config.activate.on-profile: production
   mail:
     host: "localhost"
