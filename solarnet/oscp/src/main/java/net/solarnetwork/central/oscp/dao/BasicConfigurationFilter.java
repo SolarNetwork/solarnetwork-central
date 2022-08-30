@@ -41,6 +41,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	private Long[] configurationIds;
 	private Long[] groupIds;
 	private Long[] providerIds;
+	private Long[] optimizerIds;
 	private String[] identifiers;
 
 	/**
@@ -82,6 +83,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 			setConfigurationIds(c.getConfigurationIds());
 			setGroupIds(c.getGroupIds());
 			setProviderIds(c.getProviderIds());
+			setOptimizerIds(c.getOptimizerIds());
 			setIdentifiers(getIdentifiers());
 		} else {
 			if ( criteria instanceof LockingCriteria c ) {
@@ -96,6 +98,9 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 			}
 			if ( criteria instanceof ProviderCriteria c ) {
 				setProviderIds(c.getProviderIds());
+			}
+			if ( criteria instanceof OptimizerCriteria c ) {
+				setOptimizerIds(getLocationIds());
 			}
 			if ( criteria instanceof IdentifierCriteria c ) {
 				setIdentifiers(c.getIdentifiers());
@@ -112,6 +117,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(configurationIds);
 		result = prime * result + Arrays.hashCode(groupIds);
 		result = prime * result + Arrays.hashCode(providerIds);
+		result = prime * result + Arrays.hashCode(optimizerIds);
 		result = prime * result + Arrays.hashCode(identifiers);
 		return result;
 	}
@@ -132,6 +138,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 				&& Arrays.equals(configurationIds, other.configurationIds)
 				&& Arrays.equals(groupIds, other.groupIds)
 				&& Arrays.equals(providerIds, other.providerIds)
+				&& Arrays.equals(optimizerIds, other.optimizerIds)
 				&& Arrays.equals(identifiers, other.identifiers);
 	}
 
@@ -213,6 +220,31 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 	 */
 	public void setProviderId(Long providerId) {
 		setProviderIds(providerId != null ? new Long[] { providerId } : null);
+	}
+
+	@Override
+	public Long[] getOptimizerIds() {
+		return optimizerIds;
+	}
+
+	/**
+	 * Set the optimizer IDs.
+	 * 
+	 * @param optimizerIds
+	 *        the optimizer IDs to set
+	 */
+	public void setOptimizerIds(Long[] optimizerIds) {
+		this.optimizerIds = optimizerIds;
+	}
+
+	/**
+	 * Set a single optimizer ID.
+	 * 
+	 * @param optimizerId
+	 *        the ID of the optimizer to set
+	 */
+	public void setOptimizerId(Long optimizerId) {
+		setOptimizerIds(optimizerId != null ? new Long[] { optimizerId } : null);
 	}
 
 	@Override

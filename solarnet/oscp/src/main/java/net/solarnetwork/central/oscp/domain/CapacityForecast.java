@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.util.List;
+import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
@@ -34,13 +35,13 @@ import oscp.v20.UpdateGroupCapacityForecast;
 public record CapacityForecast(ForecastType type, List<TimeBlockAmount> blocks) {
 
 	/**
-	 * Get an OSCP 2.0 value for this instance.
+	 * Get an OSCP 2.0 update value for this instance.
 	 * 
 	 * @param groupId
 	 *        the group ID to use for the forecast
-	 * @return the OSCP 2.0 group capacity value
+	 * @return the OSCP 2.0 update group capacity value
 	 */
-	public UpdateGroupCapacityForecast toOscp20GroupCapacityValue(String groupId) {
+	public UpdateGroupCapacityForecast toOscp20UpdateGroupCapacityValue(String groupId) {
 		var result = new UpdateGroupCapacityForecast();
 		result.setGroupId(groupId);
 		if ( type != null ) {
@@ -54,7 +55,27 @@ public record CapacityForecast(ForecastType type, List<TimeBlockAmount> blocks) 
 	}
 
 	/**
-	 * Get an instance for an OSCP 2.0 value.
+	 * Get an OSCP 2.0 adjust value for this instance.
+	 * 
+	 * @param groupId
+	 *        the group ID to use for the forecast
+	 * @return the OSCP 2.0 update group capacity value
+	 */
+	public AdjustGroupCapacityForecast toOscp20AdjustGroupCapacityValue(String groupId) {
+		var result = new AdjustGroupCapacityForecast();
+		result.setGroupId(groupId);
+		if ( type != null ) {
+			result.setType(type.toOscp20CapacityValue());
+		}
+		if ( blocks != null ) {
+			result.setForecastedBlocks(
+					blocks.stream().map(TimeBlockAmount::toOscp20ForecastValue).toList());
+		}
+		return result;
+	}
+
+	/**
+	 * Get an instance for an OSCP 2.0 update value.
 	 * 
 	 * <p>
 	 * Note that {@link UpdateGroupCapacityForecast#getGroupId()} is not part of
@@ -66,6 +87,30 @@ public record CapacityForecast(ForecastType type, List<TimeBlockAmount> blocks) 
 	 * @return the instance
 	 */
 	public static CapacityForecast forOscp20Value(UpdateGroupCapacityForecast update) {
+		if ( update == null ) {
+			return null;
+		}
+		ForecastType type = (update.getType() != null ? ForecastType.forOscp20Value(update.getType())
+				: null);
+		List<TimeBlockAmount> blocks = (update.getForecastedBlocks() != null ? update
+				.getForecastedBlocks().stream().map(TimeBlockAmount::forOscp20ForecastValue).toList()
+				: null);
+		return new CapacityForecast(type, blocks);
+	}
+
+	/**
+	 * Get an instance for an OSCP 2.0 adjust value.
+	 * 
+	 * <p>
+	 * Note that {@link AdjustGroupCapacityForecast#getGroupId()} is not part of
+	 * the returned object!
+	 * </p>
+	 * 
+	 * @param update
+	 *        the OSCP 2.0 value to get an instance for
+	 * @return the instance
+	 */
+	public static CapacityForecast forOscp20Value(AdjustGroupCapacityForecast update) {
 		if ( update == null ) {
 			return null;
 		}

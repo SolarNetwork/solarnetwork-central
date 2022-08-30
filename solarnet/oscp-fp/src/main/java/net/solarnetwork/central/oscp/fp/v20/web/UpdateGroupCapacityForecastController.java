@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityForecastController.java - 24/08/2022 4:00:47 pm
+ * UpdateGroupCapacityForecastController.java - 24/08/2022 4:00:47 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -45,9 +45,9 @@ import oscp.v20.UpdateGroupCapacityForecast;
  * @author matt
  * @version 1.0
  */
-@RestController("CapacityForecastControllerV20")
-@RequestMapping(CapacityForecastController.URL_PATH)
-public class CapacityForecastController {
+@RestController("UpdateCapacityForecastControllerV20")
+@RequestMapping(UpdateGroupCapacityForecastController.URL_PATH)
+public class UpdateGroupCapacityForecastController {
 
 	/** The base URL path to this controller. */
 	public static final String URL_PATH = FLEXIBILITY_PROVIDER_V20_URL_PATH
@@ -63,7 +63,7 @@ public class CapacityForecastController {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CapacityForecastController(FlexibilityProviderBiz flexibilityProviderBiz) {
+	public UpdateGroupCapacityForecastController(FlexibilityProviderBiz flexibilityProviderBiz) {
 		super();
 		this.flexibilityProviderBiz = requireNonNullArgument(flexibilityProviderBiz,
 				"flexibilityProviderBiz");
@@ -73,7 +73,7 @@ public class CapacityForecastController {
 	 * Update group capacity forecast.
 	 * 
 	 * @param input
-	 *        the handshake request
+	 *        the forecast request
 	 * @return the response
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)

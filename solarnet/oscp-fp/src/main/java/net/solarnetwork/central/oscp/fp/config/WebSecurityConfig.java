@@ -37,6 +37,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
+import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
+import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.security.ExternalSystemJwtAuthenticationConverter;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthenticationFilter;
@@ -120,9 +122,13 @@ public class WebSecurityConfig {
 						UsernamePasswordAuthenticationFilter.class)
 		      
 				.authorizeRequests()
+					.antMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
+							Role.ROLE_CAPACITYPROVIDER.toString())
+					.antMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
+							Role.ROLE_CAPACITYOPTIMIZER.toString())
 					.antMatchers("/oscp/fp/**").hasAnyAuthority(
-						Role.ROLE_CAPACITYOPTIMIZER.toString(),
-						Role.ROLE_CAPACITYPROVIDER.toString())
+							Role.ROLE_CAPACITYOPTIMIZER.toString(),
+							Role.ROLE_CAPACITYPROVIDER.toString())
 					.anyRequest().authenticated()
 					.and()
 

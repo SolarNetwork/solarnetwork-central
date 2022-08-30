@@ -30,6 +30,7 @@ import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
@@ -64,6 +65,8 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
@@ -74,6 +77,7 @@ import net.solarnetwork.central.oscp.util.DeferredSystemTask;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.KeyValuePair;
+import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.UpdateGroupCapacityForecast;
@@ -286,9 +290,36 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return;
 		}
 
-		var task = new UpdateGroupCapacityForecastTask<>(CompletableFuture.completedFuture(null),
+		var task = new UpdateGroupCapacityForecastTask(CompletableFuture.completedFuture(null),
 				systemRole, new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
-				capacityOptimizerDao, group.getIdentifier(), forecast);
+				group.getIdentifier(), forecast);
+		executor.execute(task);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void adjustGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
+			CapacityForecast forecast) {
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityOptimizer));
+		requireNonNullArgument(groupIdentifier, "groupIdentifier");
+		requireNonNullArgument(forecast, "forecast");
+
+		log.info("Adjust Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
+				authInfo.id().ident(), groupIdentifier, forecast);
+
+		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityOptimizer(authInfo.userId(),
+				authInfo.entityId(), groupIdentifier);
+		if ( group == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
+		}
+
+		if ( group.getCapacityProviderId() == null ) {
+			return;
+		}
+
+		var task = new AdjustGroupCapacityForecastTask(CompletableFuture.completedFuture(null),
+				systemRole, new UserLongCompositePK(group.getUserId(), group.getCapacityProviderId()),
+				group.getIdentifier(), forecast);
 		executor.execute(task);
 	}
 
@@ -310,40 +341,59 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	}
 
-	private class UpdateGroupCapacityForecastTask<C extends BaseOscpExternalSystemConfiguration<C>>
-			extends BaseDeferredSystemTask<C> {
+	private class AdjustGroupCapacityForecastTask
+			extends BaseDeferredSystemTask<CapacityProviderConfiguration> {
+
+		private final String groupIdentifier;
+		private final CapacityForecast forecast;
+
+		private AdjustGroupCapacityForecastTask(Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, String groupIdentifier, CapacityForecast forecast) {
+			super("AdjustGroupCapacityForecast", externalSystemReady, role, configId,
+					capacityProviderDao);
+			this.groupIdentifier = requireNonNullArgument(groupIdentifier, "groupIdentifier");
+			this.forecast = requireNonNullArgument(forecast, "forecast");
+			withErrorEventTags(CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
+			withSuccessEventTags(CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS);
+		}
+
+		@Override
+		protected void doWork() throws Exception {
+			CapacityProviderConfiguration config = registeredConfiguration(false, singleton(V20));
+			doWork20(config);
+		}
+
+		private void doWork20(CapacityProviderConfiguration conf) {
+			AdjustGroupCapacityForecast msg = forecast.toOscp20AdjustGroupCapacityValue(groupIdentifier);
+			post(ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
+		}
+
+	}
+
+	private class UpdateGroupCapacityForecastTask
+			extends BaseDeferredSystemTask<CapacityOptimizerConfiguration> {
 
 		private final String groupIdentifier;
 		private final CapacityForecast forecast;
 
 		private UpdateGroupCapacityForecastTask(Future<?> externalSystemReady, OscpRole role,
-				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
-				String groupIdentifier, CapacityForecast forecast) {
-			super("UpdateGroupCapacityForecast", externalSystemReady, role, configId, dao);
+				UserLongCompositePK configId, String groupIdentifier, CapacityForecast forecast) {
+			super("UpdateGroupCapacityForecast", externalSystemReady, role, configId,
+					capacityOptimizerDao);
 			this.groupIdentifier = requireNonNullArgument(groupIdentifier, "groupIdentifier");
 			this.forecast = requireNonNullArgument(forecast, "forecast");
-			switch (role) {
-				case CapacityProvider:
-					withErrorEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
-					withSuccessEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
-					break;
-				case CapacityOptimizer:
-					withErrorEventTags(CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
-					withSuccessEventTags(CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
-					break;
-				default:
-					throw new IllegalArgumentException("Role [%s] not supported.".formatted(role));
-			}
+			withErrorEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
+			withSuccessEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
 		}
 
 		@Override
 		protected void doWork() throws Exception {
-			C config = registeredConfiguration(false, singleton(V20));
+			CapacityOptimizerConfiguration config = registeredConfiguration(false, singleton(V20));
 			doWork20(config);
 		}
 
-		private void doWork20(C conf) {
-			UpdateGroupCapacityForecast msg = forecast.toOscp20GroupCapacityValue(groupIdentifier);
+		private void doWork20(CapacityOptimizerConfiguration conf) {
+			UpdateGroupCapacityForecast msg = forecast.toOscp20UpdateGroupCapacityValue(groupIdentifier);
 			post(UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
 		}
 

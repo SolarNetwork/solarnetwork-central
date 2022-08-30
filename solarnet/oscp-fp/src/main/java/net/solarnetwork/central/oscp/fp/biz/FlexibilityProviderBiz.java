@@ -73,15 +73,15 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * User event tags for Capacity Optimizer update group capacity forecast
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
-			CAPACITY_OPTIMIZER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG };
+	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG };
 
 	/**
 	 * User event tags for Capacity Optimizer update group capacity forecast
 	 * error events.
 	 */
-	String[] CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] {
-			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] {
+			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
 
 	/**
 	 * Register an external system using an authorization token created in
@@ -147,8 +147,8 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	void heartbeat(AuthRoleInfo authInfo, Instant expiresDate);
 
 	/**
-	 * Process an update group capacity forecast from an external system, by
-	 * forwarding the request to associated Capacity Optimizer systems.
+	 * Process an update group capacity forecast from a Capacity Provider, by
+	 * forwarding the request to associated Capacity Optimizer.
 	 * 
 	 * @param authInfo
 	 *        the authorization info of the external system
@@ -163,4 +163,23 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 */
 	void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
 			CapacityForecast forecast);
+
+	/**
+	 * Process an adjust group capacity forecast from a Capacity Optimizer, by
+	 * forwarding the request to the associated Capacity Provider.
+	 * 
+	 * @param authInfo
+	 *        the authorization info of the external system
+	 * @param groupIdentifier
+	 *        the OSCP group identifier
+	 * @param forecast
+	 *        the forecast
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void adjustGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
+			CapacityForecast forecast);
+
 }

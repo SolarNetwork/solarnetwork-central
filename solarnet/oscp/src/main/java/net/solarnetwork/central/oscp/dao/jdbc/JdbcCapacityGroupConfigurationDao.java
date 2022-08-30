@@ -135,4 +135,16 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
+	@Override
+	public CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
+			String groupIdentifier) {
+		var filter = BasicConfigurationFilter.filterForUsers(requireNonNullArgument(userId, "userId"));
+		filter.setOptimizerId(capacityOptimizerId);
+		filter.setIdentifier(groupIdentifier);
+		var sql = new SelectCapacityGroupConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql,
+				CapacityGroupConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
 }

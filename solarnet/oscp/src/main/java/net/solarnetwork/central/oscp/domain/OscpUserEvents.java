@@ -61,6 +61,9 @@ public interface OscpUserEvents {
 	/** A user event tag for OSCP update group capacity forecast . */
 	String UPDATE_GROUP_CAPACITY_FORECAST_TAG = "update-group-capacity-forecast";
 
+	/** A user event tag for OSCP adjust group capacity forecast . */
+	String ADJUST_GROUP_CAPACITY_FORECAST_TAG = "adjust-group-capacity-forecast";
+
 	/** A user event tag for OSCP "error" . */
 	String ERROR_TAG = "error";
 

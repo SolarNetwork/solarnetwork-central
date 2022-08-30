@@ -110,6 +110,9 @@ public class SelectCapacityGroupConfiguration
 		if ( filter.hasProviderCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getProviderIds(), "ocg.cp_id", where);
 		}
+		if ( groupFilter != null && groupFilter.hasOptimizerCriteria() ) {
+			idx += whereOptimizedArrayContains(groupFilter.getOptimizerIds(), "ocg.co_id", where);
+		}
 		if ( groupFilter != null && groupFilter.hasIdentifierCriteria() ) {
 			idx += whereOptimizedArrayContains(groupFilter.getIdentifiers(), "ocg.ident", where);
 		}
@@ -143,6 +146,9 @@ public class SelectCapacityGroupConfiguration
 		}
 		if ( filter.hasProviderCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getProviderIds());
+		}
+		if ( groupFilter != null && groupFilter.hasOptimizerCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, groupFilter.getOptimizerIds());
 		}
 		if ( groupFilter != null && groupFilter.hasIdentifierCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, groupFilter.getIdentifiers());

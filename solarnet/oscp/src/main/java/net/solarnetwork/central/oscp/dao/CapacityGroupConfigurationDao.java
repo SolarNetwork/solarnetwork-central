@@ -49,4 +49,18 @@ public interface CapacityGroupConfigurationDao
 	CapacityGroupConfiguration findForCapacityProvider(Long userId, Long capacityProviderId,
 			String groupIdentifier);
 
+	/**
+	 * Find a group for a given capacity optimizer and group identifier.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the group for
+	 * @param capacityOptimizerId
+	 *        the ID of the Capacity Optimizer to get the group for
+	 * @param groupIdentifier
+	 *        the identifier of the group to get
+	 * @return the configuration, or {@literal null} if not found
+	 */
+	CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
+			String groupIdentifier);
+
 }

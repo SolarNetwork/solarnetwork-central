@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityGroupFilter.java - 25/08/2022 4:14:01 pm
+ * OptimizerCriteria.java - 31/08/2022 11:03:53 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,44 @@
 
 package net.solarnetwork.central.oscp.dao;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * A basic filter for OSCP capacity group entities.
+ * Criteria API for a optimizer entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CapacityGroupFilter
-		extends UserCriteria, ConfigurationCriteria, GroupCriteria, ProviderCriteria, OptimizerCriteria,
-		IdentifierCriteria, LockingCriteria, PaginationCriteria, SortCriteria {
+public interface OptimizerCriteria {
+
+	/**
+	 * Test if any optimizer criteria exists.
+	 * 
+	 * @return {@literal true} if a optimizer criteria exists
+	 */
+	default boolean hasOptimizerCriteria() {
+		Long id = getOptimizerId();
+		return (id != null);
+	}
+
+	/**
+	 * Get an array of optimizer IDs.
+	 * 
+	 * @return array of IDs (may be {@literal null})
+	 */
+	Long[] getOptimizerIds();
+
+	/**
+	 * Get the first optimizer ID.
+	 * 
+	 * <p>
+	 * This returns the first available ID from the {@link #getOptimizerIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the optimizer ID, or {@literal null} if not available
+	 */
+	default Long getOptimizerId() {
+		Long[] ids = getOptimizerIds();
+		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
 
 }

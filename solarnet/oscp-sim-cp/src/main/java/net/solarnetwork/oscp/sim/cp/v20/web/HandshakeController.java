@@ -84,9 +84,10 @@ public class HandshakeController {
 	public ResponseEntity<Void> register20(@RequestBody HandshakeAcknowledge input, WebRequest request) {
 		log.info("Processing {} request: {}", HS_ACK_20_URL_PATH, input);
 
-		@SuppressWarnings("unused")
 		SystemSettings settings = SystemSettings.forOscp20Value(
 				requireNonNullArgument(input.getRequiredBehaviour(), "required_behaviour"));
+
+		log.info("Got handshake settings: {}", settings);
 
 		SystemConfiguration system = capacityProviderDao
 				.verifyAuthToken(authorizationTokenFromRequest(request));

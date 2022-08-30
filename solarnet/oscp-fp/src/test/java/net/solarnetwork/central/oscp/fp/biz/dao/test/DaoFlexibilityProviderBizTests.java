@@ -27,6 +27,7 @@ import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -98,6 +99,7 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.UpdateGroupCapacityForecast;
@@ -545,7 +547,8 @@ public class DaoFlexibilityProviderBizTests {
 		given(capacityOptimizerDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
 
 		// call out to the external system UpdateGroupCapacityForecast endpoint
-		UpdateGroupCapacityForecast expectedPost = forecast.toOscp20GroupCapacityValue(groupIdentifier);
+		UpdateGroupCapacityForecast expectedPost = forecast
+				.toOscp20UpdateGroupCapacityValue(groupIdentifier);
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
 		mockExternalSystem
 				.expect(once(), requestTo(conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH))
@@ -556,6 +559,56 @@ public class DaoFlexibilityProviderBizTests {
 
 		// WHEN
 		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, forecast);
+	}
+
+	@Test
+	public void adjustGroupCapacityForecast() throws Exception {
+		// GIVEN
+		final String groupIdentifier = randomUUID().toString();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityOptimizer);
+		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
+				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
+		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
+				Collections.singletonList(amount));
+
+		// find the group
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
+				randomUUID().getMostSignificantBits(), Instant.now());
+		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
+		group.setIdentifier(groupIdentifier);
+		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
+				groupIdentifier)).willReturn(group);
+
+		// get the optimizer
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(authInfo.userId(),
+				group.getCapacityProviderId(), Instant.now());
+		conf.setOscpVersion("2.0");
+		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityProviderDao.get(conf.getId())).willReturn(conf);
+
+		// get the system auth token
+		final String sysToken = randomUUID().toString();
+		given(capacityProviderDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
+
+		// call out to the external system AdjustGroupCapacityForecast endpoint
+		AdjustGroupCapacityForecast expectedPost = forecast
+				.toOscp20AdjustGroupCapacityValue(groupIdentifier);
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem
+				.expect(once(), requestTo(conf.getBaseUrl() + ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH))
+				.andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// WHEN
+		biz.adjustGroupCapacityForecast(authInfo, groupIdentifier, forecast);
 	}
 
 }

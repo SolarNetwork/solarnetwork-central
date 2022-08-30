@@ -24,6 +24,8 @@ package net.solarnetwork.oscp.sim.cp.v20.web;
 
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.newResponseSentCondition;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizer;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.CAPACITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
@@ -36,16 +38,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.oscp.sim.cp.dao.CapacityProviderDao;
 import net.solarnetwork.oscp.sim.cp.domain.SystemConfiguration;
 import net.solarnetwork.oscp.sim.cp.web.SystemHttpTask;
+import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
@@ -56,6 +61,10 @@ import oscp.v20.UpdateGroupCapacityForecast;
  */
 @RestController
 public class CapacityForecastController {
+
+	/** The URL path for 2.0 Adjust Group Capacity Forecast. */
+	public static final String AGCF_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH
+			+ ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 
 	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
 
@@ -78,7 +87,7 @@ public class CapacityForecastController {
 		requireNonNullArgument(input.type(), "type");
 		requireNonEmptyArgument(input.blocks(), "blocks");
 		SystemConfiguration conf = capacityProviderDao.systemConfiguration(systemId);
-		UpdateGroupCapacityForecast req = input.toOscp20GroupCapacityValue(groupId);
+		UpdateGroupCapacityForecast req = input.toOscp20UpdateGroupCapacityValue(groupId);
 		synchronized ( conf ) {
 			if ( !V20.equals(conf.getOscpVersion()) ) {
 				throw new IllegalArgumentException("OSCP version [%s] is not supported (must be %s)."
@@ -91,6 +100,18 @@ public class CapacityForecastController {
 					new SystemHttpTask<>("GroupCapacityUpdate", restOps, newResponseSentCondition(),
 							HttpMethod.POST, uri, req, tokenAuthorizer(conf.getOutToken())));
 		}
+	}
+
+	@PostMapping(path = AGCF_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
+	public ResponseEntity<Void> register20(@RequestBody AdjustGroupCapacityForecast input,
+			WebRequest request) {
+		log.info("Processing {} request: {}", AGCF_20_URL_PATH, input);
+
+		CapacityForecast forecast = CapacityForecast.forOscp20Value(input);
+
+		log.info("Got capacity adjustment: {}", forecast);
+
+		return ResponseEntity.noContent().build();
 	}
 
 }
