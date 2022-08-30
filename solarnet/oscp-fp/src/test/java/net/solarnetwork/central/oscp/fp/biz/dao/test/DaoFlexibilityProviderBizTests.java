@@ -28,6 +28,7 @@ import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -44,7 +45,9 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -74,12 +77,18 @@ import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.CapacityForecast;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.ForecastType;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
+import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -91,6 +100,7 @@ import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
+import oscp.v20.UpdateGroupCapacityForecast;
 import oscp.v20.VersionUrl;
 
 /**
@@ -497,6 +507,55 @@ public class DaoFlexibilityProviderBizTests {
 
 		// THEN
 		then(capacityOptimizerDao).should().updateOfflineDate(authInfo.id(), expires);
+	}
+
+	@Test
+	public void updateGroupCapacityForecast() throws Exception {
+		// GIVEN
+		final String groupIdentifier = randomUUID().toString();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
+				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
+		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
+				Collections.singletonList(amount));
+
+		// find the group
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
+				randomUUID().getMostSignificantBits(), Instant.now());
+		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
+		group.setIdentifier(groupIdentifier);
+		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
+				groupIdentifier)).willReturn(group);
+
+		// get the optimizer
+		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(authInfo.userId(),
+				group.getCapacityOptimizerId(), Instant.now());
+		conf.setOscpVersion("2.0");
+		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityOptimizerDao.get(conf.getId())).willReturn(conf);
+
+		// get the system auth token
+		final String sysToken = randomUUID().toString();
+		given(capacityOptimizerDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
+
+		// call out to the external system UpdateGroupCapacityForecast endpoint
+		UpdateGroupCapacityForecast expectedPost = forecast.toOscp20GroupCapacityValue(groupIdentifier);
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem
+				.expect(once(), requestTo(conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH))
+				.andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// WHEN
+		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, forecast);
 	}
 
 }

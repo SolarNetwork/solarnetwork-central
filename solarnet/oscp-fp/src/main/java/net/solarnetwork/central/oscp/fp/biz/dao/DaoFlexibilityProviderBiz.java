@@ -32,6 +32,7 @@ import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfig
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -41,6 +42,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
@@ -74,6 +76,7 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.KeyValuePair;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
+import oscp.v20.UpdateGroupCapacityForecast;
 import oscp.v20.VersionUrl;
 
 /**
@@ -270,8 +273,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(groupIdentifier, "groupIdentifier");
 		requireNonNullArgument(forecast, "forecast");
 
-		log.info("Update Group Capacity Forecast for {} {} with forecast: {}", systemRole,
-				authInfo.id().ident(), forecast);
+		log.info("Update Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
+				authInfo.id().ident(), groupIdentifier, forecast);
 
 		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityProvider(authInfo.userId(),
 				authInfo.entityId(), groupIdentifier);
@@ -279,7 +282,14 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
 		}
 
-		// TODO
+		if ( group.getCapacityOptimizerId() == null ) {
+			return;
+		}
+
+		var task = new UpdateGroupCapacityForecastTask<>(CompletableFuture.completedFuture(null),
+				systemRole, new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
+				capacityOptimizerDao, group.getIdentifier(), forecast);
+		executor.execute(task);
 	}
 
 	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
@@ -300,6 +310,45 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	}
 
+	private class UpdateGroupCapacityForecastTask<C extends BaseOscpExternalSystemConfiguration<C>>
+			extends BaseDeferredSystemTask<C> {
+
+		private final String groupIdentifier;
+		private final CapacityForecast forecast;
+
+		private UpdateGroupCapacityForecastTask(Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
+				String groupIdentifier, CapacityForecast forecast) {
+			super("UpdateGroupCapacityForecast", externalSystemReady, role, configId, dao);
+			this.groupIdentifier = requireNonNullArgument(groupIdentifier, "groupIdentifier");
+			this.forecast = requireNonNullArgument(forecast, "forecast");
+			switch (role) {
+				case CapacityProvider:
+					withErrorEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
+					withSuccessEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
+					break;
+				case CapacityOptimizer:
+					withErrorEventTags(CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
+					withSuccessEventTags(CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
+					break;
+				default:
+					throw new IllegalArgumentException("Role [%s] not supported.".formatted(role));
+			}
+		}
+
+		@Override
+		protected void doWork() throws Exception {
+			C config = registeredConfiguration(false, singleton(V20));
+			doWork20(config);
+		}
+
+		private void doWork20(C conf) {
+			UpdateGroupCapacityForecast msg = forecast.toOscp20GroupCapacityValue(groupIdentifier);
+			post(UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
+		}
+
+	}
+
 	private class HandshakeAckTask<C extends BaseOscpExternalSystemConfiguration<C>>
 			extends BaseDeferredSystemTask<C> {
 
@@ -316,17 +365,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		@Override
 		protected void doWork() {
-			C config = configuration(false);
-			if ( config.getRegistrationStatus() != RegistrationStatus.Registered ) {
-				var msg = "[%s] task with {} {} failed because the registration status is not Registered."
-						.formatted(name, role, configId.ident());
-				log.info(msg);
-				userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config,
-						CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS, "Not registered"));
-				return;
-			}
-
-			context().verifySystemOscpVersion(singleton(V20));
+			C config = registeredConfiguration(false, singleton(V20));
 			doWork20(config);
 		}
 
@@ -353,22 +392,23 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			withSuccessEventTags(CAPACITY_PROVIDER_REGISTER_TAGS);
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		protected void doWork() {
-			C config = configuration(true);
-			if ( config.getRegistrationStatus() != RegistrationStatus.Pending ) {
-				log.info("Unable to register with {} {} because the registration status is not Pending.",
-						role, configId.ident());
-				return;
-			}
-
 			try {
-				context().verifySystemOscpVersion(singleton(V20));
+				C config = registeredConfiguration(true, EnumSet.of(RegistrationStatus.Pending),
+						singleton(V20));
 				doWork20(config);
 			} catch ( ExternalSystemConfigurationException confEx ) {
-				config.setRegistrationStatus(RegistrationStatus.Failed);
-				dao.save(config);
-				throw confEx;
+				if ( confEx.getConfig().getRegistrationStatus() != RegistrationStatus.Pending ) {
+					log.info(
+							"Unable to register with {} {} because the registration status is not Pending.",
+							role, configId.ident());
+				} else {
+					confEx.getConfig().setRegistrationStatus(RegistrationStatus.Failed);
+					dao.save((C) confEx.getConfig());
+					throw confEx;
+				}
 			}
 		}
 

@@ -27,9 +27,12 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -42,6 +45,7 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 
 /**
@@ -314,8 +318,6 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 * @param lock
 	 *        {@literal true} to lock the configuration in the current
 	 *        transaction
-	 * @param errorTags
-	 *        error tags to include in a user event if an error occurs
 	 * @return the configuration
 	 * @throws ExternalSystemConfigurationException
 	 *         if the configuration is not found
@@ -332,6 +334,60 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			throw new ExternalSystemConfigurationException(role, config, event, msg);
 		}
 		this.configuration = config;
+		return config;
+	}
+
+	/**
+	 * Load the configuration entity and verify its registration status is
+	 * {@code Registered} and has a supported OSCP version.
+	 * 
+	 * @param lock
+	 *        {@literal true} to lock the configuration in the current
+	 *        transaction
+	 * @param supportedOscpVersions
+	 *        if provided, verify the system supports one of the given versions
+	 * @return the configuration
+	 * @throws ExternalSystemConfigurationException
+	 *         if the configuration is not found or does not support a given
+	 *         OSCP version
+	 */
+	protected C registeredConfiguration(boolean lock, Set<String> supportedOscpVersions) {
+		return registeredConfiguration(lock, EnumSet.of(RegistrationStatus.Registered),
+				supportedOscpVersions);
+	}
+
+	/**
+	 * Load the configuration entity and verify its registration status and
+	 * supported OSCP version.
+	 * 
+	 * @param lock
+	 *        {@literal true} to lock the configuration in the current
+	 *        transaction
+	 * @param supportedStatuses
+	 *        the supported registration status
+	 * @param supportedOscpVersions
+	 *        if provided, verify the system supports one of the given versions
+	 * @return the configuration
+	 * @throws ExternalSystemConfigurationException
+	 *         if the configuration is not found or does not support a given
+	 *         OSCP version
+	 */
+	protected C registeredConfiguration(boolean lock, Set<RegistrationStatus> supportedStatuses,
+			Set<String> supportedOscpVersions) {
+		C config = configuration(lock);
+		if ( !supportedStatuses.contains(config.getRegistrationStatus()) ) {
+			String statusList = supportedStatuses.stream().map(Object::toString)
+					.collect(Collectors.joining(" or "));
+			var msg = "[%s] task with {} {} failed because the registration status is not %s."
+					.formatted(name, role, configId.ident(), statusList);
+			log.info(msg);
+			userEventAppenderBiz.addEvent(config.getUserId(),
+					eventForConfiguration(config, errorTags, "Status not %s".formatted(statusList)));
+			return null;
+		}
+		if ( supportedOscpVersions != null && !supportedOscpVersions.isEmpty() ) {
+			context().verifySystemOscpVersion(supportedOscpVersions);
+		}
 		return config;
 	}
 

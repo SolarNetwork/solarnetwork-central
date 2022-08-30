@@ -56,6 +56,34 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 			CAPACITY_PROVIDER_TAG, HANDSHAKE_TAG, ERROR_TAG };
 
 	/**
+	 * User event tags for Capacity Provider update group capacity forecast
+	 * events.
+	 */
+	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG };
+
+	/**
+	 * User event tags for Capacity Provider update group capacity forecast
+	 * error events.
+	 */
+	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+
+	/**
+	 * User event tags for Capacity Optimizer update group capacity forecast
+	 * events.
+	 */
+	String[] CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_OPTIMIZER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG };
+
+	/**
+	 * User event tags for Capacity Optimizer update group capacity forecast
+	 * error events.
+	 */
+	String[] CAPACITY_OPTIMIZER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] {
+			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+
+	/**
 	 * Register an external system using an authorization token created in
 	 * SolarNetwork and shared with the system through an external process (e.g.
 	 * email, phone, etc).
