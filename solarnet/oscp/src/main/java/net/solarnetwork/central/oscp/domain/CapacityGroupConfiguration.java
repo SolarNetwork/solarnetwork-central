@@ -33,12 +33,15 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<CapacityGroupConfiguration> {
 
-	private static final long serialVersionUID = 2455264341587923374L;
+	private static final long serialVersionUID = 2002817702265442625L;
 
 	private String identifier;
-	private MeasurementPeriod measurementPeriod;
+	private MeasurementPeriod capacityProviderMeasurementPeriod;
+	private MeasurementPeriod capacityOptimizerMeasurementPeriod;
 	private Long capacityProviderId;
 	private Long capacityOptimizerId;
+	private Instant capacityProviderMeasurementDate;
+	private Instant capacityOptimizerMeasurementDate;
 
 	/**
 	 * Constructor.
@@ -86,7 +89,8 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	public void copyTo(CapacityGroupConfiguration entity) {
 		super.copyTo(entity);
 		entity.setIdentifier(identifier);
-		entity.setMeasurementPeriod(measurementPeriod);
+		entity.setCapacityProviderMeasurementPeriod(capacityProviderMeasurementPeriod);
+		entity.setCapacityOptimizerMeasurementPeriod(capacityOptimizerMeasurementPeriod);
 		entity.setCapacityProviderId(capacityProviderId);
 		entity.setCapacityOptimizerId(capacityOptimizerId);
 	}
@@ -111,22 +115,41 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	}
 
 	/**
-	 * Get the measurement period.
+	 * Get the Capacity Provider measurement period.
 	 * 
 	 * @return the period
 	 */
-	public MeasurementPeriod getMeasurementPeriod() {
-		return measurementPeriod;
+	public MeasurementPeriod getCapacityProviderMeasurementPeriod() {
+		return capacityProviderMeasurementPeriod;
 	}
 
 	/**
-	 * Set the measurement period.
+	 * Set the Capacity Provider measurement period.
 	 * 
-	 * @param measurementPeriod
+	 * @param capacityProviderMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setMeasurementPeriod(MeasurementPeriod measurementPeriod) {
-		this.measurementPeriod = measurementPeriod;
+	public void setCapacityProviderMeasurementPeriod(MeasurementPeriod measurementPeriod) {
+		this.capacityProviderMeasurementPeriod = measurementPeriod;
+	}
+
+	/**
+	 * Get the Capacity Optimizer measurement period.
+	 * 
+	 * @return the period
+	 */
+	public MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
+		return capacityOptimizerMeasurementPeriod;
+	}
+
+	/**
+	 * Set the Capacity Optimizer measurement period.
+	 * 
+	 * @param capacityOptimizerMeasurementPeriod
+	 *        the period to set
+	 */
+	public void setCapacityOptimizerMeasurementPeriod(MeasurementPeriod measurementPeriod) {
+		this.capacityOptimizerMeasurementPeriod = measurementPeriod;
 	}
 
 	/**
@@ -174,6 +197,44 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 */
 	public void setCapacityOptimizerId(Long capacityOptimizerId) {
 		this.capacityOptimizerId = capacityOptimizerId;
+	}
+
+	/**
+	 * Get the capacity provider last measurement date.
+	 * 
+	 * @return the measurement date
+	 */
+	public Instant getCapacityProviderMeasurementDate() {
+		return capacityProviderMeasurementDate;
+	}
+
+	/**
+	 * Set the capacity provider last measurement date.
+	 * 
+	 * @param capacityProviderMeasurementDate
+	 *        the measurement date to set
+	 */
+	public void setCapacityProviderMeasurementDate(Instant capacityProviderMeasurementDate) {
+		this.capacityProviderMeasurementDate = capacityProviderMeasurementDate;
+	}
+
+	/**
+	 * Get the capacity optimizer last measurement date.
+	 * 
+	 * @return the measurement date
+	 */
+	public Instant getCapacityOptimizerMeasurementDate() {
+		return capacityOptimizerMeasurementDate;
+	}
+
+	/**
+	 * Set the capacity optimizer last measurement date.
+	 * 
+	 * @param capacityOptimizerMeasurementDate
+	 *        the measurement date to set
+	 */
+	public void setCapacityOptimizerMeasurementDate(Instant capacityOptimizerMeasurementDate) {
+		this.capacityOptimizerMeasurementDate = capacityOptimizerMeasurementDate;
 	}
 
 }

@@ -163,14 +163,12 @@ CREATE TABLE solaroscp.oscp_cg_conf (
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
 	cname			CHARACTER VARYING(64) NOT NULL,
 	ident			CHARACTER VARYING(128) NOT NULL,
-	meas_secs		INTEGER NOT NULL CHECK (meas_secs > 0),
 	cp_id			BIGINT NOT NULL,
 	co_id			BIGINT NOT NULL,
+	cp_meas_secs	INTEGER NOT NULL CHECK (cp_meas_secs > 0),
+	co_meas_secs	INTEGER NOT NULL CHECK (co_meas_secs > 0),
 	sprops			JSONB,
 	CONSTRAINT oscp_cg_conf_pk PRIMARY KEY (user_id, id),
-	CONSTRAINT oscp_cg_conf_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_cg_conf_cp_fk FOREIGN KEY (user_id, cp_id)
 		REFERENCES solaroscp.oscp_cp_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
@@ -179,6 +177,40 @@ CREATE TABLE solaroscp.oscp_cg_conf (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_cg_conf_unq UNIQUE (user_id, ident)
 );
+
+/**
+ * OSCP Capacity Group Capacity Provider measurement status.
+ */
+CREATE TABLE solaroscp.oscp_cg_cp_meas (
+	user_id			BIGINT NOT NULL,
+	cg_id			BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	meas_at			TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT oscp_cg_cp_meas_pk PRIMARY KEY (user_id, cg_id),
+	CONSTRAINT oscp_cg_cp_meas_cg_fk FOREIGN KEY (user_id, cg_id)
+		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+-- Add index on meas_at to support efficient measurement job execution
+CREATE INDEX oscp_cg_cp_meas_meas_idx ON solaroscp.oscp_cg_cp_meas (meas_at);
+
+/**
+ * OSCP Capacity Group Capacity Optimizer measurement status.
+ */
+CREATE TABLE solaroscp.oscp_cg_co_meas (
+	user_id			BIGINT NOT NULL,
+	cg_id			BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	meas_at			TIMESTAMP WITH TIME ZONE,
+	CONSTRAINT oscp_cg_co_meas_pk PRIMARY KEY (user_id, cg_id),
+	CONSTRAINT oscp_cg_co_meas_cg_fk FOREIGN KEY (user_id, cg_id)
+		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+-- Add index on meas_at to support efficient measurement job execution
+CREATE INDEX oscp_cg_co_meas_meas_idx ON solaroscp.oscp_cg_co_meas (meas_at);
 
 /**
  * OSCP Asset configuration.

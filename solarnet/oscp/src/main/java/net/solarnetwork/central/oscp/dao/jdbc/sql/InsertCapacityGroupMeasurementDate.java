@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertHeartbeatDate.java - 22/08/2022 2:09:42 pm
+ * InsertCapacityGroupMeasurementDate.java - 1/09/2022 10:48:29 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -35,12 +35,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Insert a heartbeat date.
+ * Insert a capacity group measurement date.
  * 
  * @author matt
  * @version 1.0
  */
-public class InsertHeartbeatDate implements PreparedStatementCreator, SqlProvider {
+public class InsertCapacityGroupMeasurementDate implements PreparedStatementCreator, SqlProvider {
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;
@@ -52,14 +52,14 @@ public class InsertHeartbeatDate implements PreparedStatementCreator, SqlProvide
 	 * @param type
 	 *        the type of token to create
 	 * @param id
-	 *        the ID associated with the token
+	 *        the ID of the group
 	 * @param ts
 	 *        the value to set
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code ts} is {@literal null} or the
 	 *         {@code id} is not assigned
 	 */
-	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant ts) {
+	public InsertCapacityGroupMeasurementDate(OscpRole type, UserLongCompositePK id, Instant ts) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");
@@ -72,9 +72,9 @@ public class InsertHeartbeatDate implements PreparedStatementCreator, SqlProvide
 	@Override
 	public String getSql() {
 		return """
-				INSERT INTO solaroscp.oscp_%s_heartbeat (user_id, id, heartbeat_at)
+				INSERT INTO solaroscp.oscp_cg_%s_meas (user_id, cg_id, meas_at)
 				VALUES (?, ?, ?)
-				ON CONFLICT (user_id, id) DO NOTHING
+				ON CONFLICT (user_id, cg_id) DO NOTHING
 				""".formatted(type.getAlias());
 	}
 

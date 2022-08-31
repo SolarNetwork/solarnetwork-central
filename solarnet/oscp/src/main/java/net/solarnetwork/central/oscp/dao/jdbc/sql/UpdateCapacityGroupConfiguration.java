@@ -50,7 +50,8 @@ public class UpdateCapacityGroupConfiguration implements PreparedStatementCreato
 				, enabled = ?
 				, cname = ?
 				, ident = ?
-				, meas_secs = ?
+				, cp_meas_secs = ?
+				, co_meas_secs = ?
 				, cp_id = ?
 				, co_id = ?
 				, sprops = ?::jsonb
@@ -93,7 +94,10 @@ public class UpdateCapacityGroupConfiguration implements PreparedStatementCreato
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getIdentifier());
-		p = prepareCodedValue(stmt, p, entity.getMeasurementPeriod(), FifteenMinute, false);
+		p = prepareCodedValue(stmt, p, entity.getCapacityProviderMeasurementPeriod(), FifteenMinute,
+				false);
+		p = prepareCodedValue(stmt, p, entity.getCapacityOptimizerMeasurementPeriod(), FifteenMinute,
+				false);
 		stmt.setObject(++p, entity.getCapacityProviderId());
 		stmt.setObject(++p, entity.getCapacityOptimizerId());
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);

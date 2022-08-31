@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao.jdbc;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -34,9 +35,12 @@ import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.DeleteCapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertCapacityGroupMeasurementDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectCapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityGroupMeasurementDate;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -72,7 +76,13 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 		final InsertCapacityGroupConfiguration sql = new InsertCapacityGroupConfiguration(userId,
 				entity);
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		return (id != null ? new UserLongCompositePK(userId, id) : null);
+		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
+
+		// make sure measurement rows created at same time, for CP and CO
+		jdbcOps.update(new InsertCapacityGroupMeasurementDate(OscpRole.CapacityProvider, pk, null));
+		jdbcOps.update(new InsertCapacityGroupMeasurementDate(OscpRole.CapacityOptimizer, pk, null));
+
+		return pk;
 	}
 
 	@Override
@@ -145,6 +155,13 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 		var results = executeFilterQuery(jdbcOps, filter, sql,
 				CapacityGroupConfigurationRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	@Override
+	public boolean compareAndSetMeasurement(UserLongCompositePK id, OscpRole role, Instant expected,
+			Instant ts) {
+		int count = jdbcOps.update(new UpdateCapacityGroupMeasurementDate(role, id, expected, ts));
+		return (count > 0);
 	}
 
 }

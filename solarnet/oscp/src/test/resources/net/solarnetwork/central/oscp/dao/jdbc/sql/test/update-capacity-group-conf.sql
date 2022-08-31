@@ -3,7 +3,8 @@ UPDATE solaroscp.oscp_cg_conf SET
 	, enabled = ?
 	, cname = ?
 	, ident = ?
-	, meas_secs = ?
+	, cp_meas_secs = ?
+	, co_meas_secs = ?
 	, cp_id = ?
 	, co_id = ?
 	, sprops = ?::jsonb

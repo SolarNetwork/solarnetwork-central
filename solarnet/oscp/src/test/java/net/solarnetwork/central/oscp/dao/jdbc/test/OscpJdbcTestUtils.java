@@ -139,6 +139,25 @@ public class OscpJdbcTestUtils {
 	}
 
 	/**
+	 * List all capacity group measurement table rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param role
+	 *        the role
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCapacityGroupMeasurementData(JdbcOperations jdbcOps,
+			OscpRole role) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solaroscp.oscp_cg_%s_meas ORDER BY user_id, cg_id"
+						.formatted(role.getAlias()));
+		log.debug("solaroscp.oscp_cg_{}_meas table has {} items: [{}]", role.getAlias(), data.size(),
+				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
 	 * List all token table rows.
 	 * 
 	 * @param jdbcOps

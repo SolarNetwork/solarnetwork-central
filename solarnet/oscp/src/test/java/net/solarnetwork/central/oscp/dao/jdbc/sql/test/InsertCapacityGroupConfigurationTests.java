@@ -84,7 +84,8 @@ public class InsertCapacityGroupConfigurationTests {
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setIdentifier(randomUUID().toString());
-		conf.setMeasurementPeriod(MeasurementPeriod.FiveMinute);
+		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.FiveMinute);
+		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.TenMinute);
 		conf.setCapacityProviderId(providerId);
 		conf.setCapacityOptimizerId(optimizerId);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
@@ -100,13 +101,14 @@ public class InsertCapacityGroupConfigurationTests {
 		then(result).should().setBoolean(4, conf.isEnabled());
 		then(result).should().setString(5, conf.getName());
 		then(result).should().setString(6, conf.getIdentifier());
-		then(result).should().setInt(7, conf.getMeasurementPeriod().getCode());
-		then(result).should().setObject(8, conf.getCapacityProviderId());
-		then(result).should().setObject(9, conf.getCapacityOptimizerId());
+		then(result).should().setInt(7, conf.getCapacityProviderMeasurementPeriod().getCode());
+		then(result).should().setInt(8, conf.getCapacityOptimizerMeasurementPeriod().getCode());
+		then(result).should().setObject(9, conf.getCapacityProviderId());
+		then(result).should().setObject(10, conf.getCapacityOptimizerId());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(10, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(11, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(10, Types.VARCHAR);
+			then(result).should().setNull(11, Types.VARCHAR);
 		}
 	}
 

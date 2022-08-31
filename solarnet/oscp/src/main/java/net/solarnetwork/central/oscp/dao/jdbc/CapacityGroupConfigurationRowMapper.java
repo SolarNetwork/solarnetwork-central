@@ -45,10 +45,13 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>enabled (BOOLEAN)</li>
  * <li>cname (TEXT)</li>
  * <li>ident (TEXT)</li>
- * <li>meas_secs (INTEGER)</li>
+ * <li>cp_meas_secs (INTEGER)</li>
+ * <li>co_meas_secs (INTEGER)</li>
  * <li>cp_id (BIGINT)</li>
  * <li>co_id (BIGINT)</li>
  * <li>sprops (TEXT)</li>
+ * <li>cp_meas_at (TIMESTAMP)</li>
+ * <li>co_meas_at (TIMESTAMP)</li>
  * </ol>
  * 
  * 
@@ -63,18 +66,29 @@ public class CapacityGroupConfigurationRowMapper implements RowMapper<CapacityGr
 	@Override
 	public CapacityGroupConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Long entityId = rs.getLong(1);
-		Timestamp created = rs.getTimestamp(2);
+		Timestamp ts = rs.getTimestamp(2);
 		Long userId = rs.getLong(4);
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(userId, entityId,
-				created.toInstant());
+				ts.toInstant());
 		conf.setModified(rs.getTimestamp(3).toInstant());
 		conf.setEnabled(rs.getBoolean(5));
 		conf.setName(rs.getString(6));
 		conf.setIdentifier(rs.getString(7));
-		conf.setMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(8)));
-		conf.setCapacityProviderId(rs.getLong(9));
-		conf.setCapacityOptimizerId(rs.getLong(10));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(11)));
+		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(8)));
+		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(9)));
+		conf.setCapacityProviderId(rs.getLong(10));
+		conf.setCapacityOptimizerId(rs.getLong(11));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(12)));
+
+		ts = rs.getTimestamp(13);
+		if ( ts != null ) {
+			conf.setCapacityProviderMeasurementDate(ts.toInstant());
+		}
+		ts = rs.getTimestamp(14);
+		if ( ts != null ) {
+			conf.setCapacityOptimizerMeasurementDate(ts.toInstant());
+		}
+
 		return conf;
 	}
 

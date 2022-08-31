@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.oscp.dao;
 
+import java.time.Instant;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
  * DAO API for {@link CapacityGroupConfiguration} entities.
@@ -62,5 +64,21 @@ public interface CapacityGroupConfigurationDao
 	 */
 	CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
 			String groupIdentifier);
+
+	/**
+	 * Compare and update the measurement date.
+	 * 
+	 * @param id
+	 *        the primary key to save the settings for
+	 * @param role
+	 *        either {@link OscpRole#CapacityProvider} or
+	 *        {@link OscpRole#CapacityOptimizer}
+	 * @param expected
+	 *        the expected value
+	 * @param ts
+	 *        the timestamp to set of {@code expected} matches the current value
+	 */
+	boolean compareAndSetMeasurement(UserLongCompositePK id, OscpRole role, Instant expected,
+			Instant ts);
 
 }

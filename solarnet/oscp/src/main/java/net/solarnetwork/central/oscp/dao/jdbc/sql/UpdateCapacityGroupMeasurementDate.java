@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertHeartbeatDate.java - 22/08/2022 2:09:42 pm
+ * UpdateCapacityGroupMeasurementDate.java - 1/09/2022 11:21:30 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -35,58 +35,62 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 
 /**
- * Insert a heartbeat date.
+ * Update the measurement date of a capacity group configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public class InsertHeartbeatDate implements PreparedStatementCreator, SqlProvider {
+public class UpdateCapacityGroupMeasurementDate implements PreparedStatementCreator, SqlProvider {
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;
+	private final Instant expected;
 	private final Instant ts;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param type
-	 *        the type of token to create
+	 *        the type of measurement
 	 * @param id
-	 *        the ID associated with the token
+	 *        the ID of the capacity group
+	 * @param expected
+	 *        the expected current value of the measurement
 	 * @param ts
-	 *        the value to set
+	 *        the value to set of the expectation matches
 	 * @throws IllegalArgumentException
-	 *         if any argument except {@code ts} is {@literal null} or the
+	 *         if any argument except {@code expected} is {@literal null} or the
 	 *         {@code id} is not assigned
 	 */
-	public InsertHeartbeatDate(OscpRole type, UserLongCompositePK id, Instant ts) {
+	public UpdateCapacityGroupMeasurementDate(OscpRole type, UserLongCompositePK id, Instant expected,
+			Instant ts) {
 		super();
 		this.type = requireNonNullArgument(type, "type");
 		this.id = requireNonNullArgument(id, "id");
 		if ( !id.entityIdIsAssigned() ) {
 			throw new IllegalArgumentException("The entity ID must be assigned.");
 		}
-		this.ts = ts;
+		this.expected = expected;
+		this.ts = requireNonNullArgument(ts, "ts");
 	}
 
 	@Override
 	public String getSql() {
 		return """
-				INSERT INTO solaroscp.oscp_%s_heartbeat (user_id, id, heartbeat_at)
-				VALUES (?, ?, ?)
-				ON CONFLICT (user_id, id) DO NOTHING
-				""".formatted(type.getAlias());
+				UPDATE solaroscp.oscp_cg_%s_meas
+				SET meas_at = ?
+				WHERE user_id = ? AND cg_id = ? AND meas_at %s
+				""".formatted(type.getAlias(), expected != null ? "= ?" : "IS NULL");
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		stmt.setObject(1, id.getUserId(), Types.BIGINT);
-		stmt.setObject(2, id.getEntityId(), Types.BIGINT);
-		if ( ts == null ) {
-			stmt.setNull(3, Types.TIMESTAMP);
-		} else {
-			stmt.setTimestamp(3, Timestamp.from(ts));
+		stmt.setTimestamp(1, Timestamp.from(ts));
+		stmt.setObject(2, id.getUserId(), Types.BIGINT);
+		stmt.setObject(3, id.getEntityId(), Types.BIGINT);
+		if ( expected != null ) {
+			stmt.setTimestamp(4, Timestamp.from(expected));
 		}
 		return stmt;
 	}

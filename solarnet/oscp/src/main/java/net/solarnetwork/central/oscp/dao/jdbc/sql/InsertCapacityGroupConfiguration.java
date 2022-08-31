@@ -46,9 +46,9 @@ public class InsertCapacityGroupConfiguration implements PreparedStatementCreato
 
 	private static final String SQL = """
 			INSERT INTO solaroscp.oscp_cg_conf (
-				created,modified,user_id,enabled,cname,ident,meas_secs,cp_id,co_id,sprops
+				created,modified,user_id,enabled,cname,ident,cp_meas_secs,co_meas_secs,cp_id,co_id,sprops
 			)
-			VALUES (?,?,?,?,?,?,?,?,?,?::jsonb)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?::jsonb)
 			""";
 
 	private final Long userId;
@@ -86,7 +86,10 @@ public class InsertCapacityGroupConfiguration implements PreparedStatementCreato
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getIdentifier());
-		p = prepareCodedValue(stmt, p, entity.getMeasurementPeriod(), FifteenMinute, false);
+		p = prepareCodedValue(stmt, p, entity.getCapacityProviderMeasurementPeriod(), FifteenMinute,
+				false);
+		p = prepareCodedValue(stmt, p, entity.getCapacityOptimizerMeasurementPeriod(), FifteenMinute,
+				false);
 		stmt.setObject(++p, entity.getCapacityProviderId());
 		stmt.setObject(++p, entity.getCapacityOptimizerId());
 

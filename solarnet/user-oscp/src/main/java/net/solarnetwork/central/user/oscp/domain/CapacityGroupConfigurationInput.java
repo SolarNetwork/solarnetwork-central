@@ -47,7 +47,10 @@ public class CapacityGroupConfigurationInput
 	private String identifier;
 
 	@NotNull
-	private MeasurementPeriod measurementPeriod;
+	private MeasurementPeriod capacityProviderMeasurementPeriod;
+
+	@NotNull
+	private MeasurementPeriod capacityOptimizerMeasurementPeriod;
 
 	@NotNull
 	private Long capacityProviderId;
@@ -66,7 +69,8 @@ public class CapacityGroupConfigurationInput
 	protected void populateConfiguration(CapacityGroupConfiguration conf) {
 		super.populateConfiguration(conf);
 		conf.setIdentifier(identifier);
-		conf.setMeasurementPeriod(measurementPeriod);
+		conf.setCapacityProviderMeasurementPeriod(capacityProviderMeasurementPeriod);
+		conf.setCapacityOptimizerMeasurementPeriod(capacityOptimizerMeasurementPeriod);
 		conf.setCapacityProviderId(capacityProviderId);
 		conf.setCapacityOptimizerId(capacityOptimizerId);
 	}
@@ -91,22 +95,41 @@ public class CapacityGroupConfigurationInput
 	}
 
 	/**
-	 * Get the measurement period.
+	 * Get the Capacity Provider measurement period.
 	 * 
 	 * @return the period
 	 */
-	public MeasurementPeriod getMeasurementPeriod() {
-		return measurementPeriod;
+	public MeasurementPeriod getCapacityProviderMeasurementPeriod() {
+		return capacityProviderMeasurementPeriod;
 	}
 
 	/**
-	 * Set the measurement period.
+	 * Set the Capacity Provider measurement period.
 	 * 
-	 * @param measurementPeriod
+	 * @param capacityProviderMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setMeasurementPeriod(MeasurementPeriod measurementPeriod) {
-		this.measurementPeriod = measurementPeriod;
+	public void setCapacityProviderMeasurementPeriod(MeasurementPeriod measurementPeriod) {
+		this.capacityProviderMeasurementPeriod = measurementPeriod;
+	}
+
+	/**
+	 * Get the Capacity Optimizer measurement period.
+	 * 
+	 * @return the period
+	 */
+	public MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
+		return capacityOptimizerMeasurementPeriod;
+	}
+
+	/**
+	 * Set the Capacity Optimizer measurement period.
+	 * 
+	 * @param capacityOptimizerMeasurementPeriod
+	 *        the period to set
+	 */
+	public void setCapacityOptimizerMeasurementPeriod(MeasurementPeriod measurementPeriod) {
+		this.capacityOptimizerMeasurementPeriod = measurementPeriod;
 	}
 
 	/**
