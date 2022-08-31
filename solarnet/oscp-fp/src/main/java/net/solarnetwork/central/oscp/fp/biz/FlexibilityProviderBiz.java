@@ -23,11 +23,13 @@
 package net.solarnetwork.central.oscp.fp.biz;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.domain.KeyValuePair;
 
@@ -70,18 +72,32 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
 
 	/**
-	 * User event tags for Capacity Optimizer update group capacity forecast
+	 * User event tags for Capacity Optimizer adjust group capacity forecast
 	 * events.
 	 */
 	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
 			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG };
 
 	/**
-	 * User event tags for Capacity Optimizer update group capacity forecast
+	 * User event tags for Capacity Optimizer adjust group capacity forecast
 	 * error events.
 	 */
 	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] {
 			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+
+	/**
+	 * User event tags for Capacity Optimizer group capacity compliance error
+	 * events.
+	 */
+	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS = new String[] { OSCP_EVENT_TAG,
+			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG };
+
+	/**
+	 * User event tags for Capacity Optimizer group capacity compliance error
+	 * error events.
+	 */
+	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS = new String[] {
+			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG };
 
 	/**
 	 * Register an external system using an authorization token created in
@@ -121,6 +137,8 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *        the authorization info of the external system
 	 * @param settings
 	 *        the desired settings
+	 * @param requestIdentifier
+	 *        the OSCP request identifier, to correlate the response to
 	 * @param externalSystemReady
 	 *        a future that will be completed when it is OK to initiate the
 	 *        response callback to the external system
@@ -129,7 +147,8 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *         system configuration associated with {@code authInfo} does not
 	 *         exist
 	 */
-	void handshake(AuthRoleInfo authInfo, SystemSettings settings, Future<?> externalSystemReady);
+	void handshake(AuthRoleInfo authInfo, SystemSettings settings, String requestIdentifier,
+			Future<?> externalSystemReady);
 
 	/**
 	 * Handle a heartbeat from an external system.
@@ -154,6 +173,10 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *        the authorization info of the external system
 	 * @param groupIdentifier
 	 *        the OSCP group identifier
+	 * @param forecastIdentifier
+	 *        the identifier for the forecast, must be provided for
+	 *        {@link #groupCapacityComplianceError(AuthRoleInfo, String, String, String, List)}
+	 *        to work properly
 	 * @param forecast
 	 *        the forecast
 	 * @throws AuthorizationException
@@ -162,11 +185,11 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *         exist
 	 */
 	void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
-			CapacityForecast forecast);
+			String forecastIdentifier, CapacityForecast forecast);
 
 	/**
 	 * Process an adjust group capacity forecast from a Capacity Optimizer, by
-	 * forwarding the request to the associated Capacity Provider.
+	 * forwarding the message to the associated Capacity Provider.
 	 * 
 	 * @param authInfo
 	 *        the authorization info of the external system
@@ -174,12 +197,36 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 *        the OSCP group identifier
 	 * @param forecast
 	 *        the forecast
+	 * @param requestIdentifier
+	 *        the OSCP request identifier
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
 	 *         system configuration associated with {@code authInfo} does not
 	 *         exist
 	 */
 	void adjustGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
-			CapacityForecast forecast);
+			String requestIdentifier, CapacityForecast forecast);
+
+	/**
+	 * Process a group capacity compliance error from a Capacity Optimizer, by
+	 * forwarding the message to the associated Capacity Provider.
+	 * 
+	 * @param authInfo
+	 *        the authorization info of the external system
+	 * @param groupIdentifier
+	 *        the OSCP group identifier
+	 * @param forecastIdentifier
+	 *        the identifier of the forecast the compliance error refers to
+	 * @param message
+	 *        the compliance message that describes the issue
+	 * @param blocks
+	 *        the forecast blocks that are non-compliant
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void groupCapacityComplianceError(AuthRoleInfo authInfo, String groupIdentifier,
+			String forecastIdentifier, String message, List<TimeBlockAmount> blocks);
 
 }

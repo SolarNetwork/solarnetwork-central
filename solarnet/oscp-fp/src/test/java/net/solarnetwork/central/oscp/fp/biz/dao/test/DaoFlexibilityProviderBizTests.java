@@ -25,7 +25,9 @@ package net.solarnetwork.central.oscp.fp.biz.dao.test;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.CORRELATION_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REQUEST_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
@@ -401,18 +403,21 @@ public class DaoFlexibilityProviderBizTests {
 		final String sysToken = randomUUID().toString();
 		given(capacityProviderDao.getExternalSystemAuthToken(cp2.getId())).willReturn(sysToken);
 
+		final String requestId = randomUUID().toString();
+
 		// call out to the external system handshake endpoint
 		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
 		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl() + HANDSHAKE_ACK_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(header(CORRELATION_ID_HEADER, requestId))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
 		// WHEN
 		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
-		biz.handshake(authInfo, settings, sysReady);
+		biz.handshake(authInfo, settings, requestId, sysReady);
 
 		// THEN
 		then(capacityProviderDao).should().findFiltered(cpFilterCaptor.capture());
@@ -455,18 +460,21 @@ public class DaoFlexibilityProviderBizTests {
 		final String sysToken = randomUUID().toString();
 		given(capacityOptimizerDao.getExternalSystemAuthToken(cp2.getId())).willReturn(sysToken);
 
+		final String requestId = randomUUID().toString();
+
 		// call out to the external system handshake endpoint
 		HandshakeAcknowledge expectedPost = new HandshakeAcknowledge();
 		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
 		mockExternalSystem.expect(once(), requestTo(cp2.getBaseUrl() + HANDSHAKE_ACK_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(header(CORRELATION_ID_HEADER, requestId))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
 		// WHEN
 		CompletableFuture<Void> sysReady = CompletableFuture.completedFuture(null);
-		biz.handshake(authInfo, settings, sysReady);
+		biz.handshake(authInfo, settings, requestId, sysReady);
 
 		// THEN
 		then(capacityOptimizerDao).should().findFiltered(cpFilterCaptor.capture());
@@ -546,6 +554,8 @@ public class DaoFlexibilityProviderBizTests {
 		final String sysToken = randomUUID().toString();
 		given(capacityOptimizerDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
 
+		final String requestId = randomUUID().toString();
+
 		// call out to the external system UpdateGroupCapacityForecast endpoint
 		UpdateGroupCapacityForecast expectedPost = forecast
 				.toOscp20UpdateGroupCapacityValue(groupIdentifier);
@@ -554,11 +564,12 @@ public class DaoFlexibilityProviderBizTests {
 				.expect(once(), requestTo(conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(header(REQUEST_ID_HEADER, requestId))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
 		// WHEN
-		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, forecast);
+		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
 	}
 
 	@Test
@@ -580,7 +591,7 @@ public class DaoFlexibilityProviderBizTests {
 				randomUUID().getMostSignificantBits(), Instant.now());
 		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
 		group.setIdentifier(groupIdentifier);
-		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
+		given(capacityGroupDao.findForCapacityOptimizer(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
 
 		// get the optimizer
@@ -596,6 +607,8 @@ public class DaoFlexibilityProviderBizTests {
 		final String sysToken = randomUUID().toString();
 		given(capacityProviderDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
 
+		final String requestId = randomUUID().toString();
+
 		// call out to the external system AdjustGroupCapacityForecast endpoint
 		AdjustGroupCapacityForecast expectedPost = forecast
 				.toOscp20AdjustGroupCapacityValue(groupIdentifier);
@@ -604,11 +617,12 @@ public class DaoFlexibilityProviderBizTests {
 				.expect(once(), requestTo(conf.getBaseUrl() + ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH))
 				.andExpect(method(HttpMethod.POST))
 				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(header(REQUEST_ID_HEADER, requestId))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
 
 		// WHEN
-		biz.adjustGroupCapacityForecast(authInfo, groupIdentifier, forecast);
+		biz.adjustGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
 	}
 
 }

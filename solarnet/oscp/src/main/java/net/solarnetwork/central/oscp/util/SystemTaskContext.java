@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.util;
 
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -41,7 +42,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  */
 public record SystemTaskContext<C extends BaseOscpExternalSystemConfiguration<C>> (String name,
 		OscpRole role, C config, String[] errorEventTags, String[] successEventTags,
-		ExternalSystemConfigurationDao<C> dao) {
+		ExternalSystemConfigurationDao<C> dao, Map<String, ?> parameters) {
 
 	/**
 	 * Get a URI for the configuration URL.

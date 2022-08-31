@@ -45,6 +45,9 @@ import net.solarnetwork.security.AuthorizationException.Reason;
  */
 public final class OscpWebUtils {
 
+	/** The HTTP header for a message request ID. */
+	public static final String REQUEST_ID_HEADER = "X-Request-ID";
+
 	/** The HTTP header for a message correlation ID. */
 	public static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
 

@@ -31,6 +31,7 @@ import static org.mockito.BDDMockito.will;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,10 +120,10 @@ public class HeartbeatJobTests {
 				SystemTaskContext<?> ctx;
 				if ( conf instanceof CapacityProviderConfiguration c ) {
 					ctx = new SystemTaskContext<>("Heartbeat Test", OscpRole.CapacityProvider, c, null,
-							null, capacityProviderDao);
+							null, capacityProviderDao, Collections.emptyMap());
 				} else if ( conf instanceof CapacityOptimizerConfiguration c ) {
 					ctx = new SystemTaskContext<>("Heartbeat Test", OscpRole.CapacityOptimizer, c, null,
-							null, capacityOptimizerDao);
+							null, capacityOptimizerDao, Collections.emptyMap());
 				} else {
 					throw new RuntimeException("Unsupported configuration?");
 				}

@@ -28,6 +28,7 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationH
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.util.UUID;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 
 /**
  * Implementation of {@link ExternalSystemClient} using {@link RestOperations}.
@@ -58,6 +60,10 @@ import net.solarnetwork.central.oscp.util.SystemTaskContext;
 public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
 	private static final Logger log = LoggerFactory.getLogger(RestOpsExternalSystemClient.class);
+
+	private static final String[] SUPPORTED_REQUEST_PARAMETERS = new String[] {
+			OscpWebUtils.REQUEST_ID_HEADER, OscpWebUtils.CORRELATION_ID_HEADER,
+			OscpWebUtils.ERROR_MESSAGE_HEADER, };
 
 	private final RestOperations restOps;
 	private final UserEventAppenderBiz userEventAppenderBiz;
@@ -97,6 +103,18 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
+		if ( context.parameters() != null ) {
+			for ( String header : SUPPORTED_REQUEST_PARAMETERS ) {
+				Object v = context.parameters().get(header);
+				if ( v != null ) {
+					headers.add(header, v.toString());
+				}
+			}
+		}
+		if ( !headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+			// assign a unique ID
+			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
+		}
 
 		// add appropriate authorization header
 		if ( context.config().hasOauthClientSettings() && oauthClientManager != null ) {

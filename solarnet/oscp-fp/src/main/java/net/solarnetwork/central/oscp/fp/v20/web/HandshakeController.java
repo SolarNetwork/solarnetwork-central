@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.v20.web;
 
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REQUEST_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.RESPONSE_SENT;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_URL_PATH;
@@ -33,6 +34,7 @@ import javax.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
@@ -75,11 +77,15 @@ public class HandshakeController {
 	 * 
 	 * @param input
 	 *        the handshake request
+	 * @param principal
+	 *        the authenticated actor
+	 * @param requestId
+	 *        the OSCP request ID
 	 * @return the response
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> initiateHandshake(@Valid @RequestBody Handshake input,
-			Principal principal) {
+			Principal principal, @RequestHeader(REQUEST_ID_HEADER) String requestId) {
 		CompletableFuture<Void> responseSent = new CompletableFuture<>();
 		RESPONSE_SENT.set(responseSent);
 
@@ -87,7 +93,7 @@ public class HandshakeController {
 
 		AuthRoleInfo actor = OscpSecurityUtils.authRoleInfoForPrincipal(principal);
 
-		flexibilityProviderBiz.handshake(actor, settings, responseSent);
+		flexibilityProviderBiz.handshake(actor, settings, requestId, responseSent);
 
 		return ResponseEntity.noContent().build();
 	}

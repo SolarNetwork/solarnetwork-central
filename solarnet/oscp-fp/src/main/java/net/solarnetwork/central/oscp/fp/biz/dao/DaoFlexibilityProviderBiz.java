@@ -23,15 +23,20 @@
 package net.solarnetwork.central.oscp.fp.biz.dao;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.CORRELATION_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REQUEST_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.GROUP_CAPACITY_COMPLIANCE_ERROR_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
@@ -71,13 +76,16 @@ import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.util.DeferredSystemTask;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.KeyValuePair;
 import oscp.v20.AdjustGroupCapacityForecast;
+import oscp.v20.GroupCapacityComplianceError;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
 import oscp.v20.UpdateGroupCapacityForecast;
@@ -231,10 +239,11 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void handshake(AuthRoleInfo authInfo, SystemSettings settings,
+	public void handshake(AuthRoleInfo authInfo, SystemSettings settings, String requestIdentifier,
 			Future<?> externalSystemReady) {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(settings, "settings");
+		requireNonNullArgument(requestIdentifier, "requestIdentifier");
 
 		log.info("Handshake for {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
 
@@ -252,7 +261,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		SystemSettings ackSettings = new SystemSettings(null, null);
 		var task = new HandshakeAckTask<>(externalSystemReady, systemRole, conf.getId(), dao,
-				ackSettings);
+				ackSettings).withParameters(singletonMap(CORRELATION_ID_HEADER, requestIdentifier));
 		executor.execute(task);
 	}
 
@@ -272,9 +281,10 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
-			CapacityForecast forecast) {
+			String forecastIdentifier, CapacityForecast forecast) {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider));
 		requireNonNullArgument(groupIdentifier, "groupIdentifier");
+		requireNonNullArgument(forecastIdentifier, "forecastIdentifier");
 		requireNonNullArgument(forecast, "forecast");
 
 		log.info("Update Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
@@ -290,18 +300,20 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return;
 		}
 
-		var task = new UpdateGroupCapacityForecastTask(CompletableFuture.completedFuture(null),
-				systemRole, new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
-				group.getIdentifier(), forecast);
+		var task = new UpdateGroupCapacityForecastTask(completedFuture(null), systemRole,
+				new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
+				group.getIdentifier(), forecast)
+						.withParameters(singletonMap(REQUEST_ID_HEADER, forecastIdentifier));
 		executor.execute(task);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void adjustGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
-			CapacityForecast forecast) {
+			String requestIdentifier, CapacityForecast forecast) {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityOptimizer));
 		requireNonNullArgument(groupIdentifier, "groupIdentifier");
+		requireNonNullArgument(requestIdentifier, "requestIdentifier");
 		requireNonNullArgument(forecast, "forecast");
 
 		log.info("Adjust Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
@@ -317,9 +329,37 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return;
 		}
 
-		var task = new AdjustGroupCapacityForecastTask(CompletableFuture.completedFuture(null),
+		var task = new AdjustGroupCapacityForecastTask(completedFuture(null), systemRole,
+				new UserLongCompositePK(group.getUserId(), group.getCapacityProviderId()),
+				group.getIdentifier(), forecast)
+						.withParameters(singletonMap(REQUEST_ID_HEADER, requestIdentifier));
+		executor.execute(task);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void groupCapacityComplianceError(AuthRoleInfo authInfo, String groupIdentifier,
+			String forecastIdentifier, String message, List<TimeBlockAmount> blocks) {
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityOptimizer));
+		requireNonNullArgument(groupIdentifier, "groupIdentifier");
+
+		log.info(
+				"Group Capacity Compliance Error for {} {} to group [{}] with message [{}] and blocks: {}",
+				systemRole, authInfo.id().ident(), groupIdentifier, message, blocks);
+
+		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityOptimizer(authInfo.userId(),
+				authInfo.entityId(), groupIdentifier);
+		if ( group == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
+		}
+
+		if ( group.getCapacityProviderId() == null ) {
+			return;
+		}
+
+		var task = new GroupCapacityComplianceErrorTask(CompletableFuture.completedFuture(null),
 				systemRole, new UserLongCompositePK(group.getUserId(), group.getCapacityProviderId()),
-				group.getIdentifier(), forecast);
+				group.getIdentifier(), message, blocks);
 		executor.execute(task);
 	}
 
@@ -337,6 +377,42 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			withStartDelay(taskStartDelay);
 			withStartDelayRandomness(taskStartDelayRandomness);
 			withRetryDelay(taskRetryDelay);
+		}
+
+	}
+
+	private class GroupCapacityComplianceErrorTask
+			extends BaseDeferredSystemTask<CapacityProviderConfiguration> {
+
+		private final String message;
+		private final List<TimeBlockAmount> blocks;
+
+		private GroupCapacityComplianceErrorTask(Future<?> externalSystemReady, OscpRole role,
+				UserLongCompositePK configId, String forecastIdentifier, String message,
+				List<TimeBlockAmount> blocks) {
+			super("GroupCapacityComplianceError", externalSystemReady, role, configId,
+					capacityProviderDao);
+			this.message = requireNonNullArgument(message, "message");
+			this.blocks = blocks;
+			withErrorEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS);
+			withSuccessEventTags(CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS);
+			withParameters(Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER,
+					requireNonNullArgument(forecastIdentifier, "forecastIdentifier")));
+		}
+
+		@Override
+		protected void doWork() throws Exception {
+			CapacityProviderConfiguration config = registeredConfiguration(false, singleton(V20));
+			doWork20(config);
+		}
+
+		private void doWork20(CapacityProviderConfiguration conf) {
+			GroupCapacityComplianceError msg = new GroupCapacityComplianceError(message);
+			if ( blocks != null ) {
+				msg.setForecastedBlocks(
+						blocks.stream().map(TimeBlockAmount::toOscp20ForecastValue).toList());
+			}
+			post(GROUP_CAPACITY_COMPLIANCE_ERROR_URL_PATH, msg);
 		}
 
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.v20.web;
 
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.REQUEST_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.FLEXIBILITY_PROVIDER_V20_URL_PATH;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -31,6 +32,7 @@ import javax.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
@@ -80,16 +82,22 @@ public class AdjustGroupCapacityForecastController {
 	 * 
 	 * @param input
 	 *        the forecast request
+	 * @param principal
+	 *        the authenticated actor
+	 * @param requestId
+	 *        the OSCP request ID
 	 * @return the response
 	 */
 	@PostMapping(consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> updateGroupCapacityForecast(
-			@Valid @RequestBody AdjustGroupCapacityForecast input, Principal principal) {
+			@Valid @RequestBody AdjustGroupCapacityForecast input, Principal principal,
+			@RequestHeader(REQUEST_ID_HEADER) String requestId) {
 		CapacityForecast forecast = CapacityForecast.forOscp20Value(input);
 
 		AuthRoleInfo actor = OscpSecurityUtils.authRoleInfoForPrincipal(principal);
 
-		flexibilityProviderBiz.adjustGroupCapacityForecast(actor, input.getGroupId(), forecast);
+		flexibilityProviderBiz.adjustGroupCapacityForecast(actor, input.getGroupId(), requestId,
+				forecast);
 
 		return ResponseEntity.noContent().build();
 	}

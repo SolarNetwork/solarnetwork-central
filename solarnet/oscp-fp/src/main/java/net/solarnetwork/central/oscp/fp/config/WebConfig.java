@@ -34,6 +34,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.MappedInterceptor;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.central.oscp.web.ThreadLocalCompletableHandlerInterceptor;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
@@ -72,7 +73,10 @@ public class WebConfig implements WebMvcConfigurer {
 			.allowedOriginPatterns(CorsConfiguration.ALL)
 			.maxAge(TimeUnit.HOURS.toSeconds(24))
 			.allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS")
-			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest")
+			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest",
+					OscpWebUtils.REQUEST_ID_HEADER,
+					OscpWebUtils.CORRELATION_ID_HEADER,
+					OscpWebUtils.ERROR_MESSAGE_HEADER)
 			;
 		// @formatter:on
 	}

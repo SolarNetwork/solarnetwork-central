@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -78,6 +79,7 @@ public class CapacityOptimizerConfiguration
 		return copy;
 	}
 
+	@JsonIgnore
 	@Override
 	public AuthRoleInfo getAuthRole() {
 		return new AuthRoleInfo(getId(), OscpRole.CapacityOptimizer);

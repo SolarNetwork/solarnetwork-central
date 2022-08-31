@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -94,6 +95,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	private int remainingTries = DEFAULT_TRIES;
 	private int tries = 0;
 	private C configuration;
+	private Map<String, ?> parameters;
 	private SystemTaskContext<C> context;
 
 	/**
@@ -220,6 +222,19 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	public DeferredSystemTask<C> withSuccessEventTags(String[] successTags) {
 		this.successTags = successTags;
+		return this;
+	}
+
+	/**
+	 * Set the parameters.
+	 * 
+	 * @param parameters
+	 *        the parameters, provided to the {@link SystemContext} returned
+	 *        from {@link #context(String...)}
+	 * @return this instance, for method chaining
+	 */
+	public DeferredSystemTask<C> withParameters(Map<String, ?> parameters) {
+		this.parameters = parameters;
 		return this;
 	}
 
@@ -405,7 +420,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			return context;
 		}
 		SystemTaskContext<C> ctx = new SystemTaskContext<>(name, role, configuration(true), errorTags,
-				successTags, dao);
+				successTags, dao, parameters);
 		this.context = ctx;
 		return ctx;
 	}

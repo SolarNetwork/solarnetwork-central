@@ -30,6 +30,7 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.fpUrlPa
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -47,6 +48,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.fp.test.WithMockAuthenticatedToken;
 import net.solarnetwork.central.oscp.fp.v20.web.RegistrationController;
 import net.solarnetwork.central.oscp.security.OscpSecurityUtils;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import oscp.v20.Handshake;
 import oscp.v20.MeasurementConfiguration;
 import oscp.v20.RequiredBehaviour;
@@ -114,10 +116,12 @@ public class HandshakeControllerTests {
 		final String inputJson = objectMapper.writeValueAsString(input);
 
 		// THEN
+		final String requestId = UUID.randomUUID().toString();
 		// @formatter:off
 		mvc.perform(post(fpUrlPath(HANDSHAKE_URL_PATH))
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON)
+				.header(OscpWebUtils.REQUEST_ID_HEADER, requestId)
 				.content(inputJson)
 				)
 			.andExpect(status().isNoContent())

@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao.jdbc;
 import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDATE_SKIP;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -107,7 +108,7 @@ public class JdbcExternalSystemSupportDao implements ExternalSystemSupportDao {
 		if ( !rows.isEmpty() ) {
 			C row = rows.get(0);
 			SystemTaskContext<C> context = new SystemTaskContext<C>("Heartbeat", role, row, errorTags,
-					successTags, dao);
+					successTags, dao, Collections.emptyMap());
 			Instant ts = handler.apply(context);
 			if ( ts != null ) {
 				dao.compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
