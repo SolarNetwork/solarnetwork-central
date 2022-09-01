@@ -66,7 +66,7 @@ import ocpp.v16.cs.DataTransferStatus;
  * Test cases for the {@link DlbMeterDataTransferDatumPublisher} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DlbMeterDataTransferDatumPublisherTests {
 
@@ -102,7 +102,8 @@ public class DlbMeterDataTransferDatumPublisherTests {
 
 	@Test
 	public void publishDatum_singlePhase_withSolar() {
-		do_publishDatum_singlePhase_withSolar("DLBMode:Solar,Current.HomeLoad:1A,Current.Solar:2A");
+		do_publishDatum_singlePhase_withSolar("DLBMode:Solar,Current.HomeLoad:1A,Current.Solar:2A",
+				DlbMeterDataTransferDatumPublisher.VENDOR_ID);
 	}
 
 	@Test
@@ -113,10 +114,10 @@ public class DlbMeterDataTransferDatumPublisherTests {
 					"Current.HomeLoad":"1A",
 					"Current.Solar":"2A"
 				}
-				""");
+				""", DlbMeterDataTransferDatumPublisher.VENDOR_ID_2);
 	}
 
-	private void do_publishDatum_singlePhase_withSolar(String data) {
+	private void do_publishDatum_singlePhase_withSolar(String data, String vendorId) {
 		// GIVEN
 		CentralChargePoint cp = new CentralChargePoint(randomUUID().getMostSignificantBits(),
 				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
@@ -142,7 +143,7 @@ public class DlbMeterDataTransferDatumPublisherTests {
 		// WHEN
 		replayAll();
 		DataTransferRequest req = new DataTransferRequest();
-		req.setVendorId(DlbMeterDataTransferDatumPublisher.VENDOR_ID);
+		req.setVendorId(vendorId);
 		req.setMessageId(DlbMeterDataTransferDatumPublisher.MESSAGE_ID);
 		req.setData(data);
 		ActionMessage<DataTransferRequest> msg = new BasicActionMessage<>(cpi,
@@ -177,7 +178,8 @@ public class DlbMeterDataTransferDatumPublisherTests {
 	@Test
 	public void publishDatum_multiPhase_withSolar() {
 		do_publishDatum_multiPhase_withSolar(
-				"DLBMode:Solar,Current.HomeLoad.L1:1.1A,Current.HomeLoad.L2:1.2A,Current.HomeLoad.L3:1.3A,Current.Solar.L1:2.1A,Current.Solar.L2:2.2A,Current.Solar.L3:2.3A");
+				"DLBMode:Solar,Current.HomeLoad.L1:1.1A,Current.HomeLoad.L2:1.2A,Current.HomeLoad.L3:1.3A,Current.Solar.L1:2.1A,Current.Solar.L2:2.2A,Current.Solar.L3:2.3A",
+				DlbMeterDataTransferDatumPublisher.VENDOR_ID);
 	}
 
 	@Test
@@ -192,10 +194,10 @@ public class DlbMeterDataTransferDatumPublisherTests {
 					"Current.Solar.L2":"2.2A",
 					"Current.Solar.L3":"2.3A"
 				}
-				""");
+				""", DlbMeterDataTransferDatumPublisher.VENDOR_ID_2);
 	}
 
-	private void do_publishDatum_multiPhase_withSolar(String data) {
+	private void do_publishDatum_multiPhase_withSolar(String data, String vendorId) {
 		// GIVEN
 		CentralChargePoint cp = new CentralChargePoint(randomUUID().getMostSignificantBits(),
 				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
@@ -221,7 +223,7 @@ public class DlbMeterDataTransferDatumPublisherTests {
 		// WHEN
 		replayAll();
 		DataTransferRequest req = new DataTransferRequest();
-		req.setVendorId(DlbMeterDataTransferDatumPublisher.VENDOR_ID);
+		req.setVendorId(vendorId);
 		req.setMessageId(DlbMeterDataTransferDatumPublisher.MESSAGE_ID);
 		req.setData(data);
 		ActionMessage<DataTransferRequest> msg = new BasicActionMessage<>(cpi,

@@ -59,7 +59,7 @@ import ocpp.v16.cs.DataTransferStatus;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -68,6 +68,12 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
 	/** The DataTransferRequest {@code vendorId} property value. */
 	public static final String VENDOR_ID = "com.zjbeny.dlb";
+
+	/**
+	 * The DataTransferRequest {@code vendorId} property value used in later
+	 * protocol versions.
+	 */
+	public static final String VENDOR_ID_2 = "ZJBENY";
 
 	/** The DataTransferRequest {@code messageId} property value. */
 	public static final String MESSAGE_ID = "dlbMeter";
@@ -134,7 +140,8 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			return false;
 		}
 		DataTransferRequest req = (DataTransferRequest) message.getMessage();
-		return (VENDOR_ID.equals(req.getVendorId()) && MESSAGE_ID.equals(req.getMessageId()));
+		return ((VENDOR_ID.equals(req.getVendorId()) || VENDOR_ID_2.equals(req.getVendorId()))
+				&& MESSAGE_ID.equals(req.getMessageId()));
 	}
 
 	@Override
