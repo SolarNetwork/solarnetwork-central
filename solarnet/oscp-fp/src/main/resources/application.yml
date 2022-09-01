@@ -16,7 +16,12 @@ app:
   http.client.connections:
     max-total: 20
   job.oscp:
-    heartbeat:
+    heartbeat.co:
+      maximum-iterations: 1000
+      maximum-wait-ms: 240000
+      parallelism: 1
+      schedule: "30 * * * * *"
+    heartbeat.cp:
       maximum-iterations: 1000
       maximum-wait-ms: 240000
       parallelism: 1

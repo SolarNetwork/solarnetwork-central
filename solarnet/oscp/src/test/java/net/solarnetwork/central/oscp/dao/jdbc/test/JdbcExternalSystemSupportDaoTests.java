@@ -23,36 +23,14 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
-import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.ConcurrencyFailureException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.transaction.TestTransaction;
-import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
-import net.solarnetwork.central.oscp.domain.OscpRole;
-import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
@@ -81,105 +59,13 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 		flexibilityProviderDao = new JdbcFlexibilityProviderDao(jdbcTemplate);
 		capacityProviderDao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
 		capacityOptimizerDao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
-		dao = new JdbcExternalSystemSupportDao(jdbcTemplate, capacityProviderDao, capacityOptimizerDao);
+		dao = new JdbcExternalSystemSupportDao(capacityProviderDao, capacityOptimizerDao);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
 				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
 	}
 
-	@Test
-	public void capacityProvider_updateHeartbeat() {
-		// GIVEN
-		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
-				flexibilityProviderId, Instant.now());
-		UserLongCompositePK id = capacityProviderDao.create(userId, conf);
-		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
-				RegistrationStatus.Registered.getCode(), 1);
-		lastProvider = capacityProviderDao.get(id);
-
-		// WHEN
-		Instant newTs = Instant.now();
-		boolean result = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
-			assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
-			assertThat("Found provider row", ctx.config().getId(), is(equalTo(lastProvider.getId())));
-			return newTs;
-		});
-
-		// THEN
-		assertThat("Result 'true' when Instant returned from callback", result, is(equalTo(result)));
-		List<Map<String, Object>> data = allHeartbeatData(jdbcTemplate, OscpRole.CapacityProvider);
-		assertThat("Table has 1 row", data, hasSize(1));
-		Map<String, Object> row = data.get(0);
-		assertThat("Row user ID matches", row, hasEntry("user_id", lastProvider.getUserId()));
-		assertThat("Row ID matches", row, hasEntry("id", lastProvider.getEntityId()));
-		assertThat("Row heartbeat date updated", row, hasEntry("heartbeat_at", Timestamp.from(newTs)));
-	}
-
-	@Test
-	public void capacityProvider_updateHeartbeat_skipLocked() {
-		// GIVEN
-		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
-				flexibilityProviderId, Instant.now());
-		UserLongCompositePK id = capacityProviderDao.create(userId, conf);
-		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
-				RegistrationStatus.Registered.getCode(), 1);
-		lastProvider = capacityProviderDao.get(id);
-
-		log.info("Conf ID: {}", conf.getId());
-
-		// WHEN
-		AtomicBoolean updateFailed = new AtomicBoolean();
-
-		AtomicBoolean result = new AtomicBoolean(false);
-		Instant newTs = Instant.now();
-
-		try {
-			TestTransaction.flagForCommit();
-			TestTransaction.end();
-
-			TransactionTemplate tt = new TransactionTemplate(txManager);
-			CountDownLatch latch = new CountDownLatch(1);
-
-			tt.executeWithoutResult((ts) -> {
-				boolean b = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
-					log.info("Locked ID: {}", ctx.config().getId());
-
-					Thread t = new Thread(() -> {
-						tt.executeWithoutResult((ts2) -> {
-							try {
-								jdbcTemplate.queryForList(
-										"SELECT * FROM solaroscp.oscp_cp_heartbeat LIMIT 1 FOR UPDATE NOWAIT");
-							} catch ( ConcurrencyFailureException e ) {
-								updateFailed.set(true);
-							} finally {
-								log.info("Tx 2 signaling");
-								latch.countDown();
-							}
-						});
-					}, "Update 2");
-					t.start();
-
-					log.info("Tx 1 waiting within lock");
-					try {
-						latch.await(1L, TimeUnit.MINUTES);
-					} catch ( InterruptedException e ) {
-						// ignore
-					}
-					assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
-					assertThat("Found provider row", ctx.config().getId(),
-							is(equalTo(lastProvider.getId())));
-					return newTs;
-				});
-				result.set(b);
-			});
-		} finally {
-			JdbcTestUtils.deleteFromTables((JdbcTemplate) jdbcTemplate, "solaruser.user_user",
-					"solaroscp.oscp_cp_conf");
-		}
-
-		assertThat("Update 1 succeeded", result.get(), is(equalTo(true)));
-		assertThat("Update 2 failed", updateFailed.get(), is(equalTo(true)));
-	}
+	// TODO
 
 }

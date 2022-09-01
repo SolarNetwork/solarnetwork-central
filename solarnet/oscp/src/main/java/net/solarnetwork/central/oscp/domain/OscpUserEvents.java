@@ -58,6 +58,9 @@ public interface OscpUserEvents {
 	/** A user event tag for OSCP heartbeat . */
 	String HEARTBEAT_TAG = "heartbeat";
 
+	/** A user event tag for OSCP measurement . */
+	String MEASUREMENT_TAG = "measurement";
+
 	/** A user event tag for OSCP update group capacity forecast . */
 	String UPDATE_GROUP_CAPACITY_FORECAST_TAG = "update-group-capacity-forecast";
 

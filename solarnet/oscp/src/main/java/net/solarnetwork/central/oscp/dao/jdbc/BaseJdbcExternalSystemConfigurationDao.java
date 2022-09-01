@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
+import static net.solarnetwork.central.oscp.dao.BasicLockingFilter.ONE_FOR_UPDATE_SKIP;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
@@ -35,12 +39,16 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthToken;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForHeartbeat;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateOfflineDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateSystemSettings;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.util.CapacityGroupTaskContext;
+import net.solarnetwork.central.oscp.util.SystemTaskContext;
+import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -166,6 +174,70 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	@Override
 	public void updateOfflineDate(UserLongCompositePK id, Instant ts) {
 		jdbcOps.update(new UpdateOfflineDate(role, id, ts));
+	}
+
+	/**
+	 * Get the {@link RowMapper} to use for mapping full entity result objects.
+	 * 
+	 * @return the mapper, never {@literal null}
+	 */
+	protected abstract RowMapper<C> rowMapperForEntity();
+
+	/**
+	 * Get the success event tags to use within
+	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredHeartbeatEventSuccessTags();
+
+	/**
+	 * Get the error event tags to use within
+	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredHeartbeatEventErrorTags();
+
+	@Override
+	public boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler) {
+		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
+		List<C> rows = jdbcOps.query(sql, rowMapperForEntity());
+		if ( !rows.isEmpty() ) {
+			C row = rows.get(0);
+			SystemTaskContext<C> context = new SystemTaskContext<C>("Heartbeat", role, row,
+					expiredHeartbeatEventErrorTags(), expiredHeartbeatEventSuccessTags(), this,
+					Collections.emptyMap());
+			Instant ts = handler.apply(context);
+			if ( ts != null ) {
+				compareAndSetHeartbeat(row.getId(), row.getHeartbeatDate(), ts);
+			}
+			return (ts != null);
+		}
+		return false;
+	}
+
+	/**
+	 * Get the success event tags to use within
+	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredMeasurementEventSuccessTags();
+
+	/**
+	 * Get the error event tags to use within
+	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredMeasurementEventErrorTags();
+
+	@Override
+	public boolean processExternalSystemWithExpiredMeasurement(
+			Function<CapacityGroupTaskContext<C>, Instant> handler) {
+		// TODO
+		throw new UnsupportedOperationException();
 	}
 
 }

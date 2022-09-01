@@ -24,7 +24,7 @@ package net.solarnetwork.central.oscp.http;
 
 import java.util.function.Supplier;
 import org.springframework.http.HttpMethod;
-import net.solarnetwork.central.oscp.util.SystemTaskContext;
+import net.solarnetwork.central.oscp.util.TaskContext;
 
 /**
  * Service API for integration with external systems.
@@ -51,7 +51,6 @@ public interface ExternalSystemClient {
 	 * @param body
 	 *        the HTTP body content
 	 */
-	void systemExchange(SystemTaskContext<?> context, HttpMethod method, Supplier<String> path,
-			Object body);
+	void systemExchange(TaskContext<?> context, HttpMethod method, Supplier<String> path, Object body);
 
 }

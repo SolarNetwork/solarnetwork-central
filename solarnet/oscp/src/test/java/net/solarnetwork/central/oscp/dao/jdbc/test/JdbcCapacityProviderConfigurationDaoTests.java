@@ -46,6 +46,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -476,6 +478,99 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 
 		// THEN
 		assertThat("Heartbeat date returned", result.getHeartbeatDate(), is(equalTo(lastHeartbeatDate)));
+	}
+
+	@Test
+	public void processExpiredHeartbeat() {
+		// GIVEN
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
+				flexibilityProviderId, Instant.now());
+		UserLongCompositePK id = dao.create(userId, conf);
+		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
+				RegistrationStatus.Registered.getCode(), 1);
+		last = dao.get(id);
+
+		// WHEN
+		Instant newTs = Instant.now();
+		boolean result = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+			assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+			assertThat("Found provider row", ctx.config().getId(), is(equalTo(last.getId())));
+			return newTs;
+		});
+
+		// THEN
+		assertThat("Result 'true' when Instant returned from callback", result, is(equalTo(result)));
+		List<Map<String, Object>> data = allHeartbeatData(jdbcTemplate, OscpRole.CapacityProvider);
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID matches", row, hasEntry("user_id", last.getUserId()));
+		assertThat("Row ID matches", row, hasEntry("id", last.getEntityId()));
+		assertThat("Row heartbeat date updated", row, hasEntry("heartbeat_at", Timestamp.from(newTs)));
+	}
+
+	@Test
+	public void processExpiredHeartbeat_skipLocked() {
+		// GIVEN
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
+				flexibilityProviderId, Instant.now());
+		UserLongCompositePK id = dao.create(userId, conf);
+		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?, heartbeat_secs = ?",
+				RegistrationStatus.Registered.getCode(), 1);
+		last = dao.get(id);
+
+		log.info("Conf ID: {}", conf.getId());
+
+		// WHEN
+		AtomicBoolean updateFailed = new AtomicBoolean();
+
+		AtomicBoolean result = new AtomicBoolean(false);
+		Instant newTs = Instant.now();
+
+		try {
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+
+			TransactionTemplate tt = new TransactionTemplate(txManager);
+			CountDownLatch latch = new CountDownLatch(1);
+
+			tt.executeWithoutResult((ts) -> {
+				boolean b = dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+					log.info("Locked ID: {}", ctx.config().getId());
+
+					Thread t = new Thread(() -> {
+						tt.executeWithoutResult((ts2) -> {
+							try {
+								jdbcTemplate.queryForList(
+										"SELECT * FROM solaroscp.oscp_cp_heartbeat LIMIT 1 FOR UPDATE NOWAIT");
+							} catch ( ConcurrencyFailureException e ) {
+								updateFailed.set(true);
+							} finally {
+								log.info("Tx 2 signaling");
+								latch.countDown();
+							}
+						});
+					}, "Update 2");
+					t.start();
+
+					log.info("Tx 1 waiting within lock");
+					try {
+						latch.await(1L, TimeUnit.MINUTES);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+					assertThat("Found provider row", ctx.config().getId(), is(equalTo(last.getId())));
+					return newTs;
+				});
+				result.set(b);
+			});
+		} finally {
+			JdbcTestUtils.deleteFromTables((JdbcTemplate) jdbcTemplate, "solaruser.user_user",
+					"solaroscp.oscp_cp_conf");
+		}
+
+		assertThat("Update 1 succeeded", result.get(), is(equalTo(true)));
+		assertThat("Update 2 failed", updateFailed.get(), is(equalTo(true)));
 	}
 
 }

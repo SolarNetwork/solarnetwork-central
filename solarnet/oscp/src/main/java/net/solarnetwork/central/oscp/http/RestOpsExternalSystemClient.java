@@ -48,7 +48,7 @@ import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
-import net.solarnetwork.central.oscp.util.SystemTaskContext;
+import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 
 /**
@@ -85,7 +85,7 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 	}
 
 	@Override
-	public void systemExchange(SystemTaskContext<?> context, HttpMethod method, Supplier<String> path,
+	public void systemExchange(TaskContext<?> context, HttpMethod method, Supplier<String> path,
 			Object body) {
 		URI uri;
 		try {

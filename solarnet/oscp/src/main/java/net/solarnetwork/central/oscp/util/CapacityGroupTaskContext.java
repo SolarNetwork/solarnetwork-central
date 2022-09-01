@@ -1,5 +1,5 @@
 /* ==================================================================
- * ExternalSystemSupportDao.java - 21/08/2022 4:00:36 pm
+ * CapacityGroupTaskContext.java - 1/09/2022 5:28:12 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,30 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao;
+package net.solarnetwork.central.oscp.util;
 
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
-import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 
 /**
- * DAO API for supporting external system processes.
+ * Extension of {@link TaskContext} to add capacity group related information.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ExternalSystemSupportDao {
+public interface CapacityGroupTaskContext<C extends BaseOscpExternalSystemConfiguration<C>>
+		extends TaskContext<C> {
 
 	/**
-	 * Get an external system configuration.
+	 * Get the capacity group identifier.
 	 * 
-	 * @param role
-	 *        the role of the configuration to get
-	 * @param id
-	 *        the ID of the configuration to get
-	 * @return the configuration, or {@literal null} if one does not exist for
-	 *         the given values
+	 * @return the group
 	 */
-	ExternalSystemConfiguration externalSystemConfiguration(OscpRole role, UserLongCompositePK id);
+	String groupIdentifier();
 
 }

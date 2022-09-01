@@ -1,5 +1,5 @@
 /* ==================================================================
- * HeartbeatJob.java - 21/08/2022 3:58:02 pm
+ * CapacityGroupMeasurementJob.java - 1/09/2022 3:07:48 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -23,7 +23,8 @@
 package net.solarnetwork.central.oscp.jobs;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HEARTBEAT_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
@@ -33,31 +34,21 @@ import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
-import oscp.v20.Heartbeat;
+import oscp.v20.UpdateAssetMeasurement;
+import oscp.v20.UpdateGroupMeasurements;
 
 /**
- * Job to post OSCP heartbeat messages to configured systems.
- * 
- * <p>
- * This job is designed to support parallel execution, across multiple runtime
- * instances. The
- * {@link ExternalSystemConfigurationDao#processExternalSystemWithExpiredHeartbeat(java.util.function.Function)}
- * method is used to exclusively process individual pending external system
- * heartbeats by locking the heartbeat table row, making the heartbeat request,
- * and updating the locked row with the execution time. When querying for
- * pending heartbeat rows to process, locked rows are skipped. Thus the parallel
- * tasks compete for rows to process, until none remain or the maximum iteration
- * count is reached.
- * </p>
+ * Job to post OSCP measurement messages to external systems.
  * 
  * @author matt
  * @version 1.0
  */
-public class HeartbeatJob extends JobSupport {
+public class CapacityGroupMeasurementJob extends JobSupport {
 
 	private final OscpRole role;
 	private final ExternalSystemConfigurationDao<?> dao;
@@ -76,14 +67,14 @@ public class HeartbeatJob extends JobSupport {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public HeartbeatJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
+	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
 			ExternalSystemClient client) {
 		super();
 		this.role = requireNonNullArgument(role, "role");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
-		setId(this.role.toString() + "-Heartbeat");
+		setId(this.role.toString() + "-CapacityGroupMeasurement");
 		setMaximumWaitMs(1800000L);
 	}
 
@@ -96,7 +87,7 @@ public class HeartbeatJob extends JobSupport {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public HeartbeatJob withTxTemplate(TransactionTemplate txTemplate) {
+	public CapacityGroupMeasurementJob withTxTemplate(TransactionTemplate txTemplate) {
 		this.txTemplate = requireNonNullArgument(txTemplate, "txTemplate");
 		return this;
 	}
@@ -129,22 +120,33 @@ public class HeartbeatJob extends JobSupport {
 	}
 
 	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterataions) {
-		return dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
+		return dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 			remainingIterataions.decrementAndGet();
-			Integer secs = ctx.config().getSettings().heartbeatSeconds();
-			if ( secs == null ) {
-				return null;
+
+			final CapacityGroupConfiguration group = null; // TODO: get from ctx
+
+			final boolean useAssetMeasurement = false; // TODO actual logic
+			Object msg;
+			if ( useAssetMeasurement ) {
+
+				msg = new UpdateAssetMeasurement(group.getIdentifier(), null); // TODO
+			} else {
+				msg = new UpdateGroupMeasurements(group.getIdentifier(), null); // TODO
 			}
-			Instant expires = Instant.now().plusSeconds(secs.longValue() * 2L);
+
 			try {
 				client.systemExchange(ctx, HttpMethod.POST, () -> {
 					ctx.verifySystemOscpVersion(supportedOscpVersions);
-					return HEARTBEAT_URL_PATH;
-				}, new Heartbeat(expires));
+					if ( useAssetMeasurement ) {
+						return UPDATE_ASSET_MEASUREMENTS_URL_PATH;
+					}
+					return UPDATE_GROUP_MEASUREMENTS_URL_PATH;
+				}, msg);
 			} catch ( RestClientException | ExternalSystemConfigurationException e ) {
 				// ignore and continue; assume event logged in client.systemExchange()
 			}
-			return Instant.now();
+
+			return Instant.now(); // FIXME: will be measurement end time
 		});
 	}
 

@@ -114,8 +114,7 @@ public class OscpDaoConfig {
 	public ExternalSystemSupportDao externalSystemSupportDao(
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
-		return new JdbcExternalSystemSupportDao(jdbcOperations, capacityProviderDao,
-				capacityOptimizerDao);
+		return new JdbcExternalSystemSupportDao(capacityProviderDao, capacityOptimizerDao);
 	}
 
 }

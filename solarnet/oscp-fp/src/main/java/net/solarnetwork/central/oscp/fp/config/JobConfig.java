@@ -29,7 +29,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
+import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.jobs.HeartbeatJob;
 import net.solarnetwork.central.oscp.jobs.OscpJobs;
@@ -46,7 +48,10 @@ import net.solarnetwork.central.scheduler.ManagedJob;
 public class JobConfig {
 
 	@Autowired
-	private ExternalSystemSupportDao systemSupportDao;
+	private CapacityProviderConfigurationDao capacityProviderDao;
+
+	@Autowired
+	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
 
 	@Autowired
 	private ExternalSystemClient externalSystemClient;
@@ -58,16 +63,29 @@ public class JobConfig {
 	private TransactionTemplate txTemplate;
 
 	/**
-	 * The OSCP Heartbeat job for external systems.
+	 * The OSCP Heartbeat job for capacity provider systems.
 	 * 
 	 * @return the job
 	 */
-	@ConfigurationProperties(prefix = "app.job.oscp.heartbeat")
+	@ConfigurationProperties(prefix = "app.job.oscp.heartbeat.cp")
 	@Bean
-	public ManagedJob heartbeatJob() {
-		HeartbeatJob job = new HeartbeatJob(systemSupportDao, externalSystemClient)
+	public ManagedJob capacityProviderHeartbeatJob() {
+		var job = new HeartbeatJob(OscpRole.CapacityProvider, capacityProviderDao, externalSystemClient)
 				.withTxTemplate(txTemplate);
-		job.setId("DatumDeleteJobInfoCleaner");
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	/**
+	 * The OSCP Heartbeat job for capacity optimizer systems.
+	 * 
+	 * @return the job
+	 */
+	@ConfigurationProperties(prefix = "app.job.oscp.heartbeat.co")
+	@Bean
+	public ManagedJob capacityOptimizerHeartbeatJob() {
+		var job = new HeartbeatJob(OscpRole.CapacityOptimizer, capacityOptimizerDao,
+				externalSystemClient).withTxTemplate(txTemplate);
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

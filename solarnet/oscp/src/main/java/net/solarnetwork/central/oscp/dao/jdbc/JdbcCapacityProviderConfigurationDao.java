@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
@@ -62,6 +63,31 @@ public class JdbcCapacityProviderConfigurationDao
 	 */
 	public JdbcCapacityProviderConfigurationDao(JdbcOperations jdbcOps) {
 		super(jdbcOps, OscpRole.CapacityProvider, CapacityProviderConfiguration.class);
+	}
+
+	@Override
+	protected RowMapper<CapacityProviderConfiguration> rowMapperForEntity() {
+		return CapacityProviderConfigurationRowMapper.INSTANCE;
+	}
+
+	@Override
+	protected String[] expiredHeartbeatEventSuccessTags() {
+		return CAPACITY_PROVIDER_HEARTBEAT_TAGS;
+	}
+
+	@Override
+	protected String[] expiredHeartbeatEventErrorTags() {
+		return CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS;
+	}
+
+	@Override
+	protected String[] expiredMeasurementEventSuccessTags() {
+		return CAPACITY_PROVIDER_MEASUREMENT_TAGS;
+	}
+
+	@Override
+	protected String[] expiredMeasurementEventErrorTags() {
+		return CAPACITY_PROVIDER_MEASUREMENT_ERROR_TAGS;
 	}
 
 	@Override
@@ -106,7 +132,7 @@ public class JdbcCapacityProviderConfigurationDao
 	public FilterResults<CapacityProviderConfiguration, UserLongCompositePK> findFiltered(
 			ConfigurationFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
 		var sql = new SelectCapacityProviderConfiguration(filter);
-		return executeFilterQuery(jdbcOps, filter, sql, CapacityProviderConfigurationRowMapper.INSTANCE);
+		return executeFilterQuery(jdbcOps, filter, sql, rowMapperForEntity());
 	}
 
 	@Override
