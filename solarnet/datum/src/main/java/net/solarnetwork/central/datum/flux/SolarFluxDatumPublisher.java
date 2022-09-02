@@ -79,7 +79,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 *        the publish QoS
 	 */
 	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
-		this(nodeOwnershipDao, objectMapper, true, MqttQos.AtMostOnce);
+		this(nodeOwnershipDao, objectMapper, false, MqttQos.AtMostOnce);
 	}
 
 	/**
