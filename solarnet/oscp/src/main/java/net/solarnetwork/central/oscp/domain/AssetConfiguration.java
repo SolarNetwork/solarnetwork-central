@@ -36,9 +36,10 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfiguration> {
 
-	private static final long serialVersionUID = 2412245137838443911L;
+	private static final long serialVersionUID = -337374989043029897L;
 
 	private Long capacityGroupId;
+	private String identifier;
 	private OscpRole audience;
 	private Long nodeId;
 	private String sourceId;
@@ -97,6 +98,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	@Override
 	public void copyTo(AssetConfiguration entity) {
 		super.copyTo(entity);
+		entity.setIdentifier(identifier);
 		if ( audience != null ) {
 			entity.setAudience(audience);
 		}
@@ -137,6 +139,25 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 */
 	public void setCapacityGroupId(Long capacityGroupId) {
 		this.capacityGroupId = capacityGroupId;
+	}
+
+	/**
+	 * Get an identifier.
+	 * 
+	 * @return the identifier
+	 */
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	/**
+	 * Set an identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	/**

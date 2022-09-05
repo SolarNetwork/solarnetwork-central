@@ -129,6 +129,7 @@ public class OscpJdbcTestUtils {
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setCapacityGroupId(randomUUID().getMostSignificantBits());
+		conf.setIdentifier(randomUUID().toString());
 		conf.setAudience(OscpRole.CapacityProvider);
 		conf.setNodeId(randomUUID().getMostSignificantBits());
 		conf.setSourceId(randomUUID().toString());

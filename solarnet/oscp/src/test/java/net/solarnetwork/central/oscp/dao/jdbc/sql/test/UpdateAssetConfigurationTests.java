@@ -99,6 +99,7 @@ public class UpdateAssetConfigurationTests {
 		then(result).should().setBoolean(++p, conf.isEnabled());
 		then(result).should().setString(++p, conf.getName());
 		then(result).should().setObject(++p, conf.getCapacityGroupId());
+		then(result).should().setString(++p, conf.getIdentifier());
 		then(result).should().setInt(++p, conf.getAudience().getCode());
 		then(result).should().setObject(++p, conf.getNodeId());
 		then(result).should().setString(++p, conf.getSourceId());

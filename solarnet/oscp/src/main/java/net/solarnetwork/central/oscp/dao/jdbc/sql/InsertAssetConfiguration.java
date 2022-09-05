@@ -53,12 +53,12 @@ public class InsertAssetConfiguration implements PreparedStatementCreator, SqlPr
 	private static final String SQL = """
 			INSERT INTO solaroscp.oscp_asset_conf (
 				  created, modified, user_id, enabled, cname
-				, cg_id, audience, node_id, source_id, category
+				, cg_id, ident, audience, node_id, source_id, category
 				, iprops, iprops_unit, iprops_mult, iprops_phase
 				, eprops, eprops_unit, eprops_mult, etype
 				, sprops
 			)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)
 			""";
 
 	private final Long userId;
@@ -96,6 +96,7 @@ public class InsertAssetConfiguration implements PreparedStatementCreator, SqlPr
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setObject(++p, entity.getCapacityGroupId());
+		stmt.setString(++p, entity.getIdentifier());
 		p = prepareCodedValue(stmt, p, entity.getAudience(), OscpRole.CapacityProvider, false);
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());

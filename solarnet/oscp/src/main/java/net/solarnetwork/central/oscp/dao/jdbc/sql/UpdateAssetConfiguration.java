@@ -56,6 +56,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 				, enabled = ?
 				, cname = ?
 				, cg_id = ?
+				, ident = ?
 				, audience = ?
 				, node_id = ?
 				, source_id = ?
@@ -108,6 +109,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setObject(++p, entity.getCapacityGroupId());
+		stmt.setString(++p, entity.getIdentifier());
 		p = prepareCodedValue(stmt, p, entity.getAudience(), OscpRole.CapacityProvider, false);
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());

@@ -50,6 +50,7 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>enabled (BOOLEAN)</li>
  * <li>cname (TEXT)</li>
  * <li>cg_id (BIGINT)</li>
+ * <li>ident (TEXT)</li>
  * <li>audience (SMALLINT)</li>
  * <li>node_id (BIGINT)</li>
  * <li>source_id (TEXT)</li>
@@ -83,19 +84,20 @@ public class AssetConfigurationRowMapper implements RowMapper<AssetConfiguration
 		conf.setEnabled(rs.getBoolean(5));
 		conf.setName(rs.getString(6));
 		conf.setCapacityGroupId(rs.getLong(7));
-		conf.setAudience(OscpRole.forCode(rs.getInt(8)));
-		conf.setNodeId(rs.getLong(9));
-		conf.setSourceId(rs.getString(10));
-		conf.setCategory(AssetCategory.forCode(rs.getInt(11)));
-		conf.setInstantaneousPropertyNames(CommonJdbcUtils.getArray(rs, 12));
-		conf.setInstantaneousUnit(MeasurementUnit.forCode(rs.getInt(13)));
-		conf.setInstantaneousMultiplier(rs.getBigDecimal(14));
-		conf.setInstantaneousPhase(Phase.forCode(rs.getInt(15)));
-		conf.setEnergyPropertyNames(CommonJdbcUtils.getArray(rs, 16));
-		conf.setEnergyUnit(MeasurementUnit.forCode(rs.getInt(17)));
-		conf.setEnergyMultiplier(rs.getBigDecimal(18));
-		conf.setEnergyType(EnergyType.forCode(rs.getInt(19)));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(20)));
+		conf.setIdentifier(rs.getString(8));
+		conf.setAudience(OscpRole.forCode(rs.getInt(9)));
+		conf.setNodeId(rs.getLong(10));
+		conf.setSourceId(rs.getString(11));
+		conf.setCategory(AssetCategory.forCode(rs.getInt(12)));
+		conf.setInstantaneousPropertyNames(CommonJdbcUtils.getArray(rs, 13));
+		conf.setInstantaneousUnit(MeasurementUnit.forCode(rs.getInt(14)));
+		conf.setInstantaneousMultiplier(rs.getBigDecimal(15));
+		conf.setInstantaneousPhase(Phase.forCode(rs.getInt(16)));
+		conf.setEnergyPropertyNames(CommonJdbcUtils.getArray(rs, 17));
+		conf.setEnergyUnit(MeasurementUnit.forCode(rs.getInt(18)));
+		conf.setEnergyMultiplier(rs.getBigDecimal(19));
+		conf.setEnergyType(EnergyType.forCode(rs.getInt(20)));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(21)));
 		return conf;
 	}
 

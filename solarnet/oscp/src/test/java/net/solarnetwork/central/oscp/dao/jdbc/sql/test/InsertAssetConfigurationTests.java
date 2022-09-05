@@ -94,28 +94,30 @@ public class InsertAssetConfigurationTests {
 	private void thenPrepStatement(PreparedStatement result, Long userId, AssetConfiguration conf)
 			throws SQLException {
 		Timestamp ts = Timestamp.from(conf.getCreated());
-		then(result).should().setTimestamp(1, ts);
-		then(result).should().setTimestamp(2, ts);
-		then(result).should().setObject(3, userId);
-		then(result).should().setBoolean(4, conf.isEnabled());
-		then(result).should().setString(5, conf.getName());
-		then(result).should().setObject(6, conf.getCapacityGroupId());
-		then(result).should().setInt(7, conf.getAudience().getCode());
-		then(result).should().setObject(8, conf.getNodeId());
-		then(result).should().setString(9, conf.getSourceId());
-		then(result).should().setInt(10, conf.getCategory().getCode());
-		then(result).should().setArray(11, iPropNamesArray);
-		then(result).should().setInt(12, conf.getInstantaneousUnit().getCode());
-		then(result).should().setBigDecimal(13, conf.getInstantaneousMultiplier());
-		then(result).should().setInt(14, conf.getInstantaneousPhase().getCode());
-		then(result).should().setArray(15, ePropNamesArray);
-		then(result).should().setInt(16, conf.getEnergyUnit().getCode());
-		then(result).should().setBigDecimal(17, conf.getEnergyMultiplier());
-		then(result).should().setInt(18, conf.getEnergyType().getCode());
+		int p = 0;
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setObject(++p, userId);
+		then(result).should().setBoolean(++p, conf.isEnabled());
+		then(result).should().setString(++p, conf.getName());
+		then(result).should().setObject(++p, conf.getCapacityGroupId());
+		then(result).should().setString(++p, conf.getIdentifier());
+		then(result).should().setInt(++p, conf.getAudience().getCode());
+		then(result).should().setObject(++p, conf.getNodeId());
+		then(result).should().setString(++p, conf.getSourceId());
+		then(result).should().setInt(++p, conf.getCategory().getCode());
+		then(result).should().setArray(++p, iPropNamesArray);
+		then(result).should().setInt(++p, conf.getInstantaneousUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getInstantaneousMultiplier());
+		then(result).should().setInt(++p, conf.getInstantaneousPhase().getCode());
+		then(result).should().setArray(++p, ePropNamesArray);
+		then(result).should().setInt(++p, conf.getEnergyUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getEnergyMultiplier());
+		then(result).should().setInt(++p, conf.getEnergyType().getCode());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(19, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(19, Types.VARCHAR);
+			then(result).should().setNull(++p, Types.VARCHAR);
 		}
 	}
 

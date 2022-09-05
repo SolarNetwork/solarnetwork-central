@@ -60,6 +60,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -117,6 +118,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setCapacityGroupId(capacitGroupId);
+		conf.setIdentifier(randomUUID().toString());
+		conf.setAudience(OscpRole.CapacityProvider);
 		conf.setNodeId(randomUUID().getMostSignificantBits());
 		conf.setSourceId(randomUUID().toString());
 		conf.setCategory(AssetCategory.Charging);
