@@ -88,4 +88,12 @@ public interface ExternalSystemConfiguration {
 	 */
 	OAuthClientSettings oauthClientSettings();
 
+	/**
+	 * Flag to indicate if asset measurement messages should be used in place of
+	 * group measurement messages.
+	 * 
+	 * @return {@literal true} if asset measurements should be used
+	 */
+	boolean useGroupAssetMeasurement();
+
 }

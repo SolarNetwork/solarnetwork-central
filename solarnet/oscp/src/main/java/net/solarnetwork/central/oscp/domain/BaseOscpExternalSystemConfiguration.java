@@ -23,8 +23,10 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Base OSCP configuration entity.
@@ -94,6 +96,21 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 		entity.setToken(token);
 		entity.setSettings(settings);
 		entity.setHeartbeatDate(heartbeatDate);
+	}
+
+	@Override
+	public boolean useGroupAssetMeasurement() {
+		Map<String, Object> props = getServiceProps();
+		Object v = (props != null ? props.get(ExternalSystemServiceProperties.ASSET_MEAESUREMENT)
+				: null);
+		if ( v instanceof Boolean b ) {
+			return b.booleanValue();
+		} else if ( v instanceof Number n ) {
+			return n.intValue() != 0;
+		} else if ( v != null ) {
+			return StringUtils.parseBoolean(v.toString());
+		}
+		return false;
 	}
 
 	/**
@@ -183,6 +200,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * 
 	 * @return the flexibility provider ID
 	 */
+	@Override
 	public Long getFlexibilityProviderId() {
 		return flexibilityProviderId;
 	}

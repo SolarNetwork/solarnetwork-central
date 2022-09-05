@@ -48,4 +48,9 @@ public interface ExternalSystemServiceProperties {
 	 */
 	String OAUTH_CLIENT_SECRET = "oauth-client-secret";
 
+	/**
+	 * A service property that configures asset measurement messages to be used
+	 * in place of group measurements.
+	 */
+	String ASSET_MEAESUREMENT = "group-asset-measurement";
 }

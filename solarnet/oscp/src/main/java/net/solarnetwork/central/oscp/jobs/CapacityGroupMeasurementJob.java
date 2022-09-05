@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
@@ -52,6 +53,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 	private final OscpRole role;
 	private final ExternalSystemConfigurationDao<?> dao;
+	private final CapacityGroupConfigurationDao capacityGroupDao;
 	private final ExternalSystemClient client;
 	private TransactionTemplate txTemplate;
 
@@ -62,16 +64,19 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 *        the role
 	 * @param dao
 	 *        the DAO to use
+	 * @param capacityGroupDao
+	 *        the group DAO
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
-			ExternalSystemClient client) {
+			CapacityGroupConfigurationDao capacityGroupDao, ExternalSystemClient client) {
 		super();
 		this.role = requireNonNullArgument(role, "role");
 		this.dao = requireNonNullArgument(dao, "dao");
+		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
 		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
 		setId(this.role.toString() + "-CapacityGroupMeasurement");
@@ -123,12 +128,18 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		return dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
 			remainingIterataions.decrementAndGet();
 
-			final CapacityGroupConfiguration group = null; // TODO: get from ctx
+			final CapacityGroupConfiguration group = switch (role) {
+				case CapacityProvider -> capacityGroupDao.findForCapacityProvider(
+						ctx.config().getUserId(), ctx.config().getEntityId(), ctx.groupIdentifier());
+				case CapacityOptimizer -> capacityGroupDao.findForCapacityOptimizer(
+						ctx.config().getUserId(), ctx.config().getEntityId(), ctx.groupIdentifier());
+				default -> throw new IllegalArgumentException(
+						"OSCP role [%s] not supported.".formatted(role));
+			};
 
-			final boolean useAssetMeasurement = false; // TODO actual logic
+			final boolean useAssetMeasurement = ctx.config().useGroupAssetMeasurement();
 			Object msg;
 			if ( useAssetMeasurement ) {
-
 				msg = new UpdateAssetMeasurement(group.getIdentifier(), null); // TODO
 			} else {
 				msg = new UpdateGroupMeasurements(group.getIdentifier(), null); // TODO
