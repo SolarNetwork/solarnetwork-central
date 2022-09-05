@@ -59,7 +59,7 @@ dependencies {
 	implementation 'org.slf4j:slf4j-api'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.external:net.solarnetwork.external.oscp:1.0.1'
+	api 'net.solarnetwork.external:net.solarnetwork.external.oscp:1.0.2'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
