@@ -36,9 +36,10 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfiguration> {
 
-	private static final long serialVersionUID = -2971097342677332165L;
+	private static final long serialVersionUID = 2412245137838443911L;
 
 	private Long capacityGroupId;
+	private OscpRole audience;
 	private Long nodeId;
 	private String sourceId;
 	private AssetCategory category;
@@ -96,6 +97,9 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	@Override
 	public void copyTo(AssetConfiguration entity) {
 		super.copyTo(entity);
+		if ( audience != null ) {
+			entity.setAudience(audience);
+		}
 		entity.setCapacityGroupId(capacityGroupId);
 		entity.setNodeId(nodeId);
 		entity.setSourceId(sourceId);
@@ -133,6 +137,35 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 */
 	public void setCapacityGroupId(Long capacityGroupId) {
 		this.capacityGroupId = capacityGroupId;
+	}
+
+	/**
+	 * Get the audience.
+	 * 
+	 * @return the audience
+	 */
+	public OscpRole getAudience() {
+		return audience;
+	}
+
+	/**
+	 * Set the audience.
+	 * 
+	 * @param audience
+	 *        the audience to set
+	 * @throws IllegalArgumentException
+	 *         if {@code audience} is {@literal null} or not supported
+	 */
+	public void setAudience(OscpRole audience) {
+		switch (requireNonNullArgument(audience, "audience")) {
+			case CapacityProvider:
+			case CapacityOptimizer:
+				this.audience = audience;
+				break;
+
+			default:
+				throw new IllegalArgumentException("Audience [%s] not supported.".formatted(audience));
+		}
 	}
 
 	/**

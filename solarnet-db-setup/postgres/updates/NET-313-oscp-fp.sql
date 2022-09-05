@@ -201,7 +201,7 @@ CREATE TABLE solaroscp.oscp_cg_cp_meas (
 	user_id			BIGINT NOT NULL,
 	cg_id			BIGINT NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	meas_at		TIMESTAMP WITH TIME ZONE,
+	meas_at			TIMESTAMP WITH TIME ZONE,
 	CONSTRAINT oscp_cg_cp_meas_pk PRIMARY KEY (user_id, cg_id),
 	CONSTRAINT oscp_cg_cp_meas_cg_fk FOREIGN KEY (user_id, cg_id)
 		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
@@ -218,7 +218,7 @@ CREATE TABLE solaroscp.oscp_cg_co_meas (
 	user_id			BIGINT NOT NULL,
 	cg_id			BIGINT NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	meas_at		TIMESTAMP WITH TIME ZONE,
+	meas_at			TIMESTAMP WITH TIME ZONE,
 	CONSTRAINT oscp_cg_co_meas_pk PRIMARY KEY (user_id, cg_id),
 	CONSTRAINT oscp_cg_co_meas_cg_fk FOREIGN KEY (user_id, cg_id)
 		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
@@ -250,6 +250,7 @@ CREATE TABLE solaroscp.oscp_asset_conf (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
 	cname			CHARACTER VARYING(64) NOT NULL,
+	audience		SMALLINT NOT NULL,		-- CP/CO
 	node_id			BIGINT NOT NULL,
 	source_id		CHARACTER VARYING(64) NOT NULL,
 	category		SMALLINT NOT NULL,		-- asset category
@@ -263,9 +264,6 @@ CREATE TABLE solaroscp.oscp_asset_conf (
 	etype			SMALLINT NOT NULL,		-- energy type
 	sprops			JSONB,
 	CONSTRAINT oscp_asset_conf_pk PRIMARY KEY (user_id, id),
-	CONSTRAINT oscp_asset_conf_user_fk FOREIGN KEY (user_id)
-		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_asset_conf_cg_fk FOREIGN KEY (user_id, cg_id)
 		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE

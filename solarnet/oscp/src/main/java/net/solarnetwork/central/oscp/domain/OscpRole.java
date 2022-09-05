@@ -22,29 +22,39 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import static java.lang.String.format;
+import net.solarnetwork.domain.CodedValue;
+
 /**
  * Enumeration of OSCP actor roles.
  * 
  * @author matt
  * @version 1.0
  */
-public enum OscpRole {
+public enum OscpRole implements CodedValue {
 
 	/** A flexibility provider. */
-	FlexibilityProvider("fp"),
+	FlexibilityProvider('f', "fp"),
 
 	/** A capacity provider. */
-	CapacityProvider("cp"),
+	CapacityProvider('p', "cp"),
 
 	/** A capacity optimizer. */
-	CapacityOptimizer("co"),
+	CapacityOptimizer('o', "co"),
 
 	;
 
+	private char code;
 	private final String alias;
 
-	private OscpRole(String alias) {
+	private OscpRole(char code, String alias) {
+		this.code = code;
 		this.alias = alias;
+	}
+
+	@Override
+	public int getCode() {
+		return code;
 	}
 
 	/**
@@ -54,6 +64,24 @@ public enum OscpRole {
 	 */
 	public String getAlias() {
 		return alias;
+	}
+
+	/**
+	 * Create an enum instance from a code value.
+	 * 
+	 * @param code
+	 *        the code value
+	 * @return the enum instance
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not a valid enum value
+	 */
+	public static OscpRole forCode(int code) {
+		for ( OscpRole e : OscpRole.values() ) {
+			if ( code == e.code ) {
+				return e;
+			}
+		}
+		throw new IllegalArgumentException(format("Invalid OscpRole code [%s]", code));
 	}
 
 	/**

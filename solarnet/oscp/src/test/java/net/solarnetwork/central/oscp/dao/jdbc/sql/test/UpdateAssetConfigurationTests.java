@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertAssetConfigurationTests.java - 12/08/2022 3:29:58 pm
+ * UpdateAssetConfigurationTests.java - 5/09/2022 12:53:10 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -37,7 +37,6 @@ import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
@@ -49,18 +48,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAssetConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateAssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
- * Test cases for the {@link InsertAssetConfiguration} class.
+ * Test cases for the {@link UpdateAssetConfiguration} class.
  * 
  * @author matt
  * @version 1.0
  */
 @ExtendWith(MockitoExtension.class)
-public class InsertAssetConfigurationTests {
+public class UpdateAssetConfigurationTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -80,7 +80,7 @@ public class InsertAssetConfigurationTests {
 	private ArgumentCaptor<String> sqlCaptor;
 
 	private void givenPrepStatement() throws SQLException {
-		given(con.prepareStatement(any(), eq(Statement.RETURN_GENERATED_KEYS))).willReturn(stmt);
+		given(con.prepareStatement(any())).willReturn(stmt);
 	}
 
 	private void givenSetInstantaneousPropNamesArrayParameter(String[] value) throws SQLException {
@@ -91,57 +91,61 @@ public class InsertAssetConfigurationTests {
 		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(ePropNamesArray);
 	}
 
-	private void thenPrepStatement(PreparedStatement result, Long userId, AssetConfiguration conf)
-			throws SQLException {
-		Timestamp ts = Timestamp.from(conf.getCreated());
-		then(result).should().setTimestamp(1, ts);
-		then(result).should().setTimestamp(2, ts);
-		then(result).should().setObject(3, userId);
-		then(result).should().setBoolean(4, conf.isEnabled());
-		then(result).should().setString(5, conf.getName());
-		then(result).should().setObject(6, conf.getCapacityGroupId());
-		then(result).should().setInt(7, conf.getAudience().getCode());
-		then(result).should().setObject(8, conf.getNodeId());
-		then(result).should().setString(9, conf.getSourceId());
-		then(result).should().setInt(10, conf.getCategory().getCode());
-		then(result).should().setArray(11, iPropNamesArray);
-		then(result).should().setInt(12, conf.getInstantaneousUnit().getCode());
-		then(result).should().setBigDecimal(13, conf.getInstantaneousMultiplier());
-		then(result).should().setInt(14, conf.getInstantaneousPhase().getCode());
-		then(result).should().setArray(15, ePropNamesArray);
-		then(result).should().setInt(16, conf.getEnergyUnit().getCode());
-		then(result).should().setBigDecimal(17, conf.getEnergyMultiplier());
-		then(result).should().setInt(18, conf.getEnergyType().getCode());
+	private void thenPrepStatement(PreparedStatement result, UserLongCompositePK id,
+			AssetConfiguration conf) throws SQLException {
+		Timestamp ts = Timestamp.from(conf.getModified());
+		int p = 0;
+		then(result).should().setTimestamp(++p, ts);
+		then(result).should().setBoolean(++p, conf.isEnabled());
+		then(result).should().setString(++p, conf.getName());
+		then(result).should().setObject(++p, conf.getCapacityGroupId());
+		then(result).should().setInt(++p, conf.getAudience().getCode());
+		then(result).should().setObject(++p, conf.getNodeId());
+		then(result).should().setString(++p, conf.getSourceId());
+		then(result).should().setInt(++p, conf.getCategory().getCode());
+		then(result).should().setArray(++p, iPropNamesArray);
+		then(result).should().setInt(++p, conf.getInstantaneousUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getInstantaneousMultiplier());
+		then(result).should().setInt(++p, conf.getInstantaneousPhase().getCode());
+		then(result).should().setArray(++p, ePropNamesArray);
+		then(result).should().setInt(++p, conf.getEnergyUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getEnergyMultiplier());
+		then(result).should().setInt(++p, conf.getEnergyType().getCode());
 		if ( conf.getServiceProps() != null ) {
-			then(result).should().setString(19, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
+			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
-			then(result).should().setNull(19, Types.VARCHAR);
+			then(result).should().setNull(++p, Types.VARCHAR);
 		}
+		then(result).should().setObject(++p, id.getUserId());
+		then(result).should().setObject(++p, id.getEntityId());
 	}
 
 	@Test
 	public void sql() {
 		// GIVEN
-		AssetConfiguration conf = newAssetConfiguration(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		Long userId = randomUUID().getMostSignificantBits();
+		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
+		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), Instant.now());
+		conf.setModified(Instant.now());
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
-		String sql = new InsertAssetConfiguration(userId, conf).getSql();
+		String sql = new UpdateAssetConfiguration(id, conf).getSql();
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql,
-				equalToTextResource("insert-asset-conf.sql", TestSqlResources.class, SQL_COMMENT));
+				equalToTextResource("update-asset-conf.sql", TestSqlResources.class, SQL_COMMENT));
 	}
 
 	@Test
 	public void prep() throws SQLException {
 		// GIVEN
-		AssetConfiguration conf = newAssetConfiguration(randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
-				Instant.now());
+		Long userId = randomUUID().getMostSignificantBits();
+		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
+		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), Instant.now()).copyWithId(id);
+		conf.setModified(Instant.now());
 
 		// GIVEN
 		givenPrepStatement();
@@ -149,17 +153,15 @@ public class InsertAssetConfigurationTests {
 		givenSetEnergyPropNamesArrayParameter(conf.getEnergyPropertyNames());
 
 		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
-		PreparedStatement result = new InsertAssetConfiguration(userId, conf)
-				.createPreparedStatement(con);
+		PreparedStatement result = new UpdateAssetConfiguration(id, conf).createPreparedStatement(con);
 
 		// THEN
-		then(con).should().prepareStatement(sqlCaptor.capture(), eq(Statement.RETURN_GENERATED_KEYS));
+		then(con).should().prepareStatement(sqlCaptor.capture());
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(),
-				equalToTextResource("insert-asset-conf.sql", TestSqlResources.class, SQL_COMMENT));
+				equalToTextResource("update-asset-conf.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Statement returned", result, sameInstance(stmt));
-		thenPrepStatement(result, userId, conf);
+		thenPrepStatement(result, conf.getId(), conf);
 	}
 
 }

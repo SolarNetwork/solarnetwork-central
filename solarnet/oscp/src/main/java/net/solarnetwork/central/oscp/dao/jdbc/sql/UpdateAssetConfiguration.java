@@ -39,6 +39,7 @@ import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
@@ -55,6 +56,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 				, enabled = ?
 				, cname = ?
 				, cg_id = ?
+				, audience = ?
 				, node_id = ?
 				, source_id = ?
 				, category = ?
@@ -106,6 +108,7 @@ public class UpdateAssetConfiguration implements PreparedStatementCreator, SqlPr
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setObject(++p, entity.getCapacityGroupId());
+		p = prepareCodedValue(stmt, p, entity.getAudience(), OscpRole.CapacityProvider, false);
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());
 		p = prepareCodedValue(stmt, p, entity.getCategory(), AssetCategory.Charging, false);

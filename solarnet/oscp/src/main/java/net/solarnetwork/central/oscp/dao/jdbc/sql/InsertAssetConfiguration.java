@@ -39,6 +39,7 @@ import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
@@ -52,12 +53,12 @@ public class InsertAssetConfiguration implements PreparedStatementCreator, SqlPr
 	private static final String SQL = """
 			INSERT INTO solaroscp.oscp_asset_conf (
 				  created, modified, user_id, enabled, cname
-				, cg_id, node_id, source_id, category
+				, cg_id, audience, node_id, source_id, category
 				, iprops, iprops_unit, iprops_mult, iprops_phase
 				, eprops, eprops_unit, eprops_mult, etype
 				, sprops
 			)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)
 			""";
 
 	private final Long userId;
@@ -95,6 +96,7 @@ public class InsertAssetConfiguration implements PreparedStatementCreator, SqlPr
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setObject(++p, entity.getCapacityGroupId());
+		p = prepareCodedValue(stmt, p, entity.getAudience(), OscpRole.CapacityProvider, false);
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());
 		p = prepareCodedValue(stmt, p, entity.getCategory(), AssetCategory.Charging, false);

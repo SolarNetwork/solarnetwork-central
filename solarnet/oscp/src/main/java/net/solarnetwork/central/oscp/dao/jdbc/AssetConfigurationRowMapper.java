@@ -31,6 +31,7 @@ import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.codec.JsonUtils;
 
@@ -49,6 +50,7 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>enabled (BOOLEAN)</li>
  * <li>cname (TEXT)</li>
  * <li>cg_id (BIGINT)</li>
+ * <li>audience (SMALLINT)</li>
  * <li>node_id (BIGINT)</li>
  * <li>source_id (TEXT)</li>
  * <li>category (SMALLINT)</li>
@@ -81,18 +83,19 @@ public class AssetConfigurationRowMapper implements RowMapper<AssetConfiguration
 		conf.setEnabled(rs.getBoolean(5));
 		conf.setName(rs.getString(6));
 		conf.setCapacityGroupId(rs.getLong(7));
-		conf.setNodeId(rs.getLong(8));
-		conf.setSourceId(rs.getString(9));
-		conf.setCategory(AssetCategory.forCode(rs.getInt(10)));
-		conf.setInstantaneousPropertyNames(CommonJdbcUtils.getArray(rs, 11));
-		conf.setInstantaneousUnit(MeasurementUnit.forCode(rs.getInt(12)));
-		conf.setInstantaneousMultiplier(rs.getBigDecimal(13));
-		conf.setInstantaneousPhase(Phase.forCode(rs.getInt(14)));
-		conf.setEnergyPropertyNames(CommonJdbcUtils.getArray(rs, 15));
-		conf.setEnergyUnit(MeasurementUnit.forCode(rs.getInt(16)));
-		conf.setEnergyMultiplier(rs.getBigDecimal(17));
-		conf.setEnergyType(EnergyType.forCode(rs.getInt(18)));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(19)));
+		conf.setAudience(OscpRole.forCode(rs.getInt(8)));
+		conf.setNodeId(rs.getLong(9));
+		conf.setSourceId(rs.getString(10));
+		conf.setCategory(AssetCategory.forCode(rs.getInt(11)));
+		conf.setInstantaneousPropertyNames(CommonJdbcUtils.getArray(rs, 12));
+		conf.setInstantaneousUnit(MeasurementUnit.forCode(rs.getInt(13)));
+		conf.setInstantaneousMultiplier(rs.getBigDecimal(14));
+		conf.setInstantaneousPhase(Phase.forCode(rs.getInt(15)));
+		conf.setEnergyPropertyNames(CommonJdbcUtils.getArray(rs, 16));
+		conf.setEnergyUnit(MeasurementUnit.forCode(rs.getInt(17)));
+		conf.setEnergyMultiplier(rs.getBigDecimal(18));
+		conf.setEnergyType(EnergyType.forCode(rs.getInt(19)));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(20)));
 		return conf;
 	}
 

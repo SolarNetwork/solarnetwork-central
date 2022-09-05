@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.domain.MeasurementUnit.KILO_MULTIPLIER;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +33,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.domain.AssetCategory;
+import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 
 /**
@@ -78,7 +84,7 @@ public class OscpJdbcTestUtils {
 	}
 
 	/**
-	 * Create a new instance.
+	 * Create a new capacity optimizer configuration instance.
 	 * 
 	 * @param userId
 	 *        the user ID
@@ -100,6 +106,42 @@ public class OscpJdbcTestUtils {
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 		conf.setToken(randomUUID().toString());
+		return conf;
+	}
+
+	/**
+	 * Create a new asset configuration instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param providerId
+	 *        the capacity provider configuration ID
+	 * @param optimizerId
+	 *        the capacity optimizer configuration ID
+	 * @param created
+	 *        the creation date
+	 * @return the new instance
+	 */
+	public static AssetConfiguration newAssetConfiguration(Long userId, Long providerId,
+			Long optimizerId, Instant created) {
+		AssetConfiguration conf = new AssetConfiguration(
+				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+		conf.setEnabled(true);
+		conf.setName(randomUUID().toString());
+		conf.setCapacityGroupId(randomUUID().getMostSignificantBits());
+		conf.setAudience(OscpRole.CapacityProvider);
+		conf.setNodeId(randomUUID().getMostSignificantBits());
+		conf.setSourceId(randomUUID().toString());
+		conf.setCategory(AssetCategory.Charging);
+		conf.setInstantaneousPropertyNames(new String[] { "watts" });
+		conf.setInstantaneousUnit(MeasurementUnit.kW);
+		conf.setInstantaneousMultiplier(KILO_MULTIPLIER);
+		conf.setInstantaneousPhase(Phase.All);
+		conf.setEnergyPropertyNames(new String[] { "wattHours" });
+		conf.setEnergyUnit(MeasurementUnit.kWh);
+		conf.setEnergyMultiplier(KILO_MULTIPLIER);
+		conf.setEnergyType(EnergyType.Total);
+		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 		return conf;
 	}
 

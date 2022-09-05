@@ -3,6 +3,7 @@ UPDATE solaroscp.oscp_asset_conf SET
 	, enabled = ?
 	, cname = ?
 	, cg_id = ?
+	, audience = ?
 	, node_id = ?
 	, source_id = ?
 	, category = ?
