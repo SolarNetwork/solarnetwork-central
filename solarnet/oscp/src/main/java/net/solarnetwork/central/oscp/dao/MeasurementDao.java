@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.dao;
 
 import java.util.Collection;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.Measurement;
 
 /**
  * API for accessing measurement data for assets.
@@ -33,6 +34,13 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
  */
 public interface MeasurementDao {
 
-	Object findMeasurements(Collection<AssetConfiguration> assets);
+	/**
+	 * Get the measurements for a given asset.
+	 * 
+	 * @param asset
+	 *        the asset to get the measurement for
+	 * @return the measurements
+	 */
+	Collection<Measurement> getMeasurements(AssetConfiguration asset);
 
 }

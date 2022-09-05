@@ -28,6 +28,8 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,9 +43,12 @@ import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
+import net.solarnetwork.central.oscp.domain.Measurement;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
+import oscp.v20.AssetMeasurement;
+import oscp.v20.EnergyMeasurement;
 import oscp.v20.UpdateAssetMeasurement;
 import oscp.v20.UpdateGroupMeasurements;
 
@@ -156,16 +161,15 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 			if ( !assets.isEmpty() ) {
 				// get measurements
-				measurementDao.findMeasurements(assets);
-
 				final boolean useAssetMeasurement = ctx.config().useGroupAssetMeasurement();
 				Object msg;
 				if ( useAssetMeasurement ) {
-					msg = new UpdateAssetMeasurement(group.getIdentifier(), null); // TODO
+					List<AssetMeasurement> measurements = assetMeasurements(assets);
+					msg = new UpdateAssetMeasurement(group.getIdentifier(), measurements);
 				} else {
-					msg = new UpdateGroupMeasurements(group.getIdentifier(), null); // TODO
+					List<EnergyMeasurement> measurements = energyMeasurements(assets);
+					msg = new UpdateGroupMeasurements(group.getIdentifier(), measurements);
 				}
-
 				try {
 					client.systemExchange(ctx, HttpMethod.POST, () -> {
 						ctx.verifySystemOscpVersion(supportedOscpVersions);
@@ -181,6 +185,37 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 			return Instant.now(); // FIXME: will be measurement end time
 		});
+	}
+
+	private List<AssetMeasurement> assetMeasurements(List<AssetConfiguration> assets) {
+		List<AssetMeasurement> result = new ArrayList<>(assets.size());
+		for ( AssetConfiguration asset : assets ) {
+			Collection<Measurement> measurements = measurementDao.getMeasurements(asset);
+			AssetMeasurement measurement = new AssetMeasurement(asset.getIdentifier(),
+					asset.getCategory().toOscp20Value());
+			for ( Measurement meas : measurements ) {
+				if ( meas.isEnergyMeasurement() ) {
+					measurement.setEnergyMeasurement(meas.toOscp20EnergyValue());
+				} else {
+					measurement.setInstantaneousMeasurement(meas.toOscp20InstantaneousValue());
+				}
+			}
+			result.add(measurement);
+		}
+		return result;
+	}
+
+	private List<EnergyMeasurement> energyMeasurements(List<AssetConfiguration> assets) {
+		List<EnergyMeasurement> result = new ArrayList<>(assets.size());
+		for ( AssetConfiguration asset : assets ) {
+			Collection<Measurement> measurements = measurementDao.getMeasurements(asset);
+			for ( Measurement meas : measurements ) {
+				if ( meas.isEnergyMeasurement() ) {
+					result.add(meas.toOscp20EnergyValue());
+				}
+			}
+		}
+		return result;
 	}
 
 }
