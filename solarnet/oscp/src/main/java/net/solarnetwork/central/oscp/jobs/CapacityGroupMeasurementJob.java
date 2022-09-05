@@ -28,13 +28,17 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
+import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
+import net.solarnetwork.central.oscp.dao.MeasurementDao;
+import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -54,6 +58,8 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	private final OscpRole role;
 	private final ExternalSystemConfigurationDao<?> dao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
+	private final AssetConfigurationDao assetDao;
+	private final MeasurementDao measurementDao;
 	private final ExternalSystemClient client;
 	private TransactionTemplate txTemplate;
 
@@ -66,17 +72,24 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	 *        the DAO to use
 	 * @param capacityGroupDao
 	 *        the group DAO
+	 * @param assetDao
+	 *        the asset DAO to use
+	 * @param measurementDao
+	 *        the measurement DAO to use
 	 * @param client
 	 *        the client to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public CapacityGroupMeasurementJob(OscpRole role, ExternalSystemConfigurationDao<?> dao,
-			CapacityGroupConfigurationDao capacityGroupDao, ExternalSystemClient client) {
+			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao,
+			MeasurementDao measurementDao, ExternalSystemClient client) {
 		super();
 		this.role = requireNonNullArgument(role, "role");
 		this.dao = requireNonNullArgument(dao, "dao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
+		this.assetDao = requireNonNullArgument(assetDao, "assetDao");
+		this.measurementDao = requireNonNullArgument(measurementDao, "measurementDao");
 		this.client = requireNonNullArgument(client, "client");
 		setGroupId("OSCP");
 		setId(this.role.toString() + "-CapacityGroupMeasurement");
@@ -137,24 +150,33 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 						"OSCP role [%s] not supported.".formatted(role));
 			};
 
-			final boolean useAssetMeasurement = ctx.config().useGroupAssetMeasurement();
-			Object msg;
-			if ( useAssetMeasurement ) {
-				msg = new UpdateAssetMeasurement(group.getIdentifier(), null); // TODO
-			} else {
-				msg = new UpdateGroupMeasurements(group.getIdentifier(), null); // TODO
-			}
+			List<AssetConfiguration> assets = assetDao
+					.findAllForCapacityGroup(group.getUserId(), group.getEntityId(), null).stream()
+					.filter(e -> role == e.getAudience()).toList();
 
-			try {
-				client.systemExchange(ctx, HttpMethod.POST, () -> {
-					ctx.verifySystemOscpVersion(supportedOscpVersions);
-					if ( useAssetMeasurement ) {
-						return UPDATE_ASSET_MEASUREMENTS_URL_PATH;
-					}
-					return UPDATE_GROUP_MEASUREMENTS_URL_PATH;
-				}, msg);
-			} catch ( RestClientException | ExternalSystemConfigurationException e ) {
-				// ignore and continue; assume event logged in client.systemExchange()
+			if ( !assets.isEmpty() ) {
+				// get measurements
+				measurementDao.findMeasurements(assets);
+
+				final boolean useAssetMeasurement = ctx.config().useGroupAssetMeasurement();
+				Object msg;
+				if ( useAssetMeasurement ) {
+					msg = new UpdateAssetMeasurement(group.getIdentifier(), null); // TODO
+				} else {
+					msg = new UpdateGroupMeasurements(group.getIdentifier(), null); // TODO
+				}
+
+				try {
+					client.systemExchange(ctx, HttpMethod.POST, () -> {
+						ctx.verifySystemOscpVersion(supportedOscpVersions);
+						if ( useAssetMeasurement ) {
+							return UPDATE_ASSET_MEASUREMENTS_URL_PATH;
+						}
+						return UPDATE_GROUP_MEASUREMENTS_URL_PATH;
+					}, msg);
+				} catch ( RestClientException | ExternalSystemConfigurationException e ) {
+					// ignore and continue; assume event logged in client.systemExchange()
+				}
 			}
 
 			return Instant.now(); // FIXME: will be measurement end time
