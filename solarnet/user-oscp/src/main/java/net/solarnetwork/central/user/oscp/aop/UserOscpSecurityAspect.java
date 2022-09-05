@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
+import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
 
 /**
  * Security enforcing AOP aspect for {@link UserOscpBiz}.
@@ -81,6 +82,32 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match methods like {@code create*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param input
+	 *        the asset configuration input
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.createAsset(..)) && args(userId,input)")
+	public void createAssetConfiguration(Long userId, AssetConfigurationInput input) {
+	}
+
+	/**
+	 * Match methods like {@code update*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param assetId
+	 *        the asset ID
+	 * @param input
+	 *        the asset configuration input
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.oscp.biz.UserOscpBiz.updateAsset(..)) && args(userId,assetId,input)")
+	public void updateAssetConfiguration(Long userId, Long assetId, AssetConfigurationInput input) {
+	}
+
+	/**
 	 * Match methods like {@code delete*(userId, ...)}.
 	 * 
 	 * @param userId
@@ -98,6 +125,20 @@ public class UserOscpSecurityAspect extends AuthorizationSupport {
 	@Before("createUserRelatedEntity(userId) || updateUserRelatedEntity(userId) || deleteUserRelatedEntity(userId)")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
+	}
+
+	@Before("createAssetConfiguration(userId,input)")
+	public void createAssetNodeIdCheck(Long userId, AssetConfigurationInput input) {
+		if ( input != null && input.getNodeId() != null ) {
+			requireNodeReadAccess(input.getNodeId());
+		}
+	}
+
+	@Before("updateAssetConfiguration(userId,assetId,input)")
+	public void updateAssetNodeIdCheck(Long userId, Long assetId, AssetConfigurationInput input) {
+		if ( input != null && input.getNodeId() != null ) {
+			requireNodeReadAccess(input.getNodeId());
+		}
 	}
 
 }
