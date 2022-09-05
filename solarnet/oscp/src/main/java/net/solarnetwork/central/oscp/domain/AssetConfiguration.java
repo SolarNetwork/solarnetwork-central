@@ -61,10 +61,10 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if the {code id} argument is {@literal null}
 	 */
 	public AssetConfiguration(UserLongCompositePK id, Instant created) {
-		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		super(requireNonNullArgument(id, "id"), created);
 	}
 
 	/**

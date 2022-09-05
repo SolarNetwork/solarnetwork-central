@@ -26,7 +26,6 @@ import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -35,6 +34,7 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
@@ -49,6 +49,13 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	private Long capacityGroupId;
 
 	@NotNull
+	@NotBlank
+	private String identifier;
+
+	@NotNull
+	private OscpRole audience;
+
+	@NotNull
 	private Long nodeId;
 
 	@NotNull
@@ -59,30 +66,20 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	@NotNull
 	private AssetCategory category;
 
-	@NotNull
-	@NotEmpty
 	private String[] instantaneousPropertyNames;
 
-	@NotNull
 	private MeasurementUnit instantaneousUnit;
 
-	@NotNull
 	private BigDecimal instantaneousMultiplier;
 
-	@NotNull
 	private Phase instantaneousPhase;
 
-	@NotNull
-	@NotEmpty
 	private String[] energyPropertyNames;
 
-	@NotNull
 	private MeasurementUnit energyUnit;
 
-	@NotNull
 	private BigDecimal energyMultiplier;
 
-	@NotNull
 	private EnergyType energyType;
 
 	@Override
@@ -96,6 +93,8 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	protected void populateConfiguration(AssetConfiguration conf) {
 		super.populateConfiguration(conf);
 		conf.setCapacityGroupId(capacityGroupId);
+		conf.setIdentifier(identifier);
+		conf.setAudience(audience);
 		conf.setNodeId(nodeId);
 		conf.setSourceId(sourceId);
 		conf.setCategory(category);
@@ -127,6 +126,54 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	 */
 	public void setCapacityGroupId(Long capacityGroupId) {
 		this.capacityGroupId = capacityGroupId;
+	}
+
+	/**
+	 * Get an identifier.
+	 * 
+	 * @return the identifier
+	 */
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	/**
+	 * Set an identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
+	}
+
+	/**
+	 * Get the audience.
+	 * 
+	 * @return the audience
+	 */
+	public OscpRole getAudience() {
+		return audience;
+	}
+
+	/**
+	 * Set the audience.
+	 * 
+	 * @param audience
+	 *        the audience to set
+	 * @throws IllegalArgumentException
+	 *         if {@code audience} is {@literal null} or not supported
+	 */
+	public void setAudience(OscpRole audience) {
+		switch (requireNonNullArgument(audience, "audience")) {
+			case CapacityProvider:
+			case CapacityOptimizer:
+				this.audience = audience;
+				break;
+
+			default:
+				throw new IllegalArgumentException("Audience [%s] not supported.".formatted(audience));
+		}
 	}
 
 	/**

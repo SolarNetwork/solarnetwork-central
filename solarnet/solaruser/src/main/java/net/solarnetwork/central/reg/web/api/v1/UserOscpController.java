@@ -34,7 +34,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import java.net.URI;
 import java.util.Collection;
 import javax.validation.Valid;
-import javax.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -301,7 +300,7 @@ public class UserOscpController {
 	 */
 	@RequestMapping(method = GET, value = "/capacity-groups/{groupId}/assets")
 	public Result<Collection<AssetConfiguration>> availableCapacityGroupAssets(
-			@PathParam("groupId") Long groupId) {
+			@PathVariable("groupId") Long groupId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<AssetConfiguration> list = userOscpBiz().assetsForUserCapacityGroup(userId, groupId);
 		return success(list);

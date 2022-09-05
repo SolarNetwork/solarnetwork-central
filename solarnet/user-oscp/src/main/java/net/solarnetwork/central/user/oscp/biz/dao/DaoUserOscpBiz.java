@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.oscp.biz.dao;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.function.Function;
 import org.springframework.transaction.annotation.Propagation;
@@ -129,14 +130,14 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityProvider(Long userId, Long entityId) {
-		capacityProviderDao.delete(new CapacityProviderConfiguration(userId, entityId, null));
+		capacityProviderDao.delete(new CapacityProviderConfiguration(userId, entityId, Instant.now()));
 		deleteOauthClientSecret(OscpRole.CapacityProvider, userId, entityId);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityOptimizer(Long userId, Long entityId) {
-		capacityOptimizerDao.delete(new CapacityOptimizerConfiguration(userId, entityId, null));
+		capacityOptimizerDao.delete(new CapacityOptimizerConfiguration(userId, entityId, Instant.now()));
 		deleteOauthClientSecret(OscpRole.CapacityOptimizer, userId, entityId);
 	}
 
@@ -151,13 +152,13 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityGroup(Long userId, Long entityId) {
-		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, null));
+		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, Instant.now()));
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteAsset(Long userId, Long entityId) {
-		assetDao.delete(new AssetConfiguration(userId, entityId, null));
+		assetDao.delete(new AssetConfiguration(userId, entityId, Instant.now()));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
