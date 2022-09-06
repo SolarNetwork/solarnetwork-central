@@ -32,13 +32,10 @@ import java.util.Collections;
 import java.util.List;
 import org.springframework.dao.TransientDataAccessResourceException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumReading;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
-import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
@@ -47,7 +44,7 @@ import net.solarnetwork.central.oscp.domain.Measurement;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.DatumProperties;
-import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -127,25 +124,21 @@ public class DefaultMeasurementDao implements MeasurementDao {
 					if ( idx < 0 ) {
 						continue;
 					}
-					/*-
-					BigDecimal v = stats.instantaneousValue(idx);
-					if (v == null ) {
+					// TODO: need to configure if want avg/min/max; for now assume MAX
+					// TODO: need max measure time?
+					BigDecimal v = stats.getInstantaneousMaximum(idx);
+					if ( v == null ) {
 						continue;
 					}
 					if ( asset.getInstantaneousMultiplier() != null ) {
 						v = v.multiply(asset.getInstantaneousMultiplier());
 					}
-					// TODO: need to configure if want avg/min/max; for now assume MAX
-					Measurement m = Measurement.instantaneousMeasurement(v, asset.getInstantaneousPhase(), 
-					asset.getInstantaneousUnit(), null);
-					*/
+					Measurement m = Measurement.instantaneousMeasurement(v,
+							asset.getInstantaneousPhase(), asset.getInstantaneousUnit(),
+							d.getEndTimestamp());
+					result.add(m);
 				}
 			}
-
-			ReportingGeneralNodeDatumReading reading = (ReportingGeneralNodeDatumReading) DatumUtils
-					.toGeneralNodeDatum(d, meta);
-			DatumSamples samples = reading.getSamples();
-			DatumPropertiesStatistics stats = d.getStatistics();
 			return result;
 		}
 		return Collections.emptyList();
