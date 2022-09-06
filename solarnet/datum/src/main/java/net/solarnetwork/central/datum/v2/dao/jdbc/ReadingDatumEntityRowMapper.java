@@ -31,10 +31,10 @@ import java.sql.Timestamp;
 import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
 /**
  * Map reading datum rows into {@link ReadingDatum} instances.
@@ -56,7 +56,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class ReadingDatumEntityRowMapper implements RowMapper<ReadingDatum> {

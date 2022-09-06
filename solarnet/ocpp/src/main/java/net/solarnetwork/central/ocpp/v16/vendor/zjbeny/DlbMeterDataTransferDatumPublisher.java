@@ -42,6 +42,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
 import ocpp.v16.cs.DataTransferRequest;
 import ocpp.v16.cs.DataTransferResponse;
@@ -59,7 +60,7 @@ import ocpp.v16.cs.DataTransferStatus;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -223,7 +224,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
 	private static Number ampValue(String value) {
 		Matcher m = AMP_VALUE.matcher(value);
-		return (m.matches() ? StringUtils.numberValue(m.group(1)) : null);
+		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
 	}
 
 	private static String phased(String key, String phase) {

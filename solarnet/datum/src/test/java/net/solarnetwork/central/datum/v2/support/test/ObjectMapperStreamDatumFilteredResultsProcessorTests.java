@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.support.test;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
 import static net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet.dataSet;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
