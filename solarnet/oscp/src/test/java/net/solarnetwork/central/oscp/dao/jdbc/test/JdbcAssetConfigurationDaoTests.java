@@ -25,7 +25,6 @@ package net.solarnetwork.central.oscp.dao.jdbc.test;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allAssetConfigurationData;
-import static net.solarnetwork.central.oscp.domain.MeasurementUnit.KILO_MULTIPLIER;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -36,6 +35,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -55,13 +55,16 @@ import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationD
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetInstantaneousDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
-import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
+import net.solarnetwork.central.oscp.domain.StatisticType;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
@@ -100,41 +103,6 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				.getEntityId();
 	}
 
-	/**
-	 * Create a new instance.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param created
-	 *        the creation date
-	 * @param capacityGroupId
-	 *        the group ID
-	 * @return the instance
-	 */
-	public static AssetConfiguration newConf(Long userId, Instant created, Long capacitGroupId) {
-		AssetConfiguration conf = new AssetConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
-		conf.setModified(created);
-		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setCapacityGroupId(capacitGroupId);
-		conf.setIdentifier(randomUUID().toString());
-		conf.setAudience(OscpRole.CapacityProvider);
-		conf.setNodeId(randomUUID().getMostSignificantBits());
-		conf.setSourceId(randomUUID().toString());
-		conf.setCategory(AssetCategory.Charging);
-		conf.setInstantaneousPropertyNames(new String[] { randomUUID().toString() });
-		conf.setInstantaneousUnit(MeasurementUnit.kW);
-		conf.setInstantaneousMultiplier(KILO_MULTIPLIER);
-		conf.setInstantaneousPhase(Phase.All);
-		conf.setEnergyPropertyNames(new String[] { randomUUID().toString() });
-		conf.setEnergyUnit(MeasurementUnit.kWh);
-		conf.setEnergyMultiplier(KILO_MULTIPLIER);
-		conf.setEnergyType(EnergyType.Total);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		return conf;
-	}
-
 	@Test
 	public void insert() {
 		// GIVEN
@@ -145,7 +113,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		lastGroup = capacityGroupDao.get(
 				capacityGroupDao.create(userId, JdbcCapacityGroupConfigurationDaoTests.newConf(userId,
 						Instant.now(), lastProvider.getEntityId(), lastOptimzer.getEntityId())));
-		AssetConfiguration conf = newConf(userId, Instant.now(), lastGroup.getEntityId());
+		AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
+				lastGroup.getEntityId(), Instant.now());
 
 		// WHEN
 		UserLongCompositePK result = dao.create(userId, conf);
@@ -211,14 +180,21 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		conf.setNodeId(randomUUID().getMostSignificantBits());
 		conf.setSourceId(randomUUID().toString());
 		conf.setCategory(AssetCategory.Charging);
-		conf.setInstantaneousPropertyNames(new String[] { randomUUID().toString() });
-		conf.setInstantaneousUnit(MeasurementUnit.kW);
-		conf.setInstantaneousMultiplier(KILO_MULTIPLIER);
-		conf.setInstantaneousPhase(Phase.All);
-		conf.setEnergyPropertyNames(new String[] { randomUUID().toString() });
-		conf.setEnergyUnit(MeasurementUnit.kWh);
-		conf.setEnergyMultiplier(KILO_MULTIPLIER);
-		conf.setEnergyType(EnergyType.Total);
+		conf.setPhase(Phase.All);
+
+		AssetInstantaneousDatumConfiguration inst = conf.getInstantaneous();
+		inst.setPropertyNames(new String[] { randomUUID().toString() });
+		inst.setStatisticType(StatisticType.Average);
+		inst.setUnit(MeasurementUnit.W);
+		inst.setMultiplier(BigDecimal.ONE);
+
+		AssetEnergyDatumConfiguration energy = conf.getEnergy();
+		energy.setPropertyNames(new String[] { randomUUID().toString() });
+		energy.setUnit(MeasurementUnit.Wh);
+		energy.setMultiplier(BigDecimal.ONE);
+		energy.setType(EnergyType.Total);
+		energy.setDirection(EnergyDirection.Export);
+
 		conf.setServiceProps(Collections.singletonMap("bim", randomUUID().toString()));
 
 		UserLongCompositePK result = dao.save(conf);
@@ -228,6 +204,7 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		List<Map<String, Object>> data = allAssetConfigurationData(jdbcTemplate);
 		assertThat("Table has 1 row", data, hasSize(1));
 		assertThat("Retrieved entity matches updated source", updated, is(equalTo(conf)));
+		assertThat("Entity saved updated values", conf.isSameAs(updated), is(equalTo(true)));
 	}
 
 	@Test
@@ -280,7 +257,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					userId = userIds.get(u);
 					flexibilityProviderId = flexibilityProviderIds.get(u);
 				}
-				AssetConfiguration conf = newConf(userId, t, userGroups.get(userId).getEntityId());
+				AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
+						userGroups.get(userId).getEntityId(), t);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -332,7 +310,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				} else {
 					userId = userIds.get(u);
 				}
-				AssetConfiguration conf = newConf(userId, t, userGroups.get(userId).getEntityId());
+				AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
+						userGroups.get(userId).getEntityId(), t);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);

@@ -29,10 +29,14 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetInstantaneousDatumConfiguration;
+import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
+import net.solarnetwork.central.oscp.domain.StatisticType;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
@@ -55,14 +59,17 @@ import net.solarnetwork.codec.JsonUtils;
  * <li>node_id (BIGINT)</li>
  * <li>source_id (TEXT)</li>
  * <li>category (SMALLINT)</li>
+ * <li>phase (SMALLINT)</li>
  * <li>iprops (TEXT[])</li>
+ * <li>iprops_stat (SMALLINT)</li>
  * <li>iprops_unit (SMALLINT)</li>
  * <li>iprops_mult (DECIMAL)</li>
- * <li>iprops_phase (SMALLINT)</li>
  * <li>eprops (TEXT[])</li>
+ * <li>eprops_stat (SMALLINT)</li>
  * <li>eprops_unit (SMALLINT)</li>
  * <li>eprops_mult (DECIMAL)</li>
  * <li>etype (SMALLINT)</li>
+ * <li>edir (SMALLINT)</li>
  * <li>sprops (TEXT)</li>
  * </ol>
  * 
@@ -89,15 +96,50 @@ public class AssetConfigurationRowMapper implements RowMapper<AssetConfiguration
 		conf.setNodeId(rs.getLong(10));
 		conf.setSourceId(rs.getString(11));
 		conf.setCategory(AssetCategory.forCode(rs.getInt(12)));
-		conf.setInstantaneousPropertyNames(CommonJdbcUtils.getArray(rs, 13));
-		conf.setInstantaneousUnit(MeasurementUnit.forCode(rs.getInt(14)));
-		conf.setInstantaneousMultiplier(rs.getBigDecimal(15));
-		conf.setInstantaneousPhase(Phase.forCode(rs.getInt(16)));
-		conf.setEnergyPropertyNames(CommonJdbcUtils.getArray(rs, 17));
-		conf.setEnergyUnit(MeasurementUnit.forCode(rs.getInt(18)));
-		conf.setEnergyMultiplier(rs.getBigDecimal(19));
-		conf.setEnergyType(EnergyType.forCode(rs.getInt(20)));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(21)));
+		conf.setPhase(Phase.forCode(rs.getInt(13)));
+
+		AssetInstantaneousDatumConfiguration inst = new AssetInstantaneousDatumConfiguration();
+		inst.setPropertyNames(CommonJdbcUtils.getArray(rs, 14));
+		int c = rs.getInt(15);
+		if ( !rs.wasNull() ) {
+			inst.setStatisticType(StatisticType.forCode(c));
+		}
+		c = rs.getInt(16);
+		if ( !rs.wasNull() ) {
+			inst.setUnit(MeasurementUnit.forCode(c));
+		}
+		inst.setMultiplier(rs.getBigDecimal(17));
+		if ( inst.getPropertyNames() != null ) {
+			conf.setInstantaneous(inst);
+		}
+
+		AssetEnergyDatumConfiguration energy = new AssetEnergyDatumConfiguration();
+		energy.setPropertyNames(CommonJdbcUtils.getArray(rs, 18));
+		c = rs.getInt(19);
+		if ( !rs.wasNull() ) {
+			energy.setStatisticType(StatisticType.forCode(c));
+		}
+		c = rs.getInt(20);
+		if ( !rs.wasNull() ) {
+			energy.setUnit(MeasurementUnit.forCode(c));
+		}
+		energy.setMultiplier(rs.getBigDecimal(21));
+		if ( energy.getPropertyNames() != null ) {
+			conf.setInstantaneous(inst);
+		}
+		c = rs.getInt(22);
+		if ( !rs.wasNull() ) {
+			energy.setType(EnergyType.forCode(c));
+		}
+		c = rs.getInt(23);
+		if ( !rs.wasNull() ) {
+			energy.setDirection(EnergyDirection.forCode(c));
+		}
+		if ( energy.getPropertyNames() != null ) {
+			conf.setEnergy(energy);
+		}
+
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(24)));
 		return conf;
 	}
 

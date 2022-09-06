@@ -104,14 +104,17 @@ public class UpdateAssetConfigurationTests {
 		then(result).should().setObject(++p, conf.getNodeId());
 		then(result).should().setString(++p, conf.getSourceId());
 		then(result).should().setInt(++p, conf.getCategory().getCode());
+		then(result).should().setInt(++p, conf.getPhase().getCode());
 		then(result).should().setArray(++p, iPropNamesArray);
-		then(result).should().setInt(++p, conf.getInstantaneousUnit().getCode());
-		then(result).should().setBigDecimal(++p, conf.getInstantaneousMultiplier());
-		then(result).should().setInt(++p, conf.getInstantaneousPhase().getCode());
+		then(result).should().setInt(++p, conf.getInstantaneous().getStatisticType().getCode());
+		then(result).should().setInt(++p, conf.getInstantaneous().getUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getInstantaneous().getMultiplier());
 		then(result).should().setArray(++p, ePropNamesArray);
-		then(result).should().setInt(++p, conf.getEnergyUnit().getCode());
-		then(result).should().setBigDecimal(++p, conf.getEnergyMultiplier());
-		then(result).should().setInt(++p, conf.getEnergyType().getCode());
+		then(result).should().setInt(++p, conf.getEnergy().getStatisticType().getCode());
+		then(result).should().setInt(++p, conf.getEnergy().getUnit().getCode());
+		then(result).should().setBigDecimal(++p, conf.getEnergy().getMultiplier());
+		then(result).should().setInt(++p, conf.getEnergy().getType().getCode());
+		then(result).should().setInt(++p, conf.getEnergy().getDirection().getCode());
 		if ( conf.getServiceProps() != null ) {
 			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {
@@ -127,7 +130,7 @@ public class UpdateAssetConfigurationTests {
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
 		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), Instant.now());
+				Instant.now());
 		conf.setModified(Instant.now());
 
 		// WHEN
@@ -145,13 +148,13 @@ public class UpdateAssetConfigurationTests {
 		Long userId = randomUUID().getMostSignificantBits();
 		UserLongCompositePK id = new UserLongCompositePK(userId, randomUUID().getMostSignificantBits());
 		AssetConfiguration conf = newAssetConfiguration(userId, randomUUID().getMostSignificantBits(),
-				randomUUID().getMostSignificantBits(), Instant.now()).copyWithId(id);
+				Instant.now()).copyWithId(id);
 		conf.setModified(Instant.now());
 
 		// GIVEN
 		givenPrepStatement();
-		givenSetInstantaneousPropNamesArrayParameter(conf.getInstantaneousPropertyNames());
-		givenSetEnergyPropNamesArrayParameter(conf.getEnergyPropertyNames());
+		givenSetInstantaneousPropNamesArrayParameter(conf.getInstantaneous().getPropertyNames());
+		givenSetEnergyPropNamesArrayParameter(conf.getEnergy().getPropertyNames());
 
 		// WHEN
 		PreparedStatement result = new UpdateAssetConfiguration(id, conf).createPreparedStatement(con);

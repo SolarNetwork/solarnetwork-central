@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * Base OSCP configuration entity.
@@ -47,7 +49,7 @@ import net.solarnetwork.dao.Entity;
 public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfigurationEntity<C>>
 		extends BasicEntity<UserLongCompositePK>
 		implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
-		CopyingIdentity<UserLongCompositePK, C>, Serializable, Cloneable {
+		CopyingIdentity<UserLongCompositePK, C>, Differentiable<C>, Serializable, Cloneable {
 
 	private static final long serialVersionUID = -4040376195754476954L;
 
@@ -100,6 +102,32 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 		if ( serviceProps != null ) {
 			entity.setServiceProps(new LinkedHashMap<>(serviceProps));
 		}
+	}
+
+	/**
+	 * Test if this entity has the same property values as another.
+	 * 
+	 * <p>
+	 * The {@code id}, {@code created}, and {@code modified} properties are not
+	 * compared.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the entity to compare to
+	 * @return {@literal true} if the properties of this entity are equal to the
+	 *         other's
+	 */
+	public boolean isSameAs(C other) {
+		// @formatter:off
+		return (this.enabled == other.isEnabled() 
+				&& Objects.equals(this.name, other.getName())
+				&& Objects.equals(serviceProps, other.getServiceProps()));
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(C other) {
+		return !isSameAs(other);
 	}
 
 	/**

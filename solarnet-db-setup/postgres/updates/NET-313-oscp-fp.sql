@@ -255,14 +255,17 @@ CREATE TABLE solaroscp.oscp_asset_conf (
 	node_id			BIGINT NOT NULL,
 	source_id		CHARACTER VARYING(64) NOT NULL,
 	category		SMALLINT NOT NULL,		-- asset category
+	phase			SMALLINT,				-- phase
 	iprops          TEXT[],					-- instantaneous measurement datum property names
+	iprops_stat		SMALLINT,				-- instantaneous measurement datum property statistic type
 	iprops_unit		SMALLINT,				-- instantaneous measurement datum property unit enum
 	iprops_mult		DECIMAL,				-- instantaneous measurement multiplication factor
-	iprops_phase	SMALLINT,				-- instantaneous phase
+	etype			SMALLINT,				-- energy type
+	edir			SMALLINT,				-- energy direction
 	eprops          TEXT[],					-- energy measurement datum property names
+	eprops_stat		SMALLINT,				-- energy measurement datum property statistic type
 	eprops_unit		SMALLINT,				-- energy measurement datum property unit enum
 	eprops_mult		DECIMAL,				-- energy measurement multiplication factor
-	etype			SMALLINT,				-- energy type
 	sprops			JSONB,
 	CONSTRAINT oscp_asset_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_asset_conf_cg_fk FOREIGN KEY (user_id, cg_id)

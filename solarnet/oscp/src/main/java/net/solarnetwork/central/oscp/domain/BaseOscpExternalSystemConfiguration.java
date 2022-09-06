@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.util.StringUtils;
@@ -96,6 +97,24 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 		entity.setToken(token);
 		entity.setSettings(settings);
 		entity.setHeartbeatDate(heartbeatDate);
+	}
+
+	@Override
+	public boolean isSameAs(C other) {
+		boolean result = super.isSameAs(other);
+		if ( !result ) {
+			return false;
+		}
+		// @formatter:off
+		return (Objects.equals(this.token, other.getToken()) 
+				&& Objects.equals(this.baseUrl, other.getBaseUrl())
+				&& Objects.equals(this.oscpVersion, other.getOscpVersion())
+				&& Objects.equals(this.flexibilityProviderId, other.getFlexibilityProviderId())
+				&& Objects.equals(this.registrationStatus, other.getRegistrationStatus())
+				&& Objects.equals(this.settings, other.getSettings())
+				&& Objects.equals(this.heartbeatDate, other.getHeartbeatDate())
+				&& Objects.equals(this.offlineDate, other.getOfflineDate()));
+		// @formatter:on
 	}
 
 	@Override

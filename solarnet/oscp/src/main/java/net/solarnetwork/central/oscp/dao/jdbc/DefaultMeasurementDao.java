@@ -38,10 +38,9 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
-import net.solarnetwork.central.oscp.domain.EnergyDirection;
-import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
+import net.solarnetwork.central.oscp.domain.AssetInstantaneousDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.Measurement;
-import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
@@ -96,9 +95,10 @@ public class DefaultMeasurementDao implements MeasurementDao {
 			List<Measurement> result = new ArrayList<>(2);
 			ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
 					.metadataForStreamId(d.getStreamId());
-			if ( asset.getEnergyType() != null && asset.getEnergyPropertyNames() != null ) {
+			if ( asset.getEnergy() != null && asset.getEnergy().getPropertyNames() != null ) {
+				AssetEnergyDatumConfiguration energy = asset.getEnergy();
 				DatumProperties props = d.getProperties();
-				for ( String propName : asset.getEnergyPropertyNames() ) {
+				for ( String propName : energy.getPropertyNames() ) {
 					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
 					if ( idx < 0 ) {
 						continue;
@@ -107,35 +107,40 @@ public class DefaultMeasurementDao implements MeasurementDao {
 					if ( v == null ) {
 						continue;
 					}
-					if ( asset.getEnergyMultiplier() != null ) {
-						v = v.multiply(asset.getEnergyMultiplier());
+					if ( energy.getMultiplier() != null ) {
+						v = v.multiply(energy.getMultiplier());
 					}
-					// TODO: the Phase, EnergyType, and EnergyDirection need to be defined on AssetConfiguration
-					Measurement m = Measurement.energyMeasurement(v, Phase.All, asset.getEnergyUnit(),
-							d.getEndTimestamp(), EnergyType.Total, EnergyDirection.Import,
+					var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
+							d.getEndTimestamp(), energy.getType(), energy.getDirection(),
 							d.getTimestamp());
 					result.add(m);
 				}
 			}
-			if ( asset.getInstantaneousPropertyNames() != null ) {
+			if ( asset.getInstantaneous() != null
+					&& asset.getInstantaneous().getPropertyNames() != null ) {
+				AssetInstantaneousDatumConfiguration inst = asset.getInstantaneous();
+				DatumProperties props = d.getProperties();
 				DatumPropertiesStatistics stats = d.getStatistics();
-				for ( String propName : asset.getInstantaneousPropertyNames() ) {
-					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
+				for ( String propName : inst.getPropertyNames() ) {
+					int idx = meta.propertyIndex(DatumSamplesType.Instantaneous, propName);
 					if ( idx < 0 ) {
 						continue;
 					}
-					// TODO: need to configure if want avg/min/max; for now assume MAX
-					// TODO: need max measure time?
-					BigDecimal v = stats.getInstantaneousMaximum(idx);
+
+					BigDecimal v = switch (inst.statisticType()) {
+						case Maximum -> stats.getInstantaneousMaximum(idx);
+						case Minimum -> stats.getInstantaneousMinimum(idx);
+						case Count -> stats.getInstantaneousCount(idx);
+						default -> props.instantaneousValue(idx);
+					};
 					if ( v == null ) {
 						continue;
 					}
-					if ( asset.getInstantaneousMultiplier() != null ) {
-						v = v.multiply(asset.getInstantaneousMultiplier());
+					if ( inst.getMultiplier() != null ) {
+						v = v.multiply(inst.getMultiplier());
 					}
-					Measurement m = Measurement.instantaneousMeasurement(v,
-							asset.getInstantaneousPhase(), asset.getInstantaneousUnit(),
-							d.getEndTimestamp());
+					Measurement m = Measurement.instantaneousMeasurement(v, asset.getPhase(),
+							inst.getUnit(), d.getEndTimestamp());
 					result.add(m);
 				}
 			}

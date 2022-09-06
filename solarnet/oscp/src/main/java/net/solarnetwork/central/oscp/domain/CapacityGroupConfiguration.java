@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
+import java.util.Objects;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -93,6 +94,25 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 		entity.setCapacityOptimizerMeasurementPeriod(capacityOptimizerMeasurementPeriod);
 		entity.setCapacityProviderId(capacityProviderId);
 		entity.setCapacityOptimizerId(capacityOptimizerId);
+		entity.setCapacityProviderMeasurementDate(capacityProviderMeasurementDate);
+		entity.setCapacityOptimizerMeasurementDate(capacityOptimizerMeasurementDate);
+	}
+
+	@Override
+	public boolean isSameAs(CapacityGroupConfiguration other) {
+		boolean result = super.isSameAs(other);
+		if ( !result ) {
+			return false;
+		}
+		// @formatter:off
+		return (Objects.equals(this.identifier, other.identifier) 
+				&& Objects.equals(this.capacityProviderMeasurementPeriod, other.capacityProviderMeasurementPeriod)
+				&& Objects.equals(this.capacityOptimizerMeasurementPeriod, other.capacityOptimizerMeasurementPeriod)
+				&& Objects.equals(this.capacityProviderId, other.capacityProviderId)
+				&& Objects.equals(this.capacityOptimizerId, other.capacityOptimizerId)
+				&& Objects.equals(this.capacityProviderMeasurementDate, other.capacityProviderMeasurementDate)
+				&& Objects.equals(this.capacityOptimizerMeasurementDate, other.capacityOptimizerMeasurementDate));
+		// @formatter:on
 	}
 
 	/**

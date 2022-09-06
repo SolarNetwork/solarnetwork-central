@@ -24,7 +24,7 @@ package net.solarnetwork.central.user.oscp.domain;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.math.BigDecimal;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -32,8 +32,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-import net.solarnetwork.central.oscp.domain.EnergyType;
-import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 
@@ -66,21 +64,14 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	@NotNull
 	private AssetCategory category;
 
-	private String[] instantaneousPropertyNames;
+	@NotNull
+	private Phase phase;
 
-	private MeasurementUnit instantaneousUnit;
+	@Valid
+	private AssetInstantaneousDatumConfigurationInput instantaneous;
 
-	private BigDecimal instantaneousMultiplier;
-
-	private Phase instantaneousPhase;
-
-	private String[] energyPropertyNames;
-
-	private MeasurementUnit energyUnit;
-
-	private BigDecimal energyMultiplier;
-
-	private EnergyType energyType;
+	@Valid
+	private AssetEnergyDatumConfigurationInput energy;
 
 	@Override
 	public AssetConfiguration toEntity(UserLongCompositePK id) {
@@ -98,14 +89,13 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 		conf.setNodeId(nodeId);
 		conf.setSourceId(sourceId);
 		conf.setCategory(category);
-		conf.setInstantaneousPropertyNames(instantaneousPropertyNames);
-		conf.setInstantaneousUnit(instantaneousUnit);
-		conf.setInstantaneousMultiplier(instantaneousMultiplier);
-		conf.setInstantaneousPhase(instantaneousPhase);
-		conf.setEnergyPropertyNames(energyPropertyNames);
-		conf.setEnergyUnit(energyUnit);
-		conf.setEnergyMultiplier(energyMultiplier);
-		conf.setEnergyType(energyType);
+		conf.setPhase(phase);
+		if ( instantaneous != null ) {
+			conf.setInstantaneous(instantaneous.toEntity());
+		}
+		if ( energy != null ) {
+			conf.setEnergy(energy.toEntity());
+		}
 	}
 
 	/**
@@ -234,159 +224,60 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 	}
 
 	/**
-	 * Get the instantaneous datum stream property names.
+	 * Get the phase.
 	 * 
-	 * @return the property names
+	 * @return the phase
 	 */
-	public String[] getInstantaneousPropertyNames() {
-		return instantaneousPropertyNames;
+	public Phase getPhase() {
+		return phase;
 	}
 
 	/**
-	 * Set the instantaneous datum stream property names.
+	 * Set the phase.
 	 * 
-	 * @param instantaneousPropertyNames
-	 *        the property names to set
-	 */
-	public void setInstantaneousPropertyNames(String[] instantaneousPropertyNames) {
-		this.instantaneousPropertyNames = instantaneousPropertyNames;
-	}
-
-	/**
-	 * Get the instantaneous unit.
-	 * 
-	 * @return the unit
-	 */
-	public MeasurementUnit getInstantaneousUnit() {
-		return instantaneousUnit;
-	}
-
-	/**
-	 * Set the instantaneous unit.
-	 * 
-	 * @param instantaneousUnit
-	 *        the unit to set
-	 */
-	public void setInstantaneousUnit(MeasurementUnit instantaneousUnit) {
-		this.instantaneousUnit = instantaneousUnit;
-	}
-
-	/**
-	 * Get the instantaneous datum stream property value multiplier.
-	 * 
-	 * @return the multiplier to convert instantaneous property values into
-	 *         {@code instantaneousUnit}, or {@literal null} for no conversion
-	 */
-	public BigDecimal getInstantaneousMultiplier() {
-		return instantaneousMultiplier;
-	}
-
-	/**
-	 * Set the instantaneous datum stream property value multiplier.
-	 * 
-	 * @param instantaneousMultiplier
-	 *        the multiplier to convert instantaneous property values into
-	 *        {@code instantaneousUnit}, or {@literal null} for no conversion
-	 */
-	public void setInstantaneousMultiplier(BigDecimal instantaneousMultiplier) {
-		this.instantaneousMultiplier = instantaneousMultiplier;
-	}
-
-	/**
-	 * Get the instantaneous phase.
-	 * 
-	 * @return the instantaneous phase
-	 */
-	public Phase getInstantaneousPhase() {
-		return instantaneousPhase;
-	}
-
-	/**
-	 * Set the instantaneous phase.
-	 * 
-	 * @param instantaneousPhase
+	 * @param phase
 	 *        the phase to set
 	 */
-	public void setInstantaneousPhase(Phase instantaneousPhase) {
-		this.instantaneousPhase = instantaneousPhase;
+	public void setPhase(Phase instantaneousPhase) {
+		this.phase = instantaneousPhase;
 	}
 
 	/**
-	 * Get the instantaneous datum stream property names.
+	 * Get the instantaneous configuration.
 	 * 
-	 * @return the property names
+	 * @return the configuration
 	 */
-	public String[] getEnergyPropertyNames() {
-		return energyPropertyNames;
+	public AssetInstantaneousDatumConfigurationInput getInstantaneous() {
+		return instantaneous;
 	}
 
 	/**
-	 * Set the instantaneous datum stream property names.
+	 * Set the instantaneous configuration
 	 * 
-	 * @param energyPropertyNames
-	 *        the property names to set
+	 * @param instantaneous
+	 *        the configuration to set
 	 */
-	public void setEnergyPropertyNames(String[] energyPropertyNames) {
-		this.energyPropertyNames = energyPropertyNames;
+	public void setInstantaneous(AssetInstantaneousDatumConfigurationInput instantaneous) {
+		this.instantaneous = instantaneous;
 	}
 
 	/**
-	 * Get the energy unit.
+	 * Get the energy configuration.
 	 * 
-	 * @return the unit
+	 * @return the configuration
 	 */
-	public MeasurementUnit getEnergyUnit() {
-		return energyUnit;
+	public AssetEnergyDatumConfigurationInput getEnergy() {
+		return energy;
 	}
 
 	/**
-	 * Set the energy unit
+	 * Set the energy configuration.
 	 * 
-	 * @param energyUnit
-	 *        the unit to set
+	 * @param energy
+	 *        the configuration to set
 	 */
-	public void setEnergyUnit(MeasurementUnit energyUnit) {
-		this.energyUnit = energyUnit;
-	}
-
-	/**
-	 * Get the energy datum stream property value multiplier.
-	 * 
-	 * @return the multiplier to convert energy property values into
-	 *         {@code energyUnit}, or {@literal null} for no conversion
-	 */
-	public BigDecimal getEnergyMultiplier() {
-		return energyMultiplier;
-	}
-
-	/**
-	 * Set the energy datum stream property value multiplier.
-	 * 
-	 * @param energyMultiplier
-	 *        the multiplier to convert energy property values into
-	 *        {@code energyUnit}, or {@literal null} for no conversion
-	 */
-	public void setEnergyMultiplier(BigDecimal energyMultiplier) {
-		this.energyMultiplier = energyMultiplier;
-	}
-
-	/**
-	 * Get the energy type.
-	 * 
-	 * @return the type
-	 */
-	public EnergyType getEnergyType() {
-		return energyType;
-	}
-
-	/**
-	 * Set the energy type.
-	 * 
-	 * @param energyType
-	 *        the type to set
-	 */
-	public void setEnergyType(EnergyType energyType) {
-		this.energyType = energyType;
+	public void setEnergy(AssetEnergyDatumConfigurationInput energy) {
+		this.energy = energy;
 	}
 
 }
