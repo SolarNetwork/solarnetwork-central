@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientException;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -44,9 +45,11 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.Measurement;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.dao.DateRangeCriteria;
 import oscp.v20.AssetMeasurement;
 import oscp.v20.EnergyMeasurement;
 import oscp.v20.UpdateAssetMeasurement;
@@ -154,20 +157,32 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				default -> throw new IllegalArgumentException(
 						"OSCP role [%s] not supported.".formatted(role));
 			};
+			final MeasurementPeriod period = switch (role) {
+				case CapacityProvider -> group.getCapacityProviderMeasurementPeriod();
+				case CapacityOptimizer -> group.getCapacityOptimizerMeasurementPeriod();
+				default -> throw new IllegalArgumentException(
+						"OSCP role [%s] not supported.".formatted(role));
+			};
 
 			List<AssetConfiguration> assets = assetDao
 					.findAllForCapacityGroup(group.getUserId(), group.getEntityId(), null).stream()
 					.filter(e -> role == e.getAudience()).toList();
+
+			Instant startDate = ctx.taskDate();
+			Instant endDate = startDate.plusSeconds(period.getCode());
+			BasicDatumCriteria dateCriteria = new BasicDatumCriteria();
+			dateCriteria.setStartDate(startDate);
+			dateCriteria.setEndDate(endDate);
 
 			if ( !assets.isEmpty() ) {
 				// get measurements
 				final boolean useAssetMeasurement = ctx.config().useGroupAssetMeasurement();
 				Object msg;
 				if ( useAssetMeasurement ) {
-					List<AssetMeasurement> measurements = assetMeasurements(assets);
+					List<AssetMeasurement> measurements = assetMeasurements(assets, dateCriteria);
 					msg = new UpdateAssetMeasurement(group.getIdentifier(), measurements);
 				} else {
-					List<EnergyMeasurement> measurements = energyMeasurements(assets);
+					List<EnergyMeasurement> measurements = energyMeasurements(assets, dateCriteria);
 					msg = new UpdateGroupMeasurements(group.getIdentifier(), measurements);
 				}
 				try {
@@ -183,14 +198,15 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				}
 			}
 
-			return Instant.now(); // FIXME: will be measurement end time
+			return endDate;
 		});
 	}
 
-	private List<AssetMeasurement> assetMeasurements(List<AssetConfiguration> assets) {
+	private List<AssetMeasurement> assetMeasurements(List<AssetConfiguration> assets,
+			DateRangeCriteria criteria) {
 		List<AssetMeasurement> result = new ArrayList<>(assets.size());
 		for ( AssetConfiguration asset : assets ) {
-			Collection<Measurement> measurements = measurementDao.getMeasurements(asset);
+			Collection<Measurement> measurements = measurementDao.getMeasurements(asset, criteria);
 			AssetMeasurement measurement = new AssetMeasurement(asset.getIdentifier(),
 					asset.getCategory().toOscp20Value());
 			for ( Measurement meas : measurements ) {
@@ -205,10 +221,11 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		return result;
 	}
 
-	private List<EnergyMeasurement> energyMeasurements(List<AssetConfiguration> assets) {
+	private List<EnergyMeasurement> energyMeasurements(List<AssetConfiguration> assets,
+			DateRangeCriteria criteria) {
 		List<EnergyMeasurement> result = new ArrayList<>(assets.size());
 		for ( AssetConfiguration asset : assets ) {
-			Collection<Measurement> measurements = measurementDao.getMeasurements(asset);
+			Collection<Measurement> measurements = measurementDao.getMeasurements(asset, criteria);
 			for ( Measurement meas : measurements ) {
 				if ( meas.isEnergyMeasurement() ) {
 					result.add(meas.toOscp20EnergyValue());

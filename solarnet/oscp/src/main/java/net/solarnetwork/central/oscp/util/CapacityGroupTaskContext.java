@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.util;
 
+import java.time.Instant;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 
 /**
@@ -39,5 +40,12 @@ public interface CapacityGroupTaskContext<C extends BaseOscpExternalSystemConfig
 	 * @return the group
 	 */
 	String groupIdentifier();
+
+	/**
+	 * Get the task date, which is task specific.
+	 * 
+	 * @return the task date
+	 */
+	Instant taskDate();
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.util;
 
+import java.time.Instant;
 import java.util.Map;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
@@ -38,9 +39,9 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
  * @version 1.0
  */
 public record CapacityGroupSystemTaskContext<C extends BaseOscpExternalSystemConfiguration<C>> (
-		String name, OscpRole role, C config, CapacityGroupConfiguration group, String[] errorEventTags,
-		String[] successEventTags, ExternalSystemConfigurationDao<C> dao, Map<String, ?> parameters)
-		implements CapacityGroupTaskContext<C> {
+		String name, OscpRole role, C config, CapacityGroupConfiguration group, Instant taskDate,
+		String[] errorEventTags, String[] successEventTags, ExternalSystemConfigurationDao<C> dao,
+		Map<String, ?> parameters) implements CapacityGroupTaskContext<C> {
 
 	@Override
 	public String groupIdentifier() {

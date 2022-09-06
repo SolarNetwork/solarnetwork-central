@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import java.util.Collection;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.Measurement;
+import net.solarnetwork.dao.DateRangeCriteria;
 
 /**
  * API for accessing measurement data for assets.
@@ -39,8 +40,10 @@ public interface MeasurementDao {
 	 * 
 	 * @param asset
 	 *        the asset to get the measurement for
+	 * @param criteria
+	 *        the criteria
 	 * @return the measurements
 	 */
-	Collection<Measurement> getMeasurements(AssetConfiguration asset);
+	Collection<Measurement> getMeasurements(AssetConfiguration asset, DateRangeCriteria criteria);
 
 }
