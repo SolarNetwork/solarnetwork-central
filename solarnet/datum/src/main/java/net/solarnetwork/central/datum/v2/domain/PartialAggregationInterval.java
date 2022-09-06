@@ -29,13 +29,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * A date interval for partial aggregation support.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class PartialAggregationInterval {

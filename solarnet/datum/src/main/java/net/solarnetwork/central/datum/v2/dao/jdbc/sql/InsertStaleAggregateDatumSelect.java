@@ -29,7 +29,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.AggregationCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Insert records into the {@literal solardatm.agg_stale_datm} table that match
@@ -42,7 +42,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class InsertStaleAggregateDatumSelect implements PreparedStatementCreator, SqlProvider {

@@ -24,14 +24,14 @@ package net.solarnetwork.central.security;
 
 import java.time.Instant;
 import java.util.Set;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for a security policy, that is rules defining access permissions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface SecurityPolicy {
 

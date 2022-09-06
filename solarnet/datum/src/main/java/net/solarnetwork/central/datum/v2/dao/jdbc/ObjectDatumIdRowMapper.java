@@ -31,7 +31,7 @@ import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.LocationDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {

@@ -32,7 +32,7 @@ import java.sql.Types;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
@@ -41,7 +41,7 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
  * {@literal solardatm.agg_datm_X} table.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class InsertAggregateDatum implements PreparedStatementCreator, SqlProvider {

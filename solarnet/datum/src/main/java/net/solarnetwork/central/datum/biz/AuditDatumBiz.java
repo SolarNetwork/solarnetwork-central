@@ -26,14 +26,14 @@ import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for accessing audit datum data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.27
  */
 public interface AuditDatumBiz {

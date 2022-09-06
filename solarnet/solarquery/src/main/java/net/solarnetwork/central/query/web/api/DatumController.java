@@ -41,17 +41,17 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })

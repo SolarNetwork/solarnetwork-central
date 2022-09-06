@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
@@ -37,7 +37,7 @@ import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
  * Extension of {@link AggregateDatumEntity} to support reading entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public class ReadingDatumEntity extends AggregateDatumEntity

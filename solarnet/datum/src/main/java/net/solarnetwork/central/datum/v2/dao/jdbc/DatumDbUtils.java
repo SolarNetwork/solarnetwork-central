@@ -83,8 +83,8 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -101,7 +101,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * </p>
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 3.8
  */
 public final class DatumDbUtils {

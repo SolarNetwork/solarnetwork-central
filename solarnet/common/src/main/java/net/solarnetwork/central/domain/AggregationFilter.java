@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import java.time.Instant;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Extension of {@link Filter} specific to aggregated results. This API designed
@@ -30,7 +31,7 @@ import java.time.Instant;
  * "aggregate" filter results.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface AggregationFilter extends Filter {
 

@@ -46,7 +46,7 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.datum.DatumProperties;
 

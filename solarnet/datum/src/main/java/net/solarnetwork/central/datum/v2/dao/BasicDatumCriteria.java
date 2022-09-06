@@ -37,16 +37,16 @@ import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.dao.RecentCriteria;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Basic implementation of {@link DatumCriteria}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria

@@ -34,7 +34,7 @@ import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorPro
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * {@link DatumStreamCriteria} filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectStaleAggregateDatum

@@ -32,7 +32,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.SearchFilter;
 
@@ -40,7 +40,7 @@ import net.solarnetwork.util.SearchFilter;
  * Generate dynamic SQL for a "find stream metadata" query.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 3.8
  */
 public class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {

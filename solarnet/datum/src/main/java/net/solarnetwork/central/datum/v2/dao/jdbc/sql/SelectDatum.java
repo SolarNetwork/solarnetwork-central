@@ -39,14 +39,14 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 3.8
  */
 public class SelectDatum

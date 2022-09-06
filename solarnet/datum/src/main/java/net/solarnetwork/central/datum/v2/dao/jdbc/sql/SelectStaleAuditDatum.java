@@ -33,14 +33,14 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Select for {@link StaleAuditDatum} instances via a
  * {@link DatumStreamCriteria} filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectStaleAuditDatum implements PreparedStatementCreator, SqlProvider {

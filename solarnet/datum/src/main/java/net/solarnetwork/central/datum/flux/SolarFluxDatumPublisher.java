@@ -31,19 +31,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Publish datum to SolarFlux.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {

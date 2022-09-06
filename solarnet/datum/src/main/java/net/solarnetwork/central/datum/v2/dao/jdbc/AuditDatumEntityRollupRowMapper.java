@@ -28,7 +28,7 @@ import java.sql.Timestamp;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Map datum audit rollup rows into {@link AuditDatumRollup} instances.
@@ -52,7 +52,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * </ol>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRollup> {

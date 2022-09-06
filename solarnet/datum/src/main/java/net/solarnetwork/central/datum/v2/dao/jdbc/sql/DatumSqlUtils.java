@@ -52,13 +52,13 @@ import net.solarnetwork.central.datum.v2.dao.ObjectMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.ByteOrdering;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ByteUtils;
 import net.solarnetwork.util.SearchFilter;
@@ -69,7 +69,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -1551,8 +1551,8 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria, PreparedStatement,
-	 *      int)
+	 * @see CommonSqlUtils#prepareDateRange(DateRangeCriteria,
+	 *      PreparedStatement, int)
 	 */
 	public static int prepareDateRangeFilter(DateRangeCriteria filter, PreparedStatement stmt,
 			int parameterOffset) throws SQLException {

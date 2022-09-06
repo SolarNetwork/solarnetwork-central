@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -50,7 +50,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for user authorization ticket management.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/auth-tokens")

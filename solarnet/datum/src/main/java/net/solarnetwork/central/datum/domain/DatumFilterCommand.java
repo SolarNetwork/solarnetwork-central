@@ -38,7 +38,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -46,6 +45,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "combiningType", "combiningTypeKey",

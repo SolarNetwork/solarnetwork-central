@@ -33,14 +33,14 @@ import java.util.Map;
 import java.util.Set;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Basic implementation of {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
 @JsonSerialize(using = SecurityPolicySerializer.class)

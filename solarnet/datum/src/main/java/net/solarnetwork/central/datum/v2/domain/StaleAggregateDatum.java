@@ -24,15 +24,15 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for a "stale" aggregate datum record that represents a period of time for
  * a specific aggregation level that needs to be computed.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface StaleAggregateDatum extends Identity<StreamKindPK> {

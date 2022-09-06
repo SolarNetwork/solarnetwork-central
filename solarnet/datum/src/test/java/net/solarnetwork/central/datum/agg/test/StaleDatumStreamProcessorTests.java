@@ -58,7 +58,7 @@ import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.DatumAppEvent;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumId.NodeDatumId;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.test.Assertion;
 
 /**
