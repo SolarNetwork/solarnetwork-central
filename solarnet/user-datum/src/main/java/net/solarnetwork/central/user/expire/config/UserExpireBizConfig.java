@@ -32,13 +32,13 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserDatumDeleteBiz;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.support.PrefixedMessageSource;
 
@@ -46,7 +46,7 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * Configuration for user datum expire services.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class UserExpireBizConfig {

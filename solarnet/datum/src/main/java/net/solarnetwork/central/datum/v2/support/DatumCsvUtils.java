@@ -45,7 +45,7 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -59,7 +59,7 @@ import net.solarnetwork.util.DateUtils;
  * Utilities for Datum CSV processing.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 2.9
  */
 public final class DatumCsvUtils {

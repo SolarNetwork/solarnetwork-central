@@ -35,7 +35,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.query.biz.dao.DatumCriteriaValidator;
 
 /**

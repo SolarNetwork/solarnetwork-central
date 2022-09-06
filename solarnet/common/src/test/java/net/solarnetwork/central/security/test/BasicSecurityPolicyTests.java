@@ -41,7 +41,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.codec.JsonUtils;

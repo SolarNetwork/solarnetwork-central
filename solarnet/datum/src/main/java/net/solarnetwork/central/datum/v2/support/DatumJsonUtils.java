@@ -46,8 +46,8 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -59,7 +59,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * Utilities for Datum JSON processing.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 2.8
  */
 public final class DatumJsonUtils {

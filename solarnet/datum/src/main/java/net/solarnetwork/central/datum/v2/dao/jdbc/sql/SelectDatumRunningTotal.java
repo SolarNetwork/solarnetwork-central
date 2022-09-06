@@ -36,8 +36,8 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.central.domain.Aggregation;
 
 /**
  * Select for {@link AggregateDatum} instances for
@@ -45,7 +45,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class SelectDatumRunningTotal implements PreparedStatementCreator, SqlProvider {

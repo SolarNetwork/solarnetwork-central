@@ -30,7 +30,7 @@ import java.util.List;
 import org.junit.Test;
 import net.solarnetwork.central.datum.v2.domain.LocalDateInterval;
 import net.solarnetwork.central.datum.v2.domain.PartialAggregationInterval;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link PartialAggregationInterval} class.

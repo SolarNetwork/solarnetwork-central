@@ -58,7 +58,7 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SelectDatum} class.

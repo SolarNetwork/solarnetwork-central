@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.LocalDateRangeCriteria;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Search criteria specific to aggregated results.
@@ -35,7 +35,7 @@ import net.solarnetwork.dao.LocalDateRangeCriteria;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface AggregationCriteria extends DateRangeCriteria, LocalDateRangeCriteria {

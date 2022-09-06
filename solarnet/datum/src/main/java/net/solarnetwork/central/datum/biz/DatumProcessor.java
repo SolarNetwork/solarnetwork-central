@@ -25,14 +25,14 @@ package net.solarnetwork.central.datum.biz;
 import java.util.Collections;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * A general-purpose API for processing {@link GeneralNodeDatum} instances.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumProcessor {
 

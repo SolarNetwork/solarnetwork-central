@@ -23,13 +23,13 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.LocalDateTime;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * A date/time interval.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class LocalDateInterval {

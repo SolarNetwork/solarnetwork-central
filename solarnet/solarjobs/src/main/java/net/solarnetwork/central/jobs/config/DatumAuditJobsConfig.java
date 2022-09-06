@@ -30,14 +30,14 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.agg.JdbcCallJob;
 import net.solarnetwork.central.datum.agg.StaleAuditDataProcessor;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.scheduler.ManagedJob;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Datum aggregate jobs configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class DatumAuditJobsConfig {

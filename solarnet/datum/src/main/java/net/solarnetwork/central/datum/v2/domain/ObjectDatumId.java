@@ -26,14 +26,14 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general object datum identifier.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ObjectDatumId implements Cloneable, Serializable {
 

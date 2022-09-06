@@ -24,14 +24,14 @@ package net.solarnetwork.central.datum.v2.domain;
 
 import java.time.Instant;
 import java.util.UUID;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for an audit record count of datum properties.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface AuditDatum extends Identity<DatumPK>, DatumRecordCounts {

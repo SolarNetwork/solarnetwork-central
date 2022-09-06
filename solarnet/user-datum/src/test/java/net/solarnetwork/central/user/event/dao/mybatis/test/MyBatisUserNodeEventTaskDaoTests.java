@@ -40,7 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;

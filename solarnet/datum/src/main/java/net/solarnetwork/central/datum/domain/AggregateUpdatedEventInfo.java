@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * {@link DatumAppEvent} properties object for {@link DatumAppEvent} aggregate
@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * 
  * @author matt
  * 
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "aggregationKey", "timestamp" })
 public class AggregateUpdatedEventInfo {
