@@ -26,6 +26,7 @@ import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupConfigurationData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
+import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupConfiguration;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -92,34 +93,6 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		flexibilityProviderId = flexibilityProviderDao
 				.idForToken(flexibilityProviderDao.createAuthToken(unassignedEntityIdKey(userId)), false)
 				.getEntityId();
-	}
-
-	/**
-	 * Create a new instance.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param created
-	 *        the creation date
-	 * @param capacityProviderId
-	 *        the provider ID
-	 * @param capacityOptimizerId
-	 *        the optimizer ID
-	 * @return the instance
-	 */
-	public static CapacityGroupConfiguration newConf(Long userId, Instant created,
-			Long capacityProviderId, Long capacityOptimizerId) {
-		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
-				UserLongCompositePK.unassignedEntityIdKey(userId), created);
-		conf.setModified(created);
-		conf.setEnabled(true);
-		conf.setName(randomUUID().toString());
-		conf.setIdentifier(randomUUID().toString());
-		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.TenMinute);
-		conf.setCapacityProviderId(capacityProviderId);
-		conf.setCapacityOptimizerId(capacityOptimizerId);
-		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
-		return conf;
 	}
 
 	@Test
@@ -298,9 +271,9 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				} else {
 					userId = userIds.get(u);
 				}
-				CapacityGroupConfiguration conf = newConf(userId, t,
+				CapacityGroupConfiguration conf = newCapacityGroupConfiguration(userId,
 						userProviders.get(userId).getEntityId(),
-						userOptimizers.get(userId).getEntityId());
+						userOptimizers.get(userId).getEntityId(), t);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -350,9 +323,9 @@ public class JdbcCapacityGroupConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				} else {
 					userId = userIds.get(u);
 				}
-				CapacityGroupConfiguration conf = newConf(userId, t,
+				CapacityGroupConfiguration conf = newCapacityGroupConfiguration(userId,
 						userProviders.get(userId).getEntityId(),
-						userOptimizers.get(userId).getEntityId());
+						userOptimizers.get(userId).getEntityId(), t);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);

@@ -37,10 +37,12 @@ import net.solarnetwork.central.oscp.domain.AssetCategory;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetInstantaneousDatumConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
@@ -154,6 +156,34 @@ public class OscpJdbcTestUtils {
 		energy.setDirection(EnergyDirection.Import);
 		conf.setEnergy(energy);
 
+		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
+		return conf;
+	}
+
+	/**
+	 * Create a new capacity group configuration instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param capacityProviderId
+	 *        the provider ID
+	 * @param capacityOptimizerId
+	 *        the optimizer ID
+	 * @param created
+	 *        the creation date
+	 * @return the instance
+	 */
+	public static CapacityGroupConfiguration newCapacityGroupConfiguration(Long userId,
+			Long capacityProviderId, Long capacityOptimizerId, Instant created) {
+		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(
+				UserLongCompositePK.unassignedEntityIdKey(userId), created);
+		conf.setModified(created);
+		conf.setEnabled(true);
+		conf.setName(randomUUID().toString());
+		conf.setIdentifier(randomUUID().toString());
+		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.TenMinute);
+		conf.setCapacityProviderId(capacityProviderId);
+		conf.setCapacityOptimizerId(capacityOptimizerId);
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 		return conf;
 	}

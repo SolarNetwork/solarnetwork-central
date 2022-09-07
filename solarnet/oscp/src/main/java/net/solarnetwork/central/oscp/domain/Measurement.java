@@ -118,6 +118,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 				phase != null ? phase.toOscp20Value() : null,
 				unit != null ? unit.toOscp20EnergyValue() : null,
 				energyDirection != null ? energyDirection.toOscp20Value() : null, measureTime);
+		result.setEnergyType(energyType.toOscp20Value());
 		result.setInitialMeasureTime(startMeasureTime);
 		return result;
 	}

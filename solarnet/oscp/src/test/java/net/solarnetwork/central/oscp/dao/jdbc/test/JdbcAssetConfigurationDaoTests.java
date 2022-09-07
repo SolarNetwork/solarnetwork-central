@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao.jdbc.test;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allAssetConfigurationData;
+import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.newCapacityGroupConfiguration;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -110,9 +111,9 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				.newCapacityProviderConf(userId, flexibilityProviderId, Instant.now())));
 		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
 				.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
-		lastGroup = capacityGroupDao.get(
-				capacityGroupDao.create(userId, JdbcCapacityGroupConfigurationDaoTests.newConf(userId,
-						Instant.now(), lastProvider.getEntityId(), lastOptimzer.getEntityId())));
+		lastGroup = capacityGroupDao
+				.get(capacityGroupDao.create(userId, newCapacityGroupConfiguration(userId,
+						lastProvider.getEntityId(), lastOptimzer.getEntityId(), Instant.now())));
 		AssetConfiguration conf = OscpJdbcTestUtils.newAssetConfiguration(userId,
 				lastGroup.getEntityId(), Instant.now());
 
@@ -167,9 +168,9 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 				.newCapacityProviderConf(userId, flexibilityProviderId, Instant.now())));
 		lastOptimzer = capacityOptimizerDao.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
 				.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
-		lastGroup = capacityGroupDao.get(
-				capacityGroupDao.create(userId, JdbcCapacityGroupConfigurationDaoTests.newConf(userId,
-						Instant.now(), lastProvider.getEntityId(), lastOptimzer.getEntityId())));
+		lastGroup = capacityGroupDao
+				.get(capacityGroupDao.create(userId, newCapacityGroupConfiguration(userId,
+						lastProvider.getEntityId(), lastOptimzer.getEntityId(), Instant.now())));
 
 		// WHEN
 		AssetConfiguration conf = last.copyWithId(last.getId());
@@ -250,8 +251,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 									Instant.now()));
 					userGroups.put(userId,
 							capacityGroupDao.get(capacityGroupDao.create(userId,
-									JdbcCapacityGroupConfigurationDaoTests.newConf(userId, Instant.now(),
-											providerId.getEntityId(), optimizerId.getEntityId()))));
+									newCapacityGroupConfiguration(userId, providerId.getEntityId(),
+											optimizerId.getEntityId(), Instant.now()))));
 
 				} else {
 					userId = userIds.get(u);
@@ -304,8 +305,8 @@ public class JdbcAssetConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSup
 									Instant.now()));
 					userGroups.put(userId,
 							capacityGroupDao.get(capacityGroupDao.create(userId,
-									JdbcCapacityGroupConfigurationDaoTests.newConf(userId, Instant.now(),
-											providerId.getEntityId(), optimizerId.getEntityId()))));
+									newCapacityGroupConfiguration(userId, providerId.getEntityId(),
+											optimizerId.getEntityId(), Instant.now()))));
 
 				} else {
 					userId = userIds.get(u);
