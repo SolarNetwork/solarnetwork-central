@@ -95,27 +95,6 @@ public class DefaultMeasurementDao implements MeasurementDao {
 			List<Measurement> result = new ArrayList<>(2);
 			ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
 					.metadataForStreamId(d.getStreamId());
-			if ( asset.getEnergy() != null && asset.getEnergy().getPropertyNames() != null ) {
-				AssetEnergyDatumConfiguration energy = asset.getEnergy();
-				DatumProperties props = d.getProperties();
-				for ( String propName : energy.getPropertyNames() ) {
-					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
-					if ( idx < 0 ) {
-						continue;
-					}
-					BigDecimal v = props.accumulatingValue(idx);
-					if ( v == null ) {
-						continue;
-					}
-					if ( energy.getMultiplier() != null ) {
-						v = v.multiply(energy.getMultiplier());
-					}
-					var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
-							d.getEndTimestamp(), energy.getType(), energy.getDirection(),
-							d.getTimestamp());
-					result.add(m);
-				}
-			}
 			if ( asset.getInstantaneous() != null
 					&& asset.getInstantaneous().getPropertyNames() != null ) {
 				AssetInstantaneousDatumConfiguration inst = asset.getInstantaneous();
@@ -141,6 +120,27 @@ public class DefaultMeasurementDao implements MeasurementDao {
 					}
 					Measurement m = Measurement.instantaneousMeasurement(v, asset.getPhase(),
 							inst.getUnit(), d.getEndTimestamp());
+					result.add(m);
+				}
+			}
+			if ( asset.getEnergy() != null && asset.getEnergy().getPropertyNames() != null ) {
+				AssetEnergyDatumConfiguration energy = asset.getEnergy();
+				DatumProperties props = d.getProperties();
+				for ( String propName : energy.getPropertyNames() ) {
+					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
+					if ( idx < 0 ) {
+						continue;
+					}
+					BigDecimal v = props.accumulatingValue(idx);
+					if ( v == null ) {
+						continue;
+					}
+					if ( energy.getMultiplier() != null ) {
+						v = v.multiply(energy.getMultiplier());
+					}
+					var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
+							d.getEndTimestamp(), energy.getType(), energy.getDirection(),
+							d.getTimestamp());
 					result.add(m);
 				}
 			}
