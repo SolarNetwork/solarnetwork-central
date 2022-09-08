@@ -361,6 +361,7 @@ $$
 		UNION
 		SELECT (solardatm.calc_datm_at(d, end_ts)).*
 		FROM solardatm.find_datm_around(sid, end_ts, tolerance) d
+		HAVING count(*) > 0
 	)
 	-- combine raw datm with reset datm
 	SELECT d.stream_id

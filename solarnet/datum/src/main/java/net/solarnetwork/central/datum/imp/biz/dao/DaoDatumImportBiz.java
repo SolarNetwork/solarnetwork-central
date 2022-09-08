@@ -108,7 +108,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -693,6 +693,11 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				ExecutorService s = progressExecutor();
 				if ( !s.isShutdown() ) {
 					s.shutdown();
+					try {
+						s.awaitTermination(5, TimeUnit.MINUTES);
+					} catch ( InterruptedException e ) {
+						// ignore this one
+					}
 				}
 			}
 			return new BasicDatumImportResult(info);
