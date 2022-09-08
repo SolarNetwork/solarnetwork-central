@@ -23,14 +23,21 @@
 package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 
@@ -42,17 +49,12 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
  */
 public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
-	@Autowired
-	private PlatformTransactionManager txManager;
-
 	private JdbcFlexibilityProviderDao flexibilityProviderDao;
 	private JdbcCapacityProviderConfigurationDao capacityProviderDao;
 	private JdbcCapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private JdbcExternalSystemSupportDao dao;
 	private Long userId;
 	private Long flexibilityProviderId;
-
-	private CapacityProviderConfiguration lastProvider;
 
 	@BeforeEach
 	public void setup() {
@@ -66,6 +68,42 @@ public class JdbcExternalSystemSupportDaoTests extends AbstractJUnit5JdbcDaoTest
 				.getEntityId();
 	}
 
-	// TODO
+	@Test
+	public void findExternalSystem_provider() {
+		// GIVEN
+		CapacityProviderConfiguration conf = capacityProviderDao
+				.get(capacityProviderDao.create(userId, OscpJdbcTestUtils.newCapacityProviderConf(userId,
+						flexibilityProviderId, Instant.now())));
+
+		// WHEN
+		ExternalSystemConfiguration result = dao.externalSystemConfiguration(OscpRole.CapacityProvider,
+				conf.getId());
+
+		// THEN
+		assertThat("System returned", result, is(equalTo(conf)));
+		assertThat("System is expected type", result,
+				is(instanceOf(CapacityProviderConfiguration.class)));
+		assertThat("System populated fully", conf.isSameAs((CapacityProviderConfiguration) result),
+				is(equalTo(true)));
+	}
+
+	@Test
+	public void findExternalSystem_optimizer() {
+		// GIVEN
+		CapacityOptimizerConfiguration conf = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
+						.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
+
+		// WHEN
+		ExternalSystemConfiguration result = dao.externalSystemConfiguration(OscpRole.CapacityOptimizer,
+				conf.getId());
+
+		// THEN
+		assertThat("System returned", result, is(equalTo(conf)));
+		assertThat("System is expected type", result,
+				is(instanceOf(CapacityOptimizerConfiguration.class)));
+		assertThat("System populated fully", conf.isSameAs((CapacityOptimizerConfiguration) result),
+				is(equalTo(true)));
+	}
 
 }
