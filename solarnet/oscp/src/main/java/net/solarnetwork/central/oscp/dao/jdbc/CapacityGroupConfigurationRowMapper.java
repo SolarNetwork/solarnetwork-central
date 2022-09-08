@@ -63,28 +63,57 @@ public class CapacityGroupConfigurationRowMapper implements RowMapper<CapacityGr
 	/** A default instance. */
 	public static final RowMapper<CapacityGroupConfiguration> INSTANCE = new CapacityGroupConfigurationRowMapper();
 
+	/** A default instance. */
+	public static final RowMapper<CapacityGroupConfiguration> EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE;
+	static {
+		EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE = new CapacityGroupConfigurationRowMapper(
+				BaseExternalSystemConfigurationRowMapper.COLUMN_COUNT);
+	}
+
+	private final int columnOffset;
+
+	/**
+	 * Default constructor.
+	 */
+	public CapacityGroupConfigurationRowMapper() {
+		this(0);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param columnOffset
+	 *        a column offset to apply
+	 */
+	public CapacityGroupConfigurationRowMapper(int columnOffset) {
+		super();
+		this.columnOffset = columnOffset;
+	}
+
 	@Override
 	public CapacityGroupConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
-		Long entityId = rs.getLong(1);
-		Timestamp ts = rs.getTimestamp(2);
-		Long userId = rs.getLong(4);
+		int p = columnOffset;
+		Long entityId = rs.getLong(++p);
+		Timestamp ts = rs.getTimestamp(++p);
+		Timestamp mod = rs.getTimestamp(++p);
+		Long userId = rs.getLong(++p);
 		CapacityGroupConfiguration conf = new CapacityGroupConfiguration(userId, entityId,
 				ts.toInstant());
-		conf.setModified(rs.getTimestamp(3).toInstant());
-		conf.setEnabled(rs.getBoolean(5));
-		conf.setName(rs.getString(6));
-		conf.setIdentifier(rs.getString(7));
-		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(8)));
-		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(9)));
-		conf.setCapacityProviderId(rs.getLong(10));
-		conf.setCapacityOptimizerId(rs.getLong(11));
-		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(12)));
+		conf.setModified(mod.toInstant());
+		conf.setEnabled(rs.getBoolean(++p));
+		conf.setName(rs.getString(++p));
+		conf.setIdentifier(rs.getString(++p));
+		conf.setCapacityProviderMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(++p)));
+		conf.setCapacityOptimizerMeasurementPeriod(MeasurementPeriod.forCode(rs.getInt(++p)));
+		conf.setCapacityProviderId(rs.getLong(++p));
+		conf.setCapacityOptimizerId(rs.getLong(++p));
+		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(++p)));
 
-		ts = rs.getTimestamp(13);
+		ts = rs.getTimestamp(++p);
 		if ( ts != null ) {
 			conf.setCapacityProviderMeasurementDate(ts.toInstant());
 		}
-		ts = rs.getTimestamp(14);
+		ts = rs.getTimestamp(++p);
 		if ( ts != null ) {
 			conf.setCapacityOptimizerMeasurementDate(ts.toInstant());
 		}

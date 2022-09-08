@@ -41,6 +41,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
@@ -116,25 +117,25 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
 		}
 
-		// add appropriate authorization header
-		if ( context.config().hasOauthClientSettings() && oauthClientManager != null ) {
-			AuthRoleInfo role = context.config().getAuthRole();
-			OAuth2AuthorizeRequest authReq = OAuth2AuthorizeRequest
-					.withClientRegistrationId(role.asIdentifier())
-					.principal("%s %s %s".formatted(context.role(), context.config().getId().ident(),
-							context.config().getName()))
-					.build();
-
-			OAuth2AuthorizedClient oauthClient = requireNonNullObject(
-					oauthClientManager.authorize(authReq), "oauthClient");
-			OAuth2AccessToken accessToken = oauthClient.getAccessToken();
-			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
-		} else {
-			String authToken = context.authToken();
-			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
-		}
-
 		try {
+			// add appropriate authorization header
+			if ( context.config().hasOauthClientSettings() && oauthClientManager != null ) {
+				AuthRoleInfo role = context.config().getAuthRole();
+				OAuth2AuthorizeRequest authReq = OAuth2AuthorizeRequest
+						.withClientRegistrationId(role.asIdentifier())
+						.principal("%s %s %s".formatted(context.role(), context.config().getId().ident(),
+								context.config().getName()))
+						.build();
+
+				OAuth2AuthorizedClient oauthClient = requireNonNullObject(
+						oauthClientManager.authorize(authReq), "oauthClient");
+				OAuth2AccessToken accessToken = oauthClient.getAccessToken();
+				headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
+			} else {
+				String authToken = context.authToken();
+				headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+			}
+
 			HttpEntity<Object> req = new HttpEntity<>(body, headers);
 			restOps.exchange(uri, method, req, Void.class);
 			log.info("[{}] with {} {} successful at: {}", context.name(), context.role(),
@@ -183,6 +184,15 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
 								format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
+			}
+			throw e;
+		} catch ( OAuth2AuthorizationException e ) {
+			log.warn("[{}] with {} {} failed at [{}] because of an OAuth error: {}", context.name(),
+					context.role(), context.config().getId().ident(), uri, e.getMessage());
+			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
+				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
+						eventForConfiguration(context.config(), context.errorEventTags(),
+								format("OAuth error: %s", e.getMessage())));
 			}
 			throw e;
 		} catch ( RuntimeException e ) {

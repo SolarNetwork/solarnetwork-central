@@ -27,6 +27,7 @@ import java.util.function.Function;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.util.CapacityGroupTaskContext;
@@ -107,13 +108,26 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 	 * Compare and update the heartbeat date.
 	 * 
 	 * @param id
-	 *        the primary key to save the settings for
+	 *        the primary key to save the heartbeat date for
 	 * @param expected
 	 *        the expected value
 	 * @param ts
 	 *        the timestamp to set of {@code expected} matches the current value
 	 */
 	boolean compareAndSetHeartbeat(UserLongCompositePK id, Instant expected, Instant ts);
+
+	/**
+	 * Compare and update the heartbeat date.
+	 * 
+	 * @param groupId
+	 *        the primary key of the {@link CapacityGroupConfiguration} to save
+	 *        the measurement date for
+	 * @param expected
+	 *        the expected value
+	 * @param ts
+	 *        the timestamp to set of {@code expected} matches the current value
+	 */
+	boolean compareAndSetMeasurement(UserLongCompositePK groupId, Instant expected, Instant ts);
 
 	/**
 	 * Update the offline date.

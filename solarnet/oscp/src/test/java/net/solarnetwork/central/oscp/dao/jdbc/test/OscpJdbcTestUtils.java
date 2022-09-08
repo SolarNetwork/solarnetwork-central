@@ -118,6 +118,10 @@ public class OscpJdbcTestUtils {
 	/**
 	 * Create a new asset configuration instance.
 	 * 
+	 * <p>
+	 * The audience will be {@link OscpRole#CapacityProvider}.
+	 * </p>
+	 * 
 	 * @param userId
 	 *        the user ID
 	 * @param capacityGroupId
@@ -125,16 +129,35 @@ public class OscpJdbcTestUtils {
 	 * @param created
 	 *        the creation date
 	 * @return the new instance
+	 * @see #newAssetConfiguration(Long, Long, OscpRole, Instant)
 	 */
 	public static AssetConfiguration newAssetConfiguration(Long userId, Long capacityGroupId,
 			Instant created) {
+		return newAssetConfiguration(userId, capacityGroupId, OscpRole.CapacityProvider, created);
+	}
+
+	/**
+	 * Create a new asset configuration instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param capacityGroupId
+	 *        the capacity group configuration ID
+	 * @param audience
+	 *        the audience
+	 * @param created
+	 *        the creation date
+	 * @return the new instance
+	 */
+	public static AssetConfiguration newAssetConfiguration(Long userId, Long capacityGroupId,
+			OscpRole audience, Instant created) {
 		AssetConfiguration conf = new AssetConfiguration(
 				UserLongCompositePK.unassignedEntityIdKey(userId), created);
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setCapacityGroupId(capacityGroupId);
 		conf.setIdentifier(randomUUID().toString());
-		conf.setAudience(OscpRole.CapacityProvider);
+		conf.setAudience(audience);
 		conf.setNodeId(randomUUID().getMostSignificantBits());
 		conf.setSourceId(randomUUID().toString());
 		conf.setCategory(AssetCategory.Charging);

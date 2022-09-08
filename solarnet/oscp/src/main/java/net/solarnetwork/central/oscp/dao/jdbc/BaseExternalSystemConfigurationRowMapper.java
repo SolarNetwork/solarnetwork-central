@@ -68,6 +68,9 @@ import net.solarnetwork.codec.JsonUtils;
 public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements RowMapper<C> {
 
+	/** The number of columns mapped by this mapper. */
+	public static final int COLUMN_COUNT = 15;
+
 	@Override
 	public final C mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Long entityId = rs.getObject(1, Long.class);

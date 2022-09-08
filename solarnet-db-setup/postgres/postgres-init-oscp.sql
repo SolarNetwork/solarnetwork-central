@@ -10,7 +10,10 @@ CREATE TABLE solaroscp.oscp_fp_token (
 	token			CHARACTER VARYING(128),
 	oauth			BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT oscp_fp_token_pk PRIMARY KEY (user_id, id),
-	CONSTRAINT oscp_fp_token_unq UNIQUE (token)
+	CONSTRAINT oscp_fp_token_unq UNIQUE (token),
+	CONSTRAINT oscp_fp_token_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**
@@ -165,8 +168,8 @@ CREATE TABLE solaroscp.oscp_cg_conf (
 	ident			CHARACTER VARYING(128) NOT NULL,
 	cp_id			BIGINT NOT NULL,
 	co_id			BIGINT NOT NULL,
-	cp_meas_secs	INTEGER NOT NULL CHECK (cp_meas_secs > 0),
-	co_meas_secs	INTEGER NOT NULL CHECK (co_meas_secs > 0),
+	cp_meas_secs	INTEGER NOT NULL CHECK (cp_meas_secs > 0 AND cp_meas_secs <= 3600),
+	co_meas_secs	INTEGER NOT NULL CHECK (co_meas_secs > 0 AND cp_meas_secs <= 3600),
 	sprops			JSONB,
 	CONSTRAINT oscp_cg_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_cg_conf_cp_fk FOREIGN KEY (user_id, cp_id)
@@ -257,6 +260,9 @@ CREATE TABLE solaroscp.oscp_asset_conf (
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_asset_conf_ident_unq UNIQUE (cg_id, ident)
 );
+
+-- Add index on meas_at to support efficient measurement job execution
+CREATE INDEX oscp_asset_conf_audience_idx ON solaroscp.oscp_asset_conf (user_id, cg_id, audience);
 
 /**
  * Create a Flexibility Provider token.

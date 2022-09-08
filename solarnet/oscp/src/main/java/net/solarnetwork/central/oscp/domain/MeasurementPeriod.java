@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import net.solarnetwork.domain.CodedValue;
 
@@ -70,6 +73,42 @@ public enum MeasurementPeriod implements CodedValue {
 	@Override
 	public int getCode() {
 		return seconds;
+	}
+
+	/**
+	 * Get the starting date for a period that contains a given date.
+	 * 
+	 * @param date
+	 *        the date to get the starting period date for
+	 * @return the starting period date
+	 */
+	public Instant periodStart(Instant date) {
+		return date.truncatedTo(ChronoUnit.MINUTES)
+				.minus((date.atZone(ZoneOffset.UTC).getMinute() * 60) % seconds, ChronoUnit.SECONDS);
+	}
+
+	/**
+	 * Get the starting date for a period that ends at the start of the period
+	 * that contains a given date.
+	 * 
+	 * @param date
+	 *        the date to get the previous starting period date for
+	 * @return the previous starting period date
+	 */
+	public Instant previousPeriodStart(Instant taskDate) {
+		return periodStart(taskDate).minus(seconds, ChronoUnit.SECONDS);
+	}
+
+	/**
+	 * Get the next measurement period start based on a given period start.
+	 * 
+	 * @param periodStart
+	 *        the period start; no validation is performed to check if this is a
+	 *        valid starting period date
+	 * @return the period start offset by this period
+	 */
+	public Instant nextPeriodStart(Instant periodStart) {
+		return periodStart.plusSeconds(seconds);
 	}
 
 	/**

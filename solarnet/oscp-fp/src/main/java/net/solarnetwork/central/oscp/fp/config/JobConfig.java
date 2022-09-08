@@ -29,10 +29,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
+import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
+import net.solarnetwork.central.oscp.jobs.CapacityGroupMeasurementJob;
 import net.solarnetwork.central.oscp.jobs.HeartbeatJob;
 import net.solarnetwork.central.oscp.jobs.OscpJobs;
 import net.solarnetwork.central.scheduler.ManagedJob;
@@ -52,6 +56,15 @@ public class JobConfig {
 
 	@Autowired
 	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
+
+	@Autowired
+	private CapacityGroupConfigurationDao capacityGroupDao;
+
+	@Autowired
+	private AssetConfigurationDao assetDao;
+
+	@Autowired
+	private MeasurementDao measurementDao;
 
 	@Autowired
 	private ExternalSystemClient externalSystemClient;
@@ -86,6 +99,36 @@ public class JobConfig {
 	public ManagedJob capacityOptimizerHeartbeatJob() {
 		var job = new HeartbeatJob(OscpRole.CapacityOptimizer, capacityOptimizerDao,
 				externalSystemClient).withTxTemplate(txTemplate);
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	/**
+	 * The OSCP Heartbeat job for capacity provider systems.
+	 * 
+	 * @return the job
+	 */
+	@ConfigurationProperties(prefix = "app.job.oscp.measurement.cp")
+	@Bean
+	public ManagedJob capacityProviderMeasurementJob() {
+		var job = new CapacityGroupMeasurementJob(OscpRole.CapacityProvider, capacityProviderDao,
+				capacityGroupDao, assetDao, measurementDao, externalSystemClient)
+						.withTxTemplate(txTemplate);
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
+	}
+
+	/**
+	 * The OSCP Heartbeat job for capacity optimizer systems.
+	 * 
+	 * @return the job
+	 */
+	@ConfigurationProperties(prefix = "app.job.oscp.measurement.co")
+	@Bean
+	public ManagedJob capacityOptimizerMeasurementJob() {
+		var job = new CapacityGroupMeasurementJob(OscpRole.CapacityOptimizer, capacityOptimizerDao,
+				capacityGroupDao, assetDao, measurementDao, externalSystemClient)
+						.withTxTemplate(txTemplate);
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}

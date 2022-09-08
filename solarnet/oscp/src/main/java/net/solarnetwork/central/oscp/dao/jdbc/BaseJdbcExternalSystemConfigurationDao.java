@@ -40,12 +40,17 @@ import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.InsertHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectAuthToken;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForHeartbeat;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.SelectExternalSystemForMeasurement;
+import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateCapacityGroupMeasurementDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateHeartbeatDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateOfflineDate;
 import net.solarnetwork.central.oscp.dao.jdbc.sql.UpdateSystemSettings;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemAndGroup;
+import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
+import net.solarnetwork.central.oscp.util.CapacityGroupSystemTaskContext;
 import net.solarnetwork.central.oscp.util.CapacityGroupTaskContext;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
 import net.solarnetwork.central.oscp.util.TaskContext;
@@ -172,6 +177,12 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	}
 
 	@Override
+	public boolean compareAndSetMeasurement(UserLongCompositePK groupId, Instant expected, Instant ts) {
+		int count = jdbcOps.update(new UpdateCapacityGroupMeasurementDate(role, groupId, expected, ts));
+		return (count > 0);
+	}
+
+	@Override
 	public void updateOfflineDate(UserLongCompositePK id, Instant ts) {
 		jdbcOps.update(new UpdateOfflineDate(role, id, ts));
 	}
@@ -199,6 +210,22 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 */
 	protected abstract String[] expiredHeartbeatEventErrorTags();
 
+	/**
+	 * Get the success event tags to use within
+	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredMeasurementEventSuccessTags();
+
+	/**
+	 * Get the error event tags to use within
+	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
+	 * 
+	 * @return the tags, never {@literal null}
+	 */
+	protected abstract String[] expiredMeasurementEventErrorTags();
+
 	@Override
 	public boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
@@ -217,27 +244,39 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 		return false;
 	}
 
-	/**
-	 * Get the success event tags to use within
-	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
-	 * 
-	 * @return the tags, never {@literal null}
-	 */
-	protected abstract String[] expiredMeasurementEventSuccessTags();
-
-	/**
-	 * Get the error event tags to use within
-	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
-	 * 
-	 * @return the tags, never {@literal null}
-	 */
-	protected abstract String[] expiredMeasurementEventErrorTags();
-
 	@Override
 	public boolean processExternalSystemWithExpiredMeasurement(
 			Function<CapacityGroupTaskContext<C>, Instant> handler) {
-		// TODO
-		throw new UnsupportedOperationException();
+		PreparedStatementCreator sql = new SelectExternalSystemForMeasurement(role, ONE_FOR_UPDATE_SKIP);
+		List<ExternalSystemAndGroup<C>> rows = jdbcOps.query(sql,
+				new ExternalSystemAndGroupConfigurationRowMapper<>(rowMapperForEntity(),
+						CapacityGroupConfigurationRowMapper.EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE));
+		if ( !rows.isEmpty() ) {
+			ExternalSystemAndGroup<C> row = rows.get(0);
+			Instant measurementDate = (role == OscpRole.CapacityProvider
+					? row.group().getCapacityProviderMeasurementDate()
+					: row.group().getCapacityOptimizerMeasurementDate());
+			Instant taskDate;
+			if ( measurementDate != null ) {
+				taskDate = measurementDate;
+			} else {
+				// no previous task date; set the date to the start of the _previous_ period
+				MeasurementPeriod p = (role == OscpRole.CapacityProvider
+						? row.group().getCapacityProviderMeasurementPeriod()
+						: row.group().getCapacityOptimizerMeasurementPeriod());
+				taskDate = p.previousPeriodStart(Instant.now());
+			}
+			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<C>(
+					"Measurement", role, row.conf(), row.group(), taskDate,
+					expiredMeasurementEventErrorTags(), expiredMeasurementEventSuccessTags(), this,
+					Collections.emptyMap());
+			Instant ts = handler.apply(context);
+			if ( ts != null ) {
+				compareAndSetMeasurement(row.group().getId(), measurementDate, ts);
+			}
+			return (ts != null);
+		}
+		return false;
 	}
 
 }

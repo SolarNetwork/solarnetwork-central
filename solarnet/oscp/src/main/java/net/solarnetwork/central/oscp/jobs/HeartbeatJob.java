@@ -31,9 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
-import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -141,10 +139,11 @@ public class HeartbeatJob extends JobSupport {
 					ctx.verifySystemOscpVersion(supportedOscpVersions);
 					return HEARTBEAT_URL_PATH;
 				}, new Heartbeat(expires));
-			} catch ( RestClientException | ExternalSystemConfigurationException e ) {
+				return Instant.now();
+			} catch ( RuntimeException e ) {
 				// ignore and continue; assume event logged in client.systemExchange()
+				return null;
 			}
-			return Instant.now();
 		});
 	}
 

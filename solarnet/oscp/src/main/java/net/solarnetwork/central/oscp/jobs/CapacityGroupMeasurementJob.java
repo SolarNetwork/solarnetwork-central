@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
@@ -43,7 +42,6 @@ import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.Measurement;
 import net.solarnetwork.central.oscp.domain.MeasurementPeriod;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -169,7 +167,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 					.filter(e -> role == e.getAudience()).toList();
 
 			Instant startDate = ctx.taskDate();
-			Instant endDate = startDate.plusSeconds(period.getCode());
+			Instant endDate = period.nextPeriodStart(startDate);
 			BasicDatumCriteria dateCriteria = new BasicDatumCriteria();
 			dateCriteria.setStartDate(startDate);
 			dateCriteria.setEndDate(endDate);
@@ -193,8 +191,9 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 						}
 						return UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 					}, msg);
-				} catch ( RestClientException | ExternalSystemConfigurationException e ) {
+				} catch ( RuntimeException e ) {
 					// ignore and continue; assume event logged in client.systemExchange()
+					return null;
 				}
 			}
 

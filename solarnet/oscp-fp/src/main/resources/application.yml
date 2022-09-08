@@ -13,6 +13,15 @@ app:
     password: "solarnet"
     platform: "postgres"
     initialize: false
+  datum:
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
   http.client.connections:
     max-total: 20
   job.oscp:
@@ -26,6 +35,16 @@ app:
       maximum-wait-ms: 240000
       parallelism: 1
       schedule: "0 * * * * *"
+    measurement.co:
+      maximum-iterations: 1000
+      maximum-wait-ms: 240000
+      parallelism: 1
+      schedule: "20 1/2 * * * *"
+    measurement.cp:
+      maximum-iterations: 1000
+      maximum-wait-ms: 240000
+      parallelism: 1
+      schedule: "50 1/2 * * * *"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false

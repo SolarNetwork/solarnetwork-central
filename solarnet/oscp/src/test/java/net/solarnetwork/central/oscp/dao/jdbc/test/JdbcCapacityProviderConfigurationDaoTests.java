@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.dao.jdbc.test;
 
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allCapacityGroupMeasurementData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allConfigurationData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allHeartbeatData;
 import static net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils.allTokenData;
@@ -59,8 +60,13 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.OscpRole;
@@ -81,6 +87,9 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 	private PlatformTransactionManager txManager;
 
 	private JdbcFlexibilityProviderDao flexibilityProviderDao;
+	private JdbcCapacityOptimizerConfigurationDao capacityOptimizerDao;
+	private JdbcCapacityGroupConfigurationDao capacityGroupDao;
+	private JdbcAssetConfigurationDao assetDao;
 	private JdbcCapacityProviderConfigurationDao dao;
 	private Long userId;
 	private Long flexibilityProviderId;
@@ -93,6 +102,9 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 	@BeforeEach
 	public void setup() {
 		flexibilityProviderDao = new JdbcFlexibilityProviderDao(jdbcTemplate);
+		capacityOptimizerDao = new JdbcCapacityOptimizerConfigurationDao(jdbcTemplate);
+		capacityGroupDao = new JdbcCapacityGroupConfigurationDao(jdbcTemplate);
+		assetDao = new JdbcAssetConfigurationDao(jdbcTemplate);
 		dao = new JdbcCapacityProviderConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		flexibilityProviderId = flexibilityProviderDao
@@ -567,6 +579,130 @@ public class JdbcCapacityProviderConfigurationDaoTests extends AbstractJUnit5Jdb
 		} finally {
 			JdbcTestUtils.deleteFromTables((JdbcTemplate) jdbcTemplate, "solaruser.user_user",
 					"solaroscp.oscp_cp_conf");
+		}
+
+		assertThat("Update 1 succeeded", result.get(), is(equalTo(true)));
+		assertThat("Update 2 failed", updateFailed.get(), is(equalTo(true)));
+	}
+
+	@Test
+	public void processExpiredMeasurement() {
+		// GIVEN
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
+				flexibilityProviderId, Instant.now());
+		UserLongCompositePK id = dao.create(userId, conf);
+		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?",
+				RegistrationStatus.Registered.getCode());
+		last = dao.get(id);
+
+		CapacityOptimizerConfiguration optConf = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
+						.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
+
+		CapacityGroupConfiguration group = capacityGroupDao.get(
+				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
+						id.getEntityId(), optConf.getEntityId(), Instant.now())));
+
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
+				OscpRole.CapacityProvider, Instant.now()));
+
+		// WHEN
+		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()
+				.previousPeriodStart(Instant.now());
+		Instant newTs = group.getCapacityProviderMeasurementPeriod().nextPeriodStart(expectedTaskDate);
+		boolean result = dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
+			assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+			assertThat("Found provider row", ctx.config().getId(), is(equalTo(last.getId())));
+			assertThat("Found group", ctx.groupIdentifier(), is(equalTo(group.getIdentifier())));
+			assertThat("Task date is previous period start", ctx.taskDate(),
+					is(equalTo(expectedTaskDate)));
+			return newTs;
+		});
+
+		// THEN
+		assertThat("Result 'true' when Instant returned from callback", result, is(equalTo(result)));
+		List<Map<String, Object>> data = allCapacityGroupMeasurementData(jdbcTemplate,
+				OscpRole.CapacityProvider);
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID matches", row, hasEntry("user_id", last.getUserId()));
+		assertThat("Row ID matches", row, hasEntry("cg_id", group.getEntityId()));
+		assertThat("Row measurement date updated", row, hasEntry("meas_at", Timestamp.from(newTs)));
+	}
+
+	@Test
+	public void processExpiredMeasurement_skipLocked() {
+		// GIVEN
+		CapacityProviderConfiguration conf = OscpJdbcTestUtils.newCapacityProviderConf(userId,
+				flexibilityProviderId, Instant.now());
+		UserLongCompositePK id = dao.create(userId, conf);
+		jdbcTemplate.update("UPDATE solaroscp.oscp_cp_conf SET reg_status = ?",
+				RegistrationStatus.Registered.getCode());
+		last = dao.get(id);
+
+		CapacityOptimizerConfiguration optConf = capacityOptimizerDao
+				.get(capacityOptimizerDao.create(userId, OscpJdbcTestUtils
+						.newCapacityOptimizerConf(userId, flexibilityProviderId, Instant.now())));
+
+		CapacityGroupConfiguration group = capacityGroupDao.get(
+				capacityGroupDao.create(userId, OscpJdbcTestUtils.newCapacityGroupConfiguration(userId,
+						id.getEntityId(), optConf.getEntityId(), Instant.now())));
+
+		assetDao.create(userId, OscpJdbcTestUtils.newAssetConfiguration(userId, group.getEntityId(),
+				OscpRole.CapacityProvider, Instant.now()));
+
+		// WHEN
+		Instant expectedTaskDate = group.getCapacityProviderMeasurementPeriod()
+				.previousPeriodStart(Instant.now());
+		Instant newTs = group.getCapacityProviderMeasurementPeriod().nextPeriodStart(expectedTaskDate);
+
+		AtomicBoolean updateFailed = new AtomicBoolean();
+
+		AtomicBoolean result = new AtomicBoolean(false);
+
+		try {
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+
+			TransactionTemplate tt = new TransactionTemplate(txManager);
+			CountDownLatch latch = new CountDownLatch(1);
+
+			tt.executeWithoutResult((ts) -> {
+				boolean b = dao.processExternalSystemWithExpiredMeasurement((ctx) -> {
+					log.info("Locked ID: {}", ctx.config().getId());
+
+					Thread t = new Thread(() -> {
+						tt.executeWithoutResult((ts2) -> {
+							try {
+								jdbcTemplate.queryForList(
+										"SELECT * FROM solaroscp.oscp_cg_cp_meas LIMIT 1 FOR UPDATE NOWAIT");
+							} catch ( ConcurrencyFailureException e ) {
+								updateFailed.set(true);
+							} finally {
+								log.info("Tx 2 signaling");
+								latch.countDown();
+							}
+						});
+					}, "Update 2");
+					t.start();
+
+					log.info("Tx 1 waiting within lock");
+					try {
+						latch.await(1L, TimeUnit.MINUTES);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					assertThat("Role is provider", ctx.role(), is(equalTo(OscpRole.CapacityProvider)));
+					assertThat("Found provider row", ctx.config().getId(), is(equalTo(last.getId())));
+					assertThat("Found group", ctx.groupIdentifier(), is(equalTo(group.getIdentifier())));
+					assertThat("Task date is previous period start", ctx.taskDate(),
+							is(equalTo(expectedTaskDate)));
+					return newTs;
+				});
+				result.set(b);
+			});
+		} finally {
+			JdbcTestUtils.deleteFromTables((JdbcTemplate) jdbcTemplate, "solaruser.user_user");
 		}
 
 		assertThat("Update 1 succeeded", result.get(), is(equalTo(true)));

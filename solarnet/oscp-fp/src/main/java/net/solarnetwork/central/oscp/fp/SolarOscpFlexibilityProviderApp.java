@@ -26,6 +26,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.datum.config.JdbcDatumEntityDaoConfig;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 
 /**
@@ -40,7 +41,8 @@ import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 		SolarOscpFlexibilityProviderApp.class,
 })
 @Import({
-	SolarNetCommonConfiguration.class
+	SolarNetCommonConfiguration.class,
+	JdbcDatumEntityDaoConfig.class
 })
 //@formatter:on
 public class SolarOscpFlexibilityProviderApp {

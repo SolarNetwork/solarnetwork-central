@@ -26,12 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.MeasurementDao;
+import net.solarnetwork.central.oscp.dao.jdbc.DefaultMeasurementDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
@@ -50,6 +53,9 @@ public class OscpDaoConfig {
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
+
+	@Autowired
+	private ReadingDatumDao readingDatumDao;
 
 	/**
 	 * The OSCP flexibility provider DAO.
@@ -115,6 +121,16 @@ public class OscpDaoConfig {
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao) {
 		return new JdbcExternalSystemSupportDao(capacityProviderDao, capacityOptimizerDao);
+	}
+
+	/**
+	 * The OSCP measurement DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public MeasurementDao oscpMeasurementDao() {
+		return new DefaultMeasurementDao(readingDatumDao);
 	}
 
 }
