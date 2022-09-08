@@ -29,16 +29,16 @@ import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
 /**
  * Extension of {@link DatumEntity} to support aggregated (e.g. "rollup")
  * entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 2.8
  */
 public class AggregateDatumEntity extends DatumEntity

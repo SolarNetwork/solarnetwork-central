@@ -30,7 +30,7 @@ import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Map stale audit rows into {@link StaleAuditDatumEntity} instances.
@@ -47,7 +47,7 @@ import net.solarnetwork.central.domain.Aggregation;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public class StaleAuditDatumEntityRowMapper implements RowMapper<StaleAuditDatum> {

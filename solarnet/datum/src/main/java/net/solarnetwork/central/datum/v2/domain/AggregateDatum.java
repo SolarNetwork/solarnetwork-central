@@ -22,14 +22,15 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
 /**
  * API for an aggregate "rollup" object that exists within a unique stream at a
  * specific point in time and a set of property values.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 2.8
  */
 public interface AggregateDatum extends Datum {

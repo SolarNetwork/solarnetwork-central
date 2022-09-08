@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import java.math.BigDecimal;
 import org.junit.Test;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
 /**
  * Test cases for the {@link DatumPropertiesStatistics} class.

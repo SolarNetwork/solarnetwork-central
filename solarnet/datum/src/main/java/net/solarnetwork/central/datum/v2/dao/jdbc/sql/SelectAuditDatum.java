@@ -35,14 +35,14 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Select for {@link AuditDatum} instances via a {@link AuditDatumCriteria}
  * filter.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class SelectAuditDatum

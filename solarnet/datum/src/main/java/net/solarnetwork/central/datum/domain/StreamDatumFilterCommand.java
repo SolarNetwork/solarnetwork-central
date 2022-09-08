@@ -39,7 +39,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.domain.AggregationFilter;
 import net.solarnetwork.central.domain.NodeMappingFilter;
 import net.solarnetwork.central.domain.SourceMappingFilter;
@@ -47,6 +46,7 @@ import net.solarnetwork.central.support.BaseFilterSupport;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
 import net.solarnetwork.domain.MutableSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.StringUtils;
 
@@ -54,7 +54,7 @@ import net.solarnetwork.util.StringUtils;
  * Implementation of {@link StreamDatumFilter}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",

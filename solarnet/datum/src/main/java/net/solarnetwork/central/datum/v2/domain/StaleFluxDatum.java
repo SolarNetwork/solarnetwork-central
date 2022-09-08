@@ -23,14 +23,14 @@
 package net.solarnetwork.central.datum.v2.domain;
 
 import java.util.UUID;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * API for a "stale" SolarFlux datum record that represents a stream at a
  * specific aggregation level that needs to be published to SolarFlux.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface StaleFluxDatum {

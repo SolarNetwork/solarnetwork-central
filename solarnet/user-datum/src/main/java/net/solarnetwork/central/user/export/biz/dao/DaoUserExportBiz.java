@@ -45,7 +45,6 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
@@ -64,6 +63,7 @@ import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.event.AppEvent;
 import net.solarnetwork.event.AppEventHandler;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -75,7 +75,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 

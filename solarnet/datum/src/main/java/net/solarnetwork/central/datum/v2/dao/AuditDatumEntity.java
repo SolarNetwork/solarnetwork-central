@@ -31,14 +31,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.domain.BasicIdentity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Audit datum entity.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 @JsonPropertyOrder({ "ts", "streamId", "aggregation", "datumTotalCount", "datumCount",

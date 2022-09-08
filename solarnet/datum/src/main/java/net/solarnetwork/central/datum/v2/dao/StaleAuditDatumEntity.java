@@ -27,16 +27,16 @@ import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
-import net.solarnetwork.central.domain.Aggregation;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.BasicIdentity;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Entity for a "stale" audit record, which is used to mark specific audit time
  * periods as needing to be (re)computed.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public class StaleAuditDatumEntity extends BasicIdentity<StreamKindPK>

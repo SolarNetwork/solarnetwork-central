@@ -44,11 +44,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.BasicObjectDatumStreamMetadataSerializer;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
@@ -153,7 +153,7 @@ import net.solarnetwork.util.ArrayUtils;
  * </pre>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public final class ObjectMapperStreamDatumFilteredResultsProcessor

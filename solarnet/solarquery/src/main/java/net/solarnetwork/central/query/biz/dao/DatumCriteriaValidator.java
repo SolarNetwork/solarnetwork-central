@@ -26,7 +26,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ArrayUtils;
 
@@ -34,7 +34,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Validator for criteria used for reading queries.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.1
  */
 public class DatumCriteriaValidator implements Validator {

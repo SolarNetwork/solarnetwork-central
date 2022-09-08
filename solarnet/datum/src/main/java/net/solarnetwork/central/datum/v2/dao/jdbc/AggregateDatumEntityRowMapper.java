@@ -32,9 +32,9 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
-import net.solarnetwork.central.datum.v2.domain.DatumPropertiesStatistics;
-import net.solarnetwork.central.domain.Aggregation;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 
 /**
  * Map rollup aggregate rows into {@link AggregateDatumEntity} instances.
@@ -55,7 +55,7 @@ import net.solarnetwork.domain.datum.DatumProperties;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 3.8
  */
 public class AggregateDatumEntityRowMapper implements RowMapper<AggregateDatum> {
