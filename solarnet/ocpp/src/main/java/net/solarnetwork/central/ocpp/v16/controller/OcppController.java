@@ -97,7 +97,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -391,6 +391,16 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 							"Error handling OCPP action %s: %s", instr.action, root.getMessage()));
 					instructionDao.compareAndUpdateInstructionState(instructionId, instr.getNodeId(),
 							instr.getState(), InstructionState.Declined, data);
+					if ( userId != null ) {
+						generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ERROR_TAGS, "Failed to send",
+								data);
+					}
+				} else if ( userId != null ) {
+					Map<String, Object> data = new HashMap<>(4);
+					data.put(ACTION_DATA_KEY, instr.action);
+					data.put(CHARGE_POINT_DATA_KEY, instr.chargePointIdentity.getIdentifier());
+					data.put(MESSAGE_DATA_KEY, JsonUtils.getJSONString(cpMsg, "{}"));
+					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_QUEUED_TAGS, null, data);
 				}
 				return true;
 			});
