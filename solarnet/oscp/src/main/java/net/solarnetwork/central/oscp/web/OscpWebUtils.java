@@ -69,6 +69,9 @@ public final class OscpWebUtils {
 	/** The URL path to the Capacity Provider API. */
 	public static final String CAPACITY_PROVIDER_URL_PATH = "/oscp/cp";
 
+	/** The URL path to the Capacity Optimizer API. */
+	public static final String CAPACITY_OPTIMIZER_URL_PATH = "/oscp/co";
+
 	/** The URL path to the Flexibility Provider API. */
 	public static final String FLEXIBILITY_PROVIDER_URL_PATH = "/oscp/fp";
 
@@ -202,6 +205,10 @@ public final class OscpWebUtils {
 
 		/** The URL path for the Capacity Provider version 2.0 API. */
 		public static final String CAPACITY_PROVIDER_V20_URL_PATH = CAPACITY_PROVIDER_URL_PATH
+				+ V20_URL_PATH;
+
+		/** The URL path for the Capacity Optimizer version 2.0 API. */
+		public static final String CAPACITY_OPTIMIZER_V20_URL_PATH = CAPACITY_OPTIMIZER_URL_PATH
 				+ V20_URL_PATH;
 
 		/** The URL path for the Flexibility Provider version 2.0 API. */
