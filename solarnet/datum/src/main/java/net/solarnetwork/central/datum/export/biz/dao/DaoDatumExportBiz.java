@@ -87,7 +87,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO-based implementation of {@link DatumExportBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
 
@@ -247,7 +247,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 				updateTaskStatus(DatumExportState.Completed, Boolean.TRUE, null, Instant.now());
 			} catch ( Exception e ) {
-				log.warn("Error exporting datum for task {}", this, e.getMessage());
+				log.warn("Error exporting datum for task {}: {}", this, e.getMessage());
 				Throwable root = e;
 				while ( root.getCause() != null ) {
 					root = root.getCause();
