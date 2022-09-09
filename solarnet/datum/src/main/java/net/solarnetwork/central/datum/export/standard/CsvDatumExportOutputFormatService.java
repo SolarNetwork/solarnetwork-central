@@ -79,7 +79,7 @@ import net.solarnetwork.util.ClassUtils;
  * {@link DatumExportOutputFormatService}
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.23
  */
 public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -324,11 +324,11 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				try (BufferedOutputStream rawOut = new BufferedOutputStream(
 						new FileOutputStream(temporaryConcatenatedFile));
 						OutputStream out = (decompressTemp ? new GZIPOutputStream(rawOut)
-								: createCompressedOutputStream(rawOut));
+								: createCompressedOutputStream(rawOut));) {
+					if ( headers != null ) {
 						ICsvMapWriter concatenatedWriter = new CsvMapWriter(
 								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
-								CsvPreference.STANDARD_PREFERENCE)) {
-					if ( headers != null ) {
+								CsvPreference.STANDARD_PREFERENCE);
 						concatenatedWriter.writeHeader(headers);
 						concatenatedWriter.flush();
 					}
