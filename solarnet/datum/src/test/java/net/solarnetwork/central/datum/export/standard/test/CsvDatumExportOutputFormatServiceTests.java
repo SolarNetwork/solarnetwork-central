@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.GZIPInputStream;
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.springframework.util.FileCopyUtils;
@@ -257,6 +258,80 @@ public class CsvDatumExportOutputFormatServiceTests {
 				equalTo(OutputCompressionType.GZIP.getContentType()));
 		String csv = FileCopyUtils
 				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), "UTF-8"));
+		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
+
+		StringBuilder buf = new StringBuilder("created,nodeId,sourceId,localDate,localTime,watts\r\n");
+		DateTimeFormatter tsFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss.SSS'Z'")
+				.withZone(ZoneOffset.UTC);
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+				.withZone(ZoneOffset.UTC);
+		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm:ss.SSS")
+				.withZone(ZoneOffset.UTC);
+		for ( int i = 0; i < 100; i++ ) {
+			Instant date = start.plus(i, ChronoUnit.MINUTES);
+			buf.append(String.format("%s,-1,test.source,%s,%s,123.456\r\n", tsFormatter.format(date),
+					dateFormatter.format(date), timeFormatter.format(date)));
+		}
+
+		assertThat("Generated CSV", csv, equalTo(buf.toString()));
+	}
+
+	@Test
+	public void exportCompressedXz() throws IOException {
+		// given
+		CsvDatumExportOutputFormatService service = new CsvDatumExportOutputFormatService();
+		BasicOutputConfiguration config = new BasicOutputConfiguration();
+		config.setCompressionType(OutputCompressionType.XZ);
+
+		List<GeneralNodeDatumFilterMatch> data = new ArrayList<>(100);
+		Instant start = LocalDateTime.of(2018, 4, 23, 11, 19).atZone(ZoneOffset.UTC).toInstant();
+		for ( int i = 0; i < 100; i++ ) {
+			GeneralNodeDatumMatch d1 = new GeneralNodeDatumMatch();
+			d1.setCreated(start.plus(i, ChronoUnit.MINUTES));
+			d1.setNodeId(TEST_NODE_ID);
+			d1.setSourceId(TEST_SOURCE_ID);
+			d1.setLocalDateTime(d1.getCreated().atZone(ZoneOffset.UTC).toLocalDateTime());
+			d1.setSampleJson("{\"i\":{\"watts\":123.456}}");
+			data.add(d1);
+		}
+
+		List<Double> progress = new ArrayList<>(4);
+
+		// when
+		Iterable<DatumExportResource> results = null;
+		try (DatumExportOutputFormatService.ExportContext context = service
+				.createExportContext(config)) {
+			assertThat("Context created", context, notNullValue());
+
+			context.start(1);
+			context.appendDatumMatch(data, new ProgressListener<DatumExportService>() {
+
+				@Override
+				public void progressChanged(DatumExportService ctx, double amountComplete) {
+					assertThat("Same context", ctx, sameInstance(service));
+					progress.add(amountComplete);
+				}
+			});
+			results = context.finish();
+		}
+
+		// then
+		assertThat("Result created", results, notNullValue());
+
+		List<DatumExportResource> resultList = StreamSupport.stream(results.spliterator(), false)
+				.collect(Collectors.toList());
+		assertThat(resultList, hasSize(1));
+		assertThat("Progress provided", progress, hasSize(100));
+
+		DatumExportResource r = resultList.get(0);
+		assertThat(r, Matchers.instanceOf(BasicDatumExportResource.class));
+		File tempFile = ((BasicDatumExportResource) r).getDelegate().getFile();
+		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
+		assertThat("Temp file extension", tempFile.getName(), endsWith(".csv.xz"));
+		assertThat("Content type", r.getContentType(),
+				equalTo(OutputCompressionType.XZ.getContentType()));
+		String csv = FileCopyUtils.copyToString(
+				new InputStreamReader(new XZCompressorInputStream(r.getInputStream()), "UTF-8"));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 
 		StringBuilder buf = new StringBuilder("created,nodeId,sourceId,localDate,localTime,watts\r\n");
