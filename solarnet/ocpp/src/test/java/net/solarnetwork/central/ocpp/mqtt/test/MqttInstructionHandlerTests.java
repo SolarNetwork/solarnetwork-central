@@ -26,12 +26,12 @@ import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -153,7 +153,7 @@ public class MqttInstructionHandlerTests {
 
 		MqttMessage mqttMessage = mqttMessageCaptor.getValue();
 		assertThat("MQTT topic", mqttMessage.getTopic(), equalTo(handler.getMqttTopic()));
-		assertThat("MQTT QoS", mqttMessage.getQosLevel(), equalTo(MqttQos.AtMostOnce));
+		assertThat("MQTT QoS", mqttMessage.getQosLevel(), equalTo(MqttQos.AtLeastOnce));
 
 		JsonNode pubJson = objectMapper.readTree(mqttMessage.getPayload());
 		assertThat("MQTT payload", pubJson, instanceOf(ObjectNode.class));
