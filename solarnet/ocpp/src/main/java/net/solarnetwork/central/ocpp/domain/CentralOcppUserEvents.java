@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.domain;
  * Constants for central OCPP user events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CentralOcppUserEvents {
 
@@ -52,6 +52,14 @@ public interface CentralOcppUserEvents {
 	/** User event tags for OCPP connection ended events. */
 	public static final String[] CHARGE_POINT_DISCONNECTED_TAGS = new String[] { OCPP_EVENT_TAG,
 			CHARGER_EVENT_TAG, "disconnected" };
+
+	/** User event tags for OCPP instruction general events. */
+	public static final String[] CHARGE_POINT_INSTRUCTION_TAGS = new String[] { OCPP_EVENT_TAG,
+			INSTRUCTION_EVENT_TAG };
+
+	/** User event tags for OCPP instruction queued events. */
+	public static final String[] CHARGE_POINT_INSTRUCTION_QUEUED_TAGS = new String[] { OCPP_EVENT_TAG,
+			INSTRUCTION_EVENT_TAG, "queued" };
 
 	/** User event tags for OCPP instruction success events. */
 	public static final String[] CHARGE_POINT_INSTRUCTION_SENT_TAGS = new String[] { OCPP_EVENT_TAG,
