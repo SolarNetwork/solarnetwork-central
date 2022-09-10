@@ -64,7 +64,7 @@ import ocpp.domain.Action;
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
 		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler, CentralOcppUserEvents {
@@ -130,7 +130,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	@Override
 	public void processActionMessage(ActionMessage<JsonNode> message,
 			ActionMessageResultHandler<JsonNode, Void> resultHandler) {
-		log.debug("Posting OCPP instruction {} action {} to MQTT topic {} for charge point {}",
+		log.info("Posting OCPP instruction {} action {} to MQTT topic {} for charge point {}",
 				message.getMessageId(), message.getAction(), mqttTopic, message.getClientId());
 		MqttConnection conn = mqttConnection.get();
 		if ( conn != null && conn.isEstablished() ) {
@@ -142,10 +142,14 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
 				resultHandler.handleActionMessageResult(message, null, null);
 			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
+				log.warn(
+						"Error posting OCPP instruction {} action {} to MQTT topic {} for charge point {}: {}",
+						message.getMessageId(), message.getAction(), mqttTopic, message.getClientId(),
+						e.toString());
 				resultHandler.handleActionMessageResult(message, null, e);
 			}
 		} else {
-			log.debug(
+			log.warn(
 					"MQTT connection not available to post OCPP instruction {} action {} for charge point {}",
 					message.getMessageId(), message.getAction(), message.getClientId());
 			resultHandler.handleActionMessageResult(message, null,
@@ -176,7 +180,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 		}
 		try {
 			JsonNode json = objectMapper.readTree(message.getPayload());
-			log.trace("Received OCPP instruction {}", json);
+			log.info("Received OCPP instruction {}", json);
 			if ( json.isObject() ) {
 				Long instructionId = json.path("messageId").asLong();
 				ChargePointIdentity identity = objectMapper.readValue(
@@ -254,7 +258,8 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 											data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
 											data.put(MESSAGE_DATA_KEY, resultParameters);
 											generateUserEvent(cp.getUserId(),
-													CHARGE_POINT_INSTRUCTION_SENT_TAGS, null, data);
+													CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null,
+													data);
 										}
 									}
 									return true;
