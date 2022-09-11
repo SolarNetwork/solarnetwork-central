@@ -25,6 +25,8 @@ package net.solarnetwork.central.ocpp.v16.controller;
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
+import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -381,7 +384,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
 			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
 					instr.getId().toString(), instr.action, instr.jsonPayload);
-			handler.processActionMessage(cpMsg, (msg, res, err) -> {
+			ActionMessageResultHandler<JsonNode, Void> processor = (msg, res, err) -> {
 				if ( err != null ) {
 					Throwable root = err;
 					while ( root.getCause() != null ) {
@@ -403,7 +406,20 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_QUEUED_TAGS, null, data);
 				}
 				return true;
-			});
+			};
+			if ( isActualTransactionActive() ) {
+				// we need the instruction state committed before passing to the handler
+				registerSynchronization(new TransactionSynchronization() {
+
+					@Override
+					public void afterCommit() {
+						handler.processActionMessage(cpMsg, processor);
+					}
+
+				});
+			} else {
+				handler.processActionMessage(cpMsg, processor);
+			}
 			return;
 		}
 
@@ -437,7 +453,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 					data.put(ACTION_DATA_KEY, instr.action);
 					data.put(CHARGE_POINT_DATA_KEY, instr.chargePointIdentity.getIdentifier());
 					data.put(MESSAGE_DATA_KEY, resultParameters);
-					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_SENT_TAGS, null, data);
+					generateUserEvent(userId, CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null, data);
 				}
 			}
 			return true;
