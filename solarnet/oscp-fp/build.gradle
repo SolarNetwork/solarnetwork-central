@@ -18,6 +18,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
 	implementation project(':solarnet-oscp')
 
 	// Spring
