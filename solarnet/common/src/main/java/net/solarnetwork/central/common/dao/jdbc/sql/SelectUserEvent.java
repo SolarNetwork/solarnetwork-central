@@ -57,7 +57,7 @@ public class SelectUserEvent
 	 *        the filter criteria
 	 */
 	public SelectUserEvent(UserEventFilter filter) {
-		this(TimeBasedV7UuidGenerator.INSTANCE, filter, DEFAULT_FETCH_SIZE);
+		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter, DEFAULT_FETCH_SIZE);
 	}
 
 	/**
