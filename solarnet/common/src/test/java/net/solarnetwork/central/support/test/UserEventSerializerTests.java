@@ -52,9 +52,9 @@ import net.solarnetwork.codec.JsonUtils;
 public class UserEventSerializerTests {
 
 	private static final Instant TEST_DATE = LocalDateTime
-			.of(2021, 8, 11, 16, 45, 1, (int) TimeUnit.MILLISECONDS.toNanos(234))
+			.of(2021, 8, 11, 16, 45, 1, (int) TimeUnit.MICROSECONDS.toNanos(234567))
 			.toInstant(ZoneOffset.UTC);
-	private static final String TEST_DATE_STRING = "2021-08-11 16:45:01.234Z";
+	private static final String TEST_DATE_STRING = "2021-08-11 16:45:01.234567Z";
 
 	private TimeBasedV7UuidGenerator uuidGenerator;
 	private ObjectMapper mapper;
@@ -70,7 +70,7 @@ public class UserEventSerializerTests {
 	@Before
 	public void setup() {
 		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(),
-				Clock.fixed(TEST_DATE, ZoneOffset.UTC));
+				Clock.fixed(TEST_DATE, ZoneOffset.UTC), true);
 		mapper = createObjectMapper();
 	}
 

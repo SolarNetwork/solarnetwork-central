@@ -35,6 +35,12 @@ import net.solarnetwork.dao.Entity;
 /**
  * An application event related to a user.
  * 
+ * <p>
+ * Note that time-based UUIDs are assumed for {@link #getCreated()} to work, and
+ * microsecond precision time is assumed for V7 UUIDs. See
+ * {@link UuidUtils#extractTimestamp(UUID, boolean)}.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
@@ -132,7 +138,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	@Override
 	public Instant getCreated() {
-		return UuidUtils.extractTimestamp(getEventId());
+		return UuidUtils.extractTimestamp(getEventId(), true);
 	}
 
 	/**

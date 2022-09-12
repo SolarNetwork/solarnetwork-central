@@ -71,7 +71,7 @@ public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 	 *        the filter criteria
 	 */
 	public DeleteUserEvent(UserEventPurgeFilter filter) {
-		this(TimeBasedV7UuidGenerator.INSTANCE, filter);
+		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter);
 	}
 
 	public DeleteUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventPurgeFilter filter) {

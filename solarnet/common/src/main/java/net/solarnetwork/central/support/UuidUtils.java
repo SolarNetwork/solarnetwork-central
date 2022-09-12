@@ -23,13 +23,14 @@
 package net.solarnetwork.central.support;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
  * Utility functions for UUIDs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UuidUtils {
 
@@ -50,11 +51,53 @@ public final class UuidUtils {
 	 *         timestamp
 	 */
 	public static Instant extractTimestamp(UUID uuid) {
+		return extractTimestamp(uuid, false);
+	}
+
+	/**
+	 * Extract the timestamp out of a UUID.
+	 * 
+	 * <p>
+	 * Only UUID versions 1 and 7 are supported.
+	 * </p>
+	 * 
+	 * @param uuid
+	 *        the UUID to extract the timestamp from
+	 * @param assumeMicros
+	 *        if {@literal true} then for version 7 UUIDs assume that bits 66-76
+	 *        represent microseconds of the timestamp
+	 * @return the timestamp, or {@literal null} if unable to extract a
+	 *         timestamp
+	 * @since 1.1
+	 */
+	public static Instant extractTimestamp(UUID uuid, boolean assumeMicros) {
 		if ( uuid.version() == 7 ) {
-			// timestamp is highest 48 bits of UUID
-			return Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
+			return extractTimestampV7(uuid, assumeMicros);
 		} else if ( uuid.version() == 1 ) {
 			return Instant.ofEpochMilli(uuid.timestamp());
+		}
+		return null;
+	}
+
+	/**
+	 * Extract the timestamp out of a version 7 UUID.
+	 * 
+	 * @param uuid
+	 *        the UUID to extract the timestamp from
+	 * @param assumeMicros
+	 *        if {@literal true} then assume that bits 66-76 represent
+	 *        microseconds of the timestamp
+	 * @return the timestamp, or {@literal null} if unable to extract a
+	 *         timestamp
+	 */
+	public static Instant extractTimestampV7(UUID uuid, boolean assumeMicros) {
+		if ( uuid.version() == 7 ) {
+			// timestamp is highest 48 bits of UUID
+			Instant inst = Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
+			if ( assumeMicros ) {
+				inst = inst.plus((uuid.getMostSignificantBits() & 0xFFF) >> 2, ChronoUnit.MICROS);
+			}
+			return inst;
 		}
 		return null;
 	}
