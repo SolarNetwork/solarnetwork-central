@@ -36,7 +36,9 @@ public enum StatisticType implements CodedValue {
 	/** The average of the property values seen within the aggregate period. */
 	Average('a'),
 
-	/** The count of properties that participated in the aggregate value. */
+	/**
+	 * The count of property values that participated in the aggregate value.
+	 */
 	Count('c'),
 
 	/** The minimum property value seen within the aggregate period. */
