@@ -35,18 +35,19 @@ import oscp.v20.ForecastedBlock.PhaseIndicator;
  */
 public enum Phase implements CodedValue {
 
-	/** A charging asset like an EV charger (possibly bi-directional). */
+	/** Phase on which is measured is not known or irrelevant. */
 	Unknown('u'),
 
-	/** Consumption asset, neither {@code Charging} nor {@code Storage}. */
+	/** Represents measurement on phase 1. */
 	A('a'),
 
-	/** Generation asset like PV. */
+	/** Represents measurement on phase 2. */
 	B('b'),
 
-	/** Storage asset, like a battery. */
+	/** Represents measurement on phase 2. */
 	C('c'),
 
+	/** Represents the sum of all phases (1, 2, and 3). */
 	All('z')
 
 	;
