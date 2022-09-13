@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -32,6 +33,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
+@JsonIgnoreProperties("authRole")
 public class CapacityProviderConfiguration
 		extends BaseOscpExternalSystemConfiguration<CapacityProviderConfiguration> {
 
