@@ -31,11 +31,11 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**

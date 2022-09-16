@@ -27,9 +27,9 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.solarnetwork.central.dao.CopyingIdentity;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.dao.BasicUuidEntity;
+import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
