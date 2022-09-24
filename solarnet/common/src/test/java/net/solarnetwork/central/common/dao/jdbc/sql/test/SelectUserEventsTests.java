@@ -31,7 +31,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.then;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -50,6 +50,8 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.sql.SelectUserEvent;
+import net.solarnetwork.central.support.SearchFilterUtils;
+import net.solarnetwork.util.SearchFilter;
 
 /**
  * Test cases for the {@link SelectUserEvent} class.
@@ -95,25 +97,29 @@ public class SelectUserEventsTests {
 		int p = 0;
 		if ( filter.hasUserCriteria() ) {
 			if ( filter.getUserIds().length == 1 ) {
-				verify(result).setObject(++p, filter.getUserId());
+				then(result).should().setObject(++p, filter.getUserId());
 			} else {
-				verify(result).setArray(++p, userIdsArray);
+				then(result).should().setArray(++p, userIdsArray);
 			}
 		}
 		if ( filter.hasTagCriteria() ) {
-			verify(result).setArray(++p, tagsArray);
+			then(result).should().setArray(++p, tagsArray);
+		}
+		if ( filter.hasSearchFilterCriteria() ) {
+			then(result).should().setString(++p, SearchFilterUtils
+					.toSqlJsonPath(SearchFilter.forLDAPSearchFilterString(filter.getSearchFilter())));
 		}
 		if ( filter.hasStartDate() ) {
-			verify(result).setObject(++p, createUuidV7Boundary(filter.getStartDate()));
+			then(result).should().setObject(++p, createUuidV7Boundary(filter.getStartDate()));
 		}
 		if ( filter.hasEndDate() ) {
-			verify(result).setObject(++p, createUuidV7Boundary(filter.getEndDate()));
+			then(result).should().setObject(++p, createUuidV7Boundary(filter.getEndDate()));
 		}
 		if ( filter.getMax() != null ) {
-			verify(result).setInt(++p, filter.getMax());
+			then(result).should().setInt(++p, filter.getMax());
 		}
 		if ( filter.getOffset() != null && filter.getOffset() > 0 ) {
-			verify(result).setInt(++p, filter.getOffset());
+			then(result).should().setInt(++p, filter.getOffset());
 		}
 	}
 
@@ -151,7 +157,7 @@ public class SelectUserEventsTests {
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
 
 		// THEN
-		verify(con).prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(),
@@ -198,7 +204,7 @@ public class SelectUserEventsTests {
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
 
 		// THEN
-		verify(con).prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(),
@@ -242,11 +248,56 @@ public class SelectUserEventsTests {
 		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
 
 		// THEN
-		verify(con).prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
 				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
 				"select-user-event-multiusers.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verifyPrepStatement(result, filter);
+	}
+
+	@Test
+	public void sql_searchFilter() {
+		// GIVEN
+		BasicUserEventFilter filter = new BasicUserEventFilter();
+		filter.setUserIds(new Long[] { 1L });
+		filter.setTags(new String[] { "A", "B" });
+		filter.setSearchFilter("(foo=bar)");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		// WHEN
+		String sql = new SelectUserEvent(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-user-event-searchfilter.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void prep_searchFilter() throws SQLException {
+		// GIVEN
+		BasicUserEventFilter filter = new BasicUserEventFilter();
+		filter.setUserIds(new Long[] { 1L });
+		filter.setTags(new String[] { "A", "B" });
+		filter.setSearchFilter("(foo=bar)");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
+
+		givenPrepStatement();
+		givenSetTagsArrayParameter(filter.getTags());
+
+		// WHEN
+		PreparedStatement result = new SelectUserEvent(filter).createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-user-event-searchfilter.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verifyPrepStatement(result, filter);
 	}
