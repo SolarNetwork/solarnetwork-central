@@ -64,7 +64,7 @@ public final class SearchFilterUtils {
 	}
 
 	/**
-	 * Convert a search filter into a JSON Path expression.
+	 * Convert a search filter into a SQL JSON Path expression.
 	 * 
 	 * @param filter
 	 *        the filter
