@@ -126,7 +126,7 @@ public class SecurityTokenAuthenticationEntryPoint
 		if ( handleWithResolver(request, response, accessDeniedException) ) {
 			return;
 		}
-		response.sendError(HttpServletResponse.SC_FORBIDDEN, accessDeniedException.getMessage());
+		response.sendError(HttpServletResponse.SC_FORBIDDEN);
 	}
 
 	/**

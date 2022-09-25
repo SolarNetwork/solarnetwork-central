@@ -30,9 +30,9 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZoneId;
@@ -189,8 +189,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
-			datumCount += r;
-			datumHourlyCount += h;
+			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
+			datumHourlyCount += (int) h;
 			datumDailyCount += d;
 			propCount += p;
 			propUpdateCount += p_u;
@@ -248,8 +248,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
-			datumCount += r;
-			datumHourlyCount += h;
+			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
+			datumHourlyCount += (int) h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
@@ -301,8 +301,8 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
-			datumCount += r;
-			datumHourlyCount += h;
+			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
+			datumHourlyCount += (int) h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
