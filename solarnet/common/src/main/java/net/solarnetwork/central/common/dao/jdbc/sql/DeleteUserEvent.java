@@ -74,6 +74,14 @@ public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter);
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param uuidTimestampDecoder
+	 *        the UUID decoder to use
+	 * @param filter
+	 *        the filter criteria
+	 */
 	public DeleteUserEvent(UuidTimestampDecoder uuidTimestampDecoder, UserEventPurgeFilter filter) {
 		super();
 		this.uuidTimestampDecoder = requireNonNullArgument(uuidTimestampDecoder, "uuidTimestampDecoder");
