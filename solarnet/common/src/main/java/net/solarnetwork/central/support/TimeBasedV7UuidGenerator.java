@@ -26,8 +26,10 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.UuidTimestampDecoder;
@@ -42,7 +44,7 @@ import net.solarnetwork.central.biz.UuidTimestampDecoder;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampDecoder {
 
@@ -61,43 +63,84 @@ public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampDec
 		INSTANCE = g;
 	}
 
+	/**
+	 * A default instance with microsecond time precision.
+	 * 
+	 * @since 1.1
+	 */
+	public static final TimeBasedV7UuidGenerator INSTANCE_MICROS;
+	static {
+		Clock c = Clock.tick(Clock.systemUTC(), Duration.of(1, ChronoUnit.MICROS));
+		TimeBasedV7UuidGenerator g;
+		try {
+			g = new TimeBasedV7UuidGenerator(SecureRandom.getInstanceStrong(), c, true);
+		} catch ( NoSuchAlgorithmException e ) {
+			g = new TimeBasedV7UuidGenerator(new SecureRandom(), c, true);
+		}
+		INSTANCE_MICROS = g;
+	}
+
 	private final SecureRandom rand;
 	private final Clock clock;
+	private final boolean includeMicros;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param generator
 	 *        the generator to use
+	 * @param clock
+	 *        the clock
 	 */
 	public TimeBasedV7UuidGenerator(SecureRandom rand, Clock clock) {
+		this(rand, clock, false);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param generator
+	 *        the generator to use
+	 * @param clock
+	 *        the clock
+	 * @param includeMicros
+	 *        include microseconds in the UUID, for higher-resolution time-based
+	 *        sorting
+	 * @since 1.1
+	 */
+	public TimeBasedV7UuidGenerator(SecureRandom rand, Clock clock, boolean includeMicros) {
 		super();
 		this.rand = requireNonNullArgument(rand, "rand");
 		this.clock = requireNonNullArgument(clock, "clock");
+		this.includeMicros = includeMicros;
 	}
 
 	@Override
 	public UUID generate() {
-		long now = clock.millis();
+		final Instant now = clock.instant();
 
 		// @formatter:off
 		long lower = 0xB000000000000000L | (rand.nextLong() & 0x3FFFFFFFFFFFFFFFL);
 		byte[] r = new byte[2];
 		rand.nextBytes(r);
 		long upper = (
-				((now & 0xFFFFFFFFFFFFL) << 16) // truncate epoch to 48 bits
+				((now.toEpochMilli() & 0xFFFFFFFFFFFFL) << 16) // truncate epoch to 48 bits
 				| 0x7000L // variant
 				| ((r[0] & 0x0F) << 8) // rand_a 12 bits
 				| (r[1] & 0xFF)
 				);
+		if ( includeMicros ) {
+			// use 10 bits for microseconds; preserve last 2 random bits
+			int micros = ((now.getNano() / 1_000) - ((now.getNano() / 1_000_000) * 1_000));
+			upper = (upper & 0xFFFFFFFF_FFFFF003L) | (micros << 2);
+		}
 		// @formatter:on
 		return new UUID(upper, lower);
 	}
 
 	@Override
 	public Instant decodeTimestamp(UUID uuid) {
-		// timestamp is highest 48 bits of UUID
-		return Instant.ofEpochMilli((uuid.getMostSignificantBits() >> 16) & 0xFFFFFFFFFFFFL);
+		return UuidUtils.extractTimestampV7(uuid, includeMicros);
 	}
 
 	@Override

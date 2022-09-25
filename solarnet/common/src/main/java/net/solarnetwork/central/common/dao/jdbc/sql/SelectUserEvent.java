@@ -32,7 +32,9 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.biz.UuidTimestampDecoder;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.support.SearchFilterUtils;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.SearchFilter;
 
 /**
  * Select for user events.
@@ -49,6 +51,7 @@ public class SelectUserEvent
 	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventFilter filter;
 	private final int fetchSize;
+	private final SearchFilter searchFilter;
 
 	/**
 	 * Constructor.
@@ -57,7 +60,7 @@ public class SelectUserEvent
 	 *        the filter criteria
 	 */
 	public SelectUserEvent(UserEventFilter filter) {
-		this(TimeBasedV7UuidGenerator.INSTANCE, filter, DEFAULT_FETCH_SIZE);
+		this(TimeBasedV7UuidGenerator.INSTANCE_MICROS, filter, DEFAULT_FETCH_SIZE);
 	}
 
 	/**
@@ -76,6 +79,7 @@ public class SelectUserEvent
 		this.uuidTimestampDecoder = requireNonNullArgument(uuidTimestampDecoder, "uuidTimestampDecoder");
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
+		this.searchFilter = SearchFilter.forLDAPSearchFilterString(filter.getSearchFilter());
 	}
 
 	@Override
@@ -101,6 +105,10 @@ public class SelectUserEvent
 		}
 		if ( filter.hasTagCriteria() ) {
 			where.append("\tAND uel.tags @> ?\n");
+			idx += 1;
+		}
+		if ( searchFilter != null ) {
+			where.append("\tAND jsonb_path_exists(uel.jdata, ?::jsonpath)\n");
 			idx += 1;
 		}
 
@@ -132,6 +140,9 @@ public class SelectUserEvent
 		}
 		if ( filter.hasTagCriteria() ) {
 			p = CommonSqlUtils.prepareArrayParameter(con, stmt, p, filter.getTags());
+		}
+		if ( searchFilter != null ) {
+			stmt.setString(++p, SearchFilterUtils.toSqlJsonPath(searchFilter));
 		}
 		if ( filter.getStartDate() != null ) {
 			stmt.setObject(++p, uuidTimestampDecoder.createTimestampBoundary(filter.getStartDate()));

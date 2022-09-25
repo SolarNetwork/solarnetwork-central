@@ -93,7 +93,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 
 	@BeforeEach
 	public void setup() {
-		uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE;
+		uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE_MICROS;
 		executor = Executors.newFixedThreadPool(3);
 		dao = EasyMock.createMock(UserEventAppenderDao.class);
 		queue = new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT);

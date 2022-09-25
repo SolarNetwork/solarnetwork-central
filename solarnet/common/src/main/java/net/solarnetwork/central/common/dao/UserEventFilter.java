@@ -30,9 +30,9 @@ import net.solarnetwork.dao.SortCriteria;
  * Filter API for user events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface UserEventFilter
-		extends UserCriteria, TagCriteria, DateRangeCriteria, PaginationCriteria, SortCriteria {
+public interface UserEventFilter extends UserCriteria, TagCriteria, DateRangeCriteria,
+		SearchFilterCriteria, PaginationCriteria, SortCriteria {
 
 }

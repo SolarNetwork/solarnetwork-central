@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.MutableClock;
@@ -241,6 +243,52 @@ public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		assertThat("Remaining event IDs",
 				allUserEventData().stream().map(e -> (UUID) e.get("event_id")).collect(toSet()),
 				containsInAnyOrder(expectedUuids));
+	}
+
+	@Test
+	public void find_searchFilter() {
+		// GIVEN
+		final int groupSize = 4;
+		final int count = groupSize * 4;
+		final List<UserEvent> events = new ArrayList<>(count);
+		final List<UserEvent> expected = new ArrayList<>(5);
+		for ( int i = 0; i < count; i++ ) {
+			String[] tags;
+			switch (i % groupSize) {
+				case 0:
+					tags = new String[] { "a", "b", "c" };
+					break;
+				case 1:
+					tags = new String[] { "a", "b", "d" };
+					break;
+				case 2:
+					tags = new String[] { "a", "e", "f" };
+					break;
+				default:
+					tags = new String[] { "g", "h", "i" };
+					break;
+			}
+			UserEvent event = new UserEvent(userId, uuidGenerator.generate(), tags, null,
+					"{\"count\":%d}".formatted(i));
+			dao.add(event);
+			events.add(event);
+			if ( i > 0 && i < 6 ) {
+				expected.add(event);
+			}
+			clock.add(1, ChronoUnit.SECONDS);
+		}
+
+		allUserEventData();
+
+		// WHEN
+		BasicUserEventFilter f = new BasicUserEventFilter();
+		f.setUserId(userId);
+		f.setSearchFilter("(&(count>=1)(count<6))");
+		FilterResults<UserEvent, UserUuidPK> result = dao.findFiltered(f);
+		assertThat("Results returned for query", result, is(notNullValue()));
+		assertThat("Results with count 1..5 returned", result.getReturnedResultCount(), is(equalTo(5)));
+		assertThat("Results as expected", StreamSupport.stream(result.spliterator(), false).toList(),
+				contains(expected.toArray(UserEvent[]::new)));
 	}
 
 }

@@ -66,7 +66,7 @@ import ocpp.json.ActionPayloadDecoder;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -392,8 +392,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 									data.put(ACTION_DATA_KEY, action);
 									data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
 									data.put(MESSAGE_DATA_KEY, resultParameters);
-									generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_SENT_TAGS,
-											null, data);
+									generateUserEvent(cp.getUserId(),
+											CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null, data);
 								}
 							}
 							return true;

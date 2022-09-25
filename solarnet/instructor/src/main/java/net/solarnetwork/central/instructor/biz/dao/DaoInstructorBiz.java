@@ -188,7 +188,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		instr.setState(InstructionState.Queued);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
-				if ( param == null || param.getName() == null || param.getValue().isEmpty()
+				if ( param == null || param.getName() == null || param.getName().isEmpty()
 						|| param.getValue() == null ) {
 					continue;
 				}

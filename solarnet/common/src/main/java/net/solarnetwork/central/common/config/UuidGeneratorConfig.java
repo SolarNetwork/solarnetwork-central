@@ -38,7 +38,7 @@ public class UuidGeneratorConfig {
 
 	@Bean
 	public UuidGenerator uuidGenerator() {
-		return TimeBasedV7UuidGenerator.INSTANCE;
+		return TimeBasedV7UuidGenerator.INSTANCE_MICROS;
 	}
 
 }

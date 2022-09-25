@@ -132,7 +132,7 @@ app:
         read-timeout-seconds: 0
         write-timeout-seconds: -1
     instr-publish:
-      publish-qos-level: 0
+      publish-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10

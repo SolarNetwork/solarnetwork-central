@@ -140,7 +140,7 @@ public class AsyncDaoUserEventAppenderBiz
 				new StatCounter("AsyncDaoUserEventAppender",
 						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz", log, 500,
 						UserEventStats.values()),
-				TimeBasedV7UuidGenerator.INSTANCE);
+				TimeBasedV7UuidGenerator.INSTANCE_MICROS);
 	}
 
 	/**
