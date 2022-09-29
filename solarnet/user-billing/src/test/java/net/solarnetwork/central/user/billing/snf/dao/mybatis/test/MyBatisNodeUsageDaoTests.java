@@ -208,9 +208,9 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				new String[] { "datum-props-in", "10000000", 	"0.0000008" },
 				new String[] { "datum-props-in", "500000000",	"0.0000002" },
 				new String[] { "ocpp-chargers", 	"0", 		"2"},
-				new String[] { "ocpp-chargers", 	"1000", 	"1"},
-				new String[] { "ocpp-chargers", 	"100000", 	"0.5"},
-				new String[] { "ocpp-chargers", 	"10000000", "0.3"},
+				new String[] { "ocpp-chargers", 	"250", 		"1"},
+				new String[] { "ocpp-chargers", 	"12500", 	"0.5"},
+				new String[] { "ocpp-chargers", 	"500000", 	"0.3"},
 				new String[] { "oscp-cap-groups", 	"0", 		"18"},
 				new String[] { "oscp-cap-groups", 	"100", 		"9"},
 				new String[] { "oscp-cap-groups", 	"1000", 	"5"},
@@ -611,8 +611,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 					NamedCost{name=Tier 1, quantity=10000000, cost=0.50000000},
 					NamedCost{name=Tier 2, quantity=90000000, cost=0.90000000}],
 				ocpp-chargers=[
-					NamedCost{name=Tier 1, quantity=1000, cost=2000},
-					NamedCost{name=Tier 2, quantity=1000, cost=1000}],
+					NamedCost{name=Tier 1, quantity=250, cost=500},
+					NamedCost{name=Tier 2, quantity=1750, cost=1750}],
 				oscp-cap-groups=[
 					NamedCost{name=Tier 1, quantity=100, cost=1800},
 					NamedCost{name=Tier 2, quantity=100, cost=900}]
@@ -644,13 +644,13 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						NamedCost.forTier(2, "90000000", 	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()).toString())));
 
 				assertThat("OCPP charger cost", usage.getOcppChargersCost().setScale(3), equalTo(
-								new BigDecimal("1000").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost())
-						.add(	new BigDecimal("1000").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()))
+								new BigDecimal("250") .multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost())
+						.add(	new BigDecimal("1750").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()))
 						.setScale(3)
 						));
 				assertThat("OCPP Charger cost tiers", ocppChargersTiersCost, contains(
-						NamedCost.forTier(1, "1000", new BigDecimal("1000").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost()).toString()),
-						NamedCost.forTier(2, "1000", new BigDecimal("1000").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()).toString())));
+						NamedCost.forTier(1, "250",  new BigDecimal("250") .multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "1750", new BigDecimal("1750").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()).toString())));
 
 				assertThat("OSCP Capacity Groups cost", usage.getOscpCapacityGroupsCost().setScale(3), equalTo(
 								new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost())
