@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.dao.mybatis;
 
 import static java.util.Collections.singletonMap;
 import java.util.Collection;
+import java.util.Map;
 import org.springframework.dao.DataRetrievalFailureException;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
@@ -35,7 +36,7 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  * MyBatis implementation of {@link SystemUserDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<SystemUser, Long>
 		implements CentralSystemUserDao {
@@ -47,7 +48,21 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 		DeleteForUserAndId("delete-CentralSystemUser-for-user-and-id"),
 
 		/** Get a system user for a given username. */
-		GetForUsername("get-CentralSystemUser-for-username");
+		GetForUsername("get-CentralSystemUser-for-username"),
+
+		/**
+		 * Get a system user for a given username and charger identifier.
+		 * 
+		 * <p>
+		 * The query will be passed a map with {@code username} and
+		 * {@code identifier} properties.
+		 * </p>
+		 * 
+		 * @since 1.1
+		 */
+		GetForUsernameAndCharger("get-CentralSystemUser-for-username-and-charger"),
+
+		;
 
 		private final String queryName;
 
@@ -75,6 +90,12 @@ public class MyBatisCentralSystemUserDao extends BaseMyBatisGenericDaoSupport<Sy
 	@Override
 	public SystemUser getForUsername(String username) {
 		return selectFirst(QueryName.GetForUsername.getQueryName(), username);
+	}
+
+	@Override
+	public SystemUser getForUsernameAndChargePoint(String username, String chargePointIdentifier) {
+		Map<String, Object> params = Map.of("username", username, "identifier", chargePointIdentifier);
+		return selectFirst(QueryName.GetForUsernameAndCharger.getQueryName(), params);
 	}
 
 	@Override
