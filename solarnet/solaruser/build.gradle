@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '1.7.0'
+version = '1.7.1'
 archivesBaseName = 'solaruser'
 
 configurations {
@@ -58,7 +58,7 @@ dependencies {
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.3.0'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.4.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

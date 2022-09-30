@@ -40,9 +40,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
+import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralSystemUserDao;
+import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.dao.GenericDao;
+import net.solarnetwork.ocpp.domain.ChargePointInfo;
+import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.SystemUser;
 
 /**
@@ -53,18 +57,29 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  */
 public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupport {
 
+	private static final String TEST_CP_IDENT = "one";
+
+	private MyBatisCentralChargePointDao chargePointDao;
 	private MyBatisCentralSystemUserDao dao;
 
 	private Long userId;
+	private Long nodeId;
 	private SystemUser last;
 
 	@Before
 	public void setUp() throws Exception {
+		chargePointDao = new MyBatisCentralChargePointDao();
+		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
 		dao = new MyBatisCentralSystemUserDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
 		last = null;
-		userId = UUID.randomUUID().getMostSignificantBits();
+		UUID uuid = UUID.randomUUID();
+		userId = uuid.getMostSignificantBits();
+		nodeId = uuid.getLeastSignificantBits();
 		setupTestUser(userId);
+		setupTestLocation();
+		setupTestNode(nodeId);
+		setupTestUserNode(userId, nodeId);
 	}
 
 	private CentralSystemUser createTestSystemUser() {
@@ -73,6 +88,16 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		user.setUsername("foobar");
 		user.setPassword("secret");
 		return user;
+	}
+
+	private CentralChargePoint createTestChargePoint() {
+		CentralChargePoint entity = new CentralChargePoint(null, userId, nodeId,
+				Instant.ofEpochMilli(System.currentTimeMillis()),
+				new ChargePointInfo(TEST_CP_IDENT, "foo", "bar"));
+		entity.setEnabled(true);
+		entity.setRegistrationStatus(RegistrationStatus.Accepted);
+		entity.setConnectorCount(1);
+		return entity;
 	}
 
 	@Test
@@ -259,6 +284,44 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("Username matches", entity.getUsername(), equalTo("foobar"));
 		assertThat("Password IS returned", entity.getPassword(), equalTo("secret"));
 		assertThat("Allowed charge points", entity.getAllowedChargePoints(), contains("one", "two"));
+	}
+
+	@Test
+	public void findByUsernameAndCharger() {
+		findAll();
+		SystemUser entity = dao.getForUsernameAndChargePoint("b", "c");
+		assertThat("Match", entity, notNullValue());
+		assertThat("Username matches", entity.getUsername(), equalTo("b"));
+		assertThat("Password IS returned", entity.getPassword(), equalTo("bb"));
+	}
+
+	@Test
+	public void findByUsernameAndCharger_withAllowedChargePoints() {
+		CentralChargePoint cp = createTestChargePoint();
+		cp = (CentralChargePoint) chargePointDao.get(chargePointDao.save(cp));
+		findAll_withAllowedChargePoints();
+		SystemUser entity = dao.getForUsernameAndChargePoint("foobar", TEST_CP_IDENT);
+		assertThat("Match", entity, notNullValue());
+		assertThat("Username matches", entity.getUsername(), equalTo("foobar"));
+		assertThat("Password IS returned", entity.getPassword(), equalTo("secret"));
+		assertThat("Allowed charge points", entity.getAllowedChargePoints(), contains("one", "two"));
+	}
+
+	@Test
+	public void findByUsernameAndCharger_withAllowedChargePoints_notAllowed() {
+		findAll_withAllowedChargePoints();
+		SystemUser entity = dao.getForUsernameAndChargePoint("foobar", "three");
+		assertThat("No match", entity, nullValue());
+	}
+
+	@Test
+	public void findByUsernameAndCharger_withAllowedChargePoints_disabled() {
+		CentralChargePoint cp = createTestChargePoint();
+		cp.setEnabled(false);
+		cp = (CentralChargePoint) chargePointDao.get(chargePointDao.save(cp));
+		findAll_withAllowedChargePoints();
+		SystemUser entity = dao.getForUsernameAndChargePoint("foobar", TEST_CP_IDENT);
+		assertThat("No match", entity, nullValue());
 	}
 
 	@Test

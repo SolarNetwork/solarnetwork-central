@@ -82,6 +82,16 @@
 			su.username = #{username}
 	</select>
 	
+	<select id="get-CentralSystemUser-for-username-and-charger" parameterType="map" resultMap="CentralSystemUser-FullResult">
+		SELECT
+			<include refid="fragment-CentralSystemUser-full-result"/>
+		FROM solarev.ocpp_system_user su
+		LEFT OUTER JOIN solarev.ocpp_charge_point cp 
+			ON cp.ident = #{identifier,jdbcType=VARCHAR} AND cp.user_id = su.user_id
+		WHERE su.username = #{username,jdbcType=VARCHAR}
+			AND (su.allowed_cp IS NULL OR cp.enabled = TRUE)
+	</select>
+	
 	<sql id="fragment-findall-CentralSystemUser-where">
 		<if test="filter != null">
 			<where>
