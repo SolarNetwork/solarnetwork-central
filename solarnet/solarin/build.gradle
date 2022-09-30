@@ -46,7 +46,7 @@ dependencies {
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.2'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.3.0'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.4.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

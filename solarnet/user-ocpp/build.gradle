@@ -31,7 +31,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	
 	// SolarNetwork
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp:2.0.0'
+	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp:2.1.0'
 	
 	// Utilities
 	implementation 'org.aspectj:aspectjweaver'
