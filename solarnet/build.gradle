@@ -92,6 +92,11 @@ subprojects {
         myBatisStarterVersion = '2.2.0'
         snCommonMqttVersion = '3.2.0'
         snCommonMqttNettyVersion = '2.2.0'
+        snExternalOcppVersion = '1.1.2'
+        snCommonOcppVersion = '2.1.0'
+        snCommonOcpp16Version = '2.0.2'
+        snCommonOcppWebVersion = '2.4.0'
+        snCommonPkiBcVersion = '2.0.0'
         superCsvVersion = '2.4.0'
 
         libraries = [
