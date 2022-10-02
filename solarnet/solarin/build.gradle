@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.2'
+	id 'org.springframework.boot' version '2.7.4'
 }
 
 apply plugin: 'java'
@@ -44,9 +44,9 @@ dependencies {
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:2.0.2'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.4.0'
+	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web:${snCommonOcppWebVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
