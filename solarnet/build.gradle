@@ -89,6 +89,7 @@ subprojects {
 	ext {
 		checkstyleVersion = '8.34'
 		javaxAnnotationVersion = '1.3.2'
+		jsonSchemaValidatorVersion = '1.0.73'
 		myBatisStarterVersion = '2.2.0'
 		snCommonVersion = '2.11.0'
 		snCommonMqttVersion = '3.2.0'

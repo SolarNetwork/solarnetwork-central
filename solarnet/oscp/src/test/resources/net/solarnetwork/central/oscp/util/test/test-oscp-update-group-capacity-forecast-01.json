@@ -1,0 +1,34 @@
+{
+	"group_id" : "abc123",
+	"type" : "CONSUMPTION",
+	"forecasted_blocks" : [
+		{
+			"capacity" : 123.456,
+			"phase" : "ALL",
+			"unit" : "KW",
+			"start_time" : "2022-10-07T00:00:00Z",
+			"end_time" : "2022-10-07T00:15:00Z"
+		},
+		{
+			"capacity" : 234.567,
+			"phase" : "ALL",
+			"unit" : "KW",
+			"start_time" : "2022-10-07T00:15:00Z",
+			"end_time" : "2022-10-07T00:30:00Z"
+		},
+		{
+			"capacity" : 345.678,
+			"phase" : "ALL",
+			"unit" : "KW",
+			"start_time" : "2022-10-07T00:30:00Z",
+			"end_time" : "2022-10-07T00:45:00Z"
+		},
+		{
+			"capacity" : 456.789,
+			"phase" : "ALL",
+			"unit" : "KW",
+			"start_time" : "2022-10-07T00:45:00Z",
+			"end_time" : "2022-10-07T01:00:00Z"
+		}
+	]
+}

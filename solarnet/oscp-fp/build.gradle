@@ -41,6 +41,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'org.apache.httpcomponents:httpclient'
 	implementation 'org.aspectj:aspectjweaver'
 

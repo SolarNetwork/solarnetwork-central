@@ -54,6 +54,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'javax.annotation:javax.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.hibernate.validator:hibernate-validator'
