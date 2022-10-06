@@ -77,6 +77,9 @@ public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCr
 					, cname = ?
 					, url = ?
 					, oscp_ver = ?
+					, pub_in = ?
+					, pub_flux = ?
+					, source_id_tmpl = ?
 					, sprops = ?::jsonb
 				WHERE user_id = ? AND id = ?
 				""";
@@ -93,6 +96,9 @@ public class UpdateCapacityOptimizerConfiguration implements PreparedStatementCr
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 		stmt.setString(++p, entity.getOscpVersion());
+		stmt.setBoolean(++p, entity.isPublishToSolarIn());
+		stmt.setBoolean(++p, entity.isPublishToSolarFlux());
+		stmt.setString(++p, entity.getSourceIdTemplate());
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		stmt.setObject(++p, id.getUserId());

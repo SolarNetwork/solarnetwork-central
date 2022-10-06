@@ -2,6 +2,7 @@ SELECT c.id, c.created, c.modified, c.user_id, c.enabled
 	, c.fp_id, c.reg_status, c.cname, c.url, c.oscp_ver
 	, c.heartbeat_secs, c.meas_styles, NULL::timestamptz AS heartbeat_at, c.offline_at
 	, c.sprops
+	, c.pub_in, c.pub_flux, c.source_id_tmpl
 	, g.id, g.created, g.modified, g.user_id, g.enabled, g.cname
 	, g.ident, g.cp_meas_secs, g.co_meas_secs, g.cp_id, g.co_id, g.sprops
 	, NULL::timestamptz AS cp_meas_at, m.meas_at AS co_meas_at

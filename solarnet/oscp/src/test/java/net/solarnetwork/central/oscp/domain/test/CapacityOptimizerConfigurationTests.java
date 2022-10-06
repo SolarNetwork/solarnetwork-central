@@ -76,6 +76,9 @@ public class CapacityOptimizerConfigurationTests {
 				, "name":"%s"
 				, "baseUrl":"%s"
 				, "registrationStatus":"%s"
+				, "publishToSolarIn":%s
+				, "publishToSolarFlux":%s
+				, "sourceIdTemplate":"%s"
 				, "serviceProps":%s
 				}
 				""",
@@ -87,6 +90,9 @@ public class CapacityOptimizerConfigurationTests {
 				conf.getName(),
 				conf.getBaseUrl(),
 				conf.getRegistrationStatus().name(),
+				conf.isPublishToSolarIn(),
+				conf.isPublishToSolarFlux(),
+				conf.getSourceIdTemplate(),
 				JsonUtils.getJSONString(conf.getServiceProps(), "null")
 				), actualJson, true);
 		// @formatter:on
@@ -106,6 +112,9 @@ public class CapacityOptimizerConfigurationTests {
 		conf.setName("Howdy");
 		conf.setBaseUrl("https://localhost/" + UUID.randomUUID());
 		conf.setRegistrationStatus(RegistrationStatus.Pending);
+		conf.setPublishToSolarIn(true);
+		conf.setPublishToSolarFlux(false);
+		conf.setSourceIdTemplate("foo/bar");
 		conf.setServiceProps(Collections.singletonMap("foo", "bar"));
 
 		// WHEN

@@ -85,6 +85,9 @@ public class UpdateCapacityOptimizerConfigurationTests {
 		conf.setEnabled(true);
 		conf.setName(randomUUID().toString());
 		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setPublishToSolarFlux(false);
+		conf.setPublishToSolarIn(true);
+		conf.setSourceIdTemplate("foo/bar");
 		conf.setServiceProps(Collections.singletonMap("foo", randomUUID().toString()));
 		return conf;
 	}
@@ -99,6 +102,9 @@ public class UpdateCapacityOptimizerConfigurationTests {
 		then(result).should().setString(++p, conf.getName());
 		then(result).should().setString(++p, conf.getBaseUrl());
 		then(result).should().setString(++p, conf.getOscpVersion());
+		then(result).should().setBoolean(++p, conf.isPublishToSolarIn());
+		then(result).should().setBoolean(++p, conf.isPublishToSolarFlux());
+		then(result).should().setString(++p, conf.getSourceIdTemplate());
 		if ( conf.getServiceProps() != null ) {
 			then(result).should().setString(++p, JsonUtils.getJSONString(conf.getServiceProps(), "{}"));
 		} else {

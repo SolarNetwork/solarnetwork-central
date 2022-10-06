@@ -22,12 +22,26 @@
 
 package net.solarnetwork.central.oscp.dao.jdbc;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 
 /**
  * Row mapper for {@link CapacityOptimizerConfiguration} entities.
+ * 
+ * <p>
+ * The expected column order in the SQL results is that of
+ * {@link BaseExternalSystemConfigurationRowMapper} with the following
+ * additions:
+ * </p>
+ * 
+ * <ol>
+ * <li>pub_in (BOOLEAN)</li>
+ * <li>pub_flux (BOOLEAN)</li>
+ * <li>source_id_tmpl (STRING)</li>
+ * </ol>
  * 
  * @author matt
  * @version 1.0
@@ -38,10 +52,27 @@ public class CapacityOptimizerConfigurationRowMapper
 	/** A default instance. */
 	public static final RowMapper<CapacityOptimizerConfiguration> INSTANCE = new CapacityOptimizerConfigurationRowMapper();
 
+	/** The number of columns mapped by this mapper. */
+	public static final int COLUMN_COUNT = 18;
+
 	@Override
 	protected CapacityOptimizerConfiguration createConfiguration(Long userId, Long entityId,
 			Instant created) {
 		return new CapacityOptimizerConfiguration(userId, entityId, created);
+	}
+
+	@Override
+	protected void populateConfiguration(ResultSet rs, int rowNum, CapacityOptimizerConfiguration conf)
+			throws SQLException {
+		super.populateConfiguration(rs, rowNum, conf);
+		conf.setPublishToSolarIn(rs.getBoolean(16));
+		conf.setPublishToSolarFlux(rs.getBoolean(17));
+		conf.setSourceIdTemplate(rs.getString(18));
+	}
+
+	@Override
+	public int getColumnCount() {
+		return COLUMN_COUNT;
 	}
 
 }

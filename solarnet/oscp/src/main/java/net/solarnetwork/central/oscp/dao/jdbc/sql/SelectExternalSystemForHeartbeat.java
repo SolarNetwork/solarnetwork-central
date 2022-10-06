@@ -70,6 +70,9 @@ public class SelectExternalSystemForHeartbeat implements PreparedStatementCreato
 					, c.heartbeat_secs, c.meas_styles, h.heartbeat_at, c.offline_at
 					, c.sprops
 				""");
+		if ( type == OscpRole.CapacityOptimizer ) {
+			buf.append("	, c.pub_in, c.pub_flux, c.source_id_tmpl\n");
+		}
 		buf.append("FROM solaroscp.oscp_");
 		buf.append(type.getAlias()).append("_conf c\n");
 		buf.append("INNER JOIN solaroscp.oscp_").append(type.getAlias()).append("_heartbeat h\n");

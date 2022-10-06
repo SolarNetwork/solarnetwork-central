@@ -67,18 +67,19 @@ public class InsertCapacityOptimizerConfiguration implements PreparedStatementCr
 	public String getSql() {
 		StringBuilder buf = new StringBuilder("""
 				INSERT INTO solaroscp.oscp_co_conf (
-					created, modified, user_id""");
+					  created, modified, user_id""");
 		if ( entity.getId().entityIdIsAssigned() ) {
 			buf.append(", id");
 		}
 		buf.append("""
-				, enabled, fp_id, reg_status, cname, url, sprops
+				, enabled, fp_id, reg_status, cname, url
+				, pub_in, pub_flux, source_id_tmpl, sprops
 				)
 				VALUES (""");
 		if ( entity.getId().entityIdIsAssigned() ) {
 			buf.append("?,");
 		}
-		buf.append("?,?,?,?,?,?,?,?,?::jsonb)");
+		buf.append("?,?,?,?,?,?,?,?,?,?,?,?::jsonb)");
 		return buf.toString();
 	}
 
@@ -98,6 +99,9 @@ public class InsertCapacityOptimizerConfiguration implements PreparedStatementCr
 		p = prepareCodedValue(stmt, p, entity.getRegistrationStatus(), Pending, false);
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
+		stmt.setBoolean(++p, entity.isPublishToSolarIn());
+		stmt.setBoolean(++p, entity.isPublishToSolarFlux());
+		stmt.setString(++p, entity.getSourceIdTemplate());
 
 		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 

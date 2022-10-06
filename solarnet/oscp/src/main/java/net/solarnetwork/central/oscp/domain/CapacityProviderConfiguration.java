@@ -33,7 +33,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties("authRole")
+@JsonIgnoreProperties({ "authRole", "id" })
 public class CapacityProviderConfiguration
 		extends BaseOscpExternalSystemConfiguration<CapacityProviderConfiguration> {
 

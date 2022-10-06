@@ -63,13 +63,6 @@ public class CapacityGroupConfigurationRowMapper implements RowMapper<CapacityGr
 	/** A default instance. */
 	public static final RowMapper<CapacityGroupConfiguration> INSTANCE = new CapacityGroupConfigurationRowMapper();
 
-	/** A default instance. */
-	public static final RowMapper<CapacityGroupConfiguration> EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE;
-	static {
-		EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE = new CapacityGroupConfigurationRowMapper(
-				BaseExternalSystemConfigurationRowMapper.COLUMN_COUNT);
-	}
-
 	private final int columnOffset;
 
 	/**

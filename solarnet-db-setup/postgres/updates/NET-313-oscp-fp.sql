@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS solaroscp.oscp_co_heartbeat CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_co_setting CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_co_token CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cg_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cg_co_meas CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cg_cp_meas CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_asset_conf CASCADE;
 */
 
@@ -111,6 +113,9 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	heartbeat_secs	SMALLINT,                 -- required
 	meas_styles		SMALLINT[],               -- required
 	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
+	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
+	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	source_id_tmpl	CHARACTER VARYING(255),
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)

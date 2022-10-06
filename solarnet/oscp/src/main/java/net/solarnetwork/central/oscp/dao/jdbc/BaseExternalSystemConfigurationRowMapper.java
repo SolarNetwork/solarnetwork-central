@@ -28,6 +28,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Set;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.ColumnCountProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
@@ -66,7 +67,7 @@ import net.solarnetwork.codec.JsonUtils;
  * @version 1.0
  */
 public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOscpExternalSystemConfiguration<C>>
-		implements RowMapper<C> {
+		implements RowMapper<C>, ColumnCountProvider {
 
 	/** The number of columns mapped by this mapper. */
 	public static final int COLUMN_COUNT = 15;
@@ -129,6 +130,11 @@ public abstract class BaseExternalSystemConfigurationRowMapper<C extends BaseOsc
 		}
 
 		conf.setServiceProps(JsonUtils.getStringMap(rs.getString(15)));
+	}
+
+	@Override
+	public int getColumnCount() {
+		return COLUMN_COUNT;
 	}
 
 }

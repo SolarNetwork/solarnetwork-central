@@ -32,6 +32,7 @@ import java.util.function.Function;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.common.dao.jdbc.ColumnCountProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
@@ -248,9 +249,16 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	public boolean processExternalSystemWithExpiredMeasurement(
 			Function<CapacityGroupTaskContext<C>, Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForMeasurement(role, ONE_FOR_UPDATE_SKIP);
+		RowMapper<C> entityMapper = rowMapperForEntity();
+		if ( !(entityMapper instanceof ColumnCountProvider) ) {
+			throw new RuntimeException(
+					"The configured entity RowMapper must implement ColumnCountProvider: "
+							+ entityMapper);
+		}
 		List<ExternalSystemAndGroup<C>> rows = jdbcOps.query(sql,
 				new ExternalSystemAndGroupConfigurationRowMapper<>(rowMapperForEntity(),
-						CapacityGroupConfigurationRowMapper.EXTERNAL_SYSTEM_CONFIG_OFFSET_INSTANCE));
+						new CapacityGroupConfigurationRowMapper(
+								((ColumnCountProvider) entityMapper).getColumnCount())));
 		if ( !rows.isEmpty() ) {
 			ExternalSystemAndGroup<C> row = rows.get(0);
 			Instant measurementDate = (role == OscpRole.CapacityProvider
