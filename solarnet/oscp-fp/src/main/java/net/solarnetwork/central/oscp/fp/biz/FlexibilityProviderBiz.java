@@ -42,40 +42,40 @@ import net.solarnetwork.domain.KeyValuePair;
 public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/** User event tags for Capacity Provider registration events. */
-	String[] CAPACITY_PROVIDER_REGISTER_TAGS = new String[] { OSCP_EVENT_TAG, CAPACITY_PROVIDER_TAG,
+	String[] CAPACITY_PROVIDER_REGISTER_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
 			REGISTER_TAG };
 
 	/** User event tags for Capacity Provider registration error events. */
-	String[] CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_REGISTER_ERROR_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_PROVIDER_TAG, REGISTER_TAG, ERROR_TAG };
 
 	/** User event tags for Capacity Provider handshake events. */
-	String[] CAPACITY_PROVIDER_HANDSHAKE_TAGS = new String[] { OSCP_EVENT_TAG, CAPACITY_PROVIDER_TAG,
+	String[] CAPACITY_PROVIDER_HANDSHAKE_TAGS = new String[] { OSCP_TAG, CAPACITY_PROVIDER_TAG,
 			HANDSHAKE_TAG };
 
 	/** User event tags for Capacity Provider handshake error events. */
-	String[] CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_PROVIDER_TAG, HANDSHAKE_TAG, ERROR_TAG };
 
 	/**
 	 * User event tags for Capacity Provider update group capacity forecast
 	 * events.
 	 */
-	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG };
 
 	/**
 	 * User event tags for Capacity Provider update group capacity forecast
 	 * error events.
 	 */
-	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
 
 	/**
 	 * User event tags for Capacity Optimizer adjust group capacity forecast
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG };
 
 	/**
@@ -83,13 +83,13 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * error events.
 	 */
 	String[] CAPACITY_OPTIMIZER_ADJUST_GROUP_CAPACITY_FORECAST_ERROR_TAGS = new String[] {
-			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
+			OSCP_TAG, CAPACITY_OPTIMIZER_TAG, ADJUST_GROUP_CAPACITY_FORECAST_TAG, ERROR_TAG };
 
 	/**
 	 * User event tags for Capacity Optimizer group capacity compliance error
 	 * events.
 	 */
-	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS = new String[] { OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG };
 
 	/**
@@ -97,7 +97,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * error events.
 	 */
 	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS = new String[] {
-			OSCP_EVENT_TAG, CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG };
+			OSCP_TAG, CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG };
 
 	/**
 	 * Register an external system using an authorization token created in
