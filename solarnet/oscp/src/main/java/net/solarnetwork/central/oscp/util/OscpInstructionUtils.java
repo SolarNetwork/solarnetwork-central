@@ -54,7 +54,7 @@ public final class OscpInstructionUtils {
 	/**
 	 * A node instruction parameter name for an OSCP Capacity Group identifier.
 	 */
-	public static final String OCPP_CAPACITY_GROUP_IDENTIFIER_PARAM = "cgIdentifier";
+	public static final String OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM = "cgIdentifier";
 
 	/** A node instruction parameter name for an OSCP action name. */
 	public static final String OSCP_ACTION_PARAM = "action";
@@ -86,9 +86,9 @@ public final class OscpInstructionUtils {
 	 * <p>
 	 * This method will decode the {@code Instruction} parameters of a JSON OSCP
 	 * action message into an OSCP message instance. If {@code params} contains
-	 * a {@link #OCPP_MESSAGE_PARAM} value, that will be treated as an OCPP JSON
-	 * message and decoded directly. Otherwise the keys of {@code params} will
-	 * be used as JavaBean style property values for the OSCP message.
+	 * a {@link #OCPP_MESSAGE_PARAM} value that is a string, that will be
+	 * treated as an OCPP JSON message and decoded directly. If the value is
+	 * already a {@link ObjectNode} it will be used as-is.
 	 * </p>
 	 * 
 	 * @param <T>
@@ -105,8 +105,8 @@ public final class OscpInstructionUtils {
 	 *         message
 	 */
 	public static Object decodeJsonOscp20InstructionMessage(ObjectMapper objectMapper,
-			Map<String, String> params, JsonSchemaFactory validator) {
-		final String action = requireNonNullArgument(params.get(OSCP_ACTION_PARAM), "action");
+			Map<String, ?> params, JsonSchemaFactory validator) {
+		final String action = requireNonNullArgument(params.get(OSCP_ACTION_PARAM), "action").toString();
 		final Class<?> actionClass = switch (action) {
 			case "AdjustGroupCapacityForecast" -> oscp.v20.AdjustGroupCapacityForecast.class;
 			case "GroupCapacityComplianceError" -> oscp.v20.GroupCapacityComplianceError.class;
@@ -118,8 +118,9 @@ public final class OscpInstructionUtils {
 		};
 		try {
 			ObjectNode jsonPayload;
-			if ( params.containsKey(OSCP_MESSAGE_PARAM) ) {
-				JsonNode jsonNode = objectMapper.readTree(params.get(OSCP_MESSAGE_PARAM));
+			Object msgObj = params.get(OSCP_MESSAGE_PARAM);
+			if ( msgObj instanceof String msgString ) {
+				JsonNode jsonNode = objectMapper.readTree(msgString);
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
 				} else if ( jsonNode instanceof ObjectNode ) {
@@ -128,6 +129,8 @@ public final class OscpInstructionUtils {
 					throw new IOException(
 							"OSCP " + OSCP_MESSAGE_PARAM + " parameter must be a JSON object.");
 				}
+			} else if ( msgObj instanceof ObjectNode msgNode ) {
+				jsonPayload = msgNode;
 			} else {
 				throw new IllegalArgumentException("Missing [%s] parameter for OSCP 2.0 action [%s]"
 						.formatted(OSCP_MESSAGE_PARAM, action));

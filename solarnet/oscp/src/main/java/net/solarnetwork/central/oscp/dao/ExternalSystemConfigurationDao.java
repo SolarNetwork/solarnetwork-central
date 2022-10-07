@@ -45,38 +45,38 @@ public interface ExternalSystemConfigurationDao<C extends BaseOscpExternalSystem
 		FilterableDao<C, UserLongCompositePK, ConfigurationFilter>, ExternalSystemAuthTokenDao {
 
 	/** User event tags for Capacity Provider heartbeat events. */
-	String[] CAPACITY_PROVIDER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.HEARTBEAT_TAG };
 
 	/** User event tags for Capacity Provider heartbeat error events. */
-	String[] CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.HEARTBEAT_TAG,
 			OscpUserEvents.ERROR_TAG };
 
 	/** User event tags for Capacity Optimizer heartbeat events. */
-	String[] CAPACITY_OPTIMIZER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_HEARTBEAT_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.HEARTBEAT_TAG };
 
 	/** User event tags for Capacity Optimizer heartbeat error events. */
-	String[] CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.HEARTBEAT_TAG,
 			OscpUserEvents.ERROR_TAG };
 
 	/** User event tags for Capacity Provider measurement events. */
-	String[] CAPACITY_PROVIDER_MEASUREMENT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_MEASUREMENT_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.MEASUREMENT_TAG };
 
 	/** User event tags for Capacity Provider measurement error events. */
-	String[] CAPACITY_PROVIDER_MEASUREMENT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_PROVIDER_MEASUREMENT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_PROVIDER_TAG, OscpUserEvents.MEASUREMENT_TAG,
 			OscpUserEvents.ERROR_TAG };
 
 	/** User event tags for Capacity Optimizer measurement events. */
-	String[] CAPACITY_OPTIMIZER_MEASUREMENT_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_MEASUREMENT_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.MEASUREMENT_TAG };
 
 	/** User event tags for Capacity Optimizer measurement error events. */
-	String[] CAPACITY_OPTIMIZER_MEASUREMENT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_EVENT_TAG,
+	String[] CAPACITY_OPTIMIZER_MEASUREMENT_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
 			OscpUserEvents.CAPACITY_OPTIMIZER_TAG, OscpUserEvents.MEASUREMENT_TAG,
 			OscpUserEvents.ERROR_TAG };
 

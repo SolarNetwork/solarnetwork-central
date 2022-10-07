@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public interface OscpUserEvents {
 
 	/** A user event tag for OSCP. */
-	String OSCP_EVENT_TAG = "oscp";
+	String OSCP_TAG = "oscp";
 
 	/** A user event tag for OSCP Flexibility Provider . */
 	String FLEXIBILITY_PROVIDER_TAG = "fp";
@@ -73,6 +73,15 @@ public interface OscpUserEvents {
 	/** A user event tag for OSCP "error" . */
 	String ERROR_TAG = "error";
 
+	/** A user event tag for OSCP input state . */
+	String INPUT_TAG = "in";
+
+	/** A user event tag for OSCP output state . */
+	String OUTPUT_TAG = "out";
+
+	/** A user event tag for OSCP "instruction" . */
+	String INSTRUCTION_TAG = "instruction";
+
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
 
@@ -87,6 +96,18 @@ public interface OscpUserEvents {
 
 	/** User event data key for a version. */
 	String VERSION_DATA_KEY = "v";
+
+	/** A user event data key for an OSCP action name. */
+	String ACTION_DATA_KEY = "action";
+
+	/** A user event data key for an instruction ID. */
+	String INSTRUCTION_ID_DATA_KEY = "instructionId";
+
+	/** A user event data key for an OSCP capacity optimizer ID. */
+	String CAPACITY_OPTIMIZER_ID_DATA_KEY = "coId";
+
+	/** A user event data key for an OSCP capacity group identifier. */
+	String CAPACITY_GROUP_IDENTIFIER_DATA_KEY = "cgIdentifier";
 
 	/**
 	 * Get a user log event for a configuration ID.

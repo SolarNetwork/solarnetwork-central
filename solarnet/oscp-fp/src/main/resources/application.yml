@@ -54,6 +54,10 @@ app:
         ttl: 21600
         heap-max-entries: 50
         disk-max-size-mb: 10
+  oscp.v20:
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OSCP_v20"
+      subscribe-timeout: 30
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
@@ -84,6 +88,20 @@ app:
         write-timeout-seconds: -1
     user-events:
       publish-qos-level: 0
+  solarqueue:
+    connection:
+      uid: "SolarQueue-@@SOLAROSCP_FP_ID@@"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solaroscp-fp-@@SOLAROSCP_FP_ID@@"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: false
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: -1
+        write-timeout-seconds: -1
   task.executor:
     thread-name-prefix: "SolarOSCP-FP-"
     core-pool-size: 10
