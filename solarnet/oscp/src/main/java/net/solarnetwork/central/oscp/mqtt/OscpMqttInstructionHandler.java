@@ -255,8 +255,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			params.put(OSCP_ACTION_PARAM, action);
 			params.put(OSCP_MESSAGE_PARAM, json.path(OSCP_MESSAGE_PARAM));
 
-			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(objectMapper, params,
-					null); // assume message JSON already validated at this point
+			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, null); // assume message JSON already validated at this point
 			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
 
 			incrementInstructionReceivedStat(action);

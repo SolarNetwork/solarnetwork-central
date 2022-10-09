@@ -115,9 +115,27 @@ debug: false
 logging:
   level:
     ROOT: "INFO"
+    org.mybatis.spring.mapper.ClassPathMapperScanner: OFF
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: 
+    - "classpath*:net/solarnetwork/central/instructor/dao/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
 
 server:
   compression:

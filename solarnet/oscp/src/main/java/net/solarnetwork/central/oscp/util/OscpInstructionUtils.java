@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.ValidationMessage;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Utilities for OSCP instruction support.
@@ -76,6 +77,8 @@ public final class OscpInstructionUtils {
 				+ OSCP_ACTION_KEBAB_CASE_REPLACE.matcher(s).replaceAll("-$1").toLowerCase() + ".json";
 	};
 
+	private static final ObjectMapper OBJECT_MAPPER = JsonUtils.newObjectMapper();
+
 	private OscpInstructionUtils() {
 		// not available
 	}
@@ -91,21 +94,20 @@ public final class OscpInstructionUtils {
 	 * already a {@link ObjectNode} it will be used as-is.
 	 * </p>
 	 * 
-	 * @param <T>
-	 *        the return type
-	 * @param objectMapper
-	 *        the mapper to use
-	 * @param action
-	 *        the message action to decode
 	 * @param params
 	 *        the instruction parameters
+	 * @param action
+	 *        the message action to decode
+	 * 
+	 * @param <T>
+	 *        the return type
 	 * @return the result
 	 * @throws IllegalArgumentException
 	 *         if the instruction parameters do not describe a supported OSCP
 	 *         message
 	 */
-	public static Object decodeJsonOscp20InstructionMessage(ObjectMapper objectMapper,
-			Map<String, ?> params, JsonSchemaFactory validator) {
+	public static Object decodeJsonOscp20InstructionMessage(Map<String, ?> params,
+			JsonSchemaFactory validator) {
 		final String action = requireNonNullArgument(params.get(OSCP_ACTION_PARAM), "action").toString();
 		final Class<?> actionClass = switch (action) {
 			case "AdjustGroupCapacityForecast" -> oscp.v20.AdjustGroupCapacityForecast.class;
@@ -120,7 +122,7 @@ public final class OscpInstructionUtils {
 			ObjectNode jsonPayload;
 			Object msgObj = params.get(OSCP_MESSAGE_PARAM);
 			if ( msgObj instanceof String msgString ) {
-				JsonNode jsonNode = objectMapper.readTree(msgString);
+				JsonNode jsonNode = OBJECT_MAPPER.readTree(msgString);
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
 				} else if ( jsonNode instanceof ObjectNode ) {
@@ -146,7 +148,7 @@ public final class OscpInstructionUtils {
 											.collect(Collectors.joining(", "))));
 				}
 			}
-			return objectMapper.treeToValue(jsonPayload, actionClass);
+			return OBJECT_MAPPER.treeToValue(jsonPayload, actionClass);
 		} catch ( IOException e ) {
 			throw new IllegalArgumentException(
 					"Invalid JSON for [%s] OSCP action: %s".formatted(action, e.getMessage()));

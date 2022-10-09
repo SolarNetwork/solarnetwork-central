@@ -52,6 +52,7 @@ dependencies {
 	implementation 'commons-fileupload:commons-fileupload:1.4'
 
 	// Utils
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'

@@ -53,7 +53,7 @@ public class MeasurementsController {
 	public static final String UGM_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH
 			+ UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 
-	/** The URL path for 2.0 UpdateGroupMeasurements messages. */
+	/** The URL path for 2.0 UpdateAssetMeasurements messages. */
 	public static final String UAM_20_URL_PATH = CAPACITY_OPTIMIZER_V20_URL_PATH
 			+ UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 

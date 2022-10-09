@@ -38,6 +38,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -169,7 +170,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -194,8 +194,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -219,7 +217,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -247,8 +244,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -272,7 +267,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -303,8 +297,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -328,7 +320,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -365,8 +356,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -390,7 +379,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -433,8 +421,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -458,7 +444,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = "NotSupported";
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -501,8 +486,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -534,7 +517,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -577,8 +559,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_ERROR_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
@@ -613,7 +593,6 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
-		instruction.setId(UUID.randomUUID().getMostSignificantBits());
 		// @formatter:off
 		instruction.setParams(Map.of(
 				OSCP_ACTION_PARAM, action,
@@ -653,6 +632,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		// WHEN
 		hook.onMqttServerConnectionEstablished(conn, false);
 		NodeInstruction result = hook.willQueueNodeInstruction(instruction);
+		Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		hook.didQueueNodeInstruction(result, instructionId);
 
 		// THEN
 		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
@@ -660,9 +641,9 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		log.debug("Got event: {}", event);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS)));
 		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
-		assertThat("Event data instruction ID", eventData,
-				hasEntry(INSTRUCTION_ID_DATA_KEY, instruction.getId()));
 		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
+		assertThat("Event data capacity optimizer ID", eventData,
+				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
 		assertThat("Event data capacity optimizer ID", eventData,
 				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
 		assertThat("Event data capacity group identifier", eventData,
@@ -676,7 +657,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		assertThat("Mqtt message topic", msg.getTopic(), is(equalTo(MQTT_TOPIC_V20)));
 		Map<String, Object> msgBody = getStringMap(new String(msg.getPayload(), StandardCharsets.UTF_8));
 		assertThat("Mqtt message instruction ID", msgBody,
-				hasEntry(INSTRUCTION_ID_PARAM, instruction.getId()));
+				hasEntry(INSTRUCTION_ID_PARAM, instructionId));
 		assertThat("Mqtt message node ID", msgBody, hasEntry(NODE_ID_PARAM, TEST_NODE_ID));
 		assertThat("Mqtt message user ID", msgBody, hasEntry(USER_ID_PARAM, TEST_USER_ID));
 		assertThat("Mqtt message action", msgBody, hasEntry(OSCP_ACTION_PARAM, action));
@@ -691,7 +672,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		assertThat("Mqtt message message content", msgBody,
 				hasEntry(OSCP_MESSAGE_PARAM, expectedMsgBody));
 
-		assertThat("Result is same instance", result, is(sameInstance(instruction)));
+		assertThat("Result is NOT same instance", result, is(not(sameInstance(instruction))));
 		assertThat("Instruction status updated for queue", result.getState(), is(equalTo(Queuing)));
 	}
 

@@ -34,12 +34,10 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.FileCopyUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchemaFactory;
 import com.nimbusds.jose.util.StandardCharset;
 import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.oscp.util.OscpUtils;
-import net.solarnetwork.codec.JsonUtils;
 import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
@@ -50,12 +48,10 @@ import oscp.v20.UpdateGroupCapacityForecast;
  */
 public class OscpInstructionUtilsTests {
 
-	private ObjectMapper mapper;
 	private JsonSchemaFactory jsonSchemaFactory;
 
 	@BeforeEach
 	public void setup() {
-		mapper = JsonUtils.newObjectMapper();
 		jsonSchemaFactory = OscpUtils.oscpSchemaFactory_v20();
 	}
 
@@ -85,8 +81,7 @@ public class OscpInstructionUtilsTests {
 		params.put("msg", json);
 
 		// WHEN
-		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(mapper, params,
-				jsonSchemaFactory);
+		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaFactory);
 
 		// THEN
 		assertThat("Message parsed and validated", msg,

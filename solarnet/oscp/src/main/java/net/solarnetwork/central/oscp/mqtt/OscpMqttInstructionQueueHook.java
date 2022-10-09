@@ -45,6 +45,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
+import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -220,15 +221,11 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		}
 
 		try {
-			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(objectMapper, params,
+			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params,
 					jsonSchemaFactory);
 			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
-			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_IN_TAGS, "Queuing instruction",
-					eventData);
-
-			instruction.setState(Queuing);
-			publishOscpInstructionMessage(instruction, userNode.getUserId(), cg, cp, eventData, action,
-					msg);
+			return new OscpNodeInstruction(instruction, Queuing, userNode.getUserId(), cg, cp, eventData,
+					action, msg);
 		} catch ( IllegalArgumentException e ) {
 			// invalid OSCP message
 			incrementInstructionErrorStat(action);
@@ -238,6 +235,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", e.getMessage()));
 		} catch ( Exception e ) {
+			log.error("Error queuing OSCP {} instruction with data {}: {}", action, eventData,
+					e.toString(), e);
 			incrementInstructionErrorStat(action);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
@@ -264,17 +263,18 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		}
 	}
 
-	public void publishOscpInstructionMessage(NodeInstruction instruction, Long userId,
+	public void publishOscpInstructionMessage(Long instructionId, Long nodeId, Long userId,
 			CapacityGroupConfiguration group, CapacityProviderConfiguration provider,
 			Map<String, Object> eventData, String action, Object msg) {
-		log.info("Queueing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}",
-				instruction.getId(), action, mqttTopic, provider.getId().ident());
+		log.info("Queueing OSCP instruction {} to MQTT topic {} for Capacity Provider {}", action,
+				mqttTopic, provider.getId().ident());
+		eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
 		MqttConnection conn = mqttConnection.get();
 		if ( conn != null && conn.isEstablished() ) {
 			try {
 				Map<String, Object> body = new HashMap<>(8);
-				body.put(INSTRUCTION_ID_PARAM, instruction.getId());
-				body.put(NODE_ID_PARAM, instruction.getNodeId());
+				body.put(INSTRUCTION_ID_PARAM, instructionId);
+				body.put(NODE_ID_PARAM, nodeId);
 				body.put(USER_ID_PARAM, userId);
 				body.put(OSCP_ACTION_PARAM, action);
 				body.put(OSCP_CAPACITY_OPTIMIZER_ID_PARAM, group.getCapacityOptimizerId());
@@ -286,29 +286,59 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 				Future<?> f = conn.publish(mqttMsg);
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
 				incrementInstructionQueuedStat(action);
+				generateUserEvent(userId, OSCP_INSTRUCTION_IN_TAGS, "Queued instruction", eventData);
 			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
 				log.warn(
 						"Error queuing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}: {}",
-						instruction.getId(), action, mqttTopic, provider.getId().ident(), e.toString());
+						instructionId, action, mqttTopic, provider.getId().ident(), e.toString());
 				throw new RemoteServiceException(
 						"MQTT error queuing OSCP instruction %d action %s for Capacity Provider %s: %s"
-								.formatted(instruction.getId(), action, provider.getId().ident(),
+								.formatted(instructionId, action, provider.getId().ident(),
 										e.getMessage()),
 						e);
 			}
 		} else {
 			log.warn(
 					"MQTT connection not available to publish OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}",
-					instruction.getId(), action, mqttTopic, provider.getId().ident());
+					instructionId, action, mqttTopic, provider.getId().ident());
 			throw new RemoteServiceException(
 					"MQTT connection not available to publish OSCP instruction %d action %s for Capacity Provider %s"
-							.formatted(instruction.getId(), action, provider.getId().ident()));
+							.formatted(instructionId, action, provider.getId().ident()));
 		}
 	}
 
 	@Override
 	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
-		// nothing
+		if ( instruction instanceof OscpNodeInstruction instr ) {
+			publishOscpInstructionMessage(instructionId, instruction.getNodeId(), instr.userId, instr.cg,
+					instr.cp, instr.eventData, instr.action, instr.msg);
+		}
+	}
+
+	private static class OscpNodeInstruction extends NodeInstruction {
+
+		private static final long serialVersionUID = 2907749503777764999L;
+
+		private final Long userId;
+		private final CapacityGroupConfiguration cg;
+		private final CapacityProviderConfiguration cp;
+		private final Map<String, Object> eventData;
+		private final String action;
+		private Object msg;
+
+		private OscpNodeInstruction(NodeInstruction instruction, InstructionState state, Long userId,
+				CapacityGroupConfiguration cg, CapacityProviderConfiguration cp,
+				Map<String, Object> eventData, String action, Object msg) {
+			super(instruction);
+			setState(state);
+			this.userId = userId;
+			this.cg = cg;
+			this.cp = cp;
+			this.eventData = eventData;
+			this.action = action;
+			this.msg = msg;
+		}
+
 	}
 
 	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
