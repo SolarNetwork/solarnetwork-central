@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityOptimizerConfigurationRowMapper.java - 12/08/2022 4:09:13 pm
+ * DatumPublishSettings.java - 10/10/2022 8:49:23 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,28 +20,37 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao.jdbc;
-
-import java.time.Instant;
-import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+package net.solarnetwork.central.oscp.domain;
 
 /**
- * Row mapper for {@link CapacityOptimizerConfiguration} entities.
+ * Settings related to datum publishing.
  * 
  * @author matt
  * @version 1.0
  */
-public class CapacityOptimizerConfigurationRowMapper
-		extends BaseExternalSystemConfigurationRowMapper<CapacityOptimizerConfiguration> {
+public interface DatumPublishSettings {
 
-	/** A default instance. */
-	public static final RowMapper<CapacityOptimizerConfiguration> INSTANCE = new CapacityOptimizerConfigurationRowMapper();
+	/**
+	 * Get the "publish to SolarIn" toggle.
+	 * 
+	 * @return {@literal true} if data from this group should be published to
+	 *         SolarIn; defaults to {@literal true}
+	 */
+	boolean isPublishToSolarIn();
 
-	@Override
-	protected CapacityOptimizerConfiguration createConfiguration(Long userId, Long entityId,
-			Instant created) {
-		return new CapacityOptimizerConfiguration(userId, entityId, created);
-	}
+	/**
+	 * Get the "publish to SolarFlux" toggle.
+	 * 
+	 * @return {@literal true} if data from this group should be published to
+	 *         SolarFlux; defaults to {@literal true}
+	 */
+	boolean isPublishToSolarFlux();
+
+	/**
+	 * Set the source ID template.
+	 * 
+	 * @return the template, or {@literal null}
+	 */
+	String getSourceIdTemplate();
 
 }

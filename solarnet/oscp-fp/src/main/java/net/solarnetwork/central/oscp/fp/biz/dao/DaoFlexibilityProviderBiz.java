@@ -58,6 +58,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
@@ -77,6 +78,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.oscp.fp.biz.FlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.util.DeferredSystemTask;
@@ -111,6 +113,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
 	private TransactionTemplate txTemplate;
 	private TaskScheduler taskScheduler;
+	private DatumProcessor fluxPublisher;
+	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private long taskConditionTimeout = DeferredSystemTask.DEFAULT_CONDITION_TIMEOUT;
 	private long taskStartDelay = DeferredSystemTask.DEFAULT_START_DELAY;
 	private long taskStartDelayRandomness = DeferredSystemTask.DEFAULT_START_DELAY_RANDOMNESS;
@@ -377,6 +381,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			withStartDelay(taskStartDelay);
 			withStartDelayRandomness(taskStartDelayRandomness);
 			withRetryDelay(taskRetryDelay);
+			// TODO withDatumPublisher()
 		}
 
 	}
@@ -694,6 +699,57 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 */
 	public void setTaskRetryDelay(long taskRetryDelay) {
 		this.taskRetryDelay = taskRetryDelay;
+	}
+
+	/**
+	 * Get the SolarFlux publisher.
+	 * 
+	 * @return the publisher, or {@literal null}
+	 */
+	public DatumProcessor getFluxPublisher() {
+		return fluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 * 
+	 * @param fluxPublisher
+	 *        the publisher to set
+	 */
+	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+		this.fluxPublisher = fluxPublisher;
+	}
+
+	/**
+	 * Get the source ID template.
+	 * 
+	 * @return the template; defaults to
+	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
+	 */
+	public String getSourceIdTemplate() {
+		return sourceIdTemplate;
+	}
+
+	/**
+	 * Set the source ID template.
+	 * 
+	 * <p>
+	 * This template string allows for these parameters:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
+	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
+	 * (string)</li>
+	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
+	 * <li><code>{location}</code> - the location (string)</li>
+	 * </ol>
+	 * 
+	 * @param sourceIdTemplate
+	 *        the template to set
+	 */
+	public void setSourceIdTemplate(String sourceIdTemplate) {
+		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * CapacityOptimizerConfigurationRowMapper.java - 12/08/2022 4:09:13 pm
+ * UserSettingsDao.java - 10/10/2022 8:36:24 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,28 +20,17 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.dao.jdbc;
+package net.solarnetwork.central.oscp.dao;
 
-import java.time.Instant;
-import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
+import net.solarnetwork.central.oscp.domain.UserSettings;
+import net.solarnetwork.dao.GenericDao;
 
 /**
- * Row mapper for {@link CapacityOptimizerConfiguration} entities.
+ * DAO API for {@link UserSettings}.
  * 
  * @author matt
  * @version 1.0
  */
-public class CapacityOptimizerConfigurationRowMapper
-		extends BaseExternalSystemConfigurationRowMapper<CapacityOptimizerConfiguration> {
-
-	/** A default instance. */
-	public static final RowMapper<CapacityOptimizerConfiguration> INSTANCE = new CapacityOptimizerConfigurationRowMapper();
-
-	@Override
-	protected CapacityOptimizerConfiguration createConfiguration(Long userId, Long entityId,
-			Instant created) {
-		return new CapacityOptimizerConfiguration(userId, entityId, created);
-	}
+public interface UserSettingsDao extends GenericDao<UserSettings, Long> {
 
 }

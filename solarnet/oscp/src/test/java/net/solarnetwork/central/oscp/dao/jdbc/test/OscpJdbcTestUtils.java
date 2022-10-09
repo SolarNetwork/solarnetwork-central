@@ -38,6 +38,7 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.AssetInstantaneousDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.StatisticType;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 
 /**
  * Test utilities for OSCP.
@@ -212,6 +214,45 @@ public class OscpJdbcTestUtils {
 	}
 
 	/**
+	 * Create a new user settings instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the creation date
+	 * @return the instance
+	 */
+	public static UserSettings newUserSettings(Long userId, Instant created) {
+		UserSettings conf = new UserSettings(userId, created);
+		conf.setModified(created);
+		conf.setPublishToSolarIn(true);
+		conf.setPublishToSolarFlux(true);
+		conf.setSourceIdTemplate("foo/bar");
+		return conf;
+	}
+
+	/**
+	 * Create a new user settings instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param groupId
+	 *        the group ID
+	 * @param created
+	 *        the creation date
+	 * @return the instance
+	 */
+	public static CapacityGroupSettings newCapacityGroupSettings(Long userId, Long groupId,
+			Instant created) {
+		CapacityGroupSettings conf = new CapacityGroupSettings(userId, groupId, created);
+		conf.setModified(created);
+		conf.setPublishToSolarIn(true);
+		conf.setPublishToSolarFlux(true);
+		conf.setSourceIdTemplate("group/foo/bar");
+		return conf;
+	}
+
+	/**
 	 * List all configuration table rows.
 	 * 
 	 * @param jdbcOps
@@ -308,6 +349,36 @@ public class OscpJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solaroscp.oscp_asset_conf ORDER BY user_id, id");
 		log.debug("solaroscp.oscp_asset_conf table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List all user setting table rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allUserSettingsData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solaroscp.oscp_user_settings ORDER BY user_id");
+		log.debug("solaroscp.oscp_user_settings table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List all capacity group setting table rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCapacityGroupSettingsData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solaroscp.oscp_cg_settings ORDER BY user_id, cg_id");
+		log.debug("solaroscp.oscp_cg_settings table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

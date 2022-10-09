@@ -1,4 +1,5 @@
 /*
+DROP TABLE IF EXISTS solaroscp.oscp_user_settings CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_fp_token CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cp_conf CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cp_heartbeat CASCADE;
@@ -9,12 +10,29 @@ DROP TABLE IF EXISTS solaroscp.oscp_co_heartbeat CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_co_setting CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_co_token CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cg_conf CASCADE;
+DROP TABLE IF EXISTS solaroscp.oscp_cg_settings CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cg_co_meas CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_cg_cp_meas CASCADE;
 DROP TABLE IF EXISTS solaroscp.oscp_asset_conf CASCADE;
 */
 
 CREATE SCHEMA IF NOT EXISTS solaroscp;
+
+/**
+ * Account-wide settings.
+ */
+CREATE TABLE solaroscp.oscp_user_settings (
+	user_id			BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
+	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	source_id_tmpl	CHARACTER VARYING(255),
+	CONSTRAINT oscp_user_settings_pk PRIMARY KEY (user_id),
+	CONSTRAINT oscp_user_settings_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
 
 /**
  * OSCP Flexibility Provider tokens.
@@ -113,9 +131,6 @@ CREATE TABLE solaroscp.oscp_co_conf (
 	heartbeat_secs	SMALLINT,                 -- required
 	meas_styles		SMALLINT[],               -- required
 	offline_at		TIMESTAMP WITH TIME ZONE, -- from heartbeat
-	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
-	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
-	source_id_tmpl	CHARACTER VARYING(255),
 	sprops			JSONB,
 	CONSTRAINT oscp_co_conf_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT oscp_co_conf_user_fk FOREIGN KEY (user_id)
@@ -200,6 +215,23 @@ CREATE TABLE solaroscp.oscp_cg_conf (
 		REFERENCES solaroscp.oscp_co_conf (user_id,id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT oscp_cg_conf_unq UNIQUE (user_id, ident)
+);
+
+/**
+ * OSCP Capacity Group settings.
+ */
+CREATE TABLE solaroscp.oscp_cg_settings (
+	user_id			BIGINT NOT NULL,
+	cg_id			BIGINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
+	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	source_id_tmpl	CHARACTER VARYING(255),
+	CONSTRAINT oscp_cg_settings_pk PRIMARY KEY (user_id, cg_id),
+	CONSTRAINT oscp_cg_settings_cg_fk FOREIGN KEY (user_id, cg_id)
+		REFERENCES solaroscp.oscp_cg_conf (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 /**

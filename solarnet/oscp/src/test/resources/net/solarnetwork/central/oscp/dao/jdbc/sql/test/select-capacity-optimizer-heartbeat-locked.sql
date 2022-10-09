@@ -2,7 +2,6 @@ SELECT c.id, c.created, c.modified, c.user_id, c.enabled
 	, c.fp_id, c.reg_status, c.cname, c.url, c.oscp_ver
 	, c.heartbeat_secs, c.meas_styles, h.heartbeat_at, c.offline_at
 	, c.sprops
-	, c.pub_in, c.pub_flux, c.source_id_tmpl
 FROM solaroscp.oscp_co_conf c
 INNER JOIN solaroscp.oscp_co_heartbeat h
 	ON c.user_id = h.user_id AND c.id = h.id

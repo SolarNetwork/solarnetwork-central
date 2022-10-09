@@ -25,7 +25,6 @@ package net.solarnetwork.central.oscp.domain;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -34,18 +33,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "authRole", "id" })
-@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
-		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "heartbeatDate",
-		"offlineDate", "publishToSolarIn", "publishToSolarFlux", "sourceIdTemplate", "serviceProps" })
+@JsonIgnoreProperties({"authRole","id"})
 public class CapacityOptimizerConfiguration
 		extends BaseOscpExternalSystemConfiguration<CapacityOptimizerConfiguration> {
 
-	private static final long serialVersionUID = -2474911848073216744L;
-
-	private boolean publishToSolarIn = true;
-	private boolean publishToSolarFlux = true;
-	private String sourceIdTemplate;
+	private static final long serialVersionUID = 8184628006786027922L;
 
 	/**
 	 * Constructor.
@@ -93,67 +85,6 @@ public class CapacityOptimizerConfiguration
 	@Override
 	public AuthRoleInfo getAuthRole() {
 		return new AuthRoleInfo(getId(), OscpRole.CapacityOptimizer);
-	}
-
-	/**
-	 * Get the "publish to SolarIn" toggle.
-	 * 
-	 * @return {@literal true} if data from this charge point should be
-	 *         published to SolarIn; defaults to {@literal true}
-	 */
-	public boolean isPublishToSolarIn() {
-		return publishToSolarIn;
-	}
-
-	/**
-	 * Set the "publish to SolarIn" toggle.
-	 * 
-	 * @param publishToSolarIn
-	 *        {@literal true} if data from this charge point should be published
-	 *        to SolarIn
-	 */
-	public void setPublishToSolarIn(boolean publishToSolarIn) {
-		this.publishToSolarIn = publishToSolarIn;
-	}
-
-	/**
-	 * Get the "publish to SolarFlux" toggle.
-	 * 
-	 * @return {@literal true} if data from this charge point should be
-	 *         published to SolarFlux; defaults to {@literal true}
-	 */
-	public boolean isPublishToSolarFlux() {
-		return publishToSolarFlux;
-	}
-
-	/**
-	 * Set the "publish to SolarFlux" toggle.
-	 * 
-	 * @param publishToSolarFlux
-	 *        {@literal true} if data from this charge point should be published
-	 *        to SolarFlux
-	 */
-	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
-		this.publishToSolarFlux = publishToSolarFlux;
-	}
-
-	/**
-	 * Set the source ID template.
-	 * 
-	 * @return the template, or {@literal null}
-	 */
-	public String getSourceIdTemplate() {
-		return sourceIdTemplate;
-	}
-
-	/**
-	 * Get the source ID template.
-	 * 
-	 * @param sourceIdTemplate
-	 *        the template to set
-	 */
-	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 }

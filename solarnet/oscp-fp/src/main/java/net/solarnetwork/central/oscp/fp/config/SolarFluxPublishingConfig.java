@@ -23,13 +23,18 @@
 package net.solarnetwork.central.oscp.fp.config;
 
 import static net.solarnetwork.central.oscp.fp.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
@@ -43,6 +48,9 @@ import net.solarnetwork.codec.JsonUtils;
 @Configuration
 @Profile("mqtt")
 public class SolarFluxPublishingConfig {
+
+	@Autowired
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	/**
 	 * A module for handling SolarFlux objects.
@@ -62,9 +70,21 @@ public class SolarFluxPublishingConfig {
 	@Bean
 	@Qualifier(SOLARFLUX)
 	public ObjectMapper solarFluxObjectMapper() {
-		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
+		ObjectMapper mapper = JsonUtils
+				.createObjectMapper(new CBORFactory(), JsonUtils.JAVA_TIMESTAMP_MODULE)
+				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+				.disable(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS);
 		mapper.registerModule(SOLARFLUX_MODULE);
 		return mapper;
+	}
+
+	@Bean
+	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
+	@Qualifier(SOLARFLUX)
+	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
+				solarFluxObjectMapper());
+		return processor;
 	}
 
 }
