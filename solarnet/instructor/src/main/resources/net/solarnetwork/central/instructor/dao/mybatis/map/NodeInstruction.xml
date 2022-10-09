@@ -10,12 +10,16 @@
 		INSERT INTO solarnet.sn_node_instruction 
 			(id
 			<if test="created != null">,created</if>
-			, node_id, topic, instr_date, deliver_state)
+			, node_id, topic, instr_date, deliver_state
+			<if test="resultParametersJson != null">,jresult_params</if>
+			)
 		VALUES
 			(#{id}
 			<if test="created != null">,#{created}</if>
 			, #{nodeId}, #{topic}, #{instructionDate}, 
-			CAST(#{state} AS solarnet.instruction_delivery_state))
+			CAST(#{state} AS solarnet.instruction_delivery_state)
+			<if test="resultParametersJson != null">,CAST(#{resultParametersJson} AS json)</if>
+			)
 	</insert>
 
 	<update id="update-NodeInstruction" parameterType="NodeInstruction">
