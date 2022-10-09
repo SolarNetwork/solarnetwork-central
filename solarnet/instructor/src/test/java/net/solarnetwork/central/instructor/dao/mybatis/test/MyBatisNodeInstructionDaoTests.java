@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.dao.mybatis.test;
 
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -74,12 +75,19 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	private NodeInstruction storeNewInstruction(Long nodeId, Instant date) {
+		return storeNewInstruction(nodeId, date, null);
+	}
+
+	private NodeInstruction storeNewInstruction(Long nodeId, Instant date,
+			Map<String, Object> resultParams) {
+
 		NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
 		datum.setInstructionDate(date);
 		datum.setNodeId(nodeId);
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
+		datum.setResultParameters(resultParams);
 
 		datum.addParameter("Test param 1", "Test value 1");
 		datum.addParameter("Test param 2", "Test value 2");
@@ -110,6 +118,18 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
+		NodeInstruction datum = dao.get(lastDatum.getId());
+		validate(lastDatum, datum);
+	}
+
+	@Test
+	public void storeNew_withResultParameters() {
+		lastDatum = storeNewInstruction(TEST_NODE_ID, Instant.now(), singletonMap("foo", "bar"));
+	}
+
+	@Test
+	public void getByPrimaryKey_withResultParameters() {
+		storeNew_withResultParameters();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		validate(lastDatum, datum);
 	}
