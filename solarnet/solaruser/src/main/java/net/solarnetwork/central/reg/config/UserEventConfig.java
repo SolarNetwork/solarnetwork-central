@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+import org.springframework.validation.Validator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
@@ -46,6 +47,7 @@ import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.common.dao.UserEventDao;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.reg.support.UserEventFilterValidator;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatCounter;
@@ -58,6 +60,9 @@ import net.solarnetwork.util.StatCounter;
  */
 @Configuration
 public class UserEventConfig {
+
+	/** A qualifier for user event services. */
+	public static final String USER_EVENT = "user-event";
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
@@ -98,6 +103,12 @@ public class UserEventConfig {
 	@Bean
 	public DaoUserEventBiz userEventBiz(UserEventDao userEventDao) {
 		return new DaoUserEventBiz(userEventDao);
+	}
+
+	@Bean
+	@Qualifier(USER_EVENT)
+	public Validator datumCriteriaValidator() {
+		return new UserEventFilterValidator();
 	}
 
 	@Profile("mqtt")
