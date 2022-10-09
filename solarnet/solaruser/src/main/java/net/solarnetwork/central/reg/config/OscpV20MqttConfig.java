@@ -1,5 +1,5 @@
 /* ==================================================================
- * OscpV20MqttConfig.java - 7/10/2022 2:59:40 pm
+ * OscpV20MqttConfig.java - 9/10/2022 11:20:46 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,52 +20,45 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.fp.config;
+package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration.OSCP_V20;
-import static net.solarnetwork.central.oscp.fp.config.JsonConfig.CBOR_MAPPER;
-import static net.solarnetwork.central.oscp.fp.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
+import static net.solarnetwork.central.reg.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.annotation.Order;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.networknt.schema.JsonSchemaFactory;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
-import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttCountStat;
-import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
+import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionQueueHook;
+import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
- * Configuration for OSCP instruction handling.
+ * Configuration for OSCP v2.0 MQTT.
  * 
  * @author matt
  * @version 1.0
  */
-@Profile(OscpV20MqttConfig.MQTT_OSCP_V20)
 @Configuration(proxyBeanMethods = false)
+@Profile(OscpV20MqttConfig.MQTT_OSCP_V20)
 public class OscpV20MqttConfig {
 
 	/** Profile expression for MQTT with OSCP v20. */
 	public static final String MQTT_OSCP_V20 = "mqtt & " + SolarNetOscpConfiguration.OSCP_V20;
 
 	@Autowired
-	private AsyncTaskExecutor taskExecutor;
-
-	@Autowired
-	private UserEventAppenderBiz userEventAppenderBiz;
-
-	@Autowired
-	@Qualifier(CBOR_MAPPER)
-	private ObjectMapper objectMapper;
+	private UserNodeDao userNodeDao;
 
 	@Autowired
 	private CapacityGroupConfigurationDao capacityGroupDao;
@@ -77,10 +70,7 @@ public class OscpV20MqttConfig {
 	private CapacityProviderConfigurationDao capacityProviderDao;
 
 	@Autowired
-	private NodeInstructionDao nodeInstructionDao;
-
-	@Autowired
-	private ExternalSystemClient client;
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * The MQTT statistics to use.
@@ -95,19 +85,25 @@ public class OscpV20MqttConfig {
 
 	/**
 	 * A node instruction queue hook to process OSCP instructions (from a
-	 * Capacity Optimizer) and forward them to a Capacity Provider
+	 * Capacity Optimizer) and publish them to a MQTT topic, for the Flexibility
+	 * Provider to subscribe to and process.
 	 * 
+	 * @param jsonSchemaFactory
+	 *        the JSON schema validator
 	 * @return the hook
 	 */
-	@ConfigurationProperties(prefix = "app.oscp.v20.mqtt.instr-handler")
+	@Order(10)
 	@Qualifier(SOLARQUEUE)
 	@Bean
-	public OscpMqttInstructionHandler oscpMqttInstructionHandler_v20(
-			@Qualifier(OSCP_V20) MqttStats mqttStats) {
-		OscpMqttInstructionHandler handler = new OscpMqttInstructionHandler(mqttStats, taskExecutor,
-				objectMapper, nodeInstructionDao, capacityGroupDao, capacityOptimizerDao,
-				capacityProviderDao, client);
-		handler.setUserEventAppenderBiz(userEventAppenderBiz);
-		return handler;
+	public OscpMqttInstructionQueueHook oscpMqttInstructionQueueHook_v20(
+			@Qualifier(OSCP_V20) MqttStats stats,
+			@Qualifier(OSCP_V20) JsonSchemaFactory jsonSchemaFactory) {
+		ObjectMapper objectMapper = JsonUtils.newObjectMapper(new CBORFactory());
+		OscpMqttInstructionQueueHook hook = new OscpMqttInstructionQueueHook(stats, objectMapper,
+				userNodeDao, capacityGroupDao, capacityOptimizerDao, capacityProviderDao);
+		hook.setJsonSchemaFactory(jsonSchemaFactory);
+		hook.setUserEventAppenderBiz(userEventAppenderBiz);
+		return hook;
 	}
+
 }

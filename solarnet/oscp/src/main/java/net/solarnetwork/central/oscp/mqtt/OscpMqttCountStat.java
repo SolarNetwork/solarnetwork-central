@@ -33,29 +33,31 @@ import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
  */
 public enum OscpMqttCountStat implements MqttStat {
 
-	InstructionsReceived(0, "instructions received"),
+	InstructionsQueued(0, "instructions queued"),
 
-	InstructionErrors(1, "instruction errors"),
+	InstructionsReceived(1, "instructions received"),
+
+	InstructionErrors(2, "instruction errors"),
 
 	AdjustGroupCapacityForecastInstructionsReceived(
-			2,
+			3,
 			"AdjustGroupCapacityForecast instructions received"),
 
-	AdjustGroupCapacityForecastInstructionErrors(3, "AdjustGroupCapacityForecast instruction errors"),
+	AdjustGroupCapacityForecastInstructionErrors(4, "AdjustGroupCapacityForecast instruction errors"),
 
 	GroupCapacityComplianceErrorInstructionsReceived(
-			4,
+			5,
 			"GroupCapacityComplianceError instructions received"),
 
-	GroupCapacityComplianceErrorInstructionErrors(5, "GroupCapacityComplianceError instruction errors"),
+	GroupCapacityComplianceErrorInstructionErrors(6, "GroupCapacityComplianceError instruction errors"),
 
-	UpdateAssetMeasurementInstructionsReceived(6, "UpdateAssetMeasurement instructions received"),
+	UpdateAssetMeasurementInstructionsReceived(7, "UpdateAssetMeasurement instructions received"),
 
-	UpdateAssetMeasurementInstructionErrors(7, "UpdateAssetMeasurement instruction errors"),
+	UpdateAssetMeasurementInstructionErrors(8, "UpdateAssetMeasurement instruction errors"),
 
-	UpdateGroupMeasurementsInstructionsReceived(8, "UpdateGroupMeasurements instructions received"),
+	UpdateGroupMeasurementsInstructionsReceived(9, "UpdateGroupMeasurements instructions received"),
 
-	UpdateGroupMeasurementsInstructionErrors(9, "UpdateGroupMeasurements instruction errors"),
+	UpdateGroupMeasurementsInstructionErrors(10, "UpdateGroupMeasurements instruction errors"),
 
 	;
 
@@ -65,6 +67,48 @@ public enum OscpMqttCountStat implements MqttStat {
 	private OscpMqttCountStat(int index, String description) {
 		this.index = index;
 		this.description = description;
+	}
+
+	/**
+	 * Get a statistic instance for an action.
+	 * 
+	 * @param action
+	 *        the action
+	 * @return the statistic, or {@literal null} if {@code action} is
+	 *         {@literal null} or unsupported
+	 */
+	public static OscpMqttCountStat instructionReceivedStat(String action) {
+		if ( action == null ) {
+			return null;
+		}
+		return switch (action) {
+			case "AdjustGroupCapacityForecast" -> AdjustGroupCapacityForecastInstructionsReceived;
+			case "GroupCapacityComplianceError" -> GroupCapacityComplianceErrorInstructionsReceived;
+			case "UpdateAssetMeasurement" -> UpdateAssetMeasurementInstructionsReceived;
+			case "UpdateGroupMeasurements" -> UpdateGroupMeasurementsInstructionsReceived;
+			default -> null;
+		};
+	}
+
+	/**
+	 * Get an error statistic instance for an action.
+	 * 
+	 * @param action
+	 *        the action
+	 * @return the error statistic, or {@literal null} if {@code action} is
+	 *         {@literal null} or unsupported
+	 */
+	public static OscpMqttCountStat instructionErrorStat(String action) {
+		if ( action == null ) {
+			return null;
+		}
+		return switch (action) {
+			case "AdjustGroupCapacityForecast" -> AdjustGroupCapacityForecastInstructionErrors;
+			case "GroupCapacityComplianceError" -> GroupCapacityComplianceErrorInstructionErrors;
+			case "UpdateAssetMeasurement" -> UpdateAssetMeasurementInstructionErrors;
+			case "UpdateGroupMeasurements" -> UpdateGroupMeasurementsInstructionErrors;
+			default -> null;
+		};
 	}
 
 	@Override

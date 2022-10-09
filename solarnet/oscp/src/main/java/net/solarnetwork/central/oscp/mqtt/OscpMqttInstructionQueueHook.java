@@ -23,6 +23,8 @@
 package net.solarnetwork.central.oscp.mqtt;
 
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
+import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
@@ -43,7 +45,6 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -60,6 +61,7 @@ import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.service.RemoteServiceException;
 
 /**
@@ -92,6 +94,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	/**
 	 * Constructor.
 	 * 
+	 * @param stats
+	 *        the stats to use
 	 * @param objectMapper
 	 *        the object mapper to use
 	 * @param userNodeDao
@@ -105,8 +109,8 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
 	 */
-	public OscpMqttInstructionQueueHook(ObjectMapper objectMapper, UserNodeDao userNodeDao,
-			CapacityGroupConfigurationDao capacityGroupDao,
+	public OscpMqttInstructionQueueHook(MqttStats stats, ObjectMapper objectMapper,
+			UserNodeDao userNodeDao, CapacityGroupConfigurationDao capacityGroupDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
 			CapacityProviderConfigurationDao capacityProviderDao) {
 		super();
@@ -116,6 +120,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		setDisplayName("OSCP Instruction Publisher");
+		setMqttStats(requireNonNullArgument(stats, "stats"));
 	}
 
 	@Override
@@ -129,6 +134,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		UserNode userNode = userNodeDao.get(nodeId);
 		if ( userNode == null ) {
 			log.trace("UserNode not found for node {}; ignoring OSCPv20 instruction {}", nodeId, topic);
+			instruction.setState(Declined);
 			return instruction;
 		}
 		final Map<String, String> params = instruction.getParams();
@@ -139,7 +145,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( action == null || action.isBlank() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS, "Missing OSCP action",
 					null);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Missing OSCP action"));
 			return instruction;
 		}
@@ -149,8 +155,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( coIdString == null ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Missing capacity optimizer ID", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Missing capacity optimizer ID"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 		eventData.put(CAPACITY_OPTIMIZER_ID_DATA_KEY, coIdString);
@@ -161,8 +168,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		} catch ( NumberFormatException e ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Invalid capacity optimizer ID", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Invalid capacity optimizer ID"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 		eventData.put(CAPACITY_OPTIMIZER_ID_DATA_KEY, coId); // replace string with long
@@ -171,8 +179,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cgIdent == null || cgIdent.isBlank() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Missing group identifier", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Missing group identifier"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 		eventData.put(CAPACITY_GROUP_IDENTIFIER_DATA_KEY, cgIdent);
@@ -182,8 +191,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( co == null || !co.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown capacity optimizer", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Unknown capacity optimizer"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 
@@ -192,8 +202,9 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cg == null || !cg.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown group identifier", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Unknown group identifier"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 
@@ -202,42 +213,61 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		if ( cp == null || !cp.isEnabled() ) {
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Unknown capacity provider", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", "Unknown capacity provider"));
+			incrementInstructionErrorStat(action);
 			return instruction;
 		}
 
 		try {
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(objectMapper, params,
 					jsonSchemaFactory);
-
-			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_TAGS, "Publishing instruction",
+			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
+			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_IN_TAGS, "Queuing instruction",
 					eventData);
 
-			instruction.setState(InstructionState.Executing);
+			instruction.setState(Queuing);
 			publishOscpInstructionMessage(instruction, userNode.getUserId(), cg, cp, eventData, action,
 					msg);
 		} catch ( IllegalArgumentException e ) {
 			// invalid OSCP message
+			incrementInstructionErrorStat(action);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS, "Invalid OSCP message",
 					eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", e.getMessage()));
 		} catch ( Exception e ) {
+			incrementInstructionErrorStat(action);
 			eventData.put(MESSAGE_DATA_KEY, e.getMessage());
 			generateUserEvent(userNode.getUserId(), OSCP_INSTRUCTION_ERROR_TAGS,
 					"Error handling OSCP message", eventData);
-			instruction.setState(InstructionState.Declined);
+			instruction.setState(Declined);
 			instruction.setResultParameters(singletonMap("error", e.getMessage()));
 		}
 		return instruction;
 	}
 
+	private void incrementInstructionQueuedStat(String action) {
+		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionsQueued);
+		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionReceivedStat(action);
+		if ( actionStat != null ) {
+			getMqttStats().incrementAndGet(actionStat);
+		}
+	}
+
+	private void incrementInstructionErrorStat(String action) {
+		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionErrors);
+		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionErrorStat(action);
+		if ( actionStat != null ) {
+			getMqttStats().incrementAndGet(actionStat);
+		}
+	}
+
 	public void publishOscpInstructionMessage(NodeInstruction instruction, Long userId,
 			CapacityGroupConfiguration group, CapacityProviderConfiguration provider,
 			Map<String, Object> eventData, String action, Object msg) {
-		log.info("Publishing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}",
+		log.info("Queueing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}",
 				instruction.getId(), action, mqttTopic, provider.getId().ident());
 		MqttConnection conn = mqttConnection.get();
 		if ( conn != null && conn.isEstablished() ) {
@@ -255,12 +285,13 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 						payload);
 				Future<?> f = conn.publish(mqttMsg);
 				f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
+				incrementInstructionQueuedStat(action);
 			} catch ( IOException | TimeoutException | ExecutionException | InterruptedException e ) {
 				log.warn(
-						"Error publishing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}: {}",
+						"Error queuing OSCP instruction {} action {} to MQTT topic {} for Capacity Provider {}: {}",
 						instruction.getId(), action, mqttTopic, provider.getId().ident(), e.toString());
 				throw new RemoteServiceException(
-						"MQTT error publishing OSCP instruction %d action %s for Capacity Provider %s: %s"
+						"MQTT error queuing OSCP instruction %d action %s for Capacity Provider %s: %s"
 								.formatted(instruction.getId(), action, provider.getId().ident(),
 										e.getMessage()),
 						e);

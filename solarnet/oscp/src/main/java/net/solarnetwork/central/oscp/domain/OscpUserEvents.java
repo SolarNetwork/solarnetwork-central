@@ -109,6 +109,9 @@ public interface OscpUserEvents {
 	/** A user event data key for an OSCP capacity group identifier. */
 	String CAPACITY_GROUP_IDENTIFIER_DATA_KEY = "cgIdentifier";
 
+	/** A user event data key for an OSCP message content. */
+	String CONTENT_DATA_KEY = "content";
+
 	/**
 	 * Get a user log event for a configuration ID.
 	 * 

@@ -27,6 +27,7 @@ import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.instructor.domain.InstructionState.Completed;
 import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
 import static net.solarnetwork.central.instructor.domain.InstructionState.Executing;
+import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
@@ -71,6 +72,7 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
  * MQTT subscriber for OSCP v2.0 instructions.
@@ -103,6 +105,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	/**
 	 * Constructor.
 	 * 
+	 * @param stats
+	 *        the stats to use
 	 * @param taskExecutor
 	 *        the task executor
 	 * @param objectMapper
@@ -120,7 +124,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OscpMqttInstructionHandler(Executor taskExecutor, ObjectMapper objectMapper,
+	public OscpMqttInstructionHandler(MqttStats stats, Executor taskExecutor, ObjectMapper objectMapper,
 			NodeInstructionDao nodeInstructionDao, CapacityGroupConfigurationDao capacityGroupDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
 			CapacityProviderConfigurationDao capacityProviderDao, ExternalSystemClient client) {
@@ -133,6 +137,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.client = requireNonNullArgument(client, "client");
 		setDisplayName("OSCP Instruction Subscriber");
+		setMqttStats(requireNonNullArgument(stats, "stats"));
 	}
 
 	@Override
@@ -177,7 +182,13 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 				return;
 			}
 
-			eventData.put(INSTRUCTION_ID_PARAM, instructionId);
+			if ( !nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId, Queuing,
+					Executing, null) ) {
+				// assumed claimed by another handler
+				return;
+			}
+
+			eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
 
 			action = json.path(OSCP_ACTION_PARAM).textValue();
 			if ( action == null || action.isBlank() ) {
@@ -243,11 +254,13 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			Map<String, Object> params = new HashMap<>(2);
 			params.put(OSCP_ACTION_PARAM, action);
 			params.put(OSCP_MESSAGE_PARAM, json.path(OSCP_MESSAGE_PARAM));
+
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(objectMapper, params,
 					null); // assume message JSON already validated at this point
+			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
 
 			incrementInstructionReceivedStat(action);
-			generateUserEvent(userId, OSCP_INSTRUCTION_TAGS, "Processing instruction", eventData);
+			generateUserEvent(userId, OSCP_INSTRUCTION_TAGS, "Processing queued instruction", eventData);
 			taskExecutor.execute(
 					new SendOscpInstructionTask(instructionId, nodeId, cg, cp, eventData, action, msg));
 		} catch ( IllegalArgumentException e ) {
@@ -291,7 +304,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	private void incrementInstructionReceivedStat(String action) {
 		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionsReceived);
-		OscpMqttCountStat actionStat = instructionReceivedStat(action);
+		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionReceivedStat(action);
 		if ( actionStat != null ) {
 			getMqttStats().incrementAndGet(actionStat);
 		}
@@ -299,36 +312,10 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	private void incrementInstructionErrorStat(String action) {
 		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionErrors);
-		OscpMqttCountStat actionStat = instructionErrorStat(action);
+		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionErrorStat(action);
 		if ( actionStat != null ) {
 			getMqttStats().incrementAndGet(actionStat);
 		}
-	}
-
-	private OscpMqttCountStat instructionReceivedStat(String action) {
-		if ( action == null ) {
-			return null;
-		}
-		return switch (action) {
-			case "AdjustGroupCapacityForecast" -> OscpMqttCountStat.AdjustGroupCapacityForecastInstructionsReceived;
-			case "GroupCapacityComplianceError" -> OscpMqttCountStat.GroupCapacityComplianceErrorInstructionsReceived;
-			case "UpdateAssetMeasurement" -> OscpMqttCountStat.UpdateAssetMeasurementInstructionsReceived;
-			case "UpdateGroupMeasurements" -> OscpMqttCountStat.UpdateGroupMeasurementsInstructionsReceived;
-			default -> null;
-		};
-	}
-
-	private OscpMqttCountStat instructionErrorStat(String action) {
-		if ( action == null ) {
-			return null;
-		}
-		return switch (action) {
-			case "AdjustGroupCapacityForecast" -> OscpMqttCountStat.AdjustGroupCapacityForecastInstructionErrors;
-			case "GroupCapacityComplianceError" -> OscpMqttCountStat.GroupCapacityComplianceErrorInstructionErrors;
-			case "UpdateAssetMeasurement" -> OscpMqttCountStat.UpdateAssetMeasurementInstructionErrors;
-			case "UpdateGroupMeasurements" -> OscpMqttCountStat.UpdateGroupMeasurementsInstructionErrors;
-			default -> null;
-		};
 	}
 
 	private class SendOscpInstructionTask implements Runnable, Supplier<String> {
@@ -351,7 +338,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			this.eventData = eventData;
 			this.action = action;
 			this.msg = msg;
-			this.context = new SystemTaskContext<>(action, OscpRole.CapacityProvider, provider,
+			this.context = new SystemTaskContext<>(action, OscpRole.CapacityOptimizer, provider,
 					OSCP_INSTRUCTION_ERROR_TAGS, OSCP_INSTRUCTION_TAGS, capacityProviderDao,
 					Collections.emptyMap());
 		}
@@ -373,6 +360,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		public void run() {
 			try {
 				client.systemExchange(context, HttpMethod.POST, this, msg);
+				generateUserEvent(group.getUserId(), OSCP_INSTRUCTION_OUT_TAGS, "Posted instruction",
+						eventData);
 				if ( !nodeInstructionDao.compareAndUpdateInstructionState(instructionId, nodeId,
 						Executing, Completed, null) ) {
 					log.warn(

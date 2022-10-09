@@ -30,7 +30,7 @@ import net.solarnetwork.central.oscp.domain.OscpUserEvents;
  * @author matt
  * @version 1.0
  */
-public interface OscpMqttInstructions {
+public interface OscpMqttInstructions extends OscpUserEvents {
 
 	/** The MQTT topic for OSCP instruction messages. */
 	String MQTT_TOPIC_V20 = "instr/OSCP_v20";
@@ -45,11 +45,15 @@ public interface OscpMqttInstructions {
 	String USER_ID_PARAM = "userId";
 
 	/** User event tags for OSCP instruction general events. */
-	String[] OSCP_INSTRUCTION_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
-			OscpUserEvents.INSTRUCTION_TAG };
+	String[] OSCP_INSTRUCTION_TAGS = new String[] { OSCP_TAG, INSTRUCTION_TAG };
 
 	/** User event tags for OSCP instruction error events. */
-	String[] OSCP_INSTRUCTION_ERROR_TAGS = new String[] { OscpUserEvents.OSCP_TAG,
-			OscpUserEvents.INSTRUCTION_TAG, OscpUserEvents.ERROR_TAG };
+	String[] OSCP_INSTRUCTION_ERROR_TAGS = new String[] { OSCP_TAG, INSTRUCTION_TAG, ERROR_TAG };
+
+	/** User event tags for OSCP instruction input events. */
+	String[] OSCP_INSTRUCTION_IN_TAGS = new String[] { OSCP_TAG, INSTRUCTION_TAG, INPUT_TAG };
+
+	/** User event tags for OSCP instruction output events. */
+	String[] OSCP_INSTRUCTION_OUT_TAGS = new String[] { OSCP_TAG, INSTRUCTION_TAG, OUTPUT_TAG };
 
 }
