@@ -47,6 +47,13 @@ public interface DatumPublishSettings {
 	boolean isPublishToSolarFlux();
 
 	/**
+	 * Get the node ID.
+	 * 
+	 * @return the node ID
+	 */
+	Long getNodeId();
+
+	/**
 	 * Set the source ID template.
 	 * 
 	 * @return the template, or {@literal null}

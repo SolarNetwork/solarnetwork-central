@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,6 +228,7 @@ public class OscpJdbcTestUtils {
 		conf.setModified(created);
 		conf.setPublishToSolarIn(true);
 		conf.setPublishToSolarFlux(true);
+		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setSourceIdTemplate("foo/bar");
 		return conf;
 	}
@@ -248,6 +250,7 @@ public class OscpJdbcTestUtils {
 		conf.setModified(created);
 		conf.setPublishToSolarIn(true);
 		conf.setPublishToSolarFlux(true);
+		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setSourceIdTemplate("group/foo/bar");
 		return conf;
 	}

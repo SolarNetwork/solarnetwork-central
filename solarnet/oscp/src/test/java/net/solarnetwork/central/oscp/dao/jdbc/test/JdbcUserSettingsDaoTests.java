@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcUserSettingsDao;
@@ -69,6 +70,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		settings.setModified(settings.getCreated());
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
+		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		settings.setSourceIdTemplate("foo/bar");
 
 		// WHEN
@@ -84,6 +86,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		assertThat("Row user ID matches", row, hasEntry("user_id", settings.getUserId()));
 		assertThat("Row pub_in matches", row, hasEntry("pub_in", settings.isPublishToSolarIn()));
 		assertThat("Row pub_flux matches", row, hasEntry("pub_flux", settings.isPublishToSolarFlux()));
+		assertThat("Row node_id matches", row, hasEntry("node_id", settings.getNodeId()));
 		assertThat("Row source_id_tmpl matches", row,
 				hasEntry("source_id_tmpl", settings.getSourceIdTemplate()));
 
@@ -99,7 +102,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		UserSettings result = dao.get(last.getId());
 
 		// THEN
-		assertThat("Retrieved entity matches source", result, is(equalTo(last)));
+		assertThat("Retrieved entity matches source", result.isSameAs(last), is(equalTo(true)));
 	}
 
 	@Test
@@ -112,6 +115,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		settings.setModified(Instant.now().plusMillis(474));
 		settings.setPublishToSolarIn(false);
 		settings.setPublishToSolarIn(false);
+		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		settings.setSourceIdTemplate("bim/bam");
 
 		Long result = dao.save(settings);
@@ -127,6 +131,7 @@ public class JdbcUserSettingsDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 		assertThat("Row user ID matches", row, hasEntry("user_id", settings.getUserId()));
 		assertThat("Row pub_in matches", row, hasEntry("pub_in", settings.isPublishToSolarIn()));
 		assertThat("Row pub_flux matches", row, hasEntry("pub_flux", settings.isPublishToSolarFlux()));
+		assertThat("Row node_id matches", row, hasEntry("node_id", settings.getNodeId()));
 		assertThat("Row source_id_tmpl matches", row,
 				hasEntry("source_id_tmpl", settings.getSourceIdTemplate()));
 	}

@@ -46,14 +46,15 @@ import net.solarnetwork.domain.Differentiable;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "sourceIdTemplate" })
+@JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "nodeId",
+		"sourceIdTemplate" })
 public class UserSettings extends BasicLongEntity implements CopyingIdentity<Long, UserSettings>,
 		Differentiable<UserSettings>, UserRelatedEntity<Long>, DatumPublishSettings {
 
-	private static final long serialVersionUID = -1276338583244980473L;
+	private static final long serialVersionUID = -6867441421770638409L;
 
 	/** The default {@code sourceIdTemplate} value. */
-	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/oscp/{coId}/{cpId}/{groupIdentifier}";
+	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/oscp/{role}/{action}/{cp}/{co}/{cgIdentifier}";
 
 	/**
 	 * A regular expression for finding sequences of more than one {@literal /}
@@ -87,6 +88,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
 	private String sourceIdTemplate;
+	private Long nodeId;
 
 	/**
 	 * Default constructor.
@@ -132,6 +134,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 		entity.setPublishToSolarIn(publishToSolarIn);
 		entity.setPublishToSolarFlux(publishToSolarFlux);
 		entity.setSourceIdTemplate(sourceIdTemplate);
+		entity.setNodeId(nodeId);
 	}
 
 	/**
@@ -155,7 +158,8 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 		// @formatter:off
 		return publishToSolarIn == other.publishToSolarIn
 				&& publishToSolarFlux == other.publishToSolarFlux
-				&& Objects.equals(sourceIdTemplate, other.sourceIdTemplate);
+				&& Objects.equals(sourceIdTemplate, other.sourceIdTemplate)
+				&& Objects.equals(nodeId, other.nodeId);
 		// @formatter:on
 	}
 
@@ -244,6 +248,21 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
+	}
+
+	@Override
+	public Long getNodeId() {
+		return nodeId;
+	}
+
+	/**
+	 * Set the node ID.
+	 * 
+	 * @param nodeId
+	 *        the nodeId to set
+	 */
+	public void setNodeId(Long nodeId) {
+		this.nodeId = nodeId;
 	}
 
 }

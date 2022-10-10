@@ -41,6 +41,7 @@ import net.solarnetwork.central.oscp.domain.UserSettings;
  * <li>modified (TIMESTAMP)</li>
  * <li>pub_in (BOOLEAN)</li>
  * <li>pub_flux (BOOLEAN)</li>
+ * <li>node_id (BIGINT)</li>
  * <li>source_id_tmpl (TEXT)</li>
  * </ol>
  * 
@@ -61,6 +62,7 @@ public class UserSettingsRowMapper implements RowMapper<UserSettings> {
 		entity.setModified(rs.getTimestamp(++p).toInstant());
 		entity.setPublishToSolarIn(rs.getBoolean(++p));
 		entity.setPublishToSolarFlux(rs.getBoolean(++p));
+		entity.setNodeId(rs.getObject(++p, Long.class));
 		entity.setSourceIdTemplate(rs.getString(++p));
 		return entity;
 	}

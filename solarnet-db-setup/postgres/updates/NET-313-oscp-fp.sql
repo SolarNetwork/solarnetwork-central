@@ -27,6 +27,7 @@ CREATE TABLE solaroscp.oscp_user_settings (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
 	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	node_id			BIGINT NOT NULL,
 	source_id_tmpl	CHARACTER VARYING(255),
 	CONSTRAINT oscp_user_settings_pk PRIMARY KEY (user_id),
 	CONSTRAINT oscp_user_settings_user_fk FOREIGN KEY (user_id)
@@ -227,6 +228,7 @@ CREATE TABLE solaroscp.oscp_cg_settings (
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	pub_in			BOOLEAN NOT NULL DEFAULT TRUE,
 	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	node_id			BIGINT,
 	source_id_tmpl	CHARACTER VARYING(255),
 	CONSTRAINT oscp_cg_settings_pk PRIMARY KEY (user_id, cg_id),
 	CONSTRAINT oscp_cg_settings_cg_fk FOREIGN KEY (user_id, cg_id)

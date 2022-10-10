@@ -55,7 +55,7 @@ public class SelectUserSettings implements PreparedStatementCreator, SqlProvider
 	@Override
 	public String getSql() {
 		return """
-				SELECT user_id,created,modified,pub_in,pub_flux,source_id_tmpl
+				SELECT user_id,created,modified,pub_in,pub_flux,node_id,source_id_tmpl
 				FROM solaroscp.oscp_user_settings
 				WHERE user_id = ?
 				""";

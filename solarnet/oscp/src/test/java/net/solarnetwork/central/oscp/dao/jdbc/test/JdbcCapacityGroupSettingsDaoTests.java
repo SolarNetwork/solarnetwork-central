@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -114,6 +115,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		settings.setModified(settings.getCreated());
 		settings.setPublishToSolarIn(true);
 		settings.setPublishToSolarFlux(true);
+		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		settings.setSourceIdTemplate("foo/bar");
 
 		// WHEN
@@ -130,6 +132,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 				hasEntry("modified", Timestamp.from(settings.getCreated())));
 		assertThat("Row pub_in matches", row, hasEntry("pub_in", settings.isPublishToSolarIn()));
 		assertThat("Row pub_flux matches", row, hasEntry("pub_flux", settings.isPublishToSolarFlux()));
+		assertThat("Row node_id matches", row, hasEntry("node_id", settings.getNodeId()));
 		assertThat("Row source_id_tmpl matches", row,
 				hasEntry("source_id_tmpl", settings.getSourceIdTemplate()));
 
@@ -145,7 +148,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		CapacityGroupSettings result = dao.get(last.getId());
 
 		// THEN
-		assertThat("Retrieved entity matches source", result, is(equalTo(last)));
+		assertThat("Retrieved entity matches source", result.isSameAs(last), is(equalTo(true)));
 	}
 
 	@Test
@@ -180,6 +183,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 				is(equalTo(settings.isPublishToSolarIn())));
 		assertThat("Pub SolarFlux setting", result.isPublishToSolarFlux(),
 				is(equalTo(settings.isPublishToSolarFlux())));
+		assertThat("Node ID setting", result.getNodeId(), is(equalTo(settings.getNodeId())));
 		assertThat("Source ID template setting", result.getSourceIdTemplate(),
 				is(equalTo(settings.getSourceIdTemplate())));
 	}
@@ -213,6 +217,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		settings.setModified(Instant.now().plusMillis(474));
 		settings.setPublishToSolarIn(false);
 		settings.setPublishToSolarIn(false);
+		settings.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		settings.setSourceIdTemplate("bim/bam");
 
 		UserLongCompositePK result = dao.save(settings);
@@ -229,6 +234,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 				hasEntry("modified", Timestamp.from(settings.getCreated())));
 		assertThat("Row pub_in matches", row, hasEntry("pub_in", settings.isPublishToSolarIn()));
 		assertThat("Row pub_flux matches", row, hasEntry("pub_flux", settings.isPublishToSolarFlux()));
+		assertThat("Row node_id matches", row, hasEntry("node_id", settings.getNodeId()));
 		assertThat("Row source_id_tmpl matches", row,
 				hasEntry("source_id_tmpl", settings.getSourceIdTemplate()));
 	}

@@ -56,12 +56,13 @@ public class InsertUserSettings implements PreparedStatementCreator, SqlProvider
 	@Override
 	public String getSql() {
 		return """
-				INSERT INTO solaroscp.oscp_user_settings (user_id,created,modified,pub_in,pub_flux,source_id_tmpl)
-				VALUES (?,?,?,?,?,?)
+				INSERT INTO solaroscp.oscp_user_settings (user_id,created,modified,pub_in,pub_flux,node_id,source_id_tmpl)
+				VALUES (?,?,?,?,?,?,?)
 				ON CONFLICT (user_id) DO UPDATE SET
 					modified = EXCLUDED.modified
 					, pub_in = EXCLUDED.pub_in
 					, pub_flux = EXCLUDED.pub_flux
+					, node_id = EXCLUDED.node_id
 					, source_id_tmpl = EXCLUDED.source_id_tmpl
 				""";
 	}
@@ -76,6 +77,7 @@ public class InsertUserSettings implements PreparedStatementCreator, SqlProvider
 		stmt.setTimestamp(++p, ts);
 		stmt.setBoolean(++p, entity.isPublishToSolarIn());
 		stmt.setBoolean(++p, entity.isPublishToSolarFlux());
+		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceIdTemplate());
 		return stmt;
 	}

@@ -87,6 +87,7 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 						, COALESCE(gs.modified, us.modified) AS modified
 						, COALESCE(gs.pub_in, us.pub_in) AS pub_in
 						, COALESCE(gs.pub_flux, us.pub_flux) AS pub_flux
+						, COALESCE(gs.node_id, us.node_id) AS node_id
 						, COALESCE(gs.source_id_tmpl, us.source_id_tmpl) AS source_id_tmpl
 					FROM solaroscp.oscp_cg_conf cg
 					LEFT OUTER JOIN solaroscp.oscp_user_settings us ON us.user_id = cg.user_id
@@ -106,6 +107,7 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 						, modified
 						, pub_in
 						, pub_flux
+						, node_id
 						, source_id_tmpl
 					FROM solaroscp.oscp_cg_settings
 					WHERE user_id = ?

@@ -46,19 +46,20 @@ import net.solarnetwork.domain.Differentiable;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "groupId", "userId", "created", "publishToSolarIn", "publishToSolarFlux",
+@JsonPropertyOrder({ "groupId", "userId", "created", "publishToSolarIn", "publishToSolarFlux", "nodeId",
 		"sourceIdTemplate" })
 public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 		implements CopyingIdentity<UserLongCompositePK, CapacityGroupSettings>,
 		Differentiable<CapacityGroupSettings>, UserRelatedEntity<UserLongCompositePK>,
 		DatumPublishSettings {
 
-	private static final long serialVersionUID = -8011430178854234297L;
+	private static final long serialVersionUID = 2982265655654356895L;
 
 	private Instant modified;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
 	private String sourceIdTemplate;
+	private Long nodeId;
 
 	/**
 	 * Default constructor.
@@ -119,6 +120,7 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 		entity.setPublishToSolarIn(publishToSolarIn);
 		entity.setPublishToSolarFlux(publishToSolarFlux);
 		entity.setSourceIdTemplate(sourceIdTemplate);
+		entity.setNodeId(nodeId);
 	}
 
 	/**
@@ -142,7 +144,8 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 		// @formatter:off
 		return publishToSolarIn == other.publishToSolarIn
 				&& publishToSolarFlux == other.publishToSolarFlux
-				&& Objects.equals(sourceIdTemplate, other.sourceIdTemplate);
+				&& Objects.equals(sourceIdTemplate, other.sourceIdTemplate)
+				&& Objects.equals(nodeId, other.nodeId);
 		// @formatter:on
 	}
 
@@ -235,6 +238,21 @@ public class CapacityGroupSettings extends BasicEntity<UserLongCompositePK>
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		this.sourceIdTemplate = sourceIdTemplate;
+	}
+
+	@Override
+	public Long getNodeId() {
+		return nodeId;
+	}
+
+	/**
+	 * Set the node ID.
+	 * 
+	 * @param nodeId
+	 *        the nodeId to set
+	 */
+	public void setNodeId(Long nodeId) {
+		this.nodeId = nodeId;
 	}
 
 }
