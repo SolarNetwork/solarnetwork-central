@@ -24,6 +24,7 @@ package net.solarnetwork.oscp.sim.cp.web;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +42,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.UnknownContentTypeException;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 
 /**
  * Task to send a HTTP request.
@@ -115,6 +117,9 @@ public class SystemHttpTask<T> implements Runnable {
 		var headers = new HttpHeaders();
 		if ( headersCustomizer != null ) {
 			headersCustomizer.accept(body, headers);
+		}
+		if ( !headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
 		}
 		try {
 			var req = new HttpEntity<T>(body, headers);

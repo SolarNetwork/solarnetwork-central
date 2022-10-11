@@ -29,18 +29,22 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.dao.jdbc.DefaultMeasurementDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcAssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcCapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.dao.jdbc.JdbcFlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.jdbc.JdbcUserSettingsDao;
 
 /**
  * OSCP DAO configuration.
@@ -56,6 +60,16 @@ public class OscpDaoConfig {
 
 	@Autowired
 	private ReadingDatumDao readingDatumDao;
+
+	/**
+	 * The OSCP users settings DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public UserSettingsDao oscpUserSettingsDao() {
+		return new JdbcUserSettingsDao(jdbcOperations);
+	}
 
 	/**
 	 * The OSCP flexibility provider DAO.
@@ -85,6 +99,16 @@ public class OscpDaoConfig {
 	@Bean
 	public CapacityGroupConfigurationDao oscpCapacityGroupConfigurationDao() {
 		return new JdbcCapacityGroupConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The OSCP capacity group settings DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public CapacityGroupSettingsDao oscpCapacityGroupSettingsDao() {
+		return new JdbcCapacityGroupSettingsDao(jdbcOperations);
 	}
 
 	/**

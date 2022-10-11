@@ -48,6 +48,10 @@ app:
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
   oauth:
     client:
       registration-cache:

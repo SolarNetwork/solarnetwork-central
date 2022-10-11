@@ -23,10 +23,10 @@
 package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.central.oscp.domain.UserSettings.removeEmptySourceIdSegments;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonValue;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.util.StringUtils;
 
@@ -37,8 +37,16 @@ import net.solarnetwork.util.StringUtils;
  *        the system user
  * @param action
  *        the action
+ * @param src
+ *        the source configuration
+ * @param dest
+ *        the destination configuration
+ * @param group
+ *        the capacity group
  * @param settings
  *        the publish settings
+ * @param datum
+ *        the datum to publish
  * @param params
  *        optional template parameters
  * @author matt
@@ -46,7 +54,7 @@ import net.solarnetwork.util.StringUtils;
  */
 public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSystemConfiguration<?> src,
 		BaseOscpExternalSystemConfiguration<?> dest, CapacityGroupConfiguration group,
-		DatumPublishSettings settings, GeneralNodeDatum datum, KeyValuePair... params) {
+		DatumPublishSettings settings, Collection<OwnedGeneralNodeDatum> datum, KeyValuePair... params) {
 
 	/** The parameter name for the role alias. */
 	public static final String ROLE_ALIAS_PARAM = "role";
@@ -81,6 +89,9 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	/** The parameter name for a Capacity Optimizer name. */
 	public static final String CAPACITY_OPTIMIZER_NAME_PARAM = "coName";
 
+	/** The parameter name for a {@code ForecastType} alias. */
+	public static final String FORECAST_TYPE_PARAM = "forecastType";
+
 	/**
 	 * Get the event user ID.
 	 * 
@@ -108,7 +119,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	 *         available
 	 */
 	public String sourceId() {
-		String template = (settings != null ? settings.getSourceIdTemplate() : null);
+		String template = (settings != null ? settings.sourceIdTemplate() : null);
 		if ( template == null ) {
 			return null;
 		}
@@ -186,16 +197,6 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 			}
 		}
 		return m;
-	}
-
-	/**
-	 * Get the object to serialize into JSON.
-	 * 
-	 * @return the JSON object
-	 */
-	@JsonValue
-	public GeneralNodeDatum jsonObj() {
-		return datum;
 	}
 
 }

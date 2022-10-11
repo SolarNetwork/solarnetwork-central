@@ -28,6 +28,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.oscp.dao.BasicConfigurationFilter.filterForUsers;
+import static net.solarnetwork.central.oscp.domain.DatumPublishEvent.FORECAST_TYPE_PARAM;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityOptimizer;
 import static net.solarnetwork.central.oscp.domain.OscpRole.CapacityProvider;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
@@ -42,15 +43,22 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
@@ -58,11 +66,16 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.datum.biz.DatumProcessor;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.OwnedGeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.BasicConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
@@ -73,8 +86,11 @@ import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
+import net.solarnetwork.central.oscp.domain.DatumPublishSettings;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
@@ -86,6 +102,7 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.KeyValuePair;
+import net.solarnetwork.domain.datum.DatumSamples;
 import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.GroupCapacityComplianceError;
 import oscp.v20.HandshakeAcknowledge;
@@ -110,10 +127,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
+	private final CapacityGroupSettingsDao capacityGroupSettingsDao;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
 	private TransactionTemplate txTemplate;
 	private TaskScheduler taskScheduler;
-	private DatumProcessor fluxPublisher;
+	private DatumEntityDao datumDao;
+	private Consumer<DatumPublishEvent> fluxPublisher;
 	private String sourceIdTemplate = UserSettings.DEFAULT_SOURCE_ID_TEMPLATE;
 	private long taskConditionTimeout = DeferredSystemTask.DEFAULT_CONDITION_TIMEOUT;
 	private long taskStartDelay = DeferredSystemTask.DEFAULT_START_DELAY;
@@ -147,6 +167,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the capacity optimizer configuration DAO
 	 * @param capacityGroupDao
 	 *        the capacity group configuration DAO
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO
+	 * @capacityGroupSettingsDao the capacity group settings DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -154,7 +177,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
-			CapacityGroupConfigurationDao capacityGroupDao) {
+			CapacityGroupConfigurationDao capacityGroupDao,
+			CapacityGroupSettingsDao capacityGroupSettingsDao, SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.externalSystemClient = requireNonNullArgument(externalSystemClient, "externalSystemClient");
@@ -164,6 +188,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
+		this.capacityGroupSettingsDao = requireNonNullArgument(capacityGroupSettingsDao,
+				"capacityGroupSettingsDao");
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 	}
 
 	private ExternalSystemConfigurationDao<?> configurationDaoForRole(OscpRole systemRole) {
@@ -304,10 +331,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return;
 		}
 
-		var task = new UpdateGroupCapacityForecastTask(completedFuture(null), systemRole,
-				new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
-				group.getIdentifier(), forecast)
-						.withParameters(singletonMap(REQUEST_ID_HEADER, forecastIdentifier));
+		var task = new UpdateGroupCapacityForecastTask(completedFuture(null), systemRole, group,
+				forecast).withParameters(singletonMap(REQUEST_ID_HEADER, forecastIdentifier));
 		executor.execute(task);
 	}
 
@@ -370,6 +395,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
 			extends DeferredSystemTask<C> {
 
+		private final Consumer<DatumPublishEvent> fluxPublisher;
+		private final DatumEntityDao datumDao;
+
 		private BaseDeferredSystemTask(String name, Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao) {
 			super(name, externalSystemReady, role, configId, dao, externalSystemClient,
@@ -381,7 +409,67 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			withStartDelay(taskStartDelay);
 			withStartDelayRandomness(taskStartDelayRandomness);
 			withRetryDelay(taskRetryDelay);
-			// TODO withDatumPublisher()
+			this.fluxPublisher = DaoFlexibilityProviderBiz.this.fluxPublisher;
+			this.datumDao = DaoFlexibilityProviderBiz.this.datumDao;
+		}
+
+		/**
+		 * Publish datum.
+		 * 
+		 * @param action
+		 *        the OSCP action name
+		 * @param sourceIdSuffix
+		 *        an optional suffix to add to the resolved source ID
+		 * @param src
+		 *        the source system
+		 * @param dest
+		 *        the destination system
+		 * @param group
+		 *        the group
+		 * @param settings
+		 *        the publish settings
+		 * @param datumSupplier
+		 *        the datum supplier
+		 * @param sourceIdParameters
+		 *        additional source ID template parameters
+		 */
+		protected void publish(String action, String sourceIdSuffix,
+				BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
+				CapacityGroupConfiguration group, DatumPublishSettings settings,
+				Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
+				KeyValuePair... sourceIdParameters) {
+			if ( !DatumPublishSettings.shouldPublish(settings)
+					|| (fluxPublisher == null && datumDao == null) ) {
+				return;
+			}
+			Long nodeId = settings.getNodeId();
+			SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
+			if ( ownership == null || !this.configId.getUserId().equals(ownership.getUserId()) ) {
+				// node ownership not known or not owned by context user: ignore
+				return;
+			}
+			final Collection<OwnedGeneralNodeDatum> datum = datumSupplier.get();
+			if ( datum == null || datum.isEmpty() ) {
+				return;
+			}
+			DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings,
+					datum, sourceIdParameters);
+			String sourceId = event.sourceId();
+			if ( sourceIdSuffix != null ) {
+				sourceId += sourceIdSuffix;
+			}
+			for ( OwnedGeneralNodeDatum d : datum ) {
+				d.setNodeId(nodeId);
+				d.setSourceId(sourceId);
+			}
+			if ( datumDao != null && settings.isPublishToSolarIn() ) {
+				for ( OwnedGeneralNodeDatum d : datum ) {
+					datumDao.store(d);
+				}
+			}
+			if ( fluxPublisher != null && settings.isPublishToSolarFlux() ) {
+				fluxPublisher.accept(event);
+			}
 		}
 
 	}
@@ -452,32 +540,93 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	}
 
 	private class UpdateGroupCapacityForecastTask
-			extends BaseDeferredSystemTask<CapacityOptimizerConfiguration> {
+			extends BaseDeferredSystemTask<CapacityOptimizerConfiguration>
+			implements Supplier<Collection<OwnedGeneralNodeDatum>> {
 
-		private final String groupIdentifier;
+		private final CapacityGroupConfiguration group;
 		private final CapacityForecast forecast;
 
 		private UpdateGroupCapacityForecastTask(Future<?> externalSystemReady, OscpRole role,
-				UserLongCompositePK configId, String groupIdentifier, CapacityForecast forecast) {
-			super("UpdateGroupCapacityForecast", externalSystemReady, role, configId,
+				CapacityGroupConfiguration group, CapacityForecast forecast) {
+			super("UpdateGroupCapacityForecast", externalSystemReady, role,
+					new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
 					capacityOptimizerDao);
-			this.groupIdentifier = requireNonNullArgument(groupIdentifier, "groupIdentifier");
+			this.group = group;
 			this.forecast = requireNonNullArgument(forecast, "forecast");
+			requireNonNullArgument(forecast.type(), "forecast.type");
 			withErrorEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
 			withSuccessEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
 		}
 
 		@Override
 		protected void doWork() throws Exception {
-			CapacityOptimizerConfiguration config = registeredConfiguration(false, singleton(V20));
-			doWork20(config);
+			CapacityOptimizerConfiguration optimizer = registeredConfiguration(false, singleton(V20));
+			doWork20(optimizer);
+
+			CapacityProviderConfiguration provider = capacityProviderDao
+					.get(new UserLongCompositePK(optimizer.getUserId(), group.getCapacityProviderId()));
+			if ( provider == null ) {
+				// should not get here
+				return;
+			}
+			DatumPublishSettings settings = capacityGroupSettingsDao
+					.resolveDatumPublishSettings(optimizer.getUserId(), group.getIdentifier());
+			String forecastTypeAlias = forecast.type().getAlias();
+			String sourceIdSuffix = "/".concat(forecastTypeAlias);
+			publish(UpdateGroupCapacityForecast.class.getSimpleName(), sourceIdSuffix, provider,
+					optimizer, group, settings, this,
+					new KeyValuePair(FORECAST_TYPE_PARAM, forecastTypeAlias));
 		}
 
 		private void doWork20(CapacityOptimizerConfiguration conf) {
-			UpdateGroupCapacityForecast msg = forecast.toOscp20UpdateGroupCapacityValue(groupIdentifier);
+			UpdateGroupCapacityForecast msg = forecast
+					.toOscp20UpdateGroupCapacityValue(group.getIdentifier());
 			post(UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
 		}
 
+		@Override
+		public Collection<OwnedGeneralNodeDatum> get() {
+			// we don't need to set node ID or source ID here, as that will be resolved in the publish() method
+			Map<Instant, OwnedGeneralNodeDatum> data = new HashMap<>();
+			if ( forecast.blocks() != null && !forecast.blocks().isEmpty() ) {
+				for ( TimeBlockAmount tba : forecast.blocks() ) {
+					Instant start = tba.start();
+					if ( start == null ) {
+						continue;
+					}
+					Instant end = tba.end();
+					if ( end == null ) {
+						continue;
+					}
+					OwnedGeneralNodeDatum d = data.computeIfAbsent(start, k -> {
+						OwnedGeneralNodeDatum newD = new OwnedGeneralNodeDatum(configId.getUserId());
+						newD.setCreated(k);
+						DatumSamples s = new DatumSamples();
+						newD.setSamples(s);
+						s.putInstantaneousSampleValue("duration", Duration.between(k, end).toSeconds());
+						return newD;
+					});
+					BigDecimal amount = tba.amount();
+					if ( amount == null ) {
+						continue;
+					}
+					DatumSamples s = d.getSamples();
+					Phase phase = tba.phase();
+					s.putInstantaneousSampleValue(propName("amount", phase), tba.amount());
+					s.putStatusSampleValue(propName("unit", phase), tba.unit().toString());
+				}
+			}
+			return data.values().stream().filter(d -> d.getSamples().getInstantaneous().size() > 1)
+					.sorted(Comparator.comparing(GeneralNodeDatum::getCreated)).toList();
+		}
+
+	}
+
+	private static String propName(String base, Phase phase) {
+		if ( phase == null || phase == Phase.All ) {
+			return base;
+		}
+		return "%s_%c".formatted(base, (char) phase.getCode());
 	}
 
 	private class HandshakeAckTask<C extends BaseOscpExternalSystemConfiguration<C>>
@@ -702,11 +851,30 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	}
 
 	/**
+	 * Get the datum DAO.
+	 * 
+	 * @return the DAO
+	 */
+	public DatumEntityDao getDatumDao() {
+		return datumDao;
+	}
+
+	/**
+	 * Set the datum DAO.
+	 * 
+	 * @param datumDao
+	 *        the DAO to set
+	 */
+	public void setDatumDao(DatumEntityDao datumDao) {
+		this.datumDao = datumDao;
+	}
+
+	/**
 	 * Get the SolarFlux publisher.
 	 * 
 	 * @return the publisher, or {@literal null}
 	 */
-	public DatumProcessor getFluxPublisher() {
+	public Consumer<DatumPublishEvent> getFluxPublisher() {
 		return fluxPublisher;
 	}
 
@@ -716,7 +884,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
-	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+	public void setFluxPublisher(Consumer<DatumPublishEvent> fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
 	}
 

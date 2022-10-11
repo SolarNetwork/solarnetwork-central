@@ -96,11 +96,15 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *        the URL path, to add to the base URL
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the URI
+	 * @return the URI, or {@literal null} if none configured
 	 * @throws ExternalSystemConfigurationException
 	 *         if an error occurs
 	 */
 	default URI systemUri(String path, String... extraErrorTags) {
+		String baseUrl = config().getBaseUrl();
+		if ( baseUrl == null || baseUrl.isBlank() ) {
+			return null;
+		}
 		try {
 			return URI.create(config().getBaseUrl() + path);
 		} catch ( IllegalArgumentException | NullPointerException e ) {

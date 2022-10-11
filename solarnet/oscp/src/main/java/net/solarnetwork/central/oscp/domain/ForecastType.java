@@ -67,14 +67,18 @@ public enum ForecastType implements CodedValue {
 		this.code = code;
 	}
 
-	/**
-	 * Get the number of seconds represented by this period.
-	 * 
-	 * @return the number of seconds
-	 */
 	@Override
 	public int getCode() {
 		return code;
+	}
+
+	/**
+	 * Get the type alias.
+	 * 
+	 * @return the alias
+	 */
+	public String getAlias() {
+		return String.valueOf(code);
 	}
 
 	/**

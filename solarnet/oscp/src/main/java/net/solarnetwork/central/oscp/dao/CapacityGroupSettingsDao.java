@@ -50,4 +50,17 @@ public interface CapacityGroupSettingsDao
 	 */
 	DatumPublishSettings resolveDatumPublishSettings(Long userId, Long groupId);
 
+	/**
+	 * Resolve datum publish settings using {@link UserSettings} defaults if
+	 * capacity group settings do not exist for the given ID.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param groupIdentifier
+	 *        the capacity group identifier to resolve settings for
+	 * @return the settings, or {@literal null} if no capacity group or user
+	 *         settings exist
+	 */
+	DatumPublishSettings resolveDatumPublishSettings(Long userId, String groupIdentifier);
+
 }

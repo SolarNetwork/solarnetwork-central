@@ -80,7 +80,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	protected final OscpRole role;
 	protected final UserLongCompositePK configId;
 	protected final ExternalSystemConfigurationDao<C> dao;
-	protected final ExternalSystemClient systemBiz;
+	protected final ExternalSystemClient client;
 	protected final UserEventAppenderBiz userEventAppenderBiz;
 	protected final Executor executor;
 	protected final TaskScheduler taskScheduler;
@@ -133,7 +133,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		this.role = requireNonNullArgument(role, "role");
 		this.configId = requireNonNullArgument(configId, "configId");
 		this.dao = requireNonNullArgument(dao, "dao");
-		this.systemBiz = requireNonNullArgument(systemBiz, "systemBiz");
+		this.client = requireNonNullArgument(systemBiz, "systemBiz");
 		this.userEventAppenderBiz = userEventAppenderBiz;
 		this.executor = executor;
 		this.taskScheduler = taskScheduler;
@@ -439,7 +439,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	protected void post(String path, Object body, String... extraErrorTags) {
 		SystemTaskContext<C> ctx = context(extraErrorTags);
-		systemBiz.systemExchange(ctx, HttpMethod.POST, () -> path, body);
+		client.systemExchange(ctx, HttpMethod.POST, () -> path, body);
 	}
 
 }

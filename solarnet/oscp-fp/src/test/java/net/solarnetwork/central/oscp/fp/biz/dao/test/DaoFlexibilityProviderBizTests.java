@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.biz.dao.test;
 
+import static java.time.Instant.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
@@ -33,14 +34,17 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
@@ -57,6 +61,8 @@ import java.util.EnumSet;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,8 +79,13 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
@@ -82,8 +93,10 @@ import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.oscp.domain.ForecastType;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
@@ -92,6 +105,7 @@ import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
 import net.solarnetwork.central.oscp.domain.TimeBlockAmount;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -131,6 +145,18 @@ public class DaoFlexibilityProviderBizTests {
 	@Mock
 	private CapacityGroupConfigurationDao capacityGroupDao;
 
+	@Mock
+	private CapacityGroupSettingsDao capacitySettingsDao;
+
+	@Mock
+	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Mock
+	private DatumEntityDao datumDao;
+
+	@Mock
+	private Consumer<DatumPublishEvent> fluxPublisher;
+
 	@Captor
 	private ArgumentCaptor<ConfigurationFilter> cpFilterCaptor;
 
@@ -139,6 +165,12 @@ public class DaoFlexibilityProviderBizTests {
 
 	@Captor
 	private ArgumentCaptor<String> tokenCaptor;
+
+	@Captor
+	private ArgumentCaptor<GeneralNodeDatum> datumCaptor;
+
+	@Captor
+	private ArgumentCaptor<DatumPublishEvent> datumPublishEventCaptor;
 
 	private ObjectMapper objectMapper;
 	private CallingThreadExecutorService executor;
@@ -158,9 +190,11 @@ public class DaoFlexibilityProviderBizTests {
 		biz = new DaoFlexibilityProviderBiz(executor,
 				new RestOpsExternalSystemClient(restTemplate, userEventAppenderBiz),
 				userEventAppenderBiz, flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
-				capacityGroupDao);
+				capacityGroupDao, capacitySettingsDao, nodeOwnershipDao);
 		biz.setTaskStartDelay(0);
 		biz.setTaskStartDelayRandomness(0);
+		biz.setDatumDao(datumDao);
+		biz.setFluxPublisher(fluxPublisher);
 		// no biz.setTxTemplate(tt); to use test transaction
 	}
 
@@ -537,6 +571,7 @@ public class DaoFlexibilityProviderBizTests {
 		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
 				randomUUID().getMostSignificantBits(), Instant.now());
 		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
+		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
 		group.setIdentifier(groupIdentifier);
 		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
 				groupIdentifier)).willReturn(group);
@@ -570,6 +605,106 @@ public class DaoFlexibilityProviderBizTests {
 
 		// WHEN
 		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
+	}
+
+	@Test
+	public void updateGroupCapacityForecast_noOptimizerUriWithDatumPublish() throws Exception {
+		// GIVEN
+		final String groupIdentifier = randomUUID().toString();
+		final var authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final var topOfHour = now().truncatedTo(ChronoUnit.HOURS);
+		final var amount1 = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
+				Phase.All, new BigDecimal("1.1"), MeasurementUnit.kW);
+		final var amount2 = new TimeBlockAmount(amount1.end(), amount1.end().plus(1, ChronoUnit.HOURS),
+				Phase.All, new BigDecimal("2.2"), MeasurementUnit.kW);
+		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
+				Arrays.asList(amount1, amount2));
+
+		// find the group
+		var group = new CapacityGroupConfiguration(authInfo.userId(),
+				randomUUID().getMostSignificantBits(), now());
+		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
+		group.setCapacityProviderId(randomUUID().getMostSignificantBits());
+		group.setIdentifier(groupIdentifier);
+		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
+				groupIdentifier)).willReturn(group);
+
+		// get the optimizer
+		var optimizer = new CapacityOptimizerConfiguration(authInfo.userId(),
+				group.getCapacityOptimizerId(), Instant.now());
+		optimizer.setOscpVersion("2.0");
+		optimizer.setBaseUrl(null);
+		optimizer.setRegistrationStatus(RegistrationStatus.Registered);
+		optimizer.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityOptimizerDao.get(optimizer.getId())).willReturn(optimizer);
+
+		// get the provider
+		var provider = new CapacityProviderConfiguration(authInfo.userId(),
+				group.getCapacityProviderId(), Instant.now());
+		provider.setOscpVersion("2.0");
+		provider.setBaseUrl(null);
+		provider.setRegistrationStatus(RegistrationStatus.Registered);
+		provider.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityProviderDao.get(provider.getId())).willReturn(provider);
+
+		// get the group publish settings
+		var settings = new CapacityGroupSettings(authInfo.userId(), group.getEntityId(), now());
+		settings.setPublishToSolarIn(true);
+		settings.setPublishToSolarFlux(true);
+		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		settings.setNodeId(randomUUID().getMostSignificantBits());
+		given(capacitySettingsDao.resolveDatumPublishSettings(authInfo.userId(), groupIdentifier))
+				.willReturn(settings);
+
+		// verify node ID owned by user
+		var owner = BasicSolarNodeOwnership.ownershipFor(settings.getNodeId(), authInfo.userId());
+		given(nodeOwnershipDao.ownershipForNodeId(settings.getNodeId())).willReturn(owner);
+
+		final String requestId = randomUUID().toString();
+
+		// WHEN
+		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
+
+		// THEN
+		then(datumDao).should(times(2)).store(datumCaptor.capture());
+		String expectedSourceId = "/oscp/cp/UpdateGroupCapacityForecast/%d/%d/%s/%c".formatted(
+				provider.getEntityId(), optimizer.getEntityId(), group.getIdentifier(),
+				(char) forecast.type().getCode());
+		for ( int i = 0; i < 2; i++ ) {
+			GeneralNodeDatum d = datumCaptor.getAllValues().get(i);
+			assertThat("Datum %d node ID from settings".formatted(i), d.getNodeId(),
+					is(equalTo(settings.getNodeId())));
+			assertThat("Datum %d source ID from template".formatted(i), d.getSourceId(),
+					is(equalTo(expectedSourceId)));
+			assertThat("Datum %d date from time block start".formatted(i), d.getCreated(),
+					is(equalTo(topOfHour.plus(i, ChronoUnit.HOURS))));
+			assertThat("Datum %d duration property is time block seconds".formatted(i),
+					d.getSamples().getInstantaneousSampleLong("duration"),
+					is(equalTo(TimeUnit.HOURS.toSeconds(1))));
+			assertThat("Datum %d amount property from time block".formatted(i),
+					d.getSamples().getInstantaneousSampleBigDecimal("amount"),
+					is(equalTo(new BigDecimal("%d.%1$d".formatted(i + 1)))));
+			assertThat("Datum %d unit property from time block".formatted(i),
+					d.getSamples().getStatusSampleString("unit"),
+					is(equalTo(MeasurementUnit.kW.toString())));
+			// FIXME: define constants for property names
+		}
+
+		then(fluxPublisher).should(times(1)).accept(datumPublishEventCaptor.capture());
+		DatumPublishEvent pubEvent = datumPublishEventCaptor.getValue();
+		assertThat("Pub event role is provider", pubEvent.role(),
+				is(equalTo(OscpRole.CapacityProvider)));
+		assertThat("Pub event action", pubEvent.action(),
+				is(equalTo(UpdateGroupCapacityForecast.class.getSimpleName())));
+		assertThat("Pub event source is provider", pubEvent.src(), is(sameInstance(provider)));
+		assertThat("Pub event dest is optimizer", pubEvent.dest(), is(sameInstance(optimizer)));
+		assertThat("Pub event group", pubEvent.group(), is(sameInstance(group)));
+		assertThat("Pub event settings", pubEvent.settings(), is(sameInstance(settings)));
+		assertThat("Pub event params has ForecastType alias", pubEvent.params(), is(arrayContaining(
+				new KeyValuePair(DatumPublishEvent.FORECAST_TYPE_PARAM, forecast.type().getAlias()))));
 	}
 
 	@Test

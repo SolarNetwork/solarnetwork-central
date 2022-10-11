@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.MainDataSourceConfig;
 import net.solarnetwork.central.common.dao.config.MyBatisCommonConfig;
+import net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig;
 import net.solarnetwork.central.datum.config.JdbcDatumEntityDaoConfig;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 	SolarNetCommonConfiguration.class,
 	MyBatisCommonConfig.class,
 	MainDataSourceConfig.class,
+	SolarNodeOwnershipDaoConfig.class,
 	JdbcDatumEntityDaoConfig.class
 })
 //@formatter:on

@@ -60,4 +60,37 @@ public interface DatumPublishSettings {
 	 */
 	String getSourceIdTemplate();
 
+	/**
+	 * Get a source ID template, returning a default value if not otherwise
+	 * configured.
+	 * 
+	 * @return the source ID template, never {@literal null}
+	 */
+	default String sourceIdTemplate() {
+		String t = getSourceIdTemplate();
+		return (t != null ? t : UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+	}
+
+	/**
+	 * Test if some publish mode enabled.
+	 * 
+	 * @return {@literal true} if either SolarIn or SolarFlux publishing is
+	 *         enabled
+	 */
+	default boolean shouldPublish() {
+		return isPublishToSolarIn() || isPublishToSolarFlux();
+	}
+
+	/**
+	 * Test if a settings instance exists and has some publish mode enabled.
+	 * 
+	 * @param settings
+	 *        the settings to test
+	 * @return {@literal true} if {@code settings} is not {@literal null} and
+	 *         has either SolarIn or SolarFlux publishing enabled
+	 */
+	static boolean shouldPublish(DatumPublishSettings settings) {
+		return settings != null && settings.shouldPublish();
+	}
+
 }

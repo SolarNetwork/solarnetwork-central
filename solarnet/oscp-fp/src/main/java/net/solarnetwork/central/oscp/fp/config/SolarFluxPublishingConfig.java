@@ -23,7 +23,6 @@
 package net.solarnetwork.central.oscp.fp.config;
 
 import static net.solarnetwork.central.oscp.fp.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -33,9 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.oscp.mqtt.OscpActionDatumPublisher;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
 
@@ -45,12 +43,9 @@ import net.solarnetwork.codec.JsonUtils;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
 public class SolarFluxPublishingConfig {
-
-	@Autowired
-	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	/**
 	 * A module for handling SolarFlux objects.
@@ -78,12 +73,19 @@ public class SolarFluxPublishingConfig {
 		return mapper;
 	}
 
+	/**
+	 * Publish OSCP action events as SolarFlux datum.
+	 * 
+	 * @param mapper
+	 *        the mapper to use
+	 * @return the publisher
+	 */
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
-	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
-				solarFluxObjectMapper());
+	public OscpActionDatumPublisher solarFluxOscpActionDatumPublisher(
+			@Qualifier(SOLARFLUX) ObjectMapper mapper) {
+		OscpActionDatumPublisher processor = new OscpActionDatumPublisher(mapper);
 		return processor;
 	}
 

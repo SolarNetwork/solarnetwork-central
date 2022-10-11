@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import static net.solarnetwork.central.oscp.fp.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -31,10 +34,14 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
@@ -58,10 +65,19 @@ public class ServiceConfig {
 	private CapacityGroupConfigurationDao capacityGroupDao;
 
 	@Autowired
+	private CapacityGroupSettingsDao capacityGroupSettingsDao;
+
+	@Autowired
 	private CapacityProviderConfigurationDao capacityProviderDao;
 
 	@Autowired
 	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
+
+	@Autowired
+	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Autowired
+	private DatumEntityDao datumDao;
 
 	@Autowired
 	private AsyncTaskExecutor executor;
@@ -78,6 +94,10 @@ public class ServiceConfig {
 	@Autowired
 	private OAuth2AuthorizedClientManager oauthClientManager;
 
+	@Qualifier(SOLARFLUX)
+	@Autowired(required = false)
+	private Consumer<DatumPublishEvent> fluxPublisher;
+
 	@Bean
 	public RestOpsExternalSystemClient externalSystemClient() {
 		var service = new RestOpsExternalSystemClient(restOps, userEventAppenderBiz);
@@ -93,9 +113,12 @@ public class ServiceConfig {
 	@Bean
 	public DaoFlexibilityProviderBiz flexibilityProviderBiz(ExternalSystemClient client) {
 		var biz = new DaoFlexibilityProviderBiz(executor, client, userEventAppenderBiz,
-				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao, capacityGroupDao);
+				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao, capacityGroupDao,
+				capacityGroupSettingsDao, nodeOwnershipDao);
 		biz.setTxTemplate(transactionTemplate);
 		biz.setTaskScheduler(taskScheduler);
+		biz.setDatumDao(datumDao);
+		biz.setFluxPublisher(fluxPublisher);
 		return biz;
 	}
 

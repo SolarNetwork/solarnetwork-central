@@ -157,9 +157,11 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// WHEN
 		DatumPublishSettings result = dao.resolveDatumPublishSettings(userId, group.getEntityId());
+		DatumPublishSettings result2 = dao.resolveDatumPublishSettings(userId, group.getIdentifier());
 
 		// THEN
 		assertThat("No settings available", result, is(nullValue()));
+		assertThat("Search by identifier has no settings available", result2, is(nullValue()));
 	}
 
 	@Test
@@ -171,6 +173,7 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// WHEN
 		DatumPublishSettings result = dao.resolveDatumPublishSettings(userId, group.getEntityId());
+		DatumPublishSettings result2 = dao.resolveDatumPublishSettings(userId, group.getIdentifier());
 
 		// THEN
 		assertThat("Settings resolved to user values", result, is(notNullValue()));
@@ -186,6 +189,11 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 		assertThat("Node ID setting", result.getNodeId(), is(equalTo(settings.getNodeId())));
 		assertThat("Source ID template setting", result.getSourceIdTemplate(),
 				is(equalTo(settings.getSourceIdTemplate())));
+		assertThat("Searcy by identifier returns group settings", result2,
+				is(instanceOf(CapacityGroupSettings.class)));
+		assertThat("Search by identifier is same as by ID",
+				((CapacityGroupSettings) result2).isSameAs((CapacityGroupSettings) result),
+				is(equalTo(true)));
 	}
 
 	@Test
@@ -199,11 +207,17 @@ public class JdbcCapacityGroupSettingsDaoTests extends AbstractJUnit5JdbcDaoTest
 
 		// WHEN
 		DatumPublishSettings result = dao.resolveDatumPublishSettings(userId, group.getEntityId());
+		DatumPublishSettings result2 = dao.resolveDatumPublishSettings(userId, group.getIdentifier());
 
 		// THEN
 		assertThat("Settings resolved to group values", result, is(notNullValue()));
 		assertThat("Resolved as group settings", result, is(instanceOf(CapacityGroupSettings.class)));
 		assertThat("Resolved values from group", ((CapacityGroupSettings) result).isSameAs(last),
+				is(equalTo(true)));
+		assertThat("Searcy by identifier returns group settings", result2,
+				is(instanceOf(CapacityGroupSettings.class)));
+		assertThat("Search by identifier is same as by ID",
+				((CapacityGroupSettings) result2).isSameAs((CapacityGroupSettings) result),
 				is(equalTo(true)));
 	}
 

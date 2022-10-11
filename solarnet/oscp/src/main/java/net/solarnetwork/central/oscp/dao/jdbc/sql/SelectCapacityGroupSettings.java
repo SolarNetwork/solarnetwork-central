@@ -41,6 +41,7 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 
 	private final Long userId;
 	private final Long groupId;
+	private final String groupIdentifier;
 	private final boolean resolve;
 
 	/**
@@ -72,6 +73,40 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.groupId = groupId;
+		this.groupIdentifier = null;
+		this.resolve = resolve;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the ID of the user to select
+	 * @param groupIdentifier
+	 *        the capacity group identifier
+	 */
+	public SelectCapacityGroupSettings(Long userId, String groupIdentifier) {
+		this(userId, groupIdentifier, false);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the ID of the user to select
+	 * @param groupIdentifier
+	 *        the capacity group identifier
+	 * @param resolve
+	 *        {@literal true} to resolve user settings as defaults when no group
+	 *        settings are available
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@literal null}
+	 */
+	public SelectCapacityGroupSettings(Long userId, String groupIdentifier, boolean resolve) {
+		super();
+		this.userId = requireNonNullArgument(userId, "userId");
+		this.groupId = null;
+		this.groupIdentifier = groupIdentifier;
 		this.resolve = resolve;
 	}
 
@@ -97,6 +132,8 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 					""");
 			if ( groupId != null ) {
 				buf.append(" AND cg.id = ?");
+			} else if ( groupIdentifier != null ) {
+				buf.append(" AND cg.ident = ?");
 			}
 		} else {
 			buf.append("""
@@ -114,6 +151,8 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 					""");
 			if ( groupId != null ) {
 				buf.append(" AND cg_id = ?");
+			} else if ( groupIdentifier != null ) {
+				buf.append(" AND ident = ?");
 			}
 		}
 		return buf.toString();
@@ -126,6 +165,8 @@ public class SelectCapacityGroupSettings implements PreparedStatementCreator, Sq
 		stmt.setObject(1, userId, Types.BIGINT);
 		if ( groupId != null ) {
 			stmt.setObject(2, groupId, Types.BIGINT);
+		} else if ( groupIdentifier != null ) {
+			stmt.setString(2, groupIdentifier);
 		}
 		return stmt;
 	}

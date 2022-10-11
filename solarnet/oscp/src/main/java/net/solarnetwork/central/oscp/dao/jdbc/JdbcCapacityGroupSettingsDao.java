@@ -66,8 +66,8 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 
 	@Override
 	public Collection<CapacityGroupSettings> findAll(Long userId, List<SortDescriptor> sorts) {
-		final var sql = new SelectCapacityGroupSettings(requireNonNullArgument(userId, "userId"), null,
-				false);
+		final var sql = new SelectCapacityGroupSettings(requireNonNullArgument(userId, "userId"),
+				(Long) null, false);
 		return jdbcOps.query(sql, CapacityGroupSettingsRowMapper.INSTANCE);
 	}
 
@@ -104,6 +104,14 @@ public class JdbcCapacityGroupSettingsDao implements CapacityGroupSettingsDao {
 		final Long groupId = entity.getGroupId();
 		jdbcOps.update(new DeleteCapacityGroupSettings(userId, groupId));
 
+	}
+
+	@Override
+	public DatumPublishSettings resolveDatumPublishSettings(Long userId, String groupIdentifier) {
+		final var sql = new SelectCapacityGroupSettings(userId, groupIdentifier, true);
+		Collection<CapacityGroupSettings> results = jdbcOps.query(sql,
+				CapacityGroupSettingsRowMapper.INSTANCE);
+		return results.stream().findFirst().orElse(null);
 	}
 
 	@Override

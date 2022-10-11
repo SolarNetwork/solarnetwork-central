@@ -29,6 +29,10 @@ import oscp.v20.UpdateGroupCapacityForecast;
 /**
  * A capacity forecast record of capacity amount blocks.
  * 
+ * @param type
+ *        the forecast type
+ * @param blocks
+ *        the forecast time blocks
  * @author matt
  * @version 1.0
  */

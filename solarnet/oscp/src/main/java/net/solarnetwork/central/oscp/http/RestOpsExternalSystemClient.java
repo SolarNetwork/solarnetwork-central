@@ -91,6 +91,11 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 		URI uri;
 		try {
 			uri = context.systemUri(path.get());
+			if ( uri == null ) {
+				log.debug("[{}] with {} {} will not be sent because the system URI is not configured.",
+						context.name(), context.role(), context.config().getId().ident());
+				return;
+			}
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn("[{}] with {} {} failed because of the system URI could not be resolved: {}",
 					context.name(), context.role(), context.config().getId().ident(), e.getMessage());
