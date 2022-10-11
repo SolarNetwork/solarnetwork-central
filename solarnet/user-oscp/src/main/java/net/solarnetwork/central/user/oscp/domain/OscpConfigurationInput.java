@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * API for OSCP configuration input.
@@ -31,14 +30,15 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public interface OscpConfigurationInput<T extends UserRelatedEntity<UserLongCompositePK>> {
+public interface OscpConfigurationInput<T extends UserRelatedEntity<K>, K> {
 
 	/**
-	 * Create an entity from the
+	 * Create an entity from the input properties and a given primary key.
 	 * 
-	 * @param userId
-	 * @return
+	 * @param id
+	 *        the primary key to use
+	 * @return the new entity
 	 */
-	T toEntity(UserLongCompositePK id);
+	T toEntity(K id);
 
 }

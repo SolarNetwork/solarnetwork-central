@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.web.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -39,19 +40,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
 import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityGroupConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityGroupSettingsInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityOptimizerConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Web service API for OSCP management.
@@ -90,6 +97,47 @@ public class UserOscpController {
 			throw new UnsupportedOperationException("OSCP service not available.");
 		}
 		return userOscpBiz;
+	}
+
+	/**
+	 * Update a user settings for the current user.
+	 * 
+	 * @param input
+	 *        the input
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/settings", consumes = APPLICATION_JSON_VALUE)
+	public Result<UserSettings> updateUserSettings(@Valid @RequestBody UserSettingsInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		UserSettings result = userOscpBiz().updateUserSettings(userId, input);
+		return success(result);
+	}
+
+	/**
+	 * View a specific user settings.
+	 * 
+	 * @param id
+	 *        the ID of the user settings to view
+	 * @return the settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/settings")
+	public Response<UserSettings> viewUserSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOscpBiz().settingsForUser(userId));
+	}
+
+	/**
+	 * Delete a specific user settings.
+	 * 
+	 * @param id
+	 *        the ID of the user settings to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
+	public Response<Void> deleteUserSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOscpBiz().deleteUserSettings(userId);
+		return response(null);
 	}
 
 	/**
@@ -290,6 +338,62 @@ public class UserOscpController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOscpBiz().deleteCapacityGroup(userId, groupId);
 		return success();
+	}
+
+	/**
+	 * Get all available capacity group settings for the current user.
+	 * 
+	 * @return the capacity group settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/capacity-groups/settings")
+	public Response<Collection<CapacityGroupSettings>> availableCapacityGroupSettings() {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<CapacityGroupSettings> list = userOscpBiz().capacityGroupSettingsForUser(userId);
+		return response(list);
+	}
+
+	/**
+	 * Update a capacity group settings for the current user.
+	 * 
+	 * @param id
+	 *        the capacity group ID of the settings to update
+	 * @param input
+	 *        the input
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}/settings", consumes = APPLICATION_JSON_VALUE)
+	public Result<CapacityGroupSettings> updateCapacityGroupSettings(@PathVariable("groupId") Long id,
+			@Valid @RequestBody CapacityGroupSettingsInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		CapacityGroupSettings result = userOscpBiz().updateCapacityGroupSettings(userId, id, input);
+		return success(result);
+	}
+
+	/**
+	 * View a specific capacity group settings.
+	 * 
+	 * @param id
+	 *        the ID of the capacity group settings to view
+	 * @return the settings
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/capacity-groups/{groupId}/settings")
+	public Response<CapacityGroupSettings> viewCapacityGroupSettings(@PathVariable("groupId") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOscpBiz().capacityGroupSettingsForUser(userId, id));
+	}
+
+	/**
+	 * Delete a specific capacity group settings.
+	 * 
+	 * @param id
+	 *        the ID of the capacity group settings to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/capacity-groups/{groupId}/settings")
+	public Response<Void> deleteCapacityGroupSettings(@PathVariable("groupId") Long id) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOscpBiz().deleteCapacityGroupSettings(userId, id);
+		return response(null);
 	}
 
 	/**

@@ -30,9 +30,11 @@ import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.user.oscp.biz.dao.DaoUserOscpBiz;
 
 /**
@@ -44,6 +46,9 @@ import net.solarnetwork.central.user.oscp.biz.dao.DaoUserOscpBiz;
 @Configuration(proxyBeanMethods = false)
 @Profile(OSCP_V20)
 public class UserOscpBizConfig {
+
+	@Autowired
+	private UserSettingsDao userSettingsDao;
 
 	@Autowired
 	private FlexibilityProviderDao flexibilityProviderDao;
@@ -58,6 +63,9 @@ public class UserOscpBizConfig {
 	private CapacityGroupConfigurationDao capacityGroupDao;
 
 	@Autowired
+	private CapacityGroupSettingsDao capacityGroupSettingsDao;
+
+	@Autowired
 	private AssetConfigurationDao assetDao;
 
 	@Autowired
@@ -65,8 +73,8 @@ public class UserOscpBizConfig {
 
 	@Bean
 	public DaoUserOscpBiz userOscpBiz() {
-		var biz = new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
-				capacityGroupDao, assetDao);
+		var biz = new DaoUserOscpBiz(userSettingsDao, flexibilityProviderDao, capacityProviderDao,
+				capacityOptimizerDao, capacityGroupDao, capacityGroupSettingsDao, assetDao);
 		biz.setSecretsBiz(secretsBiz);
 		return biz;
 	}

@@ -46,9 +46,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
@@ -66,6 +68,9 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
 public class DaoUserOscpBizTests {
 
 	@Mock
+	private UserSettingsDao userSettingsDao;
+
+	@Mock
 	private FlexibilityProviderDao flexibilityProviderDao;
 
 	@Mock
@@ -78,6 +83,9 @@ public class DaoUserOscpBizTests {
 	private CapacityGroupConfigurationDao capacityGroupDao;
 
 	@Mock
+	private CapacityGroupSettingsDao capacityGroupSettingsDao;
+
+	@Mock
 	private AssetConfigurationDao assetDao;
 
 	@Captor
@@ -87,8 +95,8 @@ public class DaoUserOscpBizTests {
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserOscpBiz(flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
-				capacityGroupDao, assetDao);
+		biz = new DaoUserOscpBiz(userSettingsDao, flexibilityProviderDao, capacityProviderDao,
+				capacityOptimizerDao, capacityGroupDao, capacityGroupSettingsDao, assetDao);
 	}
 
 	@Test

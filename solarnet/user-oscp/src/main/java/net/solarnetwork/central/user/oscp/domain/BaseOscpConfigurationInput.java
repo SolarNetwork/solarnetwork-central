@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.BaseOscpConfigurationEntity;
 import net.solarnetwork.util.ObjectUtils;
 
@@ -38,7 +39,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @version 1.0
  */
 public abstract class BaseOscpConfigurationInput<T extends BaseOscpConfigurationEntity<T>>
-		implements OscpConfigurationInput<T> {
+		implements OscpConfigurationInput<T, UserLongCompositePK> {
 
 	@NotNull
 	@NotBlank

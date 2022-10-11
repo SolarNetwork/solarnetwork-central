@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.oscp.domain;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -30,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
@@ -243,11 +242,9 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	 * 
 	 * @param sourceIdTemplate
 	 *        the template to set
-	 * @throws IllegalArgumentException
-	 *         if {@code sourceIdTemplate} is {@literal null}
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
-		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
+		this.sourceIdTemplate = sourceIdTemplate;
 	}
 
 	@Override

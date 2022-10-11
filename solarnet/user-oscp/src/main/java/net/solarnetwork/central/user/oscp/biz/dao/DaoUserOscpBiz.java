@@ -34,25 +34,31 @@ import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.AssetConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
+import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties;
 import net.solarnetwork.central.oscp.domain.OAuthClientSettings;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.oscp.util.AuthRoleSecretKeyFormatter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.oscp.biz.UserOscpBiz;
 import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityGroupConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityGroupSettingsInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityOptimizerConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 
 /**
  * DAO implementation of {@link UserOscpBiz}.
@@ -62,10 +68,12 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
  */
 public class DaoUserOscpBiz implements UserOscpBiz {
 
+	private final UserSettingsDao userSettingsDao;
 	private final FlexibilityProviderDao flexibilityProviderDao;
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
+	private final CapacityGroupSettingsDao capacityGroupSettingsDao;
 	private final AssetConfigurationDao assetDao;
 
 	private SecretsBiz secretsBiz;
@@ -74,6 +82,8 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	/**
 	 * Constructor.
 	 * 
+	 * @param userSettingsDao
+	 *        the user settings DAO
 	 * @param flexibilityProviderDao
 	 *        the flexibility provider DAO
 	 * @param capacityProviderDao
@@ -82,22 +92,34 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	 *        the capacity optimizer DAO
 	 * @param capacityGroupDao
 	 *        the capacity group DAO
+	 * @param capacityGroupSettingsDao
+	 *        the capacity group settings DAO
 	 * @param assetDao
 	 *        the asset DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserOscpBiz(FlexibilityProviderDao flexibilityProviderDao,
+	public DaoUserOscpBiz(UserSettingsDao userSettingsDao, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
-			CapacityGroupConfigurationDao capacityGroupDao, AssetConfigurationDao assetDao) {
+			CapacityGroupConfigurationDao capacityGroupDao,
+			CapacityGroupSettingsDao capacityGroupSettingsDao, AssetConfigurationDao assetDao) {
 		super();
+		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.flexibilityProviderDao = requireNonNullArgument(flexibilityProviderDao,
 				"flexibilityProviderDao");
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
+		this.capacityGroupSettingsDao = requireNonNullArgument(capacityGroupSettingsDao,
+				"capacityGroupSettingsDao");
 		this.assetDao = requireNonNullArgument(assetDao, "assetDao");
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserSettings settingsForUser(Long userId) {
+		return userSettingsDao.get(userId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -123,8 +145,26 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
+	public Collection<CapacityGroupSettings> capacityGroupSettingsForUser(Long userId) {
+		return capacityGroupSettingsDao.findAll(userId, null);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public CapacityGroupSettings capacityGroupSettingsForUser(Long userId, Long entityId) {
+		return capacityGroupSettingsDao.get(new UserLongCompositePK(userId, entityId));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
 	public AssetConfiguration assetForUser(Long userId, Long entityId) {
 		return requireNonNullObject(assetDao.get(new UserLongCompositePK(userId, entityId)), entityId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserSettings(Long userId) {
+		userSettingsDao.delete(new UserSettings(userId));
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -153,6 +193,12 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Override
 	public void deleteCapacityGroup(Long userId, Long entityId) {
 		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, Instant.now()));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteCapacityGroupSettings(Long userId, Long entityId) {
+		capacityGroupSettingsDao.delete(new CapacityGroupSettings(userId, entityId));
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -290,6 +336,15 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public UserSettings updateUserSettings(Long userId, UserSettingsInput input)
+			throws AuthorizationException {
+		UserSettings settings = input.toEntity(requireNonNullArgument(userId, "userId"));
+		Long pk = requireNonNullObject(userSettingsDao.save(settings), userId);
+		return userSettingsDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public CapacityProviderConfiguration updateCapacityProvider(Long userId, Long entityId,
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
 		CapacityProviderConfiguration conf = input.toEntity(new UserLongCompositePK(
@@ -334,6 +389,16 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
 		UserLongCompositePK pk = requireNonNullObject(capacityGroupDao.save(conf), entityId);
 		return capacityGroupDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CapacityGroupSettings updateCapacityGroupSettings(Long userId, Long entityId,
+			CapacityGroupSettingsInput input) throws AuthorizationException {
+		CapacityGroupSettings settings = input.toEntity(new UserLongCompositePK(
+				requireNonNullArgument(userId, "userId"), requireNonNullArgument(entityId, "entityId")));
+		UserLongCompositePK pk = requireNonNullObject(capacityGroupSettingsDao.save(settings), entityId);
+		return capacityGroupSettingsDao.get(pk);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

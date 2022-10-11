@@ -25,13 +25,17 @@ package net.solarnetwork.central.user.oscp.biz;
 import java.util.Collection;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
+import net.solarnetwork.central.oscp.domain.UserSettings;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.oscp.domain.AssetConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityGroupConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.CapacityGroupSettingsInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityOptimizerConfigurationInput;
 import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationInput;
+import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 
 /**
  * Service API for SolarUser OSCP support.
@@ -40,6 +44,15 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
  * @version 1.0
  */
 public interface UserOscpBiz {
+
+	/**
+	 * Get the user settings.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the settings for
+	 * @return the settings, or {@literal null} if no settings exist
+	 */
+	UserSettings settingsForUser(Long userId);
 
 	/**
 	 * Get a capacity provider configuration for a given user.
@@ -84,6 +97,17 @@ public interface UserOscpBiz {
 	CapacityGroupConfiguration capacityGroupForUser(Long userId, Long entityId);
 
 	/**
+	 * Get the capacity group settings for a given group.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the settings for
+	 * @param entityId
+	 *        the ID of the group to get
+	 * @return the settings, or {@literal null} if no settings exist
+	 */
+	CapacityGroupSettings capacityGroupSettingsForUser(Long userId, Long entityId);
+
+	/**
 	 * Get an asset configuration for a given user.
 	 * 
 	 * @param userId
@@ -96,6 +120,14 @@ public interface UserOscpBiz {
 	 *         configuration with the given IDs does not exist
 	 */
 	AssetConfiguration assetForUser(Long userId, Long entityId);
+
+	/**
+	 * Delete a user settings for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to delete the configuration for
+	 */
+	void deleteUserSettings(Long userId);
 
 	/**
 	 * Delete a capacity provider configuration for a given user.
@@ -114,9 +146,9 @@ public interface UserOscpBiz {
 	 * Get a capacity optimizer configuration for a given user.
 	 * 
 	 * @param userId
-	 *        the ID of the user to get the configuration for
+	 *        the ID of the user to delete the configuration for
 	 * @param entityId
-	 *        the ID of the configuration to get
+	 *        the ID of the configuration to delete
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -127,9 +159,9 @@ public interface UserOscpBiz {
 	 * Delete a capacity group configuration for a given user.
 	 * 
 	 * @param userId
-	 *        the ID of the user to get the configuration for
+	 *        the ID of the user to delete the configuration for
 	 * @param entityId
-	 *        the ID of the configuration to get
+	 *        the ID of the configuration to delete
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -137,12 +169,22 @@ public interface UserOscpBiz {
 	void deleteCapacityGroup(Long userId, Long entityId);
 
 	/**
+	 * Delete a capacity group settings for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to delete the configuration for
+	 * @param entityId
+	 *        the ID of the configuration to delete
+	 */
+	void deleteCapacityGroupSettings(Long userId, Long entityId);
+
+	/**
 	 * Delete an asset configuration for a given user.
 	 * 
 	 * @param userId
-	 *        the ID of the user to get the configuration for
+	 *        the ID of the user to delete the configuration for
 	 * @param entityId
-	 *        the ID of the configuration to get
+	 *        the ID of the configuration to delete
 	 * @throws AuthorizationException
 	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
 	 *         configuration with the given IDs does not exist
@@ -175,6 +217,15 @@ public interface UserOscpBiz {
 	 * @return all available configurations; never {@literal null}
 	 */
 	Collection<CapacityGroupConfiguration> capacityGroupsForUser(Long userId);
+
+	/**
+	 * List the available capacity group settings for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get settings for
+	 * @return all available settings; never {@literal null}
+	 */
+	Collection<CapacityGroupSettings> capacityGroupSettingsForUser(Long userId);
 
 	/**
 	 * List the available asset configurations for a given user.
@@ -255,6 +306,17 @@ public interface UserOscpBiz {
 			throws AuthorizationException;
 
 	/**
+	 * Update or create a user settings.
+	 * 
+	 * @param userId
+	 *        the user ID to update the settings for
+	 * @param input
+	 *        the settings input
+	 * @return the updated settings entity
+	 */
+	UserSettings updateUserSettings(Long userId, UserSettingsInput input) throws AuthorizationException;
+
+	/**
 	 * Update an existing capacity provider configuration.
 	 * 
 	 * @param userId
@@ -307,6 +369,20 @@ public interface UserOscpBiz {
 	 */
 	CapacityGroupConfiguration updateCapacityGroup(Long userId, Long entityId,
 			CapacityGroupConfigurationInput input) throws AuthorizationException;
+
+	/**
+	 * Update or create a capacity group settings.
+	 * 
+	 * @param userId
+	 *        the user ID to update the settings for
+	 * @param entityId
+	 *        the entity ID to update the settings for
+	 * @param input
+	 *        the settings input
+	 * @return the updated settings entity
+	 */
+	CapacityGroupSettings updateCapacityGroupSettings(Long userId, Long entityId,
+			CapacityGroupSettingsInput input) throws AuthorizationException;
 
 	/**
 	 * Update an existing asset configuration.
