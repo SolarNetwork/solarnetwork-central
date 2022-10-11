@@ -73,6 +73,7 @@ import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
+import oscp.v20.AdjustGroupCapacityForecast;
 
 /**
  * MQTT subscriber for OSCP v2.0 instructions.
@@ -257,6 +258,11 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, null); // assume message JSON already validated at this point
 			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
+
+			// for AdjustGroupCapacityForecast make sure group fixed to instruction group
+			if ( msg instanceof AdjustGroupCapacityForecast m ) {
+				m.setGroupId(cg.getIdentifier());
+			}
 
 			incrementInstructionReceivedStat(action);
 			generateUserEvent(userId, OSCP_INSTRUCTION_TAGS, "Processing queued instruction", eventData);

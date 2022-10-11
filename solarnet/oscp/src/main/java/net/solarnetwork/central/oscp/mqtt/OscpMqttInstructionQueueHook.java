@@ -64,6 +64,7 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.service.RemoteServiceException;
+import oscp.v20.AdjustGroupCapacityForecast;
 
 /**
  * Node instruction queue hook to publish OSCP v2.0 instructions to a MQTT
@@ -223,6 +224,16 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		try {
 			Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params,
 					jsonSchemaFactory);
+
+			// for AdjustGroupCapacityForecast make sure group fixed to instruction group
+			if ( msg instanceof AdjustGroupCapacityForecast m ) {
+				if ( !cg.getIdentifier().equals(m.getGroupId()) ) {
+					throw new IllegalArgumentException(
+							"The AdjustGroupCapacityForecast message group_identifier must match the instruction %s parameter"
+									.formatted(OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM));
+				}
+			}
+
 			eventData.put(CONTENT_DATA_KEY, objectMapper.convertValue(msg, Map.class));
 			return new OscpNodeInstruction(instruction, Queuing, userNode.getUserId(), cg, cp, eventData,
 					action, msg);

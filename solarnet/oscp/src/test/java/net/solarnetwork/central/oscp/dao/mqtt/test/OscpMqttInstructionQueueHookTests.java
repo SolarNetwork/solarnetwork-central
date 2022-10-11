@@ -82,6 +82,7 @@ import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttStats;
+import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.GroupCapacityComplianceError;
 
 /**
@@ -574,7 +575,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 	}
 
 	@Test
-	public void processInstruction() throws IOException {
+	public void processInstruction_GroupCapacityComplianceError() throws IOException {
 		// GIVEN
 		final String msgJson = """
 				{
@@ -669,6 +670,109 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		@SuppressWarnings("unchecked")
 		Map<String, Object> expectedMsgBody = mapper
 				.convertValue(mapper.readValue(msgJson, GroupCapacityComplianceError.class), Map.class);
+		assertThat("Mqtt message message content", msgBody,
+				hasEntry(OSCP_MESSAGE_PARAM, expectedMsgBody));
+
+		assertThat("Result is NOT same instance", result, is(not(sameInstance(instruction))));
+		assertThat("Instruction status updated for queue", result.getState(), is(equalTo(Queuing)));
+	}
+
+	@Test
+	public void processInstruction_AdjustGroupCapacityForecast() throws IOException {
+		// GIVEN
+		final String msgJson = """
+				{
+					"group_id":"foo-group",
+					"type":"CONSUMPTION",
+					"forecasted_blocks":[
+						{
+							"capacity"   : 123.456,
+							"phase"      : "ALL",
+							"unit"       : "KW",
+							"start_time" : "2022-10-08T18:00:00Z",
+							"end_time"   : "2022-10-08T18:15:00Z"
+						}
+					]
+				}
+				""";
+		final String action = AdjustGroupCapacityForecast.class.getSimpleName();
+		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
+				TEST_NODE_ID);
+		// @formatter:off
+		instruction.setParams(Map.of(
+				OSCP_ACTION_PARAM, action,
+				OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID.toString(),
+				OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT,
+				OSCP_MESSAGE_PARAM, msgJson));
+		// @formatter:on
+		UserNode userNode = new UserNode(new User(TEST_USER_ID, "user@localhost"),
+				new SolarNode(TEST_NODE_ID, TEST_LOC_ID));
+		given(userNodeDao.get(TEST_NODE_ID)).willReturn(userNode);
+
+		CapacityOptimizerConfiguration optimizer = new CapacityOptimizerConfiguration(TEST_USER_ID,
+				TEST_CO_ID, Instant.now());
+		optimizer.setEnabled(true);
+		given(capacityOptimizerDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CO_ID)))
+				.willReturn(optimizer);
+
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(TEST_USER_ID,
+				UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		group.setIdentifier(TEST_CG_IDENT);
+		group.setCapacityOptimizerId(TEST_CO_ID);
+		group.setCapacityProviderId(TEST_CP_ID);
+		group.setEnabled(true);
+		given(capacityGroupDao.findForCapacityOptimizer(TEST_USER_ID, TEST_CO_ID, TEST_CG_IDENT))
+				.willReturn(group);
+
+		CapacityProviderConfiguration provider = new CapacityProviderConfiguration(TEST_USER_ID,
+				TEST_CP_ID, Instant.now());
+		provider.setEnabled(true);
+		given(capacityProviderDao.get(new UserLongCompositePK(TEST_USER_ID, TEST_CP_ID)))
+				.willReturn(provider);
+
+		// publish to MQTT
+		given(conn.isEstablished()).willReturn(true);
+		given(conn.publish(any())).willReturn(completedFuture(null));
+
+		// WHEN
+		hook.onMqttServerConnectionEstablished(conn, false);
+		NodeInstruction result = hook.willQueueNodeInstruction(instruction);
+		Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		hook.didQueueNodeInstruction(result, instructionId);
+
+		// THEN
+		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), eventCaptor.capture());
+		LogEventInfo event = eventCaptor.getValue();
+		log.debug("Got event: {}", event);
+		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_IN_TAGS)));
+		Map<String, Object> eventData = JsonUtils.getStringMap(event.getData());
+		assertThat("Event data action", eventData, hasEntry(ACTION_DATA_KEY, action));
+		assertThat("Event data capacity optimizer ID", eventData,
+				hasEntry(INSTRUCTION_ID_DATA_KEY, instructionId));
+		assertThat("Event data capacity optimizer ID", eventData,
+				hasEntry(CAPACITY_OPTIMIZER_ID_DATA_KEY, TEST_CO_ID));
+		assertThat("Event data capacity group identifier", eventData,
+				hasEntry(CAPACITY_GROUP_IDENTIFIER_DATA_KEY, TEST_CG_IDENT));
+		assertThat("Event data content is JSON as Map", eventData, hasEntry(CONTENT_DATA_KEY, mapper
+				.convertValue(mapper.readValue(msgJson, AdjustGroupCapacityForecast.class), Map.class)));
+
+		then(conn).should().publish(msgCaptor.capture());
+		MqttMessage msg = msgCaptor.getValue();
+		assertThat("Mqtt message topic", msg.getTopic(), is(equalTo(MQTT_TOPIC_V20)));
+		Map<String, Object> msgBody = getStringMap(new String(msg.getPayload(), StandardCharsets.UTF_8));
+		assertThat("Mqtt message instruction ID", msgBody,
+				hasEntry(INSTRUCTION_ID_PARAM, instructionId));
+		assertThat("Mqtt message node ID", msgBody, hasEntry(NODE_ID_PARAM, TEST_NODE_ID));
+		assertThat("Mqtt message user ID", msgBody, hasEntry(USER_ID_PARAM, TEST_USER_ID));
+		assertThat("Mqtt message action", msgBody, hasEntry(OSCP_ACTION_PARAM, action));
+		assertThat("Mqtt message capacity optimizer ID", msgBody,
+				hasEntry(OSCP_CAPACITY_OPTIMIZER_ID_PARAM, TEST_CO_ID));
+		assertThat("Mqtt message capacity group identifier", msgBody,
+				hasEntry(OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM, TEST_CG_IDENT));
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> expectedMsgBody = mapper
+				.convertValue(mapper.readValue(msgJson, AdjustGroupCapacityForecast.class), Map.class);
 		assertThat("Mqtt message message content", msgBody,
 				hasEntry(OSCP_MESSAGE_PARAM, expectedMsgBody));
 
