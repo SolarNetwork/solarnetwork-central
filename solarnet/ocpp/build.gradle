@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OCPP'
-version = '1.3.6'
+version = '1.3.7'
 archivesBaseName = 'solarnet-ocpp'
 
 configurations {

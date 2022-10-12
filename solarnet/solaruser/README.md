@@ -16,9 +16,9 @@ This app depends on the following projects:
  * [solarnet-user-datum][solarnet-user-datum]
  * [solarnet-user-ocpp][solarnet-user-ocpp]
  
-# Profiles
+# Runtime profiles
 
-The following Spring profiles are available:
+The following Spring runtime profiles are available:
 
 | Profile | Description |
 |:--------|:------------|
@@ -36,6 +36,33 @@ configured as
 SPRING_PROFILES_ACTIVE="production,datum-import-s3-resource-storage,dogtag,mqtt,ocpp-v16,snf-billing,user-event-sqs"
 ```
 
+# Runtime configuration
+
+See the [application.yml][app-config] file for the available runtime configuration properties, and
+their default values. You can override any property by creating an `application.yml` file in the
+working directory of the application, or via profile-specific files like 
+`application-production.yml` when the `production` profile is active.
+
+
+# Building
+
+The build is managed by Gradle, and requires a Java Development Kit version 17+ to build (and run).
+
+```sh
+# Unix-like OS:
+../gradlew build
+
+# Build without running tests:
+../gradlew build -x test
+
+# Windows:
+../gradlew.bat build
+```
+
+The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
+
+
+[app-config]: src/main/resources/application.yml
 [solarnet-common]: ../common/
 [solarnet-datum]: ../datum/
 [solarnet-instructor]: ../instructor/

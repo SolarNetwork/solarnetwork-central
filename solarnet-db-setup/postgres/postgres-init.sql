@@ -36,5 +36,7 @@
 \i postgres-init-user-events.sql
 \i postgres-init-ocpp-schema.sql
 \i postgres-init-ocpp.sql
+\i postgres-init-oscp-schema.sql
+\i postgres-init-oscp.sql
 \i postgres-init-quartz-schema.sql
 \i postgres-init-quartz.sql

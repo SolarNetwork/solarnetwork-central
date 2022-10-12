@@ -33,7 +33,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.SmartValidator;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,6 +46,7 @@ import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.reg.config.JsonConfig;
+import net.solarnetwork.central.reg.config.UserEventConfig;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
@@ -66,7 +67,7 @@ public class UserEventController {
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final UserEventBiz userEventBiz;
-	private SmartValidator filterValidator;
+	private Validator filterValidator;
 
 	/**
 	 * Constructor.
@@ -147,7 +148,7 @@ public class UserEventController {
 	 * 
 	 * @return the validator
 	 */
-	public SmartValidator getFilterValidator() {
+	public Validator getFilterValidator() {
 		return filterValidator;
 	}
 
@@ -155,14 +156,14 @@ public class UserEventController {
 	 * Set the filter validator to use.
 	 * 
 	 * @param filterValidator
-	 *        the valiadtor to set
+	 *        the validator to set
 	 * @throws IllegalArgumentException
 	 *         if {@code validator} does not support the {@link UserEventFilter}
 	 *         class
 	 */
-	// TODO @Autowired
-	// TODO @Qualifier(USER_EVENT_FILTER)
-	public void setFilterValidator(SmartValidator filterValidator) {
+	@Autowired
+	@Qualifier(UserEventConfig.USER_EVENT)
+	public void setFilterValidator(Validator filterValidator) {
 		if ( filterValidator != null && !filterValidator.supports(UserEventFilter.class) ) {
 			throw new IllegalArgumentException("The Validator must support the UserEventFilter class.");
 		}

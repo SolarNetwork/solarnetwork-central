@@ -30,7 +30,10 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanInstantiationException;
@@ -43,9 +46,11 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,7 +63,9 @@ import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
 import net.solarnetwork.web.domain.Response;
@@ -148,6 +155,9 @@ public final class WebServiceControllerSupport {
 
 	@Autowired
 	private MessageSource messageSource;
+
+	@Autowired(required = false)
+	private Validator validator;
 
 	/**
 	 * Get a standardized string description of a request.
@@ -378,12 +388,13 @@ public final class WebServiceControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
-			WebRequest request, Locale locale) {
+			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
 		log.error("DataIntegrityViolationException in request {}: {}", requestDescription(request),
 				e.toString());
 		String msg;
 		String msgKey;
 		String code;
+		Object[] params = new Object[] { e.getMostSpecificCause().getMessage() };
 		if ( e instanceof DuplicateKeyException ) {
 			msg = "Duplicate key";
 			msgKey = "error.dao.duplicateKey";
@@ -402,6 +413,7 @@ public final class WebServiceControllerSupport {
 			if ( sqlEx != null ) {
 				log.warn("Root SQLException from {}: {}", e.getMessage(), sqlEx.getMessage(), sqlEx);
 				sqlState = sqlEx.getSQLState();
+				params[0] = sqlEx.getMessage();
 			}
 			if ( sqlState != null && sqlState.startsWith("22") ) {
 				// Class 22 — Data Exception
@@ -412,6 +424,9 @@ public final class WebServiceControllerSupport {
 				msg = "Integrity constraint violation";
 				if ( sqlState.equals("23503") ) {
 					msgKey = "error.dao.sqlState.class.23503";
+					if ( HttpMethod.DELETE.matches(servletRequest.getMethod()) ) {
+						msgKey += ".delete";
+					}
 					code = "DAO.00105";
 				} else {
 					msgKey = "error.dao.sqlState.class.23";
@@ -424,8 +439,7 @@ public final class WebServiceControllerSupport {
 			}
 		}
 		if ( messageSource != null ) {
-			msg = messageSource.getMessage(msgKey,
-					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
+			msg = messageSource.getMessage(msgKey, params, msg, locale);
 		}
 		return new Response<Object>(Boolean.FALSE, code, msg, null);
 	}
@@ -492,6 +506,26 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
+	 * Handle an {@link ConstraintViolationException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	@ResponseBody
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
+			WebRequest request, Locale locale) {
+		log.debug("ConstraintViolationException in request {}: {}", requestDescription(request),
+				e.toString());
+		BindingResult errors = ExceptionUtils.toBindingResult(e, validator);
+		return ExceptionUtils.generateErrorsResult(errors, "VAL.00003", locale, messageSource);
+	}
+
+	/**
 	 * Handle an {@link BindException}.
 	 * 
 	 * @param e
@@ -504,11 +538,10 @@ public final class WebServiceControllerSupport {
 	 */
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
-	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleBindException(BindException e, WebRequest request, Locale locale) {
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("BindException in request {}: {}", requestDescription(request), e.toString());
-		String msg = generateErrorsMessage(e, locale, messageSource);
-		return new Response<Object>(Boolean.FALSE, null, msg, null);
+		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
 
 	private String generateErrorsMessage(Errors e, Locale locale, MessageSource msgSrc) {

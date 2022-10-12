@@ -31,69 +31,67 @@ package net.solarnetwork.central.ocpp.domain;
 public interface CentralOcppUserEvents {
 
 	/** A user event tag for OCPP. */
-	public static final String OCPP_EVENT_TAG = "ocpp";
+	String OCPP_EVENT_TAG = "ocpp";
 
 	/** A user event tag for OCPP "charger". */
-	public static final String CHARGER_EVENT_TAG = "charger";
+	String CHARGER_EVENT_TAG = "charger";
 
 	/** A user event tag for OCPP "instruction" . */
-	public static final String INSTRUCTION_EVENT_TAG = "instruction";
+	String INSTRUCTION_EVENT_TAG = "instruction";
 
 	/** A user event tag for OCPP "error" . */
-	public static final String ERROR_TAG = "error";
+	String ERROR_TAG = "error";
 
 	/** A user event tag for OCPP "message". */
-	public static final String MESSAGE_EVENT_TAG = "message";
+	String MESSAGE_EVENT_TAG = "message";
 
 	/** User event tags for OCPP connection established events. */
-	public static final String[] CHARGE_POINT_CONNECTED_TAGS = new String[] { OCPP_EVENT_TAG,
-			CHARGER_EVENT_TAG, "connected" };
+	String[] CHARGE_POINT_CONNECTED_TAGS = new String[] { OCPP_EVENT_TAG, CHARGER_EVENT_TAG,
+			"connected" };
 
 	/** User event tags for OCPP connection ended events. */
-	public static final String[] CHARGE_POINT_DISCONNECTED_TAGS = new String[] { OCPP_EVENT_TAG,
-			CHARGER_EVENT_TAG, "disconnected" };
+	String[] CHARGE_POINT_DISCONNECTED_TAGS = new String[] { OCPP_EVENT_TAG, CHARGER_EVENT_TAG,
+			"disconnected" };
 
 	/** User event tags for OCPP instruction general events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG };
+	String[] CHARGE_POINT_INSTRUCTION_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG };
 
 	/** User event tags for OCPP instruction queued events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_QUEUED_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG, "queued" };
+	String[] CHARGE_POINT_INSTRUCTION_QUEUED_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
+			"queued" };
 
 	/** User event tags for OCPP instruction acknowledged events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS = new String[] {
-			OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG, "ack" };
+	String[] CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS = new String[] { OCPP_EVENT_TAG,
+			INSTRUCTION_EVENT_TAG, "ack" };
 
 	/** User event tags for OCPP instruction error events. */
-	public static final String[] CHARGE_POINT_INSTRUCTION_ERROR_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG, ERROR_TAG };
+	String[] CHARGE_POINT_INSTRUCTION_ERROR_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
+			ERROR_TAG };
 
 	/** User event tags for OCPP message received events. */
-	public static final String[] CHARGE_POINT_MESSAGE_RECEIVED_TAGS = new String[] { OCPP_EVENT_TAG,
-			MESSAGE_EVENT_TAG, "received" };
+	String[] CHARGE_POINT_MESSAGE_RECEIVED_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
+			"received" };
 
 	/** User event tags for OCPP message sent events. */
-	public static final String[] CHARGE_POINT_MESSAGE_SENT_TAGS = new String[] { OCPP_EVENT_TAG,
-			MESSAGE_EVENT_TAG, "sent" };
+	String[] CHARGE_POINT_MESSAGE_SENT_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG, "sent" };
 
 	/** User event tags for OCPP message sent events. */
-	public static final String[] CHARGE_POINT_MESSAGE_SENT_ERROR_TAGS = new String[] { OCPP_EVENT_TAG,
-			MESSAGE_EVENT_TAG, "sent", ERROR_TAG };
+	String[] CHARGE_POINT_MESSAGE_SENT_ERROR_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
+			"sent", ERROR_TAG };
 
 	/** User event data key for a charge point identifier. */
-	public static final String CHARGE_POINT_DATA_KEY = "cp";
+	String CHARGE_POINT_DATA_KEY = "cp";
 
 	/** User event data key for an error. */
-	public static final String ERROR_DATA_KEY = "error";
+	String ERROR_DATA_KEY = "error";
 
 	/** User event data key for an OCPP action. */
-	public static final String ACTION_DATA_KEY = "action";
+	String ACTION_DATA_KEY = "action";
 
 	/** User event data key for a message. */
-	public static final String MESSAGE_DATA_KEY = "message";
+	String MESSAGE_DATA_KEY = "message";
 
 	/** User event data key for a message ID. */
-	public static final String MESSAGE_ID_DATA_KEY = "messageId";
+	String MESSAGE_ID_DATA_KEY = "messageId";
 
 }

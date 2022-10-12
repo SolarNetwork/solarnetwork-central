@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '1.8.0'
+version = '1.9.0'
 archivesBaseName = 'solarnet-common'
 
 configurations {
@@ -62,19 +62,21 @@ dependencies {
 	// Utilities
 	implementation 'com.amazonaws:aws-java-sdk-ec2:1.11.1034'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation 'software.amazon.awssdk:secretsmanager:2.17+'
 	implementation 'com.cronutils:cron-utils:9.1.5'
+	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'commons-codec:commons-codec'
+	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'javax.annotation:javax.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.9'
 	implementation 'org.slf4j:slf4j-api'
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common:2.8.0'
+	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
 	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
 	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.2.0'

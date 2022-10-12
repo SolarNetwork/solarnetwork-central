@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Node usage constants.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface NodeUsages {
 
@@ -38,5 +38,11 @@ public interface NodeUsages {
 
 	/** A key to use for datum days stored usage. */
 	String DATUM_DAYS_STORED_KEY = "datum-days-stored";
+
+	/** A key to use for OCPP Charger usage. */
+	String OCPP_CHARGERS_KEY = "ocpp-chargers";
+
+	/** A key to use for OSCP Capacity Group usage. */
+	String OSCP_CAPACITY_GROUPS_KEY = "oscp-cap-groups";
 
 }
