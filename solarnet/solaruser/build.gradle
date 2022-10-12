@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.2'
+	id 'org.springframework.boot' version '2.7.4'
 }
 
 //apply plugin: 'checkstyle'
@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '1.7.1'
+version = '1.8.0'
 archivesBaseName = 'solaruser'
 
 configurations {
@@ -26,10 +26,12 @@ dependencies {
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
+	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-ocpp')
+	implementation project(':solarnet-user-oscp')
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
@@ -50,6 +52,7 @@ dependencies {
 	implementation 'commons-fileupload:commons-fileupload:1.4'
 
 	// Utils
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
@@ -57,8 +60,8 @@ dependencies {
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
-	implementation 'net.solarnetwork.common:net.solarnetwork.common.ocpp.web:2.4.0'
+	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web:${snCommonOcppWebVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

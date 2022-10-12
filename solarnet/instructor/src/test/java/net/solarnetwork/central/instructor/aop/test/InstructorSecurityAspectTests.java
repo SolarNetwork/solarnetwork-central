@@ -65,6 +65,7 @@ public class InstructorSecurityAspectTests {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 		service = new InstructorSecurityAspect(nodeOwnershipDao, nodeInstructionDao);
+		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	@After

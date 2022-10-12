@@ -34,19 +34,21 @@ import java.util.Objects;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NodeUsageCost {
 
 	private BigDecimal datumPropertiesInCost;
 	private BigDecimal datumDaysStoredCost;
 	private BigDecimal datumOutCost;
+	private BigDecimal ocppChargersCost;
+	private BigDecimal oscpCapacityGroupsCost;
 
 	/**
 	 * Constructor.
 	 */
 	public NodeUsageCost() {
-		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 	}
 
 	/**
@@ -71,6 +73,32 @@ public class NodeUsageCost {
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * This constructor converts all costs to {@link BigDecimal} values.
+	 * </p>
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @since 1.1
+	 */
+	public NodeUsageCost(String datumPropertiesInCost, String datumOutCost, String datumDaysStoredCost,
+			String ocppChargersCost, String oscpCapacityGroupsCost) {
+		this(new BigDecimal(datumPropertiesInCost), new BigDecimal(datumOutCost),
+				new BigDecimal(datumDaysStoredCost), new BigDecimal(ocppChargersCost),
+				new BigDecimal(oscpCapacityGroupsCost));
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -80,15 +108,39 @@ public class NodeUsageCost {
 	 */
 	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
 			BigDecimal datumDaysStoredCost) {
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, null, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @since 1.1
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal ocppChargersCost,
+			BigDecimal oscpCapacityGroupsCost) {
 		super();
 		setDatumPropertiesInCost(datumPropertiesInCost);
 		setDatumOutCost(datumOutCost);
 		setDatumDaysStoredCost(datumDaysStoredCost);
+		setOcppChargersCost(ocppChargersCost);
+		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost);
+		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost, ocppChargersCost,
+				oscpCapacityGroupsCost);
 	}
 
 	@Override
@@ -102,7 +154,9 @@ public class NodeUsageCost {
 		NodeUsageCost other = (NodeUsageCost) obj;
 		return Objects.equals(datumDaysStoredCost, other.datumDaysStoredCost)
 				&& Objects.equals(datumOutCost, other.datumOutCost)
-				&& Objects.equals(datumPropertiesInCost, other.datumPropertiesInCost);
+				&& Objects.equals(datumPropertiesInCost, other.datumPropertiesInCost)
+				&& Objects.equals(ocppChargersCost, other.ocppChargersCost)
+				&& Objects.equals(oscpCapacityGroupsCost, other.oscpCapacityGroupsCost);
 	}
 
 	@Override
@@ -115,6 +169,10 @@ public class NodeUsageCost {
 		builder.append(datumOutCost);
 		builder.append(", datumDaysStoredCost=");
 		builder.append(datumDaysStoredCost);
+		builder.append(", ocppChargersCost=");
+		builder.append(ocppChargersCost);
+		builder.append(", oscpCapacityGroupsCost=");
+		builder.append(oscpCapacityGroupsCost);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -183,6 +241,50 @@ public class NodeUsageCost {
 			datumOutCost = BigDecimal.ZERO;
 		}
 		this.datumOutCost = datumOutCost;
+	}
+
+	/**
+	 * Get the OCPP Chargers cost.
+	 * 
+	 * @return the cost, never {@literal null}
+	 */
+	public BigDecimal getOcppChargersCost() {
+		return ocppChargersCost;
+	}
+
+	/**
+	 * Set the OCPP Chargers cost.
+	 * 
+	 * @param ocppChargersCost
+	 *        the cost to set
+	 */
+	public void setOcppChargersCost(BigDecimal ocppChargersCost) {
+		if ( ocppChargersCost == null ) {
+			ocppChargersCost = BigDecimal.ZERO;
+		}
+		this.ocppChargersCost = ocppChargersCost;
+	}
+
+	/**
+	 * Get the OSCP Capacity Groups cost.
+	 * 
+	 * @return the cost, never {@literal null}
+	 */
+	public BigDecimal getOscpCapacityGroupsCost() {
+		return oscpCapacityGroupsCost;
+	}
+
+	/**
+	 * Set the OSCP Capacity Groups cost.
+	 * 
+	 * @param oscpCapacityGroupsCost
+	 *        the cost to set
+	 */
+	public void setOscpCapacityGroupsCost(BigDecimal oscpCapacityGroupsCost) {
+		if ( oscpCapacityGroupsCost == null ) {
+			oscpCapacityGroupsCost = BigDecimal.ZERO;
+		}
+		this.oscpCapacityGroupsCost = oscpCapacityGroupsCost;
 	}
 
 }

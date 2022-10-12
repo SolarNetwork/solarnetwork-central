@@ -1,0 +1,21 @@
+logging:
+  level:
+    ROOT: "INFO"
+    net.solarnetwork: "TRACE"
+    org.springframework.jdbc: "DEBUG"
+  pattern:
+    console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+spring:
+  datasource:
+    hikari:
+      minimumIdle: 0
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+    url: "jdbc:postgresql://localhost:5432/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
+    platform: "postgres"
+    initialize: "false"

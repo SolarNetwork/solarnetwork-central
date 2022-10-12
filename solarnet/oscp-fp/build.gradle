@@ -1,0 +1,62 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.2'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'SolarOSCP Flexibility Provider'
+version = '1.0.0'
+archivesBaseName = 'solaroscp-fp'
+
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
+	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-oscp')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// SolarNetwork
+	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	
+	// Utilities
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
+	implementation 'org.apache.httpcomponents:httpclient'
+	implementation 'org.aspectj:aspectjweaver'
+
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+    
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarNetwork OSCP Flexibility Provider',
+					'Implementation-Version': archiveVersion
+	}
+}

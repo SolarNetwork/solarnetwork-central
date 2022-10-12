@@ -7,4 +7,4 @@ build/
 var/
 /*.properties
 /solar*/src/main/resources/application-*.yml
-
+/*/*.yml

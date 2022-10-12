@@ -30,43 +30,59 @@
 		  nu.prop_in 			AS node_usage_prop_in
 		, nu.datum_out 			AS node_usage_datum_out
 		, nu.datum_stored 		AS node_usage_datum_stored
+		, nu.ocpp_chargers		AS node_usage_ocpp_chargers
+		, nu.oscp_cap_groups	AS node_usage_oscp_cap_groups
 		
 		, nu.prop_in_tiers 				AS node_usage_prop_in_tiers
 		, nu.datum_out_tiers 			AS node_usage_datum_out_tiers
 		, nu.datum_stored_tiers 		AS node_usage_datum_stored_tiers
+		, nu.ocpp_chargers_tiers		AS node_usage_ocpp_chargers_tiers
+		, nu.oscp_cap_groups_tiers		AS node_usage_oscp_cap_groups_tiers
 	</sql>
 
 	<resultMap id="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
 		<result property="datumPropertiesIn" 		column="node_usage_prop_in"/>
 		<result property="datumOut"	 				column="node_usage_datum_out"/>
 		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
+		<result property="ocppChargers" 			column="node_usage_ocpp_chargers"/>
+		<result property="oscpCapacityGroups" 		column="node_usage_oscp_cap_groups"/>
 
 		<result property="datumPropertiesInTiersNumeric"	column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumOutTiersNumeric"	 			column="node_usage_datum_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumDaysStoredTiersNumeric" 		column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="ocppChargersTiersNumeric" 		column="node_usage_ocpp_chargers_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityGroupsTiersNumeric" 	column="node_usage_oscp_cap_groups_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<sql id="fragment-Usage-full-result">
 		  <include refid="fragment-Usage-counts-result"/>
-		, nu.prop_in_cost 		AS node_usage_prop_in_cost
-		, nu.datum_out_cost 	AS node_usage_datum_out_cost
-		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
-		, nu.total_cost			AS node_usage_total_cost
+		, nu.prop_in_cost 			AS node_usage_prop_in_cost
+		, nu.datum_out_cost 		AS node_usage_datum_out_cost
+		, nu.datum_stored_cost 		AS node_usage_datum_stored_cost
+		, nu.ocpp_chargers_cost 	AS node_usage_ocpp_chargers_cost
+		, nu.oscp_cap_groups_cost 	AS node_usage_oscp_cap_groups_cost
+		, nu.total_cost				AS node_usage_total_cost
 		
 		, nu.prop_in_tiers_cost 		AS node_usage_prop_in_tiers_cost
 		, nu.datum_out_tiers_cost 		AS node_usage_datum_out_tiers_cost
 		, nu.datum_stored_tiers_cost 	AS node_usage_datum_stored_tiers_cost
+		, nu.ocpp_chargers_tiers_cost 	AS node_usage_ocpp_chargers_tiers_cost
+		, nu.oscp_cap_groups_tiers_cost AS node_usage_oscp_cap_groups_tiers_cost
 	</sql>
 
 	<resultMap id="Usage-FullResult" extends="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
 		<result property="datumPropertiesInCost"	column="node_usage_prop_in_cost"/>
 		<result property="datumOutCost"				column="node_usage_datum_out_cost"/>
 		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
+		<result property="ocppChargersCost"			column="node_usage_ocpp_chargers_cost"/>
+		<result property="oscpCapacityGroupsCost"	column="node_usage_oscp_cap_groups_cost"/>
 		<result property="totalCost"				column="node_usage_total_cost"/>
 
 		<result property="datumPropertiesInCostTiers"		column="node_usage_prop_in_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumOutCostTiers"				column="node_usage_datum_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumDaysStoredCostTiers"			column="node_usage_datum_stored_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="ocppChargersCostTiers"			column="node_usage_ocpp_chargers_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityGroupsCostTiers"		column="node_usage_oscp_cap_groups_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<select id="find-Usage-for-account" parameterType="map" resultMap="Usage-FullResult">
@@ -85,10 +101,20 @@
 		Node-level usage (counts only)
 	 -->
 
+	<sql id="fragment-NodeUsage-counts-result">
+		  nu.prop_in 			AS node_usage_prop_in
+		, nu.datum_out 			AS node_usage_datum_out
+		, nu.datum_stored 		AS node_usage_datum_stored
+		
+		, nu.prop_in_tiers 		AS node_usage_prop_in_tiers
+		, nu.datum_out_tiers 	AS node_usage_datum_out_tiers
+		, nu.datum_stored_tiers AS node_usage_datum_stored_tiers
+	</sql>
+
 	<sql id="fragment-NodeUsage-full-result">
 		  nu.node_id AS node_usage_node_id
 		, un.disp_name AS node_usage_node_name
-		, <include refid="fragment-Usage-counts-result"/>
+		, <include refid="fragment-NodeUsage-counts-result"/>
 	</sql>
 
 	<resultMap id="NodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage" extends="Usage-CountsResult">

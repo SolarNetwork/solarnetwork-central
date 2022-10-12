@@ -28,7 +28,7 @@ import java.util.Arrays;
  * Exception thrown when authorization to some resource fails.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AuthorizationException extends SecurityException {
 
@@ -63,6 +63,29 @@ public class AuthorizationException extends SecurityException {
 
 		/** Access was requested to an unknown object. */
 		UNKNOWN_OBJECT,
+	}
+
+	/**
+	 * Helper for validating an object is not {@literal null}, throwing an
+	 * exception otherwise.
+	 * 
+	 * @param <T>
+	 *        the object type
+	 * @param object
+	 *        the object that must not be {@literal null}
+	 * @param id
+	 *        the ID associated with the object
+	 * @return {@code object}
+	 * @throws AuthorizationException
+	 *         with a {@link Reason#UNKNOWN_OBJECT} if {@code object} is
+	 *         {@literal null}
+	 * @since 1.2
+	 */
+	public static <T> T requireNonNullObject(T object, Object id) {
+		if ( object == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, id);
+		}
+		return object;
 	}
 
 	private final Reason reason;

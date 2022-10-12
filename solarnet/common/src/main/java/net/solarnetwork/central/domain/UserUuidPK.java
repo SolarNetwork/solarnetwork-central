@@ -34,7 +34,8 @@ import com.fasterxml.uuid.UUIDComparator;
  * @author matt
  * @version 1.0
  */
-public class UserUuidPK extends BasePK implements Serializable, Cloneable, Comparable<UserUuidPK> {
+public class UserUuidPK extends BasePK
+		implements Serializable, Cloneable, Comparable<UserUuidPK>, CompositeKey2<Long, UUID> {
 
 	private static final long serialVersionUID = 417842772182618447L;
 
@@ -111,7 +112,7 @@ public class UserUuidPK extends BasePK implements Serializable, Cloneable, Compa
 	 * 
 	 * @return the user ID
 	 */
-	public Long getUserId() {
+	public final Long getUserId() {
 		return userId;
 	}
 
@@ -120,8 +121,18 @@ public class UserUuidPK extends BasePK implements Serializable, Cloneable, Compa
 	 * 
 	 * @return the UUID
 	 */
-	public UUID getUuid() {
+	public final UUID getUuid() {
 		return uuid;
+	}
+
+	@Override
+	public final Long keyComponent1() {
+		return getUserId();
+	}
+
+	@Override
+	public final UUID keyComponent2() {
+		return getUuid();
 	}
 
 }

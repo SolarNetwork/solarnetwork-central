@@ -29,6 +29,8 @@ import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.U
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_DAYS_STORED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -98,7 +100,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -136,6 +138,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String datumPropertiesInKey = DATUM_PROPS_IN_KEY;
 	private String datumOutKey = DATUM_OUT_KEY;
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
+	private String ocppChargersKey = OCPP_CHARGERS_KEY;
+	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
@@ -270,6 +274,25 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
 						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_DAYS_STORED_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getOcppChargers().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, ocppChargersKey,
+						new BigDecimal(usage.getOcppChargers()), usage.getOcppChargersCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OCPP_CHARGERS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getOscpCapacityGroups().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oscpCapacityGroupsKey,
+						new BigDecimal(usage.getOscpCapacityGroups()),
+						usage.getOscpCapacityGroupsCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_GROUPS_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -635,6 +658,55 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			throw new IllegalArgumentException("The datumDaysStoredKey argumust must not be null.");
 		}
 		this.datumDaysStoredKey = datumDaysStoredKey;
+	}
+
+	/**
+	 * Get the item key for OCPP chargers.
+	 * 
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#OCPP_CHARGERS_KEY}
+	 * @since 1.1
+	 */
+	public String getOcppChargersKey() {
+		return ocppChargersKey;
+	}
+
+	/**
+	 * Set the item key for OCPP chargers.
+	 * 
+	 * @param ocppChargersKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.1
+	 */
+	public void setOcppChargersKey(String ocppChargersKey) {
+		this.ocppChargersKey = requireNonNullArgument(ocppChargersKey, "ocppChargersKey");
+	}
+
+	/**
+	 * Get the item key for OSCP Capacity Groups.
+	 * 
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#OSCP_CAPACITY_GROUPS_KEY}
+	 * @since 1.1
+	 */
+	public String getOscpCapacityGroupsKey() {
+		return oscpCapacityGroupsKey;
+	}
+
+	/**
+	 * Set the item key for OSCP Capacity Groups.
+	 * 
+	 * @param oscpCapacityGroupsKey
+	 *        the oscpCapacityGroupsKey to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.1
+	 */
+	public void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
+		this.oscpCapacityGroupsKey = requireNonNullArgument(oscpCapacityGroupsKey,
+				"oscpCapacityGroupsKey");
 	}
 
 	/**

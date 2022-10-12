@@ -1,0 +1,40 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.2'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'SolarOSCP Capacity Provider Simulator'
+version = '1.0.0'
+archivesBaseName = 'solaroscp-sim-cp'
+
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-oscp')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	
+	// Utilities
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarOSCP Capacity Provider Simulator',
+					'Implementation-Version': archiveVersion
+	}
+}

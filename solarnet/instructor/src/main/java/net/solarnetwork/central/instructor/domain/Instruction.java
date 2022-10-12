@@ -38,7 +38,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class Instruction extends BaseEntity {
 
@@ -240,7 +240,7 @@ public class Instruction extends BaseEntity {
 			return resultParametersJson;
 		}
 		Map<String, Object> map = getResultParameters();
-		if ( map == null ) {
+		if ( map == null || map.isEmpty() ) {
 			return null;
 		}
 		String json = JsonUtils.getJSONString(map, null);

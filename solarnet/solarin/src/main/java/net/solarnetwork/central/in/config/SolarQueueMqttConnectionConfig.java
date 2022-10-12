@@ -36,7 +36,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
- * SolarIn/MQTT (SolarQuery) configuration.
+ * SolarIn/MQTT (SolarQueue) configuration.
  * 
  * @author matt
  * @version 1.0
