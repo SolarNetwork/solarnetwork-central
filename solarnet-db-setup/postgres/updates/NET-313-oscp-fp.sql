@@ -251,7 +251,7 @@ CREATE TABLE solaroscp.oscp_cg_cp_meas (
 );
 
 -- Add index on meas_at to support efficient measurement job execution
-CREATE INDEX oscp_cg_cp_meas_posted_idx ON solaroscp.oscp_cg_cp_meas (meas_at);
+CREATE INDEX oscp_cg_cp_meas_meas_idx ON solaroscp.oscp_cg_cp_meas (meas_at);
 
 /**
  * OSCP Capacity Group Capacity Optimizer measurement job status.
@@ -268,7 +268,7 @@ CREATE TABLE solaroscp.oscp_cg_co_meas (
 );
 
 -- Add index on meas_at to support efficient measurement job execution
-CREATE INDEX oscp_cg_co_meas_posted_idx ON solaroscp.oscp_cg_co_meas (meas_at);
+CREATE INDEX oscp_cg_co_meas_meas_idx ON solaroscp.oscp_cg_co_meas (meas_at);
 
 /**
  * OSCP Asset configuration.
