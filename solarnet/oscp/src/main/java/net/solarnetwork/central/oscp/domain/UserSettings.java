@@ -83,6 +83,19 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("");
 	}
 
+	/**
+	 * Get an instance of default datum publish settings.
+	 * 
+	 * @param userId
+	 *        the user to associate the settings with
+	 * @return the default settings
+	 */
+	public static DatumPublishSettings defaultSettings(Long userId) {
+		UserSettings s = new UserSettings(userId);
+		s.setSourceIdTemplate(DEFAULT_SOURCE_ID_TEMPLATE);
+		return s;
+	}
+
 	private Instant modified;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
