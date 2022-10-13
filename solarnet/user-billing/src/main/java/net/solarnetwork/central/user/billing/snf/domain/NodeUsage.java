@@ -56,7 +56,7 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
@@ -573,10 +573,10 @@ public class NodeUsage extends BasicLongEntity
 				new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
 		result.put(DATUM_DAYS_STORED_KEY, new UsageInfo(DATUM_DAYS_STORED_KEY,
 				new BigDecimal(datumDaysStored), costs.getDatumDaysStoredCost()));
-		result.put(OCPP_CHARGERS_KEY, new UsageInfo(OCPP_CHARGERS_KEY, new BigDecimal(datumDaysStored),
+		result.put(OCPP_CHARGERS_KEY, new UsageInfo(OCPP_CHARGERS_KEY, new BigDecimal(ocppChargers),
 				costs.getOcppChargersCost()));
 		result.put(OSCP_CAPACITY_GROUPS_KEY, new UsageInfo(OSCP_CAPACITY_GROUPS_KEY,
-				new BigDecimal(datumDaysStored), costs.getOscpCapacityGroupsCost()));
+				new BigDecimal(oscpCapacityGroups), costs.getOscpCapacityGroupsCost()));
 		return result;
 	}
 
