@@ -41,6 +41,7 @@ import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.oscp.fp.biz.dao.DaoFlexibilityProviderBiz;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
@@ -72,6 +73,9 @@ public class ServiceConfig {
 
 	@Autowired
 	private CapacityOptimizerConfigurationDao capacityOptimizerDao;
+
+	@Autowired
+	private UserSettingsDao userSettingsDao;
 
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
@@ -114,7 +118,7 @@ public class ServiceConfig {
 	public DaoFlexibilityProviderBiz flexibilityProviderBiz(ExternalSystemClient client) {
 		var biz = new DaoFlexibilityProviderBiz(executor, client, userEventAppenderBiz,
 				flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao, capacityGroupDao,
-				capacityGroupSettingsDao, nodeOwnershipDao);
+				userSettingsDao, capacityGroupSettingsDao, nodeOwnershipDao);
 		biz.setTxTemplate(transactionTemplate);
 		biz.setTaskScheduler(taskScheduler);
 		biz.setDatumDao(datumDao);

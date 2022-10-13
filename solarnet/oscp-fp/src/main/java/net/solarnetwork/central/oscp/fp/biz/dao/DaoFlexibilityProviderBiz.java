@@ -42,6 +42,7 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHA
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -80,6 +81,7 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
+import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
@@ -106,6 +108,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.GroupCapacityComplianceError;
 import oscp.v20.HandshakeAcknowledge;
+import oscp.v20.Heartbeat;
 import oscp.v20.Register;
 import oscp.v20.UpdateGroupCapacityForecast;
 import oscp.v20.VersionUrl;
@@ -127,6 +130,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
+	private final UserSettingsDao userSettingsDao;
 	private final CapacityGroupSettingsDao capacityGroupSettingsDao;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
@@ -167,6 +171,10 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the capacity optimizer configuration DAO
 	 * @param capacityGroupDao
 	 *        the capacity group configuration DAO
+	 * @param userSettingsDao
+	 *        the user settings DAO
+	 * @param capacityGroupSettingsDao
+	 *        the group settings DAo
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 * @capacityGroupSettingsDao the capacity group settings DAO
@@ -177,7 +185,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
-			CapacityGroupConfigurationDao capacityGroupDao,
+			CapacityGroupConfigurationDao capacityGroupDao, UserSettingsDao userSettingsDao,
 			CapacityGroupSettingsDao capacityGroupSettingsDao, SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
@@ -188,6 +196,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
+		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.capacityGroupSettingsDao = requireNonNullArgument(capacityGroupSettingsDao,
 				"capacityGroupSettingsDao");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
@@ -307,6 +316,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		dao.updateOfflineDate(authInfo.id(), expiresDate);
+
+		var task = new HeartbeatTask<>(authInfo, expiresDate, dao);
+		executor.execute(task);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -392,11 +404,47 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		executor.execute(task);
 	}
 
+	private void publishDatum(String action, String sourceIdSuffix, OscpRole role, Long userId,
+			BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
+			CapacityGroupConfiguration group, DatumPublishSettings settings,
+			Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
+			KeyValuePair... sourceIdParameters) {
+		if ( !DatumPublishSettings.shouldPublish(settings)
+				|| (fluxPublisher == null && datumDao == null) ) {
+			return;
+		}
+		Long nodeId = settings.getNodeId();
+		SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
+		if ( ownership == null || !userId.equals(ownership.getUserId()) ) {
+			// node ownership not known or not owned by context user: ignore
+			return;
+		}
+		final Collection<OwnedGeneralNodeDatum> datum = datumSupplier.get();
+		if ( datum == null || datum.isEmpty() ) {
+			return;
+		}
+		DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings, datum,
+				sourceIdParameters);
+		String sourceId = event.sourceId();
+		if ( sourceIdSuffix != null ) {
+			sourceId += sourceIdSuffix;
+		}
+		for ( OwnedGeneralNodeDatum d : datum ) {
+			d.setNodeId(nodeId);
+			d.setSourceId(sourceId);
+		}
+		if ( datumDao != null && settings.isPublishToSolarIn() ) {
+			for ( OwnedGeneralNodeDatum d : datum ) {
+				datumDao.store(d);
+			}
+		}
+		if ( fluxPublisher != null && settings.isPublishToSolarFlux() ) {
+			fluxPublisher.accept(event);
+		}
+	}
+
 	private abstract class BaseDeferredSystemTask<C extends BaseOscpExternalSystemConfiguration<C>>
 			extends DeferredSystemTask<C> {
-
-		private final Consumer<DatumPublishEvent> fluxPublisher;
-		private final DatumEntityDao datumDao;
 
 		private BaseDeferredSystemTask(String name, Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao) {
@@ -409,8 +457,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			withStartDelay(taskStartDelay);
 			withStartDelayRandomness(taskStartDelayRandomness);
 			withRetryDelay(taskRetryDelay);
-			this.fluxPublisher = DaoFlexibilityProviderBiz.this.fluxPublisher;
-			this.datumDao = DaoFlexibilityProviderBiz.this.datumDao;
 		}
 
 		/**
@@ -438,38 +484,60 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				CapacityGroupConfiguration group, DatumPublishSettings settings,
 				Supplier<Collection<OwnedGeneralNodeDatum>> datumSupplier,
 				KeyValuePair... sourceIdParameters) {
-			if ( !DatumPublishSettings.shouldPublish(settings)
-					|| (fluxPublisher == null && datumDao == null) ) {
+			DaoFlexibilityProviderBiz.this.publishDatum(action, sourceIdSuffix, role,
+					configId.getUserId(), src, dest, group, settings, datumSupplier, sourceIdParameters);
+		}
+	}
+
+	private class HeartbeatTask<C extends BaseOscpExternalSystemConfiguration<C>>
+			extends BaseDeferredSystemTask<C> implements Supplier<Collection<OwnedGeneralNodeDatum>> {
+
+		private final Instant expires;
+		private final Instant ts = Instant.now();
+
+		private HeartbeatTask(AuthRoleInfo authInfo, Instant expiresDate,
+				ExternalSystemConfigurationDao<C> dao) {
+			super("Heartbeat", completedFuture(null), authInfo.role(), authInfo.id(), dao);
+			this.expires = requireNonNullArgument(expiresDate, "expiresDate");
+			if ( role == OscpRole.CapacityProvider ) {
+				withErrorEventTags(CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS);
+				withErrorEventTags(CAPACITY_PROVIDER_HEARTBEAT_TAGS);
+			} else {
+				withErrorEventTags(CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS);
+				withErrorEventTags(CAPACITY_OPTIMIZER_HEARTBEAT_TAGS);
+			}
+		}
+
+		@Override
+		public void doWork() {
+			DatumPublishSettings settings = userSettingsDao.get(configId.getUserId());
+			if ( settings == null ) {
 				return;
 			}
-			Long nodeId = settings.getNodeId();
-			SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
-			if ( ownership == null || !this.configId.getUserId().equals(ownership.getUserId()) ) {
-				// node ownership not known or not owned by context user: ignore
-				return;
+			String sourceIdSuffix = "/hb";
+			CapacityProviderConfiguration provider = null;
+			CapacityOptimizerConfiguration optimizer = null;
+			BaseOscpExternalSystemConfiguration<C> src = configuration(false);
+			if ( src instanceof CapacityProviderConfiguration c ) {
+				provider = c;
+			} else if ( src instanceof CapacityOptimizerConfiguration c ) {
+				optimizer = c;
 			}
-			final Collection<OwnedGeneralNodeDatum> datum = datumSupplier.get();
-			if ( datum == null || datum.isEmpty() ) {
-				return;
-			}
-			DatumPublishEvent event = new DatumPublishEvent(role, action, src, dest, group, settings,
-					datum, sourceIdParameters);
-			String sourceId = event.sourceId();
-			if ( sourceIdSuffix != null ) {
-				sourceId += sourceIdSuffix;
-			}
-			for ( OwnedGeneralNodeDatum d : datum ) {
-				d.setNodeId(nodeId);
-				d.setSourceId(sourceId);
-			}
-			if ( datumDao != null && settings.isPublishToSolarIn() ) {
-				for ( OwnedGeneralNodeDatum d : datum ) {
-					datumDao.store(d);
-				}
-			}
-			if ( fluxPublisher != null && settings.isPublishToSolarFlux() ) {
-				fluxPublisher.accept(event);
-			}
+			publish(Heartbeat.class.getSimpleName(), sourceIdSuffix, provider, optimizer, null, settings,
+					this);
+		}
+
+		@Override
+		public Collection<OwnedGeneralNodeDatum> get() {
+			// we don't need to set node ID or source ID here, as that will be resolved in the publish() method
+			OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(configId.getUserId());
+			d.setCreated(ts);
+
+			DatumSamples s = new DatumSamples();
+			s.putStatusSampleValue("expires", ISO_DATE_TIME_ALT_UTC.format(expires));
+			d.setSamples(s);
+
+			return Collections.singleton(d);
 		}
 
 	}
