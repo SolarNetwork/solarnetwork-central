@@ -89,7 +89,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -276,6 +276,22 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 				&& loc.getElevation() == null);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Location getLocationForNode(Long nodeId) {
+		// verify node ID with security
+		AuthenticatedNode authNode = getAuthenticatedNode();
+		if ( authNode == null ) {
+			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		} else if ( nodeId == null ) {
+			nodeId = authNode.getNodeId();
+		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+			log.warn("Illegal location fetch by node {} for node {}", authNode.getNodeId(), nodeId);
+			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+		}
+		return solarLocationDao.getSolarLocationForNode(nodeId);
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void updateLocation(Long nodeId, final net.solarnetwork.domain.Location location) {
@@ -287,10 +303,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( nodeId == null ) {
 			nodeId = authNode.getNodeId();
 		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
-			if ( log.isWarnEnabled() ) {
-				log.warn("Illegal location update by node " + authNode.getNodeId() + " as node "
-						+ nodeId);
-			}
+			log.warn("Illegal location update by node {} for node {}", authNode.getNodeId(), nodeId);
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		final SolarLocation loc = solarLocationDao.getSolarLocationForNode(nodeId);
