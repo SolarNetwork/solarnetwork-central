@@ -243,7 +243,6 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
-		Collections.sort(usages, NodeUsage.SORT_BY_NODE_ID);
 		for ( NodeUsage usage : usages ) {
 			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 1 ) {
 				// no cost for this node
@@ -332,6 +331,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 		// populate node usages
 		if ( nodeUsages != null ) {
+			Collections.sort(nodeUsages, NodeUsage.SORT_BY_NODE_ID);
 			List<SnfInvoiceNodeUsage> invoiceNodeUsages = new ArrayList<>(nodeUsages.size());
 			for ( NodeUsage nodeUsage : nodeUsages ) {
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),

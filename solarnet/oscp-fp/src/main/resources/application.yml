@@ -21,7 +21,7 @@ app:
     stream-metadata-id-cache:
       ttl: 900
       heap-max-entries: 10000
-      disk-max-size-mb: 10
+      disk-max-size-mb: 5
   http.client.connections:
     max-total: 20
   job.oscp:
@@ -51,13 +51,13 @@ app:
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
-    disk-max-size-mb: 100
+    disk-max-size-mb: 10
   oauth:
     client:
       registration-cache:
         ttl: 21600
         heap-max-entries: 50
-        disk-max-size-mb: 10
+        disk-max-size-mb: 1
   oscp.v20:
     mqtt.instr-handler:
       mqtt-topic: "instr/OSCP_v20"
@@ -73,7 +73,7 @@ app:
     cache:
       ttl: 900
       heap-max-entries: 500
-      disk-max-size-mb: 50
+      disk-max-size-mb: 1
     simple:
       dir: "var/secrets"
       password: "Secret.123"
