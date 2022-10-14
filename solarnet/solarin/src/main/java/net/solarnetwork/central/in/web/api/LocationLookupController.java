@@ -131,7 +131,7 @@ public class LocationLookupController {
 	 * @since 1.2
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET, params = "sourceId")
 	public Response<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
 			@PathVariable("locationId") Long locationId,
 			@RequestParam(value = "sourceId") String sourceId) {
@@ -179,7 +179,7 @@ public class LocationLookupController {
 	 * @since 2.4
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/view" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/view" }, method = RequestMethod.GET, params = "!sourceId")
 	public Response<Location> getLocation() {
 		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return response(dataCollectorBiz.getLocationForNode(nodeId));
