@@ -48,7 +48,7 @@ import net.solarnetwork.web.domain.Response;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/solarin/api/v1/pub/location", "/solarin/api/v1/sec/location" })
@@ -131,7 +131,7 @@ public class LocationLookupController {
 	 * @since 1.2
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET, params = "sourceId")
 	public Response<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
 			@PathVariable("locationId") Long locationId,
 			@RequestParam(value = "sourceId") String sourceId) {
@@ -166,6 +166,23 @@ public class LocationLookupController {
 		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		dataCollectorBiz.updateLocation(nodeId, location);
 		return response(null);
+	}
+
+	/**
+	 * Get the location for a node.
+	 * 
+	 * <p>
+	 * Only authenticated nodes are allowed to call this method.
+	 * </p>
+	 * 
+	 * @return the location details of the node
+	 * @since 2.4
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "/view" }, method = RequestMethod.GET, params = "!sourceId")
+	public Response<Location> getLocation() {
+		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
+		return response(dataCollectorBiz.getLocationForNode(nodeId));
 	}
 
 }

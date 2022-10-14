@@ -64,8 +64,10 @@ import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -282,6 +284,35 @@ public class DaoDataCollectorBizTests {
 		curr.setStreet("street");
 		curr.setTimeZoneId("UTC");
 		return curr;
+	}
+
+	@Test
+	public void getNodeLocation() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		SolarLocation loc = createLocation(123L);
+
+		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(loc);
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(nodeId);
+		Location result = biz.getLocationForNode(nodeId);
+
+		// THEN
+		assertThat("DAO location returned", result, is(sameInstance(loc)));
+	}
+
+	@Test(expected = AuthorizationException.class)
+	public void getNodeLocation_unauthorized() {
+		// GIVEN
+		final Long nodeId = 1L;
+
+		// WHEN
+		replayAll();
+		SecurityUtils.becomeNode(2L);
+		biz.getLocationForNode(nodeId);
 	}
 
 	@Test

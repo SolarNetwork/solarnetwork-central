@@ -48,7 +48,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public interface DataCollectorBiz {
 
@@ -78,6 +78,16 @@ public interface DataCollectorBiz {
 	 * @since 2.1
 	 */
 	void postStreamDatum(Iterable<StreamDatum> datums);
+
+	/**
+	 * Get the location associated with a node.
+	 * 
+	 * @param nodeId
+	 *        the node ID to get the location for
+	 * @return the location, or {@literal null} if not available
+	 * @since 3.2
+	 */
+	Location getLocationForNode(Long nodeId);
 
 	/**
 	 * Update a node's own location.
