@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
@@ -40,7 +43,7 @@ import net.solarnetwork.central.user.domain.UserLongPK;
  * Test cases for the {@link MyBatisAccountDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -90,6 +93,35 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Account", entity.isSameAs(last), equalTo(true));
+	}
+
+	@Test
+	public void getByUser_atDate() {
+		insert();
+
+		Address oldAddress = createTestAddress(Instant.now().minus(2, ChronoUnit.DAYS));
+		oldAddress.setName("OLD");
+		oldAddress = addressDao.get(addressDao.save(oldAddress));
+
+		Account now = dao.getForUser(last.getUserId(),
+				ZonedDateTime.now(oldAddress.getTimeZone()).toLocalDate());
+		Account yesterday = dao.getForUser(last.getUserId(),
+				ZonedDateTime.now(oldAddress.getTimeZone()).minus(1, ChronoUnit.DAYS).toLocalDate());
+		Account tomorrow = dao.getForUser(last.getUserId(),
+				ZonedDateTime.now(oldAddress.getTimeZone()).plus(1, ChronoUnit.DAYS).toLocalDate());
+
+		assertThat("ID", now.getId(), equalTo(last.getId()));
+		assertThat("Created", now.getCreated(), equalTo(last.getCreated()));
+		assertThat("Account", now.isSameAs(last), equalTo(true));
+		assertThat("Current account has current address", now.getAddress(), equalTo(last.getAddress()));
+
+		assertThat("ID", yesterday.getId(), equalTo(last.getId()));
+		assertThat("Yesterday account has yesterday address", yesterday.getAddress(),
+				equalTo(oldAddress));
+
+		assertThat("ID", tomorrow.getId(), equalTo(last.getId()));
+		assertThat("Tomorrow account has current address", tomorrow.getAddress(),
+				equalTo(last.getAddress()));
 	}
 
 	@Test

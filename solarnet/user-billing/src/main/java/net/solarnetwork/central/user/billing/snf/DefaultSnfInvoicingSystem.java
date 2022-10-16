@@ -198,7 +198,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			SnfInvoicingSystem.InvoiceGenerationOptions options) {
 		// get account
-		Account account = accountDao.getForUser(userId);
+		Account account = accountDao.getForUser(userId, endDate);
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}

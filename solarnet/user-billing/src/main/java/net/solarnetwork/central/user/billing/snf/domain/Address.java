@@ -28,6 +28,7 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -35,12 +36,14 @@ import net.solarnetwork.domain.Differentiable;
  * An address for billing.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class Address extends BasicLongEntity implements Differentiable<Address> {
+public class Address extends BasicLongEntity
+		implements UserRelatedEntity<Long>, Differentiable<Address> {
 
-	private static final long serialVersionUID = 2456834373588564668L;
+	private static final long serialVersionUID = -8287306387880683563L;
 
+	private Long userId;
 	private String name;
 	private String email;
 	private String country;
@@ -75,8 +78,8 @@ public class Address extends BasicLongEntity implements Differentiable<Address> 
 	 * instance.
 	 * 
 	 * <p>
-	 * The {@code id} and {@code created} properties are not compared by this
-	 * method.
+	 * The {@code id}, {@code userId}, and {@code created} properties are not
+	 * compared by this method.
 	 * </p>
 	 * 
 	 * @param other
@@ -126,6 +129,21 @@ public class Address extends BasicLongEntity implements Differentiable<Address> 
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	@Override
+	public Long getUserId() {
+		return userId;
+	}
+
+	/**
+	 * Set the associated user ID.
+	 * 
+	 * @param userId
+	 *        the user ID to set
+	 */
+	public void setUserId(Long userId) {
+		this.userId = userId;
 	}
 
 	/**

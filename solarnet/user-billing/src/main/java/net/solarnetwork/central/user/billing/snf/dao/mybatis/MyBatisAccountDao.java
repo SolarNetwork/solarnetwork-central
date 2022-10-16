@@ -23,6 +23,8 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,7 +39,7 @@ import net.solarnetwork.central.user.domain.UserLongPK;
  * MyBatis implementation of {@link AccountDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongPK>
 		implements AccountDao {
@@ -45,11 +47,23 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	/** Query name enumeration. */
 	public enum QueryName {
 
+		/** Claim credit from account balance. */
 		ClaimCreditFromAccountBalance("claim-AccountBalance-credit"),
 
+		/** Get account balance for a user. */
 		GetAccountBalanceForUser("get-AccountBalance-for-user"),
 
-		GetForUser("get-Account-for-user");
+		/** Get an account for a user. */
+		GetForUser("get-Account-for-user"),
+
+		/**
+		 * Get an account for a user at a specific date.
+		 * 
+		 * @since 1.1
+		 */
+		GetForUserAtDate("get-Account-for-user-at-date"),
+
+		;
 
 		private final String queryName;
 
@@ -77,6 +91,12 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	@Override
 	public Account getForUser(Long userId) {
 		return selectFirst(QueryName.GetForUser.getQueryName(), userId);
+	}
+
+	@Override
+	public Account getForUser(Long userId, LocalDate at) {
+		Map<String, Object> params = Map.of("userId", userId, "date", Date.valueOf(at));
+		return selectFirst(QueryName.GetForUserAtDate.getQueryName(), params);
 	}
 
 	@Override

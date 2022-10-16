@@ -48,12 +48,15 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
  * Base class for MyBatis DAO tests.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
+
+	/** A test user ID. */
+	protected static final Long TEST_USER_ID = UUID.randomUUID().getMostSignificantBits();
 
 	private SqlSessionFactory sqlSessionFactory;
 	private SqlSessionTemplate sqlSessionTemplate;
@@ -109,7 +112,19 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 * @return the address
 	 */
 	protected Address createTestAddress() {
-		Address s = new Address(null, Instant.ofEpochMilli(System.currentTimeMillis()));
+		return createTestAddress(Instant.ofEpochMilli(System.currentTimeMillis()));
+	}
+
+	/**
+	 * Create a test address instance.
+	 * 
+	 * @param created
+	 *        the creation date
+	 * @return the address
+	 * @since 2.1
+	 */
+	protected Address createTestAddress(Instant created) {
+		Address s = new Address(null, created);
 		s.setName("Tester Dude");
 		s.setEmail("test@localhost");
 		s.setCountry("NZ");
@@ -119,6 +134,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		s.setLocality("Wellington");
 		s.setPostalCode("1001");
 		s.setStreet(new String[] { "Level 1", "123 Main Street" });
+		s.setUserId(TEST_USER_ID);
 		return s;
 	}
 
@@ -130,7 +146,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	 * @return the account
 	 */
 	protected Account createTestAccount(Address address) {
-		Account account = new Account(null, UUID.randomUUID().getMostSignificantBits(),
+		Account account = new Account(null, TEST_USER_ID,
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		account.setAddress(address);
 		account.setCurrencyCode("NZD");
