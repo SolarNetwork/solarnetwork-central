@@ -168,6 +168,22 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 				&& props.containsKey(ExternalSystemServiceProperties.OAUTH_CLIENT_ID);
 	}
 
+	/**
+	 * Get the extra HTTP headers if available.
+	 * 
+	 * @return the extra HTTP headers, or {@literal null}
+	 */
+	@SuppressWarnings("unchecked")
+	public Map<String, ?> extraHttpHeaders() {
+		final Map<String, Object> props = getServiceProps();
+		final Object o = (props != null ? props.get(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS)
+				: null);
+		if ( o instanceof Map<?, ?> map ) {
+			return (Map<String, ?>) map;
+		}
+		return null;
+	}
+
 	@Override
 	public Long getUserId() {
 		return getId().getUserId();

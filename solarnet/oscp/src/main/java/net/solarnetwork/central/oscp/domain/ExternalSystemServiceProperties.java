@@ -51,6 +51,22 @@ public interface ExternalSystemServiceProperties {
 	/**
 	 * A service property that configures asset measurement messages to be used
 	 * in place of group measurements.
+	 * 
+	 * <p>
+	 * The value should be a boolean, with {@literal true} to enable the group
+	 * asset measurement mode.
+	 * </p>
 	 */
 	String ASSET_MEAESUREMENT = "group-asset-measurement";
+
+	/**
+	 * A service property that configures additional HTTP header values to be
+	 * included in all OSCP requests.
+	 * 
+	 * <p>
+	 * The value associated with this key should be a simple map of string
+	 * key/value pairs.
+	 * </p>
+	 */
+	String EXTRA_HTTP_HEADERS = "http-headers";
 }
