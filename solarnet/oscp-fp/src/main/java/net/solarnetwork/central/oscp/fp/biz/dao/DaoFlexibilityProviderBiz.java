@@ -307,6 +307,29 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public void handshakeAcknowledge(AuthRoleInfo authInfo, SystemSettings settings,
+			String requestIdentifier) {
+		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
+		requireNonNullArgument(settings, "settings");
+
+		log.info("Handshake acknowledge for {} {} with settings: {}", systemRole, authInfo.id().ident(),
+				settings);
+
+		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
+		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
+		filter.setConfigurationId(authInfo.entityId());
+		filter.setLockResults(true);
+		var filterResults = dao.findFiltered(filter);
+		if ( filterResults.getReturnedResultCount() < 1 ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
+		}
+		BaseOscpExternalSystemConfiguration<?> conf = stream(filterResults.spliterator(), false)
+				.findFirst().orElse(null);
+		dao.saveSettings(conf.getId(), settings);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public void heartbeat(AuthRoleInfo authInfo, Instant expiresDate) {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(expiresDate, "expiresDate");

@@ -112,6 +112,7 @@ public final class OscpInstructionUtils {
 		final Class<?> actionClass = switch (action) {
 			case "AdjustGroupCapacityForecast" -> oscp.v20.AdjustGroupCapacityForecast.class;
 			case "GroupCapacityComplianceError" -> oscp.v20.GroupCapacityComplianceError.class;
+			case "Handshake" -> oscp.v20.Handshake.class;
 			case "UpdateAssetMeasurement" -> oscp.v20.UpdateAssetMeasurement.class;
 			case "UpdateGroupCapacityForecast" -> oscp.v20.UpdateGroupCapacityForecast.class;
 			case "UpdateGroupMeasurements" -> oscp.v20.UpdateGroupMeasurements.class;

@@ -167,6 +167,22 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 			Future<?> externalSystemReady);
 
 	/**
+	 * Handle a handshake acknowledgement to provide desired system settings.
+	 * 
+	 * @param authInfo
+	 *        the authorization info of the external system
+	 * @param settings
+	 *        the desired settings
+	 * @param requestIdentifier
+	 *        the OSCP request identifier, to correlate the response to
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if the
+	 *         system configuration associated with {@code authInfo} does not
+	 *         exist
+	 */
+	void handshakeAcknowledge(AuthRoleInfo authInfo, SystemSettings settings, String requestIdentifier);
+
+	/**
 	 * Handle a heartbeat from an external system.
 	 * 
 	 * @param authInfo

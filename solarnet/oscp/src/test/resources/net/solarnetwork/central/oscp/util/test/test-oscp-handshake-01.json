@@ -1,0 +1,6 @@
+{
+	"required_behaviour" : {
+	  "heartbeat_interval":60,
+	  "measurement_configuration":["CONTINUOUS"]
+	}
+}

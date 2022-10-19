@@ -63,6 +63,9 @@ import oscp.v20.HandshakeAcknowledge;
 public class HandshakeController {
 
 	/** The URL path for 2.0 Handshake Acknowledge. */
+	public static final String HS_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH + HANDSHAKE_URL_PATH;
+
+	/** The URL path for 2.0 Handshake Acknowledge. */
 	public static final String HS_ACK_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH
 			+ HANDSHAKE_ACK_URL_PATH;
 
@@ -80,8 +83,39 @@ public class HandshakeController {
 		this.restOps = requireNonNullArgument(restOps, "restOps");
 	}
 
+	@PostMapping(path = HS_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
+	public ResponseEntity<Void> handshake20(@RequestBody Handshake input, WebRequest request) {
+		log.info("Processing {} request: {}", HS_20_URL_PATH, input);
+
+		SystemSettings settings = SystemSettings.forOscp20Value(
+				requireNonNullArgument(input.getRequiredBehaviour(), "required_behaviour"));
+
+		log.info("Got handshake settings: {}", settings);
+
+		SystemConfiguration system = capacityProviderDao
+				.verifyAuthToken(authorizationTokenFromRequest(request));
+		synchronized ( system ) {
+			/*- could verify response settings here, but ignore for now
+			system.setSettings(settings);
+			capacityProviderDao.saveSystemConfiguration(system);
+			*/
+		}
+
+		URI uri = URI.create(system.getBaseUrl() + HANDSHAKE_ACK_URL_PATH);
+		log.info("Initiating handshake ack for {} to [{}]", system.getId(), uri);
+
+		// echo back behaviour in ack
+		HandshakeAcknowledge ack = new HandshakeAcknowledge();
+		ack.setRequiredBehaviour(input.getRequiredBehaviour());
+		executor.execute(new SystemHttpTask<>("HandshakeAck", restOps, newResponseSentCondition(),
+				HttpMethod.POST, uri, ack, tokenAuthorizer(system.getOutToken())));
+
+		return ResponseEntity.noContent().build();
+	}
+
 	@PostMapping(path = HS_ACK_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
-	public ResponseEntity<Void> register20(@RequestBody HandshakeAcknowledge input, WebRequest request) {
+	public ResponseEntity<Void> handshakeAck20(@RequestBody HandshakeAcknowledge input,
+			WebRequest request) {
 		log.info("Processing {} request: {}", HS_ACK_20_URL_PATH, input);
 
 		SystemSettings settings = SystemSettings.forOscp20Value(
