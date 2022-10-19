@@ -34,6 +34,7 @@ import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPAC
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSAGE_PARAM;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.GROUP_CAPACITY_COMPLIANCE_ERROR_URL_PATH;
+import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
@@ -354,6 +355,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			return switch (action) {
 				case "AdjustGroupCapacityForecast" -> ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 				case "GroupCapacityComplianceError" -> GROUP_CAPACITY_COMPLIANCE_ERROR_URL_PATH;
+				case "Handshake" -> HANDSHAKE_URL_PATH;
 				case "UpdateAssetMeasurement" -> UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 				case "UpdateGroupMeasurements" -> UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 				default -> throw new IllegalArgumentException(

@@ -33,31 +33,48 @@ import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
  */
 public enum OscpMqttCountStat implements MqttStat {
 
+	/** Total instructions queued. */
 	InstructionsQueued(0, "instructions queued"),
 
+	/** Total instructions received. */
 	InstructionsReceived(1, "instructions received"),
 
+	/** Total instruction handling errors. */
 	InstructionErrors(2, "instruction errors"),
 
+	/** AdjustGroupCapacityForecast instructions received. */
 	AdjustGroupCapacityForecastInstructionsReceived(
 			3,
 			"AdjustGroupCapacityForecast instructions received"),
 
+	/** AdjustGroupCapacityForecast instruction errors. */
 	AdjustGroupCapacityForecastInstructionErrors(4, "AdjustGroupCapacityForecast instruction errors"),
 
+	/** GroupCapacityComplianceError instructions received. */
 	GroupCapacityComplianceErrorInstructionsReceived(
 			5,
 			"GroupCapacityComplianceError instructions received"),
 
+	/** GroupCapacityComplianceError instruction errors. */
 	GroupCapacityComplianceErrorInstructionErrors(6, "GroupCapacityComplianceError instruction errors"),
 
-	UpdateAssetMeasurementInstructionsReceived(7, "UpdateAssetMeasurement instructions received"),
+	/** Handshake instructions received. */
+	HandshakeInstructionsReceived(7, "Handshake instructions received"),
 
-	UpdateAssetMeasurementInstructionErrors(8, "UpdateAssetMeasurement instruction errors"),
+	/** Handshake instruction errors. */
+	HandshakeInstructionErrors(8, "Handshake instruction errors"),
 
-	UpdateGroupMeasurementsInstructionsReceived(9, "UpdateGroupMeasurements instructions received"),
+	/** UpdateAssetMeasurement instructions received. */
+	UpdateAssetMeasurementInstructionsReceived(9, "UpdateAssetMeasurement instructions received"),
 
-	UpdateGroupMeasurementsInstructionErrors(10, "UpdateGroupMeasurements instruction errors"),
+	/** UpdateAssetMeasurement instruction errors. */
+	UpdateAssetMeasurementInstructionErrors(10, "UpdateAssetMeasurement instruction errors"),
+
+	/** UpdateGroupMeasurements instructions received. */
+	UpdateGroupMeasurementsInstructionsReceived(11, "UpdateGroupMeasurements instructions received"),
+
+	/** UpdateGroupMeasurements instruction errors. */
+	UpdateGroupMeasurementsInstructionErrors(12, "UpdateGroupMeasurements instruction errors"),
 
 	;
 
@@ -84,6 +101,7 @@ public enum OscpMqttCountStat implements MqttStat {
 		return switch (action) {
 			case "AdjustGroupCapacityForecast" -> AdjustGroupCapacityForecastInstructionsReceived;
 			case "GroupCapacityComplianceError" -> GroupCapacityComplianceErrorInstructionsReceived;
+			case "Handshake" -> HandshakeInstructionsReceived;
 			case "UpdateAssetMeasurement" -> UpdateAssetMeasurementInstructionsReceived;
 			case "UpdateGroupMeasurements" -> UpdateGroupMeasurementsInstructionsReceived;
 			default -> null;
@@ -105,6 +123,7 @@ public enum OscpMqttCountStat implements MqttStat {
 		return switch (action) {
 			case "AdjustGroupCapacityForecast" -> AdjustGroupCapacityForecastInstructionErrors;
 			case "GroupCapacityComplianceError" -> GroupCapacityComplianceErrorInstructionErrors;
+			case "Handshake" -> HandshakeInstructionErrors;
 			case "UpdateAssetMeasurement" -> UpdateAssetMeasurementInstructionErrors;
 			case "UpdateGroupMeasurements" -> UpdateGroupMeasurementsInstructionErrors;
 			default -> null;

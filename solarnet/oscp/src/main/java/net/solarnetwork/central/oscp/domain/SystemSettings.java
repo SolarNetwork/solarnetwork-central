@@ -63,9 +63,13 @@ public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> mea
 	 * 
 	 * @param direction
 	 *        the OSCP 2.0 value to get an instance for
-	 * @return the instance
+	 * @return the instance, or {@literal null} if {@code behaviour} is
+	 *         {@literal null}
 	 */
 	public static SystemSettings forOscp20Value(RequiredBehaviour behaviour) {
+		if ( behaviour == null ) {
+			return null;
+		}
 		Integer heartbeatSeconds = null;
 		if ( behaviour.getHeartbeatInterval() != null ) {
 			heartbeatSeconds = behaviour.getHeartbeatInterval().intValue();

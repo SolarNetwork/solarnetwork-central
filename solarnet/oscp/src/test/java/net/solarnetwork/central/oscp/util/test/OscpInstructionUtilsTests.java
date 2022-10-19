@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.FileCopyUtils;
@@ -38,6 +37,7 @@ import com.networknt.schema.JsonSchemaFactory;
 import com.nimbusds.jose.util.StandardCharset;
 import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.oscp.util.OscpUtils;
+import oscp.v20.Handshake;
 import oscp.v20.UpdateGroupCapacityForecast;
 
 /**
@@ -85,7 +85,25 @@ public class OscpInstructionUtilsTests {
 
 		// THEN
 		assertThat("Message parsed and validated", msg,
-				Matchers.is(instanceOf(UpdateGroupCapacityForecast.class)));
+				is(instanceOf(UpdateGroupCapacityForecast.class)));
+
+	}
+
+	@Test
+	public void decodeInstruction_Handshake() throws IOException {
+		// GIVEN
+		String json = FileCopyUtils.copyToString(new InputStreamReader(
+				getClass().getResourceAsStream("test-oscp-handshake-01.json"), StandardCharset.UTF_8));
+
+		Map<String, String> params = new HashMap<>(4);
+		params.put(OscpInstructionUtils.OSCP_ACTION_PARAM, Handshake.class.getSimpleName());
+		params.put("msg", json);
+
+		// WHEN
+		Object msg = OscpInstructionUtils.decodeJsonOscp20InstructionMessage(params, jsonSchemaFactory);
+
+		// THEN
+		assertThat("Message parsed and validated", msg, is(instanceOf(Handshake.class)));
 
 	}
 
