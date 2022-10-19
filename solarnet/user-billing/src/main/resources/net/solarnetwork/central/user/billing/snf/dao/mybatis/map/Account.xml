@@ -67,6 +67,24 @@
 			acct.user_id = #{id}
 	</select>
 	
+	<select id="get-Account-for-user-at-date" parameterType="map" resultMap="Account-FullResult">
+		WITH a AS (
+			SELECT id
+			FROM solarbill.bill_address
+			WHERE user_id = #{userId,jdbcType=BIGINT}
+				AND created &lt; (#{date,jdbcType=DATE}::date + INTERVAL '1 day') AT TIME ZONE time_zone
+			ORDER BY created DESC
+			LIMIT 1
+		)
+		SELECT
+			<include refid="fragment-Account-full-result"/>,
+			<include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+		FROM solarbill.bill_account acct
+		LEFT OUTER JOIN a ON TRUE
+		INNER JOIN solarbill.bill_address addr ON addr.id = COALESCE(a.id, acct.addr_id)
+		WHERE acct.user_id = #{userId,jdbcType=BIGINT}
+	</select>
+	
 	<update id="update-Account" parameterType="net.solarnetwork.central.user.billing.snf.domain.Account">
 		UPDATE solarbill.bill_account
 		SET currency = #{currencyCode}

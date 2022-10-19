@@ -22,24 +22,32 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import java.util.Arrays;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.http.ExternalSystemClientRegistrationRepository;
+import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
 import net.solarnetwork.central.support.CacheSettings;
 
 /**
@@ -94,11 +102,21 @@ public class OAuthClientConfig {
 	@Bean
 	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager(ClientRegistrationRepository repo,
 			OAuth2AuthorizedClientService clientService) {
-		// @formatter:off
 		OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
-				.clientCredentials()
-				.build();
-		// @formatter:on
+				.clientCredentials(b -> {
+				// @formatter:off
+					RestTemplate restOps = new RestTemplateBuilder(rt -> rt.getInterceptors().add(
+							new RestOpsExternalSystemClient.ExternalSystemExtraHeadersOAuthInterceptor()))
+									.messageConverters(Arrays.asList(
+											new FormHttpMessageConverter(),
+											new OAuth2AccessTokenResponseHttpMessageConverter()))
+									.errorHandler(new OAuth2ErrorResponseErrorHandler())
+									.build();
+					// @formatter:on
+					var client = new DefaultClientCredentialsTokenResponseClient();
+					client.setRestOperations(restOps);
+					b.accessTokenResponseClient(client);
+				}).build();
 
 		var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(repo, clientService);
 		manager.setAuthorizedClientProvider(provider);

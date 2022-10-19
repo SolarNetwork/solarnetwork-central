@@ -211,10 +211,10 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				new String[] { "ocpp-chargers", 	"250", 		"1"},
 				new String[] { "ocpp-chargers", 	"12500", 	"0.5"},
 				new String[] { "ocpp-chargers", 	"500000", 	"0.3"},
-				new String[] { "oscp-cap-groups", 	"0", 		"18"},
-				new String[] { "oscp-cap-groups", 	"100", 		"9"},
-				new String[] { "oscp-cap-groups", 	"1000", 	"5"},
-				new String[] { "oscp-cap-groups", 	"10000", 	"3"},
+				new String[] { "oscp-cap-groups", 	"0", 		"50"},
+				new String[] { "oscp-cap-groups", 	"30", 		"30"},
+				new String[] { "oscp-cap-groups", 	"100", 		"15"},
+				new String[] { "oscp-cap-groups", 	"300", 		"10"},
 				};
 		// @formatter:on
 		LocalDate expectedDate = LocalDate.of(2022, 11, 1);
@@ -600,7 +600,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				List<NamedCost> oscpCapacityGroupsTiersCost = tiersBreakdown
 						.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY);
 				assertThat("Account-level OSCP capacity group costs", oscpCapacityGroupsTiersCost,
-						hasSize(2));
+						hasSize(3));
 				/*-
 				datum-props-in=[
 					NamedCost{name=Tier 1, quantity=500000, cost=2.500000},
@@ -614,8 +614,9 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 					NamedCost{name=Tier 1, quantity=250, cost=500},
 					NamedCost{name=Tier 2, quantity=1750, cost=1750}],
 				oscp-cap-groups=[
-					NamedCost{name=Tier 1, quantity=100, cost=1800},
-					NamedCost{name=Tier 2, quantity=100, cost=900}]
+					NamedCost{name=Tier 1, quantity=30, cost=1500},
+					NamedCost{name=Tier 2, quantity=70, cost=2100},
+					NamedCost{name=Tier 3, quantity=100, cost=1500}]
 				*/
 				// @formatter:off
 				assertThat("Properties in cost", usage.getDatumPropertiesInCost().setScale(3), equalTo(
@@ -653,13 +654,16 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						NamedCost.forTier(2, "1750", new BigDecimal("1750").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()).toString())));
 
 				assertThat("OSCP Capacity Groups cost", usage.getOscpCapacityGroupsCost().setScale(3), equalTo(
-								new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost())
-						.add(	new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()))
+								new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost())
+						.add(	new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()))
+						.add(	new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()))
 						.setScale(3)
 						));
 				assertThat("OSCP Capacity Groups cost tiers", oscpCapacityGroupsTiersCost, contains(
-						NamedCost.forTier(1, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost()).toString()),
-						NamedCost.forTier(2, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()).toString())));
+						NamedCost.forTier(1, "30",  new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "70",  new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()).toString()),
+						NamedCost.forTier(2, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()).toString())
+						));
 				// @formatter:on
 			}
 			i++;

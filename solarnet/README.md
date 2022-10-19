@@ -12,6 +12,7 @@ The main application projects are:
 Additional application projects are:
 
  * [SolarOSCP Flexibility Provider](./oscp-fp/)
+ * [SolarOSCP Capacity Provider Simulator](./oscp-sim-cp/)
 
 # Building
 

@@ -9,6 +9,7 @@
 		INSERT INTO solarbill.bill_address (
 			id
 			<if test="created != null">,created</if>
+			, user_id
 			, disp_name
 			, email
 			, country
@@ -21,6 +22,7 @@
 		) VALUES (
 			#{id}
 			<if test="created != null">,#{created}</if>
+			, #{userId}
 			, #{name}
 			, #{email}
 			, #{country}
@@ -36,6 +38,7 @@
 	<sql id="fragment-Address-full-result">
 		addr.id AS bill_address_id
 		, addr.created AS bill_address_created
+		, addr.user_id AS bill_address_user_id
 		, addr.disp_name AS bill_address_disp_name
 		, addr.email AS bill_address_email
 		, addr.country AS bill_address_country
@@ -52,6 +55,7 @@
 			<idArg column="bill_address_id" javaType="Long"/>
 			<arg column="bill_address_created" javaType="java.time.Instant"/>
 		</constructor>
+		<result property="userId" column="bill_address_user_id"/>
 		<result property="name" column="bill_address_disp_name"/>
 		<result property="email" column="bill_address_email"/>
 		<result property="country" column="bill_address_country"/>

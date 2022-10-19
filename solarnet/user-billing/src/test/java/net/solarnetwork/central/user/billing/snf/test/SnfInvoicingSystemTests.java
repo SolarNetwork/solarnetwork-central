@@ -209,7 +209,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setAddress(addr);
-		expect(accountDao.getForUser(userId)).andReturn(account);
+		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
 		final NodeUsage usage = new NodeUsage();
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -275,7 +275,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setAddress(addr);
-		expect(accountDao.getForUser(userId)).andReturn(account);
+		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
 		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -358,7 +358,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setAddress(addr);
-		expect(accountDao.getForUser(userId)).andReturn(account);
+		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
 		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -456,7 +456,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setAddress(addr);
-		expect(accountDao.getForUser(userId)).andReturn(account);
+		expect(accountDao.getForUser(userId, endDate)).andReturn(account);
 
 		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));

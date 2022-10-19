@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.dao;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -32,7 +33,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link Account} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface AccountDao extends GenericDao<Account, UserLongPK> {
 
@@ -44,6 +45,17 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 * @return the account, or {@literal null} if not available
 	 */
 	Account getForUser(Long userId);
+
+	/**
+	 * Get an account for a given user ID using details (such as address) from a
+	 * specific date.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the account for
+	 * @return the account, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	Account getForUser(Long userId, LocalDate at);
 
 	/**
 	 * Get the overall account balance for a given user.

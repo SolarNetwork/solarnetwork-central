@@ -27,7 +27,10 @@ import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfig
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.net.URI;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -35,8 +38,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -48,6 +55,7 @@ import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
+import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
@@ -60,6 +68,17 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
  */
 public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
+	/**
+	 * A thread local map of extra HTTP headers for adding to OAuth token
+	 * requests.
+	 * 
+	 * <p>
+	 * For each OAuth token request, this will be set to the value of the
+	 * associated system's
+	 * {@link BaseOscpExternalSystemConfiguration#extraHttpHeaders()} value.</p.
+	 */
+	private static final ThreadLocal<Map<String, ?>> OAUTH_EXTRA_HTTP_HEADERS = new ThreadLocal<>();
+
 	private static final Logger log = LoggerFactory.getLogger(RestOpsExternalSystemClient.class);
 
 	private static final String[] SUPPORTED_REQUEST_PARAMETERS = new String[] {
@@ -69,6 +88,32 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 	private final RestOperations restOps;
 	private final UserEventAppenderBiz userEventAppenderBiz;
 	private OAuth2AuthorizedClientManager oauthClientManager;
+
+	/**
+	 * A client request interceptor that can inject the extra HTTP headers from
+	 * a system's {@link BaseOscpExternalSystemConfiguration#extraHttpHeaders()}
+	 * value in OAuth token requests.
+	 */
+	public static final class ExternalSystemExtraHeadersOAuthInterceptor
+			implements ClientHttpRequestInterceptor {
+
+		@Override
+		public ClientHttpResponse intercept(HttpRequest request, byte[] body,
+				ClientHttpRequestExecution execution) throws IOException {
+			Map<String, ?> extra = OAUTH_EXTRA_HTTP_HEADERS.get();
+			if ( extra != null ) {
+				HttpHeaders headers = request.getHeaders();
+				for ( Entry<String, ?> e : extra.entrySet() ) {
+					Object v = e.getValue();
+					if ( v != null ) {
+						headers.add(e.getKey(), v.toString());
+					}
+				}
+			}
+			return execution.execute(request, body);
+		}
+
+	}
 
 	/**
 	 * Constructor.
@@ -122,6 +167,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			headers.add(OscpWebUtils.REQUEST_ID_HEADER, UUID.randomUUID().toString());
 		}
 
+		Map<String, ?> extraHttpHeaders = context.config().extraHttpHeaders();
+
 		try {
 			// add appropriate authorization header
 			if ( context.config().hasOauthClientSettings() && oauthClientManager != null ) {
@@ -132,13 +179,27 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 								context.config().getName()))
 						.build();
 
-				OAuth2AuthorizedClient oauthClient = requireNonNullObject(
-						oauthClientManager.authorize(authReq), "oauthClient");
-				OAuth2AccessToken accessToken = oauthClient.getAccessToken();
-				headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
+				try {
+					OAUTH_EXTRA_HTTP_HEADERS.set(extraHttpHeaders);
+					OAuth2AuthorizedClient oauthClient = requireNonNullObject(
+							oauthClientManager.authorize(authReq), "oauthClient");
+					OAuth2AccessToken accessToken = oauthClient.getAccessToken();
+					headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
+				} finally {
+					OAUTH_EXTRA_HTTP_HEADERS.remove();
+				}
 			} else {
 				String authToken = context.authToken();
 				headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+			}
+
+			if ( extraHttpHeaders != null ) {
+				for ( Entry<String, ?> e : extraHttpHeaders.entrySet() ) {
+					Object v = e.getValue();
+					if ( v != null ) {
+						headers.add(e.getKey(), v.toString());
+					}
+				}
 			}
 
 			HttpEntity<Object> req = new HttpEntity<>(body, headers);
