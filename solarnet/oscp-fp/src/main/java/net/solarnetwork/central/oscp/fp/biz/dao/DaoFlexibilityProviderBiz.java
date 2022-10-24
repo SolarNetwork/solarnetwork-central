@@ -537,7 +537,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			if ( settings == null ) {
 				return;
 			}
-			String sourceIdSuffix = "/hb";
 			CapacityProviderConfiguration provider = null;
 			CapacityOptimizerConfiguration optimizer = null;
 			BaseOscpExternalSystemConfiguration<C> src = configuration(false);
@@ -546,8 +545,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			} else if ( src instanceof CapacityOptimizerConfiguration c ) {
 				optimizer = c;
 			}
-			publish(Heartbeat.class.getSimpleName(), sourceIdSuffix, provider, optimizer, null, settings,
-					this);
+			publish(Heartbeat.class.getSimpleName(), null, provider, optimizer, null, settings, this);
 		}
 
 		@Override
