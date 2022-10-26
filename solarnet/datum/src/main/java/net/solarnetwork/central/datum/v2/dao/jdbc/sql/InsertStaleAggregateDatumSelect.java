@@ -137,6 +137,7 @@ public class InsertStaleAggregateDatumSelect implements PreparedStatementCreator
 		sqlCte(buf);
 		sqlSelect(buf);
 		sqlFrom(buf);
+		buf.append("ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING");
 	}
 
 	@Override

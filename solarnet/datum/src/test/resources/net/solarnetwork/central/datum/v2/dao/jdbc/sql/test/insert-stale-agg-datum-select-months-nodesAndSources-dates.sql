@@ -8,3 +8,4 @@ WITH s AS (
 SELECT datum.stream_id, datum.ts_start, 'M' AS agg_kind
 FROM s
 INNER JOIN solardatm.find_datm_months(s.stream_id, ?, ?) datum ON TRUE
+ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING
