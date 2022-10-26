@@ -12,3 +12,4 @@ FROM s
 INNER JOIN solardatm.find_datm_hours(s.stream_id, 
 	? AT TIME ZONE s.time_zone, 
 	? AT TIME ZONE s.time_zone) datum ON TRUE
+ON CONFLICT (stream_id, ts_start, agg_kind) DO NOTHING
