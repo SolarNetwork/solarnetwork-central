@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
@@ -140,8 +141,14 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
-					root.toString(), e);
+			if ( (root instanceof RemoteServiceException)
+					|| (root instanceof net.solarnetwork.service.RemoteServiceException) ) {
+				log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
+						root.getMessage());
+			} else {
+				log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
+						root.toString(), e);
+			}
 		}
 		return false;
 	}
