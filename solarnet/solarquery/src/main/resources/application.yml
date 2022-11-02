@@ -44,11 +44,11 @@ app:
     stream-metadata-cache:
       ttl: 300
       heap-max-entries: 10000
-      disk-max-size-mb: 100
+      disk-max-size-mb: 10
     stream-metadata-id-cache:
       ttl: 900
       heap-max-entries: 10000
-      disk-max-size-mb: 100
+      disk-max-size-mb: 5
   network-identity:
     network-identity-key: "solarquery:identity:here"
     terms-of-service: "solarquery:tos:here"
@@ -64,13 +64,13 @@ app:
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
-    disk-max-size-mb: 100
+    disk-max-size-mb: 5
   query-cache:
     enabled: false
     cache:  
       ttl: 60
       heap-max-entries: 1000
-      disk-max-size-mb: 100
+      disk-max-size-mb: 80
       compress-minimum-length: 512
       stat-log-access-count: 10000
     filter:
