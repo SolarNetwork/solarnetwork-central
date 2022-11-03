@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.util;
 
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -72,6 +74,18 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/** The {@code remainingTries} property default value. */
 	public static final int DEFAULT_TRIES = 3;
+
+	/** A random number generator to use. */
+	private static final SecureRandom RNG;
+	static {
+		SecureRandom r;
+		try {
+			r = SecureRandom.getInstance("SHA1PRNG");
+		} catch ( NoSuchAlgorithmException e ) {
+			r = new SecureRandom();
+		}
+		RNG = r;
+	}
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -253,13 +267,10 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 				if ( startDelay > 0 || startDelayRandomness > 0 ) {
 					long delay = startDelay;
 					if ( startDelayRandomness > 0 ) {
-						SecureRandom rng;
-						try {
-							rng = SecureRandom.getInstance("SHA1PRNG");
-						} catch ( NoSuchAlgorithmException e ) {
-							rng = new SecureRandom();
+						delay += (RNG.nextLong(startDelayRandomness) - startDelayRandomness / 2);
+						if ( delay < 0 ) {
+							delay = -delay;
 						}
-						delay += rng.nextLong(startDelayRandomness);
 					}
 					log.debug("[{}] task sleeping for {}ms before start...", name, delay);
 					Thread.sleep(delay);
@@ -310,7 +321,12 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 			} else {
 				var msg = "[%s] task with %s %s failed; tried %d times: %s".formatted(name, role,
 						configId.ident(), tries, e.getMessage());
-				log.warn(msg, e);
+				if ( (e instanceof RestClientException) || (e instanceof IOException)
+						|| (e.getCause() instanceof IOException) ) {
+					log.warn(msg, e);
+				} else {
+					log.error(msg, e);
+				}
 				if ( userEventAppenderBiz != null ) {
 					LogEventInfo event = eventForConfiguration(configId, errorTags, msg);
 					userEventAppenderBiz.addEvent(configId.getUserId(), event);
