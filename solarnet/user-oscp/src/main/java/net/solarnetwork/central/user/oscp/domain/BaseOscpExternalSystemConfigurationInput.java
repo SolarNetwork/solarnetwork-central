@@ -48,7 +48,7 @@ public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOsc
 	protected void populateConfiguration(T conf) {
 		super.populateConfiguration(conf);
 		conf.setBaseUrl(ObjectUtils.requireNonNullArgument(baseUrl, "baseUrl").toString());
-		conf.setOscpVersion(conf.getOscpVersion());
+		conf.setOscpVersion(oscpVersion);
 		conf.setRegistrationStatus(registrationStatus);
 	}
 
