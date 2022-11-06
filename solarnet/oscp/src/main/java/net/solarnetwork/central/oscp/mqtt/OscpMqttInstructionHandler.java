@@ -67,6 +67,7 @@ import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 import net.solarnetwork.central.oscp.util.OscpInstructionUtils;
 import net.solarnetwork.central.oscp.util.SystemTaskContext;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
@@ -165,6 +166,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		Long instructionId = null;
 		Long nodeId = null;
 		Long userId = null;
+		String correlationId = null;
 		try {
 			final JsonNode json = objectMapper.readTree(message.getPayload());
 			log.info("Received OSCP instruction {}", json);
@@ -188,6 +190,13 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 					Executing, null) ) {
 				// assumed claimed by another handler
 				return;
+			}
+
+			correlationId = (json.path(CORRELATION_ID_PARAM).isTextual()
+					? json.path(CORRELATION_ID_PARAM).textValue()
+					: null);
+			if ( correlationId != null ) {
+				eventData.put(CORRELATION_ID_DATA_KEY, correlationId);
 			}
 
 			eventData.put(INSTRUCTION_ID_DATA_KEY, instructionId);
@@ -267,8 +276,8 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 			incrementInstructionReceivedStat(action);
 			generateUserEvent(userId, OSCP_INSTRUCTION_TAGS, "Processing queued instruction", eventData);
-			taskExecutor.execute(
-					new SendOscpInstructionTask(instructionId, nodeId, cg, cp, eventData, action, msg));
+			taskExecutor.execute(new SendOscpInstructionTask(instructionId, nodeId, cg, cp, eventData,
+					action, msg, correlationId));
 		} catch ( IllegalArgumentException e ) {
 			// invalid OSCP message
 			incrementInstructionErrorStat(action);
@@ -336,7 +345,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 		private SendOscpInstructionTask(Long instructionId, Long nodeId,
 				CapacityGroupConfiguration group, CapacityProviderConfiguration provider,
-				Map<String, Object> eventData, String action, Object msg) {
+				Map<String, Object> eventData, String action, Object msg, String correlationId) {
 			super();
 			this.instructionId = instructionId;
 			this.nodeId = nodeId;
@@ -344,9 +353,11 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 			this.eventData = eventData;
 			this.action = action;
 			this.msg = msg;
+			Map<String, Object> params = (correlationId != null
+					? Collections.singletonMap(OscpWebUtils.CORRELATION_ID_HEADER, correlationId)
+					: Collections.emptyMap());
 			this.context = new SystemTaskContext<>(action, OscpRole.CapacityOptimizer, provider,
-					OSCP_INSTRUCTION_ERROR_TAGS, OSCP_INSTRUCTION_TAGS, capacityProviderDao,
-					Collections.emptyMap());
+					OSCP_INSTRUCTION_ERROR_TAGS, OSCP_INSTRUCTION_TAGS, capacityProviderDao, params);
 		}
 
 		@Override

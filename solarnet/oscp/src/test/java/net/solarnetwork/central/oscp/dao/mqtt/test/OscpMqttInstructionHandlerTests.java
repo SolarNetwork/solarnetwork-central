@@ -75,6 +75,7 @@ import net.solarnetwork.central.oscp.mqtt.OscpMqttCountStat;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.TaskContext;
+import net.solarnetwork.central.oscp.web.OscpWebUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
@@ -170,6 +171,27 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 				""";
 		return json.formatted(instructionId, TEST_NODE_ID, TEST_USER_ID, action, TEST_CO_ID,
 				TEST_CG_IDENT, msg);
+	}
+
+	private String instructionJson(Long instructionId, String action, String msg, String correlationId) {
+		if ( correlationId == null ) {
+			return instructionJson(instructionId, action, msg);
+		}
+		var json = """
+				{
+					"id"            : %d,
+					"nodeId"        : %d,
+					"userId"        : %d,
+					"action"        : "%s",
+					"coId"          : %d,
+					"cgIdentifier"  : "%s",
+					"msg"           : %s,
+					"correlationId" : "%s"
+				}
+				""";
+		return json.formatted(instructionId, TEST_NODE_ID, TEST_USER_ID, action, TEST_CO_ID,
+				TEST_CG_IDENT, msg, correlationId);
+
 	}
 
 	@Test
@@ -696,6 +718,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	public void handleMessage() throws IOException {
 		// GIVEN
 		final Long instructionId = UUID.randomUUID().getMostSignificantBits();
+		final String correlationId = UUID.randomUUID().toString();
 		final String action = GroupCapacityComplianceError.class.getSimpleName();
 		var msgJson = """
 					{
@@ -711,7 +734,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 					]
 				}
 				""";
-		var json = instructionJson(instructionId, action, msgJson);
+		var json = instructionJson(instructionId, action, msgJson, correlationId);
 
 		// claim instruction
 		given(nodeInstructionDao.compareAndUpdateInstructionState(instructionId, TEST_NODE_ID, Queuing,
@@ -758,6 +781,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 				is(sameInstance(provider)));
 		assertThat("Task context role is Capacity Optimizer", ctx.role(),
 				is(equalTo(OscpRole.CapacityOptimizer)));
+		assertThat("Task parameters has correlationID", ctx.parameters(),
+				hasEntry(OscpWebUtils.CORRELATION_ID_HEADER, correlationId));
 
 		// completed instruction
 		then(nodeInstructionDao).should().compareAndUpdateInstructionState(eq(instructionId),
@@ -781,6 +806,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		assertThat("Event data content is JSON as Map", eventData,
 				hasEntry(CONTENT_DATA_KEY, mapper.convertValue(
 						mapper.readValue(msgJson, GroupCapacityComplianceError.class), Map.class)));
+		assertThat("Event data correlation ID", eventData,
+				hasEntry(CORRELATION_ID_DATA_KEY, correlationId));
 
 		event = events.get(1);
 		assertThat("Event tags", event.getTags(), is(arrayContaining(OSCP_INSTRUCTION_OUT_TAGS)));
@@ -795,6 +822,8 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 		assertThat("Event data content is JSON as Map", eventData,
 				hasEntry(CONTENT_DATA_KEY, mapper.convertValue(
 						mapper.readValue(msgJson, GroupCapacityComplianceError.class), Map.class)));
+		assertThat("Event data correlation ID", eventData,
+				hasEntry(CORRELATION_ID_DATA_KEY, correlationId));
 	}
 
 }
