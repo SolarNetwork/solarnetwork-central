@@ -91,7 +91,7 @@ public class HttpClientConfig {
 	 */
 	@Profile("!production")
 	@Bean
-	public RestTemplate testingSolarNetworkService(ClientHttpRequestFactory reqFactory) {
+	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
 		//var reqFactory = new SimpleClientHttpRequestFactory();
 		//reqFactory.setOutputStreaming(false);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
