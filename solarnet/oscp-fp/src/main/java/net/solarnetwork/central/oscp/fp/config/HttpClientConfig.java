@@ -76,7 +76,7 @@ public class HttpClientConfig {
 	 *        the request factory
 	 * @return the service
 	 */
-	@Profile("production")
+	@Profile("!http-trace")
 	@Bean
 	public RestTemplate restTemplate(ClientHttpRequestFactory reqFactory) {
 		return new RestTemplate(reqFactory);
@@ -89,7 +89,7 @@ public class HttpClientConfig {
 	 *        the request factory
 	 * @return the non-production service
 	 */
-	@Profile("!production")
+	@Profile("http-trace")
 	@Bean
 	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
 		//var reqFactory = new SimpleClientHttpRequestFactory();
