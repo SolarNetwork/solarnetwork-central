@@ -323,7 +323,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 						configId.ident(), tries, e.getMessage());
 				if ( (e instanceof RestClientException) || (e instanceof IOException)
 						|| (e.getCause() instanceof IOException) ) {
-					log.warn(msg, e);
+					log.warn(msg);
 				} else {
 					log.error(msg, e);
 				}
