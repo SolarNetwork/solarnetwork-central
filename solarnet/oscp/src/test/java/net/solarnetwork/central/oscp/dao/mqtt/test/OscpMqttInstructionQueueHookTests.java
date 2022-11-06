@@ -682,7 +682,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 		// GIVEN
 		final String msgJson = """
 				{
-					"group_id":"foo-group",
+					"group_id":"%s",
 					"type":"CONSUMPTION",
 					"forecasted_blocks":[
 						{
@@ -694,7 +694,7 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 						}
 					]
 				}
-				""";
+				""".formatted(TEST_CG_IDENT);
 		final String action = AdjustGroupCapacityForecast.class.getSimpleName();
 		final NodeInstruction instruction = new NodeInstruction(OSCP_V20_TOPIC, Instant.now(),
 				TEST_NODE_ID);
