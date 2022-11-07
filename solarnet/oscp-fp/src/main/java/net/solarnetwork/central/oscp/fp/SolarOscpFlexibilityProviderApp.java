@@ -32,6 +32,7 @@ import net.solarnetwork.central.common.dao.config.SolarNodeOwnershipDaoConfig;
 import net.solarnetwork.central.datum.config.JdbcDatumEntityDaoConfig;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
+import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
 
 /**
  * Main entry point for the SolarOscp Flexibility Provider application.
@@ -50,7 +51,8 @@ import net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration;
 	MyBatisCommonConfig.class,
 	MainDataSourceConfig.class,
 	SolarNodeOwnershipDaoConfig.class,
-	JdbcDatumEntityDaoConfig.class
+	JdbcDatumEntityDaoConfig.class,
+	WebServiceGlobalControllerSupport.class
 })
 //@formatter:on
 public class SolarOscpFlexibilityProviderApp {
