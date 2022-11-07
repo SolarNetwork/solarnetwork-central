@@ -386,7 +386,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityOptimizer(authInfo.userId(),
 				authInfo.entityId(), groupIdentifier);
 		if ( group == null ) {
-			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
+			throw new AuthorizationException(Reason.ACCESS_DENIED,
+					Map.of("auth", authInfo.asIdentifier(), "group", groupIdentifier));
 		}
 
 		if ( group.getCapacityProviderId() == null ) {
