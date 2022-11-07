@@ -367,7 +367,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 
 		var task = new UpdateGroupCapacityForecastTask(completedFuture(null), systemRole, group,
-				forecast).withParameters(singletonMap(REQUEST_ID_HEADER, forecastIdentifier));
+				forecast, forecastIdentifier);
 		executor.execute(task);
 	}
 
@@ -634,17 +634,20 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		private final CapacityGroupConfiguration group;
 		private final CapacityForecast forecast;
+		private final String forecastIdentifier;
 
 		private UpdateGroupCapacityForecastTask(Future<?> externalSystemReady, OscpRole role,
-				CapacityGroupConfiguration group, CapacityForecast forecast) {
+				CapacityGroupConfiguration group, CapacityForecast forecast, String forecastIdentifier) {
 			super("UpdateGroupCapacityForecast", externalSystemReady, role,
 					new UserLongCompositePK(group.getUserId(), group.getCapacityOptimizerId()),
 					capacityOptimizerDao);
 			this.group = group;
 			this.forecast = requireNonNullArgument(forecast, "forecast");
+			this.forecastIdentifier = requireNonNullArgument(forecastIdentifier, "forecastIdentifier");
 			requireNonNullArgument(forecast.type(), "forecast.type");
 			withErrorEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_ERROR_TAGS);
 			withSuccessEventTags(CAPACITY_PROVIDER_UPDATE_GROUP_CAPACITY_FORECAST_TAGS);
+			withParameters(singletonMap(REQUEST_ID_HEADER, forecastIdentifier));
 		}
 
 		@Override
@@ -693,6 +696,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						DatumSamples s = new DatumSamples();
 						newD.setSamples(s);
 						s.putInstantaneousSampleValue("duration", Duration.between(k, end).toSeconds());
+						s.putStatusSampleValue("forecastIdentifier", forecastIdentifier);
 						return newD;
 					});
 					BigDecimal amount = tba.amount();

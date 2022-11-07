@@ -44,6 +44,9 @@ public interface OscpMqttInstructions extends OscpUserEvents {
 	/** The user ID parameter. */
 	String USER_ID_PARAM = "userId";
 
+	/** The correlation ID parameter. */
+	String CORRELATION_ID_PARAM = "correlationId";
+
 	/** User event tags for OSCP instruction general events. */
 	String[] OSCP_INSTRUCTION_TAGS = new String[] { OSCP_TAG, INSTRUCTION_TAG };
 

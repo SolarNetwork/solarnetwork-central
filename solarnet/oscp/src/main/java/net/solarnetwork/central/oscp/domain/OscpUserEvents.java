@@ -103,6 +103,9 @@ public interface OscpUserEvents {
 	/** A user event data key for an instruction ID. */
 	String INSTRUCTION_ID_DATA_KEY = "instructionId";
 
+	/** A user event data key for an correlation ID. */
+	String CORRELATION_ID_DATA_KEY = "correlationId";
+
 	/** A user event data key for an OSCP capacity optimizer ID. */
 	String CAPACITY_OPTIMIZER_ID_DATA_KEY = "coId";
 

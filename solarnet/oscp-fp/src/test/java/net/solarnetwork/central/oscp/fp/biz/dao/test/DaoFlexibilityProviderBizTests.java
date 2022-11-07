@@ -694,6 +694,8 @@ public class DaoFlexibilityProviderBizTests {
 			assertThat("Datum %d unit property from time block".formatted(i),
 					d.getSamples().getStatusSampleString("unit"),
 					is(equalTo(MeasurementUnit.kW.toString())));
+			assertThat("Datum forecastIdentifier from request ID",
+					d.getSamples().getStatusSampleString("forecastIdentifier"), is(equalTo(requestId)));
 			// FIXME: define constants for property names
 		}
 
