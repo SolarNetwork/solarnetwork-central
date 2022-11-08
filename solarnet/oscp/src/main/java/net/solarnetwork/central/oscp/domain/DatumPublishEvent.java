@@ -62,6 +62,9 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	/** The parameter name for the action. */
 	public static final String ACTION_PARAM = "action";
 
+	/** The parameter name for the action code. */
+	public static final String ACTION_CODE_PARAM = "actionCode";
+
 	/** The parameter name for the source system ID. */
 	public static final String SOURCE_PARAM = "src";
 
@@ -175,6 +178,14 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 		}
 		if ( action != null ) {
 			m.put(ACTION_PARAM, action);
+			StringBuilder buf = new StringBuilder(4);
+			for ( int i = 0, len = action.length(); i < len; i++ ) {
+				char c = action.charAt(i);
+				if ( Character.isUpperCase(c) ) {
+					buf.append(Character.toLowerCase(c));
+				}
+			}
+			m.put(ACTION_CODE_PARAM, buf.toString());
 		}
 		if ( src != null && src.getEntityId() != null ) {
 			m.put(SOURCE_PARAM, src.getEntityId());

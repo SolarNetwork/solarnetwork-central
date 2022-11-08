@@ -96,4 +96,27 @@ public class DatumPublishEventTests {
 		assertThat("Function resolves same", fnResult, is(equalTo(result)));
 	}
 
+	@Test
+	public void resolveSourceId_actionCode() {
+		// GIVEN
+		OwnedGeneralNodeDatum d = new OwnedGeneralNodeDatum(userId);
+
+		UserSettings settings = new UserSettings();
+		settings.setSourceIdTemplate("/oscp/{role}/{actionCode}/{cp}/{co}/{cgIdentifier}");
+
+		DatumPublishEvent event = new DatumPublishEvent(OscpRole.CapacityOptimizer,
+				GroupCapacityComplianceError.class.getSimpleName(), optimizer, provider, group, settings,
+				singleton(d), (KeyValuePair[]) null);
+
+		// WHEN
+		String result = event.sourceId();
+		Function<DatumPublishEvent, String> fn = DatumPublishEvent::sourceId;
+		String fnResult = fn.apply(event);
+
+		// THEN
+		assertThat("Source ID resolved", result, is(equalTo("/oscp/co/gcce/%d/%d/%s"
+				.formatted(provider.getEntityId(), optimizer.getEntityId(), group.getIdentifier()))));
+		assertThat("Function resolves same", fnResult, is(equalTo(result)));
+	}
+
 }
