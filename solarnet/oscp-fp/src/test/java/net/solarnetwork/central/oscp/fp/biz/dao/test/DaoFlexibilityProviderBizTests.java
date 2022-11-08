@@ -90,7 +90,6 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ConfigurationFilter;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
-import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
@@ -150,9 +149,6 @@ public class DaoFlexibilityProviderBizTests {
 	private CapacityGroupSettingsDao capacitySettingsDao;
 
 	@Mock
-	private UserSettingsDao userSettingsDao;
-
-	@Mock
 	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
@@ -194,7 +190,7 @@ public class DaoFlexibilityProviderBizTests {
 		biz = new DaoFlexibilityProviderBiz(executor,
 				new RestOpsExternalSystemClient(restTemplate, userEventAppenderBiz),
 				userEventAppenderBiz, flexibilityProviderDao, capacityProviderDao, capacityOptimizerDao,
-				capacityGroupDao, userSettingsDao, capacitySettingsDao, nodeOwnershipDao);
+				capacityGroupDao, capacitySettingsDao, nodeOwnershipDao);
 		biz.setTaskStartDelay(0);
 		biz.setTaskStartDelayRandomness(0);
 		biz.setDatumDao(datumDao);

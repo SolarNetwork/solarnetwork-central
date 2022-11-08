@@ -81,7 +81,6 @@ import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.dao.ExternalSystemConfigurationDao;
 import net.solarnetwork.central.oscp.dao.FlexibilityProviderDao;
-import net.solarnetwork.central.oscp.dao.UserSettingsDao;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityForecast;
@@ -130,7 +129,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	private final CapacityProviderConfigurationDao capacityProviderDao;
 	private final CapacityOptimizerConfigurationDao capacityOptimizerDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;
-	private final UserSettingsDao userSettingsDao;
 	private final CapacityGroupSettingsDao capacityGroupSettingsDao;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private Map<String, String> versionUrlMap = defaultVersionUrlMap();
@@ -185,7 +183,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			UserEventAppenderBiz userEventAppenderBiz, FlexibilityProviderDao flexibilityProviderDao,
 			CapacityProviderConfigurationDao capacityProviderDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
-			CapacityGroupConfigurationDao capacityGroupDao, UserSettingsDao userSettingsDao,
+			CapacityGroupConfigurationDao capacityGroupDao,
 			CapacityGroupSettingsDao capacityGroupSettingsDao, SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();
 		this.executor = requireNonNullArgument(executor, "executor");
@@ -196,7 +194,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 		this.capacityOptimizerDao = requireNonNullArgument(capacityOptimizerDao, "capacityOptimizerDao");
 		this.capacityGroupDao = requireNonNullArgument(capacityGroupDao, "capacityGroupDao");
-		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.capacityGroupSettingsDao = requireNonNullArgument(capacityGroupSettingsDao,
 				"capacityGroupSettingsDao");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
@@ -340,8 +337,14 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		dao.updateOfflineDate(authInfo.id(), expiresDate);
 
-		var task = new HeartbeatTask<>(authInfo, expiresDate, dao);
-		executor.execute(task);
+		Collection<CapacityGroupConfiguration> groups = (systemRole == OscpRole.CapacityProvider
+				? capacityGroupDao.findAllForCapacityProvider(authInfo.userId(), authInfo.entityId())
+				: capacityGroupDao.findAllForCapacityOptimizer(authInfo.userId(), authInfo.entityId()));
+
+		for ( CapacityGroupConfiguration group : groups ) {
+			var task = new HeartbeatTask<>(authInfo, expiresDate, dao, group);
+			executor.execute(task);
+		}
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -517,12 +520,14 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			extends BaseDeferredSystemTask<C> implements Supplier<Collection<OwnedGeneralNodeDatum>> {
 
 		private final Instant expires;
+		private final CapacityGroupConfiguration group;
 		private final Instant ts = Instant.now();
 
 		private HeartbeatTask(AuthRoleInfo authInfo, Instant expiresDate,
-				ExternalSystemConfigurationDao<C> dao) {
+				ExternalSystemConfigurationDao<C> dao, CapacityGroupConfiguration group) {
 			super("Heartbeat", completedFuture(null), authInfo.role(), authInfo.id(), dao);
 			this.expires = requireNonNullArgument(expiresDate, "expiresDate");
+			this.group = group;
 			if ( role == OscpRole.CapacityProvider ) {
 				withErrorEventTags(CAPACITY_PROVIDER_HEARTBEAT_ERROR_TAGS);
 				withErrorEventTags(CAPACITY_PROVIDER_HEARTBEAT_TAGS);
@@ -534,7 +539,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		@Override
 		public void doWork() {
-			DatumPublishSettings settings = userSettingsDao.get(configId.getUserId());
+			DatumPublishSettings settings = capacityGroupSettingsDao
+					.resolveDatumPublishSettings(configId.getUserId(), group.getIdentifier());
 			if ( settings == null ) {
 				return;
 			}
@@ -546,7 +552,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			} else if ( src instanceof CapacityOptimizerConfiguration c ) {
 				optimizer = c;
 			}
-			publish(Heartbeat.class.getSimpleName(), null, provider, optimizer, null, settings, this);
+			publish(Heartbeat.class.getSimpleName(), null, provider, optimizer, group, settings, this);
 		}
 
 		@Override
