@@ -76,7 +76,7 @@ public class SelectExternalSystemForHeartbeat implements PreparedStatementCreato
 		buf.append("\tON c.user_id = h.user_id AND c.id = h.id\n");
 		buf.append("""
 				WHERE c.reg_status = ascii('r')
-					AND c.heartbeat_secs IS NOT NULL
+					AND c.heartbeat_secs > 0
 					AND (h.heartbeat_at IS NULL OR heartbeat_at
 						+ (c.heartbeat_secs * INTERVAL '1 second') < CURRENT_TIMESTAMP)
 					AND c.enabled = TRUE""");
