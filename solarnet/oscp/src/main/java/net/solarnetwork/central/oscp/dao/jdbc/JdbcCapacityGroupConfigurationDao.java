@@ -107,6 +107,30 @@ public class JdbcCapacityGroupConfigurationDao implements CapacityGroupConfigura
 	}
 
 	@Override
+	public Collection<CapacityGroupConfiguration> findAllForCapacityProvider(Long userId,
+			Long capacityProviderId) {
+		var filter = new BasicConfigurationFilter();
+		filter.setUserId(requireNonNullArgument(userId, "userId"));
+		filter.setProviderId(requireNonNullArgument(capacityProviderId, "capacityProviderId"));
+		var sql = new SelectCapacityGroupConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql,
+				CapacityGroupConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).toList();
+	}
+
+	@Override
+	public Collection<CapacityGroupConfiguration> findAllForCapacityOptimizer(Long userId,
+			Long capacityOptimizerId) {
+		var filter = new BasicConfigurationFilter();
+		filter.setUserId(requireNonNullArgument(userId, "userId"));
+		filter.setOptimizerId(requireNonNullArgument(capacityOptimizerId, "capacityOptimizerId"));
+		var sql = new SelectCapacityGroupConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql,
+				CapacityGroupConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).toList();
+	}
+
+	@Override
 	public CapacityGroupConfiguration get(UserLongCompositePK id) {
 		var filter = new BasicConfigurationFilter();
 		filter.setUserId(

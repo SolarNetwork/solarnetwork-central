@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.dao;
 
 import java.time.Instant;
+import java.util.Collection;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
@@ -52,6 +53,18 @@ public interface CapacityGroupConfigurationDao
 			String groupIdentifier);
 
 	/**
+	 * Find all groups for a given capacity provider.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the group for
+	 * @param capacityProviderId
+	 *        the ID of the Capacity Provider to get the group for
+	 * @return the configurations, never {@literal null}
+	 */
+	Collection<CapacityGroupConfiguration> findAllForCapacityProvider(Long userId,
+			Long capacityProviderId);
+
+	/**
 	 * Find a group for a given capacity optimizer and group identifier.
 	 * 
 	 * @param userId
@@ -64,6 +77,18 @@ public interface CapacityGroupConfigurationDao
 	 */
 	CapacityGroupConfiguration findForCapacityOptimizer(Long userId, Long capacityOptimizerId,
 			String groupIdentifier);
+
+	/**
+	 * Find all groups for a given capacity optimizer.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the group for
+	 * @param capacityOptimizerId
+	 *        the ID of the Capacity Optimizer to get the group for
+	 * @return the configurations, never {@literal null}
+	 */
+	Collection<CapacityGroupConfiguration> findAllForCapacityOptimizer(Long userId,
+			Long capacityOptimizerId);
 
 	/**
 	 * Compare and update the measurement date.

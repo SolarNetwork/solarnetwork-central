@@ -252,4 +252,43 @@ public class SelectCapacityGroupConfigurationTests {
 		thenPrepStatement(result, filter);
 	}
 
+	@Test
+	public void findAllForCapacityProvider_sql() {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+
+		// WHEN
+		String sql = new SelectCapacityGroupConfiguration(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-capacity-group-conf-cp-one.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void findAllForCapacityProvider_prep() throws SQLException {
+		// GIVEN
+		BasicConfigurationFilter filter = new BasicConfigurationFilter();
+		filter.setUserId(1L);
+		filter.setProviderId(2L);
+
+		givenPrepStatement();
+
+		// WHEN
+		PreparedStatement result = new SelectCapacityGroupConfiguration(filter)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-capacity-group-conf-cp-one.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
 }
