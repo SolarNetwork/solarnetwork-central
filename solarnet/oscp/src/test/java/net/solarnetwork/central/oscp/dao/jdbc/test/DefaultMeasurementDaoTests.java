@@ -35,10 +35,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.will;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -140,9 +142,27 @@ public class DefaultMeasurementDaoTests {
 		Collection<Measurement> results = dao.getMeasurements(asset, criteria);
 
 		// THEN
-		then(readingDatumDao).should().findFilteredStream(criteriaCaptor.capture(), any(), isNull(),
-				isNull(), isNull());
-		DatumCriteria daoCriteria = criteriaCaptor.getValue();
+		then(readingDatumDao).should(times(2)).findFilteredStream(criteriaCaptor.capture(), any(),
+				isNull(), isNull(), isNull());
+
+		// query 1 for instantaneous averages
+		DatumCriteria daoCriteria = criteriaCaptor.getAllValues().get(0);
+		assertThat("Datum criteria reading type not set", daoCriteria.getReadingType(), is(nullValue()));
+		assertThat("Datum criteria time tolerance not set", daoCriteria.getTimeTolerance(),
+				is(nullValue()));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation as duration of input criteria date range",
+				daoCriteria.getAggregation(), is(equalTo(Aggregation.FifteenMinute)));
+
+		// query 2 for accumulating reading
+		daoCriteria = criteriaCaptor.getAllValues().get(1);
 		assertThat("Datum criteria reading type", daoCriteria.getReadingType(),
 				is(equalTo(DatumReadingType.CalculatedAtDifference)));
 		assertThat("Datum criteria time tolerance", daoCriteria.getTimeTolerance(),
@@ -155,6 +175,7 @@ public class DefaultMeasurementDaoTests {
 				is(equalTo(start)));
 		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
 				is(equalTo(end)));
+		assertThat("Datum criteria aggregation not set", daoCriteria.getAggregation(), is(nullValue()));
 
 		List<Measurement> resultList = new ArrayList<>(results);
 		assertThat("Results returned for instantaneous and energy measurements", results, hasSize(2));
