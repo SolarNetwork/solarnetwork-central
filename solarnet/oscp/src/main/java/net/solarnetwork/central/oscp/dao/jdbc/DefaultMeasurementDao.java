@@ -35,6 +35,7 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
+import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.oscp.dao.MeasurementDao;
@@ -117,7 +118,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 				return Collections.emptyList();
 			}
 			StreamDatum sd = processor.getData().get(0);
-			if ( sd instanceof ReadingDatum d ) {
+			if ( sd instanceof AggregateDatum d ) {
 				ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
 						.metadataForStreamId(d.getStreamId());
 				AssetInstantaneousDatumConfiguration inst = asset.getInstantaneous();
@@ -142,7 +143,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 						v = v.multiply(inst.getMultiplier());
 					}
 					Measurement m = Measurement.instantaneousMeasurement(v, asset.getPhase(),
-							inst.getUnit(), d.getEndTimestamp());
+							inst.getUnit(), criteria.getEndDate());
 					result.add(m);
 				}
 			}
