@@ -169,6 +169,45 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	}
 
 	/**
+	 * Get a custom URL path, if available.
+	 * 
+	 * @param name
+	 *        the unique name of the custom URL path to get
+	 * @return the associated custom URL path, or {@literal null} if not
+	 *         available
+	 */
+	public String customUrlPath(String name) {
+		final Map<String, Object> props = getServiceProps();
+		if ( props == null ) {
+			return null;
+		}
+		final Object urlsProp = props.get(ExternalSystemServiceProperties.URL_PATHS);
+		if ( urlsProp instanceof Map<?, ?> urls ) {
+			Object val = urls.get(name);
+			if ( val != null ) {
+				return val.toString();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Get a custom URL path, using a fallback value if not available.
+	 * 
+	 * @param name
+	 *        the unique name of the custom URL path to get
+	 * @param fallback
+	 *        the value to use if no custom URL path for {@code name} is
+	 *        available
+	 * @return the associated custom URL path, or {@code fallback} if not
+	 *         available
+	 */
+	public String customUrlPath(String name, String fallback) {
+		String path = customUrlPath(name);
+		return (path != null ? path : fallback);
+	}
+
+	/**
 	 * Get the extra HTTP headers if available.
 	 * 
 	 * @return the extra HTTP headers, or {@literal null}

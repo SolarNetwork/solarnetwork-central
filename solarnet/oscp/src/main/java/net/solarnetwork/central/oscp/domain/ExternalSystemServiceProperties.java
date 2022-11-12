@@ -69,4 +69,26 @@ public interface ExternalSystemServiceProperties {
 	 * </p>
 	 */
 	String EXTRA_HTTP_HEADERS = "http-headers";
+
+	/**
+	 * A service property that can be used to define custom URL paths for OSCP
+	 * action messages to be sent to, instead of the URL paths defined in the
+	 * OSCP standard.
+	 * 
+	 * <p>
+	 * The value associated with this key should be a simple map of string
+	 * key/value pairs. The supported keys are:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li><code>AdjustGroupCapacityForecast</code></li>
+	 * <li><code>GroupCapacityComplianceError</code></li>
+	 * <li><code>Heartbeat</code></li>
+	 * <li><code>HandshakeAcknowledge</code></li>
+	 * <li><code>Register</code></li>
+	 * <li><code>UpdateGroupCapacityForecast</code></li>
+	 * </ul>
+	 */
+	String URL_PATHS = "url-paths";
+
 }

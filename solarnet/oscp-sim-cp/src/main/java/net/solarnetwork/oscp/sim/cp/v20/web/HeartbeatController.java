@@ -59,7 +59,7 @@ public class HeartbeatController {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 	}
 
-	@PostMapping(path = HB_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = { HB_20_URL_PATH, "/alt/oscp-heartbeat" }, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> heartbeat20(@RequestBody Heartbeat input, WebRequest request) {
 		log.info("Processing {} request: {}", HB_20_URL_PATH, input);
 

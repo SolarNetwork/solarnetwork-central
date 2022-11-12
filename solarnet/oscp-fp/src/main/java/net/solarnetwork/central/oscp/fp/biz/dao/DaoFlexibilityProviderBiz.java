@@ -737,7 +737,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		private HandshakeAckTask(Future<?> externalSystemReady, OscpRole role,
 				UserLongCompositePK configId, ExternalSystemConfigurationDao<C> dao,
 				SystemSettings settings) {
-			super("Handshake", externalSystemReady, role, configId, dao);
+			super("HandshakeAcknowledge", externalSystemReady, role, configId, dao);
 			this.settings = requireNonNullArgument(settings, "settings");
 			withErrorEventTags(CAPACITY_PROVIDER_HANDSHAKE_ERROR_TAGS);
 			withSuccessEventTags(CAPACITY_PROVIDER_HANDSHAKE_TAGS);

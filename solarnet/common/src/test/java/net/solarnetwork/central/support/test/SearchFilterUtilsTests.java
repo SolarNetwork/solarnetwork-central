@@ -115,7 +115,6 @@ public class SearchFilterUtilsTests {
 
 	@Test
 	public void sqlJsonPath_nestedMiddle() {
-
 		// GIVEN
 		SearchFilter f = SearchFilter.forLDAPSearchFilterString(
 				"(& (foo=bar) (| (bam.pop~=whiz) (boo.boo>0) ) (bam.ding<=9))");
@@ -128,4 +127,17 @@ public class SearchFilterUtilsTests {
 				"$ ? (@.foo == \"bar\" && (@.bam.pop like_regex \"whiz\" || @.boo.boo > 0) && @.bam.ding <= 9)")));
 	}
 
+	@Test
+	public void sqlJsonPath_invalidNotEqual() {
+		// GIVEN
+		SearchFilter f = SearchFilter
+				.forLDAPSearchFilterString("(&(action=StartTransaction)(message.idTag!=nzbus0002))");
+
+		// WHEN
+		String result = SearchFilterUtils.toSqlJsonPath(f);
+
+		// THEN
+		assertThat("Invalid != path", result, is(
+				equalTo("$ ? (@.action == \"StartTransaction\" && @.message.idTag! == \"nzbus0002\")")));
+	}
 }
