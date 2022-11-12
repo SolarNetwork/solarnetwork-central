@@ -190,7 +190,9 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 				}
 			} else {
 				String authToken = context.authToken();
-				headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+				if ( authToken != null ) {
+					headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(authToken));
+				}
 			}
 
 			if ( extraHttpHeaders != null ) {

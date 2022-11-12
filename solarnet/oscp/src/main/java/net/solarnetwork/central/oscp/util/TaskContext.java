@@ -123,18 +123,10 @@ public interface TaskContext<C extends BaseOscpExternalSystemConfiguration<C>> {
 	 *        the DAO to use
 	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
-	 * @return the token
+	 * @return the token, or {@literal null} if not available
 	 */
 	default String authToken(String... extraErrorTags) {
-		String authToken = dao().getExternalSystemAuthToken(config().getId());
-		if ( authToken == null ) {
-			var msg = "[%s] task with %s %s failed because the authorization token is not available."
-					.formatted(name(), role(), config().getId().ident());
-			LogEventInfo event = eventForConfiguration(config(), errorEventTags(),
-					"Missing authorization token");
-			throw new ExternalSystemConfigurationException(role(), config(), event, msg);
-		}
-		return authToken;
+		return dao().getExternalSystemAuthToken(config().getId());
 	}
 
 	/**
