@@ -137,7 +137,7 @@ public class HeartbeatJob extends JobSupport {
 			try {
 				client.systemExchange(ctx, HttpMethod.POST, () -> {
 					ctx.verifySystemOscpVersion(supportedOscpVersions);
-					return HEARTBEAT_URL_PATH;
+					return ctx.config().customUrlPath("Heartbeat", HEARTBEAT_URL_PATH);
 				}, new Heartbeat(expires));
 				return Instant.now();
 			} catch ( RuntimeException e ) {

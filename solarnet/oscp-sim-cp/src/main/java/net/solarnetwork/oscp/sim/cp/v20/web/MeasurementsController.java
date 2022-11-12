@@ -66,7 +66,8 @@ public class MeasurementsController {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 	}
 
-	@PostMapping(path = UGM_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = { UGM_20_URL_PATH,
+			"/alt/oscp-update-group-measurements" }, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> updateGroupMeasurements20(@RequestBody UpdateGroupMeasurements input,
 			WebRequest request) {
 		log.info("Processing {} request: {}", UGM_20_URL_PATH, input);
@@ -78,7 +79,8 @@ public class MeasurementsController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PostMapping(path = UAM_20_URL_PATH, consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = { UAM_20_URL_PATH,
+			"/alt/oscp-update-asset-measurements" }, consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> updateAssetMeasurements20(@RequestBody UpdateAssetMeasurement input,
 			WebRequest request) {
 		log.info("Processing {} request: {}", UAM_20_URL_PATH, input);

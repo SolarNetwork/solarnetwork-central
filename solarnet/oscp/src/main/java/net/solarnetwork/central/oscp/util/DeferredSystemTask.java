@@ -455,7 +455,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	protected void post(String path, Object body, String... extraErrorTags) {
 		SystemTaskContext<C> ctx = context(extraErrorTags);
-		client.systemExchange(ctx, HttpMethod.POST, () -> path, body);
+		client.systemExchange(ctx, HttpMethod.POST, () -> {
+			return ctx.config().customUrlPath(name, path);
+		}, body);
 	}
 
 }

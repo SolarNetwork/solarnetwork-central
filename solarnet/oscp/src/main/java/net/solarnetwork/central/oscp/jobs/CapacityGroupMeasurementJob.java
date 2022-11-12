@@ -186,10 +186,11 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				try {
 					client.systemExchange(ctx, HttpMethod.POST, () -> {
 						ctx.verifySystemOscpVersion(supportedOscpVersions);
-						if ( useAssetMeasurement ) {
-							return UPDATE_ASSET_MEASUREMENTS_URL_PATH;
-						}
-						return UPDATE_GROUP_MEASUREMENTS_URL_PATH;
+						return ctx.config().customUrlPath(
+								useAssetMeasurement ? "UpdateAssetMeasurements"
+										: "UpdateGroupMeasurements",
+								useAssetMeasurement ? UPDATE_ASSET_MEASUREMENTS_URL_PATH
+										: UPDATE_GROUP_MEASUREMENTS_URL_PATH);
 					}, msg);
 				} catch ( RuntimeException e ) {
 					// ignore and continue; assume event logged in client.systemExchange()
