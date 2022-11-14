@@ -36,6 +36,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -43,6 +44,7 @@ import static org.junit.Assert.fail;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,7 +99,7 @@ import net.solarnetwork.ocpp.service.AuthorizationService;
  * Test cases for the {@link OcppSessionDatumManager} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class OcppSessionDatumManagerTests {
 
@@ -536,7 +538,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -621,7 +623,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3456")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1, r2, r3, r4, r5, r6));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2, r3, r4, r5, r6));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(),
@@ -677,7 +679,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -719,7 +721,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("305.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -759,7 +761,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -798,7 +800,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -825,7 +827,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -874,7 +876,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.5")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1, r2));
@@ -902,7 +904,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -1019,7 +1021,7 @@ public class OcppSessionDatumManagerTests {
 				.withUnit(UnitOfMeasure.Celsius)
 				.build());
 		// @formatter:on
-		manager.addChargingSessionReadings(sampledValues);
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), sampledValues);
 
 		// THEN
 		SampledValue[] sortedSampledValues = sampledValues
@@ -1058,7 +1060,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -1101,7 +1103,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1133,7 +1135,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -1172,7 +1174,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1202,7 +1204,7 @@ public class OcppSessionDatumManagerTests {
 		int transactionId = 123;
 
 		// get ChargePoint
-		expect(chargePointDao.get(cp.getId())).andReturn(cp);
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
 
 		// get ChargePointSettings
 		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
@@ -1237,10 +1239,186 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
+	}
+
+	@Test
+	public void addReadings_noTransaction_oneLocation() {
+		// given
+		String identifier = UUID.randomUUID().toString();
+		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
+				Instant.now(), new ChargePointInfo(identifier));
+
+		// get ChargePoint
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
+
+		// get ChargePointSettings
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
+		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		final int expectedDatumCount = 1;
+
+		// save readings
+		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
+		chargeSessionDao.addReadings(capture(readingsCaptor));
+
+		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+				.times(expectedDatumCount);
+
+		// publish to SolarFlux
+		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>(CaptureType.ALL);
+		expect(fluxPublisher.isConfigured()).andReturn(true).times(expectedDatumCount);
+		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true)
+				.times(expectedDatumCount);
+
+		// when
+		replayAll();
+
+		// @formatter:off
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		SampledValue r1 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Inlet)
+				.withMeasurand(Measurand.EnergyActiveImportRegister)
+				.withUnit(UnitOfMeasure.Wh)
+				.withValue("1234")
+				.build();
+		SampledValue r2 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Inlet)
+				.withMeasurand(Measurand.PowerActiveImport)
+				.withUnit(UnitOfMeasure.W)
+				.withValue("500")
+				.build();
+		
+		// @formatter:on
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
+
+		// then
+		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1, r2));
+
+		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
+		assertThat("Consolidated readings into 1 datum based on date", persistedDatum,
+				hasSize(expectedDatumCount));
+
+		GeneralNodeDatum d = persistedDatum.get(0);
+		assertThat("Datum source ID", d.getSourceId(), equalTo("/ocpp/cp/" + identifier + "/0/Inlet"));
+		assertThat("Datum session ID", d.getSamples().getStatusSampleString("sessionId"),
+				is(nullValue()));
+		assertThat("Datum @ trigger", d.getCreated(), equalTo(r1.getTimestamp()));
+		assertThat("Datum consolidated properties", d.getSampleData(),
+				allOf(hasEntry("wattHours", new BigDecimal(r1.getValue())),
+						hasEntry("watts", new BigDecimal(r2.getValue()))));
+
+		List<Identity<GeneralNodeDatumPK>> fluxDatum = fluxPublishCaptor.getValues();
+		assertThat("Same number datum published to SolarFlux as SolarIn", fluxDatum.size(),
+				equalTo(persistedDatum.size()));
+		for ( int i = 0; i < fluxDatum.size(); i++ ) {
+			assertThat("Same datum published to SolarFlux as SolarIn", fluxDatum.get(i),
+					sameInstance(persistedDatum.get(i)));
+		}
+	}
+
+	@Test
+	public void addReadings_noTransaction_multiLocation() {
+		// given
+		String identifier = UUID.randomUUID().toString();
+		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
+				Instant.now(), new ChargePointInfo(identifier));
+
+		// get ChargePoint
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
+
+		// get ChargePointSettings
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
+		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		final int expectedDatumCount = 2;
+
+		// save readings
+		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
+		chargeSessionDao.addReadings(capture(readingsCaptor));
+
+		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+				.times(expectedDatumCount);
+
+		// publish to SolarFlux
+		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>(CaptureType.ALL);
+		expect(fluxPublisher.isConfigured()).andReturn(true).times(expectedDatumCount);
+		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true)
+				.times(expectedDatumCount);
+
+		// when
+		replayAll();
+
+		// @formatter:off
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		SampledValue r1 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Inlet)
+				.withMeasurand(Measurand.EnergyActiveImportRegister)
+				.withUnit(UnitOfMeasure.Wh)
+				.withValue("1234")
+				.build();
+		SampledValue r2 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Outlet)
+				.withMeasurand(Measurand.PowerActiveImport)
+				.withUnit(UnitOfMeasure.W)
+				.withValue("500")
+				.build();
+		
+		// @formatter:on
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
+
+		// then
+		assertThat("Persisted readings same as passed in (sorted)", readingsCaptor.getValue(),
+				contains(r2, r1));
+
+		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
+		assertThat("Consolidated readings into 2 datum based on date", persistedDatum,
+				hasSize(expectedDatumCount));
+
+		GeneralNodeDatum d;
+
+		d = persistedDatum.get(0);
+		assertThat("Datum source ID", d.getSourceId(), equalTo("/ocpp/cp/" + identifier + "/0/Outlet"));
+		assertThat("Datum session ID", d.getSamples().getStatusSampleString("sessionId"),
+				is(nullValue()));
+		assertThat("Datum @ trigger", d.getCreated(), equalTo(r2.getTimestamp()));
+		assertThat("Datum consolidated properties", d.getSampleData(),
+				hasEntry("watts", new BigDecimal(r2.getValue())));
+
+		d = persistedDatum.get(1);
+		assertThat("Datum source ID", d.getSourceId(), equalTo("/ocpp/cp/" + identifier + "/0/Inlet"));
+		assertThat("Datum session ID", d.getSamples().getStatusSampleString("sessionId"),
+				is(nullValue()));
+		assertThat("Datum @ trigger", d.getCreated(), equalTo(r1.getTimestamp()));
+		assertThat("Datum consolidated properties", d.getSampleData(),
+				hasEntry("wattHours", new BigDecimal(r1.getValue())));
+
+		List<Identity<GeneralNodeDatumPK>> fluxDatum = fluxPublishCaptor.getValues();
+		assertThat("Same number datum published to SolarFlux as SolarIn", fluxDatum.size(),
+				equalTo(persistedDatum.size()));
+		for ( int i = 0; i < fluxDatum.size(); i++ ) {
+			assertThat("Same datum published to SolarFlux as SolarIn", fluxDatum.get(i),
+					sameInstance(persistedDatum.get(i)));
+		}
 	}
 
 }
