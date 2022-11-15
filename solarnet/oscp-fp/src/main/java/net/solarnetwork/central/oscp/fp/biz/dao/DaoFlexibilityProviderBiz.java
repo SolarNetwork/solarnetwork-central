@@ -230,7 +230,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(externalSystemToken, "externalSystemToken");
 		requireNonNullArgument(versionUrl, "versionUrl");
 
-		log.info("Register for {} {} with version URL: {}", systemRole, authInfo.id().ident(),
+		log.info("Register from {} {} with version URL: {}", systemRole, authInfo.id().ident(),
 				versionUrl);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
@@ -282,7 +282,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(settings, "settings");
 		requireNonNullArgument(requestIdentifier, "requestIdentifier");
 
-		log.info("Handshake for {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
+		log.info("Handshake from {} {} with settings: {}", systemRole, authInfo.id().ident(), settings);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
 		BasicConfigurationFilter filter = filterForUsers(authInfo.userId());
@@ -309,7 +309,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(settings, "settings");
 
-		log.info("Handshake acknowledge for {} {} with settings: {}", systemRole, authInfo.id().ident(),
+		log.info("Handshake acknowledge from {} {} with settings: {}", systemRole, authInfo.id().ident(),
 				settings);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
@@ -331,7 +331,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
 		requireNonNullArgument(expiresDate, "expiresDate");
 
-		log.info("Heartbeat for {} {} with expiration: {}", systemRole, authInfo.id().ident(),
+		log.info("Heartbeat from {} {} with expiration: {}", systemRole, authInfo.id().ident(),
 				expiresDate);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
@@ -356,7 +356,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(forecastIdentifier, "forecastIdentifier");
 		requireNonNullArgument(forecast, "forecast");
 
-		log.info("Update Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
+		log.info("Update Group Capacity Forecast from {} {} to group [{}] with forecast: {}", systemRole,
 				authInfo.id().ident(), groupIdentifier, forecast);
 
 		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityProvider(authInfo.userId(),
@@ -383,7 +383,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(requestIdentifier, "requestIdentifier");
 		requireNonNullArgument(forecast, "forecast");
 
-		log.info("Adjust Group Capacity Forecast for {} {} to group [{}] with forecast: {}", systemRole,
+		log.info("Adjust Group Capacity Forecast from {} {} to group [{}] with forecast: {}", systemRole,
 				authInfo.id().ident(), groupIdentifier, forecast);
 
 		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityOptimizer(authInfo.userId(),
@@ -412,7 +412,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		requireNonNullArgument(groupIdentifier, "groupIdentifier");
 
 		log.info(
-				"Group Capacity Compliance Error for {} {} to group [{}] with message [{}] and blocks: {}",
+				"Group Capacity Compliance Error from {} {} to group [{}] with message [{}] and blocks: {}",
 				systemRole, authInfo.id().ident(), groupIdentifier, message, blocks);
 
 		CapacityGroupConfiguration group = capacityGroupDao.findForCapacityOptimizer(authInfo.userId(),
