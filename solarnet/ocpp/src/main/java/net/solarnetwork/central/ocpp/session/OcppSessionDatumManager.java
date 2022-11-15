@@ -90,7 +90,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -415,9 +415,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		readings.add(reading);
 		Map<UUID, ChargeSession> sessions = new HashMap<>(2);
 		sessions.put(sess.getId(), sess);
-		Map<Long, CentralChargePoint> chargePoints = new HashMap<>(2);
-		chargePoints.put(cp.getId(), cp);
-		addReadings(readings, sessions, chargePoints, new HashMap<>(2));
+		Map<ChargePointIdentity, CentralChargePoint> chargePoints = new HashMap<>(2);
+		chargePoints.put(info.getChargePointId(), cp);
+		addReadings(info.getChargePointId(), readings, sessions, chargePoints, new HashMap<>(2));
 
 		return new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.Accepted, null,
 				null);
@@ -440,7 +440,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
 			ChargeSession sess, SampledValue reading) {
 		final String sourceId = sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-				sess.getConnectorId(), reading.getLocation());
+				sess != null ? sess.getConnectorId() : 0, reading.getLocation());
 		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
 	}
 
@@ -454,34 +454,39 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		if ( d.getSamples() != null && !d.getSamples().isEmpty() ) {
 			d.setCreated(reading.getTimestamp());
 			d.setSourceId(sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-					sess.getConnectorId(), reading.getLocation()));
-			d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
-					DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
-			// TODO - implement support for reservation ID
-			//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
-			//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
-			d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
-					DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
-			d.getSamples().putSampleValue(DatumProperty.TransactionId.getClassification(),
-					DatumProperty.TransactionId.getPropertyName(),
-					String.valueOf(sess.getTransactionId()));
-			if ( sess.getEnded() != null ) {
-				d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
-						DatumProperty.SessionEndDate.getPropertyName(), sess.getEnded().toEpochMilli());
-			}
-			d.getSamples().putSampleValue(DatumProperty.SessionEndAuthorizationToken.getClassification(),
-					DatumProperty.SessionEndAuthorizationToken.getPropertyName(), sess.getEndAuthId());
-			if ( sess.getEndReason() != null ) {
-				d.getSamples().putSampleValue(DatumProperty.SessionEndReason.getClassification(),
-						DatumProperty.SessionEndReason.getPropertyName(),
-						sess.getEndReason().toString());
-			}
-			if ( sess.getCreated() != null
-					&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
-				Duration dur = Duration.between(sess.getCreated(),
-						sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
-				d.getSamples().putSampleValue(DatumProperty.SessionDuration.getClassification(),
-						DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
+					sess != null ? sess.getConnectorId() : 0, reading.getLocation()));
+			if ( sess != null ) {
+				d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
+						DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
+				// TODO - implement support for reservation ID
+				//d.getSamples().putSampleValue(DatumProperty.ReservationId.getClassification(),
+				//		DatumProperty.ReservationId.getPropertyName(), sess.getReservationId());
+				d.getSamples().putSampleValue(DatumProperty.SessionId.getClassification(),
+						DatumProperty.SessionId.getPropertyName(), sess.getId().toString());
+				d.getSamples().putSampleValue(DatumProperty.TransactionId.getClassification(),
+						DatumProperty.TransactionId.getPropertyName(),
+						String.valueOf(sess.getTransactionId()));
+				if ( sess.getEnded() != null ) {
+					d.getSamples().putSampleValue(DatumProperty.SessionEndDate.getClassification(),
+							DatumProperty.SessionEndDate.getPropertyName(),
+							sess.getEnded().toEpochMilli());
+				}
+				d.getSamples().putSampleValue(
+						DatumProperty.SessionEndAuthorizationToken.getClassification(),
+						DatumProperty.SessionEndAuthorizationToken.getPropertyName(),
+						sess.getEndAuthId());
+				if ( sess.getEndReason() != null ) {
+					d.getSamples().putSampleValue(DatumProperty.SessionEndReason.getClassification(),
+							DatumProperty.SessionEndReason.getPropertyName(),
+							sess.getEndReason().toString());
+				}
+				if ( sess.getCreated() != null
+						&& (sess.getEnded() != null || reading.getTimestamp() != null) ) {
+					Duration dur = Duration.between(sess.getCreated(),
+							sess.getEnded() != null ? sess.getEnded() : reading.getTimestamp());
+					d.getSamples().putSampleValue(DatumProperty.SessionDuration.getClassification(),
+							DatumProperty.SessionDuration.getPropertyName(), dur.getSeconds());
+				}
 			}
 			return d;
 		}
@@ -496,12 +501,16 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void addChargingSessionReadings(Iterable<SampledValue> readings) {
-		addReadings(readings, new HashMap<>(2), new HashMap<>(2), new HashMap<>(2));
+	public void addChargingSessionReadings(ChargePointIdentity chargePointId,
+			Iterable<SampledValue> readings) {
+		addReadings(chargePointId, readings, new HashMap<>(2), new HashMap<>(2), new HashMap<>(2));
 	}
 
-	private void addReadings(Iterable<SampledValue> readings, Map<UUID, ChargeSession> sessions,
-			Map<Long, CentralChargePoint> chargePoints, Map<Long, ChargePointSettings> settings) {
+	// NOTE that the Map implementations passed here MUST support null key and values,
+	// in order to support meter values not associated with a charge session
+	private void addReadings(ChargePointIdentity chargePointId, Iterable<SampledValue> readings,
+			Map<UUID, ChargeSession> sessions, Map<ChargePointIdentity, CentralChargePoint> chargePoints,
+			Map<Long, ChargePointSettings> settings) {
 		if ( readings == null ) {
 			return;
 		}
@@ -510,19 +519,15 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				.collect(Collectors.toList());
 		List<SampledValue> newReadings = new ArrayList<>();
 		for ( SampledValue r : sorted ) {
-			Set<SampledValue> current = currentReadings.get(r.getSessionId());
+			final UUID sessionId = r.getSessionId(); // may be null
+			Set<SampledValue> current = currentReadings.get(sessionId);
 			if ( current == null ) {
-				ChargeSession sess = sessions.get(r.getSessionId());
-				if ( sess == null ) {
-					sess = chargeSessionDao.get(r.getSessionId());
-					if ( sess == null ) {
-						throw new AuthorizationException("No active charging session found.",
-								new AuthorizationInfo(null, AuthorizationStatus.Invalid, null, null));
-					}
-					sessions.put(r.getSessionId(), sess);
+				if ( sessionId != null && !sessions.containsKey(sessionId) ) {
+					sessions.put(sessionId, chargeSessionDao.get(sessionId));
 				}
-				current = new HashSet<>(getChargingSessionReadings(r.getSessionId()));
-				currentReadings.put(r.getSessionId(), current);
+				current = (sessionId != null ? new HashSet<>(getChargingSessionReadings(sessionId))
+						: new HashSet<>(4));
+				currentReadings.put(sessionId, current);
 			}
 			if ( !current.contains(r) ) {
 				newReadings.add(r);
@@ -533,26 +538,27 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			// group readings by timestamp  and source ID into Datum
 			Map<String, Datum> datumBySourceId = new LinkedHashMap<>(4);
 			for ( SampledValue reading : newReadings ) {
-				final ChargeSession s = sessions.get(reading.getSessionId());
-				CentralChargePoint cp = chargePoints.get(s.getChargePointId());
+				CentralChargePoint cp = chargePoints.get(chargePointId);
 				if ( cp == null ) {
-					cp = (CentralChargePoint) chargePointDao.get(s.getChargePointId());
+					cp = (CentralChargePoint) chargePointDao.getForIdentity(chargePointId);
 					if ( cp == null ) {
 						throw new AuthorizationException(
-								String.format("ChargePoint %d not available.", s.getChargePointId()),
-								new AuthorizationInfo(s.getAuthId(), AuthorizationStatus.Invalid));
+								String.format("ChargePoint %s not available.", chargePointId),
+								new AuthorizationInfo(chargePointId.getIdentifier(),
+										AuthorizationStatus.Invalid));
 					}
-					chargePoints.put(cp.getId(), cp);
+					chargePoints.put(chargePointId, cp);
 				}
+				final UUID sessionId = reading.getSessionId(); // may be null
+				final ChargeSession s = sessions.get(sessionId);
 
 				ChargePointSettings cps = settings.get(cp.getId());
 				if ( cps == null ) {
 					cps = settingsForChargePoint(cp.getUserId(), cp.getId());
 					settings.put(cp.getId(), cps);
 				}
-
-				final String sourceId = sourceId(cps, cp.getInfo().getId(), s.getConnectorId(),
-						reading.getLocation());
+				final String sourceId = sourceId(cps, cp.getInfo().getId(),
+						s != null ? s.getConnectorId() : 0, reading.getLocation());
 				Datum d = datumBySourceId.get(sourceId);
 				if ( d == null || !d.getCreated().equals(reading.getTimestamp()) ) {
 					if ( d != null ) {
