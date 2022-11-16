@@ -28,6 +28,7 @@ import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTIO
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -37,6 +38,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
@@ -46,6 +48,7 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
@@ -66,7 +69,7 @@ import ocpp.json.ActionPayloadDecoder;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -75,6 +78,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
+	private ChargePointStatusDao chargePointStatusDao;
+	private ApplicationMetadata applicationMetadata;
 
 	/**
 	 * Constructor.
@@ -142,10 +147,17 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		super.afterConnectionEstablished(session);
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
-			if ( clientId.getUserIdentifier() instanceof Long ) {
+			if ( clientId.getUserIdentifier() instanceof Long userId ) {
+				final ApplicationMetadata appMeta = getApplicationMetadata();
+				if ( appMeta != null && appMeta.getInstanceId() != null ) {
+					final ChargePointStatusDao statusDao = getChargePointStatusDao();
+					if ( statusDao != null ) {
+						statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
+								appMeta.getInstanceId(), Instant.now());
+					}
+				}
 				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
-				generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_CONNECTED_TAGS, null,
-						data);
+				generateUserEvent(userId, CHARGE_POINT_CONNECTED_TAGS, null, data);
 			}
 			// look for instructions
 			executor.execute(new ProcessQueuedInstructionsTask(clientId));
@@ -469,6 +481,48 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 */
 	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
+	}
+
+	/**
+	 * Get the application metadata.
+	 * 
+	 * @return the application metadata
+	 * @since 2.3
+	 */
+	public ApplicationMetadata getApplicationMetadata() {
+		return applicationMetadata;
+	}
+
+	/**
+	 * Set the application metadata.
+	 * 
+	 * @param applicationMetadata
+	 *        the application metadata to set
+	 * @since 2.3
+	 */
+	public void setApplicationMetadata(ApplicationMetadata applicationMetadata) {
+		this.applicationMetadata = applicationMetadata;
+	}
+
+	/**
+	 * Get the charge point status DAO.
+	 * 
+	 * @return the DAO
+	 * @since 2.3
+	 */
+	public ChargePointStatusDao getChargePointStatusDao() {
+		return chargePointStatusDao;
+	}
+
+	/**
+	 * Set the charge point status DAO.
+	 * 
+	 * @param chargePointStatusDao
+	 *        the DAO to set
+	 * @since 2.3
+	 */
+	public void setChargePointStatusDao(ChargePointStatusDao chargePointStatusDao) {
+		this.chargePointStatusDao = chargePointStatusDao;
 	}
 
 }
