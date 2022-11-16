@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.common.dao.jdbc.sql;
 
+import java.io.IOException;
 import java.sql.Array;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,12 +35,14 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.OptimizedQueryCriteria;
@@ -49,7 +54,7 @@ import net.solarnetwork.domain.Identity;
  * Common JDBC utilities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class CommonJdbcUtils {
 
@@ -165,6 +170,86 @@ public final class CommonJdbcUtils {
 
 		int offset = (filter.getOffset() != null ? filter.getOffset() : 0);
 		return new BasicFilterResults<>(results, totalCount, offset, results.size());
+	}
+
+	/**
+	 * Execute a streaming query.
+	 * 
+	 * @param <T>
+	 *        the entity type
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param processor
+	 *        the stream processor
+	 * @param sql
+	 *        the prepared statement creator
+	 * @param mapper
+	 *        the row mapper
+	 * @throws IOException
+	 *         if any IO error occurs
+	 *         @since 1.2
+	 */
+	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
+			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper)
+			throws IOException {
+		executeStreamingQuery(jdbcOps, processor, sql, mapper, null, null, null, Collections.emptyMap());
+	}
+
+	/**
+	 * Execute a streaming query.
+	 * 
+	 * @param <T>
+	 *        the entity type
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param processor
+	 *        the stream processor
+	 * @param sql
+	 *        the prepared statement creator
+	 * @param mapper
+	 *        the row mapper
+	 * @param totalResultCount
+	 *        the total result count (or {@literal null})
+	 * @param startingOffset
+	 *        the starting offset (or {@literal null})
+	 * @param expectedResultCount
+	 *        the expected result count (or {@literal null})
+	 * @param attributes
+	 *        the attributes (or {@literal null})
+	 * @throws IOException
+	 *         if any IO error occurs
+	 *         @since 1.2
+	 */
+	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
+			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper,
+			Long totalResultCount, Integer startingOffset, Integer expectedResultCount,
+			Map<String, ?> attributes) throws IOException {
+		processor.start(totalResultCount, startingOffset, expectedResultCount, attributes);
+		try {
+			jdbcOps.execute(sql, new PreparedStatementCallback<Void>() {
+
+				@Override
+				public Void doInPreparedStatement(PreparedStatement ps)
+						throws SQLException, DataAccessException {
+					try (ResultSet rs = ps.executeQuery()) {
+						int row = 0;
+						while ( rs.next() ) {
+							T entity = mapper.mapRow(rs, ++row);
+							processor.handleResultItem(entity);
+						}
+					} catch ( IOException e ) {
+						throw new RuntimeException(e);
+					}
+					return null;
+				}
+			});
+		} catch ( RuntimeException e ) {
+			if ( e.getCause() instanceof IOException ) {
+				throw (IOException) e.getCause();
+			}
+			throw e;
+		}
+
 	}
 
 	/**

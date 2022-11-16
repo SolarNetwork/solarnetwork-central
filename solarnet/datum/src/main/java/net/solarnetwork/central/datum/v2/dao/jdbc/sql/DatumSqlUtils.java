@@ -289,21 +289,7 @@ public final class DatumSqlUtils {
 	 */
 	public static int orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
 			StringBuilder buf) {
-		if ( sorts == null || sortKeyMapping == null || sortKeyMapping.isEmpty() ) {
-			return 0;
-		}
-		boolean appended = false;
-		for ( SortDescriptor sort : sorts ) {
-			String sqlName = sortKeyMapping.get(sort.getSortKey());
-			if ( sqlName != null ) {
-				appended = true;
-				buf.append(", ").append(sqlName);
-				if ( sort.isDescending() ) {
-					buf.append(" DESC");
-				}
-			}
-		}
-		return (appended ? 2 : 0);
+		return CommonSqlUtils.orderBySorts(sorts, sortKeyMapping, buf);
 	}
 
 	private static String[] DEFAULT_METADATA_SORT_KEYS = new String[] { "loc", "node", "source" };
