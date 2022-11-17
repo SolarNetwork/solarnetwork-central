@@ -27,24 +27,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
+import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 
 /**
- * Update a {@link ChargePointStatus} entity connection details, creating it if
- * not already present.
+ * Update a {@link ChargePointActionStatus} entity timestamp, creating it if not
+ * already present.
  * 
  * @author matt
  * @version 1.0
  */
-public class UpsertChargePointIdentifierConnectionStatus
+public class UpsertChargePointIdentifierActionTimestamp
 		implements PreparedStatementCreator, SqlProvider {
 
 	private final Long userId;
 	private final String chargePointIdentifier;
-	private final ChargePointStatus status;
-	private final boolean updateDate;
+	private final Integer connectorId;
+	private final String action;
+	private final Instant date;
 
 	/**
 	 * Constructor.
@@ -53,66 +55,47 @@ public class UpsertChargePointIdentifierConnectionStatus
 	 *        the user ID
 	 * @param chargePointIdentifier
 	 *        the charge point identifier
-	 * @param status
-	 *        the status data
+	 * @param connectorId
+	 *        the connector ID, or {@literal null} for a charger-wide action
+	 * @param action
+	 *        the action name
+	 * @param date
+	 *        the timestamp
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument except {@code connectorId} is {@literal null}
 	 */
-	public UpsertChargePointIdentifierConnectionStatus(Long userId, String chargePointIdentifier,
-			ChargePointStatus status) {
+	public UpsertChargePointIdentifierActionTimestamp(Long userId, String chargePointIdentifier,
+			Integer connectorId, String action, Instant date) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,
 				"chargePointIdentifier");
-		this.status = requireNonNullArgument(status, "status");
-		this.updateDate = (status.getConnectedTo() != null && status.getConnectedDate() != null);
+		this.connectorId = connectorId;
+		this.action = requireNonNullArgument(action, "action");
+		this.date = requireNonNullArgument(date, "date");
 	}
 
 	@Override
 	public String getSql() {
-		StringBuilder buf = new StringBuilder();
-		buf.append("INSERT INTO solarev.ocpp_charge_point_status (user_id, cp_id, connected_to");
-		if ( updateDate ) {
-			buf.append("""
-					, connected_date)
-					SELECT cp.user_id, cp.id, ? AS connected_to, ? AS connected_date
-					FROM solarev.ocpp_charge_point cp
-					WHERE cp.user_id = ?
-						AND cp.ident = ?
-					ON CONFLICT (user_id, cp_id) DO UPDATE
-					SET connected_to = EXCLUDED.connected_to
-						, connected_date = EXCLUDED.connected_date
-					""");
-		} else {
-			buf.append("""
-					)
-					SELECT cp.user_id, cp.id, NULL::TEXT AS connected_to
-					FROM solarev.ocpp_charge_point cp
-					INNER JOIN solarev.ocpp_charge_point_status cps
-						ON cps.user_id = cp.user_id AND cps.cp_id = cp.id
-					WHERE cp.user_id = ?
-						AND cp.ident = ?
-						AND cps.connected_to = ?
-					ON CONFLICT (user_id, cp_id) DO UPDATE
-					SET connected_to = EXCLUDED.connected_to
-					""");
-		}
-		return buf.toString();
+		return """
+				INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, conn_id, action, ts)
+				SELECT cp.user_id, cp.id, ? AS conn_id, ? AS action, ? as ts
+				FROM solarev.ocpp_charge_point cp
+				WHERE cp.user_id = ?
+					AND cp.ident = ?
+				ON CONFLICT (user_id, cp_id, conn_id, action) DO UPDATE
+				SET ts = EXCLUDED.ts
+				""";
 	}
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement ps = con.prepareStatement(getSql());
-		int p = 0;
-		if ( updateDate ) {
-			ps.setString(++p, status.getConnectedTo());
-			ps.setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
-		}
-		ps.setObject(++p, userId);
-		ps.setString(++p, chargePointIdentifier);
-		if ( !updateDate ) {
-			ps.setString(++p, status.getConnectedTo());
-		}
+		ps.setInt(1, connectorId != null ? connectorId.intValue() : 0);
+		ps.setString(2, action);
+		ps.setTimestamp(3, Timestamp.from(date));
+		ps.setLong(4, userId);
+		ps.setString(5, chargePointIdentifier);
 		return ps;
 	}
 

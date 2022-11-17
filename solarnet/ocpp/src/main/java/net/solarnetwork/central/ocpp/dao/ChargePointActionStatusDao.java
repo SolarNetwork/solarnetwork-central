@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatusKey;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * DAO API for {@link ChargePointActionStatus} entities.
@@ -43,11 +47,41 @@ public interface ChargePointActionStatusDao extends
 	 * This method will create a new entity if one does not already exist.
 	 * </p>
 	 * 
-	 * @param id
-	 *        the ID of the entity to update
-	 * @param ts
-	 *        the timestamp to set
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointIdentifier
+	 *        the charge point identifier
+	 * @param connectorId
+	 *        the connector ID the message is related to, or {@literal null} or
+	 *        {@literal 0} for charger-wide actions
+	 * @param action
+	 *        the action name
+	 * @param date
+	 *        the date
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code connectorId} is {@literal null}
 	 */
-	void updateTimestamp(ChargePointActionStatusKey id, Instant ts);
+	void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
+			String action, Instant date);
+
+	/**
+	 * API for querying for a stream of {@link ChargePointActionStatus}.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        the optional starting offset
+	 * @param max
+	 *        the optional maximum result count
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	void findFilteredStream(ChargePointActionStatusFilter filter,
+			FilteredResultsProcessor<ChargePointActionStatus> processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
 
 }

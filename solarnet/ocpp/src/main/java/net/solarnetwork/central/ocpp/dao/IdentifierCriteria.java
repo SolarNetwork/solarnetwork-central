@@ -1,5 +1,5 @@
 /* ==================================================================
- * ChargePointActionStatusFilter.java - 16/11/2022 5:37:52 pm
+ * ChargePointCriteria.java - 16/11/2022 5:34:39 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,40 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * Filter API for charge point status queries.
- * 
- * <p>
- * The {@link DateRangeCriteria} applies to the
- * {@code ChargePointStatus.connectedDate} property.
- * </p>
+ * Search criteria for identifier related data.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ChargePointStatusFilter extends ChargePointCriteria, IdentifierCriteria,
-		UserCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
+public interface IdentifierCriteria {
+
+	/**
+	 * Get the first identifier.
+	 * 
+	 * <p>
+	 * This returns the first available identifier from the
+	 * {@link #getIdentifiers()} array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first identifier, or {@literal null} if not available
+	 */
+	String getIdentifier();
+
+	/**
+	 * Get an array of identifiers.
+	 * 
+	 * @return array of identifiers (may be {@literal null})
+	 */
+	String[] getIdentifiers();
+
+	/**
+	 * Test if this filter has any identifier criteria.
+	 * 
+	 * @return {@literal true} if the identifier is non-null
+	 */
+	default boolean hasIdentifierCriteria() {
+		return getIdentifier() != null;
+	}
 
 }

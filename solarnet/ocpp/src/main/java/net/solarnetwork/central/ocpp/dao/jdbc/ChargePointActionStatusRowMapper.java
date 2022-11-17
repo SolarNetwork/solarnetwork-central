@@ -26,6 +26,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
+import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 
 /**
@@ -39,26 +40,30 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * <li>created</li>
  * <li>user_id</li>
  * <li>cp_id</li>
- * <li>connected_to</li>
- * <li>connected_date</li>
+ * <li>conn_id</li>
+ * <li>action</li>
+ * <li>ts</li>
  * </ol>
  * 
  * @author matt
  * @version 1.0
  */
-public class ChargePointStatusRowMapper implements RowMapper<ChargePointStatus> {
+public class ChargePointActionStatusRowMapper implements RowMapper<ChargePointActionStatus> {
 
 	/** A default instance. */
-	public static final RowMapper<ChargePointStatus> INSTANCE = new ChargePointStatusRowMapper();
+	public static final RowMapper<ChargePointActionStatus> INSTANCE = new ChargePointActionStatusRowMapper();
 
 	@Override
-	public ChargePointStatus mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public ChargePointActionStatus mapRow(ResultSet rs, int rowNum) throws SQLException {
 		Instant created = rs.getTimestamp(1).toInstant();
 		long userId = rs.getLong(2);
 		long cpId = rs.getLong(3);
-		String connectedTo = rs.getString(4);
-		Instant connectedDate = rs.getTimestamp(5).toInstant();
-		return new ChargePointStatus(userId, cpId, created, connectedTo, connectedDate);
+		int connId = rs.getInt(4);
+		String action = rs.getString(5);
+		Instant date = rs.getTimestamp(6).toInstant();
+		var status = new ChargePointActionStatus(userId, cpId, connId, action, created);
+		status.setTimestamp(date);
+		return status;
 	}
 
 }

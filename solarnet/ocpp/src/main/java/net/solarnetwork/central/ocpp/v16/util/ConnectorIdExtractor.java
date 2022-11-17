@@ -1,5 +1,5 @@
 /* ==================================================================
- * ChargePointActionStatusFilter.java - 16/11/2022 5:37:52 pm
+ * ConnectorIdExtractor.java - 18/11/2022 7:49:09 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,25 +20,34 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.dao;
+package net.solarnetwork.central.ocpp.v16.util;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
+import java.util.function.Function;
+import ocpp.v16.cs.MeterValuesRequest;
+import ocpp.v16.cs.StartTransactionRequest;
+import ocpp.v16.cs.StatusNotificationRequest;
 
 /**
- * Filter API for charge point status queries.
- * 
- * <p>
- * The {@link DateRangeCriteria} applies to the
- * {@code ChargePointStatus.connectedDate} property.
- * </p>
+ * Extract a connector ID from OCPP v1.6 request messages.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ChargePointStatusFilter extends ChargePointCriteria, IdentifierCriteria,
-		UserCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
+public class ConnectorIdExtractor implements Function<Object, Integer> {
+
+	@Override
+	public Integer apply(Object o) {
+		if ( o == null ) {
+			return null;
+		}
+		if ( o instanceof MeterValuesRequest r ) {
+			return r.getConnectorId();
+		} else if ( o instanceof StartTransactionRequest r ) {
+			return r.getConnectorId();
+		} else if ( o instanceof StatusNotificationRequest r ) {
+			return r.getConnectorId();
+		}
+		return null;
+	}
 
 }

@@ -103,8 +103,8 @@ public class UpsertChargePointActionStatus implements PreparedStatementCreator, 
 	public String getSql() {
 		return """
 				INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, conn_id, action, ts)
-				VALUES (?, ?, ?, ?)
-				ON CONFLICT (user_id, cp, conn_id, action) DO UPDATE
+				VALUES (?, ?, ?, ?, ?)
+				ON CONFLICT (user_id, cp_id, conn_id, action) DO UPDATE
 				SET ts = EXCLUDED.ts
 				""";
 	}

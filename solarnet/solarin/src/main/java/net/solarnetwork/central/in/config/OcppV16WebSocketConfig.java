@@ -46,7 +46,9 @@ import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.service.PasswordEncoder;
@@ -94,6 +96,9 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	private ChargePointStatusDao chargePointStatusDao;
 
 	@Autowired
+	private ChargePointActionStatusDao chargePointActionStatusDao;
+
+	@Autowired
 	@Qualifier(OCPP_V16)
 	private ObjectMapper objectMapper;
 
@@ -127,6 +132,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		}
 		handler.setApplicationMetadata(applicationMetadata);
 		handler.setChargePointStatusDao(chargePointStatusDao);
+		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
+		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		return handler;
 	}
 

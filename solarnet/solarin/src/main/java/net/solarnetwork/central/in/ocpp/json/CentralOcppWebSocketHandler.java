@@ -34,9 +34,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -48,6 +50,7 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
@@ -79,6 +82,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
+	private ChargePointActionStatusDao chargePointActionStatusDao;
+	private Function<Object, Integer> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 
 	/**
@@ -195,14 +200,29 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	@Override
 	protected void willProcessRequest(PendingActionMessage msg) {
 		super.willProcessRequest(msg);
-		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long ) {
+		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long userId ) {
+			final String cpIdentifier = msg.getMessage().getClientId().getIdentifier();
+			final Action action = msg.getMessage().getAction();
+			final ChargePointActionStatusDao statusDao = getChargePointActionStatusDao();
+			if ( statusDao != null ) {
+				Integer connectorId = (connectorIdExtractor != null
+						? connectorIdExtractor.apply(msg.getMessage().getMessage())
+						: null);
+				try {
+					statusDao.updateActionTimestamp(userId, cpIdentifier, connectorId, action.getName(),
+							Instant.now());
+				} catch ( RuntimeException e ) {
+					log.error("Error updating charger {} connector {} {} status",
+							msg.getMessage().getClientId(), connectorId, action, e);
+				}
+			}
+
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put(CHARGE_POINT_DATA_KEY, msg.getMessage().getClientId().getIdentifier());
+			data.put(CHARGE_POINT_DATA_KEY, cpIdentifier);
 			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
-			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
+			data.put(ACTION_DATA_KEY, action);
 			data.put(MESSAGE_DATA_KEY, msg.getMessage().getMessage());
-			generateUserEvent((Long) msg.getMessage().getClientId().getUserIdentifier(),
-					CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
+			generateUserEvent(userId, CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
 		}
 	}
 
@@ -210,14 +230,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	protected void willProcessCallResponse(PendingActionMessage msg, Object payload,
 			Throwable exception) {
 		super.willProcessCallResponse(msg, payload, exception);
-		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long ) {
+		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long userId ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put(CHARGE_POINT_DATA_KEY, msg.getMessage().getClientId().getIdentifier());
 			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
 			data.put(ACTION_DATA_KEY, msg.getMessage().getAction());
 			data.put(MESSAGE_DATA_KEY, payload);
-			generateUserEvent((Long) msg.getMessage().getClientId().getUserIdentifier(),
-					CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
+			generateUserEvent(userId, CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);
 		}
 	}
 
@@ -225,7 +244,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	protected void didSendCall(ChargePointIdentity clientId, String messageId, Action action,
 			Object payload, String json, Throwable exception) {
 		super.didSendCall(clientId, messageId, action, payload, json, exception);
-		if ( clientId.getUserIdentifier() instanceof Long ) {
+		if ( clientId.getUserIdentifier() instanceof Long userId ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
 			data.put(MESSAGE_ID_DATA_KEY, messageId);
@@ -234,8 +253,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			if ( exception != null ) {
 				data.put(ERROR_DATA_KEY, exception.getMessage());
 			}
-			generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_MESSAGE_SENT_TAGS, null,
-					data);
+			generateUserEvent(userId, CHARGE_POINT_MESSAGE_SENT_TAGS, null, data);
 		}
 	}
 
@@ -436,7 +454,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
+		String dataStr;
+		try {
+			dataStr = (data instanceof String ? (String) data
+					: getObjectMapper().writeValueAsString(data));
+		} catch ( JsonProcessingException e ) {
+			dataStr = null;
+		}
 		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
@@ -538,6 +562,51 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 */
 	public void setChargePointStatusDao(ChargePointStatusDao chargePointStatusDao) {
 		this.chargePointStatusDao = chargePointStatusDao;
+	}
+
+	/**
+	 * Get the charge point action status DAO.
+	 * 
+	 * @return the DAO
+	 * @since 2.3
+	 */
+	public ChargePointActionStatusDao getChargePointActionStatusDao() {
+		return chargePointActionStatusDao;
+	}
+
+	/**
+	 * Set the charge point action status DAO.
+	 * 
+	 * @param chargePointActionStatusDao
+	 *        the DAO to set
+	 * @since 2.3
+	 */
+	public void setChargePointActionStatusDao(ChargePointActionStatusDao chargePointActionStatusDao) {
+		this.chargePointActionStatusDao = chargePointActionStatusDao;
+	}
+
+	/**
+	 * Get the connector ID extractor.
+	 * 
+	 * <p>
+	 * This function is responsible for extracting a charger connector ID from
+	 * an action message body.
+	 * </p>
+	 * 
+	 * @return the function
+	 */
+	public Function<Object, Integer> getConnectorIdExtractor() {
+		return connectorIdExtractor;
+	}
+
+	/**
+	 * Set the connector ID extractor.
+	 * 
+	 * @param connectorIdExtractor
+	 *        the function to set
+	 */
+	public void setConnectorIdExtractor(Function<Object, Integer> connectorIdExtractor) {
+		this.connectorIdExtractor = connectorIdExtractor;
 	}
 
 }

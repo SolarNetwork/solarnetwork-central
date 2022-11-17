@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -56,18 +58,24 @@ import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
+import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.test.CallingThreadExecutorService;
+import ocpp.domain.Action;
 import ocpp.v16.CentralSystemAction;
 import ocpp.v16.ChargePointAction;
 import ocpp.v16.ErrorCodeResolver;
 import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
+import ocpp.v16.cs.ChargePointErrorCode;
+import ocpp.v16.cs.ChargePointStatus;
+import ocpp.v16.cs.StatusNotificationRequest;
 import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
 
 /**
@@ -93,6 +101,9 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 	@Mock
 	private ChargePointStatusDao chargePointStatusDao;
+
+	@Mock
+	private ChargePointActionStatusDao chargePointActionStatusDao;
 
 	@Mock
 	private WebSocketSession session;
@@ -122,6 +133,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		handler.setInstructionDao(nodeInstructionDao);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
 		handler.setChargePointStatusDao(chargePointStatusDao);
+		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
+		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		handler.setApplicationMetadata(APP_META);
 	}
 
@@ -179,6 +192,55 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		Map<String, Object> data = JsonUtils.getStringMap(event.getData());
 		assertThat("Charger identifier included", data,
 				hasEntry(CentralOcppUserEvents.CHARGE_POINT_DATA_KEY, cpIdentity.getIdentifier()));
+	}
+
+	private Object[] call(String messageId, Action action, Object payload) {
+		if ( payload != null ) {
+			return new Object[] { 2, messageId, action.getName(), payload };
+		}
+		return new Object[] { 2, messageId, action.getName() };
+	}
+
+	@Test
+	public void handle_StatusNotificationRequest() throws Exception {
+		// GIVEN
+		final var userId = UUID.randomUUID().getMostSignificantBits();
+		final var cpIdentity = new ChargePointIdentity(UUID.randomUUID().toString(), userId);
+		Map<String, Object> sessionAttributes = Map.of(OcppWebSocketHandshakeInterceptor.CLIENT_ID_ATTR,
+				cpIdentity);
+		given(session.getAttributes()).willReturn(sessionAttributes);
+
+		// WHEN
+		handler.afterConnectionEstablished(session);
+
+		var req = new StatusNotificationRequest();
+		req.setConnectorId(1);
+		req.setErrorCode(ChargePointErrorCode.NO_ERROR);
+		req.setInfo("Hi!");
+		req.setStatus(ChargePointStatus.AVAILABLE);
+		var messageId = UUID.randomUUID().toString();
+		var call = call(messageId, CentralSystemAction.StatusNotification, req);
+		var msg = new TextMessage(mapper.writeValueAsString(call));
+		handler.handleMessage(session, msg);
+
+		// THEN
+		then(chargePointActionStatusDao).should().updateActionTimestamp(eq(userId),
+				eq(cpIdentity.getIdentifier()), eq(req.getConnectorId()), eq("StatusNotification"),
+				dateCaptor.capture());
+
+		// 3 events: connected, received, sent(error)
+		then(userEventAppenderBiz).should(times(3)).addEvent(eq(userId), logEventCaptor.capture());
+		LogEventInfo event = logEventCaptor.getAllValues().get(1);
+		assertThat("Event tags", event.getTags(), is(arrayContaining("ocpp", "message", "received")));
+		Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+		assertThat("Charger identifier included", data,
+				hasEntry(CentralOcppUserEvents.CHARGE_POINT_DATA_KEY, cpIdentity.getIdentifier()));
+		assertThat("Message ID included", data,
+				hasEntry(CentralOcppUserEvents.MESSAGE_ID_DATA_KEY, messageId));
+		assertThat("Action included", data, hasEntry(CentralOcppUserEvents.ACTION_DATA_KEY,
+				CentralSystemAction.StatusNotification.getName()));
+		assertThat("Message payload included", data, hasEntry(CentralOcppUserEvents.MESSAGE_DATA_KEY,
+				JsonUtils.getStringMap(mapper.writeValueAsString(req))));
 	}
 
 }

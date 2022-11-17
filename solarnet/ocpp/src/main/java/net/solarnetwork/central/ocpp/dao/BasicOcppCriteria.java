@@ -32,11 +32,7 @@ import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * FIXME
- * 
- * <p>
- * TODO
- * </p>
+ * Basic implementation of OCPP criteria APIs.
  * 
  * @author matt
  * @version 1.0
@@ -45,6 +41,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		implements ChargePointStatusFilter, ChargePointActionStatusFilter {
 
 	private Long[] chargePointIds;
+	private String[] identifiers;
+	private Long[] connectorIds;
 	private String[] actions;
 	private Instant startDate;
 	private Instant endDate;
@@ -65,12 +63,20 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicOcppCriteria c ) {
 			setChargePointIds(c.chargePointIds);
+			setIdentifiers(c.identifiers);
+			setConnectorIds(c.connectorIds);
 			setActions(c.actions);
 			setStartDate(c.startDate);
 			setEndDate(c.endDate);
 		} else {
 			if ( criteria instanceof ChargePointCriteria c ) {
 				setChargePointIds(c.getChargePointIds());
+			}
+			if ( criteria instanceof IdentifierCriteria c ) {
+				setIdentifiers(c.getIdentifiers());
+			}
+			if ( criteria instanceof ChargePointConnectorCriteria c ) {
+				setConnectorIds(c.getConnectorIds());
 			}
 			if ( criteria instanceof ActionCriteria c ) {
 				setActions(c.getActions());
@@ -106,6 +112,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(actions);
 		result = prime * result + Arrays.hashCode(chargePointIds);
+		result = prime * result + Arrays.hashCode(identifiers);
+		result = prime * result + Arrays.hashCode(connectorIds);
 		result = prime * result + Objects.hash(endDate, startDate);
 		return result;
 	}
@@ -124,6 +132,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		BasicOcppCriteria other = (BasicOcppCriteria) obj;
 		return Arrays.equals(actions, other.actions)
 				&& Arrays.equals(chargePointIds, other.chargePointIds)
+				&& Arrays.equals(identifiers, other.identifiers)
+				&& Arrays.equals(connectorIds, other.connectorIds)
 				&& Objects.equals(endDate, other.endDate) && Objects.equals(startDate, other.startDate);
 	}
 
@@ -139,6 +149,16 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		if ( chargePointIds != null ) {
 			builder.append("chargePointIds=");
 			builder.append(Arrays.toString(chargePointIds));
+			builder.append(", ");
+		}
+		if ( identifiers != null ) {
+			builder.append("identifiers=");
+			builder.append(Arrays.toString(identifiers));
+			builder.append(", ");
+		}
+		if ( chargePointIds != null ) {
+			builder.append("connectorIds=");
+			builder.append(Arrays.toString(connectorIds));
 			builder.append(", ");
 		}
 		if ( actions != null ) {
@@ -198,6 +218,86 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 */
 	public void setChargePointIds(Long[] chargePointIds) {
 		this.chargePointIds = chargePointIds;
+	}
+
+	/**
+	 * Set a single charge point ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single connector ID
+	 * at a time. The connector ID is still stored on the {@code connectorIds}
+	 * array, just as the first value. Calling this method replaces any existing
+	 * {@code connectorIds} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 * 
+	 * @param connectorId
+	 *        the ID of the charge point
+	 */
+	@JsonSetter
+	public void setConnectorId(Long connectorId) {
+		this.connectorIds = (connectorId == null ? null : new Long[] { connectorId });
+	}
+
+	@Override
+	@JsonIgnore
+	public Long getConnectorId() {
+		return (this.connectorIds == null || this.connectorIds.length < 1 ? null : this.connectorIds[0]);
+	}
+
+	@Override
+	public Long[] getConnectorIds() {
+		return connectorIds;
+	}
+
+	/**
+	 * Set a list of charge point IDs to filter on.
+	 * 
+	 * @param connectorIds
+	 *        The charge point IDs to filter on.
+	 */
+	public void setConnectorIds(Long[] connectorIds) {
+		this.connectorIds = connectorIds;
+	}
+
+	/**
+	 * Set an identifier.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single identifier at
+	 * a time. The identifier is still stored on the {@code identifiers} array,
+	 * just as the first value. Calling this method replaces any existing
+	 * {@code identifiers} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	@JsonSetter
+	public void setIdentifier(String identifier) {
+		this.identifiers = (identifier == null ? null : new String[] { identifier });
+	}
+
+	@Override
+	@JsonIgnore
+	public String getIdentifier() {
+		return (this.identifiers == null || this.identifiers.length < 1 ? null : this.identifiers[0]);
+	}
+
+	@Override
+	public String[] getIdentifiers() {
+		return identifiers;
+	}
+
+	/**
+	 * Set a list of identifiers to filter on.
+	 * 
+	 * @param identifiers
+	 *        The identifiers to filter on.
+	 */
+	public void setIdentifiers(String[] identifiers) {
+		this.identifiers = identifiers;
 	}
 
 	/**

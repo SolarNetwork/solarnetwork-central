@@ -64,7 +64,7 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code created} is {@literal null}
 	 */
-	public ChargePointActionStatus(long userId, long chargePointId, String action, int connectorId,
+	public ChargePointActionStatus(long userId, long chargePointId, int connectorId, String action,
 			Instant created) {
 		this(new ChargePointActionStatusKey(userId, chargePointId, connectorId, action), created);
 	}

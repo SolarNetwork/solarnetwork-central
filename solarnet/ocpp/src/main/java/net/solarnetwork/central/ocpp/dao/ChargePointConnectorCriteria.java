@@ -1,5 +1,5 @@
 /* ==================================================================
- * ChargePointActionStatusFilter.java - 16/11/2022 5:37:52 pm
+ * ChargePointCriteria.java - 16/11/2022 5:34:39 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -22,23 +22,40 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
-
 /**
- * Filter API for charge point status queries.
- * 
- * <p>
- * The {@link DateRangeCriteria} applies to the
- * {@code ChargePointStatus.connectedDate} property.
- * </p>
+ * Search criteria for connector related data.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ChargePointStatusFilter extends ChargePointCriteria, IdentifierCriteria,
-		UserCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
+public interface ChargePointConnectorCriteria {
+
+	/**
+	 * Get the first connector ID.
+	 * 
+	 * <p>
+	 * This returns the first available connector ID from the
+	 * {@link #getConnectorIds()} array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first connector ID, or {@literal null} if not available
+	 */
+	Long getConnectorId();
+
+	/**
+	 * Get an array of connector IDs.
+	 * 
+	 * @return array of connector IDs (may be {@literal null})
+	 */
+	Long[] getConnectorIds();
+
+	/**
+	 * Test if this filter has any connector criteria.
+	 * 
+	 * @return {@literal true} if the connector ID is non-null
+	 */
+	default boolean hasConnectorCriteria() {
+		return getConnectorId() != null;
+	}
 
 }

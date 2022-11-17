@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao;
 
 import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.dao.SortCriteria;
 
@@ -33,6 +34,7 @@ import net.solarnetwork.dao.SortCriteria;
  * @version 1.0
  */
 public interface ChargePointActionStatusFilter
-		extends ChargePointCriteria, UserCriteria, ActionCriteria, SortCriteria, PaginationCriteria {
+		extends ChargePointCriteria, IdentifierCriteria, ChargePointConnectorCriteria,
+		UserCriteria, ActionCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
 
 }

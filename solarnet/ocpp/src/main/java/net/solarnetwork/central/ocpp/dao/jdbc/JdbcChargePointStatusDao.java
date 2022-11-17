@@ -73,8 +73,9 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 	@Override
 	public FilterResults<ChargePointStatus, UserLongCompositePK> findFiltered(
 			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
-		// TODO implement
-		List<ChargePointStatus> list = Collections.emptyList();
+		requireNonNullArgument(filter, "filter");
+		final PreparedStatementCreator sql = new SelectChargePointStatus(filter);
+		List<ChargePointStatus> list = jdbcOps.query(sql, ChargePointStatusRowMapper.INSTANCE);
 		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());
 	}
 
