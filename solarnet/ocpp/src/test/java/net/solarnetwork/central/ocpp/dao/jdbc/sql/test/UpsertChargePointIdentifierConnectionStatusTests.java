@@ -76,12 +76,15 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 	private void thenPrepStatement(PreparedStatement result, Long userId, String chargePointIdentifier,
 			ChargePointStatus status) throws SQLException {
 		int p = 0;
-		then(result).should().setString(++p, status.getConnectedTo());
 		if ( status.getConnectedDate() != null ) {
+			then(result).should().setString(++p, status.getConnectedTo());
 			then(result).should().setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
 		then(result).should().setObject(++p, userId);
 		then(result).should().setString(++p, chargePointIdentifier);
+		if ( status.getConnectedDate() == null ) {
+			then(result).should().setString(++p, status.getConnectedTo());
+		}
 	}
 
 	@Test

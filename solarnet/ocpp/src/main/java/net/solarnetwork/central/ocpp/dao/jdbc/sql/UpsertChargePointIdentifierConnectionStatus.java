@@ -76,10 +76,10 @@ public class UpsertChargePointIdentifierConnectionStatus
 		if ( updateDate ) {
 			buf.append("""
 					, connected_date)
-					SELECT user_id, id, ? AS connected_to , ? AS connected_date
-					FROM solarev.ocpp_charge_point
-					WHERE user_id = ?
-					AND ident = ?
+					SELECT cp.user_id, cp.id, ? AS connected_to, ? AS connected_date
+					FROM solarev.ocpp_charge_point cp
+					WHERE cp.user_id = ?
+						AND cp.ident = ?
 					ON CONFLICT (user_id, cp_id) DO UPDATE
 					SET connected_to = EXCLUDED.connected_to
 						, connected_date = EXCLUDED.connected_date
@@ -87,10 +87,13 @@ public class UpsertChargePointIdentifierConnectionStatus
 		} else {
 			buf.append("""
 					)
-					SELECT user_id, id, ? AS connected_to
-					FROM solarev.ocpp_charge_point
-					WHERE user_id = ?
-					AND ident = ?
+					SELECT cp.user_id, cp.id, NULL::TEXT AS connected_to
+					FROM solarev.ocpp_charge_point cp
+					INNER JOIN solarev.ocpp_charge_point_status cps
+						ON cps.user_id = cp.user_id AND cps.cp_id = cp.id
+					WHERE cp.user_id = ?
+						AND cp.ident = ?
+						AND cps.connected_to = ?
 					ON CONFLICT (user_id, cp_id) DO UPDATE
 					SET connected_to = EXCLUDED.connected_to
 					""");
@@ -102,12 +105,15 @@ public class UpsertChargePointIdentifierConnectionStatus
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement ps = con.prepareStatement(getSql());
 		int p = 0;
-		ps.setString(++p, status.getConnectedTo());
 		if ( updateDate ) {
+			ps.setString(++p, status.getConnectedTo());
 			ps.setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
 		ps.setObject(++p, userId);
 		ps.setString(++p, chargePointIdentifier);
+		if ( !updateDate ) {
+			ps.setString(++p, status.getConnectedTo());
+		}
 		return ps;
 	}
 

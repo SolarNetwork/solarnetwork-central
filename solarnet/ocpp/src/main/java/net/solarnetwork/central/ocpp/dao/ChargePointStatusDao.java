@@ -52,11 +52,13 @@ public interface ChargePointStatusDao
 	 * @param chargePointIdentifier
 	 *        the charge point identifier
 	 * @param connectedTo
-	 *        the name of the SolarIn instance the charger is connected to, or
-	 *        {@literal null} if disconnected
+	 *        the name of the SolarIn instance the charger is connected to or
+	 *        disconnected from
 	 * @param connectionDate
-	 *        if {@code connectedTo} is not {@literal null} the connected
-	 *        timestamp to save
+	 *        the connection date, or {@literal null} if disconnected
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code connectionDate} is
+	 *         {@literal null}
 	 */
 	void updateConnectionStatus(Long userId, String chargePointIdentifier, String connectedTo,
 			Instant connectionDate);

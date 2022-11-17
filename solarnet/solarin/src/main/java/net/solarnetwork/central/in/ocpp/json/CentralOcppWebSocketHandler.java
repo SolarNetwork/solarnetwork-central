@@ -152,8 +152,12 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 				if ( appMeta != null && appMeta.getInstanceId() != null ) {
 					final ChargePointStatusDao statusDao = getChargePointStatusDao();
 					if ( statusDao != null ) {
-						statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-								appMeta.getInstanceId(), Instant.now());
+						try {
+							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
+									appMeta.getInstanceId(), Instant.now());
+						} catch ( RuntimeException e ) {
+							log.error("Error updating charger {} connection status", clientId, e);
+						}
 					}
 				}
 				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
@@ -168,10 +172,21 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
-			if ( clientId.getUserIdentifier() instanceof Long ) {
+			if ( clientId.getUserIdentifier() instanceof Long userId ) {
+				final ApplicationMetadata appMeta = getApplicationMetadata();
+				if ( appMeta != null && appMeta.getInstanceId() != null ) {
+					final ChargePointStatusDao statusDao = getChargePointStatusDao();
+					if ( statusDao != null ) {
+						try {
+							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
+									appMeta.getInstanceId(), null);
+						} catch ( RuntimeException e ) {
+							log.error("Error updating charger {} disconnection status", clientId, e);
+						}
+					}
+				}
 				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
-				generateUserEvent((Long) clientId.getUserIdentifier(), CHARGE_POINT_DISCONNECTED_TAGS,
-						null, data);
+				generateUserEvent(userId, CHARGE_POINT_DISCONNECTED_TAGS, null, data);
 			}
 		}
 		super.afterConnectionClosed(session, status);
