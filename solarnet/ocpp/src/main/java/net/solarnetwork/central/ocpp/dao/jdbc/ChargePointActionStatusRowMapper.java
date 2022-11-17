@@ -42,6 +42,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * <li>cp_id</li>
  * <li>conn_id</li>
  * <li>action</li>
+ * <li>msg_id</li>
  * <li>ts</li>
  * </ol>
  * 
@@ -60,8 +61,10 @@ public class ChargePointActionStatusRowMapper implements RowMapper<ChargePointAc
 		long cpId = rs.getLong(3);
 		int connId = rs.getInt(4);
 		String action = rs.getString(5);
-		Instant date = rs.getTimestamp(6).toInstant();
+		String messageId = rs.getString(6);
+		Instant date = rs.getTimestamp(7).toInstant();
 		var status = new ChargePointActionStatus(userId, cpId, connId, action, created);
+		status.setMessageId(messageId);
 		status.setTimestamp(date);
 		return status;
 	}

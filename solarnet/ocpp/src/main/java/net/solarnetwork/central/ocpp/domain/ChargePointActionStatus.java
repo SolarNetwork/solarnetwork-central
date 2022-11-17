@@ -37,11 +37,14 @@ import net.solarnetwork.util.ObjectUtils;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "created", "userId", "chargePointId", "connectorId", "action", "ts" })
+@JsonPropertyOrder({ "created", "userId", "chargePointId", "connectorId", "action", "messageId", "ts" })
 public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatusKey>
 		implements UserRelatedEntity<ChargePointActionStatusKey> {
 
-	private static final long serialVersionUID = 9180508639777242506L;
+	private static final long serialVersionUID = 411869331685285543L;
+
+	/** The message ID. */
+	private String messageId;
 
 	/** The last action timestamp. */
 	@JsonProperty("ts")
@@ -114,6 +117,25 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 */
 	public String getAction() {
 		return getId().getAction();
+	}
+
+	/**
+	 * Get the message ID.
+	 * 
+	 * @return the message ID
+	 */
+	public String getMessageId() {
+		return messageId;
+	}
+
+	/**
+	 * Set the message ID.
+	 * 
+	 * @param messageId
+	 *        the message ID to set
+	 */
+	public void setMessageId(String messageId) {
+		this.messageId = messageId;
 	}
 
 	/**

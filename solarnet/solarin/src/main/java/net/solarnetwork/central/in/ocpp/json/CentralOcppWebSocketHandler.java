@@ -203,6 +203,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		if ( msg.getMessage().getClientId().getUserIdentifier() instanceof Long userId ) {
 			final String cpIdentifier = msg.getMessage().getClientId().getIdentifier();
 			final Action action = msg.getMessage().getAction();
+			final String msgId = msg.getMessage().getMessageId();
 			final ChargePointActionStatusDao statusDao = getChargePointActionStatusDao();
 			if ( statusDao != null ) {
 				Integer connectorId = (connectorIdExtractor != null
@@ -210,7 +211,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 						: null);
 				try {
 					statusDao.updateActionTimestamp(userId, cpIdentifier, connectorId, action.getName(),
-							Instant.now());
+							msgId, Instant.now());
 				} catch ( RuntimeException e ) {
 					log.error("Error updating charger {} connector {} {} status",
 							msg.getMessage().getClientId(), connectorId, action, e);
@@ -219,7 +220,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put(CHARGE_POINT_DATA_KEY, cpIdentifier);
-			data.put(MESSAGE_ID_DATA_KEY, msg.getMessage().getMessageId());
+			data.put(MESSAGE_ID_DATA_KEY, msgId);
 			data.put(ACTION_DATA_KEY, action);
 			data.put(MESSAGE_DATA_KEY, msg.getMessage().getMessage());
 			generateUserEvent(userId, CHARGE_POINT_MESSAGE_RECEIVED_TAGS, null, data);

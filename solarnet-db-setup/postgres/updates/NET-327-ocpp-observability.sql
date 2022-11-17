@@ -32,6 +32,7 @@ CREATE TABLE solarev.ocpp_charge_point_status (
  * cp_id			the charge point ID
  * conn_id			the connector ID (>= 0) related to the action, or 0 for the charger
  * action			the name of the OCPP action
+ * msg_id			the action message ID
  * ts				the  date the action occurred at
  */
 CREATE TABLE solarev.ocpp_charge_point_action_status (
@@ -40,6 +41,7 @@ CREATE TABLE solarev.ocpp_charge_point_action_status (
 	cp_id			BIGINT NOT NULL,
 	conn_id			INTEGER NOT NULL,
 	action			TEXT NOT NULL,
+	msg_id			TEXT NOT NULL,
 	ts				TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT ocpp_charge_point_action_status_pk PRIMARY KEY (user_id, cp_id, conn_id, action),
 	CONSTRAINT ocpp_charge_point_action_status_charge_point_fk FOREIGN KEY (cp_id)

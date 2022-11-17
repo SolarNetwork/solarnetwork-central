@@ -56,13 +56,15 @@ public interface ChargePointActionStatusDao extends
 	 *        {@literal 0} for charger-wide actions
 	 * @param action
 	 *        the action name
+	 * @param messageId
+	 *        the message ID
 	 * @param date
 	 *        the date
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code connectorId} is {@literal null}
 	 */
 	void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
-			String action, Instant date);
+			String action, String messageId, Instant date);
 
 	/**
 	 * API for querying for a stream of {@link ChargePointActionStatus}.

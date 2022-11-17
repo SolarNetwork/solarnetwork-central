@@ -118,7 +118,7 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, connDate);
 
 		// WHEN
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, null, null);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, null);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();

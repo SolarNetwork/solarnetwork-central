@@ -226,7 +226,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		// THEN
 		then(chargePointActionStatusDao).should().updateActionTimestamp(eq(userId),
 				eq(cpIdentity.getIdentifier()), eq(req.getConnectorId()), eq("StatusNotification"),
-				dateCaptor.capture());
+				eq(messageId), dateCaptor.capture());
 
 		// 3 events: connected, received, sent(error)
 		then(userEventAppenderBiz).should(times(3)).addEvent(eq(userId), logEventCaptor.capture());

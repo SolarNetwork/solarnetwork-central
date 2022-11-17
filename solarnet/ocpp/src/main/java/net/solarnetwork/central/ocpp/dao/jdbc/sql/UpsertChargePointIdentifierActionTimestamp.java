@@ -46,6 +46,7 @@ public class UpsertChargePointIdentifierActionTimestamp
 	private final String chargePointIdentifier;
 	private final Integer connectorId;
 	private final String action;
+	private final String messageId;
 	private final Instant date;
 
 	/**
@@ -59,32 +60,36 @@ public class UpsertChargePointIdentifierActionTimestamp
 	 *        the connector ID, or {@literal null} for a charger-wide action
 	 * @param action
 	 *        the action name
+	 * @param messageId
+	 *        the message ID
 	 * @param date
 	 *        the timestamp
 	 * @throws IllegalArgumentException
 	 *         if any argument except {@code connectorId} is {@literal null}
 	 */
 	public UpsertChargePointIdentifierActionTimestamp(Long userId, String chargePointIdentifier,
-			Integer connectorId, String action, Instant date) {
+			Integer connectorId, String action, String messageId, Instant date) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,
 				"chargePointIdentifier");
 		this.connectorId = connectorId;
 		this.action = requireNonNullArgument(action, "action");
+		this.messageId = requireNonNullArgument(messageId, "messageId");
 		this.date = requireNonNullArgument(date, "date");
 	}
 
 	@Override
 	public String getSql() {
 		return """
-				INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, conn_id, action, ts)
-				SELECT cp.user_id, cp.id, ? AS conn_id, ? AS action, ? as ts
+				INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, conn_id, action, msg_id, ts)
+				SELECT cp.user_id, cp.id, ? AS conn_id, ? AS action, ? as msg_id, ? as ts
 				FROM solarev.ocpp_charge_point cp
 				WHERE cp.user_id = ?
 					AND cp.ident = ?
 				ON CONFLICT (user_id, cp_id, conn_id, action) DO UPDATE
-				SET ts = EXCLUDED.ts
+				SET msg_id = EXCLUDED.msg_id
+					, ts = EXCLUDED.ts
 				""";
 	}
 
@@ -93,9 +98,10 @@ public class UpsertChargePointIdentifierActionTimestamp
 		PreparedStatement ps = con.prepareStatement(getSql());
 		ps.setInt(1, connectorId != null ? connectorId.intValue() : 0);
 		ps.setString(2, action);
-		ps.setTimestamp(3, Timestamp.from(date));
-		ps.setLong(4, userId);
-		ps.setString(5, chargePointIdentifier);
+		ps.setString(3, messageId);
+		ps.setTimestamp(4, Timestamp.from(date));
+		ps.setLong(5, userId);
+		ps.setString(6, chargePointIdentifier);
 		return ps;
 	}
 
