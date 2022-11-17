@@ -62,24 +62,6 @@ public interface ChargePointStatusDao
 			Instant connectionDate);
 
 	/**
-	 * Update a specific charge point connection status.
-	 * 
-	 * <p>
-	 * This method will create a new entity if one does not already exist.
-	 * </p>
-	 * 
-	 * @param id
-	 *        the charge point ID
-	 * @param connectedTo
-	 *        the name of the SolarIn instance the charger is connected to, or
-	 *        {@literal null} if disconnected
-	 * @param connectionDate
-	 *        if {@code connectedTo} is not {@literal null} the connected
-	 *        timestamp to save
-	 */
-	void updateConnectionStatus(UserLongCompositePK id, String connectedTo, Instant connectionDate);
-
-	/**
 	 * API for querying for a stream of {@link ChargePointStatus}.
 	 * 
 	 * @param filter

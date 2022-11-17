@@ -40,7 +40,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.jdbc.sql.SelectChargePointStatus;
-import net.solarnetwork.central.ocpp.dao.jdbc.sql.UpsertChargePointConnectionStatus;
 import net.solarnetwork.central.ocpp.dao.jdbc.sql.UpsertChargePointIdentifierConnectionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
@@ -85,14 +84,6 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 		UpsertChargePointIdentifierConnectionStatus sql = new UpsertChargePointIdentifierConnectionStatus(
 				userId, chargePointIdentifier,
 				new ChargePointStatus(unassignedEntityIdKey(userId), null, connectedTo, connectionDate));
-		jdbcOps.update(sql);
-	}
-
-	@Override
-	public void updateConnectionStatus(UserLongCompositePK id, String connectedTo,
-			Instant connectionDate) {
-		UpsertChargePointConnectionStatus sql = new UpsertChargePointConnectionStatus(
-				new ChargePointStatus(id, null, connectedTo, connectionDate));
 		jdbcOps.update(sql);
 	}
 
