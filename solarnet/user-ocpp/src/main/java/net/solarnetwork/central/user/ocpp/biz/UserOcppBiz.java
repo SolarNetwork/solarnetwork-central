@@ -22,14 +22,20 @@
 
 package net.solarnetwork.central.user.ocpp.biz;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 
@@ -37,7 +43,7 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
  * Service API for SolarUser OCPP support.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserOcppBiz {
 
@@ -274,6 +280,28 @@ public interface UserOcppBiz {
 	 *         assigned if creating a new entity
 	 */
 	ChargePointSettings saveChargePointSettings(ChargePointSettings settings);
+
+	/**
+	 * API for querying for a filtered set of charger point statuses, streaming
+	 * the results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param processor
+	 *        the processor for the results
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.1
+	 */
+	void findFilteredChargePointStatus(ChargePointStatusFilter filter,
+			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) throws IOException;
 
 	/**
 	 * Get the available settings entities for a given user.

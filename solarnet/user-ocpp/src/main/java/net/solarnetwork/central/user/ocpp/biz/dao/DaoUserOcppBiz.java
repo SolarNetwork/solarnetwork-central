@@ -23,10 +23,12 @@
 package net.solarnetwork.central.user.ocpp.biz.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,17 +41,22 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.service.PasswordEncoder;
@@ -69,8 +76,10 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	private final CentralChargeSessionDao chargeSessionDao;
 	private final UserSettingsDao userSettingsDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
+	private final ChargePointStatusDao chargePointStatusDao;
 	private final PasswordEncoder passwordEncoder;
 	private Validator validator;
+	private Validator chargePointStatusFilterValidator;
 
 	/**
 	 * Constructor.
@@ -89,6 +98,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 *        the user settings DAo
 	 * @param chargePointSettingsDao
 	 *        the charge point settings DAO
+	 * @param chargePointStatusDao
+	 *        the charge point status DAO
 	 * @param passwordEncoder
 	 *        the system user password encoder to use
 	 * @throws IllegalArgumentException
@@ -97,7 +108,8 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
 			CentralChargeSessionDao chargeSessionDao, UserSettingsDao userSettingsDao,
-			ChargePointSettingsDao chargePointSettingsDao, PasswordEncoder passwordEncoder) {
+			ChargePointSettingsDao chargePointSettingsDao, ChargePointStatusDao chargePointStatusDao,
+			PasswordEncoder passwordEncoder) {
 		super();
 		this.systemUserDao = requireNonNullArgument(systemUserDao, "systemUserDao");
 		this.chargePointDao = requireNonNullArgument(chargePointDao, "chargePointDao");
@@ -107,6 +119,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.chargePointSettingsDao = requireNonNullArgument(chargePointSettingsDao,
 				"chargePointSettingsDao");
+		this.chargePointStatusDao = requireNonNullArgument(chargePointStatusDao, "chargePointStatusDao");
 		this.passwordEncoder = requireNonNullArgument(passwordEncoder, "passwordEncoder");
 	}
 
@@ -224,11 +237,11 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	}
 
 	private void validateInput(Object input, String name) {
-		if ( input == null ) {
-			return;
-		}
-		final Validator v = getValidator();
-		if ( v == null || !v.supports(input.getClass()) ) {
+		validateInput(input, name, getValidator());
+	}
+
+	private static void validateInput(Object input, String name, Validator v) {
+		if ( input == null || v == null || !v.supports(input.getClass()) ) {
 			return;
 		}
 		BindException errors = new BindException(input, name);
@@ -376,6 +389,15 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargeSessionDao.getIncompleteChargeSessionsForUserForChargePoint(userId, chargePointId);
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public void findFilteredChargePointStatus(ChargePointStatusFilter filter,
+			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
+			Integer offset, Integer max) throws IOException {
+		validateInput(filter, "filter", getChargePointStatusFilterValidator());
+		chargePointStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
+	}
+
 	/**
 	 * Get the validator.
 	 * 
@@ -393,6 +415,27 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 */
 	public void setValidator(Validator validator) {
 		this.validator = validator;
+	}
+
+	/**
+	 * Get the charge point status filter validator.
+	 * 
+	 * @return the validator
+	 * @since 2.1
+	 */
+	public Validator getChargePointStatusFilterValidator() {
+		return chargePointStatusFilterValidator;
+	}
+
+	/**
+	 * Set the charge point status filter validator.
+	 * 
+	 * @param chargePointStatusFilterValidator
+	 *        the validator to set
+	 * @since 2.1
+	 */
+	public void setChargePointStatusFilterValidator(Validator chargePointStatusFilterValidator) {
+		this.chargePointStatusFilterValidator = chargePointStatusFilterValidator;
 	}
 
 }

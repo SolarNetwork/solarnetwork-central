@@ -22,27 +22,49 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.datum.domain.StreamDatumFilter;
+import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.ocpp.util.ChargePointStatusSerializer;
+import net.solarnetwork.central.reg.config.JsonConfig;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -52,7 +74,7 @@ import net.solarnetwork.web.domain.Response;
  * Web service API for OCPP management.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalExceptionRestController
 @RestController("v1OcppController")
@@ -60,17 +82,27 @@ import net.solarnetwork.web.domain.Response;
 public class UserOcppController {
 
 	private final UserOcppBiz userOcppBiz;
+	private final ObjectMapper objectMapper;
+	private final ObjectMapper cborObjectMapper;
+	private Validator filterValidator;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userOcppBiz
 	 *        the user OCPP service
+	 * @param objectMapper
+	 *        the object mapper to use for JSON
+	 * @param cborObjectMapper
+	 *        the mapper to use for CBOR
 	 */
-
-	public UserOcppController(@Autowired(required = false) UserOcppBiz userOcppBiz) {
+	public UserOcppController(@Autowired(required = false) UserOcppBiz userOcppBiz,
+			ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper) {
 		super();
-		this.userOcppBiz = userOcppBiz;
+		this.userOcppBiz = requireNonNullArgument(userOcppBiz, "userOcppBiz");
+		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
+		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
 	}
 
 	/**
@@ -260,6 +292,42 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePointSettings(userId, id);
 		return response(null);
+	}
+
+	/**
+	 * Query for charger status.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param validationResult
+	 *        the binding result
+	 * @param accept
+	 *        the desired content type
+	 * @param response
+	 *        the HTTP response
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @since 2.1
+	 */
+	@ResponseBody
+	@RequestMapping(method = RequestMethod.GET, value = "/chargers/status")
+	public void listChargePointStatus(final BasicOcppCriteria filter,
+			final BindingResult validationResult, @RequestHeader(HttpHeaders.ACCEPT) final String accept,
+			final HttpServletResponse response) throws IOException {
+		if ( filterValidator != null ) {
+			filterValidator.validate(filter, validationResult);
+			if ( validationResult.hasErrors() ) {
+				throw new ValidationException(validationResult);
+			}
+		}
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		filter.setUserId(userId);
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (FilteredResultsProcessor<ChargePointStatus> processor = WebUtils
+				.filteredResultsProcessorForType(acceptTypes, response, cborObjectMapper, objectMapper,
+						ChargePointStatusSerializer.INSTANCE)) {
+			userOcppBiz().findFilteredChargePointStatus(filter, processor, null, null, null);
+		}
 	}
 
 	/**
@@ -459,6 +527,34 @@ public class UserOcppController {
 		Collection<ChargeSession> list = userOcppBiz().incompleteChargeSessionsForChargePoint(userId,
 				chargePointId);
 		return response(list);
+	}
+
+	/**
+	 * Get the filter validator to use.
+	 * 
+	 * @return the validator
+	 */
+	public Validator getFilterValidator() {
+		return filterValidator;
+	}
+
+	/**
+	 * Set the filter validator to use.
+	 * 
+	 * @param filterValidator
+	 *        the validator to set
+	 * @throws IllegalArgumentException
+	 *         if {@code validator} does not support the
+	 *         {@link StreamDatumFilter} class
+	 */
+	@Autowired
+	@Qualifier(CHARGE_POINT_STATUS_FILTER)
+	public void setFilterValidator(Validator filterValidator) {
+		if ( filterValidator != null && !filterValidator.supports(ChargePointStatusFilter.class) ) {
+			throw new IllegalArgumentException(
+					"The Validator must support the ChargePointStatusFilter class.");
+		}
+		this.filterValidator = filterValidator;
 	}
 
 }

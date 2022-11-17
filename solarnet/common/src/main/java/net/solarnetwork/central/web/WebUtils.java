@@ -22,16 +22,26 @@
 
 package net.solarnetwork.central.web;
 
+import static java.lang.String.format;
+import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
+import org.springframework.util.MimeType;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
 
 /**
  * Helper utilities for web APIs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class WebUtils {
 
@@ -89,6 +99,53 @@ public final class WebUtils {
 	 */
 	public static URI uriWithoutHost(UriComponentsBuilder builder, Map<String, ?> uriVariables) {
 		return withoutHost(builder, uriVariables).toUri();
+	}
+
+	/**
+	 * Setup a filtered results processor.
+	 * 
+	 * @param <T>
+	 *        the result type
+	 * @param acceptTypes
+	 *        the acceptable types
+	 * @param response
+	 *        the HTTP response
+	 * @param cborObjectMapper
+	 *        a CBOR object mapper
+	 * @param objectMapper
+	 *        a JSON object mapper
+	 * @param serializer
+	 *        the serializer
+	 * @return the processor
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @since 1.1
+	 */
+	public static <T> FilteredResultsProcessor<T> filteredResultsProcessorForType(
+			final List<MediaType> acceptTypes, final HttpServletResponse response,
+			ObjectMapper cborObjectMapper, ObjectMapper objectMapper, JsonSerializer<T> serializer)
+			throws IOException {
+		FilteredResultsProcessor<T> processor = null;
+		for ( MediaType acceptType : acceptTypes ) {
+			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
+				processor = new ObjectMapperFilteredResultsProcessor<>(
+						cborObjectMapper.createGenerator(response.getOutputStream()),
+						cborObjectMapper.getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), serializer);
+				break;
+			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
+				processor = new ObjectMapperFilteredResultsProcessor<>(
+						objectMapper.createGenerator(response.getOutputStream()),
+						objectMapper.getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), serializer);
+				break;
+			} else {
+				throw new IllegalArgumentException(
+						format("The [%s] media type is not supported.", acceptType));
+			}
+		}
+		response.setContentType(processor.getMimeType().toString());
+		return processor;
 	}
 
 }
