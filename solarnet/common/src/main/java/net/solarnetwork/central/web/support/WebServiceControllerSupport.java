@@ -577,7 +577,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<?> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
 			Locale locale) {
-		log.debug("InvalidPropertyException in request {}: {}", requestDescription(request),
+		log.info("InvalidPropertyException in request {}: {}", requestDescription(request),
 				e.toString());
 		return Result.error("VAL.00005", messageSource.getMessage("error.invalidProperty",
 				new Object[] { e.getMessage() }, "Invalid request syntax", locale));
