@@ -37,6 +37,7 @@ import javax.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanInstantiationException;
+import org.springframework.beans.InvalidPropertyException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -558,6 +559,28 @@ public final class WebServiceControllerSupport {
 			msg = buf.toString();
 		}
 		return msg;
+	}
+
+	/**
+	 * Handle an {@link InvalidPropertyException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param locale
+	 *        the locale
+	 * @return an error response object
+	 */
+	@ExceptionHandler(InvalidPropertyException.class)
+	@ResponseBody
+	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
+			Locale locale) {
+		log.debug("InvalidPropertyException in request {}: {}", requestDescription(request),
+				e.toString());
+		return Result.error("VAL.00005", messageSource.getMessage("error.invalidProperty",
+				new Object[] { e.getMessage() }, "Invalid request syntax", locale));
 	}
 
 	/**
