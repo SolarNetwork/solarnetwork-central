@@ -96,8 +96,7 @@ public abstract class AuthorizationSupport {
 		}
 
 		// node requires authentication
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
+		if ( actor instanceof SecurityNode node ) {
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
 				throw new AuthorizationException(node.getNodeId().toString(),
@@ -106,8 +105,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
 				throw new AuthorizationException(user.getEmail(),
@@ -116,8 +114,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
 				// user token, so user ID must match node user's ID
 				if ( !token.getUserId().equals(ownership.getUserId()) ) {
@@ -163,8 +160,7 @@ public abstract class AuthorizationSupport {
 		}
 
 		// node requires authentication
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
+		if ( actor instanceof SecurityNode node ) {
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
 				throw new AuthorizationException(node.getNodeId().toString(),
@@ -173,8 +169,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
 				throw new AuthorizationException(user.getEmail(),
@@ -183,8 +178,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
 				// user token, so user ID must match node user's ID
 				if ( !token.getUserId().equals(ownership.getUserId()) ) {
@@ -239,8 +233,7 @@ public abstract class AuthorizationSupport {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
 		}
 
-		if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
@@ -248,8 +241,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
 				// user token, so user ID must match node user's ID
 				if ( !token.getUserId().equals(userId) ) {
@@ -267,7 +259,7 @@ public abstract class AuthorizationSupport {
 	}
 
 	/**
-	 * Get a {@link SecurityPolicy} for the active user, if avaiable.
+	 * Get a {@link SecurityPolicy} for the active user, if available.
 	 * 
 	 * @return The active user's policy, or {@code null}.
 	 * @since 1.3
@@ -280,8 +272,7 @@ public abstract class AuthorizationSupport {
 			return null;
 		}
 
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			return token.getPolicy();
 		}
 
@@ -309,8 +300,7 @@ public abstract class AuthorizationSupport {
 		}
 
 		// node requires authentication
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
+		if ( actor instanceof SecurityNode node ) {
 			final SolarNodeOwnership ownership = (node.getNodeId() != null
 					? nodeOwnershipDao.ownershipForNodeId(node.getNodeId())
 					: null);
@@ -325,8 +315,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
 				throw new AuthorizationException(user.getEmail(),
@@ -335,8 +324,7 @@ public abstract class AuthorizationSupport {
 			return;
 		}
 
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			// user token, so user ID must match token owner's ID
 			if ( !token.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for token {}; wrong user", userId, token.getToken());
@@ -404,8 +392,7 @@ public abstract class AuthorizationSupport {
 
 		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
 
-		if ( domainObject instanceof FilterResults ) {
-			FilterResults<?> filterResults = (FilterResults<?>) domainObject;
+		if ( domainObject instanceof FilterResults<?> filterResults ) {
 			Collection<Object> filteredObjects = policyEnforcedCollection(filterResults, policy,
 					principal, metadataType);
 			@SuppressWarnings("unchecked")
@@ -413,8 +400,7 @@ public abstract class AuthorizationSupport {
 					filterResults.getTotalResults(), filterResults.getStartingOffset(),
 					filterResults.getReturnedResultCount());
 			return result;
-		} else if ( domainObject instanceof List ) {
-			List<?> collectionResults = (List<?>) domainObject;
+		} else if ( domainObject instanceof List<?> collectionResults ) {
 			@SuppressWarnings("unchecked")
 			T filteredObjects = (T) policyEnforcedCollection(collectionResults, policy, principal,
 					metadataType);

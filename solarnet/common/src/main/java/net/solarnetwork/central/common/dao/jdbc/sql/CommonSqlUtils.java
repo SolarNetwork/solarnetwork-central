@@ -30,17 +30,19 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.CodedValue;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public final class CommonSqlUtils {
 
@@ -789,6 +791,46 @@ public final class CommonSqlUtils {
 			codes = values.stream().map(CodedValue::getCode).toArray(Integer[]::new);
 		}
 		return prepareArrayParameter(con, stmt, parameterOffset, codes, setNull);
+	}
+
+	/**
+	 * Generate SQL {@literal ORDER BY} criteria for a set of
+	 * {@link SortDescriptor}.
+	 * 
+	 * <p>
+	 * The buffer is populated with a pattern of {@literal , key} for each key.
+	 * The leading comma and space characters are <b>not</b> stripped, but the
+	 * returned value indicates the number of characters to trim from the
+	 * results if needed.
+	 * </p>
+	 * 
+	 * @param sorts
+	 *        the sorts
+	 * @param sortKeyMapping
+	 *        the mapping of sort keys to SQL sort names
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of leading "joining" characters added to {@code buf};
+	 *         will either be {@literal 0} or {@literal 2}
+	 * @since 2.3
+	 */
+	public static int orderBySorts(Iterable<SortDescriptor> sorts, Map<String, String> sortKeyMapping,
+			StringBuilder buf) {
+		if ( sorts == null || sortKeyMapping == null || sortKeyMapping.isEmpty() ) {
+			return 0;
+		}
+		boolean appended = false;
+		for ( SortDescriptor sort : sorts ) {
+			String sqlName = sortKeyMapping.get(sort.getSortKey());
+			if ( sqlName != null ) {
+				appended = true;
+				buf.append(", ").append(sqlName);
+				if ( sort.isDescending() ) {
+					buf.append(" DESC");
+				}
+			}
+		}
+		return (appended ? 2 : 0);
 	}
 
 }

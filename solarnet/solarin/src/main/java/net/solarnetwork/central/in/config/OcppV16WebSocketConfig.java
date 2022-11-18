@@ -37,6 +37,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistration;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
@@ -45,6 +46,9 @@ import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.service.PasswordEncoder;
@@ -63,6 +67,9 @@ import ocpp.v16.ErrorCodeResolver;
 @EnableWebSocket
 @Profile(OCPP_V16)
 public class OcppV16WebSocketConfig implements WebSocketConfigurer {
+
+	@Autowired
+	private ApplicationMetadata applicationMetadata;
 
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
@@ -84,6 +91,12 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Autowired
+	private ChargePointStatusDao chargePointStatusDao;
+
+	@Autowired
+	private ChargePointActionStatusDao chargePointActionStatusDao;
 
 	@Autowired
 	@Qualifier(OCPP_V16)
@@ -117,6 +130,10 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				handler.addActionMessageProcessor(processor);
 			}
 		}
+		handler.setApplicationMetadata(applicationMetadata);
+		handler.setChargePointStatusDao(chargePointStatusDao);
+		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
+		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		return handler;
 	}
 

@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OCPP'
-version = '1.4.0'
+version = '1.5.0'
 archivesBaseName = 'solarnet-ocpp'
 
 configurations {
@@ -40,6 +40,7 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'org.threeten:threeten-extra:1.7.1'
 }
 
 jar.manifest {

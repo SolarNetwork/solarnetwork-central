@@ -26,13 +26,18 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
@@ -47,11 +52,14 @@ import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisUserSettingsDao;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class OcppDaoConfig {
 
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
+
+	@Autowired
+	private JdbcOperations jdbcOperations;
 
 	@Bean
 	public CentralAuthorizationDao ocppCentralAuthorizationDao() {
@@ -100,6 +108,16 @@ public class OcppDaoConfig {
 		MyBatisUserSettingsDao dao = new MyBatisUserSettingsDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;
+	}
+
+	@Bean
+	public ChargePointStatusDao ocppChargePointStatusDao() {
+		return new JdbcChargePointStatusDao(jdbcOperations);
+	}
+
+	@Bean
+	public ChargePointActionStatusDao ocppChargePointActionStatusDao() {
+		return new JdbcChargePointActionStatusDao(jdbcOperations);
 	}
 
 }

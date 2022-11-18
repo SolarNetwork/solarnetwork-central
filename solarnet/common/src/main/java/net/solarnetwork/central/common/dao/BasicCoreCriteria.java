@@ -23,18 +23,21 @@
 package net.solarnetwork.central.common.dao;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.dao.PaginationCriteria;
 import net.solarnetwork.domain.SimpleLocation;
 import net.solarnetwork.domain.SimplePagination;
+import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Basic implementation of some core criteria APIs.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicCoreCriteria extends SimplePagination implements PaginationCriteria, LocationCriteria,
 		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria {
@@ -118,35 +121,33 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		setMax(criteria.getMax());
 		setOffset(criteria.getOffset());
 		setSorts(criteria.getSorts());
-		if ( criteria instanceof BasicCoreCriteria ) {
-			BasicCoreCriteria bcc = (BasicCoreCriteria) criteria;
-			setLocationIds(bcc.getLocationIds());
-			setLocation(bcc.getLocation());
-			setNodeIds(bcc.getNodeIds());
-			setSourceIds(bcc.getSourceIds());
-			setUserIds(bcc.getUserIds());
-			setTokenIds(bcc.getTokenIds());
-			setSearchFilter(bcc.getSearchFilter());
+		if ( criteria instanceof BasicCoreCriteria c ) {
+			setLocationIds(c.getLocationIds());
+			setLocation(c.getLocation());
+			setNodeIds(c.getNodeIds());
+			setSourceIds(c.getSourceIds());
+			setUserIds(c.getUserIds());
+			setTokenIds(c.getTokenIds());
+			setSearchFilter(c.getSearchFilter());
 		} else {
-			if ( criteria instanceof LocationCriteria ) {
-				LocationCriteria lc = (LocationCriteria) criteria;
-				setLocationIds(lc.getLocationIds());
-				setLocation(SimpleLocation.locationValue(lc.getLocation()));
+			if ( criteria instanceof LocationCriteria c ) {
+				setLocationIds(c.getLocationIds());
+				setLocation(SimpleLocation.locationValue(c.getLocation()));
 			}
-			if ( criteria instanceof NodeCriteria ) {
-				setNodeIds(((NodeCriteria) criteria).getNodeIds());
+			if ( criteria instanceof NodeCriteria c ) {
+				setNodeIds(c.getNodeIds());
 			}
-			if ( criteria instanceof SourceCriteria ) {
-				setSourceIds(((SourceCriteria) criteria).getSourceIds());
+			if ( criteria instanceof SourceCriteria c ) {
+				setSourceIds(c.getSourceIds());
 			}
-			if ( criteria instanceof UserCriteria ) {
-				setUserIds(((UserCriteria) criteria).getUserIds());
+			if ( criteria instanceof UserCriteria c ) {
+				setUserIds(c.getUserIds());
 			}
-			if ( criteria instanceof SecurityTokenCriteria ) {
-				setTokenIds(((SecurityTokenCriteria) criteria).getTokenIds());
+			if ( criteria instanceof SecurityTokenCriteria c ) {
+				setTokenIds(c.getTokenIds());
 			}
-			if ( criteria instanceof SearchFilterCriteria ) {
-				setSearchFilter(((SearchFilterCriteria) criteria).getSearchFilter());
+			if ( criteria instanceof SearchFilterCriteria c ) {
+				setSearchFilter(c.getSearchFilter());
 			}
 		}
 	}
@@ -377,6 +378,57 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	 */
 	public void setSearchFilter(String searchFilter) {
 		this.searchFilter = searchFilter;
+	}
+
+	/**
+	 * Get the order-by list.
+	 * 
+	 * <p>
+	 * This is derived from the {@link #getSorts()} list. The returned list will
+	 * contain all the {@link SortDescriptor#getSortKey()} values. Any
+	 * descriptor where {@link SortDescriptor#isDescending()} returns
+	 * {@literal true} will cause a {@literal ~} character to be added to the
+	 * end of the associated sort key value.
+	 * </p>
+	 * 
+	 * @return the order-by list
+	 * @since 1.2
+	 */
+	public List<String> getOrderBy() {
+		List<SortDescriptor> sorts = getSorts();
+		if ( sorts == null || sorts.isEmpty() ) {
+			return null;
+		}
+		return sorts.stream().map(s -> {
+			return s.isDescending() ? s.getSortKey().concat("~") : s.getSortKey();
+		}).toList();
+	}
+
+	/**
+	 * Set the order-by list.
+	 * 
+	 * <p>
+	 * This creates the {@link #getSorts()} list. The values of the
+	 * {@code orderBys} list represent the sort descriptor key values. If the
+	 * value ends with a {@literal ~} character the descriptor will be set to
+	 * descending order.
+	 * </p>
+	 * 
+	 * @param orderBys
+	 *        the order-by list
+	 * @see #getOrderBy()
+	 * @since 1.2
+	 */
+	public void setOrderBy(List<String> orderBys) {
+		if ( orderBys == null || orderBys.isEmpty() ) {
+			setSorts(null);
+		}
+		List<SortDescriptor> sorts = orderBys.stream().map(o -> {
+			boolean desc = o.endsWith("~");
+			return (SortDescriptor) new SimpleSortDescriptor(desc ? o.substring(0, o.length() - 1) : o,
+					desc);
+		}).toList();
+		setSorts(sorts);
 	}
 
 }
