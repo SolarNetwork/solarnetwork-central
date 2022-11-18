@@ -27,18 +27,27 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.threeten.extra.MutableClock;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointStatusDao;
+import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link JdbcChargePointStatusDao} class.
@@ -53,10 +62,12 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 	private Long TEST_CHARGER_ID = UUID.randomUUID().getMostSignificantBits();
 	private String TEST_CHARGER_IDENT = UUID.randomUUID().toString();
 
+	private MutableClock clock;
 	private JdbcChargePointStatusDao dao;
 
 	@BeforeEach
 	public void setup() {
+		clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
 		dao = new JdbcChargePointStatusDao(jdbcTemplate);
 		setupTestUser(TEST_USER_ID);
 		setupTestLocation();
@@ -129,6 +140,48 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row connected to missing", row.get("connected_to"), is(nullValue()));
 		assertThat("Row connected date unchanged", row.get("connected_date"),
 				is(equalTo(Timestamp.from(connDate))));
+	}
+
+	@Test
+	public void findFiltered_dateRange() {
+		// GIVEN
+		final Instant start = clock.instant();
+		final int count = 5;
+		final List<String> chargerIdents = new ArrayList<>(count);
+		final List<String> instanceIds = new ArrayList<>(count);
+		for ( int i = 0; i < count; i++ ) {
+			String chargerIdent = UUID.randomUUID().toString();
+			chargerIdents.add(chargerIdent);
+			insertCharger(TEST_USER_ID, TEST_NODE_ID, (long) i, chargerIdent);
+			String instanceId = UUID.randomUUID().toString();
+			instanceIds.add(instanceId);
+			dao.updateConnectionStatus(TEST_USER_ID, chargerIdent, instanceId, clock.instant());
+			clock.add(1, ChronoUnit.SECONDS);
+		}
+
+		allChargePointStatusData();
+
+		// WHEN
+		BasicOcppCriteria f = new BasicOcppCriteria();
+		f.setUserId(TEST_USER_ID);
+		f.setStartDate(start.plusSeconds(1));
+		f.setEndDate(start.plusSeconds(3));
+
+		FilterResults<ChargePointStatus, UserLongCompositePK> result = dao.findFiltered(f);
+		assertThat("Results returned for query", result, is(notNullValue()));
+		assertThat("Results with a and b returned", result.getReturnedResultCount(), is(equalTo(2)));
+		List<ChargePointStatus> resultList = StreamSupport.stream(result.spliterator(), false).toList();
+		ChargePointStatus status = resultList.get(0);
+		assertThat("Status 1 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
+		assertThat("Status 1 charger ID", status.getChargePointId(), is(equalTo(1L)));
+		assertThat("Status 1 connector ID", status.getConnectedTo(), is(equalTo(instanceIds.get(1))));
+		assertThat("Status 1 timestamp", status.getConnectedDate(), is(equalTo(start.plusSeconds(1))));
+
+		status = resultList.get(1);
+		assertThat("Status 2 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
+		assertThat("Status 2 charger ID", status.getChargePointId(), is(equalTo(2L)));
+		assertThat("Status 1 connector ID", status.getConnectedTo(), is(equalTo(instanceIds.get(2))));
+		assertThat("Status 1 timestamp", status.getConnectedDate(), is(equalTo(start.plusSeconds(2))));
 	}
 
 }

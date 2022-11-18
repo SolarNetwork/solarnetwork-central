@@ -26,11 +26,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
@@ -302,6 +304,28 @@ public interface UserOcppBiz {
 	void findFilteredChargePointStatus(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
 			Integer offset, Integer max) throws IOException;
+
+	/**
+	 * API for querying for a filtered set of charger point action statuses,
+	 * streaming the results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param processor
+	 *        the processor for the results
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.1
+	 */
+	void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
+			FilteredResultsProcessor<ChargePointActionStatus> processor,
+			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
 
 	/**
 	 * Get the available settings entities for a given user.

@@ -24,7 +24,10 @@ package net.solarnetwork.central.web;
 
 import static java.lang.String.format;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
@@ -32,10 +35,10 @@ import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
+import net.solarnetwork.central.support.OutputSerializationSupportContext;
 
 /**
  * Helper utilities for web APIs.
@@ -44,6 +47,13 @@ import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
  * @version 1.1
  */
 public final class WebUtils {
+
+	/** The {@literal text/csv} media type. */
+	public static final MediaType TEXT_CSV_MEDIA_TYPE = MediaType.parseMediaType("text/csv");
+
+	/** The {@literal text/csv} media type with a UTF-8 character set. */
+	public static final MediaType TEXT_CSV_UTF8_MEDIA_TYPE = MediaType
+			.parseMediaType("text/csv; charset=UTF-8");
 
 	private WebUtils() {
 		// not allowed
@@ -104,18 +114,24 @@ public final class WebUtils {
 	/**
 	 * Setup a filtered results processor.
 	 * 
+	 * <p>
+	 * The following types are supported:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>application/json</li>
+	 * <li>application/cbor</li>
+	 * <li>text/csv</li>
+	 * </ul>
+	 * 
 	 * @param <T>
 	 *        the result type
 	 * @param acceptTypes
 	 *        the acceptable types
 	 * @param response
 	 *        the HTTP response
-	 * @param cborObjectMapper
-	 *        a CBOR object mapper
-	 * @param objectMapper
-	 *        a JSON object mapper
-	 * @param serializer
-	 *        the serializer
+	 * @param context
+	 *        the output context
 	 * @return the processor
 	 * @throws IOException
 	 *         if an IO error occurs
@@ -123,21 +139,29 @@ public final class WebUtils {
 	 */
 	public static <T> FilteredResultsProcessor<T> filteredResultsProcessorForType(
 			final List<MediaType> acceptTypes, final HttpServletResponse response,
-			ObjectMapper cborObjectMapper, ObjectMapper objectMapper, JsonSerializer<T> serializer)
-			throws IOException {
+			OutputSerializationSupportContext<T> context) throws IOException {
 		FilteredResultsProcessor<T> processor = null;
 		for ( MediaType acceptType : acceptTypes ) {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
-						cborObjectMapper.createGenerator(response.getOutputStream()),
-						cborObjectMapper.getSerializerProvider(),
-						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), serializer);
+						context.cborObjectMapper().createGenerator(response.getOutputStream()),
+						context.cborObjectMapper().getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE), context.jsonSerializer());
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
-						objectMapper.createGenerator(response.getOutputStream()),
-						objectMapper.getSerializerProvider(),
-						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), serializer);
+						context.jsonObjectMapper().createGenerator(response.getOutputStream()),
+						context.jsonObjectMapper().getSerializerProvider(),
+						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE), context.jsonSerializer());
+				break;
+			} else if ( TEXT_CSV_MEDIA_TYPE.isCompatibleWith(acceptType) ) {
+				Charset cs = acceptType.getCharset();
+				if ( cs == null ) {
+					cs = StandardCharsets.UTF_8;
+				}
+				processor = new CsvFilteredResultsProcessor<>(
+						new OutputStreamWriter(response.getOutputStream(), cs), TEXT_CSV_MEDIA_TYPE,
+						true, context.registrar());
 				break;
 			} else {
 				throw new IllegalArgumentException(

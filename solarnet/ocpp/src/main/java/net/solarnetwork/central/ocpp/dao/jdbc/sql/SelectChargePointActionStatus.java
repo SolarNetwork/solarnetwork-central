@@ -117,7 +117,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 
 	private void sqlCore(StringBuilder buf, boolean ordered) {
 		buf.append("""
-				SELECT created, user_id, cp_id, conn_id, action, ts
+				SELECT created, user_id, cp_id, conn_id, action, msg_id, ts
 				FROM solarev.ocpp_charge_point_action_status
 				""");
 		sqlWhere(buf);

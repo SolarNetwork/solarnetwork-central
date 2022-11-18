@@ -27,17 +27,26 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.threeten.extra.MutableClock;
+import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
+import net.solarnetwork.central.ocpp.domain.ChargePointActionStatusKey;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link JdbcChargePointActionStatusDao} class.
@@ -52,10 +61,12 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 	private Long TEST_CHARGER_ID = UUID.randomUUID().getMostSignificantBits();
 	private String TEST_CHARGER_IDENT = UUID.randomUUID().toString();
 
+	private MutableClock clock;
 	private JdbcChargePointActionStatusDao dao;
 
 	@BeforeEach
 	public void setup() {
+		clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.HOURS), ZoneOffset.UTC);
 		dao = new JdbcChargePointActionStatusDao(jdbcTemplate);
 		setupTestUser(TEST_USER_ID);
 		setupTestLocation();
@@ -185,6 +196,50 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
 		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
 		assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
+	}
+
+	@Test
+	public void findFiltered_dateRange() {
+		// GIVEN
+		final Instant start = clock.instant();
+		final int count = 5;
+		final List<String> messageIds = new ArrayList<>(count);
+		for ( int i = 0; i < count; i++ ) {
+			String messageId = UUID.randomUUID().toString();
+			messageIds.add(messageId);
+			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, i, "Action%d".formatted(i + 1),
+					messageId, clock.instant());
+			clock.add(1, ChronoUnit.SECONDS);
+		}
+
+		allChargePointActionStatusData();
+
+		// WHEN
+		BasicOcppCriteria f = new BasicOcppCriteria();
+		f.setUserId(TEST_USER_ID);
+		f.setStartDate(start.plusSeconds(1));
+		f.setEndDate(start.plusSeconds(3));
+
+		FilterResults<ChargePointActionStatus, ChargePointActionStatusKey> result = dao.findFiltered(f);
+		assertThat("Results returned for query", result, is(notNullValue()));
+		assertThat("Results with a and b returned", result.getReturnedResultCount(), is(equalTo(2)));
+		List<ChargePointActionStatus> resultList = StreamSupport.stream(result.spliterator(), false)
+				.toList();
+		ChargePointActionStatus status = resultList.get(0);
+		assertThat("Status 1 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
+		assertThat("Status 1 charger ID", status.getChargePointId(), is(equalTo(TEST_CHARGER_ID)));
+		assertThat("Status 1 connector ID", status.getConnectorId(), is(equalTo(1)));
+		assertThat("Status 1 action", status.getAction(), is(equalTo("Action2")));
+		assertThat("Status 1 message ID", status.getMessageId(), is(equalTo(messageIds.get(1))));
+		assertThat("Status 1 timestamp", status.getTimestamp(), is(equalTo(start.plusSeconds(1))));
+
+		status = resultList.get(1);
+		assertThat("Status 2 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
+		assertThat("Status 2 charger ID", status.getChargePointId(), is(equalTo(TEST_CHARGER_ID)));
+		assertThat("Status 2 connector ID", status.getConnectorId(), is(equalTo(2)));
+		assertThat("Status 2 action", status.getAction(), is(equalTo("Action3")));
+		assertThat("Status 2 message ID", status.getMessageId(), is(equalTo(messageIds.get(2))));
+		assertThat("Status 2 timestamp", status.getTimestamp(), is(equalTo(start.plusSeconds(2))));
 	}
 
 }

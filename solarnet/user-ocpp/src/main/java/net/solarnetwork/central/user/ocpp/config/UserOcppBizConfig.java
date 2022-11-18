@@ -36,6 +36,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
@@ -51,6 +52,7 @@ import net.solarnetwork.central.user.ocpp.biz.dao.CentralAuthorizationValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.CentralChargePointConnectorValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.CentralChargePointValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.CentralSystemUserValidator;
+import net.solarnetwork.central.user.ocpp.biz.dao.ChargePointActionStatusFilterValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.ChargePointSettingsValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.ChargePointStatusFilterValidator;
 import net.solarnetwork.central.user.ocpp.biz.dao.DaoUserOcppBiz;
@@ -69,6 +71,9 @@ public class UserOcppBizConfig {
 
 	/** A qualifier used for charge point status filter components. */
 	public static final String CHARGE_POINT_STATUS_FILTER = "charge-point-status-filter";
+
+	/** A qualifier used for charge point action status filter components. */
+	public static final String CHARGE_POINT_ACTION_STATUS_FILTER = "charge-point-action-status-filter";
 
 	@Autowired
 	private CentralSystemUserDao systemUserDao;
@@ -95,12 +100,21 @@ public class UserOcppBizConfig {
 	private ChargePointStatusDao chargePointStatusDao;
 
 	@Autowired
+	private ChargePointActionStatusDao chargePointActionStatusDao;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Bean
 	@Qualifier(CHARGE_POINT_STATUS_FILTER)
 	public Validator userOcppChargePointStatusFilterValidator() {
 		return new ChargePointStatusFilterValidator();
+	}
+
+	@Bean
+	@Qualifier(CHARGE_POINT_ACTION_STATUS_FILTER)
+	public Validator userOcppChargePointActionStatusFilterValidator() {
+		return new ChargePointActionStatusFilterValidator();
 	}
 
 	@Bean
@@ -126,12 +140,14 @@ public class UserOcppBizConfig {
 	 */
 	@Bean
 	public DaoUserOcppBiz userOcppBiz(
-			@Qualifier(CHARGE_POINT_STATUS_FILTER) Validator chargePointStatusFilterValidator) {
+			@Qualifier(CHARGE_POINT_STATUS_FILTER) Validator chargePointStatusFilterValidator,
+			@Qualifier(CHARGE_POINT_ACTION_STATUS_FILTER) Validator chargePointActionStatusFilterValidator) {
 		DaoUserOcppBiz biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao,
 				authorizationDao, chargeSessionDao, userSettingsDao, chargePointSettingsDao,
-				chargePointStatusDao, passwordEncoder);
+				chargePointStatusDao, chargePointActionStatusDao, passwordEncoder);
 		biz.setValidator(userOcppValidator());
 		biz.setChargePointStatusFilterValidator(chargePointStatusFilterValidator);
+		biz.setChargePointActionStatusFilterValidator(chargePointActionStatusFilterValidator);
 		return biz;
 	}
 

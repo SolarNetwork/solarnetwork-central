@@ -40,6 +40,7 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'org.threeten:threeten-extra:1.7.1'
 }
 
 jar.manifest {
