@@ -118,35 +118,33 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		setMax(criteria.getMax());
 		setOffset(criteria.getOffset());
 		setSorts(criteria.getSorts());
-		if ( criteria instanceof BasicCoreCriteria ) {
-			BasicCoreCriteria bcc = (BasicCoreCriteria) criteria;
-			setLocationIds(bcc.getLocationIds());
-			setLocation(bcc.getLocation());
-			setNodeIds(bcc.getNodeIds());
-			setSourceIds(bcc.getSourceIds());
-			setUserIds(bcc.getUserIds());
-			setTokenIds(bcc.getTokenIds());
-			setSearchFilter(bcc.getSearchFilter());
+		if ( criteria instanceof BasicCoreCriteria c ) {
+			setLocationIds(c.getLocationIds());
+			setLocation(c.getLocation());
+			setNodeIds(c.getNodeIds());
+			setSourceIds(c.getSourceIds());
+			setUserIds(c.getUserIds());
+			setTokenIds(c.getTokenIds());
+			setSearchFilter(c.getSearchFilter());
 		} else {
-			if ( criteria instanceof LocationCriteria ) {
-				LocationCriteria lc = (LocationCriteria) criteria;
-				setLocationIds(lc.getLocationIds());
-				setLocation(SimpleLocation.locationValue(lc.getLocation()));
+			if ( criteria instanceof LocationCriteria c ) {
+				setLocationIds(c.getLocationIds());
+				setLocation(SimpleLocation.locationValue(c.getLocation()));
 			}
-			if ( criteria instanceof NodeCriteria ) {
-				setNodeIds(((NodeCriteria) criteria).getNodeIds());
+			if ( criteria instanceof NodeCriteria c ) {
+				setNodeIds(c.getNodeIds());
 			}
-			if ( criteria instanceof SourceCriteria ) {
-				setSourceIds(((SourceCriteria) criteria).getSourceIds());
+			if ( criteria instanceof SourceCriteria c ) {
+				setSourceIds(c.getSourceIds());
 			}
-			if ( criteria instanceof UserCriteria ) {
-				setUserIds(((UserCriteria) criteria).getUserIds());
+			if ( criteria instanceof UserCriteria c ) {
+				setUserIds(c.getUserIds());
 			}
-			if ( criteria instanceof SecurityTokenCriteria ) {
-				setTokenIds(((SecurityTokenCriteria) criteria).getTokenIds());
+			if ( criteria instanceof SecurityTokenCriteria c ) {
+				setTokenIds(c.getTokenIds());
 			}
-			if ( criteria instanceof SearchFilterCriteria ) {
-				setSearchFilter(((SearchFilterCriteria) criteria).getSearchFilter());
+			if ( criteria instanceof SearchFilterCriteria c ) {
+				setSearchFilter(c.getSearchFilter());
 			}
 		}
 	}

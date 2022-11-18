@@ -26,6 +26,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
+import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
@@ -36,7 +37,7 @@ import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
  * Security enforcing AOP aspect for {@link UserOcppBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -92,6 +93,10 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	public void deleteUserRelatedEntityById(Long userId) {
 	}
 
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.findFiltered*(..)) && args(filter,..)")
+	public void filter(UserCriteria filter) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
@@ -119,6 +124,21 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 			throw new IllegalArgumentException("The userId parameter must not be null.");
 		}
 		requireUserWriteAccess(userId);
+	}
+
+	/**
+	 * Verify user read access on a query filter.
+	 * 
+	 * @param filter
+	 */
+	@Before("filter(filter)")
+	public void filterAccessCheck(UserCriteria filter) {
+		if ( !filter.hasUserCriteria() ) {
+			throw new IllegalArgumentException("The userId filter criteria must not be null.");
+		}
+		for ( Long userId : filter.getUserIds() ) {
+			requireUserReadAccess(userId);
+		}
 	}
 
 }

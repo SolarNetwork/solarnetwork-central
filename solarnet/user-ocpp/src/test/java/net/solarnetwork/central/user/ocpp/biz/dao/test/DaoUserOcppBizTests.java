@@ -46,7 +46,9 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -75,6 +77,8 @@ public class DaoUserOcppBizTests {
 	private CentralChargeSessionDao chargeSessionDao;
 	private UserSettingsDao userSettingsDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
+	private ChargePointStatusDao chargePointStatusDao;
+	private ChargePointActionStatusDao chargePointActionStatusDao;
 	private PasswordEncoder passwordEncoder;
 
 	private DaoUserOcppBiz biz;
@@ -88,20 +92,25 @@ public class DaoUserOcppBizTests {
 		passwordEncoder = EasyMock.createMock(PasswordEncoder.class);
 		userSettingsDao = EasyMock.createMock(UserSettingsDao.class);
 		chargePointSettingsDao = EasyMock.createMock(ChargePointSettingsDao.class);
+		chargePointStatusDao = EasyMock.createMock(ChargePointStatusDao.class);
+		chargePointActionStatusDao = EasyMock.createMock(ChargePointActionStatusDao.class);
 		systemUserDao = EasyMock.createMock(CentralSystemUserDao.class);
 		biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao, authorizationDao,
-				chargeSessionDao, userSettingsDao, chargePointSettingsDao, passwordEncoder);
+				chargeSessionDao, userSettingsDao, chargePointSettingsDao, chargePointStatusDao,
+				chargePointActionStatusDao, passwordEncoder);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
-				chargeSessionDao, passwordEncoder, systemUserDao, userSettingsDao);
+		EasyMock.verify(authorizationDao, chargePointDao, chargePointStatusDao,
+				chargePointActionStatusDao, chargePointSettingsDao, connectorDao, chargeSessionDao,
+				passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(authorizationDao, chargePointDao, chargePointSettingsDao, connectorDao,
-				chargeSessionDao, passwordEncoder, systemUserDao, userSettingsDao);
+		EasyMock.replay(authorizationDao, chargePointDao, chargePointStatusDao,
+				chargePointActionStatusDao, chargePointSettingsDao, connectorDao, chargeSessionDao,
+				passwordEncoder, systemUserDao, userSettingsDao);
 	}
 
 	@Test

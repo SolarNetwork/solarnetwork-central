@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.List;
@@ -31,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.util.MimeType;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -49,9 +47,11 @@ import net.solarnetwork.central.reg.config.JsonConfig;
 import net.solarnetwork.central.reg.config.UserEventConfig;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
+import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.codec.PropertySerializerRegistrar;
 
 /**
  * Web service API for user event management.
@@ -66,6 +66,7 @@ public class UserEventController {
 
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
+	private final PropertySerializerRegistrar propertySerializerRegistrar;
 	private final UserEventBiz userEventBiz;
 	private Validator filterValidator;
 
@@ -78,41 +79,18 @@ public class UserEventController {
 	 *        the object mapper to use for JSON
 	 * @param cborObjectMapper
 	 *        the mapper to use for CBOR
+	 * @param propertySerializerRegistrar
+	 *        the registrar to use (may be {@literal null}
 	 */
 	@Autowired
 	public UserEventController(UserEventBiz userEventBiz, ObjectMapper objectMapper,
-			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper) {
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userEventBiz = requireNonNullArgument(userEventBiz, "userEventBiz");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
-	}
-
-	private FilteredResultsProcessor<UserEvent> processorForType(final List<MediaType> acceptTypes,
-			final HttpServletResponse response) throws IOException {
-		FilteredResultsProcessor<UserEvent> processor = null;
-		for ( MediaType acceptType : acceptTypes ) {
-			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
-				processor = new ObjectMapperFilteredResultsProcessor<>(
-						cborObjectMapper.createGenerator(response.getOutputStream()),
-						cborObjectMapper.getSerializerProvider(),
-						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE),
-						UserEventSerializer.INSTANCE);
-				break;
-			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
-				processor = new ObjectMapperFilteredResultsProcessor<>(
-						objectMapper.createGenerator(response.getOutputStream()),
-						objectMapper.getSerializerProvider(),
-						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE),
-						UserEventSerializer.INSTANCE);
-				break;
-			} else {
-				throw new IllegalArgumentException(
-						format("The [%s] media type is not supported.", acceptType));
-			}
-		}
-		response.setContentType(processor.getMimeType().toString());
-		return processor;
+		this.propertySerializerRegistrar = propertySerializerRegistrar;
 	}
 
 	/**
@@ -138,7 +116,9 @@ public class UserEventController {
 		}
 		cmd.setUserId(SecurityUtils.getCurrentActorUserId()); // force to actor
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-		try (FilteredResultsProcessor<UserEvent> processor = processorForType(acceptTypes, response)) {
+		try (FilteredResultsProcessor<UserEvent> processor = WebUtils.filteredResultsProcessorForType(
+				acceptTypes, response, new OutputSerializationSupportContext<>(objectMapper,
+						cborObjectMapper, UserEventSerializer.INSTANCE, propertySerializerRegistrar))) {
 			userEventBiz.findFilteredUserEvents(cmd, processor);
 		}
 	}
