@@ -11,10 +11,12 @@ This app depends on the following projects:
  * [solarnet-datum][solarnet-datum]
  * [solarnet-instructor][solarnet-instructor]
  * [solarnet-ocpp][solarnet-ocpp]
+ * [solarnet-oscp][solarnet-oscp]
  * [solarnet-user][solarnet-user]
  * [solarnet-user-billing][solarnet-user-billing]
  * [solarnet-user-datum][solarnet-user-datum]
  * [solarnet-user-ocpp][solarnet-user-ocpp]
+ * [solarnet-user-oscp][solarnet-user-oscp]
  
 # Runtime profiles
 
@@ -22,10 +24,12 @@ The following Spring runtime profiles are available:
 
 | Profile | Description |
 |:--------|:------------|
+| `aws-secrets` | Enables AWS Secrets Manager persistence for some credentials, like OAuth for OSCP. |
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
 | `dogtag` | Node PKI support via Dogtag. See [PkiDogtagConfig][PkiDogtagConfig]. |
 | `mqtt` | Enables publishing aggregates to SolarFlux. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
 | `ocpp-v16` | Enables OCPP v1.6 integration. See references to [SolarNetOcppConfiguration][SolarNetOcppConfiguration]. |
+| `oscp-v20`    | Enable OSCP v2.0 integration. See references to [SolarNetOscpConfiguration][SolarNetOscpConfiguration]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 
@@ -67,13 +71,16 @@ The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
 [solarnet-datum]: ../datum/
 [solarnet-instructor]: ../instructor/
 [solarnet-ocpp]: ../ocpp/
+[solarnet-oscp]: ../oscp/
 [solarnet-user]: ../user/
 [solarnet-user-billing]: ../user-billing/
 [solarnet-user-datum]: ../user-datum/
 [solarnet-user-ocpp]: ../user-ocpp/
+[solarnet-user-oscp]: ../user-oscp/
 [PkiDogtagConfig]: ../user/src/main/java/net/solarnetwork/central/user/config/PkiDogtagConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java
 [SnfBillingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SnfBillingConfig.java
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SolarFluxPublishingConfig.java
 [SolarNetOcppConfiguration]: ../ocpp/src/main/java/net/solarnetwork/central/ocpp/config/SolarNetOcppConfiguration.java
+[SolarNetOscpConfiguration]: ../oscp/src/main/java/net/solarnetwork/central/oscp/config/SolarNetOscpConfiguration.java
 [UserEventServiceSqsConfig]: ../user-datum/src/main/java/net/solarnetwork/central/user/event/config/UserEventServiceSqsConfig.java

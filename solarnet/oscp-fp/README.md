@@ -36,6 +36,7 @@ This app depends on the following projects:
 
  * [solarnet-common][solarnet-common]
  * [solarnet-datum][solarnet-datum]
+ * [solarnet-instructor][solarnet-instructor]
  * [solarnet-oscp][solarnet-oscp]
  
 
@@ -45,14 +46,17 @@ The following Spring runtime profiles are available:
 
 | Profile | Description |
 |:--------|:------------|
-| `mqtt` | Enables integration with SolarFlux/MQTT. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
-| `oscp-jobs` | Enable OSCP periodic jobs to support things like heartbeats and measurement reporting. See [JobConfig][JobConfig]. |
+| `aws-secrets` | Enables AWS Secrets Manager persistence for OAuth credentials. If not active then a simple file-based resource will be used. |
+| `http-trace`  | Enables HTTP wire-level logging for the `net.solarnetwork.http.REQ` and `net.solarnetwork.http.RES` loggers. |
+| `mqtt`        | Enables integration with SolarFlux/MQTT. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
+| `oscp-jobs`   | Enable OSCP periodic jobs to support things like heartbeats and measurement reporting. See [JobConfig][JobConfig]. |
+| `oscp-v20`    | Enable OSCP v2.0 support. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as
 
 ```
-SPRING_PROFILES_ACTIVE="production,mqtt,oscp-jobs"
+SPRING_PROFILES_ACTIVE="production,mqtt,oscp-v20,oscp-jobs"
 ```
 
 
@@ -86,6 +90,7 @@ The build produces an executable JAR at `build/libs/solaroscp-fp-x.y.z.jar`.
 [oscp]: https://www.openchargealliance.org/protocols/oscp-20/
 [solarnet-common]: ../common/
 [solarnet-datum]: ../datum/
+[solarnet-instructor]: ../instructor/
 [solarnet-oscp]: ../oscp/
 [JobConfig]: src/main/java/net/solarnetwork/central/oscp/fp/config/JobConfig.java
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/oscp/fp/config/SolarFluxPublishingConfig.java

@@ -17,6 +17,7 @@ $(document).ready(function() {
 				model.token = config.token;
 				model.expiryDateDisplay = (config.expiryDate ? moment(config.expiryDate).format('D MMM YYYY') : '');
 				model.enabled = config.enabled;
+				model.valid = !config.expired;
 	
 				return model;
 			});
