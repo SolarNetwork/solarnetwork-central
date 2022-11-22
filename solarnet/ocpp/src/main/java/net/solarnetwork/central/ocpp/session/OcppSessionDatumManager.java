@@ -534,7 +534,14 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			}
 		}
 		if ( !newReadings.isEmpty() ) {
-			chargeSessionDao.addReadings(newReadings);
+			// readings may not have a session associated, but we can only persist session-related
+			// readings so filter the non-session related readings out here
+			List<SampledValue> sessionReadings = newReadings.stream()
+					.filter(r -> r.getSessionId() != null).toList();
+			if ( !sessionReadings.isEmpty() ) {
+				chargeSessionDao.addReadings(sessionReadings);
+			}
+
 			// group readings by timestamp  and source ID into Datum
 			Map<String, Datum> datumBySourceId = new LinkedHashMap<>(4);
 			for ( SampledValue reading : newReadings ) {

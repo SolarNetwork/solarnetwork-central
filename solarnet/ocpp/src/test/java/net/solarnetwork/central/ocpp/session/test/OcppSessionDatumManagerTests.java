@@ -1263,10 +1263,7 @@ public class OcppSessionDatumManagerTests {
 
 		final int expectedDatumCount = 1;
 
-		// save readings
-		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
-		chargeSessionDao.addReadings(capture(readingsCaptor));
-
+		// save readings (datum only)
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		UUID streamId = UUID.randomUUID();
 		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
@@ -1304,8 +1301,6 @@ public class OcppSessionDatumManagerTests {
 		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
 
 		// then
-		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1, r2));
-
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
 		assertThat("Consolidated readings into 1 datum based on date", persistedDatum,
 				hasSize(expectedDatumCount));
@@ -1346,10 +1341,7 @@ public class OcppSessionDatumManagerTests {
 
 		final int expectedDatumCount = 2;
 
-		// save readings
-		Capture<Iterable<SampledValue>> readingsCaptor = new Capture<>();
-		chargeSessionDao.addReadings(capture(readingsCaptor));
-
+		// save readings (datum only)
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
 		UUID streamId = UUID.randomUUID();
 		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
@@ -1387,9 +1379,6 @@ public class OcppSessionDatumManagerTests {
 		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
 
 		// then
-		assertThat("Persisted readings same as passed in (sorted)", readingsCaptor.getValue(),
-				contains(r2, r1));
-
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
 		assertThat("Consolidated readings into 2 datum based on date", persistedDatum,
 				hasSize(expectedDatumCount));
