@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.oscp.fp.web;
 
+import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
+import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import org.slf4j.Logger;
@@ -76,45 +76,6 @@ public class GlobalExceptionHandlers {
 	}
 
 	/**
-	 * Get a standardized string description of a request.
-	 * 
-	 * @param request
-	 *        the request
-	 * @return the description
-	 */
-	public static String requestDescription(WebRequest request) {
-		StringBuilder buf = new StringBuilder(request.getDescription(false));
-		Map<String, String[]> params = request.getParameterMap();
-		if ( params != null ) {
-			buf.append("?");
-			boolean next = false;
-			for ( Entry<String, String[]> e : params.entrySet() ) {
-				if ( next ) {
-					buf.append('&');
-				} else {
-					next = true;
-				}
-				buf.append(e.getKey()).append("=");
-				String[] vals = e.getValue();
-				if ( vals == null || vals.length < 1 ) {
-					continue;
-				} else if ( vals.length == 1 ) {
-					buf.append(vals[0]);
-				} else {
-					for ( int i = 0, len = vals.length; i < len; i++ ) {
-						if ( i > 0 ) {
-							buf.append(",");
-						}
-						buf.append(vals[i]);
-					}
-				}
-
-			}
-		}
-		return buf.toString();
-	}
-
-	/**
 	 * Handle an {@link ConstraintViolationException}.
 	 * 
 	 * @param e
@@ -127,8 +88,8 @@ public class GlobalExceptionHandlers {
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<Void> handleConstraintViolationException(ConstraintViolationException e,
 			WebRequest request, Locale locale) {
-		log.debug("ConstraintViolationException in request {}: {}", requestDescription(request),
-				e.toString());
+		log.debug("ConstraintViolationException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		BindingResult errors = ExceptionUtils.toBindingResult(e, validator);
 		return ExceptionUtils.generateErrorsResult(errors, "VAL.00003", locale, messageSource);
 	}
@@ -145,8 +106,8 @@ public class GlobalExceptionHandlers {
 	@ExceptionHandler(BindException.class)
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
-		log.debug("MethodArgumentNotValidException in request {}: {}", requestDescription(request),
-				e.toString());
+		log.debug("MethodArgumentNotValidException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
 
@@ -165,7 +126,8 @@ public class GlobalExceptionHandlers {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
-		log.warn("JsonProcessingException in request {}", requestDescription(request), e);
+		log.warn("JsonProcessingException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 		return Result.error("VAL.00005", "Malformed JSON: " + e.getOriginalMessage());
 	}
 
@@ -183,7 +145,8 @@ public class GlobalExceptionHandlers {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
-		log.warn("DateTimeParseException in request {}", requestDescription(request), e);
+		log.warn("DateTimeParseException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
 		return Result.error("VAL.00006", "Malformed date string: " + e.getMessage());
 	}
 
@@ -209,8 +172,8 @@ public class GlobalExceptionHandlers {
 		} else if ( t instanceof DateTimeParseException ) {
 			return handleDateTimeParseException((DateTimeParseException) t, request);
 		}
-		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
-				e.toString());
+		log.warn("HttpMessageNotReadableException in request {}; user [{}]: {}",
+				requestDescription(request), userPrincipalName(request), e.toString());
 		return Result.error("VAL.00007", "Malformed request: " + e.getMessage());
 	}
 
