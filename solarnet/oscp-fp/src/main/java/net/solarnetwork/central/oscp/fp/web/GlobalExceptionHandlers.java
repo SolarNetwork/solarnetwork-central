@@ -32,6 +32,7 @@ import javax.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -55,7 +56,7 @@ import net.solarnetwork.domain.Result;
  * @version 1.1
  */
 @RestControllerAdvice
-@Order(1_000_000)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandlers {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandlers.class);
