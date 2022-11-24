@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.fp.web;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,13 +33,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.domain.Result;
 
@@ -46,7 +51,7 @@ import net.solarnetwork.domain.Result;
  * Global controller exception handlers.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestControllerAdvice
 public class GlobalExceptionHandlers {
@@ -143,6 +148,70 @@ public class GlobalExceptionHandlers {
 		log.debug("MethodArgumentNotValidException in request {}: {}", requestDescription(request),
 				e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
+	}
+
+	/**
+	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
+	 * input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.1
+	 */
+	@ExceptionHandler(JsonParseException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
+		log.warn("JsonProcessingException in request {}", requestDescription(request), e);
+		return Result.error("VAL.00005", "Malformed JSON: " + e.getOriginalMessage());
+	}
+
+	/**
+	 * Handle a {@link DateTimeParseException}, from malformed date input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.1
+	 */
+	@ExceptionHandler(DateTimeParseException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
+		log.warn("DateTimeParseException in request {}", requestDescription(request), e);
+		return Result.error("VAL.00006", "Malformed date string: " + e.getMessage());
+	}
+
+	/**
+	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
+	 * input.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.1
+	 */
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
+			WebRequest request) {
+		Throwable t = e.getMostSpecificCause();
+		if ( t instanceof JsonProcessingException ) {
+			return handleJsonParseException((JsonProcessingException) t, request);
+		} else if ( t instanceof DateTimeParseException ) {
+			return handleDateTimeParseException((DateTimeParseException) t, request);
+		}
+		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
+				e.toString());
+		return Result.error("VAL.00007", "Malformed request: " + e.getMessage());
 	}
 
 }
