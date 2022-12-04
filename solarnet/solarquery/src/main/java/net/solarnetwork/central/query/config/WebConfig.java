@@ -197,8 +197,14 @@ public class WebConfig implements WebMvcConfigurer {
 		reg.setFilter(contentCachingFilter());
 		// @formatter:off
 		reg.addUrlPatterns(
-				"/api/v1/pub/datum/*",
-				"/api/v1/sec/datum/*",
+				"/api/v1/pub/datum/list",
+				"/api/v1/sec/datum/list",
+				"/api/v1/pub/datum/reading",
+				"/api/v1/sec/datum/reading",
+				"/api/v1/pub/datum/mostRecent",
+				"/api/v1/sec/datum/mostRecent",
+				"/api/v1/pub/datum/meta/*",
+				"/api/v1/sec/datum/meta/*",
 				"/api/v1/pub/location/datum/*",
 				"/api/v1/sec/location/datum/*",
 				"/api/v1/pub/range/*",
