@@ -47,6 +47,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.security.core.Authentication;
+import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
@@ -55,12 +57,19 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityPolicyMetadataType;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -541,6 +550,22 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void criteriaFromFilter_datumFilterCommand_tags_proxy() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setTags(new String[] { "foo", "bar" });
+
+		Filter proxy = filterProxy(f);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(proxy);
+
+		// THEN
+		assertThat("Tags converted to search filter", c.getSearchFilter(),
+				equalTo("(|(/t=foo)(/t=bar))"));
+	}
+
+	@Test
 	public void criteriaFromFilter_streamDatumFilterCommand_nodesAndSources() {
 		// GIVEN
 		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
@@ -553,6 +578,67 @@ public class DatumUtilsTests {
 		// THEN
 		assertThat("Node IDs copied", c.getNodeIds(), is(arrayContaining(1L, 2L)));
 		assertThat("Source IDs copied", c.getSourceIds(), is(arrayContaining("a", "b")));
+	}
+
+	@Test
+	public void criteriaFromFilter_streamDatumFilterCommand_nodesAndSources_proxy() {
+		// GIVEN
+		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
+		f.setNodeIds(new Long[] { 1L, 2L });
+		f.setSourceIds(new String[] { "a", "b" });
+
+		Filter proxy = filterProxy(f);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(proxy);
+
+		// THEN
+		assertThat("Node IDs copied", c.getNodeIds(), is(arrayContaining(1L, 2L)));
+		assertThat("Source IDs copied", c.getSourceIds(), is(arrayContaining("a", "b")));
+	}
+
+	@Test
+	public void criteriaFromFilter_streamDatumFilterCommand_mostRecent() {
+		// GIVEN
+		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
+		f.setMostRecent(true);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Most recent copied", c.isMostRecent(), is(equalTo(true)));
+	}
+
+	@Test
+	public void criteriaFromFilter_streamDatumFilterCommand_mostRecent_proxy() {
+		// GIVEN
+		StreamDatumFilterCommand f = new StreamDatumFilterCommand();
+		f.setMostRecent(true);
+
+		Filter proxy = filterProxy(f);
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(proxy);
+
+		// THEN
+		assertThat("Most recent copied", c.isMostRecent(), is(equalTo(true)));
+	}
+
+	private Filter filterProxy(Object filterToProxy) {
+		SecurityPolicy policy = BasicSecurityPolicy.builder().build();
+		SecurityUtils.becomeToken("test", SecurityTokenType.ReadNodeData, 1L, policy);
+		Authentication auth = SecurityUtils.getCurrentAuthentication();
+		return filterProxy(auth, policy, filterToProxy);
+	}
+
+	private Filter filterProxy(Authentication authentication, SecurityPolicy policy,
+			Object filterToProxy) {
+		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+				(authentication != null ? authentication.getPrincipal() : null), filterToProxy,
+				new AntPathMatcher(), SecurityPolicyMetadataType.Datum);
+		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
+
 	}
 
 	@Test

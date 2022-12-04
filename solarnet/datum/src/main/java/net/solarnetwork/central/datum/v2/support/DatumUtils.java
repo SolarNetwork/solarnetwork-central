@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import net.solarnetwork.central.datum.domain.AuditDatumRecordCounts;
 import net.solarnetwork.central.datum.domain.CombiningFilter;
-import net.solarnetwork.central.datum.domain.CommonFilter;
 import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRollupFilter;
@@ -56,6 +55,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.MostRecentFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
@@ -105,7 +105,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  * @since 2.8
  */
 public final class DatumUtils {
@@ -151,8 +151,7 @@ public final class DatumUtils {
 		Integer o = offset;
 		String[] tags = null;
 
-		if ( filter instanceof DatumFilterCommand ) {
-			DatumFilterCommand f = (DatumFilterCommand) filter;
+		if ( filter instanceof DatumFilterCommand f ) {
 			// most common
 			c.setNodeIds(f.getNodeIds());
 			c.setLocationIds(f.getLocationIds());
@@ -182,8 +181,7 @@ public final class DatumUtils {
 			if ( o == null ) {
 				o = f.getOffset();
 			}
-		} else if ( filter instanceof StreamDatumFilterCommand ) {
-			StreamDatumFilterCommand f = (StreamDatumFilterCommand) filter;
+		} else if ( filter instanceof StreamDatumFilterCommand f ) {
 			// most common
 			c.setStreamIds(f.getStreamIds());
 			Long[] objIds = f.getObjectIds();
@@ -220,8 +218,7 @@ public final class DatumUtils {
 				o = f.getOffset();
 			}
 		} else {
-			if ( filter instanceof StreamDatumFilter ) {
-				StreamDatumFilter f = (StreamDatumFilter) filter;
+			if ( filter instanceof StreamDatumFilter f ) {
 				c.setStreamIds(f.getStreamIds());
 				Long[] objIds = f.getObjectIds();
 				if ( objIds != null ) {
@@ -232,56 +229,51 @@ public final class DatumUtils {
 					}
 				}
 			}
-			if ( filter instanceof NodeFilter ) {
-				c.setNodeIds(((NodeFilter) filter).getNodeIds());
+			if ( filter instanceof NodeFilter f ) {
+				c.setNodeIds(f.getNodeIds());
 			}
-			if ( filter instanceof GeneralLocationDatumMetadataFilter ) {
-				GeneralLocationDatumMetadataFilter gldmf = (GeneralLocationDatumMetadataFilter) filter;
-				c.setLocationIds(gldmf.getLocationIds());
-				c.setLocation(locationFromFilter(gldmf.getLocation()));
-				tags = gldmf.getTags();
-			} else if ( filter instanceof GeneralNodeDatumMetadataFilter ) {
-				tags = ((GeneralNodeDatumMetadataFilter) filter).getTags();
+			if ( filter instanceof GeneralLocationDatumMetadataFilter f ) {
+				c.setLocationIds(f.getLocationIds());
+				c.setLocation(locationFromFilter(f.getLocation()));
+				tags = f.getTags();
+			} else if ( filter instanceof GeneralNodeDatumMetadataFilter f ) {
+				tags = f.getTags();
 			}
-			if ( filter instanceof SourceFilter ) {
-				c.setSourceIds(((SourceFilter) filter).getSourceIds());
+			if ( filter instanceof SourceFilter f ) {
+				c.setSourceIds(f.getSourceIds());
 			}
-			if ( filter instanceof UserFilter ) {
-				c.setUserIds(((UserFilter) filter).getUserIds());
+			if ( filter instanceof UserFilter f ) {
+				c.setUserIds(f.getUserIds());
 			}
-			if ( filter instanceof AggregationFilter ) {
-				AggregationFilter f = (AggregationFilter) filter;
+			if ( filter instanceof AggregationFilter f ) {
 				c.setAggregation(f.getAggregation());
 				c.setPartialAggregation(f.getPartialAggregation());
 			}
-			if ( filter instanceof DateRangeFilter ) {
-				DateRangeFilter f = (DateRangeFilter) filter;
+			if ( filter instanceof DateRangeFilter f ) {
 				c.setStartDate(f.getStartDate());
 				c.setEndDate(f.getEndDate());
 			}
-			if ( filter instanceof LocalDateRangeFilter ) {
-				LocalDateRangeFilter f = (LocalDateRangeFilter) filter;
+			if ( filter instanceof LocalDateRangeFilter f ) {
 				c.setLocalStartDate(f.getLocalStartDate());
 				c.setLocalEndDate(f.getLocalEndDate());
 			}
-			if ( filter instanceof CommonFilter ) {
-				c.setMostRecent(((CommonFilter) filter).isMostRecent());
+			if ( filter instanceof MostRecentFilter f ) {
+				c.setMostRecent(f.isMostRecent());
 			}
-			if ( filter instanceof DatumRollupFilter ) {
-				c.setDatumRollupTypes(((DatumRollupFilter) filter).getDatumRollupTypes());
+			if ( filter instanceof DatumRollupFilter f ) {
+				c.setDatumRollupTypes(f.getDatumRollupTypes());
 			}
-			if ( filter instanceof OptimizedQueryFilter ) {
-				c.setWithoutTotalResultsCount(
-						((OptimizedQueryFilter) filter).isWithoutTotalResultsCount());
+			if ( filter instanceof OptimizedQueryFilter f ) {
+				c.setWithoutTotalResultsCount(f.isWithoutTotalResultsCount());
 			}
-			if ( filter instanceof CombiningFilter ) {
-				c.setCombiningType(((CombiningFilter) filter).getCombiningType());
+			if ( filter instanceof CombiningFilter f ) {
+				c.setCombiningType(f.getCombiningType());
 			}
-			if ( filter instanceof NodeMappingFilter ) {
-				c.setObjectIdMappings(((NodeMappingFilter) filter).getNodeIdMappings());
+			if ( filter instanceof NodeMappingFilter f ) {
+				c.setObjectIdMappings(f.getNodeIdMappings());
 			}
-			if ( filter instanceof SourceMappingFilter ) {
-				c.setSourceIdMappings(((SourceMappingFilter) filter).getSourceIdMappings());
+			if ( filter instanceof SourceMappingFilter f ) {
+				c.setSourceIdMappings(f.getSourceIdMappings());
 			}
 		}
 
