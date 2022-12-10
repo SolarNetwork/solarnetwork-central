@@ -22,24 +22,30 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -410,6 +416,286 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 				Instant.ofEpochMilli(System.currentTimeMillis()).plusSeconds(1)));
 		assertThat("Deleted posted", result, equalTo(0));
 		assertThat("Remaining sessions", dao.getAll(null), contains(s, two));
+	}
+
+	@Test
+	public void findFiltered_sessionId() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, 0);
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setChargeSessionIds(new UUID[] { sessions.get(0).getId(), sessions.get(1).getId() });
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(0), sessions.get(1) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_active() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+			if ( i >= 2 ) {
+				sess.setEnded(Instant.now());
+			}
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setActive(true);
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(0), sessions.get(1) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_inactive() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+			if ( i >= 2 ) {
+				sess.setEnded(Instant.now());
+			}
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setActive(false);
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(2) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_transactionId() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setTransactionIds(new Integer[] { sessions.get(0).getTransactionId(),
+				sessions.get(1).getTransactionId() });
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(0), sessions.get(1) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_chargePointIdentifier() {
+		// GIVEN
+		final List<ChargePoint> cps = new ArrayList<>();
+		cps.add(createAndSaveTestChargePoint("foo", "bar"));
+		cps.add(createAndSaveTestChargePoint("bim", "bam"));
+		cps.add(createAndSaveTestChargePoint("zig", "zag"));
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cps.get(i).getId(), 1, i + 1);
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setIdentifiers(
+				new String[] { cps.get(0).getInfo().getId(), cps.get(1).getInfo().getId() });
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(0), sessions.get(1) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_user_pagination() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setMax(2);
+		FilterResults<ChargeSession, UUID> results1 = dao.findFiltered(filter);
+		filter.setOffset(2);
+		FilterResults<ChargeSession, UUID> results2 = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results 1 returned", results1, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(0), sessions.get(1) };
+		assertThat("Results 1", stream(results1.spliterator(), false).toList(), contains(expected));
+
+		expected = new ChargeSession[] { sessions.get(2) };
+		assertThat("Results 2", stream(results2.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void findFiltered_endReason() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+
+		final int sessionCount = 3;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
+		for ( int i = 0; i < sessionCount; i++ ) {
+			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+			sess.setEnded(Instant.now());
+			sess.setEndReason(ChargeSessionEndReason.forCode(i));
+			sessions.add(dao.get(dao.save(sess)));
+		}
+
+		// WHEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(userId);
+		filter.setEndReason(ChargeSessionEndReason.EmergencyStop);
+		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
+
+		// THEN
+		assertThat("Results returned", results, is(notNullValue()));
+
+		ChargeSession[] expected = new ChargeSession[] { sessions.get(1) };
+		assertThat("Results", stream(results.spliterator(), false).toList(), contains(expected));
+	}
+
+	@Test
+	public void endSession() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargeSession sess = dao.get(dao.save(createTestChargeSession(cp.getId())));
+
+		// WHEN
+		boolean result = dao.endSession(userId, sess.getId(), ChargeSessionEndReason.Other, null);
+		ChargeSession updated = dao.get(sess.getId());
+
+		// THEN
+		assertThat("Session updated", result, is(equalTo(true)));
+		assertThat("Updated session end date set", updated.getEnded(), is(notNullValue()));
+		assertThat("Updated session end reason", updated.getEndReason(),
+				is(equalTo(ChargeSessionEndReason.Other)));
+		assertThat("Updated session end auth ID", updated.getEndAuthId(), is(nullValue()));
+	}
+
+	@Test
+	public void endSession_wrongUserId() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargeSession sess = dao.get(dao.save(createTestChargeSession(cp.getId())));
+
+		// WHEN
+		boolean result = dao.endSession(userId + 1, sess.getId(), ChargeSessionEndReason.Other, null);
+
+		// THEN
+		assertThat("Session updated", result, is(equalTo(false)));
+	}
+
+	@Test
+	public void endSession_endAuthId() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargeSession sess = dao.get(dao.save(createTestChargeSession(cp.getId())));
+
+		// WHEN
+		boolean result = dao.endSession(userId, sess.getId(), ChargeSessionEndReason.Other, "yo yo");
+		ChargeSession updated = dao.get(sess.getId());
+
+		// THEN
+		assertThat("Session updated", result, is(equalTo(true)));
+		assertThat("Updated session end date set", updated.getEnded(), is(notNullValue()));
+		assertThat("Updated session end reason", updated.getEndReason(),
+				is(equalTo(ChargeSessionEndReason.Other)));
+		assertThat("Updated session end auth ID", updated.getEndAuthId(), is(equalTo("yo yo")));
+	}
+
+	@Test
+	public void endSession_alreadyEnded() {
+		// GIVEN
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar");
+		ChargeSession sess = createTestChargeSession(cp.getId());
+		sess.setEnded(Instant.now());
+		sess.setEndReason(ChargeSessionEndReason.EmergencyStop);
+		sess.setEndAuthId("foo");
+		sess = dao.get(dao.save(sess));
+
+		// WHEN
+		boolean result = dao.endSession(userId, sess.getId(), ChargeSessionEndReason.Other, null);
+		ChargeSession updated = dao.get(sess.getId());
+
+		// THEN
+		assertThat("Session updated", result, is(equalTo(false)));
+		assertThat("Fetched session end date unchanged", updated.getEnded(),
+				is(equalTo(sess.getEnded())));
+		assertThat("Fetched session end reason unchanged", updated.getEndReason(),
+				is(equalTo(sess.getEndReason())));
+		assertThat("Fetched session end auth ID unchanged", updated.getEndAuthId(),
+				is(equalTo(sess.getEndAuthId())));
 	}
 
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
+import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.domain.CentralAuthorization;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
@@ -37,15 +38,17 @@ import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
+import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 
 /**
  * Service API for SolarUser OCPP support.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserOcppBiz {
 
@@ -377,5 +380,37 @@ public interface UserOcppBiz {
 	 * @return all matching incomplete sessions; never {@literal null}
 	 */
 	Collection<ChargeSession> incompleteChargeSessionsForChargePoint(Long userId, Long chargePointId);
+
+	/**
+	 * Find charge sessions matching a search filter.
+	 * 
+	 * @param filter
+	 *        the search criteria
+	 * @param sortDescriptors
+	 *        the optional sort descriptors
+	 * @param offset
+	 *        an optional result offset
+	 * @param max
+	 *        an optional maximum number of returned results
+	 * @return
+	 */
+	FilterResults<ChargeSession, UUID> findFilteredChargeSessions(ChargeSessionFilter filter);
+
+	/**
+	 * End an active charge session.
+	 * 
+	 * @param userId
+	 *        the SolarUser user ID to delete the charge point settings for
+	 * @param sessionId
+	 *        the charge session ID to end
+	 * @param reason
+	 *        the end reason
+	 * @param endAuthId
+	 *        the optional end auth ID
+	 * @return {@literal true} if the session was ended, or {@literal false} if
+	 *         the session was already ended or does not exist
+	 */
+	boolean endChargeSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
+			String endAuthId);
 
 }

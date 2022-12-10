@@ -24,8 +24,10 @@ package net.solarnetwork.central.ocpp.dao;
 
 import java.util.Collection;
 import java.util.UUID;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.domain.ChargeSession;
+import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 
 /**
  * Extension to {@link CentralChargeSessionDao} to support SolarNet.
@@ -37,9 +39,10 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public interface CentralChargeSessionDao extends ChargeSessionDao {
+public interface CentralChargeSessionDao
+		extends ChargeSessionDao, FilterableDao<ChargeSession, UUID, ChargeSessionFilter> {
 
 	/**
 	 * Get all <em>incomplete</em> charge session for a given user ID and charge
@@ -68,5 +71,20 @@ public interface CentralChargeSessionDao extends ChargeSessionDao {
 	 * @since 1.1
 	 */
 	ChargeSession get(UUID id, Long userId);
+
+	/**
+	 * End an active session.
+	 * 
+	 * @param userId
+	 *        the ID of the owner
+	 * @param sessionId
+	 *        the ID of the session to end
+	 * @param reason
+	 *        the end reason
+	 * @param endAuthId
+	 *        the optional end auth ID to use
+	 * @since 1.2
+	 */
+	boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason, String endAuthId);
 
 }
