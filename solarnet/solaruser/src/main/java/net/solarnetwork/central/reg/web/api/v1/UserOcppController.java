@@ -71,15 +71,17 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
+import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Web service API for OCPP management.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @GlobalExceptionRestController
 @RestController("v1OcppController")
@@ -546,6 +548,43 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserSettings(userId);
 		return response(null);
+	}
+
+	/**
+	 * Find filtered charge sessions.
+	 * 
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @return the charge points
+	 * @since 2.2
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "/sessions")
+	public Response<FilterResults<ChargeSession, UUID>> findFilteredChargeSessions(
+			BasicOcppCriteria filter) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		filter.setUserId(userId);
+		return response(userOcppBiz().findFilteredChargeSessions(filter));
+	}
+
+	/**
+	 * End a charge session.
+	 * 
+	 * @param sessionId
+	 *        the ID of the charge session to end
+	 * @param endReason
+	 *        the end reason
+	 * @param endAuthId
+	 *        the optional end authorzation ID
+	 * @return {@literal true} if the session is ended, {@literal false} if it
+	 *         was already ended or does not exist
+	 * @since 2.2
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "/sessions/end")
+	public Response<Boolean> endChargeSession(@RequestParam("id") UUID sessionId,
+			@RequestParam("endReason") ChargeSessionEndReason endReason,
+			@RequestParam(name = "endAuthId", required = false) String endAuthId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return response(userOcppBiz().endChargeSession(userId, sessionId, endReason, endAuthId));
 	}
 
 	/**

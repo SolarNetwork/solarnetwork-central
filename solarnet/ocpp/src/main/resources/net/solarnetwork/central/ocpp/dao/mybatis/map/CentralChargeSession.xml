@@ -208,4 +208,90 @@
 			, ocpp_charge_sess_reading_measurand
 	 </select>
 
+	<select id="find-CentralChargeSession-for-filter" parameterType="net.solarnetwork.central.ocpp.dao.ChargeSessionFilter" 
+			resultMap="CentralChargeSession-FullResult" fetchSize="100" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-CentralChargeSession-full-result"/>
+		FROM
+			solarev.ocpp_charge_sess cs
+		INNER JOIN 
+			solarev.ocpp_charge_point cp ON cs.cp_id = cp.id
+		<where>
+			<if test="userId != null">
+				AND cp.user_id = ANY(#{userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="identifier != null">
+				AND cp.ident = ANY(#{identifiers,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="chargePointId &gt; 0">
+				AND cs.cp_id = ANY(#{chargePointIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="connectorId &gt; 0">
+				AND cs.conn_id = ANY(#{connectorIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
+			</if>
+			<if test="chargeSessionId != null">
+				AND cs.id = ANY(#{chargeSessionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDArrayTypeHandler})
+			</if>
+			<if test="active != null">
+				AND cs.ended IS
+				<choose>
+					<when test="active">
+						NULL
+					</when>
+					<otherwise>
+						NOT NULL
+					</otherwise>
+				</choose>
+			</if>
+			<if test="transactionId &gt; 0">
+				AND cs.tx_id = ANY(#{transactionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
+			</if>
+			<if test="endReason != null">
+				AND cs.end_reason = ANY(#{endReasonCodes,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
+			</if>
+			<if test="startDate != null">
+				AND cs.created &gt;= #{startDate,jdbcType=TIMESTAMP}
+			</if>
+			<if test="endDate != null">
+				AND cs.created &lt; #{endDate,jdbcType=TIMESTAMP}
+			</if>
+		</where>
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				ORDER BY
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;CHARGER&quot;">ocpp_charge_sess_cp_id</if>
+					<if test="item.sortKey == &quot;CONNECTOR&quot;">ocpp_charge_sess_conn_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">ocpp_charge_sess_created</if>
+					<if test="item.sortKey == &quot;ID&quot;">ocpp_charge_sess_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				<include refid="fragment-findall-CentralChargeSession-order"/>
+			</otherwise>
+		</choose>
+		<if test="max != null">
+			LIMIT #{max}
+		</if>
+		<if test="offset != null">
+			OFFSET #{offset}
+		</if>
+	</select>
+	
+	<update id="update-CentralChargeSession-end-session" parameterType="map">
+		UPDATE solarev.ocpp_charge_sess
+		SET ended = CURRENT_TIMESTAMP
+			, end_reason = #{endReason,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			<if test="endAuthId != null">
+			, end_auth_id = #{endAuthId,jdbcType=VARCHAR}
+			</if>
+		FROM solarev.ocpp_charge_point
+		WHERE 
+			ocpp_charge_point.id = ocpp_charge_sess.cp_id
+			AND ocpp_charge_point.user_id = #{userId,jdbcType=BIGINT}
+			AND ocpp_charge_sess.id = #{id,javaType=java.util.UUID}
+			AND ocpp_charge_sess.ended IS NULL
+	</update>
+
 </mapper>

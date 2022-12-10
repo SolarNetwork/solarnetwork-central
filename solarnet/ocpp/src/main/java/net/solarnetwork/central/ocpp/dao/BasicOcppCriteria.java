@@ -25,20 +25,22 @@ package net.solarnetwork.central.ocpp.dao;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 
 /**
  * Basic implementation of OCPP criteria APIs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicOcppCriteria extends BasicCoreCriteria
-		implements ChargePointStatusFilter, ChargePointActionStatusFilter {
+		implements ChargePointStatusFilter, ChargePointActionStatusFilter, ChargeSessionFilter {
 
 	private Long[] chargePointIds;
 	private String[] identifiers;
@@ -46,6 +48,10 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	private String[] actions;
 	private Instant startDate;
 	private Instant endDate;
+	private UUID[] chargeSessionIds;
+	private Boolean active;
+	private Integer[] transactionIds;
+	private ChargeSessionEndReason[] endReasons;
 
 	/**
 	 * Copy the properties of another criteria into this instance.
@@ -68,6 +74,10 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 			setActions(c.actions);
 			setStartDate(c.startDate);
 			setEndDate(c.endDate);
+			setChargeSessionIds(c.chargeSessionIds);
+			setActive(c.active);
+			setTransactionIds(c.transactionIds);
+			setEndReasons(c.endReasons);
 		} else {
 			if ( criteria instanceof ChargePointCriteria c ) {
 				setChargePointIds(c.getChargePointIds());
@@ -84,6 +94,16 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 			if ( criteria instanceof DateRangeCriteria c ) {
 				setStartDate(c.getStartDate());
 				setEndDate(c.getEndDate());
+			}
+			if ( criteria instanceof ChargeSessionCriteria c ) {
+				setChargeSessionIds(c.getChargeSessionIds());
+				setActive(c.getActive());
+			}
+			if ( criteria instanceof ChargeSessionTransactionCriteria c ) {
+				setTransactionIds(c.getTransactionIds());
+			}
+			if ( criteria instanceof ChargeSessionEndReasonCriteria c ) {
+				setEndReasons(endReasons);
 			}
 		}
 	}
@@ -114,7 +134,10 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(chargePointIds);
 		result = prime * result + Arrays.hashCode(identifiers);
 		result = prime * result + Arrays.hashCode(connectorIds);
-		result = prime * result + Objects.hash(endDate, startDate);
+		result = prime * result + Objects.hash(endDate, startDate, active);
+		result = prime * result + Arrays.hashCode(chargeSessionIds);
+		result = prime * result + Arrays.hashCode(transactionIds);
+		result = prime * result + Arrays.hashCode(endReasons);
 		return result;
 	}
 
@@ -134,7 +157,11 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 				&& Arrays.equals(chargePointIds, other.chargePointIds)
 				&& Arrays.equals(identifiers, other.identifiers)
 				&& Arrays.equals(connectorIds, other.connectorIds)
-				&& Objects.equals(endDate, other.endDate) && Objects.equals(startDate, other.startDate);
+				&& Objects.equals(endDate, other.endDate) && Objects.equals(startDate, other.startDate)
+				&& Arrays.equals(chargeSessionIds, other.chargeSessionIds)
+				&& Objects.equals(active, other.active)
+				&& Arrays.equals(transactionIds, other.transactionIds)
+				&& Arrays.equals(endReasons, other.endReasons);
 	}
 
 	@Override
@@ -159,6 +186,26 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		if ( chargePointIds != null ) {
 			builder.append("connectorIds=");
 			builder.append(Arrays.toString(connectorIds));
+			builder.append(", ");
+		}
+		if ( chargeSessionIds != null ) {
+			builder.append("chargeSessionIds=");
+			builder.append(Arrays.toString(chargeSessionIds));
+			builder.append(", ");
+		}
+		if ( active != null ) {
+			builder.append("active=");
+			builder.append(active);
+			builder.append(", ");
+		}
+		if ( transactionIds != null ) {
+			builder.append("transactionIds=");
+			builder.append(Arrays.toString(transactionIds));
+			builder.append(", ");
+		}
+		if ( endReasons != null ) {
+			builder.append("endReasons=");
+			builder.append(Arrays.toString(endReasons));
 			builder.append(", ");
 		}
 		if ( actions != null ) {
@@ -368,6 +415,149 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 */
 	public void setEndDate(Instant endDate) {
 		this.endDate = endDate;
+	}
+
+	@Override
+	@JsonIgnore
+	public UUID getChargeSessionId() {
+		return (this.chargeSessionIds == null || this.chargeSessionIds.length < 1 ? null
+				: this.chargeSessionIds[0]);
+	}
+
+	/**
+	 * Set a single charge session ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single connector ID
+	 * at a time. The connector ID is still stored on the
+	 * {@code chargeSessionIds} array, just as the first value. Calling this
+	 * method replaces any existing {@code chargeSessionIds} value with a new
+	 * array containing just the ID passed into this method.
+	 * </p>
+	 * 
+	 * @param chargeSessionId
+	 *        the ID of the charge session
+	 */
+	@JsonSetter
+	public void setChargeSessionId(UUID chargeSessionId) {
+		this.chargeSessionIds = (chargeSessionId == null ? null : new UUID[] { chargeSessionId });
+	}
+
+	@Override
+	public UUID[] getChargeSessionIds() {
+		return chargeSessionIds;
+	}
+
+	/**
+	 * Set the charge session IDs.
+	 * 
+	 * @param chargeSessionIds
+	 *        the charge session IDs to set
+	 */
+	public void setChargeSessionIds(UUID[] chargeSessionIds) {
+		this.chargeSessionIds = chargeSessionIds;
+	}
+
+	@Override
+	@JsonIgnore
+	public Integer getTransactionId() {
+		return (this.transactionIds == null || this.transactionIds.length < 1 ? null
+				: this.transactionIds[0]);
+	}
+
+	/**
+	 * Set a single transaction ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a transaction ID at a
+	 * time. The transaction ID is still stored on the {@code transactionIds}
+	 * array, just as the first value. Calling this method replaces any existing
+	 * {@code transactionIds} value with a new array containing just the ID
+	 * passed into this method.
+	 * </p>
+	 * 
+	 * @param transactionId
+	 *        the ID of the transaction
+	 */
+	@JsonSetter
+	public void setTransactionId(Integer transactionId) {
+		this.transactionIds = (transactionId == null ? null : new Integer[] { transactionId });
+	}
+
+	@Override
+	public Integer[] getTransactionIds() {
+		return transactionIds;
+	}
+
+	/**
+	 * Set the transaction IDs.
+	 * 
+	 * @param transactionIds
+	 *        the transaction IDs to set
+	 */
+	public void setTransactionIds(Integer[] transactionIds) {
+		this.transactionIds = transactionIds;
+	}
+
+	@Override
+	@JsonIgnore
+	public ChargeSessionEndReason getEndReason() {
+		return (this.endReasons == null || this.endReasons.length < 1 ? null : this.endReasons[0]);
+	}
+
+	/**
+	 * Set a single charge session end reason.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use one end reason at a
+	 * time. The end reason is still stored on the {@code endReasons} array,
+	 * just as the first value. Calling this method replaces any existing
+	 * {@code endReasons} value with a new array containing just the ID passed
+	 * into this method.
+	 * </p>
+	 * 
+	 * @param chargeSessionEndReason
+	 *        the end reason
+	 */
+	@JsonSetter
+	public void setEndReason(ChargeSessionEndReason endReasons) {
+		this.endReasons = (endReasons == null ? null : new ChargeSessionEndReason[] { endReasons });
+	}
+
+	@Override
+	public ChargeSessionEndReason[] getEndReasons() {
+		return endReasons;
+	}
+
+	@JsonIgnore
+	@Override
+	public Integer[] getEndReasonCodes() {
+		return ChargeSessionFilter.super.getEndReasonCodes();
+	}
+
+	/**
+	 * Set the charge session end reasons.
+	 * 
+	 * @param endReasons
+	 *        the end reasons to set
+	 */
+	public void setEndReasons(ChargeSessionEndReason[] endReasons) {
+		this.endReasons = endReasons;
+	}
+
+	@Override
+	public Boolean getActive() {
+		return active;
+	}
+
+	/**
+	 * Set the active status.
+	 * 
+	 * @param active
+	 *        the active to set
+	 */
+	public void setActive(Boolean active) {
+		this.active = active;
 	}
 
 }

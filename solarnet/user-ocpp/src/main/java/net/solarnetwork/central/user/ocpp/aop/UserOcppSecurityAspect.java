@@ -84,6 +84,16 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match endChargeSession.
+	 * 
+	 * @param userId
+	 *        the owner ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.endChargeSession(..)) && args(userId,..)")
+	public void endChargeSession(Long userId) {
+	}
+
+	/**
 	 * Match methods like {@code deleteUser*(entity)}.
 	 * 
 	 * @param userId
@@ -118,7 +128,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 		requireNodeWriteAccess(entity.getNodeId());
 	}
 
-	@Before("deleteUserRelatedEntityById(userId)")
+	@Before("deleteUserRelatedEntityById(userId) || endChargeSession(userId)")
 	public void userIdWriteAccessCheck(Long userId) {
 		if ( userId == null ) {
 			throw new IllegalArgumentException("The userId parameter must not be null.");

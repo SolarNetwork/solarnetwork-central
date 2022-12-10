@@ -26,21 +26,28 @@ import static java.util.Collections.singletonMap;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
+import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.ocpp.domain.ChargeSession;
+import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 import net.solarnetwork.ocpp.domain.SampledValue;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * MyBatis implementation of {@link CentralChargeSessionDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport<ChargeSession, UUID>
 		implements CentralChargeSessionDao {
@@ -64,6 +71,12 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 
 		/** Insert a sampled value reading. */
 		InsertReading("insert-CentralChargeSession-reading"),
+
+		/** Find sessions based on a filter. */
+		FindFiltered("find-CentralChargeSession-for-filter"),
+
+		/** End an active session. */
+		EndSession("update-CentralChargeSession-end-session"),
 
 		;
 
@@ -152,6 +165,29 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	@Override
 	public int deletePostedChargeSessions(Instant expirationDate) {
 		return getSqlSession().delete(QueryName.DeleteByPosted.getQueryName(), expirationDate);
+	}
+
+	@Override
+	public FilterResults<ChargeSession, UUID> findFiltered(ChargeSessionFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		List<ChargeSession> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null,
+				null);
+		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
+				results.size());
+	}
+
+	@Override
+	public boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
+			String endAuthId) {
+		Map<String, Object> params = new LinkedHashMap<>(4);
+		params.put("id", sessionId);
+		params.put("userId", ObjectUtils.requireNonNullArgument(userId, "userId"));
+		params.put("endReason", ObjectUtils.requireNonNullArgument(reason, "reason"));
+		if ( endAuthId != null ) {
+			params.put("endAuthId", endAuthId);
+		}
+		int count = getSqlSession().update(QueryName.EndSession.getQueryName(), params);
+		return (getLastUpdateCount(count) > 0 ? true : false);
 	}
 
 }
