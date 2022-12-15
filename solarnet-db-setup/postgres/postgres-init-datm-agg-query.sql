@@ -252,7 +252,7 @@ $$;
  *
  * @param sid 				the stream ID to find datm for
  * @param start_ts			the minimum date (inclusive)
- * @param end_ts 			the maximum date (exclusive)
+ * @param end_ts 			the maximum date (inclusive)
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
  */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span(
@@ -267,63 +267,31 @@ CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span(
 		data_a		NUMERIC[],
 		data_s		TEXT[],
 		data_t		TEXT[]
-	) LANGUAGE SQL STABLE ROWS 2000 AS
+	) LANGUAGE SQL STABLE ROWS 200 AS
 $$
 	-- first find boundary datum (least, greatest) for given time range that satisfies both the
 	-- clock and reading aggregate time windows
 	WITH b AS (
 		(
-		-- latest on/before start
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts <= start_ts
-			AND d.ts > start_ts - tolerance
-		ORDER BY d.stream_id, d.ts DESC
+		SELECT d.ts
+		FROM solardatm.find_datm_around(sid, start_ts, tolerance) AS d
+		ORDER BY d.ts
 		LIMIT 1
 		)
 		UNION
 		(
-		-- earliest on/after start within range; in case nothing before start
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts >= start_ts
-			AND d.ts < end_ts
-		ORDER BY d.stream_id, d.ts
-		LIMIT 1
-		)
-		UNION
-		(
-		-- earliest on/after end
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts >= end_ts
-			AND d.ts < end_ts + tolerance
-		ORDER BY d.stream_id, d.ts
-		LIMIT 1
-		)
-		UNION
-		(
-		-- latest on/before end, in case nothing after end
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts <= end_ts
-			AND d.ts > start_ts
-		ORDER BY d.stream_id, d.ts DESC
+		SELECT d.ts
+		FROM solardatm.find_datm_around(sid, end_ts, tolerance) AS d
+		ORDER BY d.ts DESC
 		LIMIT 1
 		)
 	)
 	-- combine boundary rows into single range row with start/end columns
 	, r AS (
 		SELECT
-			stream_id
-			, COALESCE(min(ts), start_ts) AS range_start
+			  COALESCE(min(ts), start_ts) AS range_start
 			, COALESCE(max(ts), end_ts) AS range_end
 		FROM b
-		GROUP BY stream_id
 	)
 	-- query for raw datum using the boundary range previously found
 	SELECT
@@ -333,9 +301,9 @@ $$
 		, d.data_a
 		, d.data_s
 		, d.data_t
-	FROM r
-	INNER JOIN solardatm.da_datm d ON d.stream_id = r.stream_id
-	WHERE d.ts >= r.range_start
+	FROM r, solardatm.da_datm d
+	WHERE d.stream_id = sid
+		AND d.ts >= r.range_start
 		AND d.ts <= r.range_end
 $$;
 
