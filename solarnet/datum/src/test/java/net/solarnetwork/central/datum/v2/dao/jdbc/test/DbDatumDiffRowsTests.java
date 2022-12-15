@@ -33,9 +33,9 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDa
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -74,7 +74,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  */
 public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 
-	private List<TypedDatumEntity> calcDiffDatum(UUID streamId, Instant from, Instant to) {
+	private List<TypedDatumEntity> findDiffDatum(UUID streamId, Instant from, Instant to) {
 		return jdbcTemplate.execute(new ConnectionCallback<List<TypedDatumEntity>>() {
 
 			@Override
@@ -122,12 +122,12 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_empty() {
+	public void findDiffDatum_empty() {
 		// GIVEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 
 		// WHEN
-		List<TypedDatumEntity> results = calcDiffDatum(UUID.randomUUID(), start.toInstant(),
+		List<TypedDatumEntity> results = findDiffDatum(UUID.randomUUID(), start.toInstant(),
 				start.plusDays(1).toInstant());
 
 		// THEN
@@ -135,7 +135,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_typical() throws IOException {
+	public void findDiffDatum_typical() throws IOException {
 		// GIVEN
 		List<GeneralNodeDatum> datums = loadJsonDatumResource("test-datum-02.txt", getClass());
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = insertDatumStream(log, jdbcTemplate, datums,
@@ -145,7 +145,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		ZonedDateTime end = start.plusHours(1);
-		List<TypedDatumEntity> results = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+		List<TypedDatumEntity> results = findDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
 		assertThat("Start/end results returned", results, hasSize(2));
@@ -154,14 +154,14 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_resetInMiddle() throws IOException {
+	public void findDiffDatum_resetInMiddle() throws IOException {
 		// GIVEN
 		UUID streamId = loadStreamWithAuxiliary("test-datum-16.txt");
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 		ZonedDateTime end = start.plusHours(1);
-		List<TypedDatumEntity> results = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+		List<TypedDatumEntity> results = findDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
 		assertThat("Start/reset_f/reset_s/end results returned", results, hasSize(4));
@@ -176,7 +176,7 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void calcDiffDatum_perfectHourlyData() throws IOException {
+	public void findDiffDatum_perfectHourlyData() throws IOException {
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
 				ObjectDatumKind.Node, 1L, "A", null, new String[] { "wattHours" }, null);
 		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-04.csv",
@@ -191,15 +191,15 @@ public class DbDatumDiffRowsTests extends BaseDatumJdbcTestSupport {
 		// 2017-07-04T09:00:00.000Z - 2017-07-04T10:00:00.000Z
 		ZonedDateTime start = ZonedDateTime.of(2017, 7, 4, 9, 0, 0, 0, ZoneOffset.UTC);
 		ZonedDateTime end = start.plusHours(1);
-		List<TypedDatumEntity> results = calcDiffDatum(meta.getStreamId(), start.toInstant(),
+		List<TypedDatumEntity> results = findDiffDatum(meta.getStreamId(), start.toInstant(),
 				end.toInstant());
 
 		// THEN
 		assertThat("Start/end results returned", results, hasSize(2));
 		assertThat("Start timestamp", results.get(0).getTimestamp(),
-				equalTo(ISO_INSTANT.parse("2017-07-04T08:00:00.000Z", Instant::from)));
-		assertThat("End timestamp", results.get(1).getTimestamp(),
 				equalTo(ISO_INSTANT.parse("2017-07-04T09:00:00.000Z", Instant::from)));
+		assertThat("End timestamp", results.get(1).getTimestamp(),
+				equalTo(ISO_INSTANT.parse("2017-07-04T10:00:00.000Z", Instant::from)));
 	}
 
 }

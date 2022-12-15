@@ -22,12 +22,18 @@
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertOneDatumStreamWithAuxiliary;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.readingWith;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.arrayOfDecimals;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertReadingDatum;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.datumResourceToList;
+import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,13 +45,19 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.ReadingDatumEntityRowMapper;
+import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@literal solardatm.diff_datm} database stored procedure.
@@ -64,13 +76,11 @@ public class DbDiffNearDatumTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public ReadingDatum doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement stmt = con.prepareStatement(
-				// @formatter:off
-								"SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).* "
-								+"FROM solardatm.find_datm_diff_near_rows(?::uuid,?,?,?) d "
-								+"HAVING (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).stream_id IS NOT NULL"
-								// @formatter:on
-				)) {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*
+						FROM solardatm.find_datm_diff_near_rows(?::uuid,?,?,?) d
+						HAVING (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).stream_id IS NOT NULL
+						""")) {
 					log.debug("Calculating datum diff {} from {} - {}", streamId, from, to);
 					stmt.setString(1, streamId.toString());
 					stmt.setTimestamp(2, Timestamp.from(from));
@@ -344,4 +354,26 @@ public class DbDiffNearDatumTests extends BaseDatumJdbcTestSupport {
 				null, start.plusMinutes(9), end.minusMinutes(1), decimalArray("25", "105", "130")));
 	}
 
+	@Test
+	public void calcDiffDatum_perfectHourlyData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "wattHours" }, null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-04.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2017, 7, 4, 9, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), start.plusHours(1).toInstant());
+
+		// THEN
+		log.debug("Got result: {}", result);
+		assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+		assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
+		assertThat("Agg accumulating", result.getProperties().getAccumulating(), arrayOfDecimals("37"));
+		assertThat("Stats accumulating", result.getStatistics().getAccumulating(),
+				arrayContaining(arrayOfDecimals(new String[] { "37", "12476432001", "12476432038" })));
+	}
 }
