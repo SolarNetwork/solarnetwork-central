@@ -170,14 +170,12 @@ $$;
  * Project the values of a datum stream at a specific point in time, by deriving from the previous
  * and next values from the same stream.
  *
- * This returns one row per node ID and source ID combination found. The returned `ts` column will
- * simply be `reading_ts`. The `jdata_i` column will be computed as an average of the previous/next rows,
- * and `jdata_a` will be time-projected based on the previous/next readings.
+ * This returns at most one row.
  *
- * @param nodes 		the node IDs to find
- * @param sources 		the source IDs to find
- * @param reading_ts	the timestamp to calculate the value of each datum at
- * @param span			a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
+ * @param sid 			the stream ID to find
+ * @param ts_at			the timestamp to calculate the value of each datum at
+ * @param tolerance		a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
+ * @see solardatm.calc_datm_at(datum, timestamp)
  */
 CREATE OR REPLACE FUNCTION solardatm.calc_datm_at(
 		sid 		UUID,
