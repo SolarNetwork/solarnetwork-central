@@ -314,7 +314,6 @@ $$;
  * @param end_ts 			the maximum date (exclusive)
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
  * @param target_agg		the target aggregate slot, defaults to PT1H
- * @see solardatm.find_datm_for_time_span()
  */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		sid 		UUID,
@@ -361,22 +360,12 @@ $$
 					WHEN drange.min_ts = start_ts AND d.ts = start_ts - target_agg THEN drange.min_ts
 					ELSE d.ts
 				END
-				FROM drange, solardatm.da_datm d
-				WHERE stream_id = sid
-					AND d.ts < drange.min_ts
-					AND d.ts >= start_ts - tolerance
-				ORDER BY d.stream_id, d.ts DESC
-				LIMIT 1
+				FROM drange, solardatm.find_time_before(sid, drange.min_ts, start_ts - tolerance) AS d(ts)
 			) AS min_ts
 			, (
 				-- find next datum date after maximum within slot
 				SELECT d.ts
-				FROM drange, solardatm.da_datm d
-				WHERE stream_id = sid
-					AND ts > drange.max_ts
-					AND ts < end_ts + tolerance
-				ORDER BY stream_id, ts
-				LIMIT 1
+				FROM drange, solardatm.find_time_after(sid, drange.max_ts, end_ts + tolerance)  AS d(ts)
 			) AS max_ts
 		) t
 	)

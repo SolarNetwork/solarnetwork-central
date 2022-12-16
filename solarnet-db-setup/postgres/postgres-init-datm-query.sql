@@ -187,3 +187,55 @@ $$
 	FROM solardatm.find_datm_around(sid, ts_at, tolerance) d
 	HAVING count(*) > 0
 $$;
+
+
+/**
+ * Find a datum time immediately earlier in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look backward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_before(
+	sid UUID,
+	ts_at TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT ts
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts < ts_at
+		AND ts >= cutoff
+	ORDER BY ts DESC
+	LIMIT 1
+$$;
+
+
+/**
+ * Find a datum time immediately later in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look forward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_after(
+	sid UUID,
+	instant TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT ts
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts > instant
+		AND ts <= cutoff
+	ORDER BY ts
+	LIMIT 1
+$$;
