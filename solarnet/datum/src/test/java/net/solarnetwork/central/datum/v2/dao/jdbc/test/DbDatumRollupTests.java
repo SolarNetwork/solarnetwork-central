@@ -935,12 +935,10 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		});
 	}
 
-	@Test
-	public void perfectMinutelyData_sparseData() throws IOException {
+	private ObjectDatumStreamMetadata load_raw05() {
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
 				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
 				null);
-		final UUID streamId = meta.getStreamId();
 		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
 				staticProvider(singleton(meta)));
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
@@ -949,19 +947,27 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
 		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
 
+		return meta;
+	}
+
+	@Test
+	public void raw05_1109_01() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
+
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 1, 0, 0, 0, ZoneOffset.UTC);
 		rollup(meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
 				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
 				assertThat("Sparse data:", result.getStatistics().getAccumulating(), arrayContaining(
@@ -971,18 +977,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void perfectMinutelyData_beforeMissingData() throws IOException {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
-				null);
-		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+	public void raw05_1109_02() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
@@ -990,13 +987,13 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
 				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
 				assertThat("Before mising data:", result.getStatistics().getAccumulating(),
@@ -1007,54 +1004,27 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void perfectMinutelyData_startOfMissingData() throws IOException {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
-				null);
-		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+	public void raw05_1109_03() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
 
 		// WHEN
-		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 3, 0, 0, 0, ZoneOffset.UTC);
 		rollup(meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
-				assertThat("Agg result returned", results, hasSize(1));
-
-				AggregateDatum result = results.get(0);
-				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-
-				assertThat("Start of missing data:", result.getStatistics().getAccumulating(),
-						arrayContaining(decimalArray("0", "45804", "45804"),
-								decimalArray("0", "41005", "41005")));
+				assertThat("No data in range", results, hasSize(0));
 			}
 		});
 	}
 
 	@Test
-	public void perfectMinutelyData_afterMissingDataPerfectHourEnd() throws IOException {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
-				null);
-		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+	public void raw05_1109_18() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 18, 0, 0, 0, ZoneOffset.UTC);
@@ -1062,16 +1032,34 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
+					List<AggregateDatum> results) {
+				assertThat("No data in range", results, hasSize(0));
+			}
+		});
+	}
+
+	@Test
+	public void raw05_1109_19() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
+		rollup(meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
+
+			@Override
+			public void doWithStream(List<GeneralNodeDatum> datums,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
 				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
-				assertThat("After missing data perfect hour end:",
+				assertThat("Pick up accumulation in >hour gap:",
 						result.getStatistics().getAccumulating(),
 						arrayContaining(decimalArray("132", "45804", "45936"),
 								decimalArray("132", "41005", "41137")));
@@ -1080,55 +1068,9 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void perfectMinutelyData_perfectHourStartAndEnd() throws IOException {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
-				null);
-		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
-
-		// WHEN
-		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
-		rollup(meta.getStreamId(), start, start.plusHours(1), new RollupCallback() {
-
-			@Override
-			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
-					List<AggregateDatum> results) {
-				assertThat("Agg result returned", results, hasSize(1));
-
-				AggregateDatum result = results.get(0);
-				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
-				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
-
-				assertThat("Hour with perfect start and perfect end uses perfect start and perfect end:",
-						result.getStatistics().getAccumulating(),
-						arrayContaining(decimalArray("0", "45936", "45936"),
-								decimalArray("0", "41137", "41137")));
-			}
-		});
-	}
-
-	@Test
-	public void perfectMinutelyData_perfectHourStart() throws IOException {
-		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
-				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
-				null);
-		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
-				staticProvider(singleton(meta)));
-		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
-
-		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
-		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+	public void raw05_1109_20() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = load_raw05();
 
 		// WHEN
 		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
@@ -1136,13 +1078,13 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public void doWithStream(List<GeneralNodeDatum> datums,
-					Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID sid,
+					Map<NodeSourcePK, ObjectDatumStreamMetadata> metas, UUID sid,
 					List<AggregateDatum> results) {
 				assertThat("Agg result returned", results, hasSize(1));
 
 				AggregateDatum result = results.get(0);
 				log.debug("Got result: {}", result);
-				assertThat("Stream ID matches", result.getStreamId(), equalTo(streamId));
+				assertThat("Stream ID matches", result.getStreamId(), equalTo(meta.getStreamId()));
 				assertThat("Agg timestamp", result.getTimestamp(), equalTo(start.toInstant()));
 
 				assertThat("Hour with perfect start:", result.getStatistics().getAccumulating(),
