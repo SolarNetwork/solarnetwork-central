@@ -170,14 +170,12 @@ $$;
  * Project the values of a datum stream at a specific point in time, by deriving from the previous
  * and next values from the same stream.
  *
- * This returns one row per node ID and source ID combination found. The returned `ts` column will
- * simply be `reading_ts`. The `jdata_i` column will be computed as an average of the previous/next rows,
- * and `jdata_a` will be time-projected based on the previous/next readings.
+ * This returns at most one row.
  *
- * @param nodes 		the node IDs to find
- * @param sources 		the source IDs to find
- * @param reading_ts	the timestamp to calculate the value of each datum at
- * @param span			a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
+ * @param sid 			the stream ID to find
+ * @param ts_at			the timestamp to calculate the value of each datum at
+ * @param tolerance		a maximum range before and after `reading_ts` to consider when looking for the previous/next datum
+ * @see solardatm.calc_datm_at(datum, timestamp)
  */
 CREATE OR REPLACE FUNCTION solardatm.calc_datm_at(
 		sid 		UUID,
@@ -188,4 +186,56 @@ $$
 	SELECT (solardatm.calc_datm_at(d, ts_at)).*
 	FROM solardatm.find_datm_around(sid, ts_at, tolerance) d
 	HAVING count(*) > 0
+$$;
+
+
+/**
+ * Find a datum time immediately earlier in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look backward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_before(
+	sid UUID,
+	ts_at TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT ts
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts < ts_at
+		AND ts >= cutoff
+	ORDER BY ts DESC
+	LIMIT 1
+$$;
+
+
+/**
+ * Find a datum time immediately later in time a given instance, within a cutoff.
+ *
+ * This function can be used for performance reasons in other functions, to force the query planner
+ * to use a full date constraint in the query.
+ *
+ * @param sid 				the stream ID of the datm stream to search
+ * @param ts_at				the date of the datum to find adjacent datm for
+ * @param cutoff 			the maximum time to look forward for adjacent datm
+ */
+CREATE OR REPLACE FUNCTION solardatm.find_time_after(
+	sid UUID,
+	instant TIMESTAMP WITH TIME ZONE,
+	cutoff TIMESTAMP WITH TIME ZONE
+) RETURNS SETOF TIMESTAMP WITH TIME ZONE LANGUAGE SQL STABLE ROWS 1 AS
+$$
+	SELECT ts
+	FROM solardatm.da_datm
+	WHERE stream_id = sid
+		AND ts > instant
+		AND ts <= cutoff
+	ORDER BY ts
+	LIMIT 1
 $$;

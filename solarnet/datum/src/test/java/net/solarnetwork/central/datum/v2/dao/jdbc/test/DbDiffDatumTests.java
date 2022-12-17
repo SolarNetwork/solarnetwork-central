@@ -68,13 +68,11 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 
 			@Override
 			public ReadingDatum doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement stmt = con.prepareStatement(
-				// @formatter:off
-								"SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).* "
-								+"FROM solardatm.find_datm_diff_rows(?::uuid,?,?) d "
-								+"HAVING (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).stream_id IS NOT NULL"
-								// @formatter:on
-				)) {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						SELECT (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).*
+						FROM solardatm.find_datm_diff_rows(?::uuid,?,?) d
+						HAVING (solardatm.diff_datm(d ORDER BY d.ts, d.rtype)).stream_id IS NOT NULL
+						""")) {
 					log.debug("Calculating datum diff {} from {} - {}", streamId, from, to);
 					stmt.setString(1, streamId.toString());
 					stmt.setTimestamp(2, Timestamp.from(from));
@@ -296,9 +294,9 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
+		ZonedDateTime expected = end.minusMinutes(40);
 		assertReadingDatum("Only one reset with way-back start", result,
-				readingWith(streamId, null, ZonedDateTime.of(2000, 6, 1, 12, 9, 0, 0, ZoneOffset.UTC),
-						end.minusMinutes(40), decimalArray("100", "15", "5")));
+				readingWith(streamId, null, expected, expected, decimalArray("0", "5", "5")));
 	}
 
 	@Test
@@ -313,9 +311,8 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
-		assertReadingDatum("Two reset with way-back start", result,
-				readingWith(streamId, null, ZonedDateTime.of(2000, 6, 1, 12, 9, 0, 0, ZoneOffset.UTC),
-						end.minusMinutes(20), decimalArray("105", "15", "200")));
+		assertReadingDatum("Two reset with way-back start", result, readingWith(streamId, null,
+				end.minusMinutes(40), end.minusMinutes(20), decimalArray("5", "5", "200")));
 	}
 
 	@Test
@@ -387,9 +384,206 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
 
 		// THEN
-		assertReadingDatum("Hour prior used because of perfect hourly data", result,
-				readingWith(streamId, null, start.minusHours(1), end.minusHours(1),
-						decimalArray("1", "12476432000", "12476432001")));
+		assertReadingDatum("Hour prior used because of perfect hourly data", result, readingWith(
+				streamId, null, start, end, decimalArray("37", "12476432001", "12476432038")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_imperfectHours() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = start.plusHours(1);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have perfect hour data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 1, 59, 0, 0, ZoneOffset.UTC);
+		// end falls on perfect hour
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 2, 59, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum(
+				"Hour with non-perfect start and perfect end uses prior minute start and perfect end",
+				result, readingWith(streamId, null, expectedStart, expectedEnd,
+						decimalArray("0", "45804", "45804"), decimalArray("0", "41005", "41005")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_sparseData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 1, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 1, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 1, 59, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("Sparse data:", result, readingWith(streamId, null, expectedStart,
+				expectedEnd, decimalArray("0", "45804", "45804"), decimalArray("0", "41005", "41005")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_beforeMissingData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 2, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 3, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 1, 59, 0, 0, ZoneOffset.UTC);
+		// no other data after start within end range, so end is start
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 2, 59, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("Before missing data:", result, readingWith(streamId, null, expectedStart,
+				expectedEnd, decimalArray("0", "45804", "45804"), decimalArray("0", "41005", "41005")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_startOfMissingData() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 3, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 4, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 2, 59, 0, 0, ZoneOffset.UTC);
+		// no other data after start within end range, so end is start
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 2, 59, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("Start of missing data:", result, readingWith(streamId, null, expectedStart,
+				expectedEnd, decimalArray("0", "45804", "45804"), decimalArray("0", "41005", "41005")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_afterMissingDataPerfectHourEnd() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 18, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 2, 59, 0, 0, ZoneOffset.UTC);
+		// have perfect end date
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("After missing data perfect hour end:", result,
+				readingWith(streamId, null, expectedStart, expectedEnd,
+						decimalArray("132", "45804", "45936"), decimalArray("132", "41005", "41137")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_perfectHourStartAndEnd() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have perfect hour data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 19, 0, 0, 0, ZoneOffset.UTC);
+		// end falls on perfect hour, so goes to prior minute
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("Hour with perfect start and perfect end uses perfect start and perfect end:",
+				result, readingWith(streamId, null, expectedStart, expectedEnd,
+						decimalArray("0", "45936", "45936"), decimalArray("0", "41137", "41137")));
+	}
+
+	@Test
+	public void calcDiffDatum_perfectMinutelyData_perfectHourStart() throws IOException {
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", null, new String[] { "volume", "volume_less_guest" },
+				null);
+		final UUID streamId = meta.getStreamId();
+		List<Datum> datum = datumResourceToList(getClass(), "sample-raw-data-05-perfect-minutes.csv",
+				staticProvider(singleton(meta)));
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
+
+		List<Datum> loaded = DatumDbUtils.listDatum(jdbcTemplate);
+		log.debug("Loaded datum:\n{}", loaded.stream().map(Object::toString).collect(joining("\n")));
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 11, 9, 21, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		// start does not have perfect hour data, so goes to prior minute
+		ZonedDateTime expectedStart = ZonedDateTime.of(2022, 11, 9, 20, 0, 0, 0, ZoneOffset.UTC);
+		// end falls on perfect hour, so goes to prior minute
+		ZonedDateTime expectedEnd = ZonedDateTime.of(2022, 11, 9, 20, 59, 0, 0, ZoneOffset.UTC);
+		assertReadingDatum("Hour with perfect start:", result, readingWith(streamId, null, expectedStart,
+				expectedEnd, decimalArray("2", "45936", "45938"), decimalArray("2", "41137", "41139")));
 	}
 
 }

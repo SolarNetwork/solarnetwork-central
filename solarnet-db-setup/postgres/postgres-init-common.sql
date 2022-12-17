@@ -298,3 +298,24 @@ $$
 		) / 1000.0)
 	FROM b
 $$;
+
+/**
+ * Encode a timestamp into a v7 UUID with millisecond precision.
+ *
+ * See https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#section-5.2
+ *
+ * The timestamp will be encoded as a 48-bit millisecond Unix epoch in the highest
+ * 6 bytes of the UUID and the remaining bits, which would normally be random data in a real v7
+ * UUID, will be set to 0. Thus the returned UUID can be used as a boundary for date-based
+ * filtering.
+ *
+ * @param ts the timestamp to encode
+ * @returns the encoded v7 UUID
+ */
+CREATE OR REPLACE FUNCTION solarcommon.timestamp_to_uuid_v7_boundary(ts TIMESTAMP WITH TIME ZONE)
+RETURNS UUID LANGUAGE SQL STRICT IMMUTABLE AS
+$$
+	SELECT lpad(to_hex(
+		((EXTRACT(epoch FROM ts) * 1000)::BIGINT::BIT(48) || x'7000')::BIT(64)::BIGINT
+	) || 'B000000000000000', 32, '0')::uuid
+$$;

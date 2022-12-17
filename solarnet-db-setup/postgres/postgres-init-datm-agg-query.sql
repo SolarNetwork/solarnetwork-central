@@ -247,98 +247,6 @@ BEGIN
 END;
 $$;
 
-/**
- * Find datm records for an aggregate time range, supporting both "clock" and "reading" spans.
- *
- * @param sid 				the stream ID to find datm for
- * @param start_ts			the minimum date (inclusive)
- * @param end_ts 			the maximum date (exclusive)
- * @param tolerance 		the maximum time to look forward/backward for adjacent datm
- */
-CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span(
-		sid 		UUID,
-		start_ts 	TIMESTAMP WITH TIME ZONE,
-		end_ts 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS TABLE (
-		stream_id 	UUID,
-		ts 			TIMESTAMP WITH TIME ZONE,
-		data_i		NUMERIC[],
-		data_a		NUMERIC[],
-		data_s		TEXT[],
-		data_t		TEXT[]
-	) LANGUAGE SQL STABLE ROWS 2000 AS
-$$
-	-- first find boundary datum (least, greatest) for given time range that satisfies both the
-	-- clock and reading aggregate time windows
-	WITH b AS (
-		(
-		-- latest on/before start
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts <= start_ts
-			AND d.ts > start_ts - tolerance
-		ORDER BY d.stream_id, d.ts DESC
-		LIMIT 1
-		)
-		UNION
-		(
-		-- earliest on/after start within range; in case nothing before start
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts >= start_ts
-			AND d.ts < end_ts
-		ORDER BY d.stream_id, d.ts
-		LIMIT 1
-		)
-		UNION
-		(
-		-- earliest on/after end
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts >= end_ts
-			AND d.ts < end_ts + tolerance
-		ORDER BY d.stream_id, d.ts
-		LIMIT 1
-		)
-		UNION
-		(
-		-- latest on/before end, in case nothing after end
-		SELECT d.stream_id, d.ts
-		FROM solardatm.da_datm d
-		WHERE d.stream_id = sid
-			AND d.ts <= end_ts
-			AND d.ts > start_ts
-		ORDER BY d.stream_id, d.ts DESC
-		LIMIT 1
-		)
-	)
-	-- combine boundary rows into single range row with start/end columns
-	, r AS (
-		SELECT
-			stream_id
-			, COALESCE(min(ts), start_ts) AS range_start
-			, COALESCE(max(ts), end_ts) AS range_end
-		FROM b
-		GROUP BY stream_id
-	)
-	-- query for raw datum using the boundary range previously found
-	SELECT
-		  d.stream_id
-		, d.ts
-		, d.data_i
-		, d.data_a
-		, d.data_s
-		, d.data_t
-	FROM r
-	INNER JOIN solardatm.da_datm d ON d.stream_id = r.stream_id
-	WHERE d.ts >= r.range_start
-		AND d.ts <= r.range_end
-$$;
-
 
 /**
  * Find datm auxiliary records for a time range.
@@ -405,60 +313,164 @@ $$;
  * @param start_ts			the minimum date (inclusive)
  * @param end_ts 			the maximum date (exclusive)
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
- * @see solardatm.find_datm_for_time_span()
+ * @param target_agg		the target aggregate slot, defaults to PT1H
  */
-CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_span_with_aux(
+CREATE OR REPLACE FUNCTION solardatm.find_datm_for_time_slot(
 		sid 		UUID,
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '3 months'
-	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 2000 AS
+		tolerance 	INTERVAL DEFAULT INTERVAL 'P3M',
+		target_agg 	INTERVAL DEFAULT INTERVAL 'PT1H'
+	) RETURNS SETOF solardatm.datm_rec LANGUAGE SQL STABLE ROWS 200 AS
 $$
-	-- find raw data for given time range
-	WITH d AS (
-		SELECT d.*, 0::SMALLINT AS rr
-		FROM solardatm.find_datm_for_time_span(sid, start_ts, end_ts, tolerance) d
+	-- find min/max datum date within slot; if no actual data in this slot we get NULL
+	WITH drange AS (
+		SELECT (
+			-- find minimum datum date within slot
+			SELECT ts
+			FROM solardatm.da_datm
+			WHERE stream_id = sid
+				AND ts >= start_ts
+				AND ts < end_ts
+			ORDER BY stream_id, ts
+			LIMIT 1
+		) AS min_ts
+		, (
+			-- find maximum datum date within slot
+			SELECT ts
+			FROM solardatm.da_datm
+			WHERE stream_id = sid
+				AND ts >= start_ts
+				AND ts < end_ts
+			ORDER BY stream_id, ts DESC
+			LIMIT 1
+		) AS max_ts
 	)
-	-- find reset records for same time range, split into two rows for each record: final
-	-- and starting accumulating values
-	, resets AS (
-		SELECT
-			  aux.stream_id
-			, aux.ts
-			, NULL::numeric[] AS data_i
-			, aux.data_a
-			, NULL::text[] AS data_s
-			, NULL::text[] AS data_t
-			, aux.rtype AS rr
-		FROM solardatm.find_datm_aux_for_time_span(
-			sid,
-			start_ts - tolerance,
-			end_ts + tolerance
-		) aux
+
+	-- find prior/next datum date range to provide for clock and reading input
+	, srange AS (
+		SELECT COALESCE(t.min_ts, drange.min_ts) AS min_ts, COALESCE(t.max_ts, drange.max_ts) AS max_ts
+		FROM drange, (
+			SELECT (
+				-- find prior datum date before minimum within slot
+				SELECT CASE
+					WHEN d.ts IS NULL THEN drange.min_ts
+					-- when the prior ts is exactly the start of the proir agg slot, use the datum min instead
+					-- because that value would actually be in the previous slot
+					WHEN drange.min_ts = start_ts AND d.ts = start_ts - target_agg THEN drange.min_ts
+					ELSE d.ts
+				END
+				FROM drange, solardatm.find_time_before(sid, drange.min_ts, start_ts - tolerance) AS d(ts)
+			) AS min_ts
+			, (
+				-- find next datum date after maximum within slot
+				SELECT d.ts
+				FROM drange, solardatm.find_time_after(sid, drange.max_ts, end_ts + tolerance)  AS d(ts)
+			) AS max_ts
+		) t
 	)
-	-- find min, max ts out of raw + resets to eliminate extra leading/trailing from combined results
-	, ts_range AS (
-		SELECT min_ts, max_ts
-		FROM (
-				SELECT COALESCE(max(ts), start_ts) AS min_ts
-				FROM (
-					SELECT max(ts) FROM d WHERE ts <= start_ts
-					UNION ALL
-					SELECT max(ts) FROM resets WHERE ts <= start_ts
-				) l(ts)
-			) min, (
-				SELECT COALESCE(min(ts), end_ts) AS max_ts
-				FROM (
-					SELECT min(ts) FROM d WHERE ts >= end_ts
-					UNION ALL
-					SELECT min(ts) FROM resets WHERE ts >= end_ts
-				) r(ts)
-			) max
+
+	-- find date range for resets
+	, reset_range AS (
+		SELECT MIN(aux.ts) AS min_ts, MAX(aux.ts) AS max_ts
+		FROM srange, solardatm.da_datm_aux aux
+		WHERE aux.atype = 'Reset'::solardatm.da_datm_aux_type
+			AND aux.stream_id = sid
+			AND aux.ts >= CASE
+					WHEN srange.min_ts <= start_ts
+					THEN srange.min_ts
+					ELSE start_ts - tolerance
+				END
+			AND aux.ts <= CASE
+				WHEN srange.max_ts >= end_ts
+				THEN srange.max_ts
+				ELSE end_ts + tolerance
+			END
 	)
-	-- combine raw datm with reset datm
-	SELECT d.* FROM d, ts_range WHERE d.ts >= ts_range.min_ts AND d.ts <= ts_range.max_ts
+
+	-- get combined range for datum + resets
+	, combined_srange AS (
+		SELECT CASE
+				-- if datum falls exactly on start, only include prior datum if it is more than
+				-- one agg slot away; otherwise that datum will be included in prior slot
+				WHEN t.min_ts IS NULL OR (
+						drange.min_ts = start_ts
+						AND (start_ts - t.min_ts) < target_agg
+					)
+					THEN drange.min_ts
+				ELSE t.min_ts
+			END AS min_ts
+			, CASE
+				WHEN t.max_ts IS NULL OR drange.max_ts = end_ts THEN drange.max_ts
+				ELSE t.max_ts
+			END AS max_ts
+		FROM drange, (
+			SELECT CASE
+					-- start < reset < datum: reset is min
+					WHEN reset_range.min_ts < srange.min_ts
+						AND reset_range.min_ts >= start_ts
+						THEN reset_range.min_ts
+
+					-- datum < reset < start: reset is min
+					WHEN reset_range.min_ts > srange.min_ts
+						AND reset_range.min_ts <= start_ts
+						THEN reset_range.min_ts
+
+					-- no datum: reset is min
+					WHEN srange.min_ts IS NULL THEN reset_range.min_ts
+
+					-- otherwise: datum is min (or null)
+					ELSE srange.min_ts
+				END AS min_ts
+				, CASE
+					-- datum < reset < end: reset is max
+					WHEN reset_range.max_ts > srange.max_ts
+						AND reset_range.max_ts <= end_ts
+						THEN reset_range.max_ts
+
+					-- end < reset < datum: reset is max (or null)
+					WHEN reset_range.max_ts < srange.max_ts
+						AND reset_range.max_ts >= end_ts
+						THEN reset_range.max_ts
+
+					-- no datum: reset is max (or null)
+					WHEN srange.max_ts IS NULL THEN reset_range.max_ts
+
+					-- otherwise: datum is max (or null)
+					ELSE srange.max_ts
+				END AS max_ts
+			FROM srange, reset_range
+		) t
+	)
+
+	-- return combined datum + resets
+	SELECT d.stream_id
+		, d.ts
+		, d.data_i
+		, d.data_a
+		, d.data_s
+		, d.data_t
+		, 0::SMALLINT AS rtype
+	FROM combined_srange, solardatm.da_datm d
+	WHERE d.stream_id = sid
+		AND d.ts >= combined_srange.min_ts
+		AND d.ts <= combined_srange.max_ts
+
 	UNION ALL
-	SELECT resets.* FROM resets, ts_range WHERE resets.ts >= ts_range.min_ts AND resets.ts <= ts_range.max_ts
+
+	SELECT
+		  aux.stream_id
+		, aux.ts
+		, NULL::numeric[] AS data_i
+		, aux.data_a
+		, NULL::text[] AS data_s
+		, NULL::text[] AS data_t
+		, aux.rtype AS rtype
+	FROM combined_srange, solardatm.find_datm_aux_for_time_span(
+		sid,
+		combined_srange.min_ts,
+		combined_srange.max_ts
+	) aux
 $$;
 
 
@@ -484,7 +496,7 @@ $$;
  *                          the "clock" period
  * @param tolerance_read 	the maximum time to look forward/backward for adjacent datm within
  *                          the "reading" period
- * @see solardatm.find_datm_for_time_span_with_aux()
+ * @see solardatm.find_datm_for_time_slot()
  */
 CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span(
 		sid 			UUID,
@@ -510,7 +522,7 @@ $$
 			, data_t
 			, rtype
 			, (ts >= start_ts AND ts < end_ts) AS inc
-		FROM m, solardatm.find_datm_for_time_span_with_aux(
+		FROM m, solardatm.find_datm_for_time_slot(
 			sid,
 			start_ts,
 			end_ts,
@@ -684,7 +696,7 @@ $$;
  *                          the "clock" period
  *
  * @see solardatm.count_datm_time_span_slots()
- * @see solardatm.find_datm_for_time_span_with_aux()
+ * @see solardatm.find_datm_for_time_slot()
  * @see solardatm.slot_seconds()
  */
 CREATE OR REPLACE FUNCTION solardatm.rollup_datm_for_time_span_slots(
@@ -712,7 +724,7 @@ $$
 			, data_t
 			, rtype
 			, (ts >= start_ts AND ts < end_ts) AS inc
-		FROM m, solardatm.find_datm_for_time_span_with_aux(
+		FROM m, solardatm.find_datm_for_time_slot(
 			sid,
 			start_ts,
 			end_ts,

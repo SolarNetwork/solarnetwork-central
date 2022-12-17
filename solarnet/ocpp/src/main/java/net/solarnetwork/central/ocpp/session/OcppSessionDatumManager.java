@@ -90,7 +90,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -360,6 +360,10 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	@Override
 	public ChargeSession getActiveChargingSession(ChargePointIdentity identifier, int transactionId)
 			throws AuthorizationException {
+		if ( transactionId < 1 ) {
+			// illegal transaction ID value
+			return null;
+		}
 		ChargePoint cp = chargePoint(identifier, null);
 		return chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), transactionId);
 	}
