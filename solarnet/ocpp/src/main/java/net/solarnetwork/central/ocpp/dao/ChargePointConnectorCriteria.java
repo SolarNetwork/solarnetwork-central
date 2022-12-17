@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.dao;
  * Search criteria for connector related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ChargePointConnectorCriteria {
 
@@ -40,14 +40,14 @@ public interface ChargePointConnectorCriteria {
 	 * 
 	 * @return the first connector ID, or {@literal null} if not available
 	 */
-	Long getConnectorId();
+	Integer getConnectorId();
 
 	/**
 	 * Get an array of connector IDs.
 	 * 
 	 * @return array of connector IDs (may be {@literal null})
 	 */
-	Long[] getConnectorIds();
+	Integer[] getConnectorIds();
 
 	/**
 	 * Test if this filter has any connector criteria.

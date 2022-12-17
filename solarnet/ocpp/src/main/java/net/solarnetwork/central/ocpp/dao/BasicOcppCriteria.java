@@ -44,7 +44,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	private Long[] chargePointIds;
 	private String[] identifiers;
-	private Long[] connectorIds;
+	private Integer[] connectorIds;
 	private String[] actions;
 	private Instant startDate;
 	private Instant endDate;
@@ -282,18 +282,18 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the ID of the charge point
 	 */
 	@JsonSetter
-	public void setConnectorId(Long connectorId) {
-		this.connectorIds = (connectorId == null ? null : new Long[] { connectorId });
+	public void setConnectorId(Integer connectorId) {
+		this.connectorIds = (connectorId == null ? null : new Integer[] { connectorId });
 	}
 
 	@Override
 	@JsonIgnore
-	public Long getConnectorId() {
+	public Integer getConnectorId() {
 		return (this.connectorIds == null || this.connectorIds.length < 1 ? null : this.connectorIds[0]);
 	}
 
 	@Override
-	public Long[] getConnectorIds() {
+	public Integer[] getConnectorIds() {
 		return connectorIds;
 	}
 
@@ -303,7 +303,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param connectorIds
 	 *        The charge point IDs to filter on.
 	 */
-	public void setConnectorIds(Long[] connectorIds) {
+	public void setConnectorIds(Integer[] connectorIds) {
 		this.connectorIds = connectorIds;
 	}
 

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSession;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
+import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargeSessionFilter;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
@@ -47,7 +48,7 @@ import net.solarnetwork.util.ObjectUtils;
  * MyBatis implementation of {@link CentralChargeSessionDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport<ChargeSession, UUID>
 		implements CentralChargeSessionDao {
@@ -106,21 +107,28 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	@Override
 	public ChargeSession getIncompleteChargeSessionForTransaction(long chargePointId,
 			int transactionId) {
-		return selectFirst(QueryName.FindByIncomplete.getQueryName(), singletonMap(FILTER_PROPERTY,
-				CentralChargeSession.forTransaction(chargePointId, transactionId)));
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setChargePointId(chargePointId);
+		filter.setTransactionId(transactionId);
+		return selectFirst(QueryName.FindByIncomplete.getQueryName(),
+				singletonMap(FILTER_PROPERTY, filter));
 	}
 
 	@Override
 	public ChargeSession getIncompleteChargeSessionForConnector(long chargePointId, int connectorId) {
-		return selectFirst(QueryName.FindByIncomplete.getQueryName(), singletonMap(FILTER_PROPERTY,
-				CentralChargeSession.forConnector(chargePointId, connectorId)));
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setChargePointId(chargePointId);
+		filter.setConnectorId(connectorId);
+		return selectFirst(QueryName.FindByIncomplete.getQueryName(),
+				singletonMap(FILTER_PROPERTY, filter));
 	}
 
 	@Override
 	public Collection<ChargeSession> getIncompleteChargeSessionsForChargePoint(long chargePointId) {
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setChargePointId(chargePointId);
 		return selectList(QueryName.FindByIncomplete.getQueryName(),
-				singletonMap(FILTER_PROPERTY, CentralChargeSession.forChargePoint(chargePointId)), null,
-				null);
+				singletonMap(FILTER_PROPERTY, filter), null, null);
 	}
 
 	@Override
@@ -131,9 +139,11 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 	@Override
 	public Collection<ChargeSession> getIncompleteChargeSessionsForUserForChargePoint(long userId,
 			long chargePointId) {
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setChargePointId(chargePointId);
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
-		params.put(FILTER_PROPERTY, CentralChargeSession.forChargePoint(chargePointId));
+		params.put(FILTER_PROPERTY, filter);
 		return selectList(QueryName.FindByIncomplete.getQueryName(), params, null, null);
 	}
 

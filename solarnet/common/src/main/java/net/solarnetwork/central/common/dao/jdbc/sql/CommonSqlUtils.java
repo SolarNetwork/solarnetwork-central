@@ -42,7 +42,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public final class CommonSqlUtils {
 
@@ -57,6 +57,32 @@ public final class CommonSqlUtils {
 	 * clause.
 	 */
 	public static final int WHERE_COMPONENT_PREFIX_LENGTH = 4;
+
+	/**
+	 * Prepare a SQL statement {@code INTEGER} array parameter, optimized to a
+	 * non-array parameter if the array holds a single object.
+	 * 
+	 * <p>
+	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
+	 * </p>
+	 * 
+	 * @param con
+	 *        the JDBC connection
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the array value
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.4
+	 */
+	public static int prepareOptimizedArrayParameter(Connection con, PreparedStatement stmt,
+			int parameterOffset, Integer[] value) throws SQLException {
+		return prepareOptimizedArrayParameter(con, stmt, parameterOffset, "integer", value);
+	}
 
 	/**
 	 * Prepare a SQL statement {@code BIGINT} array parameter, optimized to a

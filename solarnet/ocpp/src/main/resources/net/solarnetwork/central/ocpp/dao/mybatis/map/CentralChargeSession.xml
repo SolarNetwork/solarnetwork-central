@@ -97,16 +97,16 @@
 		<if test="userId != null">
 			AND cp.user_id = #{userId}
 		</if>
-		<if test="filter.id != null">
-			AND cs.id = #{filter.id}
+		<if test="filter.chargeSessionId != null">
+			AND cs.id = #{filter.chargeSessionId}
 		</if>
-		<if test="filter.chargePointId &gt; 0">
+		<if test="filter.chargePointId != null">
 			AND cs.cp_id = #{filter.chargePointId}
 		</if>
-		<if test="filter.connectorId &gt; 0">
+		<if test="filter.connectorId != null">
 			AND cs.conn_id = #{filter.connectorId}
 		</if>
-		<if test="filter.transactionId &gt; 0">
+		<if test="filter.transactionId != null and filter.transactionId &gt;= 0">
 			AND cs.tx_id = #{filter.transactionId}
 		</if>
 	</sql>
@@ -223,10 +223,10 @@
 			<if test="identifier != null">
 				AND cp.ident = ANY(#{identifiers,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
-			<if test="chargePointId &gt; 0">
+			<if test="chargePointId != null">
 				AND cs.cp_id = ANY(#{chargePointIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
-			<if test="connectorId &gt; 0">
+			<if test="connectorId != null">
 				AND cs.conn_id = ANY(#{connectorIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
 			</if>
 			<if test="chargeSessionId != null">
@@ -243,7 +243,8 @@
 					</otherwise>
 				</choose>
 			</if>
-			<if test="transactionId &gt; 0">
+			<!-- transactionId -1 sent as "any transaction" -->
+			<if test="transactionId != null and transactionId &gt;= 0">
 				AND cs.tx_id = ANY(#{transactionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
 			</if>
 			<if test="endReason != null">
