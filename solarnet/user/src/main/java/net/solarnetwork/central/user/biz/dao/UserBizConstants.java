@@ -22,14 +22,8 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import org.apache.commons.codec.binary.Hex;
-import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.io.RFC1924OutputStream;
 
 /**
  * Constants for common user items.
@@ -40,10 +34,10 @@ import net.solarnetwork.io.RFC1924OutputStream;
 public final class UserBizConstants {
 
 	/** The number of bytes used in a security token. */
-	public static final int RANDOM_AUTH_TOKEN_BYTE_COUNT = 16;
+	public static final int RANDOM_AUTH_TOKEN_BYTE_COUNT = 20;
 
 	/** The number of random bytes used for the unconfirmed email prefix. */
-	public static final int UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT = 10;
+	public static final int UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT = 20;
 
 	/**
 	 * The delimiter used between the unconfirmed prefix and the actual email.
@@ -54,8 +48,13 @@ public final class UserBizConstants {
 	 * The number of characters for the unconfirmed email prefix, including the
 	 * delimiter.
 	 */
-	public static final int UNCONFIRMED_EMAIL_PREFIX_LENGTH = UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT * 2
-			+ 1;
+	public static final int UNCONFIRMED_EMAIL_PREFIX_LENGTH = UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT + 1;
+
+	private static final char[] TOKEN_ALPHABET = new char[] { '0', '1', '2', '3', '4', '5', '6', '7',
+			'8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+			'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+			'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+			'-', '.', '_', };
 
 	/**
 	 * Get an "unconfirmed" value for a given email address.
@@ -77,9 +76,8 @@ public final class UserBizConstants {
 		} catch ( NoSuchAlgorithmException e ) {
 			throw new RuntimeException("Unable to generate random bytes", e);
 		}
-		byte[] data = new byte[UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT];
-		rng.nextBytes(data);
-		return Hex.encodeHexString(data) + UNCONFIRMED_EMAIL_DELIMITER + email;
+		return generateRandomToken(rng, UNCONFIRMED_EMAIL_PREFIX_BYTE_COUNT)
+				+ UNCONFIRMED_EMAIL_DELIMITER + email;
 	}
 
 	/**
@@ -133,23 +131,17 @@ public final class UserBizConstants {
 	 * 
 	 * @param rng
 	 *        the generator to use
-	 * @param byteCount
-	 *        The number of random bytes to use.
-	 * @return the random token, encoded in a base-85 form
+	 * @param length
+	 *        The number of random characters to generate.
+	 * @return the random token
 	 * @since 1.3
 	 */
-	public static String generateRandomToken(SecureRandom rng, int byteCount) {
-		try {
-			byte[] randomBytes = new byte[byteCount];
-			rng.nextBytes(randomBytes);
-			ByteArrayOutputStream byos = new ByteArrayOutputStream((int) Math.ceil(byteCount * 1.25));
-			FileCopyUtils.copy(randomBytes, new RFC1924OutputStream(byos));
-			return byos.toString("US-ASCII");
-		} catch ( UnsupportedEncodingException e ) {
-			throw new RuntimeException(e);
-		} catch ( IOException e ) {
-			throw new RuntimeException(e);
+	public static String generateRandomToken(final SecureRandom rng, final int length) {
+		char[] data = new char[length];
+		for ( int i = 0; i < length; i++ ) {
+			data[i] = TOKEN_ALPHABET[rng.nextInt(TOKEN_ALPHABET.length)];
 		}
+		return new String(data);
 	}
 
 	// can't construct me!

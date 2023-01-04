@@ -27,6 +27,9 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasLength;
 import static org.hamcrest.Matchers.is;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.biz.dao.UserBizConstants;
 
@@ -38,6 +41,18 @@ import net.solarnetwork.central.user.biz.dao.UserBizConstants;
  */
 public class UserBizConstantsTests {
 
+	private SecureRandom rng;
+
+	@BeforeEach
+	public void setup() {
+		try {
+			rng = SecureRandom.getInstance("SHA1PRNG");
+		} catch ( NoSuchAlgorithmException e ) {
+			throw new RuntimeException("Unable to generate auth token", e);
+		}
+
+	}
+
 	@Test
 	public void createUnconfirmedEmail() {
 		// GIVEN
@@ -48,7 +63,7 @@ public class UserBizConstantsTests {
 
 		// THEN
 		assertThat("Unconfirmed email ends with original email", result, endsWith(email));
-		assertThat("Unconfirmed email has MD5 hex prefix for 10 bytes + @ delimiter", result,
+		assertThat("Unconfirmed email has prefix for 20 characters + @ delimiter", result,
 				hasLength(email.length() + UserBizConstants.UNCONFIRMED_EMAIL_PREFIX_LENGTH));
 	}
 
@@ -63,7 +78,28 @@ public class UserBizConstantsTests {
 
 		// THEN
 		assertThat("Email decoded", result, is(equalTo(email)));
+	}
 
+	@Test
+	public void generateRandomAuthToken() {
+		// WHEN
+		String tok = UserBizConstants.generateRandomAuthToken(rng);
+
+		// THEN
+		assertThat("Token generated with expected length", tok,
+				hasLength(UserBizConstants.RANDOM_AUTH_TOKEN_BYTE_COUNT));
+	}
+
+	@Test
+	public void generateRandomToken() {
+		// GIVEN
+		final int length = rng.nextInt(64) + 16;
+
+		// WHEN
+		String tok = UserBizConstants.generateRandomToken(rng, length);
+
+		// THEN
+		assertThat("Token generated with expected length", tok, hasLength(length));
 	}
 
 }
