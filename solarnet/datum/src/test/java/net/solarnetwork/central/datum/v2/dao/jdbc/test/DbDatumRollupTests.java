@@ -49,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliary;
@@ -69,23 +71,75 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  */
 public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 
-	private static interface RollupCallback {
+	/**
+	 * Rollup callback.
+	 */
+	public static interface RollupCallback {
 
+		/**
+		 * Handle the rollup result.
+		 * 
+		 * @param datums
+		 *        the datums
+		 * @param meta
+		 *        the metadata
+		 * @param streamId
+		 *        the stream ID
+		 * @param results
+		 *        the results
+		 */
 		public void doWithStream(List<GeneralNodeDatum> datums,
 				Map<NodeSourcePK, ObjectDatumStreamMetadata> meta, UUID streamId,
 				List<AggregateDatum> results);
 	}
 
-	private static interface CsvRollupCallback {
+	/**
+	 * CSV rollup callback.
+	 */
+	public static interface CsvRollupCallback {
 
+		/**
+		 * Handle the rollup result.
+		 * 
+		 * @param datums
+		 *        the datums
+		 * @param meta
+		 *        the mdatadata
+		 * @param streamId
+		 *        the stream ID
+		 * @param results
+		 *        the results
+		 */
 		public void doWithStream(List<Datum> datums, ObjectDatumStreamMetadata meta, UUID streamId,
 				List<AggregateDatum> results);
 	}
 
-	private void loadCsvStreamAndRollup(String resource, ObjectDatumStreamMetadata meta,
+	/**
+	 * Load CSV stream datum and rollup.
+	 * 
+	 * @param log
+	 *        the logger
+	 * @param jdbcTemplate
+	 *        the JDBC operations
+	 * @param resourceClass
+	 *        the class to load {@code reesource} from
+	 * @param resource
+	 *        the CSV resource to load
+	 * @param meta
+	 *        the metadata
+	 * @param aggStart
+	 *        the aggregation start
+	 * @param aggEnd
+	 *        the aggregation end
+	 * @param callback
+	 *        the callback
+	 */
+	public static void loadCsvStreamAndRollup(Logger log, JdbcOperations jdbcTemplate,
+			Class<?> resourceClass, String resource, ObjectDatumStreamMetadata meta,
 			ZonedDateTime aggStart, ZonedDateTime aggEnd, CsvRollupCallback callback) {
 		final UUID streamId = meta.getStreamId();
-		List<Datum> datum = datumResourceToList(getClass(), resource, staticProvider(singleton(meta)));
+		List<Datum> datum = datumResourceToList(resourceClass, resource,
+				staticProvider(singleton(meta)));
 		log.debug("Got test data:\n{}", datum.stream().map(Object::toString).collect(joining("\n")));
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 		DatumDbUtils.insertDatum(log, jdbcTemplate, datum);
@@ -98,9 +152,35 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		callback.doWithStream(datum, meta, streamId, results);
 	}
 
-	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
+	public void loadCsvStreamAndRollup(String resource, ObjectDatumStreamMetadata meta,
+			ZonedDateTime aggStart, ZonedDateTime aggEnd, CsvRollupCallback callback) {
+		loadCsvStreamAndRollup(log, jdbcTemplate, getClass(), resource, meta, aggStart, aggEnd,
+				callback);
+	}
+
+	/**
+	 * 
+	 * @param log
+	 *        the logger
+	 * @param jdbcTemplate
+	 *        the JDBC operations
+	 * @param resourceClass
+	 *        the class to load {@code reesource} from
+	 * @param resource
+	 *        the CSV resource to load
+	 * @param aggStart
+	 *        the aggregation start
+	 * @param aggEnd
+	 *        the aggregation end
+	 * @param callback
+	 *        the callback
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	public static void loadStreamAndRollup(Logger log, JdbcOperations jdbcTemplate,
+			Class<?> resourceClass, String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
 			RollupCallback callback) throws IOException {
-		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, getClass());
+		List<GeneralNodeDatum> datums = loadJsonDatumResource(resource, resourceClass);
 		log.debug("Got test data: {}", datums);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				"UTC");
@@ -116,14 +196,38 @@ public class DbDatumRollupTests extends BaseDatumJdbcTestSupport {
 		callback.doWithStream(datums, meta, streamId, results);
 	}
 
-	private void rollup(UUID streamId, ZonedDateTime aggStart, ZonedDateTime aggEnd,
-			RollupCallback callback) {
+	private void loadStreamAndRollup(String resource, ZonedDateTime aggStart, ZonedDateTime aggEnd,
+			RollupCallback callback) throws IOException {
+		loadStreamAndRollup(log, jdbcTemplate, getClass(), resource, aggStart, aggEnd, callback);
+	}
+
+	/**
+	 * Rollup.
+	 * 
+	 * @param jdbcTemplate
+	 *        the JDBC operations
+	 * @param streamId
+	 *        the stream ID
+	 * @param aggStart
+	 *        the aggregation start
+	 * @param aggEnd
+	 *        the aggregation end
+	 * @param callback
+	 *        the callback
+	 */
+	public static void rollup(JdbcOperations jdbcTemplate, UUID streamId, ZonedDateTime aggStart,
+			ZonedDateTime aggEnd, RollupCallback callback) {
 		List<AggregateDatum> results = Collections.emptyList();
 		results = jdbcTemplate.query("select * from solardatm.rollup_datm_for_time_span(?::uuid,?,?)",
 				AggregateDatumEntityRowMapper.INSTANCE, streamId.toString(),
 				Timestamp.from(aggStart.toInstant()), Timestamp.from(aggEnd.toInstant()));
 
 		callback.doWithStream(null, null, streamId, results);
+	}
+
+	private void rollup(UUID streamId, ZonedDateTime aggStart, ZonedDateTime aggEnd,
+			RollupCallback callback) {
+		rollup(jdbcTemplate, streamId, aggStart, aggEnd, callback);
 	}
 
 	private void loadStreamWithAuxiliaryAndRollup(String resource, ZonedDateTime aggStart,

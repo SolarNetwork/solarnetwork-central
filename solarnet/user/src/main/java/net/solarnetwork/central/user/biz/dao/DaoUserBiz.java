@@ -199,7 +199,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		} catch ( NoSuchAlgorithmException e ) {
 			throw new RuntimeException("Unable to generate auth token", e);
 		}
-		final int randomLength = 16 + rng.nextInt(8);
+		final int randomLength = 24 + rng.nextInt(8);
 		final String secretString = UserBizConstants.generateRandomToken(rng, randomLength);
 		final int maxAttempts = 50;
 		for ( int i = maxAttempts; i > 0; i-- ) {
