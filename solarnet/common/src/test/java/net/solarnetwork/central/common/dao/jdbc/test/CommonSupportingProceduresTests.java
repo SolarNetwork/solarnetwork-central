@@ -38,6 +38,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.central.support.UuidUtils;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
 /**
@@ -104,6 +105,20 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 		// THEN
 		assertThat("Timestamp extracted with millisecond precision", ts,
 				is(equalTo(Timestamp.from(t.truncatedTo(ChronoUnit.MILLIS)))));
+	}
+
+	@Test
+	public void uuidV7_boundaryFromTimestamp() {
+
+		// GIVEN
+		Instant t = LocalDateTime.of(2022, 8, 3, 17, 25, 0, 123456789).toInstant(ZoneOffset.UTC);
+		// WHEN
+		UUID result = jdbcTemplate.queryForObject("SELECT solarcommon.timestamp_to_uuid_v7_boundary(?)",
+				UUID.class, Timestamp.from(t));
+
+		// THEN
+		assertThat("UUID returned as boundary", result,
+				is(equalTo(UuidUtils.createUuidV7Boundary(t.truncatedTo(ChronoUnit.MILLIS)))));
 	}
 
 }
