@@ -24,14 +24,20 @@ package net.solarnetwork.central.common.dao.jdbc.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import java.security.SecureRandom;
 import java.sql.Timestamp;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 
 /**
@@ -81,4 +87,23 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 				Timestamp.from(date));
 		assertThat("Formatted date", val, equalTo("Mon, 04 Feb 2019 22:33:44 GMT"));
 	}
+
+	@Test
+	public void uuidV7_toTimestamp() {
+		// GIVEN
+		Instant t = LocalDateTime.of(2022, 8, 3, 17, 25, 0, 123456789).toInstant(ZoneOffset.UTC);
+		Clock fixed = Clock.fixed(t, ZoneOffset.UTC);
+		TimeBasedV7UuidGenerator generator = new TimeBasedV7UuidGenerator(new SecureRandom(), fixed,
+				true);
+		UUID uuid = generator.generate();
+
+		// WHEN
+		Timestamp ts = jdbcTemplate.queryForObject("SELECT solarcommon.uuid_to_timestamp_v7(?)",
+				Timestamp.class, uuid);
+
+		// THEN
+		assertThat("Timestamp extracted with millisecond precision", ts,
+				is(equalTo(Timestamp.from(t.truncatedTo(ChronoUnit.MILLIS)))));
+	}
+
 }
