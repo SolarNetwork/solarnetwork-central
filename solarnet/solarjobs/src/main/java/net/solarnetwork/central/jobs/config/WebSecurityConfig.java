@@ -52,7 +52,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -146,13 +146,13 @@ public class WebSecurityConfig {
 	      .addFilterBefore(tokenAuthenticationFilter(),
 					UsernamePasswordAuthenticationFilter.class)
 	      
-	      .authorizeRequests()
-	      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-	        .antMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
+	      .authorizeHttpRequests()
+	      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+	        .requestMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
 	            "/api/v1/pub/**").permitAll()
 	        
-	        .antMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(ACCESS_AUTHORITIES)
-	        .antMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(ACCESS_AUTHORITIES)
+	        .requestMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(ACCESS_AUTHORITIES)
+	        .requestMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(ACCESS_AUTHORITIES)
 	        
 	        .anyRequest().authenticated()
 	    ;
