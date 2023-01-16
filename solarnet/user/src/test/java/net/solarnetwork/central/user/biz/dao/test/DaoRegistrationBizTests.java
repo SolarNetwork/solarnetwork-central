@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoRegistrationBizTest.java - Nov 30, 2012 6:21:59 AM
+ * DaoRegistrationBizTests.java - Nov 30, 2012 6:21:59 AM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -116,7 +116,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * @author matt
  * @version 2.0
  */
-public class DaoRegistrationBizTest {
+public class DaoRegistrationBizTests {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final Long TEST_CONF_ID = -2L;

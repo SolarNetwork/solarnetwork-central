@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.domain.Result.success;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +42,13 @@ import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for {@link UserAuthToken} management.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalExceptionRestController
 @RestController("v1UserAuthTokenController")
@@ -56,6 +57,12 @@ public class UserAuthTokenController {
 
 	private final UserBiz userBiz;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param userBiz
+	 *        the user service to use
+	 */
 	@Autowired
 	public UserAuthTokenController(UserBiz userBiz) {
 		super();
@@ -85,10 +92,10 @@ public class UserAuthTokenController {
 	 * @return the tokens
 	 */
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<List<UserAuthToken>> listAll(Principal principal) {
+	public Result<List<UserAuthToken>> listAll(Principal principal) {
 		final Long actorUserId = getUserId(principal);
 		List<UserAuthToken> tokens = userBiz.getAllUserAuthTokens(actorUserId);
-		return Response.response(tokens);
+		return success(tokens);
 	}
 
 	/**
@@ -103,12 +110,38 @@ public class UserAuthTokenController {
 	 * @return The generated token.
 	 */
 	@RequestMapping(value = "/generate/{type}", method = RequestMethod.POST)
-	public Response<UserAuthToken> generateToken(Principal principal,
+	public Result<UserAuthToken> generateToken(Principal principal,
 			@PathVariable("type") SecurityTokenType type,
 			@RequestBody(required = false) BasicSecurityPolicy policy) {
 		final Long actorUserId = getUserId(principal);
 		UserAuthToken token = userBiz.generateUserAuthToken(actorUserId, type, policy);
-		return new Response<UserAuthToken>(token);
+		return success(token);
+	}
+
+	/**
+	 * Update token info.
+	 * 
+	 * @param principal
+	 *        the actor
+	 * @param tokenId
+	 *        the ID of the token to update
+	 * @param name
+	 *        the name to set
+	 * @param description
+	 *        the description to set
+	 * @return the result
+	 * @since 2.1
+	 */
+	@RequestMapping(value = "/info", method = RequestMethod.POST)
+	public Result<Object> update(Principal principal, @RequestParam("tokenId") String tokenId,
+			@RequestParam(value = "name", required = false) String name,
+			@RequestParam(value = "description", required = false) String description) {
+		final Long actorUserId = getUserId(principal);
+		UserAuthToken info = new UserAuthToken();
+		info.setName(name != null && !name.isBlank() ? name : null);
+		info.setDescription(description != null && !description.isBlank() ? description : null);
+		userBiz.updateUserAuthTokenInfo(actorUserId, tokenId, info);
+		return success();
 	}
 
 	/**
@@ -121,10 +154,10 @@ public class UserAuthTokenController {
 	 * @return Success response indicator.
 	 */
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE)
-	public Response<Object> deleteToken(Principal principal, @RequestParam("tokenId") String tokenId) {
+	public Result<Object> deleteToken(Principal principal, @RequestParam("tokenId") String tokenId) {
 		final Long actorUserId = getUserId(principal);
 		userBiz.deleteUserAuthToken(actorUserId, tokenId);
-		return new Response<Object>();
+		return success();
 	}
 
 	/**
@@ -139,11 +172,11 @@ public class UserAuthTokenController {
 	 * @return The updated policy.
 	 */
 	@RequestMapping(value = "/policy", method = RequestMethod.PATCH, consumes = "application/json")
-	public Response<UserAuthToken> mergePolicy(Principal principal,
+	public Result<UserAuthToken> mergePolicy(Principal principal,
 			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
 		final Long actorUserId = getUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, false);
-		return Response.response(token);
+		return success(token);
 	}
 
 	/**
@@ -158,11 +191,11 @@ public class UserAuthTokenController {
 	 * @return The updated policy.
 	 */
 	@RequestMapping(value = "/policy", method = RequestMethod.PUT, consumes = "application/json")
-	public Response<UserAuthToken> replacePolicy(Principal principal,
+	public Result<UserAuthToken> replacePolicy(Principal principal,
 			@RequestParam("tokenId") String tokenId, @RequestBody BasicSecurityPolicy policy) {
 		final Long actorUserId = getUserId(principal);
 		UserAuthToken token = userBiz.updateUserAuthTokenPolicy(actorUserId, tokenId, policy, true);
-		return Response.response(token);
+		return success(token);
 	}
 
 	/**
@@ -177,11 +210,11 @@ public class UserAuthTokenController {
 	 * @return Success response indicator.
 	 */
 	@RequestMapping(value = "/status", method = RequestMethod.POST)
-	public Response<Object> changeStatus(Principal principal, @RequestParam("tokenId") String tokenId,
+	public Result<Object> changeStatus(Principal principal, @RequestParam("tokenId") String tokenId,
 			@RequestParam("status") SecurityTokenStatus status) {
 		final Long actorUserId = getUserId(principal);
 		userBiz.updateUserAuthTokenStatus(actorUserId, tokenId, status);
-		return new Response<Object>();
+		return success();
 	}
 
 }

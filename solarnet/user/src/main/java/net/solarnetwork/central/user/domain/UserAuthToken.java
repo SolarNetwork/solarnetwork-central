@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.domain;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,8 +31,8 @@ import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -39,13 +40,15 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String> {
 
-	private static final long serialVersionUID = -2125712171325565247L;
+	private static final long serialVersionUID = -4544594854807498756L;
 
 	private Long userId;
+	private String name;
+	private String description;
 	private String authSecret;
 	private SecurityTokenStatus status;
 	private SecurityTokenType type;
@@ -80,6 +83,22 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		setType(type);
 	}
 
+	/**
+	 * Test if the information (name, description) in another token differs from
+	 * this token.
+	 * 
+	 * @param other
+	 *        the token to compare to
+	 * @return {@literal true} if the name or description differs
+	 * @since 2.1
+	 */
+	public boolean isInfoDifferent(UserAuthToken other) {
+		if ( this == other ) {
+			return false;
+		}
+		return !(Objects.equals(description, other.description) && Objects.equals(name, other.name));
+	}
+
 	@Override
 	public Long getUserId() {
 		return userId;
@@ -87,6 +106,48 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	/**
+	 * Get the friendly name.
+	 * 
+	 * @return the name
+	 * @since 2.1
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Set the friendly name.
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 2.1
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * Get the description.
+	 * 
+	 * @return the description
+	 * @since 2.1
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Set the description.
+	 * 
+	 * @param description
+	 *        the description to set
+	 * @since 2.1
+	 */
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	/**

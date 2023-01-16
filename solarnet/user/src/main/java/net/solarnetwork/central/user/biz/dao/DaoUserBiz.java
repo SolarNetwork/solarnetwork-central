@@ -63,7 +63,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -297,6 +297,25 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		BasicSecurityPolicy newBasicPolicy = policyBuilder.build();
 		if ( !newBasicPolicy.equals(token.getPolicy()) ) {
 			token.setPolicy(newBasicPolicy);
+			userAuthTokenDao.store(token);
+		}
+		return token;
+	}
+
+	@Override
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info) {
+		assert userId != null;
+		UserAuthToken token = userAuthTokenDao.get(tokenId);
+		if ( token == null ) {
+			return null;
+		}
+		if ( !userId.equals(token.getUserId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		if ( token.isInfoDifferent(info) ) {
+			token.setName(info.getName());
+			token.setDescription(info.getDescription());
 			userAuthTokenDao.store(token);
 		}
 		return token;
