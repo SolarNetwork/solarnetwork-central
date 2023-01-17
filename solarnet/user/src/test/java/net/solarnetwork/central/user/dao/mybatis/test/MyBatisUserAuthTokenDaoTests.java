@@ -24,10 +24,10 @@ package net.solarnetwork.central.user.dao.mybatis.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,13 +35,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
@@ -51,7 +52,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -80,10 +81,10 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		assertThat("Node available", this.node, is(notNullValue()));
 		deleteFromTables(DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		assertThat("User available", this.user, is(notNullValue()));
 		userAuthToken = null;
 	}
 
@@ -97,7 +98,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.User);
 		String id = userAuthTokenDao.store(authToken);
-		assertNotNull(id);
+		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
 
@@ -113,7 +114,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(node.getId())).build());
 		String id = userAuthTokenDao.store(authToken);
-		assertNotNull(id);
+		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
 
@@ -131,48 +132,83 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
 		String id = userAuthTokenDao.store(authToken);
-		assertNotNull(id);
+		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
 
-	private void validate(UserAuthToken token, UserAuthToken entity) {
-		assertNotNull("UserAuthToken should exist", entity);
-		assertNotNull("Created date should be set", entity.getCreated());
-		assertEquals(token.getId(), entity.getId());
-		assertEquals(token.getStatus(), entity.getStatus());
-		assertEquals(token.getAuthToken(), entity.getAuthToken());
-		assertNull(entity.getAuthSecret()); // the secret is NOT returned
-		assertEquals(token.getNodeIds(), entity.getNodeIds());
+	@Test
+	public void storeNewWithInfo() {
+		UserAuthToken authToken = new UserAuthToken();
+		authToken.setCreated(Instant.now());
+		authToken.setUserId(this.user.getId());
+		authToken.setAuthSecret(TEST_SECRET);
+		authToken.setAuthToken(TEST_TOKEN);
+		authToken.setStatus(SecurityTokenStatus.Active);
+		authToken.setType(SecurityTokenType.User);
+		authToken.setName(UUID.randomUUID().toString());
+		authToken.setDescription(UUID.randomUUID().toString());
+		String id = userAuthTokenDao.store(authToken);
+		assertThat("ID returned", id, is(notNullValue()));
+		this.userAuthToken = authToken;
+	}
+
+	private void assertEqual(UserAuthToken entity, UserAuthToken expected) {
+		assertThat("UserAuthToken should exist", entity, is(notNullValue()));
+		assertThat("Created date should be set", entity.getCreated(), is(notNullValue()));
+		assertThat("Token ID", entity.getId(), is(equalTo(expected.getId())));
+		assertThat("Status", entity.getStatus(), is(equalTo(expected.getStatus())));
+		assertThat("Auth token", entity.getAuthToken(), is(equalTo(expected.getAuthToken())));
+		assertThat("Auth secret not returned", entity.getAuthSecret(), is(nullValue()));
+		assertThat("Node IDs", entity.getNodeIds(), is(equalTo(expected.getNodeIds())));
+		assertThat("Name", entity.getName(), is(equalTo(expected.getName())));
+		assertThat("Description", entity.getDescription(), is(equalTo(expected.getDescription())));
 	}
 
 	@Test
 	public void getByPrimaryKey() {
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
-		validate(this.userAuthToken, token);
+		assertEqual(token, this.userAuthToken);
 	}
 
 	@Test
 	public void getByPrimaryKeyWithNodeId() {
 		storeNewWithNodeId();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
-		validate(this.userAuthToken, token);
+		assertEqual(token, this.userAuthToken);
 	}
 
 	@Test
 	public void getByPrimaryKeyWithNodeIds() {
 		storeNewWithNodeIds();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
-		validate(this.userAuthToken, token);
+		assertEqual(token, this.userAuthToken);
 	}
 
 	@Test
-	public void update() {
+	public void getByPrimaryKeyWithInfo() {
+		storeNewWithInfo();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		assertEqual(token, this.userAuthToken);
+	}
+
+	@Test
+	public void update_status() {
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		token.setStatus(SecurityTokenStatus.Disabled);
 		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
-		validate(token, updated);
+		assertEqual(updated, token);
+	}
+
+	@Test
+	public void update_info() {
+		storeNew();
+		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
+		token.setName(UUID.randomUUID().toString());
+		token.setDescription(UUID.randomUUID().toString());
+		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
+		assertEqual(updated, token);
 	}
 
 	@Test
@@ -181,7 +217,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		userAuthTokenDao.delete(token);
 		token = userAuthTokenDao.get(token.getId());
-		assertNull(token);
+		assertThat("Token no longer available", token, is(nullValue()));
 	}
 
 	@Test
@@ -196,15 +232,15 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		userAuthTokenDao.store(authToken3);
 
 		List<UserAuthToken> results = userAuthTokenDao.findUserAuthTokensForUser(this.user.getId());
-		assertNotNull(results);
-		assertEquals(2, results.size());
-		assertEquals(this.userAuthToken, results.get(0));
-		assertEquals(authToken2, results.get(1));
+		assertThat("Results available", results, is(notNullValue()));
+		assertThat("All results for user returned", results, hasSize(2));
+		assertThat(results.get(0), is(equalTo(this.userAuthToken)));
+		assertThat(results.get(1), is(equalTo(authToken2)));
 
 		results = userAuthTokenDao.findUserAuthTokensForUser(user2.getId());
-		assertNotNull(results);
-		assertEquals(1, results.size());
-		assertEquals(authToken3, results.get(0));
+		assertThat("Results available", results, is(notNullValue()));
+		assertThat("All results for user 2 returned", results, hasSize(1));
+		assertThat(results.get(0), is(equalTo(authToken3)));
 	}
 
 	private Instant getTestDate() {

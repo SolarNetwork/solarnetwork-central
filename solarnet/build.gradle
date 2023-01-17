@@ -113,7 +113,8 @@ subprojects {
 	}
 	
 	ext['netty.version'] = '4.1.63.Final'
-
+	ext['spring-security.version']='5.8.1'
+	
 	dependencies {
 		components { all(IvyVariantDerivationRule) }
 		testImplementation libraries.junit,

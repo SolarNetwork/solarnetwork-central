@@ -25,10 +25,13 @@ package net.solarnetwork.central.instructor.dao.mybatis.test;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -47,12 +50,13 @@ import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
+import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
 
 /**
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -303,6 +307,75 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	@Test
+	public void findActiveForNodes_stream() throws IOException {
+		// GIVEN
+		storeNew();
+		final Long node2Id = TEST_NODE_ID - 1L;
+		setupTestNode(node2Id);
+		storeNewInstruction(node2Id);
+
+		final Long node3Id = TEST_NODE_ID - 2L;
+		setupTestNode(node3Id);
+		storeNewInstruction(node3Id);
+
+		// WHEN
+		SimpleInstructionFilter f = new SimpleInstructionFilter();
+		f.setNodeIds(new Long[] { node2Id, node3Id });
+		f.setState(InstructionState.Queued);
+		List<NodeInstruction> results = new ArrayList<>(2);
+		dao.findFilteredStream(f, new AbstractFilteredResultsProcessor<NodeInstruction>() {
+
+			@Override
+			public void handleResultItem(NodeInstruction resultItem) throws IOException {
+				results.add(resultItem);
+			}
+
+		});
+
+		// THEN
+		assertThat("Results for node 2 and 3 returned", results, hasSize(2));
+		int i = 0;
+		for ( NodeInstruction instr : results ) {
+			NodeInstruction expected = addedInstructions.get(++i);
+			assertThat("Instruction " + i, instr.getId(), is(equalTo(expected.getId())));
+		}
+	}
+
+	@Test
+	public void findForDateRange_stream() throws IOException {
+		// GIVEN
+		final Instant ts1 = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		storeNewInstruction(TEST_NODE_ID, ts1);
+		final Instant ts2 = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		storeNewInstruction(TEST_NODE_ID, ts2);
+		final Instant ts3 = Instant.now().truncatedTo(ChronoUnit.MINUTES).plus(1, ChronoUnit.HOURS);
+		storeNewInstruction(TEST_NODE_ID, ts3);
+
+		// WHEN
+		SimpleInstructionFilter f = new SimpleInstructionFilter();
+		f.setNodeId(TEST_NODE_ID);
+		f.setStartDate(ts1);
+		f.setEndDate(ts3);
+		List<NodeInstruction> results = new ArrayList<>(2);
+		dao.findFilteredStream(f, new AbstractFilteredResultsProcessor<NodeInstruction>() {
+
+			@Override
+			public void handleResultItem(NodeInstruction resultItem) throws IOException {
+				results.add(resultItem);
+			}
+
+		});
+
+		// THEN
+		assertThat("Results for ts 1 and 2 returned", results, hasSize(2));
+		int i = 0;
+		for ( NodeInstruction instr : results ) {
+			NodeInstruction expected = addedInstructions.get(i++);
+			assertThat("Instruction " + i, instr.getId(), is(equalTo(expected.getId())));
+		}
+	}
+
+	@Test
 	public void findPending() {
 		findByNodeId();
 
@@ -332,6 +405,46 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 			expectedIds.remove(one.getId());
 		}
 		assertEquals("Two results returned", 0, expectedIds.size());
+	}
+
+	@Test
+	public void findPendingForNodes_stream() throws IOException {
+		findByNodeId();
+
+		// store a second for a different state, to make sure filter working
+		final NodeInstruction datum = new NodeInstruction();
+		datum.setCreated(Instant.now());
+		datum.setInstructionDate(Instant.now());
+		datum.setNodeId(TEST_NODE_ID);
+		datum.setState(InstructionState.Executing);
+		datum.setTopic("Test Topic");
+
+		final Long instr2Id = dao.store(datum);
+		assertNotNull(instr2Id);
+		datum.setId(instr2Id);
+
+		// WHEN
+		SimpleInstructionFilter f = new SimpleInstructionFilter();
+		f.setNodeId(TEST_NODE_ID);
+		f.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
+				InstructionState.Executing));
+		List<NodeInstruction> results = new ArrayList<>(2);
+		dao.findFilteredStream(f, new AbstractFilteredResultsProcessor<NodeInstruction>() {
+
+			@Override
+			public void handleResultItem(NodeInstruction resultItem) throws IOException {
+				results.add(resultItem);
+			}
+
+		});
+
+		// THEN
+		assertThat("Results for node 2 and 3 returned", results, hasSize(2));
+		Set<Long> expectedIds = new HashSet<>(Arrays.asList(lastDatum.getId(), datum.getId()));
+		for ( EntityMatch one : results ) {
+			expectedIds.remove(one.getId());
+		}
+		assertThat("Two expected results returned", expectedIds, hasSize(0));
 	}
 
 	@Test

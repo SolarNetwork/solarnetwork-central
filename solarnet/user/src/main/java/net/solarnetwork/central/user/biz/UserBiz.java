@@ -27,8 +27,8 @@ import java.util.List;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
@@ -40,7 +40,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * API for registered user tasks.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public interface UserBiz {
 
@@ -217,6 +217,21 @@ public interface UserBiz {
 	 */
 	UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace);
+
+	/**
+	 * Update the info (name, description) of a token.
+	 * 
+	 * @param userId
+	 *        the user ID of the token owner
+	 * @param tokenId
+	 *        the token ID to update
+	 * @param info
+	 *        the information to update; only the name and description will be
+	 *        used
+	 * @return the updated token
+	 * @since 3.1
+	 */
+	UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info);
 
 	/**
 	 * Create an authorization builder object with a populated signing key for a

@@ -22,18 +22,21 @@
 
 package net.solarnetwork.central.instructor.biz;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface InstructorBiz {
 
@@ -97,6 +100,21 @@ public interface InstructorBiz {
 	 * @since 1.3
 	 */
 	List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds);
+
+	/**
+	 * API for querying for a filtered set of node instructions, streaming the
+	 * results.
+	 * 
+	 * @param filter
+	 *        the query filter
+	 * @param processor
+	 *        the processor for the results
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 1.4
+	 */
+	void findFilteredNodeInstructions(InstructionFilter filter,
+			FilteredResultsProcessor<NodeInstruction> processor) throws IOException;
 
 	/**
 	 * Queue an instruction for a specific node. The instruction will be put

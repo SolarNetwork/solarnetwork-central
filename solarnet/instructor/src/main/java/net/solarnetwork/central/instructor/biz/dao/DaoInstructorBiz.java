@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.biz.dao;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,16 +41,18 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoInstructorBiz implements InstructorBiz {
 
@@ -59,6 +62,13 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * @since 1.8
 	 */
 	public static final int DEFAULT_MAX_PARAM_VALUE_LENGTH = 256;
+
+	/**
+	 * A maximum number of filter results to return.
+	 * 
+	 * @since 2.1
+	 */
+	public static final Integer MAX_FILTER_RESULTS = 2000;
 
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
@@ -128,7 +138,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		Long[] ids = instructionIds.toArray(new Long[instructionIds.size()]);
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(ids);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
 	}
 
@@ -138,7 +149,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(nodeId);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+				MAX_FILTER_RESULTS);
 		return asResultList(matches);
 	}
 
@@ -149,7 +161,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(ids);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
 	}
 
@@ -160,7 +173,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		filter.setNodeId(nodeId);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+				MAX_FILTER_RESULTS);
 		return asResultList(matches);
 	}
 
@@ -172,8 +186,15 @@ public class DaoInstructorBiz implements InstructorBiz {
 		filter.setNodeIds(ids);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
+	}
+
+	@Override
+	public void findFilteredNodeInstructions(InstructionFilter filter,
+			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
+		nodeInstructionDao.findFilteredStream(filter, processor);
 	}
 
 	@Override

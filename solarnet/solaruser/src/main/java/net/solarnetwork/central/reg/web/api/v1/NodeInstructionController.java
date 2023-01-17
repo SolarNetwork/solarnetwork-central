@@ -22,38 +22,75 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.domain.Response.response;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
+import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
+import net.solarnetwork.central.reg.config.JsonConfig;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for node instruction web service API.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
 @RequestMapping(value = "/api/v1/sec/instr")
 public class NodeInstructionController {
 
-	@Autowired
-	private InstructorBiz instructorBiz;
+	private final ObjectMapper objectMapper;
+	private final ObjectMapper cborObjectMapper;
+	private final PropertySerializerRegistrar propertySerializerRegistrar;
+	private final InstructorBiz instructorBiz;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param instructorBiz
+	 *        the instructor service
+	 * @param objectMapper
+	 *        the object mapper to use for JSON
+	 * @param cborObjectMapper
+	 *        the mapper to use for CBOR
+	 * @param propertySerializerRegistrar
+	 *        the registrar to use (may be {@literal null}
+	 */
+	public NodeInstructionController(InstructorBiz instructorBiz, ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+			PropertySerializerRegistrar propertySerializerRegistrar) {
+		super();
+		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
+		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
+		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
+		this.propertySerializerRegistrar = propertySerializerRegistrar;
+	}
 
 	/**
 	 * View a single instruction, based on its primary key.
@@ -313,6 +350,31 @@ public class NodeInstructionController {
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionsState(instructionIds, state);
 		return response(null);
+	}
+
+	/**
+	 * Query for a listing of datum.
+	 * 
+	 * @param cmd
+	 *        the query criteria
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
+	 * @since 2.1
+	 */
+	@ResponseBody
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	public void listInstructions(final SimpleInstructionFilter cmd,
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
+			throws IOException {
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
+				.filteredResultsProcessorForType(acceptTypes, response,
+						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
+								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
+			instructorBiz.findFilteredNodeInstructions(cmd, processor);
+		}
 	}
 
 }

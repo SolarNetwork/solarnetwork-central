@@ -48,6 +48,8 @@
 	<thead>
 		<tr>
 			<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			<th data-th-text="#{auth-tokens.label.name}">Name</th>
+			<th data-th-text="#{auth-tokens.label.description}">Description</th>
 			<th data-th-text="#{auth-tokens.label.policy}">Policy</th>
 			<th data-th-text="#{auth-tokens.label.created}">Created</th>
 			<th data-th-text="#{auth-tokens.label.status}">Status</th>
@@ -57,6 +59,8 @@
 	<tbody>
 		<tr data-th-each="token : ${userAuthTokens}">
 			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
+			<td data-th-text="${token.name}">Personal Token</td>
+			<td data-th-text="${token.description}">For personal use.</td>
 			<td>
 				<dl data-th-replace="sec/authtokens/token-policy :: content">
 					<dt>Not After</dt>
@@ -111,6 +115,8 @@
 	<thead>
 		<tr>
 			<th data-th-text="#{auth-tokens.label.token}">Token</th>
+			<th data-th-text="#{auth-tokens.label.name}">Name</th>
+			<th data-th-text="#{auth-tokens.label.description}">Description</th>
 			<th data-th-text="#{auth-tokens.label.policy}">Policy</th>
 			<th data-th-text="#{auth-tokens.label.created}">Created</th>
 			<th data-th-text="#{auth-tokens.label.status}">Status</th>
@@ -120,6 +126,8 @@
 	<tbody>
 		<tr data-th-each="token : ${dataAuthTokens}">
 			<td class="monospace" data-th-text="${token.authToken}">ABC123</td>
+			<td data-th-text="${token.name}">Personal Token</td>
+			<td data-th-text="${token.description}">For personal use.</td>
 			<td>
 				<dl data-th-replace="sec/authtokens/token-policy :: content">
 					<dt>Not After</dt>
@@ -168,14 +176,41 @@
 		 	</div>
 		 	<div class="modal-body">
 		 		<p class="before" data-th-utext="#{auth-tokens.user.create.intro}">Create user token here.</p>
-		 		<div class="before">
-		 			<label for="create-user-auth-token-policy-apipaths" data-th-text="#{auth-tokens.policy.apiPaths.label}">API Paths</label>
-		 			<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
-		 				data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"
-		 				placeholder="Comma delimited list of API paths"></textarea>
-		 			<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
-		 				API paths restrict the API methods this token is allowed to call.
-		 			</div>
+				<div class="before form-horizontal">
+					<div class="form-group">
+						<label for="create-user-auth-token-name" class="col-sm-3 control-label"
+							data-th-text="#{auth-tokens.label.name}">
+							Name
+						</label>
+						<div class="col-sm-9">
+							<input type="text" id="create-user-auth-token-name" class="form-control"
+								name="name" maxlength="128">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="create-user-auth-token-description" class="col-sm-3 control-label"
+							data-th-text="#{auth-tokens.label.description}">
+							Description
+						</label>
+						<div class="col-sm-9">
+							<textarea id="create-user-auth-token-description" class="form-control"
+								name="description" maxlength="512"></textarea>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="create-user-auth-token-policy-apipaths" class="col-sm-3 control-label"
+							data-th-text="#{auth-tokens.policy.apiPaths.label}">
+							API Paths
+						</label>
+						<div class="col-sm-9">
+							<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
+								data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"
+								placeholder="Comma delimited list of API paths"></textarea>
+							<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
+								API paths restrict the API methods this token is allowed to call.
+							</div>
+						</div>
+					</div>
 				</div>
 		 		<div class="after">
 		 			<p data-th-utext="#{auth-tokens.created.intro}">Token created.</p>
@@ -252,7 +287,8 @@
 					Fill in this form to create a new data security token.
 				</p>
 				<ul class="nav nav-pills form-group before">
-					<li class="active"><a data-toggle="pill" href="#create-data-auth-token-tab-ids" data-th-text="#{auth-tokens.data.create.group.ids}">Node/Source IDs</a></li>
+					<li class="active"><a data-toggle="pill" href="#create-data-auth-token-tab-info" data-th-text="#{auth-tokens.data.create.group.info}">Info</a></li>
+					<li><a data-toggle="pill" href="#create-data-auth-token-tab-ids" data-th-text="#{auth-tokens.data.create.group.ids}">Node/Source IDs</a></li>
 					<li><a data-toggle="pill" href="#create-data-auth-token-tab-expiry" data-th-text="#{auth-tokens.data.create.group.expiry}">Expiry</a></li>
 					<li><a data-toggle="pill" href="#create-data-auth-token-tab-agg" data-th-text="#{auth-tokens.data.create.group.agg}">Aggregation</a></li>
 					<li><a data-toggle="pill" href="#create-data-auth-token-tab-node-meta" data-th-text="#{auth-tokens.data.create.group.node-meta}">Node Metadata</a></li>
@@ -260,7 +296,29 @@
 					<li><a data-toggle="pill" href="#create-data-auth-token-tab-apipaths" data-th-text="#{auth-tokens.data.create.group.apipaths}">API Paths</a></li>
 				</ul>
 				<div class="tab-content before">
-					<div id="create-data-auth-token-tab-ids" class="tab-pane fade in active">
+					<div id="create-data-auth-token-tab-info" class="tab-pane fade form-horizontal in active">
+						<div class="form-group">
+							<label for="create-data-auth-token-name" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.label.name}">
+								Name
+							</label>
+							<div class="col-sm-9">
+								<input type="text" id="create-data-auth-token-name" class="form-control"
+									name="name" maxlength="128">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="create-data-auth-token-description" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.label.description}">
+								Description
+							</label>
+							<div class="col-sm-9">
+								<textarea id="create-data-auth-token-description" class="form-control"
+									name="description" maxlength="512"></textarea>
+							</div>
+						</div>
+					</div>
+					<div id="create-data-auth-token-tab-ids" class="tab-pane fade">
 						<div id="create-data-auth-token-policy-nodeids" class="toggle-buttons">
 							<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
 							<button type="button" class="toggle btn btn-sm btn-default"

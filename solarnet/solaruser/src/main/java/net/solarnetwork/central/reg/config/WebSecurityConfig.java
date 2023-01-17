@@ -47,6 +47,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.header.HeaderWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
@@ -67,7 +68,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @EnableWebSecurity
@@ -155,34 +156,43 @@ public class WebSecurityConfig {
 					new AntPathRequestMatcher("/login"),
 					new StaticHeadersWriter(LOGIN_PAGE_HEADER, "true"));
 
+			// opt-in to Spring Security 6 behavior
+			// https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_defer_loading_csrftoken
+			XorCsrfTokenRequestAttributeHandler requestHandler = new XorCsrfTokenRequestAttributeHandler();
+
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
-		      .requestMatchers()
-		        .antMatchers("/login")
-		        .antMatchers("/logout")
-		        .antMatchers("/*.do")
-		        .antMatchers("/register/**")
-		        .antMatchers("/u/**")
+		      .securityMatchers()
+		        .requestMatchers("/login")
+		        .requestMatchers("/logout")
+		        .requestMatchers("/*.do")
+		        .requestMatchers("/register/**")
+		        .requestMatchers("/u/**")
 		        .and()
 		      
 		      .headers()
 		        .addHeaderWriter(loginHeaderWriter)
 		        .and()
 		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED).and()
+		      // opt-in to v6 https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_defer_loading_csrftoken
+		      .csrf((csrf) -> csrf
+		  	    .csrfTokenRequestHandler(requestHandler))
 		      
-		      .authorizeRequests()
-		        .antMatchers("/*.do").permitAll()
-		        .antMatchers("/register/**").permitAll()
-		      	.antMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-		      	.antMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-		      	.antMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-		      	.antMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-		      	.antMatchers("/u/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
-		        .antMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .antMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
+		      .sessionManagement((sessions) -> sessions
+		        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+		    	.requireExplicitAuthenticationStrategy(true))
+		      
+		      .authorizeHttpRequests()
+		        .requestMatchers("/*.do").permitAll()
+		        .requestMatchers("/register/**").permitAll()
+		      	.requestMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+		        .requestMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
+		        .requestMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		        .anyRequest().denyAll()
 		        .and()
 			      
@@ -273,8 +283,8 @@ public class WebSecurityConfig {
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
-		      .requestMatchers()
-		        .antMatchers("/api/**")
+		      .securityMatchers()
+		        .requestMatchers("/api/**")
 		        .and()
 
 		      // CSRF not needed for stateless calls
@@ -296,15 +306,15 @@ public class WebSecurityConfig {
 		      .addFilterBefore(tokenAuthenticationFilter(),
 						UsernamePasswordAuthenticationFilter.class)
 		      
-		      .authorizeRequests()
-		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		      	.antMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-		      	.antMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-		      	.antMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-		      	.antMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-		      	.antMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
-		        .antMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .antMatchers("/api/v1/pub/**").permitAll()
+		      .authorizeHttpRequests()
+		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		      	.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+		        .requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
+		        .requestMatchers("/api/v1/pub/**").permitAll()
 		        .anyRequest().denyAll()
 		    ;   
 		    // @formatter:on
@@ -333,9 +343,9 @@ public class WebSecurityConfig {
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		      
-		      .authorizeRequests()
-		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .antMatchers(HttpMethod.GET, 
+		      .authorizeHttpRequests()
+		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .requestMatchers(HttpMethod.GET, 
 		        		"/", 
 		        		"/error",
 		        		"/session-expired",
@@ -348,7 +358,7 @@ public class WebSecurityConfig {
 		        		"/js-lib/**",
 		        		"/ping", 
 		        		"/api/v1/pub/**").permitAll()
-		        .antMatchers(HttpMethod.POST,
+		        .requestMatchers(HttpMethod.POST,
 		        		"/associate.*").permitAll()
 		        .anyRequest().denyAll();
 		    // @formatter:on

@@ -50,7 +50,7 @@ import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTo
  * Security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -141,18 +141,18 @@ public class WebSecurityConfig {
 	      .addFilterBefore(tokenAuthenticationFilter(),
 					UsernamePasswordAuthenticationFilter.class)
 	      
-	      .authorizeRequests()
-		    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-	        .antMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
+	      .authorizeHttpRequests()
+		    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+	        .requestMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
 	            "/api/v1/pub/**").permitAll()
 	        
-	        .antMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
-	        .antMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
+	        .requestMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
+	        .requestMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
 	        
-	        .antMatchers(HttpMethod.DELETE, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .antMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .antMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .antMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+	        .requestMatchers(HttpMethod.DELETE, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+	        .requestMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+	        .requestMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+	        .requestMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
 	        .anyRequest().authenticated()
 	    ;
 	    // @formatter:on

@@ -48,7 +48,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -91,8 +91,8 @@ public class WebSecurityConfig {
 		// @formatter:off
 	    http
 	      // limit this configuration to specific paths
-	      .requestMatchers()
-	        .antMatchers("/solarin/**")
+	      .securityMatchers()
+	        .requestMatchers("/solarin/**")
 	        .and()
 
 	        // CSRF not needed for stateless calls
@@ -120,9 +120,9 @@ public class WebSecurityConfig {
 	        .subjectPrincipalRegex("UID=(.*?),")
 	        .and()
 	        
-	      .authorizeRequests()
-	      	.antMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
-	        .antMatchers(HttpMethod.GET, 
+	      .authorizeHttpRequests()
+	      	.requestMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
+	        .requestMatchers(HttpMethod.GET, 
 	        		"/solarin/",
 	        		"/solarin/error",
 	        		"/solarin/*.html",
@@ -132,8 +132,10 @@ public class WebSecurityConfig {
 	        		"/solarin/api/v1/pub/**",
 	        		"/solarin/identity.do").permitAll()
 	        
-	        .antMatchers(HttpMethod.GET, "/solarin/**/*Collector.do").hasAnyAuthority(NODE_AUTHORITIES)
-	        .antMatchers(HttpMethod.GET, "/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITIES)
+	        .requestMatchers( 
+	        		"/solarin/bulkCollector.do",
+	        		"/solarin/u/bulkCollector.do").hasAnyAuthority(NODE_AUTHORITIES)
+	        .requestMatchers("/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITIES)
 	        
 	        .anyRequest().authenticated()
 	    ;

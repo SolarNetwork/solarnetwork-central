@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.mock;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +32,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * Mock implementation of {@link InstructorBiz}.
@@ -123,6 +126,12 @@ public class MockInstructorBiz implements InstructorBiz {
 	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
 			Map<Long, Map<String, ?>> resultParameters) {
 		// nothing to do here
+	}
+
+	@Override
+	public void findFilteredNodeInstructions(InstructionFilter filter,
+			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
+		// nothing to do here		
 	}
 
 }

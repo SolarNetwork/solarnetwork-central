@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.support;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -37,13 +38,15 @@ import net.solarnetwork.domain.SerializeIgnore;
  * Simple implementation of {@link InstructionFilter}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SimpleInstructionFilter implements InstructionFilter {
 
 	private Long[] nodeIds;
 	private Long[] instructionIds;
 	private List<InstructionState> states;
+	private Instant startDate;
+	private Instant endDate;
 
 	@Override
 	@SerializeIgnore
@@ -61,6 +64,12 @@ public class SimpleInstructionFilter implements InstructionFilter {
 			if ( states.size() > 1 ) {
 				f.put("states", states.toArray(new InstructionState[states.size()]));
 			}
+		}
+		if ( startDate != null ) {
+			f.put("startDate", startDate);
+		}
+		if ( endDate != null ) {
+			f.put("endDate", endDate);
 		}
 		return f;
 	}
@@ -170,6 +179,38 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 */
 	public void setInstructionIds(Long[] instructionIds) {
 		this.instructionIds = instructionIds;
+	}
+
+	@Override
+	public Instant getStartDate() {
+		return startDate;
+	}
+
+	/**
+	 * Set the start date (inclusive).
+	 * 
+	 * @param startDate
+	 *        the start date
+	 * @since 2.1
+	 */
+	public void setStartDate(Instant startDate) {
+		this.startDate = startDate;
+	}
+
+	@Override
+	public Instant getEndDate() {
+		return endDate;
+	}
+
+	/**
+	 * Set the end date (exclusive).
+	 * 
+	 * @param endDate
+	 *        the end date
+	 * @since 2.1
+	 */
+	public void setEndDate(Instant endDate) {
+		this.endDate = endDate;
 	}
 
 }

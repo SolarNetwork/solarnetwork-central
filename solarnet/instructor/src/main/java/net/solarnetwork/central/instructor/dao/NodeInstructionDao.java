@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.instructor.dao;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
@@ -30,12 +31,13 @@ import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 
 /**
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface NodeInstructionDao
 		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {
@@ -119,5 +121,20 @@ public interface NodeInstructionDao
 	 */
 	long updateStaleInstructionsState(InstructionState currentState, Instant olderThanDate,
 			InstructionState desiredState);
+
+	/**
+	 * API for querying for a filtered stream of {@link NodeInstruction}
+	 * entities.
+	 * 
+	 * @param filter
+	 *        the filter
+	 * @param processor
+	 *        the stream processor
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @since 2.2
+	 */
+	void findFilteredStream(InstructionFilter filter,
+			FilteredResultsProcessor<NodeInstruction> processor) throws IOException;
 
 }

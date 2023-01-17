@@ -25,7 +25,8 @@ package net.solarnetwork.central.common.config;
 import static java.lang.String.format;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -51,7 +52,7 @@ import net.solarnetwork.util.ByteUtils;
  * Load up application metadata into the environment.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -172,7 +173,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 
 	public ContainerMetadata ecsContainerMetadataV4(String uri) {
 		ObjectMapper mapper = JsonUtils.newObjectMapper();
-		try (JsonParser p = mapper.createParser(new URL(uri))) {
+		try (JsonParser p = mapper.createParser(new URI(uri).toURL())) {
 			ObjectNode root = p.readValueAsTree();
 			JsonNode taskArn = root.get("TaskARN");
 			if ( taskArn == null ) {
@@ -193,6 +194,9 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			ContainerMetadata meta = new ContainerMetadata(taskId);
 			logger.info(format("Discovered ECS metadata from [%s]: %s", uri, root));
 			return meta;
+		} catch ( URISyntaxException e ) {
+			logger.error(format("URL syntax error for ECS container metadata from [%s]: %s", uri,
+					e.toString()));
 		} catch ( IOException e ) {
 			logger.error(
 					format("IO error reading ECS container metadata from [%s]: %s", uri, e.toString()));

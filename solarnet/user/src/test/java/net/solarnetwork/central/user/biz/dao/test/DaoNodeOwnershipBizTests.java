@@ -1,5 +1,5 @@
 /* ==================================================================
- * DaoNodeOwnershipBizTest.java - Apr 20, 2015 8:33:06 PM
+ * DaoNodeOwnershipBizTests.java - Apr 20, 2015 8:33:06 PM
  * 
  * Copyright 2007-2015 SolarNetwork.net Dev Team
  * 
@@ -55,7 +55,7 @@ import org.junit.Test;
  * @author matt
  * @version 1.0
  */
-public class DaoNodeOwnershipBizTest {
+public class DaoNodeOwnershipBizTests {
 
 	private static final Long TEST_USER_ID = -1L;
 	private static final String TEST_EMAIL = "test@localhost";

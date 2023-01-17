@@ -142,6 +142,8 @@ CREATE TABLE solaruser.user_auth_token (
 	auth_token		CHARACTER(20) NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	user_id			BIGINT NOT NULL,
+	disp_name		CHARACTER VARYING(128),
+	description		CHARACTER VARYING(512),
 	auth_secret		CHARACTER VARYING(32) NOT NULL,
 	status			solaruser.user_auth_token_status NOT NULL,
 	token_type		solaruser.user_auth_token_type NOT NULL,

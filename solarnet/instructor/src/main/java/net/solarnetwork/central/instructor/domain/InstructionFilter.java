@@ -24,14 +24,15 @@ package net.solarnetwork.central.instructor.domain;
 
 import java.util.List;
 import net.solarnetwork.central.domain.Filter;
+import net.solarnetwork.dao.DateRangeCriteria;
 
 /**
  * Filter for Instruction entities.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public interface InstructionFilter extends Filter {
+public interface InstructionFilter extends Filter, DateRangeCriteria {
 
 	/**
 	 * Filter based on a node ID.
