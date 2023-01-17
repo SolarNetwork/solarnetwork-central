@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, ${status})">
+<head>
+    <title data-th-text="#{error.page.unknown.title}">Error</title>
+	<style type="text/css">
+		body {
+			font-family: helvetica,sans-serif;
+			font-size: 14pt;
+			color: #eeeeee;
+			background-color: #333333;
+		}
+	</style>
+</head>
+<body>
+<main>
+	<h1 data-th-text="#{error.page.unknown.header}">Error</h1>
+	<p data-th-text="#{error.page.unknown.message}">That was unexpected.</p>
+</main>
+</body>
+</html>
