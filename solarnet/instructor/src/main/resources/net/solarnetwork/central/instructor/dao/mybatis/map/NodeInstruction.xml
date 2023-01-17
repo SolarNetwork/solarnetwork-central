@@ -110,7 +110,7 @@
 	
 	<!--  Filter search -->
 	
-	<select id="findall-NodeInstruction-EntityMatch" parameterType="map" resultMap="NodeInstructionFullResult">
+	<select id="findall-NodeInstruction-EntityMatch" parameterType="map" resultMap="NodeInstructionFullResult"  resultOrdered="true" fetchSize="250" resultSetType="FORWARD_ONLY">
 		SELECT 
 			<include refid="fragment-NodeInstruction-full-result"/>,
 			<include refid="fragment-InstructionParameter-full-result"/>
@@ -138,9 +138,15 @@
 					       CAST(#{item} AS solarnet.instruction_delivery_state)
 					</foreach>
   				</if>
+  				<if test="filter.startDate != null">
+  					AND ni.instr_date &gt;= #{filter.startDate,jdbcType=TIMESTAMP}
+  				</if>
+  				<if test="filter.endDate != null">
+  					AND ni.instr_date &lt; #{filter.endDate,jdbcType=TIMESTAMP}
+  				</if>
 			</if>
 		</where>
-		ORDER BY ni.id
+		ORDER BY ni.id, nip.idx
 	</select>
 	
 	<update id="delete-NodeInstruction-completed" statementType="CALLABLE" parameterType="map">

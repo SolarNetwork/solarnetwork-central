@@ -22,9 +22,15 @@
 
 package net.solarnetwork.central.instructor.dao.mybatis;
 
+import static java.util.Collections.singletonMap;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.ibatis.session.ResultContext;
+import org.apache.ibatis.session.ResultHandler;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.EntityMatch;
@@ -34,13 +40,14 @@ import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -152,6 +159,36 @@ public class MyBatisNodeInstructionDao
 		params.put("expectedState", currentState);
 		params.put("state", desiredState);
 		return getSqlSession().update(UPDATE_STALE_STATE, params);
+	}
+
+	@Override
+	public void findFilteredStream(InstructionFilter filter,
+			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
+		requireNonNullArgument(filter, "filter");
+		requireNonNullArgument(processor, "processor");
+		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		try {
+			getSqlSession().select("findall-NodeInstruction-EntityMatch",
+					singletonMap(FILTER_PROPERTY, filter), new ResultHandler<NodeInstruction>() {
+
+						@Override
+						public void handleResult(
+								ResultContext<? extends NodeInstruction> resultContext) {
+							NodeInstruction instr = resultContext.getResultObject();
+							try {
+								processor.handleResultItem(instr);
+							} catch ( IOException e ) {
+								resultContext.stop();
+								throw new RuntimeException(e);
+							}
+						}
+					});
+		} catch ( RuntimeException e ) {
+			if ( e.getCause() instanceof IOException ) {
+				throw (IOException) e.getCause();
+			}
+			throw e;
+		}
 	}
 
 }
