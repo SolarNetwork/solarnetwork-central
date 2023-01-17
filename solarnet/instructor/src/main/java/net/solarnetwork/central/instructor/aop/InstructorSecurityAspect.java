@@ -32,14 +32,16 @@ import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 
 /**
  * Security aspect for {@link InstructorBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -91,6 +93,10 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	public void updateInstructionsState(Set<Long> instructionIds) {
 	}
 
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.findFilteredNodeInstructions(..)) && args(filter,..)")
+	public void findFilteredInstructions(InstructionFilter filter) {
+	}
+
 	/**
 	 * Allow the current user (or current node) access to node instructions.
 	 * 
@@ -118,6 +124,28 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 		}
 		for ( Long nodeId : nodeIds ) {
 			instructionsForNodeCheck(nodeId);
+		}
+	}
+
+	/**
+	 * Allow the current user to filter instructions.
+	 * 
+	 * @param filter
+	 *        the filter
+	 */
+	@Before("findFilteredInstructions(filter)")
+	public void findFilteredInstructionsCheck(InstructionFilter filter) {
+		if ( filter == null || filter.getNodeId() == null ) {
+			log.warn("Access DENIED; no node ID provided");
+			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
+		}
+		for ( Long nodeId : filter.getNodeIds() ) {
+			requireNodeWriteAccess(nodeId);
+		}
+		if ( filter.getInstructionIds() != null ) {
+			for ( Long instrId : filter.getInstructionIds() ) {
+				updateInstructionAccessCheck(instrId);
+			}
 		}
 	}
 
