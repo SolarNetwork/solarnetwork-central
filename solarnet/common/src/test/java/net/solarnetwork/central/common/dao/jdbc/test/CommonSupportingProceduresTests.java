@@ -103,8 +103,26 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 				Timestamp.class, uuid);
 
 		// THEN
-		assertThat("Timestamp extracted with millisecond precision", ts,
-				is(equalTo(Timestamp.from(t.truncatedTo(ChronoUnit.MILLIS)))));
+		assertThat("Timestamp extracted with microsecond precision", ts,
+				is(equalTo(Timestamp.from(t.truncatedTo(ChronoUnit.MICROS)))));
+	}
+
+	@Test
+	public void uuidV7_toTimestamp_zeroMicros() {
+		// GIVEN
+		Instant t = LocalDateTime.of(2022, 8, 3, 17, 25, 0, 123).toInstant(ZoneOffset.UTC);
+		Clock fixed = Clock.fixed(t, ZoneOffset.UTC);
+		TimeBasedV7UuidGenerator generator = new TimeBasedV7UuidGenerator(new SecureRandom(), fixed,
+				true);
+		UUID uuid = generator.generate();
+
+		// WHEN
+		Timestamp ts = jdbcTemplate.queryForObject("SELECT solarcommon.uuid_to_timestamp_v7(?)",
+				Timestamp.class, uuid);
+
+		// THEN
+		assertThat("Timestamp extracted with microsecond precision", ts,
+				is(equalTo(Timestamp.from(t.truncatedTo(ChronoUnit.MICROS)))));
 	}
 
 	@Test
@@ -118,7 +136,7 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 
 		// THEN
 		assertThat("UUID returned as boundary", result,
-				is(equalTo(UuidUtils.createUuidV7Boundary(t.truncatedTo(ChronoUnit.MILLIS)))));
+				is(equalTo(UuidUtils.createUuidV7Boundary(t.truncatedTo(ChronoUnit.MICROS)))));
 	}
 
 }

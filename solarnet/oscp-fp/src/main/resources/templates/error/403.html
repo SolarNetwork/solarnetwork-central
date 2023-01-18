@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, '403')">
+<head>
+    <title data-th-text="#{error.page.403.title}">Not allowed</title>
+	<style type="text/css">
+		body {
+			font-family: helvetica,sans-serif;
+			font-size: 14pt;
+			color: #eeeeee;
+			background-color: #333333;
+		}
+	</style>
+</head>
+<body>
+<main>
+	<h1 data-th-text="#{error.page.403.header}">Hold your horses!</h1>
+	<p data-th-text="#{error.page.403.message}">You are not supposed to be here.</p>
+</main>
+</body>
+</html>

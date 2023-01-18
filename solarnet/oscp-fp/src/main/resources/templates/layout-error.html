@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html data-th-fragment="layout (title, body, code)">
+<head>
+    <title data-th-replace="${title}">Oops!</title>
+	<style type="text/css">
+		body {
+			font-family: helvetica,sans-serif;
+			font-size: 14pt;
+			color: #eeeeee;
+			background-color: #333333;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<main data-th-replace="${body}">
+			<h1>Oops!</h1>
+			<p>Egads! That wasn't supposed to happen.</p>
+		</main>
+		<footer data-th-if="${code}">
+			<p class="text-muted"><small data-th-text="${code}">500</small>
+		</footer>
+	</div>
+</body>
+</html>
