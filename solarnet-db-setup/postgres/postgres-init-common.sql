@@ -272,12 +272,26 @@ $$
 $$;
 
 /**
- * Extract the timestamp from a v7 UUID.
+ * Extract the timestamp from a v7 UUID with microsecond support.
  *
  * See https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#section-5.2
  * No validation is performed to check that the provided UUID is type 7.
+ * 
  * Any UUID that encodes a 48-bit millisecond Unix epoch in the highest
- * 6 bytes of the UUID can be decoded by this function.
+ * 6 bytes, and bits 12-2 of bytes 6 & 7 as the microseconds of the UUID
+ * can be decoded by this function:
+ * 
+ *  0                   1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                           unix_ts_ms                          |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |          unix_ts_ms           |  ver  |       micros      |rnd|
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |var|                        rand_b                             |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                            rand_b                             |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * @param u the v7 UUID to extract the timestamp from
  * @returns the extracted timestamp
@@ -288,14 +302,24 @@ $$
 	WITH b AS (
 		SELECT uuid_send(u) bu
 	)
-	SELECT to_timestamp((
+	SELECT to_timestamp(((
+		-- convert first 48 bits (millis) to micros
 	      (get_byte(bu, 0)::BIGINT << 40)
 		+ (get_byte(bu, 1)::BIGINT << 32)
 		+ (get_byte(bu, 2)::BIGINT << 24)
 		+ (get_byte(bu, 3)::BIGINT << 16)
 		+ (get_byte(bu, 4)::BIGINT << 8)
 		+  get_byte(bu, 5)::BIGINT
-		) / 1000.0)
+		) * 1000::BIGINT
+		-- add bits 52-61 (micros)
+		+ ((
+		    (
+		      (get_byte(bu, 6)::BIGINT << 8)
+		    +  get_byte(bu, 7)::BIGINT
+		    ) & 4095::BIGINT
+		  ) >> 2)
+		) / 1000000.0::DECIMAL
+	)
 	FROM b
 $$;
 
