@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Controller for user authorization ticket management.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/auth-tokens")
@@ -232,6 +232,31 @@ public class UserAuthTokenController extends ControllerSupport {
 						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
 		return success(token);
+	}
+
+	/**
+	 * Update token info.
+	 * 
+	 * @param tokenId
+	 *        the ID of the token to update
+	 * @param name
+	 *        the name to set
+	 * @param description
+	 *        the description to set
+	 * @return the result
+	 * @since 2.3
+	 */
+	@RequestMapping(value = "/info", method = RequestMethod.POST)
+	@ResponseBody
+	public Result<Object> update(@RequestParam("id") String tokenId,
+			@RequestParam(value = "name", required = false) String name,
+			@RequestParam(value = "description", required = false) String description) {
+		final SecurityUser user = SecurityUtils.getCurrentUser();
+		UserAuthToken info = new UserAuthToken();
+		info.setName(name != null && !name.isBlank() ? name : null);
+		info.setDescription(description != null && !description.isBlank() ? description : null);
+		userBiz.updateUserAuthTokenInfo(user.getUserId(), tokenId, info);
+		return success();
 	}
 
 }

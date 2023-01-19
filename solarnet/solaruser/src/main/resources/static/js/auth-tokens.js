@@ -56,38 +56,6 @@ $(document).ready(function() {
 		});
 	});
 	
-	$('.action-user-token').find('button').on('click', function(event) {
-		//.user-token-change-status or .user-token-delete
-		event.preventDefault();
-		var button = $(this);
-		var tokenId = button[0].form.elements['id'].value;
-		var csrf = button[0].form.elements['_csrf'].value;
-		if ( button.hasClass('user-token-delete') ) {
-			var form = $('#delete-user-auth-token');
-			form[0].elements['id'].value = tokenId;
-			form.find('.container-token').text(tokenId);
-			form.modal('show');
-		} else if ( button.hasClass('user-token-change-status') ) {
-			var newStatus = (button.data('status') === 'Active' ? 'Disabled' : 'Active');
-			$.post(button.data('action'), {id:tokenId, status:newStatus, '_csrf':csrf}, function(data) {
-				document.location.reload(true);
-			}, 'json');
-		}
-	});
-	
-	$('#delete-user-auth-token').each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(json, status, xhr, form) {
-				form.modal('hide');
-				document.location.reload(true);
-			},
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#delete-user-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-			}
-		});
-	});
-
 	function resetToggleButtons(root) {
 		root.find('.toggle.btn')
 			.removeClass('btn-primary btn-success btn-info btn-warning btn-danger')
@@ -308,6 +276,66 @@ $(document).ready(function() {
 		}
 	});
 	
+	$('.edit-token-info').on('click', function(event) {
+		var target = $(event.target),
+			tokenId = target.data('token-id'),
+			name = target.data('token-name') || '',
+			desc = target.data('token-description') || '',
+			form = $('#edit-auth-token-info');
+		event.preventDefault();
+		form[0].elements['id'].value = tokenId;
+		form[0].elements['name'].value = name;
+		form[0].elements['description'].value = desc;
+		form.modal('show');
+	});
+	
+	$('#edit-auth-token-info').each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				form.modal('hide');
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#edit-auth-token-info .modal-body > *:first-child', 'alert-error', statusText);
+			}
+		});
+	});
+	
+	$('.token-delete').on('click', function(event) {
+		var target = $(event.target),
+			tokenId = target.data('token-id'),
+			form = $('#delete-auth-token');
+		event.preventDefault();
+		form[0].elements['id'].value = tokenId;
+		form.modal('show');
+	});
+	
+	$('#delete-auth-token').each(function() {
+		$(this).ajaxForm({
+			dataType: 'json',
+			success: function(json, status, xhr, form) {
+				form.modal('hide');
+				document.location.reload(true);
+			},
+			error: function(xhr, status, statusText) {
+				SolarReg.showAlertBefore('#delete-auth-token .modal-body > *:first-child', 'alert-error', statusText);
+			}
+		});
+	});
+	
+	$('.token-change-status').on('click', function(event) {
+		var target = $(event.target),
+			tokenId = target.data('token-id'),
+			newStatus = (target.data('status') === 'Active' ? 'Disabled' : 'Active'),
+			data = {id:tokenId, status:newStatus, '_csrf':SolarReg.csrfData.token};
+		event.preventDefault();
+		$.post(target.data('action'), data, function() {
+				document.location.reload(true);
+			}, 'json');
+	});
+	
+	/*
 	$('.action-data-token').find('button').on('click', function(event) {
 		//.user-token-change-status or .user-token-delete
 		event.preventDefault();
@@ -326,17 +354,5 @@ $(document).ready(function() {
 			}, 'json');
 		}
 	});
-	
-	$('#delete-data-auth-token').each(function() {
-		$(this).ajaxForm({
-			dataType: 'json',
-			success: function(json, status, xhr, form) {
-				form.modal('hide');
-				document.location.reload(true);
-			},
-			error: function(xhr, status, statusText) {
-				SolarReg.showAlertBefore('#delete-data-auth-token .modal-body > *:first-child', 'alert-error', statusText);
-			}
-		});
-	});
+	*/
 });
