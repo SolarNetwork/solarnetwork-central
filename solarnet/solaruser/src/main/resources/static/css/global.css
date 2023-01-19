@@ -218,3 +218,8 @@ table.table-body-borderless tbody tr.rule + tr th {
 	padding: 4px;
 	border: 1px solid #ccc;
 }
+
+td.edit-dropdown,
+th.edit-dropdown {
+	min-width: 100px;
+}
