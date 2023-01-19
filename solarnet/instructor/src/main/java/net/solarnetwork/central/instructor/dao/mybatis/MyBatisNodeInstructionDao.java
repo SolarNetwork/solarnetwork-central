@@ -47,7 +47,7 @@ import net.solarnetwork.codec.JsonUtils;
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -159,6 +159,13 @@ public class MyBatisNodeInstructionDao
 		params.put("expectedState", currentState);
 		params.put("state", desiredState);
 		return getSqlSession().update(UPDATE_STALE_STATE, params);
+	}
+
+	@Override
+	protected Long executeFilterCountQuery(final String countQueryName, InstructionFilter filter,
+			final Map<String, ?> sqlProps) {
+		// count not supported, so don't bother trying
+		return null;
 	}
 
 	@Override
