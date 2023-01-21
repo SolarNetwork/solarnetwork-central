@@ -70,12 +70,23 @@ CREATE OR REPLACE FUNCTION solardatm.audit_increment_node_count(
 	srvc			CHARACTER(4),
 	ts_recv 		TIMESTAMP WITH TIME ZONE,
 	icount			INTEGER
-	) RETURNS VOID LANGUAGE SQL VOLATILE AS
+	) RETURNS VOID LANGUAGE PLPGSQL VOLATILE AS
 $$
+DECLARE
+	tz						TEXT;
+BEGIN
+	-- get node time zone
+	SELECT COALESCE(solarnet.get_node_timezone(stale.node_id), 'UTC') INTO tz;
+
 	INSERT INTO solardatm.aud_node_io (node_id, service, ts_start, cnt)
 	VALUES (node, srvc, date_trunc('hour', ts_recv), icount)
 	ON CONFLICT (node_id, service, ts_start) DO UPDATE
-	SET cnt = aud_node_io.cnt + EXCLUDED.cnt
+	SET cnt = aud_node_io.cnt + EXCLUDED.cnt;
+
+	INSERT INTO solardatm.aud_stale_node (node_id, service, ts_start, aud_kind)
+	VALUES (node, srvc, date_trunc('day', ts_recv AT TIME ZONE tz) AT TIME ZONE tz, 'd')
+	ON CONFLICT DO NOTHING;
+END
 $$;
 
 /**
