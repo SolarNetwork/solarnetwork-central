@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.biz.NodeServiceAuditor;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -52,7 +53,7 @@ import net.solarnetwork.central.support.FilteredResultsProcessor;
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoInstructorBiz implements InstructorBiz {
 
@@ -72,6 +73,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	private final NodeInstructionDao nodeInstructionDao;
 	private final List<NodeInstructionQueueHook> queueHooks;
+	private final NodeServiceAuditor nodeServiceAuditor;
 	private int maxParamValueLength = DEFAULT_MAX_PARAM_VALUE_LENGTH;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -96,10 +98,27 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
 			List<NodeInstructionQueueHook> queueHooks) {
+		this(nodeInstructionDao, queueHooks, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeInstructionDao
+	 *        the DAO to use
+	 * @param queueHooks
+	 *        the queue hooks to use (may be {@literal null}
+	 * @param nodeServiceAuditor
+	 *        the node service auditor to use (may be {@literal null})
+	 * @since 2.2
+	 */
+	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
+			List<NodeInstructionQueueHook> queueHooks, NodeServiceAuditor nodeServiceAuditor) {
 		super();
 		this.nodeInstructionDao = nodeInstructionDao;
 		this.queueHooks = (queueHooks != null ? queueHooks
 				: Collections.<NodeInstructionQueueHook> emptyList());
+		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 
 	private List<Instruction> asResultList(FilterResults<EntityMatch> matches) {
@@ -225,6 +244,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 		}
 		if ( log.isTraceEnabled() ) {
 			log.trace("Processing instruction {} with {} hooks", instr.getId(), queueHooks.size());
+		}
+		if ( nodeServiceAuditor != null ) {
+			nodeServiceAuditor.auditNodeService(nodeId, INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
 		}
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
 			instr = hook.willQueueNodeInstruction(instr);
