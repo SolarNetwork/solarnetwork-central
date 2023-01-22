@@ -29,11 +29,13 @@ import static net.solarnetwork.domain.datum.Aggregation.RunningTotal;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.domain.AuditNodeServiceValue;
 import net.solarnetwork.dao.BasicIdentity;
+import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumId;
 
@@ -45,8 +47,8 @@ import net.solarnetwork.domain.datum.DatumId;
  */
 @JsonPropertyOrder({ "ts", "nodeId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
-public class AuditNodeServiceEntity extends BasicIdentity<DatumId>
-		implements AuditNodeServiceValue, Cloneable, Serializable {
+public class AuditNodeServiceEntity extends BasicIdentity<DatumId> implements AuditNodeServiceValue,
+		Cloneable, Serializable, Differentiable<AuditNodeServiceValue> {
 
 	private static final long serialVersionUID = 8906783581107973754L;
 
@@ -139,6 +141,31 @@ public class AuditNodeServiceEntity extends BasicIdentity<DatumId>
 		super(id);
 		this.aggregation = (aggregation == null ? Aggregation.None : aggregation);
 		this.count = count;
+	}
+
+	/**
+	 * Test if the properties of another object are the same as in this
+	 * instance.
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(AuditNodeServiceValue other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(getId(), other.getId())
+				&& Objects.equals(aggregation, other.getAggregation())
+				&& Objects.equals(count, other.getCount());
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(AuditNodeServiceValue other) {
+		return !isSameAs(other);
 	}
 
 	@JsonProperty("ts")

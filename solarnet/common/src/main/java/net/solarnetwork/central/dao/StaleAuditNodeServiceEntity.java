@@ -24,9 +24,11 @@ package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Objects;
 import net.solarnetwork.central.domain.AggregateDatumId;
 import net.solarnetwork.central.domain.StaleAuditNodeServiceValue;
 import net.solarnetwork.dao.BasicEntity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * Stale audit node service entity.
@@ -34,8 +36,8 @@ import net.solarnetwork.dao.BasicEntity;
  * @author matt
  * @version 1.0
  */
-public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId>
-		implements StaleAuditNodeServiceValue, Cloneable, Serializable {
+public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId> implements
+		StaleAuditNodeServiceValue, Cloneable, Serializable, Differentiable<StaleAuditNodeServiceValue> {
 
 	private static final long serialVersionUID = -3150400939940353987L;
 
@@ -54,6 +56,29 @@ public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId>
 	@Override
 	public StaleAuditNodeServiceEntity clone() {
 		return (StaleAuditNodeServiceEntity) super.clone();
+	}
+
+	/**
+	 * Test if the properties of another object are the same as in this
+	 * instance.
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(StaleAuditNodeServiceValue other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(getId(), other.getId());
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(StaleAuditNodeServiceValue other) {
+		return !isSameAs(other);
 	}
 
 }
