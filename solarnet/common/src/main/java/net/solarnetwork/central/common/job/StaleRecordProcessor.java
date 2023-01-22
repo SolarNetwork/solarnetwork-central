@@ -1,5 +1,5 @@
 /* ==================================================================
- * StaleDatumProcessor.java - Aug 1, 2013 4:27:13 PM
+ * StaleRecordProcessor.java - Aug 1, 2013 4:27:13 PM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.common.job;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -32,7 +32,7 @@ import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
- * Job to process "stale" reporting aggregate data.
+ * Job to process "stale" record data.
  * 
  * <p>
  * This job executes a JDBC procedure, which is expected to return an Integer
@@ -43,7 +43,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * @author matt
  * @version 2.0
  */
-public class StaleDatumProcessor extends JdbcCallJob {
+public class StaleRecordProcessor extends JdbcCallJob {
 
 	/**
 	 * Construct with properties.
@@ -53,7 +53,7 @@ public class StaleDatumProcessor extends JdbcCallJob {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public StaleDatumProcessor(JdbcOperations jdbcOps) {
+	public StaleRecordProcessor(JdbcOperations jdbcOps) {
 		super(jdbcOps);
 		setMaximumIterations(5);
 	}

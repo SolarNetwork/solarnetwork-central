@@ -28,18 +28,12 @@ import static net.solarnetwork.central.common.dao.jdbc.test.CommonDbTestUtils.li
 import static net.solarnetwork.central.common.dao.jdbc.test.CommonDbTestUtils.listStaleAuditNodeServiceValues;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
 import net.solarnetwork.central.dao.StaleAuditNodeServiceEntity;
 import net.solarnetwork.central.domain.AggregateDatumId;
@@ -58,23 +52,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 public class DbAuditIncrementNodeCountTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private AuditNodeServiceValue incrementAndGet(Long nodeId, String service, Instant ts, int count) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				log.debug("Incrementing audit node service count for node {} service {} @ {}: +{}",
-						nodeId, service, ts, count);
-				try (CallableStatement stmt = con
-						.prepareCall("{call solardatm.audit_increment_node_count(?,?,?,?)}")) {
-					stmt.setObject(1, nodeId);
-					stmt.setString(2, service);
-					stmt.setTimestamp(3, Timestamp.from(ts));
-					stmt.setInt(4, count);
-					stmt.execute();
-				}
-				return null;
-			}
-		});
+		CommonDbTestUtils.auditNodeService(jdbcTemplate, nodeId, service, ts, count);
 		Instant tsHour = ts.truncatedTo(ChronoUnit.HOURS);
 		return listAuditNodeServiceValueHourly(jdbcTemplate).stream().filter(e -> {
 			return (e.getNodeId().equals(nodeId) && e.getService().equals(service)

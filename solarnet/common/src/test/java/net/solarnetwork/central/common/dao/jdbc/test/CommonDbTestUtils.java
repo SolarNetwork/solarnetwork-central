@@ -22,18 +22,25 @@
 
 package net.solarnetwork.central.common.dao.jdbc.test;
 
+import static java.util.stream.Collectors.joining;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -75,6 +82,46 @@ public final class CommonDbTestUtils {
 		return jdbcOps.query("""
 				SELECT ts_start, node_id, service, 'h' AS agg_kind, cnt
 				FROM solardatm.aud_node_io
+				ORDER BY node_id, service, ts_start
+				""", AuditNodeServiceValueRowMapper.INSTANCE);
+	}
+
+	/**
+	 * Get a list of all daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 * 
+	 * <p>
+	 * The values are ordered by node ID, service, and timestamp.
+	 * </p>
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations to use
+	 * @return the values, never {@literal null}
+	 */
+	public static List<AuditNodeServiceValue> listAuditNodeServiceValueDaily(JdbcOperations jdbcOps) {
+		return jdbcOps.query("""
+				SELECT ts_start, node_id, service, 'd' AS agg_kind, cnt
+				FROM solardatm.aud_node_daily
+				ORDER BY node_id, service, ts_start
+				""", AuditNodeServiceValueRowMapper.INSTANCE);
+	}
+
+	/**
+	 * Get a list of all daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 * 
+	 * <p>
+	 * The values are ordered by node ID, service, and timestamp.
+	 * </p>
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations to use
+	 * @return the values, never {@literal null}
+	 */
+	public static List<AuditNodeServiceValue> listAuditNodeServiceValueMonthly(JdbcOperations jdbcOps) {
+		return jdbcOps.query("""
+				SELECT ts_start, node_id, service, 'M' AS agg_kind, cnt
+				FROM solardatm.aud_node_monthly
 				ORDER BY node_id, service, ts_start
 				""", AuditNodeServiceValueRowMapper.INSTANCE);
 	}
@@ -131,6 +178,41 @@ public final class CommonDbTestUtils {
 				}
 			});
 		}
+	}
+
+	/**
+	 * Audit a node service.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param nodeId
+	 *        the node ID
+	 * @param service
+	 *        the service name
+	 * @param ts
+	 *        the timestamp
+	 * @param count
+	 *        the count to add
+	 */
+	public static void auditNodeService(JdbcOperations jdbcOps, Long nodeId, String service, Instant ts,
+			int count) {
+		jdbcOps.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				log.debug("Incrementing audit node service count for node {} service {} @ {}: +{}",
+						nodeId, service, ts, count);
+				try (CallableStatement stmt = con
+						.prepareCall("{call solardatm.audit_increment_node_count(?,?,?,?)}")) {
+					stmt.setObject(1, nodeId);
+					stmt.setString(2, service);
+					stmt.setTimestamp(3, Timestamp.from(ts));
+					stmt.setInt(4, count);
+					stmt.execute();
+				}
+				return null;
+			}
+		});
 	}
 
 	/**
@@ -195,6 +277,87 @@ public final class CommonDbTestUtils {
 		assertThat(prefix + " timestamp", actual.getTimestamp(), is(equalTo(expected.getTimestamp())));
 		assertThat(prefix + " aggregation", actual.getAggregation(),
 				is(equalTo(expected.getAggregation())));
+	}
+
+	/**
+	 * Call the {@code solardatm.process_one_aud_stale_node} stored procedure to
+	 * compute audit data.
+	 * 
+	 * @param log
+	 *        the logger to use
+	 * @param jdbcOps
+	 *        the JDBC template to use
+	 * @param kinds
+	 *        the kinds of stale audit records to process; e.g. {@code Day} or
+	 *        {@code Month}
+	 */
+	public static void processStaleAuditNodeService(Logger log, JdbcOperations jdbcOps,
+			Set<Aggregation> kinds) {
+		debugStaleAuditNodeServiceTable(log, jdbcOps, "Stale audit datum at start");
+
+		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel)
+				.collect(Collectors.toList());
+
+		jdbcOps.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (CallableStatement cs = con
+						.prepareCall("{? = call solardatm.process_one_aud_stale_node(?)}")) {
+					cs.registerOutParameter(1, Types.INTEGER);
+					for ( Aggregation kind : sortedKinds ) {
+						int processed = processStaleAuditKind(kind.getKey(), cs);
+						log.debug("Processed {} stale {} audit node", processed, kind.getKey());
+						debugStaleAuditNodeServiceTable(log, jdbcOps,
+								"Stale audit node after process " + kind.getKey());
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Call the {@code solardatm.process_one_aud_stale_node} stored procedure to
+	 * compute audit data for all aggregate kinds.
+	 * 
+	 * @param log
+	 *        the logger to use
+	 * @param jdbcOps
+	 *        the JDBC template to use
+	 * @see #processStaleAggregateDatum(Logger, JdbcOperations, Set)
+	 */
+	public static void processStaleAuditNodeService(Logger log, JdbcOperations jdbcOps) {
+		processStaleAuditNodeService(log, jdbcOps, EnumSet.of(Aggregation.Day, Aggregation.Month));
+	}
+
+	private static int processStaleAuditKind(String kind, CallableStatement cs) throws SQLException {
+		int processed = 0;
+		while ( true ) {
+			cs.setString(2, kind);
+			if ( cs.execute() ) {
+				processed = cs.getInt(1);
+			} else {
+				break;
+			}
+		}
+		return processed;
+	}
+
+	/**
+	 * Log the contents of the stale audit node service table.
+	 * 
+	 * @param log
+	 *        the logger to log to
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param msg
+	 *        a log message
+	 */
+	public static void debugStaleAuditNodeServiceTable(Logger log, JdbcOperations jdbcOps, String msg) {
+		List<Map<String, Object>> staleRows = jdbcOps.queryForList(
+				"SELECT * FROM solardatm.aud_stale_node ORDER BY aud_kind, service, ts_start, node_id");
+		log.debug("{}:\n{}", msg, staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
 	}
 
 }

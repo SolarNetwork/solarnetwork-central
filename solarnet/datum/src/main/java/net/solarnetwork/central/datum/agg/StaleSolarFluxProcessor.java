@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.job.TieredStaleRecordProcessor;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -68,7 +69,7 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
  * @version 2.0
  * @since 1.7
  */
-public class StaleSolarFluxProcessor extends TieredStaleDatumProcessor {
+public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 
 	private final DatumEntityDao datumDao;
 	private final DatumProcessor publisher;

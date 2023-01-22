@@ -198,24 +198,24 @@ BEGIN
 			WHEN 'M' THEN
 				-- in case node tz changed, remove record(s) from other zone
 				-- monthly records clean 1 month on either side
-				DELETE FROM solardatm.aud_node_monthly a
-				WHERE a.node_id = stale.node_id
-					AND a.service = stale.service
-					AND a.ts_start > (stale.ts_start AT TIME ZONE tz - interval '1 month') AT TIME ZONE tz
-					AND a.ts_start < (stale.ts_start AT TIME ZONE tz + interval '1 month') AT TIME ZONE tz
-					AND a.ts_start <> stale.ts_start;
+				DELETE FROM solardatm.aud_node_monthly
+				WHERE node_id = stale.node_id
+					AND service = stale.service
+					AND ts_start > (stale.ts_start AT TIME ZONE tz - interval '1 month') AT TIME ZONE tz
+					AND ts_start < (stale.ts_start AT TIME ZONE tz + interval '1 month') AT TIME ZONE tz
+					AND ts_start <> stale.ts_start;
 			ELSE
 				-- in case node tz changed, remove record(s) from other zone
 				-- daily records clean 1 day on either side
 				DELETE FROM solardatm.aud_node_daily
 				WHERE node_id = stale.node_id
-					AND a.service = stale.service
+					AND service = stale.service
 					AND ts_start > stale.ts_start - interval '1 day'
 					AND ts_start < stale.ts_start + interval '1 day'
 					AND ts_start <> stale.ts_start;
 
 				-- recalculate monthly audit based on updated daily values
-				INSERT INTO solardatm.aud_stale_datm (node_id, service, ts_start, aud_kind)
+				INSERT INTO solardatm.aud_stale_node (node_id, service, ts_start, aud_kind)
 				VALUES (
 					stale.node_id,
 					stale.service,
@@ -225,10 +225,10 @@ BEGIN
 		END CASE;
 
 		-- remove processed stale record
-		DELETE FROM solardatm.aud_stale_datm WHERE CURRENT OF curs;
+		DELETE FROM solardatm.aud_stale_node WHERE CURRENT OF curs;
 		result_cnt := 1;
 	END IF;
 	CLOSE curs;
 	RETURN result_cnt;
-END;
+END
 $$;

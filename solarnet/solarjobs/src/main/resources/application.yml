@@ -122,6 +122,18 @@ app:
       stale-queuing:
         seconds-older: 30
         schedule: "6/10 * * * * *"
+    node:
+      audit:
+        daily:
+          maximum-iterations: 10000
+          maximum-wait-ms: 299000
+          parallelism: 4
+          schedule: "30 4/5 * * * *"
+        monthly:
+          maximum-iterations: 10000
+          maximum-wait-ms: 299000
+          parallelism: 4
+          schedule: "40 10/20 * * * *"
     user-alert:
       stale-data:
         cleaner:

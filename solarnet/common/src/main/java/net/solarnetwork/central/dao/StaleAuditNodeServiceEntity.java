@@ -81,4 +81,19 @@ public class StaleAuditNodeServiceEntity extends BasicEntity<AggregateDatumId> i
 		return !isSameAs(other);
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("StaleAuditNodeServiceEntity{");
+		final AggregateDatumId id = getId();
+		if ( id != null ) {
+			builder.append("nodeId=").append(id.getObjectId());
+			builder.append(",service=").append(id.getSourceId());
+			builder.append(",agg=").append(id.getAggregation());
+			builder.append(",ts=").append(id.getTimestamp());
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
 }
