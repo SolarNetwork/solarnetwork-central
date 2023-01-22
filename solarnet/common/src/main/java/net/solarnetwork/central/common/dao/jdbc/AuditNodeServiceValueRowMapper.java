@@ -60,11 +60,11 @@ public class AuditNodeServiceValueRowMapper implements RowMapper<AuditNodeServic
 		Number nodeId = (Number) rs.getObject(2);
 		String service = rs.getString(3);
 		Aggregation aggregation = Aggregation.forKey(rs.getString(4));
-		Number count = (Number) rs.getObject(5);
+		long count = rs.getLong(5);
 		return new AuditNodeServiceEntity(
 				DatumId.nodeId(nodeId instanceof Long l ? l : nodeId != null ? nodeId.longValue() : null,
 						service, timestamp.toInstant()),
-				aggregation, count != null ? count.longValue() : 0L);
+				aggregation, count);
 	}
 
 }
