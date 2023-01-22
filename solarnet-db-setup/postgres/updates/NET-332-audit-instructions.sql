@@ -76,7 +76,7 @@ DECLARE
 	tz						TEXT;
 BEGIN
 	-- get node time zone
-	SELECT COALESCE(solarnet.get_node_timezone(stale.node_id), 'UTC') INTO tz;
+	SELECT COALESCE(solarnet.get_node_timezone(node), 'UTC') INTO tz;
 
 	INSERT INTO solardatm.aud_node_io (node_id, service, ts_start, cnt)
 	VALUES (node, srvc, date_trunc('hour', ts_recv), icount)
