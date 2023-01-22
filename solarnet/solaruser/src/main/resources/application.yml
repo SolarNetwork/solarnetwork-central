@@ -83,6 +83,11 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
+  node-service-auditor:
+    update-delay: 100
+    flush-delay: 10000
+    connection-recovery-delay: 15000
+    stat-log-update-count: 500
   ocpp.v16:
     mqtt.instr-handler:
       mqtt-topic: "instr/OCPP_v16"
