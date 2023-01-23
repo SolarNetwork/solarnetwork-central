@@ -17,7 +17,7 @@ This app depends on the following projects:
  * [solarnet-user-datum][solarnet-user-datum]
  * [solarnet-user-ocpp][solarnet-user-ocpp]
  * [solarnet-user-oscp][solarnet-user-oscp]
- 
+
 # Runtime profiles
 
 The following Spring runtime profiles are available:
@@ -45,7 +45,7 @@ SPRING_PROFILES_ACTIVE="production,datum-import-s3-resource-storage,dogtag,mqtt,
 
 See the [application.yml][app-config] file for the available runtime configuration properties, and
 their default values. You can override any property by creating an `application.yml` file in the
-working directory of the application, or via profile-specific files like 
+working directory of the application, or via profile-specific files like
 `application-production.yml` when the `production` profile is active.
 
 
@@ -78,7 +78,7 @@ The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
 [solarnet-user-datum]: ../user-datum/
 [solarnet-user-ocpp]: ../user-ocpp/
 [solarnet-user-oscp]: ../user-oscp/
-[InstructorBizConfig]: src/main/java/net/solarnetwork/central/instructor/config/InstructorBizConfig.java
+[InstructorBizConfig]: ../instructor/src/main/java/net/solarnetwork/central/instructor/config/InstructorBizConfig.java
 [JdbcNodeServiceAuditorConfig]: ../common/src/main/java/net/solarnetwork/central/common/config/JdbcNodeServiceAuditorConfig.java
 [PkiDogtagConfig]: ../user/src/main/java/net/solarnetwork/central/user/config/PkiDogtagConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java
