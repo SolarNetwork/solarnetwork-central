@@ -47,7 +47,12 @@ CREATE TABLE solardatm.aud_node_monthly (
 CREATE UNIQUE INDEX IF NOT EXISTS aud_node_monthly_pkey
 ON solardatm.aud_node_monthly (node_id, service, ts_start DESC);
 
--- "stale" audit queue table
+/**
+ * Queue table for stale audit aggregate records.
+ *
+ * The `aud_kind` is an aggregate key, like `d` or `M` for daily or monthly. Each record represents
+ * an aggregate period that is "stale" and needs to be (re)computed.
+ */
 CREATE TABLE solardatm.aud_stale_node (
 	node_id					BIGINT NOT NULL,
 	service					CHARACTER(4),
@@ -155,6 +160,18 @@ $$
 	GROUP BY aud.node_id, aud.service
 $$;
 
+/**
+ * Compute a single stale audit node rollup and store the results in the
+ * `solardatm.aud_node_daily` or `solardatm.aud_node_monthly` tables.
+ *
+ * After saving the rollup value for any kind except `M`, a new stale audit datum record will be
+ * inserted into the `aud_stale_node` table for the `M` kind.
+ *
+ * @param kind the aggregate kind: 'd' or 'M' for  daily or monthly
+ *
+ * @see solardatm.calc_audit_node_daily()
+ * @see solardatm.calc_audit_node_monthly()
+ */
 CREATE OR REPLACE FUNCTION solardatm.process_one_aud_stale_node(kind CHARACTER)
   RETURNS INTEGER LANGUAGE plpgsql VOLATILE AS
 $$
