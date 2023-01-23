@@ -133,7 +133,7 @@ app:
           maximum-iterations: 10000
           maximum-wait-ms: 299000
           parallelism: 4
-          schedule: "40 10/20 * * * *"
+          schedule: "40 18/20 * * * *"
     user-alert:
       stale-data:
         cleaner:
