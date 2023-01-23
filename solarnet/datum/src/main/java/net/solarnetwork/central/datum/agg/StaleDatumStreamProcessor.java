@@ -30,6 +30,7 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.transaction.CannotCreateTransactionException;
+import net.solarnetwork.central.common.job.TieredStoredProcedureStaleRecordProcessor;
 import net.solarnetwork.central.datum.biz.DatumAppEventAcceptor;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
@@ -55,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 3.0
  * @since 1.14
  */
-public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleDatumProcessor {
+public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordProcessor {
 
 	/** The default {@code jdbcCall} value. */
 	public static final String DEFAULT_SQL = "{call solardatm.process_one_agg_stale_datm(?)}";

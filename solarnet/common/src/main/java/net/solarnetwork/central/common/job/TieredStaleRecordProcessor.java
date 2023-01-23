@@ -1,5 +1,5 @@
 /* ==================================================================
- * TieredStaleDatumProcessor.java - 3/07/2018 7:46:22 AM
+ * TieredStaleRecordProcessor.java - 3/07/2018 7:46:22 AM
  * 
  * Copyright 2018 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +29,7 @@ import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
- * Abstract job to process "stale" tiers of data.
+ * Abstract job to process "stale" record tiers.
  * 
  * <p>
  * This job executes a JDBC procedure, which is expected to accept one or two
@@ -55,7 +55,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * @version 2.0
  * @since 1.6
  */
-public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
+public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 
 	private final String taskDescription;
 	private String tierProcessType = "h";
@@ -71,7 +71,7 @@ public abstract class TieredStaleDatumProcessor extends StaleDatumProcessor {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public TieredStaleDatumProcessor(JdbcOperations jdbcOps, String taskDescription) {
+	public TieredStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
 		super(jdbcOps);
 		this.taskDescription = requireNonNullArgument(taskDescription, "taskDescription");
 		setMaximumIterations(1);

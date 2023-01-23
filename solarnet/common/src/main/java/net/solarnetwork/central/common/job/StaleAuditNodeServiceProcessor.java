@@ -1,7 +1,7 @@
 /* ==================================================================
- * StaleAuditDataProcessor.java - 3/07/2018 9:46:25 AM
+ * StaleAuditNodeServiceProcessor.java - 23/01/2023 9:50:23 am
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2023 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,22 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.common.job;
 
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.job.TieredStoredProcedureStaleRecordProcessor;
 
 /**
- * Job to process "stale" audit datum reporting data.
+ * Job to process "stale" audit node service data.
  * 
  * @author matt
- * @version 2.0
- * @since 1.6
+ * @version 1.0
  */
-public class StaleAuditDataProcessor extends TieredStoredProcedureStaleRecordProcessor {
+public class StaleAuditNodeServiceProcessor extends TieredStoredProcedureStaleRecordProcessor {
 
 	/** The default {@code jdbcCall} value. */
-	public static final String DEFAULT_SQL = "{? = call solardatm.process_one_aud_stale_datm(?)}";
+	public static final String DEFAULT_SQL = "{? = call solardatm.process_one_aud_stale_node(?)}";
 
 	/**
 	 * Construct with properties.
@@ -45,8 +43,8 @@ public class StaleAuditDataProcessor extends TieredStoredProcedureStaleRecordPro
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public StaleAuditDataProcessor(JdbcOperations jdbcOps) {
-		super(jdbcOps, "stale audit data");
+	public StaleAuditNodeServiceProcessor(JdbcOperations jdbcOps) {
+		super(jdbcOps, "stale node service audit data");
 		setJdbcCall(DEFAULT_SQL);
 		setTierProcessMax(null);
 	}

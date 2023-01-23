@@ -1,5 +1,5 @@
 /* ==================================================================
- * TieredStoredProcedureStaleDatumProcessor.java - 1/11/2019 3:22:26 pm
+ * TieredStoredProcedureStaleRecordProcessor.java - 1/11/2019 3:22:26 pm
  * 
  * Copyright 2019 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.agg;
+package net.solarnetwork.central.common.job;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -44,7 +44,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * @version 2.0
  * @since 1.7
  */
-public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumProcessor {
+public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecordProcessor {
 
 	/**
 	 * Constructor.
@@ -56,7 +56,7 @@ public class TieredStoredProcedureStaleDatumProcessor extends TieredStaleDatumPr
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public TieredStoredProcedureStaleDatumProcessor(JdbcOperations jdbcOps, String taskDescription) {
+	public TieredStoredProcedureStaleRecordProcessor(JdbcOperations jdbcOps, String taskDescription) {
 		super(jdbcOps, taskDescription);
 	}
 

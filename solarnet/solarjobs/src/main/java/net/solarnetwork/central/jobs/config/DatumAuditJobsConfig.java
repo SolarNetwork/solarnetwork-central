@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.datum.agg.JdbcCallJob;
+import net.solarnetwork.central.common.job.JdbcCallJob;
 import net.solarnetwork.central.datum.agg.StaleAuditDataProcessor;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.domain.datum.Aggregation;
