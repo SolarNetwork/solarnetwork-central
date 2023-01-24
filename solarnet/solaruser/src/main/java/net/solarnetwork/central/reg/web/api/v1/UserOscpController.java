@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration.OSCP_V20;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.web.domain.Response.response;
@@ -36,6 +37,7 @@ import java.net.URI;
 import java.util.Collection;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -66,6 +68,7 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 1.0
  */
+@Profile(OSCP_V20)
 @GlobalExceptionRestController
 @RestController("v1OscpController")
 @RequestMapping(value = { "/u/sec/oscp", "/api/v1/sec/user/oscp" })
