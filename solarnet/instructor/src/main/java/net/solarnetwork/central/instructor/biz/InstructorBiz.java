@@ -36,9 +36,16 @@ import net.solarnetwork.central.support.FilteredResultsProcessor;
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface InstructorBiz {
+
+	/**
+	 * The node audit service name for instruction added.
+	 * 
+	 * @since 1.5
+	 */
+	String INSTRUCTION_ADDED_AUDIT_SERVICE = "inst";
 
 	/**
 	 * Return any active instructions for a specific node.

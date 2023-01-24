@@ -37,6 +37,8 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.biz.NodeServiceAuditor;
+import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.biz.dao.DaoInstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
@@ -48,28 +50,30 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
  * Test cases for the {@link DaoInstructorBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoInstructorBizTests {
 
 	private NodeInstructionDao nodeInstructionDao;
 	private List<NodeInstructionQueueHook> hooks;
+	private NodeServiceAuditor auditor;
 	private DaoInstructorBiz biz;
 
 	@Before
 	public void setup() {
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 		hooks = new ArrayList<>();
-		biz = new DaoInstructorBiz(nodeInstructionDao, hooks);
+		auditor = EasyMock.createMock(NodeServiceAuditor.class);
+		biz = new DaoInstructorBiz(nodeInstructionDao, hooks, auditor);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(nodeInstructionDao);
+		EasyMock.verify(nodeInstructionDao, auditor);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(nodeInstructionDao);
+		EasyMock.replay(nodeInstructionDao, auditor);
 	}
 
 	@Test
@@ -88,6 +92,8 @@ public class DaoInstructorBizTests {
 		dbInstr.setState(InstructionState.Queued);
 		dbInstr.setParameters(instr.getParameters());
 		expect(nodeInstructionDao.get(instrId)).andReturn(dbInstr);
+
+		auditor.auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
 
 		// WHEN
 		replayAll();
@@ -128,6 +134,8 @@ public class DaoInstructorBizTests {
 					buf.substring(i, i + Math.min(biz.getMaxParamValueLength(), buf.length() - i)));
 		}
 		expect(nodeInstructionDao.get(instrId)).andReturn(dbInstr);
+
+		auditor.auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
 
 		// WHEN
 		replayAll();

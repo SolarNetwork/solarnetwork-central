@@ -308,6 +308,71 @@ CREATE TABLE solardatm.aud_stale_datm (
 	CONSTRAINT aud_stale_datm_pkey PRIMARY KEY (aud_kind, ts_start, stream_id)
 );
 
+
+/**
+ * General node audit ingest data table.
+ *
+ * This data represents the lowest level audit data for nodes. The `service` column defines the
+ * metric being counted, and is application defined.
+ */
+CREATE TABLE solardatm.aud_node_io (
+	node_id					BIGINT NOT NULL,
+	service					CHARACTER(4) NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	cnt 					INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_node_io_pkey ON solardatm.aud_node_io (node_id, service, ts_start DESC);
+
+/**
+ * Node audit daily summary data table.
+ *
+ * This data represents a calculated summary of counts of node-related rows in other tables.
+ * It must be maintained as the source data tables are updated.
+ */
+CREATE TABLE solardatm.aud_node_daily (
+	node_id					BIGINT NOT NULL,
+	service					CHARACTER(4) NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+    cnt 					BIGINT NOT NULL DEFAULT 0,
+	processed				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_node_daily_pkey
+ON solardatm.aud_node_daily (node_id, service, ts_start DESC);
+
+/**
+ * Node audit monthly summary data table.
+ *
+ * This data represents a calculated summary of counts of node-related rows in the
+ * solardatm.aud_node_daily table. It must be maintained as the source data table is updated.
+ */
+CREATE TABLE solardatm.aud_node_monthly (
+	node_id					BIGINT NOT NULL,
+	service					CHARACTER(4) NOT NULL,
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+    cnt 					BIGINT NOT NULL DEFAULT 0,
+	processed 				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS aud_node_monthly_pkey
+ON solardatm.aud_node_monthly (node_id, service, ts_start DESC);
+
+/**
+ * Queue table for stale audit aggregate records.
+ *
+ * The `aud_kind` is an aggregate key, like `d` or `M` for daily or monthly. Each record represents
+ * an aggregate period that is "stale" and needs to be (re)computed.
+ */
+CREATE TABLE solardatm.aud_stale_node (
+	node_id					BIGINT NOT NULL,
+	service					CHARACTER(4),
+	ts_start				TIMESTAMP WITH TIME ZONE NOT NULL,
+	aud_kind 				CHARACTER NOT NULL,
+	created 				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT aud_stale_node_pkey PRIMARY KEY (aud_kind, service, ts_start, node_id)
+);
+
 /*
 	================================================================================================
 	General datm supporting functions

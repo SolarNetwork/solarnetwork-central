@@ -26,6 +26,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.biz.NodeServiceAuditor;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.biz.dao.DaoInstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -37,7 +38,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class InstructorBizConfig {
 
 	@Autowired
@@ -46,9 +47,17 @@ public class InstructorBizConfig {
 	@Autowired(required = false)
 	private List<NodeInstructionQueueHook> queueHooks;
 
+	@Autowired(required = false)
+	private NodeServiceAuditor nodeServiceAuditor;
+
+	/**
+	 * The instruction service.
+	 * 
+	 * @return the service
+	 */
 	@Bean
 	public InstructorBiz instructorBiz() {
-		return new DaoInstructorBiz(nodeInstructionDao, queueHooks);
+		return new DaoInstructorBiz(nodeInstructionDao, queueHooks, nodeServiceAuditor);
 	}
 
 }
