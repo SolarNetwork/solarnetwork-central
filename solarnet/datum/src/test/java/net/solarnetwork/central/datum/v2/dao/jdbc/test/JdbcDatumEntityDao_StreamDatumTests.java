@@ -146,8 +146,9 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 		// GIVEN
 		store_new();
 		DatumEntity datum = new DatumEntity(lastDatum.getStreamId(), lastDatum.getTimestamp(),
-				Instant.now(), DatumProperties.propertiesOf(decimalArray("3.21", "4.32", "5.43"),
-						decimalArray("5.43"), null, new String[] { "b" }));
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
+				DatumProperties.propertiesOf(decimalArray("3.21", "4.32", "5.43"), decimalArray("5.43"),
+						null, new String[] { "b" }));
 
 		// WHEN
 		DatumPK id = dao.store(datum);
@@ -203,7 +204,8 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 	public void store_withNullPropertyValues() throws IOException {
 		// GIVEN
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS), Instant.now(),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
 				DatumProperties.propertiesOf(decimalArray(null, null, "1.23", null),
 						decimalArray("2.34", null, null, "3.45"),
 						new String[] { null, "On", null, "Off" }, new String[] { "a", "b" }));
