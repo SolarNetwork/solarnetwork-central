@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
@@ -31,7 +32,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
@@ -86,13 +86,13 @@ public class DbMoveDatumAuxiliaryTests extends BaseDatumJdbcTestSupport {
 		DatumDbUtils.insertDatumAuxiliary(log, jdbcTemplate, singleton(aux));
 
 		// WHEN
-		DatumAuxiliaryEntity newAux = new DatumAuxiliaryEntity(UUID.randomUUID(), Instant.now(),
-				DatumAuxiliaryType.Reset, null, aux.getSamplesFinal(), aux.getSamplesStart(),
-				aux.getNotes(), aux.getMetadata());
+		DatumAuxiliaryEntity newAux = new DatumAuxiliaryEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.MICROS), DatumAuxiliaryType.Reset, null,
+				aux.getSamplesFinal(), aux.getSamplesStart(), aux.getNotes(), aux.getMetadata());
 		boolean result = callMoveDatumAuxiliary(aux.getId(), newAux);
 
 		// THEN
-		assertThat("Moved", result, Matchers.equalTo(true));
+		assertThat("Moved", result, equalTo(true));
 		List<DatumAuxiliary> rows = DatumDbUtils.listDatumAuxiliary(jdbcTemplate);
 		assertThat("One row in DB", rows, hasSize(1));
 		DatumTestUtils.assertDatumAuxiliary("Moved", rows.get(0), newAux);
