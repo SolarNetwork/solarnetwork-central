@@ -30,10 +30,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.query.web.support.AuditingJCacheContentCachingService;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.web.support.CachedContent;
+import net.solarnetwork.central.web.support.JCacheContentCachingService;
 
 /**
  * Content caching service configuration.
@@ -53,9 +55,6 @@ public class ContentCachingServiceConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
-
-	@Autowired
-	private QueryAuditor queryAuditor;
 
 	public static class QueryCacheSettings extends CacheSettings {
 
@@ -98,9 +97,21 @@ public class ContentCachingServiceConfig {
 		return settings.createCache(cacheManager, String.class, CachedContent.class, QUERY_CACHE);
 	}
 
+	@Profile("!query-auditor")
 	@Bean(QUERY_CACHING_SERVICE)
 	@Qualifier(QUERY_CACHE)
-	public AuditingJCacheContentCachingService queryCachingService() {
+	public JCacheContentCachingService queryCachingService() {
+		QueryCacheSettings settings = queryCacheSettings();
+		JCacheContentCachingService service = new JCacheContentCachingService(queryCache());
+		service.setCompressMinimumLength(settings.compressMinimumLength);
+		service.setStatLogAccessCount(settings.statLogAccessCount);
+		return service;
+	}
+
+	@Profile("query-auditor")
+	@Bean(QUERY_CACHING_SERVICE)
+	@Qualifier(QUERY_CACHE)
+	public AuditingJCacheContentCachingService auditingQueryCachingService(QueryAuditor queryAuditor) {
 		QueryCacheSettings settings = queryCacheSettings();
 		AuditingJCacheContentCachingService service = new AuditingJCacheContentCachingService(
 				queryCache(), queryAuditor);
