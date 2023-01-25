@@ -40,11 +40,12 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * <li>user_id</li>
  * <li>cp_id</li>
  * <li>connected_to</li>
+ * <li>session_id</li>
  * <li>connected_date</li>
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointStatusRowMapper implements RowMapper<ChargePointStatus> {
 
@@ -57,8 +58,9 @@ public class ChargePointStatusRowMapper implements RowMapper<ChargePointStatus> 
 		long userId = rs.getLong(2);
 		long cpId = rs.getLong(3);
 		String connectedTo = rs.getString(4);
-		Instant connectedDate = rs.getTimestamp(5).toInstant();
-		return new ChargePointStatus(userId, cpId, created, connectedTo, connectedDate);
+		String sessionId = rs.getString(5);
+		Instant connectedDate = rs.getTimestamp(6).toInstant();
+		return new ChargePointStatus(userId, cpId, created, connectedTo, sessionId, connectedDate);
 	}
 
 }

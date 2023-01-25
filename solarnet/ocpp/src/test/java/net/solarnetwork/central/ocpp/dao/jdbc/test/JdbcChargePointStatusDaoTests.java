@@ -83,13 +83,14 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 				""", cpId, userId, nodeId, cpIdent);
 	}
 
-	private void insertChargerStatus(Long userId, Long cpId, String connectedTo, Instant connectedDate) {
+	private void insertChargerStatus(Long userId, Long cpId, String connectedTo, String sessionId,
+			Instant connectedDate) {
 		jdbcTemplate.update(
 				"""
-						INSERT INTO solarev.ocpp_charge_point_status (user_id, cp_id, connected_to, connected_date)
-						VALUES (?, ?, ?, ?)
+						INSERT INTO solarev.ocpp_charge_point_status (user_id, cp_id, connected_to, session_id, connected_date)
+						VALUES (?, ?, ?, ?, ?)
 						""",
-				userId, cpId, connectedTo, Timestamp.from(connectedDate));
+				userId, cpId, connectedTo, sessionId, Timestamp.from(connectedDate));
 	}
 
 	private List<Map<String, Object>> allChargePointStatusData() {
@@ -104,10 +105,11 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 	public void update_connected() {
 		// GIVEN
 		final String instanceId = UUID.randomUUID().toString();
+		final String sessionId = UUID.randomUUID().toString();
 		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
 
 		// WHEN
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, connDate);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, connDate);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();
@@ -117,6 +119,7 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
 		assertThat("Row connected to matches instance ID", row.get("connected_to"),
 				is(equalTo(instanceId)));
+		assertThat("Row session ID matches", row.get("session_id"), is(equalTo(sessionId)));
 		assertThat("Row connected date matches", row.get("connected_date"),
 				is(equalTo(Timestamp.from(connDate))));
 	}
@@ -125,11 +128,12 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 	public void update_disconnected() {
 		// GIVEN
 		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final String sessionId = UUID.randomUUID().toString();
 		final String instanceId = UUID.randomUUID().toString();
-		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, connDate);
+		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, sessionId, connDate);
 
 		// WHEN
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, null);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, null);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();
@@ -138,6 +142,31 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
 		assertThat("Row connected to missing", row.get("connected_to"), is(nullValue()));
+		assertThat("Row session ID missing", row.get("session_id"), is(nullValue()));
+		assertThat("Row connected date unchanged", row.get("connected_date"),
+				is(equalTo(Timestamp.from(connDate))));
+	}
+
+	@Test
+	public void update_disconnected_differentSession() {
+		// GIVEN
+		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final String sessionId = UUID.randomUUID().toString();
+		final String instanceId = UUID.randomUUID().toString();
+		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, sessionId, connDate);
+
+		// WHEN
+		final String sessionId2 = UUID.randomUUID().toString();
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId2, null);
+
+		// THEN
+		List<Map<String, Object>> data = allChargePointStatusData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
+		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row connected to unchanged", row.get("connected_to"), is(instanceId));
+		assertThat("Row session ID unchanged", row.get("session_id"), is(sessionId));
 		assertThat("Row connected date unchanged", row.get("connected_date"),
 				is(equalTo(Timestamp.from(connDate))));
 	}
@@ -149,13 +178,17 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		final int count = 5;
 		final List<String> chargerIdents = new ArrayList<>(count);
 		final List<String> instanceIds = new ArrayList<>(count);
+		final List<String> sessionIds = new ArrayList<>(count);
 		for ( int i = 0; i < count; i++ ) {
 			String chargerIdent = UUID.randomUUID().toString();
 			chargerIdents.add(chargerIdent);
 			insertCharger(TEST_USER_ID, TEST_NODE_ID, (long) i, chargerIdent);
 			String instanceId = UUID.randomUUID().toString();
 			instanceIds.add(instanceId);
-			dao.updateConnectionStatus(TEST_USER_ID, chargerIdent, instanceId, clock.instant());
+			String sessionId = UUID.randomUUID().toString();
+			sessionIds.add(sessionId);
+			dao.updateConnectionStatus(TEST_USER_ID, chargerIdent, instanceId, sessionId,
+					clock.instant());
 			clock.add(1, ChronoUnit.SECONDS);
 		}
 
@@ -174,14 +207,16 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		ChargePointStatus status = resultList.get(0);
 		assertThat("Status 1 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
 		assertThat("Status 1 charger ID", status.getChargePointId(), is(equalTo(1L)));
-		assertThat("Status 1 connector ID", status.getConnectedTo(), is(equalTo(instanceIds.get(1))));
+		assertThat("Status 1 connected to", status.getConnectedTo(), is(equalTo(instanceIds.get(1))));
+		assertThat("Status 1 session ID", status.getSessionId(), is(equalTo(sessionIds.get(1))));
 		assertThat("Status 1 timestamp", status.getConnectedDate(), is(equalTo(start.plusSeconds(1))));
 
 		status = resultList.get(1);
 		assertThat("Status 2 user ID", status.getUserId(), is(equalTo(TEST_USER_ID)));
 		assertThat("Status 2 charger ID", status.getChargePointId(), is(equalTo(2L)));
-		assertThat("Status 1 connector ID", status.getConnectedTo(), is(equalTo(instanceIds.get(2))));
-		assertThat("Status 1 timestamp", status.getConnectedDate(), is(equalTo(start.plusSeconds(2))));
+		assertThat("Status 2 connected to", status.getConnectedTo(), is(equalTo(instanceIds.get(2))));
+		assertThat("Status 2 session ID", status.getSessionId(), is(equalTo(sessionIds.get(2))));
+		assertThat("Status 2 timestamp", status.getConnectedDate(), is(equalTo(start.plusSeconds(2))));
 	}
 
 }

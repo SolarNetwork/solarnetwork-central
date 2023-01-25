@@ -51,7 +51,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC based implementation of {@link ChargePointStatusDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 
@@ -81,10 +81,10 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 
 	@Override
 	public void updateConnectionStatus(Long userId, String chargePointIdentifier, String connectedTo,
-			Instant connectionDate) {
+			String sessionId, Instant connectionDate) {
 		UpsertChargePointIdentifierConnectionStatus sql = new UpsertChargePointIdentifierConnectionStatus(
-				userId, chargePointIdentifier,
-				new ChargePointStatus(unassignedEntityIdKey(userId), null, connectedTo, connectionDate));
+				userId, chargePointIdentifier, new ChargePointStatus(unassignedEntityIdKey(userId), null,
+						connectedTo, sessionId, connectionDate));
 		jdbcOps.update(sql);
 	}
 

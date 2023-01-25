@@ -53,7 +53,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class UpsertChargePointIdentifierConnectionStatusTests {
@@ -78,12 +78,14 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		int p = 0;
 		if ( status.getConnectedDate() != null ) {
 			then(result).should().setString(++p, status.getConnectedTo());
+			then(result).should().setString(++p, status.getSessionId());
 			then(result).should().setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
 		then(result).should().setObject(++p, userId);
 		then(result).should().setString(++p, chargePointIdentifier);
 		if ( status.getConnectedDate() == null ) {
 			then(result).should().setString(++p, status.getConnectedTo());
+			then(result).should().setString(++p, status.getSessionId());
 		}
 	}
 
@@ -91,14 +93,15 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 	public void connected_sql() {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final String cpId = UUID.randomUUID().toString();
+		final String cpIdent = UUID.randomUUID().toString();
 		final String instanceId = UUID.randomUUID().toString();
+		final String sessionId = UUID.randomUUID().toString();
 		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), instanceId, connDate);
+				Instant.now(), instanceId, sessionId, connDate);
 
 		// WHEN
-		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpId, status).getSql();
+		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status).getSql();
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
@@ -112,9 +115,10 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
 		final String cpIdent = UUID.randomUUID().toString();
 		final String instanceId = UUID.randomUUID().toString();
+		final String sessionId = UUID.randomUUID().toString();
 		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), instanceId, connDate);
+				Instant.now(), instanceId, sessionId, connDate);
 
 		givenPrepStatement();
 
@@ -135,12 +139,13 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 	public void disconnected_sql() {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final String cpId = UUID.randomUUID().toString();
+		final String cpIdent = UUID.randomUUID().toString();
+		final String sessionId = UUID.randomUUID().toString();
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), null, null);
+				Instant.now(), null, sessionId, null);
 
 		// WHEN
-		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpId, status).getSql();
+		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status).getSql();
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
@@ -153,8 +158,9 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		// GIVEN
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
 		final String cpIdent = UUID.randomUUID().toString();
+		final String sessionId = UUID.randomUUID().toString();
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), null, null);
+				Instant.now(), null, sessionId, null);
 
 		givenPrepStatement();
 

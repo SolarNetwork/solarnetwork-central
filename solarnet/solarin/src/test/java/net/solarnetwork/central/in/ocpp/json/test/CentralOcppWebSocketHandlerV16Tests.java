@@ -82,7 +82,7 @@ import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class CentralOcppWebSocketHandlerV16Tests {
@@ -144,6 +144,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
 		final ChargePointIdentity cpIdentity = new ChargePointIdentity(UUID.randomUUID().toString(),
 				userId);
+		final String sessionId = UUID.randomUUID().toString();
+		given(session.getId()).willReturn(sessionId);
 		Map<String, Object> sessionAttributes = Map.of(OcppWebSocketHandshakeInterceptor.CLIENT_ID_ATTR,
 				cpIdentity);
 		given(session.getAttributes()).willReturn(sessionAttributes);
@@ -153,7 +155,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 		// THEN
 		then(chargePointStatusDao).should().updateConnectionStatus(eq(userId),
-				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), dateCaptor.capture());
+				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), eq(sessionId),
+				dateCaptor.capture());
 		assertThat("Status data is close to now",
 				System.currentTimeMillis() - dateCaptor.getValue().toEpochMilli(),
 				is(lessThanOrEqualTo(SECONDS.toMillis(2))));
@@ -164,6 +167,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		Map<String, Object> data = JsonUtils.getStringMap(event.getData());
 		assertThat("Charger identifier included", data,
 				hasEntry(CentralOcppUserEvents.CHARGE_POINT_DATA_KEY, cpIdentity.getIdentifier()));
+		assertThat("Session ID included", data,
+				hasEntry(CentralOcppUserEvents.SESSION_ID_DATA_KEY, sessionId));
 
 		assertThat("Charger is avaialble", handler.availableChargePointsIds(), contains(cpIdentity));
 	}
@@ -174,6 +179,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		final Long userId = UUID.randomUUID().getMostSignificantBits();
 		final ChargePointIdentity cpIdentity = new ChargePointIdentity(UUID.randomUUID().toString(),
 				userId);
+		final String sessionId = UUID.randomUUID().toString();
+		given(session.getId()).willReturn(sessionId);
 		Map<String, Object> sessionAttributes = Map.of(OcppWebSocketHandshakeInterceptor.CLIENT_ID_ATTR,
 				cpIdentity);
 		given(session.getAttributes()).willReturn(sessionAttributes);
@@ -183,7 +190,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 		// THEN
 		then(chargePointStatusDao).should().updateConnectionStatus(eq(userId),
-				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), isNull());
+				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), eq(sessionId), isNull());
 
 		then(userEventAppenderBiz).should().addEvent(eq(userId), logEventCaptor.capture());
 		LogEventInfo event = logEventCaptor.getValue();
@@ -192,6 +199,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		Map<String, Object> data = JsonUtils.getStringMap(event.getData());
 		assertThat("Charger identifier included", data,
 				hasEntry(CentralOcppUserEvents.CHARGE_POINT_DATA_KEY, cpIdentity.getIdentifier()));
+		assertThat("Session ID included", data,
+				hasEntry(CentralOcppUserEvents.SESSION_ID_DATA_KEY, sessionId));
 	}
 
 	private Object[] call(String messageId, Action action, Object payload) {
@@ -206,6 +215,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		// GIVEN
 		final var userId = UUID.randomUUID().getMostSignificantBits();
 		final var cpIdentity = new ChargePointIdentity(UUID.randomUUID().toString(), userId);
+		final String sessionId = UUID.randomUUID().toString();
+		given(session.getId()).willReturn(sessionId);
 		Map<String, Object> sessionAttributes = Map.of(OcppWebSocketHandshakeInterceptor.CLIENT_ID_ATTR,
 				cpIdentity);
 		given(session.getAttributes()).willReturn(sessionAttributes);

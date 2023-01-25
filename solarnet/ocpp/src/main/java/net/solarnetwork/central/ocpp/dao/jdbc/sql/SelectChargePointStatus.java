@@ -113,7 +113,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 
 	private void sqlCore(StringBuilder buf, boolean ordered) {
 		buf.append("""
-				SELECT created, user_id, cp_id, connected_to, connected_date
+				SELECT created, user_id, cp_id, connected_to, session_id, connected_date
 				FROM solarev.ocpp_charge_point_status
 				""");
 		sqlWhere(buf);
@@ -124,6 +124,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 		int idx = 0;
 		idx += whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
 		idx += whereOptimizedArrayContains(filter.getChargePointIds(), "cp_id", where);
+		idx += whereOptimizedArrayContains(filter.getIdentifiers(), "session_id", where);
 		idx += whereDateRange(filter, "connected_date", where);
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(WHERE_COMPONENT_PREFIX_LENGTH));
@@ -167,6 +168,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getChargePointIds());
+		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIdentifiers());
 		p = prepareDateRange(filter, stmt, p);
 		return p;
 	}

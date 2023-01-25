@@ -35,7 +35,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link ChargePointStatus} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ChargePointStatusDao
 		extends FilterableDao<ChargePointStatus, UserLongCompositePK, ChargePointStatusFilter> {
@@ -54,6 +54,8 @@ public interface ChargePointStatusDao
 	 * @param connectedTo
 	 *        the name of the SolarIn instance the charger is connected to or
 	 *        disconnected from
+	 * @param sessionId
+	 *        the connection session ID
 	 * @param connectionDate
 	 *        the connection date, or {@literal null} if disconnected
 	 * @throws IllegalArgumentException
@@ -61,7 +63,7 @@ public interface ChargePointStatusDao
 	 *         {@literal null}
 	 */
 	void updateConnectionStatus(Long userId, String chargePointIdentifier, String connectedTo,
-			Instant connectionDate);
+			String sessionId, Instant connectionDate);
 
 	/**
 	 * API for querying for a stream of {@link ChargePointStatus}.

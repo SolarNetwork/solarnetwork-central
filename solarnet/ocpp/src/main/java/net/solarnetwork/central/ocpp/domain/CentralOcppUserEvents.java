@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.domain;
  * Constants for central OCPP user events.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CentralOcppUserEvents {
 
@@ -93,5 +93,8 @@ public interface CentralOcppUserEvents {
 
 	/** User event data key for a message ID. */
 	String MESSAGE_ID_DATA_KEY = "messageId";
+
+	/** User event data key for a session ID. */
+	String SESSION_ID_DATA_KEY = "sessionId";
 
 }
