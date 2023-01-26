@@ -36,7 +36,7 @@ import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttStats;
 
 /**
- * SolarIn/MQTT (SolarQuery) configuration.
+ * SolarFlux configuration.
  * 
  * @author matt
  * @version 1.0
