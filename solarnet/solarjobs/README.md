@@ -14,7 +14,7 @@ This app depends on the following projects:
  * [solarnet-user-billing][solarnet-user-billing]
  * [solarnet-user-datum][solarnet-user-datum]
  * [solarnet-user-ocpp][solarnet-user-ocpp]
- 
+
 # Runtime profiles
 
 The following Spring runtime profiles are available:
@@ -23,6 +23,7 @@ The following Spring runtime profiles are available:
 |:--------|:------------|
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
 | `mqtt` | Enables publishing aggregates to SolarFlux. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
+| `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 
@@ -37,7 +38,7 @@ SPRING_PROFILES_ACTIVE="production,datum-import-s3-resource-storage,mqtt,snf-bil
 
 See the [application.yml][app-config] file for the available runtime configuration properties, and
 their default values. You can override any property by creating an `application.yml` file in the
-working directory of the application, or via profile-specific files like 
+working directory of the application, or via profile-specific files like
 `application-production.yml` when the `production` profile is active.
 
 
