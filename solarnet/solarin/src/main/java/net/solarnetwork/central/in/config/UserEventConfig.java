@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
@@ -51,6 +52,12 @@ import net.solarnetwork.util.StatCounter;
 /**
  * Configuration for user event handling.
  * 
+ * <p>
+ * The {@code logging-user-event-appender} profile can be enabled to disable the
+ * default async DAO appender in favor of one that simply logs the events to the
+ * application log. This can be useful in unit tests, for example.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
@@ -60,19 +67,10 @@ public class UserEventConfig {
 	@Autowired
 	private JdbcOperations jdbcOperations;
 
-	@Autowired
-	private UuidGenerator uuidGenerator;
-
 	@Bean
 	public UserEventAppenderDao userEventAppenderDao() {
 		JdbcUserEventDao dao = new JdbcUserEventDao(jdbcOperations);
 		return dao;
-	}
-
-	@Bean
-	@ConfigurationProperties(prefix = "app.user.events.async-appender")
-	public AsyncUserEventAppenderSettings asyncUserEventAppenderSettings() {
-		return new AsyncUserEventAppenderSettings();
 	}
 
 	@Profile("mqtt")
@@ -85,24 +83,46 @@ public class UserEventConfig {
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 
-	@Bean(destroyMethod = "serviceDidShutdown")
-	public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
-			UserEventAppenderDao dao,
-			@Autowired(required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
-		ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
-				settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
-				new CustomizableThreadFactory("UserEventAppender-"));
-		executor.allowCoreThreadTimeOut(true);
-		AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
-				new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
-				new StatCounter("AsyncDaoUserEventAppender",
-						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
-						LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
-						settings.getStatFrequency(), UserEventStats.values()),
-				uuidGenerator);
-		biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
-		biz.setSolarFluxPublisher(userEventSolarFluxPublisher);
-		return biz;
+	@Profile("!logging-user-event-appender")
+	@Configuration
+	public static class AsyncUserEventAppenderConfig {
+
+		@Bean
+		@ConfigurationProperties(prefix = "app.user.events.async-appender")
+		public AsyncUserEventAppenderSettings asyncUserEventAppenderSettings() {
+			return new AsyncUserEventAppenderSettings();
+		}
+
+		@Bean(destroyMethod = "serviceDidShutdown")
+		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
+				UserEventAppenderDao dao, UuidGenerator uuidGenerator,
+				@Autowired(required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
+					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
+					new CustomizableThreadFactory("UserEventAppender-"));
+			executor.allowCoreThreadTimeOut(true);
+			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
+					new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
+					new StatCounter("AsyncDaoUserEventAppender",
+							"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
+							LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
+							settings.getStatFrequency(), UserEventStats.values()),
+					uuidGenerator);
+			biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
+			biz.setSolarFluxPublisher(userEventSolarFluxPublisher);
+			return biz;
+		}
+
+	}
+
+	@Profile("logging-user-event-appender")
+	@Configuration
+	public static class LoggingUserEventAppenderConfig {
+
+		@Bean
+		public LoggingUserEventAppenderBiz userEventAppenderBiz() {
+			return new LoggingUserEventAppenderBiz();
+		}
 	}
 
 }
