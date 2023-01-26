@@ -23,10 +23,13 @@
 package net.solarnetwork.central.ocpp.dao.jdbc.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.sql.Timestamp;
@@ -143,8 +146,9 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
 		assertThat("Row connected to missing", row.get("connected_to"), is(nullValue()));
 		assertThat("Row session ID missing", row.get("session_id"), is(nullValue()));
-		assertThat("Row connected date unchanged", row.get("connected_date"),
-				is(equalTo(Timestamp.from(connDate))));
+		assertThat("Row connected date updated to 'now' (within a few ms of now)",
+				Instant.now().toEpochMilli() - ((Timestamp) row.get("connected_date")).getTime(),
+				is(allOf(greaterThanOrEqualTo(0L), lessThan(500L))));
 	}
 
 	@Test
