@@ -14,7 +14,7 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
     username: "solartest"
     password: "solartest"
     platform: "postgres"
@@ -309,7 +309,7 @@ spring:
   thymeleaf.cache: false
 app:
   datasource:
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    url: "jdbc:postgresql://localhost/solarnetwork"
     username: solarnet
     password: solarnet
 

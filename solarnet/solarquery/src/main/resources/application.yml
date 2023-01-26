@@ -8,7 +8,7 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
     username: solartest
     password: solartest
     platform: postgres
@@ -21,7 +21,7 @@ app:
       idleTimeout: 600000
       maxLifetime: 1800000
       readOnly: false
-    url-example: "jdbc:postgresql://localhost:5412/solarnetwork_unittest"
+    url-example: "jdbc:postgresql://localhost/solarnetwork_unittest"
     username: solartest
     password: solartest
     platform: postgres
@@ -133,7 +133,7 @@ debug: true
 
 app:
   datasource:
-    url: "jdbc:postgresql://localhost:5412/solarnetwork"
+    url: "jdbc:postgresql://localhost/solarnetwork"
     username: solarnet
     password: solarnet
   query-cache:

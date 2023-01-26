@@ -21,7 +21,7 @@ spring:
       connectionTimeout: 30000
       idleTimeout: 600000
       maxLifetime: 1800000
-    url: jdbc:postgresql://localhost:5412/solarnetwork_unittest
+    url: jdbc:postgresql://localhost/solarnetwork_unittest
     username: solartest
     password: solartest
     platform: postgres

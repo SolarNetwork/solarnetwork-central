@@ -17,9 +17,6 @@ description = 'SolarNet: OSCP'
 version = '1.4.0'
 archivesBaseName = 'solarnet-oscp'
 
-sourceCompatibility = 17
-targetCompatibility = 17
-
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
