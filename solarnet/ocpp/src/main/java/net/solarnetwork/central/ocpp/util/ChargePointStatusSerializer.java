@@ -28,12 +28,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
+import net.solarnetwork.codec.JsonDateUtils.InstantSerializer;
 
 /**
  * JSON serializer for {@link ChargePointStatus} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus> {
 
@@ -53,17 +54,22 @@ public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus
 			generator.writeNull();
 			return;
 		}
-		generator.writeStartObject(status, 5);
+		generator.writeStartObject(status, 6);
 		if ( status.getCreated() != null ) {
-			generator.writeObjectField("created", status.getCreated());
+			generator.writeFieldName("created");
+			InstantSerializer.INSTANCE.serialize(status.getCreated(), generator, provider);
 		}
 		generator.writeNumberField("userId", status.getUserId());
 		generator.writeNumberField("chargePointId", status.getChargePointId());
 		if ( status.getConnectedTo() != null ) {
 			generator.writeStringField("connectedTo", status.getConnectedTo());
 		}
+		if ( status.getSessionId() != null ) {
+			generator.writeStringField("sessionId", status.getSessionId());
+		}
 		if ( status.getConnectedDate() != null ) {
-			generator.writeObjectField("connectedDate", status.getConnectedDate());
+			generator.writeFieldName("connectedDate");
+			InstantSerializer.INSTANCE.serialize(status.getConnectedDate(), generator, provider);
 		}
 		generator.writeEndObject();
 	}
