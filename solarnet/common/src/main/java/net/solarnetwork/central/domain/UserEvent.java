@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.support.UuidUtils;
@@ -109,9 +110,11 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 		builder.append(getEventId());
 		builder.append(", ");
 
-		builder.append("tags=");
-		builder.append(getTags());
-		builder.append(", ");
+		if ( tags != null ) {
+			builder.append("tags=");
+			builder.append(Arrays.toString(tags));
+			builder.append(", ");
+		}
 
 		if ( message != null ) {
 			builder.append("message=");
