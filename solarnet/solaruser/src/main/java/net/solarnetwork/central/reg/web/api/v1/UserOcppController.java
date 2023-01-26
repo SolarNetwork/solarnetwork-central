@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_ACTION_STATUS_FILTER;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -33,6 +34,7 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -83,6 +85,7 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 2.2
  */
+@Profile(OCPP_V16)
 @GlobalExceptionRestController
 @RestController("v1OcppController")
 @RequestMapping(value = { "/u/sec/ocpp", "/api/v1/sec/user/ocpp" })
@@ -107,8 +110,8 @@ public class UserOcppController {
 	 * @param propertySerializerRegistrar
 	 *        the registrar to use (may be {@literal null}
 	 */
-	public UserOcppController(@Autowired(required = false) UserOcppBiz userOcppBiz,
-			ObjectMapper objectMapper, @Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public UserOcppController(UserOcppBiz userOcppBiz, ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
 		this.userOcppBiz = requireNonNullArgument(userOcppBiz, "userOcppBiz");

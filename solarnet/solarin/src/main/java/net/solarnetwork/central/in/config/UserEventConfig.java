@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ import net.solarnetwork.util.StatCounter;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
 
 	@Autowired
@@ -61,10 +62,6 @@ public class UserEventConfig {
 
 	@Autowired
 	private UuidGenerator uuidGenerator;
-
-	@Autowired
-	@Qualifier(SOLARFLUX)
-	private ObjectMapper solarFluxObjectMapper;
 
 	@Bean
 	public UserEventAppenderDao userEventAppenderDao() {
@@ -78,17 +75,20 @@ public class UserEventConfig {
 		return new AsyncUserEventAppenderSettings();
 	}
 
+	@Profile("mqtt")
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarflux.user-events")
 	@Qualifier(SOLARFLUX)
-	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher() {
+	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
+			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
 		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
 				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 
 	@Bean(destroyMethod = "serviceDidShutdown")
 	public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
-			UserEventAppenderDao dao) {
+			UserEventAppenderDao dao,
+			@Autowired(required = false) @Qualifier(SOLARFLUX) MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher) {
 		ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
 				settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
 				new CustomizableThreadFactory("UserEventAppender-"));
@@ -101,7 +101,7 @@ public class UserEventConfig {
 						settings.getStatFrequency(), UserEventStats.values()),
 				uuidGenerator);
 		biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
-		biz.setSolarFluxPublisher(userEventSolarFluxPublisher());
+		biz.setSolarFluxPublisher(userEventSolarFluxPublisher);
 		return biz;
 	}
 

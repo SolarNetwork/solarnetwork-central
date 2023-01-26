@@ -72,7 +72,7 @@ import ocpp.json.ActionPayloadDecoder;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -159,13 +159,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), Instant.now());
+									appMeta.getInstanceId(), session.getId(), Instant.now());
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} connection status", clientId, e);
 						}
 					}
 				}
-				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+				Map<String, Object> data = Map.of(CHARGE_POINT_DATA_KEY, clientId.getIdentifier(),
+						SESSION_ID_DATA_KEY, session.getId());
 				generateUserEvent(userId, CHARGE_POINT_CONNECTED_TAGS, null, data);
 			}
 			// look for instructions
@@ -184,13 +185,14 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), null);
+									appMeta.getInstanceId(), session.getId(), null);
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} disconnection status", clientId, e);
 						}
 					}
 				}
-				Map<String, Object> data = singletonMap(CHARGE_POINT_DATA_KEY, clientId.getIdentifier());
+				Map<String, Object> data = Map.of(CHARGE_POINT_DATA_KEY, clientId.getIdentifier(),
+						SESSION_ID_DATA_KEY, session.getId());
 				generateUserEvent(userId, CHARGE_POINT_DISCONNECTED_TAGS, null, data);
 			}
 		}

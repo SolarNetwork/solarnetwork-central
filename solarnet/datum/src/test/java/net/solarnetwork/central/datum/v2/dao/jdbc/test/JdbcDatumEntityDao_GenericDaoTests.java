@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,12 +53,12 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.dao.GenericDao;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -79,7 +80,9 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 	@Test
 	public void saveNew() {
-		DatumEntity datum = new DatumEntity(UUID.randomUUID(), Instant.now(), Instant.now(),
+		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
 				DatumProperties.propertiesOf(
 						new BigDecimal[] { new BigDecimal("1.23"), new BigDecimal("2.34") },
 						new BigDecimal[] { new BigDecimal("3.45") }, new String[] { "On" }, null));
@@ -219,10 +222,10 @@ public class JdbcDatumEntityDao_GenericDaoTests extends BaseDatumJdbcTestSupport
 
 	private void assertSame(DatumEntity expected, DatumEntity entity) {
 		assertThat("DatumEntity should exist", entity, notNullValue());
-		assertThat("Stream ID", expected.getStreamId(), equalTo(entity.getStreamId()));
-		assertThat("Timestamp", expected.getTimestamp(), equalTo(entity.getTimestamp()));
-		assertThat("Received", expected.getReceived(), equalTo(entity.getReceived()));
-		assertThat("Properties", expected.getProperties(), equalTo(entity.getProperties()));
+		assertThat("Stream ID", entity.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat("Timestamp", entity.getTimestamp(), equalTo(expected.getTimestamp()));
+		assertThat("Received", entity.getReceived(), equalTo(expected.getReceived()));
+		assertThat("Properties", entity.getProperties(), equalTo(expected.getProperties()));
 	}
 
 	@Test

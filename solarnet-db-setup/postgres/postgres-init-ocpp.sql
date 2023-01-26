@@ -148,6 +148,7 @@ CREATE TABLE solarev.ocpp_charge_point_status (
 	user_id			BIGINT NOT NULL,
 	cp_id			BIGINT NOT NULL,
 	connected_to	TEXT,
+	session_id		TEXT,
 	connected_date	TIMESTAMP WITH TIME ZONE,
 	CONSTRAINT ocpp_charge_point_status_pk PRIMARY KEY (user_id, cp_id),
 	CONSTRAINT ocpp_charge_point_status_charge_point_fk FOREIGN KEY (cp_id)

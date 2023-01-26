@@ -34,17 +34,20 @@ import net.solarnetwork.util.ObjectUtils;
  * OCPP charger overall status.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "created", "userId", "chargePointId", "connectedTo", "connectedDate" })
+@JsonPropertyOrder({ "created", "userId", "chargePointId", "connectedTo", "sessionId", "connectedDate" })
 public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 		implements UserRelatedEntity<UserLongCompositePK> {
 
-	private static final long serialVersionUID = 1717488657665528060L;
+	private static final long serialVersionUID = -4350200357133821464L;
 
 	/** The SolarIn instance connected to. */
 	private String connectedTo;
+
+	/** The connection session ID. */
+	private String sessionId;
 
 	/** The connection date. */
 	private Instant connectedDate;
@@ -63,13 +66,16 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        {@literal null} if not connected
 	 * @param connectedDate
 	 *        the date the connection was established
+	 * @param sessionId
+	 *        the connection session ID
 	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} or {@code chargePointId} is {@literal null}
 	 */
 	public ChargePointStatus(Long userId, Long chargePointId, Instant created, String connectedTo,
-			Instant connectedDate) {
-		this(new UserLongCompositePK(userId, chargePointId), created, connectedTo, connectedDate);
+			String sessionId, Instant connectedDate) {
+		this(new UserLongCompositePK(userId, chargePointId), created, connectedTo, sessionId,
+				connectedDate);
 	}
 
 	/**
@@ -82,6 +88,8 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 * @param connectedTo
 	 *        the name of the SolarIn instance the charger is connected to, or
 	 *        {@literal null} if not connected
+	 * @param sessionId
+	 *        the connection session ID
 	 * @param connectedDate
 	 *        the date the connection was established
 	 * @return the new instance
@@ -89,9 +97,10 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *         if {@code id} is {@literal null}
 	 */
 	public ChargePointStatus(UserLongCompositePK id, Instant created, String connectedTo,
-			Instant connectedDate) {
+			String sessionId, Instant connectedDate) {
 		super(ObjectUtils.requireNonNullArgument(id, "id"), created);
 		this.connectedTo = connectedTo;
+		this.sessionId = sessionId;
 		this.connectedDate = connectedDate;
 
 	}
@@ -127,6 +136,27 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 */
 	public void setConnectedTo(String connectedTo) {
 		this.connectedTo = connectedTo;
+	}
+
+	/**
+	 * Get the connection session ID.
+	 * 
+	 * @return the sessionId the session ID
+	 * @since 1.1
+	 */
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	/**
+	 * Set the connection session ID.
+	 * 
+	 * @param sessionId
+	 *        the session ID to set
+	 * @since 1.1
+	 */
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 
 	/**

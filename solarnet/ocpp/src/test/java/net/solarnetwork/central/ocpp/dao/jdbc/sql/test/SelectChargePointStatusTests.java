@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -55,7 +56,7 @@ import net.solarnetwork.central.ocpp.dao.jdbc.sql.SelectChargePointStatus;
  * Test cases for the {@link SelectChargePointStatus} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectChargePointStatusTests {
@@ -76,6 +77,9 @@ public class SelectChargePointStatusTests {
 	@Mock
 	private Array chargePointIdsArray;
 
+	@Mock
+	private Array identifiersArray;
+
 	@Captor
 	private ArgumentCaptor<String> sqlCaptor;
 
@@ -90,6 +94,10 @@ public class SelectChargePointStatusTests {
 
 	private void givenSetChargePointIdsArrayParameter(Long[] value) throws SQLException {
 		given(con.createArrayOf(eq("bigint"), aryEq(value))).willReturn(chargePointIdsArray);
+	}
+
+	private void givenSetIdentifiersArrayParameter(String[] value) throws SQLException {
+		given(con.createArrayOf(eq("text"), aryEq(value))).willReturn(identifiersArray);
 	}
 
 	private void thenPrepStatement(PreparedStatement result, ChargePointStatusFilter filter)
@@ -107,6 +115,13 @@ public class SelectChargePointStatusTests {
 				then(result).should().setObject(++p, filter.getChargePointId());
 			} else {
 				then(result).should().setArray(++p, chargePointIdsArray);
+			}
+		}
+		if ( filter.hasIdentifierCriteria() ) {
+			if ( filter.getIdentifiers().length == 1 ) {
+				then(result).should().setObject(++p, filter.getIdentifier());
+			} else {
+				then(result).should().setArray(++p, identifiersArray);
 			}
 		}
 		if ( filter.hasStartDate() ) {
@@ -283,6 +298,93 @@ public class SelectChargePointStatusTests {
 		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
 		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
 				"select-cpstatus-user-cps-dateRange.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
+	@Test
+	public void find_userAndChargePointsAndSessionId_sql() {
+		// GIVEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(1L);
+		filter.setChargePointIds(new Long[] { 2L, 3L });
+		filter.setIdentifier(UUID.randomUUID().toString());
+
+		// WHEN
+		String sql = new SelectChargePointStatus(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-cpstatus-user-cps-session.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void find_userAndChargePointsAndSessionId_prep() throws SQLException {
+		// GIVEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(1L);
+		filter.setChargePointIds(new Long[] { 2L, 3L });
+		filter.setIdentifier(UUID.randomUUID().toString());
+
+		givenPrepStatement();
+		givenSetChargePointIdsArrayParameter(filter.getChargePointIds());
+
+		// WHEN
+		PreparedStatement result = new SelectChargePointStatus(filter, TEST_FETCH_SIZE)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-cpstatus-user-cps-session.sql", TestSqlResources.class, SQL_COMMENT));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		thenPrepStatement(result, filter);
+	}
+
+	@Test
+	public void find_userAndChargePointsAndSessionIds_sql() {
+		// GIVEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(1L);
+		filter.setChargePointIds(new Long[] { 2L, 3L });
+		filter.setIdentifiers(
+				new String[] { UUID.randomUUID().toString(), UUID.randomUUID().toString() });
+
+		// WHEN
+		String sql = new SelectChargePointStatus(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-cpstatus-user-cps-sessions.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void find_userAndChargePointsAndSessionIds_prep() throws SQLException {
+		// GIVEN
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setUserId(1L);
+		filter.setChargePointIds(new Long[] { 2L, 3L });
+		filter.setIdentifiers(
+				new String[] { UUID.randomUUID().toString(), UUID.randomUUID().toString() });
+
+		givenPrepStatement();
+		givenSetChargePointIdsArrayParameter(filter.getChargePointIds());
+		givenSetIdentifiersArrayParameter(filter.getIdentifiers());
+
+		// WHEN
+		PreparedStatement result = new SelectChargePointStatus(filter, TEST_FETCH_SIZE)
+				.createPreparedStatement(con);
+
+		// THEN
+		then(con).should().prepareStatement(sqlCaptor.capture(), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
+				"select-cpstatus-user-cps-sessions.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		thenPrepStatement(result, filter);
 	}

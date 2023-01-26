@@ -44,7 +44,7 @@ public class UpsertChargePointIdentifierConnectionStatus
 	private final Long userId;
 	private final String chargePointIdentifier;
 	private final ChargePointStatus status;
-	private final boolean updateDate;
+	private final boolean connected;
 
 	/**
 	 * Constructor.
@@ -65,36 +65,40 @@ public class UpsertChargePointIdentifierConnectionStatus
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,
 				"chargePointIdentifier");
 		this.status = requireNonNullArgument(status, "status");
-		this.updateDate = (status.getConnectedTo() != null && status.getConnectedDate() != null);
+		this.connected = (status.getConnectedTo() != null && status.getConnectedDate() != null);
 	}
 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append("INSERT INTO solarev.ocpp_charge_point_status (user_id, cp_id, connected_to");
-		if ( updateDate ) {
+		buf.append(
+				"INSERT INTO solarev.ocpp_charge_point_status (user_id, cp_id, connected_to, session_id, connected_date)\n");
+		if ( connected ) {
 			buf.append("""
-					, connected_date)
-					SELECT cp.user_id, cp.id, ? AS connected_to, ? AS connected_date
+					SELECT cp.user_id, cp.id, ? AS connected_to, ? AS session_id, ? AS connected_date
 					FROM solarev.ocpp_charge_point cp
 					WHERE cp.user_id = ?
 						AND cp.ident = ?
 					ON CONFLICT (user_id, cp_id) DO UPDATE
 					SET connected_to = EXCLUDED.connected_to
+						, session_id = EXCLUDED.session_id
 						, connected_date = EXCLUDED.connected_date
 					""");
 		} else {
 			buf.append("""
-					)
-					SELECT cp.user_id, cp.id, NULL::TEXT AS connected_to
+					SELECT cp.user_id, cp.id, NULL::TEXT AS connected_to, NULL::TEXT AS session_id
+						, CURRENT_TIMESTAMP AS connected_date
 					FROM solarev.ocpp_charge_point cp
 					INNER JOIN solarev.ocpp_charge_point_status cps
 						ON cps.user_id = cp.user_id AND cps.cp_id = cp.id
 					WHERE cp.user_id = ?
 						AND cp.ident = ?
 						AND cps.connected_to = ?
+						AND cps.session_id = ?
 					ON CONFLICT (user_id, cp_id) DO UPDATE
 					SET connected_to = EXCLUDED.connected_to
+						, session_id = EXCLUDED.session_id
+						, connected_date = EXCLUDED.connected_date
 					""");
 		}
 		return buf.toString();
@@ -104,14 +108,16 @@ public class UpsertChargePointIdentifierConnectionStatus
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement ps = con.prepareStatement(getSql());
 		int p = 0;
-		if ( updateDate ) {
+		if ( connected ) {
 			ps.setString(++p, status.getConnectedTo());
+			ps.setString(++p, status.getSessionId());
 			ps.setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
 		ps.setObject(++p, userId);
 		ps.setString(++p, chargePointIdentifier);
-		if ( !updateDate ) {
+		if ( !connected ) {
 			ps.setString(++p, status.getConnectedTo());
+			ps.setString(++p, status.getSessionId());
 		}
 		return ps;
 	}

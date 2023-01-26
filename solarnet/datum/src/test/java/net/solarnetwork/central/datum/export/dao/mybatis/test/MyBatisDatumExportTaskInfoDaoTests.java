@@ -103,7 +103,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		DatumExportTaskInfo info = dao.get(this.info.getId());
 		info.setTaskSuccess(Boolean.TRUE);
 		info.setMessage("Yee haw!");
-		info.setCompleted(Instant.now());
+		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.MICROS));
 		UUID uuid = dao.store(info);
 		assertThat("UUID unchanged", uuid, equalTo(info.getId()));
 

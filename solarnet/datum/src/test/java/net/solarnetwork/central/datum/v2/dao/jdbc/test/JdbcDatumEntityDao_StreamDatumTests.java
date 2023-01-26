@@ -46,8 +46,8 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.dao.GenericDao;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
@@ -72,7 +72,8 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 	public void store_new() {
 		// GIVEN
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS), Instant.now(),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				DatumProperties.propertiesOf(decimalArray("1.23", "2.34"), decimalArray("3.45"),
 						new String[] { "On" }, new String[] { "a" }));
 
@@ -108,7 +109,8 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 	public void store_new2() {
 		// GIVEN
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS), Instant.now(),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
 				DatumProperties.propertiesOf(decimalArray("3.21", "4.32", "5.43"), decimalArray("5.43"),
 						null, new String[] { "b" }));
 
@@ -144,8 +146,9 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 		// GIVEN
 		store_new();
 		DatumEntity datum = new DatumEntity(lastDatum.getStreamId(), lastDatum.getTimestamp(),
-				Instant.now(), DatumProperties.propertiesOf(decimalArray("3.21", "4.32", "5.43"),
-						decimalArray("5.43"), null, new String[] { "b" }));
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
+				DatumProperties.propertiesOf(decimalArray("3.21", "4.32", "5.43"), decimalArray("5.43"),
+						null, new String[] { "b" }));
 
 		// WHEN
 		DatumPK id = dao.store(datum);
@@ -184,10 +187,10 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 
 	private void assertSame(DatumEntity expected, DatumEntity entity) {
 		assertThat("DatumEntity should exist", entity, notNullValue());
-		assertThat("Stream ID", expected.getStreamId(), equalTo(entity.getStreamId()));
-		assertThat("Timestamp", expected.getTimestamp(), equalTo(entity.getTimestamp()));
-		assertThat("Received", expected.getReceived(), equalTo(entity.getReceived()));
-		assertThat("Properties", expected.getProperties(), equalTo(entity.getProperties()));
+		assertThat("Stream ID", entity.getStreamId(), equalTo(expected.getStreamId()));
+		assertThat("Timestamp", entity.getTimestamp(), equalTo(expected.getTimestamp()));
+		assertThat("Received", entity.getReceived(), equalTo(expected.getReceived()));
+		assertThat("Properties", entity.getProperties(), equalTo(expected.getProperties()));
 	}
 
 	@Test
@@ -201,7 +204,8 @@ public class JdbcDatumEntityDao_StreamDatumTests extends BaseDatumJdbcTestSuppor
 	public void store_withNullPropertyValues() throws IOException {
 		// GIVEN
 		DatumEntity datum = new DatumEntity(UUID.randomUUID(),
-				Instant.now().truncatedTo(ChronoUnit.MILLIS), Instant.now(),
+				Instant.now().truncatedTo(ChronoUnit.MILLIS),
+				Instant.now().truncatedTo(ChronoUnit.MICROS),
 				DatumProperties.propertiesOf(decimalArray(null, null, "1.23", null),
 						decimalArray("2.34", null, null, "3.45"),
 						new String[] { null, "On", null, "Off" }, new String[] { "a", "b" }));
