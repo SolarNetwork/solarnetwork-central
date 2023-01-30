@@ -546,7 +546,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				chargeSessionDao.addReadings(sessionReadings);
 			}
 
-			// group readings by timestamp  and source ID into Datum
+			// group readings by timestamp and source ID into Datum
 			Map<String, Datum> datumBySourceId = new LinkedHashMap<>(4);
 			for ( SampledValue reading : newReadings ) {
 				CentralChargePoint cp = chargePoints.get(chargePointId);
