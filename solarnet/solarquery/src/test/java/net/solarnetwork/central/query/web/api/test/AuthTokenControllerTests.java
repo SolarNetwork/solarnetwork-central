@@ -135,7 +135,7 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 				.header(AuthorizationUtils.SN_DATE_HEADER,
 						AUTHORIZATION_DATE_HEADER_FORMATTER.format(now))
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().is(HttpStatus.UNAUTHORIZED.value()));
+			.andExpect(status().is(HttpStatus.FORBIDDEN.value()));
 		// @formatter:on
 	}
 

@@ -24,7 +24,7 @@ TODO: document fully
 
 # Update group capacity forecast (CP →  FP)
 
-Here is a data flow diagram representing the OSCP _update group capacity forecast_ function, 
+Here is a data flow diagram representing the OSCP _update group capacity forecast_ function,
 initiated by a Capacity Provider and using OAuth for authentication:
 
 ![Update group capacity forecast data flow using OAuth](docs/img/update-group-capacity-forecast-data-flow-oauth.svg)
@@ -38,7 +38,7 @@ This app depends on the following projects:
  * [solarnet-datum][solarnet-datum]
  * [solarnet-instructor][solarnet-instructor]
  * [solarnet-oscp][solarnet-oscp]
- 
+
 
 # Runtime Profiles
 
@@ -46,11 +46,12 @@ The following Spring runtime profiles are available:
 
 | Profile | Description |
 |:--------|:------------|
-| `aws-secrets` | Enables AWS Secrets Manager persistence for OAuth credentials. If not active then a simple file-based resource will be used. |
-| `http-trace`  | Enables HTTP wire-level logging for the `net.solarnetwork.http.REQ` and `net.solarnetwork.http.RES` loggers. |
-| `mqtt`        | Enables integration with SolarFlux/MQTT. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
-| `oscp-jobs`   | Enable OSCP periodic jobs to support things like heartbeats and measurement reporting. See [JobConfig][JobConfig]. |
-| `oscp-v20`    | Enable OSCP v2.0 support. |
+| `aws-secrets`  | Enables AWS Secrets Manager persistence for OAuth credentials. If not active then a simple file-based resource will be used. |
+| `http-trace`   | Enables HTTP wire-level logging for the `net.solarnetwork.http.REQ` and `net.solarnetwork.http.RES` loggers. |
+| `mqtt`         | Enables integration with SolarFlux/MQTT. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
+| `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
+| `oscp-jobs`    | Enable OSCP periodic jobs to support things like heartbeats and measurement reporting. See [JobConfig][JobConfig]. |
+| `oscp-v20`     | Enable OSCP v2.0 support. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as
@@ -64,7 +65,7 @@ SPRING_PROFILES_ACTIVE="production,mqtt,oscp-v20,oscp-jobs"
 
 See the [application.yml][app-config] file for the available runtime configuration properties, and
 their default values. You can override any property by creating an `application.yml` file in the
-working directory of the application, or via profile-specific files like 
+working directory of the application, or via profile-specific files like
 `application-production.yml` when the `production` profile is active.
 
 

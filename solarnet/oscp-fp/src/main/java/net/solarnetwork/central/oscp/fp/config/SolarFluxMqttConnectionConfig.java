@@ -41,7 +41,7 @@ import net.solarnetwork.common.mqtt.MqttStats;
  * @version 1.0
  */
 @Configuration
-@Profile("mqtt")
+@Profile("mqtt & !no-solarflux")
 public class SolarFluxMqttConnectionConfig {
 
 	/** Qualifier for SolarFlux. */

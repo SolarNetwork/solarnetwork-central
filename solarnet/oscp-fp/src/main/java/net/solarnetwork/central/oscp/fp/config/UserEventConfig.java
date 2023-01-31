@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
@@ -52,6 +53,12 @@ import net.solarnetwork.util.StatCounter;
 
 /**
  * Configuration for user event handling.
+ * 
+ * <p>
+ * The {@code logging-user-event-appender} profile can be enabled to disable the
+ * default async DAO appender in favor of one that simply logs the events to the
+ * application log. This can be useful in unit tests, for example.
+ * </p>
  * 
  * @author matt
  * @version 1.0
@@ -97,11 +104,9 @@ public class UserEventConfig {
 	/**
 	 * Configuration for persisting user events.
 	 */
+	@Profile("!logging-user-event-appender")
 	@Configuration
-	public static class UserEventAppenderConfig {
-
-		@Autowired
-		private UuidGenerator uuidGenerator;
+	public static class AsyncUserEventAppenderConfig {
 
 		@Bean
 		@ConfigurationProperties(prefix = "app.user.events.async-appender")
@@ -111,7 +116,7 @@ public class UserEventConfig {
 
 		@Bean(destroyMethod = "serviceDidShutdown")
 		public AsyncDaoUserEventAppenderBiz userEventAppenderBiz(AsyncUserEventAppenderSettings settings,
-				UserEventAppenderDao dao,
+				UserEventAppenderDao dao, UuidGenerator uuidGenerator,
 				@Qualifier(SOLARFLUX) @Autowired(required = false) MqttJsonPublisher<UserEvent> solarFluxPublisher) {
 			ThreadPoolExecutor executor = new ThreadPoolExecutor(settings.getThreads(),
 					settings.getThreads(), 5L, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(),
@@ -129,6 +134,16 @@ public class UserEventConfig {
 			return biz;
 		}
 
+	}
+
+	@Profile("logging-user-event-appender")
+	@Configuration
+	public static class LoggingUserEventAppenderConfig {
+
+		@Bean
+		public LoggingUserEventAppenderBiz userEventAppenderBiz() {
+			return new LoggingUserEventAppenderBiz();
+		}
 	}
 
 }

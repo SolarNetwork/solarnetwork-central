@@ -11,7 +11,7 @@ This app depends on the following projects:
  * [solarnet-instructor][solarnet-instructor]
  * [solarnet-ocpp][solarnet-ocpp]
  * [solarnet-user][solarnet-user]
- 
+
 # Runtime profiles
 
 The following Spring runtime profiles are available:
@@ -20,6 +20,7 @@ The following Spring runtime profiles are available:
 |:--------|:------------|
 | `dogtag` | Node PKI support via Dogtag. See [PkiDogtagConfig][PkiDogtagConfig]. |
 | `mqtt` | Enables integration with SolarIn/MQTT. See [MqttDataCollectorConfig][MqttDataCollectorConfig]. |
+| `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `ocpp-charge-session` | Enable OCPP charge session support. See [OcppChargeSessionManagerConfig][OcppChargeSessionManagerConfig]. |
 | `ocpp-v16` | Enables OCPP v1.6 integration. See references to [SolarNetOcppConfiguration][SolarNetOcppConfiguration]. |
 
@@ -34,7 +35,7 @@ SPRING_PROFILES_ACTIVE="production,dogtag,mqtt,ocpp-charge-session,ocpp-v16"
 
 See the [application.yml][app-config] file for the available runtime configuration properties, and
 their default values. You can override any property by creating an `application.yml` file in the
-working directory of the application, or via profile-specific files like 
+working directory of the application, or via profile-specific files like
 `application-production.yml` when the `production` profile is active.
 
 
