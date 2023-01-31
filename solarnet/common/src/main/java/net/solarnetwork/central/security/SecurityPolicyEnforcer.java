@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -43,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
@@ -283,28 +284,43 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		}
 
 		if ( sourceIds != null && sourceIds.length > 0 ) {
+			Set<String> sourceIdsSet = new LinkedHashSet<>(Arrays.asList(sourceIds));
+
 			// extract policy source ID patterns
 			Set<String> policySourceIdPatterns = null;
+
+			// extract input source ID patterns
+			Set<String> sourceIdPatterns = null;
+
 			if ( pathMatcher != null ) {
 				for ( String policySourceId : policySourceIds ) {
 					if ( pathMatcher.isPattern(policySourceId) ) {
 						if ( policySourceIdPatterns == null ) {
-							policySourceIdPatterns = new LinkedHashSet<String>(policySourceIds.size());
+							policySourceIdPatterns = new LinkedHashSet<>(policySourceIds.size());
 						}
 						policySourceIdPatterns.add(policySourceId);
 					}
 				}
 				if ( policySourceIdPatterns != null ) {
-					Set<String> mutablePolicySourceIds = new LinkedHashSet<String>(policySourceIds);
+					Set<String> mutablePolicySourceIds = new LinkedHashSet<>(policySourceIds);
 					mutablePolicySourceIds.removeAll(policySourceIdPatterns);
 					policySourceIds = mutablePolicySourceIds;
+				}
+
+				for ( String sourceId : sourceIds ) {
+					if ( pathMatcher.isPattern(sourceId) ) {
+						if ( sourceIdPatterns == null ) {
+							sourceIdPatterns = new LinkedHashSet<>(sourceIds.length);
+						}
+						sourceIdPatterns.add(sourceId);
+						sourceIdsSet.remove(sourceId);
+					}
 				}
 			}
 
 			// remove any source IDs not in the policy (or not matching a pattern)
-			Set<String> sourceIdsSet = new LinkedHashSet<String>(Arrays.asList(sourceIds));
 			for ( Iterator<String> itr = sourceIdsSet.iterator(); itr.hasNext(); ) {
-				String sourceId = itr.next();
+				final String sourceId = itr.next();
 				if ( policySourceIds.contains(sourceId) ) {
 					continue;
 				}
@@ -315,10 +331,32 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				LOG.warn("Access DENIED to source {} for {}: policy restriction", sourceId, principal);
 				itr.remove();
 			}
-			if ( sourceIdsSet.size() < 1 ) {
+
+			// resolve source ID patterns against policy
+			if ( sourceIdPatterns != null ) {
+				// if a source ID pattern exactly matches a policy source ID pattern, allow
+				if ( policySourceIdPatterns != null ) {
+					for ( String sourceIdPattern : sourceIdPatterns ) {
+						if ( policySourceIdPatterns.contains(sourceIdPattern) ) {
+							sourceIdsSet.add(sourceIdPattern);
+							continue;
+						}
+						LOG.warn("Access DENIED to source {} for {}: policy restriction",
+								sourceIdPattern, principal);
+					}
+				}
+				// if a source ID pattern matches a policy source ID, fill in that policy ID
+				for ( String policySourceId : policySourceIds ) {
+					if ( matchesPattern(sourceIdPatterns, policySourceId) ) {
+						sourceIdsSet.add(policySourceId);
+					}
+				}
+			}
+
+			if ( sourceIdsSet.isEmpty() ) {
 				LOG.warn("Access DENIED to sources {} for {}", sourceIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceIds);
-			} else if ( sourceIdsSet.size() < sourceIds.length ) {
+			} else if ( !sourceIdsSet.equals(new HashSet<>(Arrays.asList(sourceIds))) ) {
 				sourceIds = sourceIdsSet.toArray(new String[sourceIdsSet.size()]);
 			}
 		} else if ( sourceIds == null || sourceIds.length < 1 ) {

@@ -40,7 +40,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Basic implementation of {@link SecurityPolicy}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @JsonDeserialize(builder = net.solarnetwork.central.security.BasicSecurityPolicy.Builder.class)
 @JsonSerialize(using = SecurityPolicySerializer.class)
@@ -640,6 +640,68 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder2 = new StringBuilder();
+		builder2.append("BasicSecurityPolicy{");
+		if ( nodeIds != null ) {
+			builder2.append("nodeIds=");
+			builder2.append(nodeIds);
+			builder2.append(", ");
+		}
+		if ( sourceIds != null ) {
+			builder2.append("sourceIds=");
+			builder2.append(sourceIds);
+			builder2.append(", ");
+		}
+		if ( aggregations != null ) {
+			builder2.append("aggregations=");
+			builder2.append(aggregations);
+			builder2.append(", ");
+		}
+		if ( locationPrecisions != null ) {
+			builder2.append("locationPrecisions=");
+			builder2.append(locationPrecisions);
+			builder2.append(", ");
+		}
+		if ( minAggregation != null ) {
+			builder2.append("minAggregation=");
+			builder2.append(minAggregation);
+			builder2.append(", ");
+		}
+		if ( minLocationPrecision != null ) {
+			builder2.append("minLocationPrecision=");
+			builder2.append(minLocationPrecision);
+			builder2.append(", ");
+		}
+		if ( nodeMetadataPaths != null ) {
+			builder2.append("nodeMetadataPaths=");
+			builder2.append(nodeMetadataPaths);
+			builder2.append(", ");
+		}
+		if ( userMetadataPaths != null ) {
+			builder2.append("userMetadataPaths=");
+			builder2.append(userMetadataPaths);
+			builder2.append(", ");
+		}
+		if ( apiPaths != null ) {
+			builder2.append("apiPaths=");
+			builder2.append(apiPaths);
+			builder2.append(", ");
+		}
+		if ( notAfter != null ) {
+			builder2.append("notAfter=");
+			builder2.append(notAfter);
+			builder2.append(", ");
+		}
+		if ( refreshAllowed != null ) {
+			builder2.append("refreshAllowed=");
+			builder2.append(refreshAllowed);
+		}
+		builder2.append("}");
+		return builder2.toString();
 	}
 
 }
