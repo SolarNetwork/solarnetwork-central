@@ -36,6 +36,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
@@ -43,16 +45,25 @@ import net.solarnetwork.central.oscp.security.ExternalSystemJwtAuthenticationCon
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthenticationFilter;
 import net.solarnetwork.central.oscp.security.Role;
+import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
 /**
  * Web security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
+
+	@Autowired
+	private HandlerExceptionResolver handlerExceptionResolver;
+
+	@Bean
+	public RequestRejectedHandler requestRejectedHandler() {
+		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
+	}
 
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
@@ -101,8 +112,8 @@ public class WebSecurityConfig {
 			// @formatter:off
 			http
 				// limit this configuration to specific paths
-				.requestMatchers()
-					.antMatchers("/oscp/**")
+				.securityMatchers()
+					.requestMatchers("/oscp/**")
 					.and()
 
 				// CSRF not needed for stateless calls
@@ -121,12 +132,12 @@ public class WebSecurityConfig {
 				.addFilterBefore(tokenAuthenticationFilter(),
 						UsernamePasswordAuthenticationFilter.class)
 		      
-				.authorizeRequests()
-					.antMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
+				.authorizeHttpRequests()
+					.requestMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
 							Role.ROLE_CAPACITYPROVIDER.toString())
-					.antMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
+					.requestMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
 							Role.ROLE_CAPACITYOPTIMIZER.toString())
-					.antMatchers("/oscp/fp/**").hasAnyAuthority(
+					.requestMatchers("/oscp/fp/**").hasAnyAuthority(
 							Role.ROLE_CAPACITYOPTIMIZER.toString(),
 							Role.ROLE_CAPACITYPROVIDER.toString())
 					.anyRequest().authenticated()
@@ -163,9 +174,9 @@ public class WebSecurityConfig {
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		      
-		      .authorizeRequests()
-		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .antMatchers(HttpMethod.GET, 
+		      .authorizeHttpRequests()
+		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .requestMatchers(HttpMethod.GET, 
 		        		"/", 
 		        		"/error",
 		        		"/*.html",
