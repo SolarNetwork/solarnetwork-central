@@ -59,8 +59,17 @@ import ocpp.v16.cs.DataTransferStatus;
  * the end.
  * </p>
  * 
+ * <p>
+ * The format of the {@code DataTransfer} message has changed over time. The
+ * original format used the Vendor ID {@link #VENDOR_ID} and used a delimited
+ * text structure. An update switched the Vendor ID to {@link #VENDOR_ID_2} and
+ * changed to a JSON structure. A further update switched the data units from
+ * {@code A} to {@code kW} and changed the JSON property names as a result, as
+ * well as adding a {@link #DLB_STATUS_KEY} property.
+ * </p>
+ * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -79,36 +88,27 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	/** The DataTransferRequest {@code messageId} property value. */
 	public static final String MESSAGE_ID = "dlbMeter";
 
-	/** THe data key for the DLB mode. */
+	/** The data key for the DLB mode. */
 	public static final String DLB_MODE_KEY = "DLBMode";
 
-	/**
-	 * The data key for the single-phase home load current, as an amperes value
-	 * with {@literal A} suffix, e.g. "1A".
-	 */
-	public static final String CURRENT_HOME_LOAD = "Current.HomeLoad";
-
-	/**
-	 * The data key for the single-phase solar current, as an amperes value with
-	 * {@literal A} suffix, e.g. "1A".
-	 */
-	public static final String CURRENT_SOLAR = "Current.Solar";
-
-	/**
-	 * The data key pattern for the multi-phase home load current, as an amperes
-	 * value with {@literal A} suffix, e.g. "1A".
-	 */
-	public static final Pattern CURRENT_HOME_LOAD_PHASED = Pattern
-			.compile("Current\\.HomeLoad\\.L(\\d)");
-
-	/**
-	 * The data key pattern for the multi-phase home load current, as an amperes
-	 * value with {@literal A} suffix, e.g. "1A".
-	 */
-	public static final Pattern CURRENT_SOLAR_PHASED = Pattern.compile("Current\\.Solar\\.L(\\d)");
-
 	/** The data value pattern for an ampere value. */
-	public static final Pattern AMP_VALUE = Pattern.compile("(\\d+(\\.\\d*)?)A");
+	public static final Pattern AMP_VALUE = Pattern.compile("(-*\\d+(\\.\\d*)?)A");
+
+	/**
+	 * The data value pattern for a kilowatt value.
+	 * 
+	 * @since 1.4
+	 */
+	public static final Pattern KW_VALUE = Pattern.compile("(-*\\d+(\\.\\d*)?)kW",
+			Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * The data key for the DLB status, whose value can be Normal, Error, or
+	 * Offline.
+	 * 
+	 * @since 1.4
+	 */
+	public static final String DLB_STATUS_KEY = "DLBStatus";
 
 	private final DatumPublisherSupport pubSupport;
 
@@ -184,27 +184,32 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 			final String key = e.getKey();
 			if ( DLB_MODE_KEY.equals(key) ) {
 				s.putStatusSampleValue("mode", e.getValue());
+			} else if ( DLB_STATUS_KEY.equals(key) ) {
+				s.putStatusSampleValue("status", e.getValue());
 			} else {
-				Number amps = ampValue(e.getValue().toString());
-				if ( amps != null ) {
-					String propName = null;
-					if ( CURRENT_HOME_LOAD.equals(key) ) {
-						propName = "load";
-					} else if ( CURRENT_SOLAR.equals(key) ) {
-						propName = "solar";
-					} else {
-						Matcher m = CURRENT_HOME_LOAD_PHASED.matcher(key);
-						if ( m.matches() ) {
-							propName = phased("load", m.group(1));
-						} else {
-							m = CURRENT_SOLAR_PHASED.matcher(key);
-							if ( m.matches() ) {
-								propName = phased("solar", m.group(1));
-							}
-						}
+				Number value = ampValue(e.getValue().toString());
+				if ( value == null ) {
+					value = kwValue(e.getValue().toString());
+					if ( value != null ) {
+						// convert to W
+						value = NumberUtils.scaled(value, 3);
 					}
-					if ( propName != null ) {
-						s.putInstantaneousSampleValue(propName, amps);
+				}
+				if ( value != null ) {
+					DlbMeterKey meterKey = DlbMeterKey.forKey(key);
+					if ( meterKey != null ) {
+						String propName = switch (meterKey.name()) {
+							case HomeLoad -> "load";
+							case Solar -> "solar";
+							case EVSE -> "evse";
+							case Grid -> "grid";
+						};
+						if ( meterKey.isPhased() ) {
+							propName = phased(propName, meterKey.phase());
+						}
+						if ( propName != null ) {
+							s.putInstantaneousSampleValue(propName, value);
+						}
 					}
 				}
 			}
@@ -224,6 +229,11 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
 	private static Number ampValue(String value) {
 		Matcher m = AMP_VALUE.matcher(value);
+		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
+	}
+
+	private static Number kwValue(String value) {
+		Matcher m = KW_VALUE.matcher(value);
 		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
 	}
 
