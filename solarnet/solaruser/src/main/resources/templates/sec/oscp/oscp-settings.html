@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="oscp-settings">
+	<h2>
+		<span data-th-text="#{oscp.settings.header}">Default Settings</span>
+		<button type="button" id="oscp-edit-settings-button" class="btn btn-primary pull-right"
+			data-target="#oscp-settings-edit-modal" data-toggle="modal"
+			data-th-title="#{oscp.settings.add}"
+			data-th-text="#{oscp.settings.add}">
+			Edit Settings
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{oscp.settings.intro(0)}">
+		Your settings are shown here. Use the Edit button to edit the settings.
+	</p>
+	<table id="oscp-settings-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{oscp.settings.nodeId.label}">Node ID</th>
+				<th data-th-text="#{oscp.settings.sourceIdTemplate.label}">Source ID template</th>
+				<th data-th-text="#{oscp.settings.publishToSolarIn.label}">SolarIn</th>
+				<th data-th-text="#{oscp.settings.publishToSolarFlux.label}">SolarFlux</th>
+			</tr>
+			<tr data-th-classappend="'template'">
+				<td data-tprop="nodeId"></td>
+				<td data-tprop="sourceIdTemplate"></td>
+				<td><span class="label" data-tprop="publishToSolarIn"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+				<td><span class="label" data-tprop="publishToSolarFlux"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

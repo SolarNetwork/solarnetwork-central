@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'oscp')">
+<head>
+    <title data-th-text="#{oscp.title}">OSCP</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div class="container" data-th-fragment="content" id="oscp-management">
+<a id="top"></a>
+
+<p class="intro" data-th-utext="#{oscp.intro}">
+	Here is your OSCP related stuff.
+</p>
+
+<div data-th-replace="sec/oscp/oscp-settings :: content"></div>
+<!--/* TODO
+
+<div data-th-replace="sec/oscp/oscp-credential-list :: content"></div>
+
+<div data-th-replace="sec/oscp/oscp-auth-list :: content"></div>
+
+<div data-th-replace="sec/oscp/oscp-charger-list :: content"></div>
+
+<div data-th-replace="sec/oscp/oscp-connector-list :: content"></div>
+ */-->
+ 
+<!--/* Modal forms */-->
+
+<form data-th-replace="sec/oscp/oscp-settings-edit-modal :: form"></form>
+<!--/* TODO
+<form data-th-replace="sec/oscp/oscp-auth-edit-modal :: form"></form>
+<form data-th-replace="sec/oscp/oscp-charger-edit-modal :: form"></form>
+<form data-th-replace="sec/oscp/oscp-connector-edit-modal :: form"></form>
+<form data-th-replace="sec/oscp/oscp-credential-edit-modal :: form"></form>
+<form data-th-replace="sec/oscp/oscp-credential-password-modal :: div"></form>
+ */-->
+
+</div>
+</body>
+</html>

@@ -73,6 +73,9 @@
 				<li data-th-classappend="${navloc == 'ocpp'}?active" sec:authorize="hasRole('ROLE_OCPP')">
 					<a data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
 				</li>
+				<li data-th-classappend="${navloc == 'oscp'}?active" sec:authorize="hasRole('ROLE_OSCP')">
+					<a data-th-href="@{/u/sec/oscp}" data-th-text="#{link.oscp}">OSCP</a>
+				</li>
 				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')" data-th-if="ocppBiz">
 					<a data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
 				</li>
