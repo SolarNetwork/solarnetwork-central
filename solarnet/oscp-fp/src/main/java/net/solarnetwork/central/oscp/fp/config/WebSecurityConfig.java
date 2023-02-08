@@ -48,7 +48,7 @@ import net.solarnetwork.central.oscp.security.Role;
  * Web security configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
@@ -101,8 +101,8 @@ public class WebSecurityConfig {
 			// @formatter:off
 			http
 				// limit this configuration to specific paths
-				.requestMatchers()
-					.antMatchers("/oscp/**")
+				.securityMatchers()
+					.requestMatchers("/oscp/**")
 					.and()
 
 				// CSRF not needed for stateless calls
@@ -121,12 +121,12 @@ public class WebSecurityConfig {
 				.addFilterBefore(tokenAuthenticationFilter(),
 						UsernamePasswordAuthenticationFilter.class)
 		      
-				.authorizeRequests()
-					.antMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
+				.authorizeHttpRequests()
+					.requestMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
 							Role.ROLE_CAPACITYPROVIDER.toString())
-					.antMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
+					.requestMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
 							Role.ROLE_CAPACITYOPTIMIZER.toString())
-					.antMatchers("/oscp/fp/**").hasAnyAuthority(
+					.requestMatchers("/oscp/fp/**").hasAnyAuthority(
 							Role.ROLE_CAPACITYOPTIMIZER.toString(),
 							Role.ROLE_CAPACITYPROVIDER.toString())
 					.anyRequest().authenticated()
@@ -163,9 +163,9 @@ public class WebSecurityConfig {
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		      
-		      .authorizeRequests()
-		      	.antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .antMatchers(HttpMethod.GET, 
+		      .authorizeHttpRequests()
+		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .requestMatchers(HttpMethod.GET, 
 		        		"/", 
 		        		"/error",
 		        		"/*.html",
