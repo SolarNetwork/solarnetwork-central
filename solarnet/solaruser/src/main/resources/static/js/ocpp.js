@@ -426,7 +426,7 @@ $(document).ready(function() {
 					config = SolarReg.Templates.findContextItem(form);
 
 				if ( !config || config.chargePointId === undefined ) {
-					delete data.chargePointid;
+					delete data.chargePointId;
 				}
 
 				delete data.id;
