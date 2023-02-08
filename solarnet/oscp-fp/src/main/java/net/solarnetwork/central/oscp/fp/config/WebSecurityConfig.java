@@ -36,6 +36,8 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
@@ -43,6 +45,7 @@ import net.solarnetwork.central.oscp.security.ExternalSystemJwtAuthenticationCon
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthenticationFilter;
 import net.solarnetwork.central.oscp.security.Role;
+import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
 /**
  * Web security configuration.
@@ -53,6 +56,14 @@ import net.solarnetwork.central.oscp.security.Role;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
+
+	@Autowired
+	private HandlerExceptionResolver handlerExceptionResolver;
+
+	@Bean
+	public RequestRejectedHandler requestRejectedHandler() {
+		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
+	}
 
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
