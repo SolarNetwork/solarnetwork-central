@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="oscp-cps">
+	<h2>
+		<span data-th-text="#{oscp.cps.header}">Capacity Providers</span>
+		<button type="button" id="oscp-add-cp-button" class="btn btn-primary pull-right"
+			data-target="#oscp-cp-edit-modal" data-toggle="modal"
+			data-th-title="#{oscp.cps.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{oscp.cps.intro(0)}">
+		Your Capacity Providers are shown here. Use the + button to add new providers.
+	</p>
+	<table id="oscp-cps-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{oscp.system.id.label}">ID</th>
+				<th data-th-text="#{oscp.system.name.label}">Name</th>
+				<th data-th-text="#{oscp.system.created.label}">Created</th>
+				<th data-th-text="#{oscp.system.baseUrl.label}">URL</th>
+				<th data-th-text="#{oscp.system.status.label}">Status</th>
+				<!--/* th data-th-text="#{oscp.system.oscpVersion.label}">Version</th */-->
+				<th data-th-text="#{oscp.system.details.label}">Details</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#oscp-cp-edit-modal"></a></td>
+				<td data-tprop=name></td>
+				<td data-tprop="createdDisplay"></td>
+				<td data-tprop="baseUrl"></td>
+				<td>
+					<span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span>
+					<br>
+					<span class="label label-default" data-tprop="registrationStatus"
+						data-th-data-unknown-text="#{oscp.registrationStatus.Unknown}"
+						data-th-data-pending-text="#{oscp.registrationStatus.Pending}"
+						data-th-data-registered-text="#{oscp.registrationStatus.Registered}"
+						data-th-data-failed-text="#{oscp.registrationStatus.Failed}"
+						data-th-data-pending-label="warning"
+						data-th-data-registered-label="success"
+						data-th-data-failed-label="danger"
+						></span>
+				</td>
+				<td class="small">
+					<dl class="details-container dl-horizontal">
+						<dt data-th-text="#{oscp.system.settings.measurementStyles.label}">Measurement Styles</dt>
+						<dd data-tprop="measurementStylesDisplay"></dd>
+						<dt data-th-text="#{oscp.system.sprops.oauthTokenUrl.label}">Token URL</dt>
+						<dd data-tprop="oauthTokenUrl"></dd>
+						<dt data-th-text="#{oscp.system.sprops.oauthClientId.label}">Client ID</dt>
+						<dd data-tprop="oauthClientId"></dd>
+						<dt data-th-text="#{oscp.system.sprops.oauthClientSecret.label}">Client Secret</dt>
+						<dd data-tprop="oauthClientSecret"></dd>
+					</dl>
+					<div class="headers-container hidden">
+						<label data-th-text="#{oscp.system.sprops.httpHeaders.label}">HTTP Headers</label>
+						<dl class="dl-horizontal">
+						</dl>
+					</div>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

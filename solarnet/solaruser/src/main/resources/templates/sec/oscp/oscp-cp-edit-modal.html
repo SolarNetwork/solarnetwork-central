@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<form id="oscp-cp-edit-modal" class="edit-config oscp" data-th-classappend="'modal fade'"
+		data-th-action="@{/u/sec/oscp/capacity-providers}" method="post" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-text="#{oscp.cps.edit.title}">Edit OSCP Capacity Provider</h4>
+			</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p data-th-utext="#{oscp.cps.edit.intro}">Edit the OSCP Capacity Provider details on this form.</p>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.name.label}">
+		 				Name
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input class="form-control" name="name" type="text" maxlength="64" required>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.registrationStatus.label}">
+		 				Status
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<select name="registrationStatus" class="form-control">
+		 					<option value="Pending" data-th-text="#{oscp.registrationStatus.Pending}">Pending</option>
+		 					<option value="Registered" data-th-text="#{oscp.registrationStatus.Registered}">Registered</option>
+		 					<option value="Failed" data-th-text="#{oscp.registrationStatus.Failed}">Failed</option>
+		 				</select>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.baseUrl.label}">
+		 				URL
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="text" class="form-control" name="baseUrl" maxlength="256" required>
+		 			</div>
+		 		</div>
+		 		<input type="hidden" name="oscpVersion" value="2.0">
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.enabled.label}">
+		 				Enabled
+		 			</label>
+		 			<div class="col-sm-8">
+						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+							data-toggle="setting-toggle" aria-pressed="false"
+							data-th-data-on-text="#{settings.enabled.label}"
+							data-th-data-off-text="#{settings.disabled.label}"
+							data-th-text="#{settings.toggle.disabled}">
+							Disabled
+						</button>
+		 			</div>
+		 		</div>
+		 		<fieldset>
+		 			<legend data-th-text="#{oscp.system.sprops.oauth.label}">OAuth</legend>
+		 			<p data-th-utext="#{oscp.system.sprops.oauth.intro}">If the provider supports OAuth
+		 			2.0 client-credentials style authentication, fill in the OAuth details here.
+		 			Providing OAuth settings means OAuth authentication will replace the OSCP
+		 			standard token authentication scheme when communicating this this provider.</p>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.system.sprops.oauthTokenUrl.label}">
+							OAuth Token URL
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="serviceProps.oauth-token-url" maxlength="256">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.system.sprops.oauthClientId.label}">
+							OAuth Client ID
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="serviceProps.oauth-client-id" maxlength="256">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.system.sprops.oauthClientSecret.label}">
+							OAuth Client Secret
+						</label>
+						<div class="col-sm-8">
+							<input type="password" class="form-control" name="serviceProps.oauth-client-secret" maxlength="256"
+								placeholder="Leave empty to keep any existing password"
+								data-th-placeholder="#{oscp.system.sprops.oauthClientSecret.placeholder}"
+								>
+						</div>
+					</div>
+		 		</fieldset>
+		 		<fieldset class="dynamic-list">
+		 			<legend>
+		 				<span data-th-text="#{oscp.system.sprops.httpHeaders.label}">Custom HTTP Headers</span>
+						<button type="button" class="btn btn-default btn-xs pull-right list-add http-headers-add"
+							title="Add HTTP header"
+							data-th-title="#{oscp.system.sprops.httpHeaders.add.title}">
+							<i class="glyphicon glyphicon-plus"></i>
+						</button>
+		 			</legend>
+		 			<p data-th-utext="#{oscp.system.sprops.httpHeaders.intro}">You can add any custom HTTP headers as required by the provider.</p>
+					<div class="row" data-th-classappend="'template'">
+						<div class="col-sm-5">
+							<input type="text" class="form-control input-sm" name="httpHeaderName" maxlength="64"
+								placeholder="Name" data-th-placeholder="#{oscp.cps.httpHeaders.name.label}"
+								>
+						</div>
+						<div class="col-sm-6">
+							<input type="text" class="form-control input-sm" name="httpHeaderValue" maxlength="256"
+								placeholder="Value" data-th-placeholder="#{oscp.cps.httpHeaders.value.label}"
+								>
+						</div>
+						<div class="col-sm-1">
+							<button type="button" class="btn btn-danger btn-sm pull-right http-headers-delete"
+								title="Delete HTTP header"
+								data-th-title="#{oscp.system.sprops.httpHeaders.delete.title}">
+								<i class="glyphicon glyphicon-trash"></i>
+							</button>
+						</div>
+					</div>
+					<div class="list-container">
+					</div>
+		 		</fieldset>
+		 		<fieldset class="dynamic-list">
+		 			<legend>
+		 				<span data-th-text="#{oscp.system.sprops.urlPaths.label}">Custom URL Paths</span>
+						<button type="button" class="btn btn-default btn-xs pull-right list-add url-paths-add"
+							title="Add URL path"
+							data-th-title="#{oscp.system.sprops.urlPaths.add.title}">
+							<i class="glyphicon glyphicon-plus"></i>
+						</button>
+		 			</legend>
+		 			<p data-th-utext="#{oscp.system.sprops.urlPaths.intro}">Configure <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarUser-OSCP-API#custom-url-path-service-properties" target="_blank">custom URL paths</a> as required by the provider.</p>
+					<div class="row" data-th-classappend="'template'">
+						<div class="col-sm-5">
+							<select name="urlPathAction" class="form-control input-sm">
+								<option value="AdjustGroupCapacityForecast">AdjustGroupCapacityForecast</option>
+								<option value="GroupCapacityComplianceError">GroupCapacityComplianceError</option>
+								<option value="HandshakeAcknowledge">HandshakeAcknowledge</option>
+								<option value="Heartbeat">Heartbeat</option>
+								<option value="Register">Register</option>
+								<option value="UpdateGroupCapacityForecast">UpdateGroupCapacityForecast</option>
+								<option value="UpdateAssetMeasurements">UpdateAssetMeasurements</option>
+								<option value="UpdateGroupMeasurements">UpdateGroupMeasurements</option>
+							</select>
+						</div>
+						<div class="col-sm-6">
+							<input type="text" class="form-control input-sm" name="urlPathPath" maxlength="256"
+								placeholder="/custom/path" data-th-placeholder="#{oscp.system.sprops.urlPaths.path.placeholder}"
+								>
+						</div>
+						<div class="col-sm-1">
+							<button type="button" class="btn btn-danger btn-sm pull-right url-paths-delete"
+								title="Delete URL path"
+								data-th-title="#{oscp.system.sprops.urlPaths.delete.title}">
+								<i class="glyphicon glyphicon-trash"></i>
+							</button>
+						</div>
+					</div>
+					<div class="list-container">
+					</div>
+		 		</fieldset>
+		 	</div>
+		 	<div class="modal-body delete-confirm" data-th-classappend="'hidden'">
+		 		<p class="alert alert-danger" data-th-utext="#{oscp.cps.delete.confirm.intro}">
+		 			Are you sure you want to delete this configuration?
+		 		</p>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<span data-th-text="#{oscp.cps.delete.label}">Delete</span>
+		 		</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+		 	</div>
+		 </div>
+ 	</div>
+	<input type="hidden" name="id">
+	<input type="hidden" name="userId" data-th-data-user-id="${actorUserId}">
+</form>
+</body>
+</html>

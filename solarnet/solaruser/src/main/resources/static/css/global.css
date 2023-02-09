@@ -30,7 +30,7 @@ section + section {
 	text-align: center;
 }
 
-.tz-picker-container div, 
+.tz-picker-container div,
 .tz-picker-container map {
     margin: auto;
 }
@@ -207,6 +207,14 @@ table.table-body-borderless tbody tr.rule + tr th {
 .edit-config span.config-name:after,
 .config-action span.config-name:after {
 	content: close-quote;
+}
+
+.edit-config fieldset {
+	margin-top: 2rem;
+}
+
+.edit-config fieldset.dynamic-list + fieldset.dynamic-list {
+	margin-top: 4rem;
 }
 
 .input-line {

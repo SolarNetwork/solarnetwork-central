@@ -9,7 +9,7 @@ $(document).ready(function() {
 		const groupConfigs = [];
 		const groupConfigsMap = new Map();
 
-		
+
 		/* ============================
 		   Settings
 		   ============================ */
@@ -146,18 +146,133 @@ $(document).ready(function() {
 		});
 
 		/* ============================
+		   Capacity Providers
+		   ============================ */
+		const cpsContainer = $('#oscp-cps-container');
+		const cpConfigs = [];
+		const cpConfigsMap = new Map();
+
+		function populateCpConfigs(configs, preserve) {
+			configs = Array.isArray(configs) ? configs : [];
+			if ( !preserve ) {
+				cpConfigsMap.clear();
+			}
+			var items = configs.map(function(config) {
+				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+				model.id = config.configId;
+				model.createdDisplay = moment(config.created).format('D MMM YYYY');
+				model.baseUrl = config.baseUrl;
+				model.enabled = config.enabled;
+				model.registrationStatus = config.registrationStatus;
+				if ( config.settings && Array.isArray(config.settings.measurementStyles) ) {
+					model.measurementStyles = config.settings.measurementStyles;
+					model.measurementStylesDisplay = config.settings.measurementStyles.join(', ');
+				}
+				if ( config.serviceProps ) {
+					if ( config.serviceProps['oauth-token-url'] ) {
+						model.oauthTokenUrl = config.serviceProps['oauth-token-url'];
+					}
+					if ( config.serviceProps['oauth-client-id'] ) {
+						model.oauthClientId = config.serviceProps['oauth-client-id'];
+					}
+				}
+				if ( config.httpHeaders ) {
+					model.httpHeaders = config.httpHeaders;
+				}
+				cpConfigsMap.set(config.id, model);
+				return model;
+			});
+			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve, (item, el) => {
+				// TODO: populate dynamic lists
+			});
+			SolarReg.saveServiceConfigurations(configs, preserve, cpConfigs, cpsContainer);
+		}
+
+		$('#oscp-cps-container .list-container').on('click', function(event) {
+			// edit cp or cp settings
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+		$('#oscp-cp-edit-modal').on('show.bs.modal', function(event) {
+			var config = SolarReg.Templates.findContextItem(this),
+				enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+				populateCpConfigs([res], true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+
+				if ( !data.userId ) {
+					// use actor user ID, i.e. for new cps
+					data.userId = form.elements['userId'].dataset.userId;
+				}
+
+				return data;
+			}, {
+				errorMessageGenerator: function(xhr, json, form) {
+					var msg;
+					if ( json ) {
+						if ( json.code === 'DAO.00101' ) {
+							// assume this means the given identifier is a duplicate
+							msg = form.elements['info.id'].dataset['errorDuplicateText'];
+						} else if ( json.message === 'UNKNOWN_OBJECT' ) {
+							// assume this means the given node ID is not valid
+							msg = form.elements['nodeId'].dataset['errorInvalidText'];
+						}
+					}
+					return msg;
+				}
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function() {
+			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-cps-container .list-container'), (id, deleted) => {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, cpConfigs, cpsContainer);
+				if ( deleted ) {
+					cpConfigsMap.delete(id);
+				}
+			});
+		})
+		.find('button.toggle').each(function() {
+			var toggle = $(this);
+			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+		});
+
+
+		/* ============================
+		   OSCP entity delete
+		   ============================ */
+		$('.oscp.edit-config button.delete-config').on('click', function(event) {
+			var options = {};
+			var form = $(event.target).closest('form').get(0);
+			if ( form && form.elements['groupId'] && form.elements['sourceIdTemplate'] ) {
+				// group settings use /capacity-groups/X/settings path
+				options.urlSerializer = action => {
+					return action.replace(/\/settings$/, '/' + form.elements['groupId'].value + '/settings');
+				};
+			}
+			SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
+		});
+
+		/* ============================
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 2;
+			var loadCountdown = 3;
 			var settingConfs = [];
 			var groupSettingConfs = [];
-	
+			var cpConfs = [];
+
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
 					populateSettingConfigs(settingConfs);
 					populateGroupSettingConfigs(groupSettingConfs);
+					populateCpConfigs(cpConfs);
 				}
 			}
 
@@ -177,6 +292,15 @@ $(document).ready(function() {
 				console.debug('Got OSCP group settings: %o', json);
 				if ( json && json.success === true ) {
 					groupSettingConfs = json.data;
+				}
+				liftoff();
+			});
+
+			// list all capacity providers
+			$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-providers'), function(json) {
+				console.debug('Got OSCP capacity providers: %o', json);
+				if ( json && json.success === true ) {
+					cpConfs = json.data;
 				}
 				liftoff();
 			});
