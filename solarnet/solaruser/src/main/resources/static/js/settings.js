@@ -435,7 +435,40 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
 /**
  * Encode a service item configuration form into an object, suitable for encoding into JSON
  * for posting to SolarNetwork.
- *
+ * 
+ * This method iterates over all form fields and maps them into object properties. The field
+ * names are split on `.` characters into nested objects.  * A form field can be ignored by adding a `data-settings-ignore` attribute to that field,
+ * with any non-empty value.
+ * 
+ * The object property name can include a prefix by adding a `data-settings-prefix`
+ * attribute to a form field.
+ * 
+ * The object property name can also be derived from a previous form element value, by
+ * adding a `data-settings-name-field` attribute to that field. The attribute value is
+ * the name of another HTML field that comes before this field (in DOM order).
+ * 
+ * For example, given form fields like
+ * 
+ * ```html
+ * <input name="foo" value="bar">
+ * <input name="info.name" value="Joe">
+ * <input name="into.age" value="99">
+ * <select name="answer">
+ *   <option value="0">0</option>
+ *   <option value="11">11</option>
+ *   <option value="42" selected>42</option>
+ * </select>
+ * <input name="cilent-id" value="abc123" data-settings-prefix="props.">
+ * <input name="key" value="car" data-settings-ignore="true">
+ * <input name="val" value="mini" data-settings-name-field="key" data-settings-prefix="props.">
+ * ```
+ * 
+ * An object like the following would be generated:
+ * 
+ * ```javascript
+ * {foo:"bar", info:{name:"Joe", age:"99"}, answer:"42", props:{"client-id":abc123, car:"mini"}}
+ * ```
+ * 
  * @param {HTMLFormElement} form the form
  * @param {boolean} excludeEmptyProperties {@constant true} to omit empty form field values from the result
  * @returns {Object} the encoded object
