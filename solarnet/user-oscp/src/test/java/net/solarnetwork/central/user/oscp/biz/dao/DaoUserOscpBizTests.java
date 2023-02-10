@@ -23,9 +23,11 @@
 package net.solarnetwork.central.user.oscp.biz.dao;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -115,6 +117,26 @@ public class DaoUserOscpBizTests {
 	}
 
 	@Test
+	public void listCapacityProviders_oauthSecretRemoved() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<CapacityProviderConfiguration> confs = new ArrayList<>();
+		CapacityProviderConfiguration conf = new CapacityProviderConfiguration(userId,
+				randomUUID().getMostSignificantBits(), Instant.now());
+		conf.putServiceProp(OAUTH_CLIENT_SECRET, "secret!");
+		confs.add(conf);
+		given(capacityProviderDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<CapacityProviderConfiguration> results = biz.capacityProvidersForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+		assertThat("Secret property removed", conf.getServiceProp(OAUTH_CLIENT_SECRET), is(nullValue()));
+	}
+
+	@Test
 	public void listCapacityOptimizers() {
 		// GIVEN
 		final Long userId = randomUUID().getMostSignificantBits();
@@ -127,6 +149,26 @@ public class DaoUserOscpBizTests {
 
 		// THEN
 		assertThat("DAO results returned", results, is(sameInstance(confs)));
+	}
+
+	@Test
+	public void listCapacityOptimizers_oauthSecretRemoved() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+
+		final List<CapacityOptimizerConfiguration> confs = new ArrayList<>();
+		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(userId,
+				randomUUID().getMostSignificantBits(), Instant.now());
+		conf.putServiceProp(OAUTH_CLIENT_SECRET, "secret!");
+		confs.add(conf);
+		given(capacityOptimizerDao.findAll(userId, null)).willReturn(confs);
+
+		// WHEN
+		Collection<CapacityOptimizerConfiguration> results = biz.capacityOptimizersForUser(userId);
+
+		// THEN
+		assertThat("DAO results returned", results, is(sameInstance(confs)));
+		assertThat("Secret property removed", conf.getServiceProp(OAUTH_CLIENT_SECRET), is(nullValue()));
 	}
 
 	@Test
