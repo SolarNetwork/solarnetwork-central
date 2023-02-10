@@ -473,9 +473,6 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 							// <input>
 							name = nameField.value;
 						}
-						if ( field.dataset.settingsPrefix ) {
-							name = field.dataset.settingsPrefix + name;
-						}
 						break;
 					}
 				}
@@ -483,6 +480,9 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 		}
 		if ( !name || field.dataset.settingsIgnore ) {
 			continue;
+		}
+		if ( field.dataset.settingsPrefix ) {
+			name = field.dataset.settingsPrefix + name;
 		}
 		components = name.split('.');
 		if ( field.selectedOptions ) {
