@@ -70,7 +70,6 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
  * @returns {Object} the first object that has a matching `name` property
  */
 SolarReg.findByName = function findByName(array, name) {
-	var result;
 	if ( name && array ) {
 		for ( const el of array ) {
 			if ( el.name === identifier ) {
