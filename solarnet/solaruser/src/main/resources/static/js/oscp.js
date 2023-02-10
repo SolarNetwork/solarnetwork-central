@@ -78,7 +78,7 @@ $(document).ready(function() {
 			}
 		}
 
-		$('#oscp-settings-edit-modal').on('show.bs.modal', function(event) {
+		$('#oscp-settings-edit-modal').on('show.bs.modal', function handleModalShow(event) {
 			// handle both default and capacity-group-specific settings
 			var modal = $(event.target),
 				config = SolarReg.Templates.findContextItem(modal);
@@ -95,7 +95,7 @@ $(document).ready(function() {
 			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
+		.on('submit', function handleModalFormSubmit(event) {
 			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 				if ( res.groupId === undefined ) {
 					populateSettingConfigs([res], true);
@@ -121,7 +121,7 @@ $(document).ready(function() {
 			});
 			return false;
 		})
-		.on('hidden.bs.modal', function() {
+		.on('hidden.bs.modal', function handleModalHidden() {
 			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-settings-container .list-container'), (id, deleted) => {
 				if ( deleted ) {
 					groupSettingConfigsMap.delete(id);
@@ -176,15 +176,16 @@ $(document).ready(function() {
 						model.oauthClientId = config.serviceProps['oauth-client-id'];
 					}
 				}
-				if ( config.httpHeaders ) {
-					model.httpHeaders = config.httpHeaders;
+				if ( config.serviceProps['http-headers'] ) {
+					model.httpHeaders = config.serviceProps['http-headers'];
+				}
+				if ( config.serviceProps['url-paths'] ) {
+					model.urlPaths = config.serviceProps['url-paths'];
 				}
 				cpConfigsMap.set(config.id, model);
 				return model;
 			});
-			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve, (item, el) => {
-				// TODO: populate dynamic lists
-			});
+			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve);
 			SolarReg.saveServiceConfigurations(configs, preserve, cpConfigs, cpsContainer);
 		}
 
@@ -193,14 +194,39 @@ $(document).ready(function() {
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
 
-		$('#oscp-cp-edit-modal').on('show.bs.modal', function(event) {
-			var config = SolarReg.Templates.findContextItem(this),
-				enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange($(this).find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm($(event.target), [], []);
+		$('#oscp-cp-edit-modal').on('show.bs.modal', function handleModalShow(event) {
+			var el = $(this)
+				, config = SolarReg.Templates.findContextItem(this)
+				, enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange(el.find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm(el, [], []);
+
+			if ( !(config && config.serviceProps) ) {
+				return;
+			}
+
+			var itemKey;
+				
+			// populate HTTP Headers dynamic list
+			if ( config.serviceProps['http-headers'] ) {
+				let httpHeadersListRoot = el.find('.dynamic-list.http-headers')
+					, httpHeadersListTemplate = httpHeadersListRoot.find('.template')
+					, httpHeadersListContainer = httpHeadersListRoot.find('.dynamic-list-container');
+
+				let listConfig = config.serviceProps['http-headers'];
+				for ( itemKey in listConfig ) {
+					let headerVal = listConfig[itemKey];
+					let newListItem = SolarReg.Templates.appendTemplateItem(httpHeadersListContainer, httpHeadersListTemplate, {});
+					newListItem.find('input[name=httpHeaderName]').val(itemKey);
+					newListItem.find('input[name=httpHeaderValue]').val(headerVal);
+				}
+			}
+
+			// TODO: populate dynamic URL Paths
+
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function(event) {
+		.on('submit', function handleModalFormSubmit(event) {
 			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 				populateCpConfigs([res], true);
 			}, function serializeDataConfigForm(form) {
@@ -229,7 +255,7 @@ $(document).ready(function() {
 			});
 			return false;
 		})
-		.on('hidden.bs.modal', function() {
+		.on('hidden.bs.modal', function handleModalHidden() {
 			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-cps-container .list-container'), (id, deleted) => {
 				SolarReg.deleteServiceConfiguration(deleted ? id : null, cpConfigs, cpsContainer);
 				if ( deleted ) {
@@ -237,6 +263,7 @@ $(document).ready(function() {
 				}
 			});
 		})
+		.on('click', SolarReg.Settings.handleDynamicListAddOrDelete)
 		.find('button.toggle').each(function() {
 			var toggle = $(this);
 			SolarReg.Settings.setupSettingToggleButton(toggle, false);

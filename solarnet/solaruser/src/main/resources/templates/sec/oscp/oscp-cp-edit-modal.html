@@ -94,49 +94,49 @@
 						</div>
 					</div>
 		 		</fieldset>
-		 		<fieldset class="dynamic-list">
+		 		<fieldset class="dynamic-list http-headers">
 		 			<legend>
 		 				<span data-th-text="#{oscp.system.sprops.httpHeaders.label}">Custom HTTP Headers</span>
-						<button type="button" class="btn btn-default btn-xs pull-right list-add http-headers-add"
+						<button type="button" class="btn btn-default btn-xs pull-right dynamic-list-add http-headers-add"
 							title="Add HTTP header"
 							data-th-title="#{oscp.system.sprops.httpHeaders.add.title}">
 							<i class="glyphicon glyphicon-plus"></i>
 						</button>
 		 			</legend>
 		 			<p data-th-utext="#{oscp.system.sprops.httpHeaders.intro}">You can add any custom HTTP headers as required by the provider.</p>
-					<div class="row" data-th-classappend="'template'">
+					<div class="row dynamic-list-item" data-th-classappend="'template'">
 						<div class="col-sm-5">
 							<input type="text" class="form-control input-sm" name="httpHeaderName" maxlength="64"
-								placeholder="Name" data-th-placeholder="#{oscp.cps.httpHeaders.name.label}"
+								placeholder="Name" data-th-placeholder="#{oscp.system.sprops.httpHeaders.name.label}"
 								>
 						</div>
 						<div class="col-sm-6">
 							<input type="text" class="form-control input-sm" name="httpHeaderValue" maxlength="256"
-								placeholder="Value" data-th-placeholder="#{oscp.cps.httpHeaders.value.label}"
+								placeholder="Value" data-th-placeholder="#{oscp.system.sprops.httpHeaders.value.label}"
 								>
 						</div>
 						<div class="col-sm-1">
-							<button type="button" class="btn btn-danger btn-sm pull-right http-headers-delete"
+							<button type="button" class="btn btn-danger btn-sm pull-right dynamic-list-delete"
 								title="Delete HTTP header"
 								data-th-title="#{oscp.system.sprops.httpHeaders.delete.title}">
 								<i class="glyphicon glyphicon-trash"></i>
 							</button>
 						</div>
 					</div>
-					<div class="list-container">
+					<div class="dynamic-list-container">
 					</div>
 		 		</fieldset>
-		 		<fieldset class="dynamic-list">
+		 		<fieldset class="dynamic-list url-paths">
 		 			<legend>
 		 				<span data-th-text="#{oscp.system.sprops.urlPaths.label}">Custom URL Paths</span>
-						<button type="button" class="btn btn-default btn-xs pull-right list-add url-paths-add"
+						<button type="button" class="btn btn-default btn-xs pull-right dynamic-list-add url-paths-add"
 							title="Add URL path"
 							data-th-title="#{oscp.system.sprops.urlPaths.add.title}">
 							<i class="glyphicon glyphicon-plus"></i>
 						</button>
 		 			</legend>
 		 			<p data-th-utext="#{oscp.system.sprops.urlPaths.intro}">Configure <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarUser-OSCP-API#custom-url-path-service-properties" target="_blank">custom URL paths</a> as required by the provider.</p>
-					<div class="row" data-th-classappend="'template'">
+					<div class="row dynamic-list-item" data-th-classappend="'template'">
 						<div class="col-sm-5">
 							<select name="urlPathAction" class="form-control input-sm">
 								<option value="AdjustGroupCapacityForecast">AdjustGroupCapacityForecast</option>
@@ -155,14 +155,14 @@
 								>
 						</div>
 						<div class="col-sm-1">
-							<button type="button" class="btn btn-danger btn-sm pull-right url-paths-delete"
+							<button type="button" class="btn btn-danger btn-sm pull-right dynamic-list-delete"
 								title="Delete URL path"
 								data-th-title="#{oscp.system.sprops.urlPaths.delete.title}">
 								<i class="glyphicon glyphicon-trash"></i>
 							</button>
 						</div>
 					</div>
-					<div class="list-container">
+					<div class="dynamic-list-container">
 					</div>
 		 		</fieldset>
 		 	</div>
