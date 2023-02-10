@@ -37,12 +37,13 @@ import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base OSCP configuration entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "enabled", "serviceProps" })
@@ -316,6 +317,55 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	 */
 	public void setServiceProps(Map<String, Object> serviceProps) {
 		this.serviceProps = serviceProps;
+	}
+
+	/**
+	 * Add or remove a service property value.
+	 * 
+	 * @param key
+	 *        the key to add, or remove if {@code value} is {@literal null}
+	 * @param value
+	 *        the value to set, or {@literal null} if {@code key} should be
+	 *        removed
+	 * @return any previous value associated with {@code key} before adding or
+	 *         removing it from the service properties map, or {@literal null}
+	 *         if nothing was removed
+	 * @throws IllegalArgumentException
+	 *         if {@code key} is {@literal null}
+	 * @since 1.1
+	 */
+	public Object putServiceProp(String key, Object value) {
+		ObjectUtils.requireNonNullArgument(key, "key");
+		Map<String, Object> props = getServiceProps();
+		if ( props == null ) {
+			if ( value == null ) {
+				return null;
+			}
+			props = new LinkedHashMap<>(4);
+			setServiceProps(props);
+		}
+		if ( value != null ) {
+			return props.put(key, value);
+		} else {
+			return props.remove(key);
+		}
+	}
+
+	/**
+	 * Get a service property value.
+	 * 
+	 * @param key
+	 *        the key of the property to get
+	 * @return the value associated with {@code key}, or {@literal null} if none
+	 *         associated
+	 * @since 1.1
+	 */
+	public Object getServiceProp(String key) {
+		final Map<String, Object> props = getServiceProps();
+		if ( props != null ) {
+			return props.get(key);
+		}
+		return null;
 	}
 
 }
