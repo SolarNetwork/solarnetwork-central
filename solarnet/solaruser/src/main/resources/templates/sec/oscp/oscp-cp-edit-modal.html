@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<title>OSCP Capacity Provider Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
@@ -8,7 +9,8 @@
 </head>
 <body>
 <form id="oscp-cp-edit-modal" class="edit-config oscp" data-th-classappend="'modal fade'"
-		data-th-action="@{/u/sec/oscp/capacity-providers}" method="post" tabindex="-1" role="dialog">
+		data-th-action="@{/u/sec/oscp/capacity-providers}" method="post" tabindex="-1" role="dialog"
+		data-settings-update-method="put">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -108,11 +110,13 @@
 						<div class="col-sm-5">
 							<input type="text" class="form-control input-sm" name="httpHeaderName" maxlength="64"
 								placeholder="Name" data-th-placeholder="#{oscp.system.sprops.httpHeaders.name.label}"
+								data-settings-ignore="true"
 								>
 						</div>
 						<div class="col-sm-6">
 							<input type="text" class="form-control input-sm" name="httpHeaderValue" maxlength="256"
 								placeholder="Value" data-th-placeholder="#{oscp.system.sprops.httpHeaders.value.label}"
+								data-settings-name-field="httpHeaderName" data-settings-prefix="serviceProps.http-headers."
 								>
 						</div>
 						<div class="col-sm-1">
@@ -138,7 +142,8 @@
 		 			<p data-th-utext="#{oscp.system.sprops.urlPaths.intro}">Configure <a href="https://github.com/SolarNetwork/solarnetwork/wiki/SolarUser-OSCP-API#custom-url-path-service-properties" target="_blank">custom URL paths</a> as required by the provider.</p>
 					<div class="row dynamic-list-item" data-th-classappend="'template'">
 						<div class="col-sm-5">
-							<select name="urlPathAction" class="form-control input-sm">
+							<select name="urlPathAction" class="form-control input-sm" data-settings-ignore="true">
+								<option></option>
 								<option value="AdjustGroupCapacityForecast">AdjustGroupCapacityForecast</option>
 								<option value="GroupCapacityComplianceError">GroupCapacityComplianceError</option>
 								<option value="HandshakeAcknowledge">HandshakeAcknowledge</option>
@@ -152,6 +157,7 @@
 						<div class="col-sm-6">
 							<input type="text" class="form-control input-sm" name="urlPathPath" maxlength="256"
 								placeholder="/custom/path" data-th-placeholder="#{oscp.system.sprops.urlPaths.path.placeholder}"
+								data-settings-name-field="urlPathAction" data-settings-prefix="serviceProps.url-paths."
 								>
 						</div>
 						<div class="col-sm-1">

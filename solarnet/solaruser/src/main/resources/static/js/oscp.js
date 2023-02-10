@@ -159,7 +159,8 @@ $(document).ready(function() {
 			}
 			var items = configs.map(function(config) {
 				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-				model.id = config.configId;
+				config.id = config.configId; // assumed by setttings.js methods
+				model.id = config.configId;				
 				model.createdDisplay = moment(config.created).format('D MMM YYYY');
 				model.baseUrl = config.baseUrl;
 				model.enabled = config.enabled;
@@ -205,29 +206,19 @@ $(document).ready(function() {
 				return;
 			}
 
-			var itemKey;
-				
-			// populate HTTP Headers dynamic list
-			if ( config.serviceProps['http-headers'] ) {
-				let httpHeadersListRoot = el.find('.dynamic-list.http-headers')
-					, httpHeadersListTemplate = httpHeadersListRoot.find('.template')
-					, httpHeadersListContainer = httpHeadersListRoot.find('.dynamic-list-container');
+			// populate dynamic HTTP Headers list
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['http-headers'], el, 
+				'http-headers', 'httpHeaderName', 'httpHeaderValue');
 
-				let listConfig = config.serviceProps['http-headers'];
-				for ( itemKey in listConfig ) {
-					let headerVal = listConfig[itemKey];
-					let newListItem = SolarReg.Templates.appendTemplateItem(httpHeadersListContainer, httpHeadersListTemplate, {});
-					newListItem.find('input[name=httpHeaderName]').val(itemKey);
-					newListItem.find('input[name=httpHeaderValue]').val(headerVal);
-				}
-			}
-
-			// TODO: populate dynamic URL Paths
-
+			// populate dynamic URL Paths list
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['url-paths'], el, 
+				'url-paths', 'urlPathAction', 'urlPathPath');
+			
+			return;
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-		.on('submit', function handleModalFormSubmit(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+		.on('submit', function handleCpModalFormSubmit(event) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
 				populateCpConfigs([res], true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
@@ -239,19 +230,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
-				errorMessageGenerator: function(xhr, json, form) {
-					var msg;
-					if ( json ) {
-						if ( json.code === 'DAO.00101' ) {
-							// assume this means the given identifier is a duplicate
-							msg = form.elements['info.id'].dataset['errorDuplicateText'];
-						} else if ( json.message === 'UNKNOWN_OBJECT' ) {
-							// assume this means the given node ID is not valid
-							msg = form.elements['nodeId'].dataset['errorInvalidText'];
-						}
-					}
-					return msg;
-				}
+				urlId: true
 			});
 			return false;
 		})
