@@ -455,7 +455,33 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 	for ( i = 0, iLen = fields.length; i < iLen; i += 1 ) {
 		field = fields.item(i);
 		name = field.name;
-		if ( !name ) {
+		// allow name to be derived from a reference to a previous field's value
+		if ( field.dataset.settingsNameField ) {
+			name = undefined;
+			if ( field.value ) {
+				for ( let b = i - 1; b >= 0; b -= 1 ) {
+					let nameField = fields[b];
+					if ( nameField.name === field.dataset.settingsNameField ) {
+						if ( nameField && nameField.selectedOptions ) {
+							// <select>
+							if ( nameField.selectedOptions.length ) {
+								name = (nameField.selectedOptions[0].hasAttribute('value')
+									? nameField.selectedOptions[0].value
+									: undefined)
+							}
+						} else {
+							// <input>
+							name = nameField.value;
+						}
+						if ( field.dataset.settingsPrefix ) {
+							name = field.dataset.settingsPrefix + name;
+						}
+						break;
+					}
+				}
+			}
+		}
+		if ( !name || field.dataset.settingsIgnore ) {
 			continue;
 		}
 		components = name.split('.');
