@@ -527,6 +527,13 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
  * ```html
  * <form data-ajax-method="put">
  * ```
+ * 
+ * If a `urlId` option is provided and the form has a value in its `id` element, and a `settings-update-method` data
+ * attribute exists on the form, that value will be used. For example to `POST` on creation but `PUT` on update:
+ * 
+ * ```html
+ * <form method="post" data-settings-update-method="put">
+ * ```
  *
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
@@ -557,8 +564,12 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		: form.action);
 	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
 	var origXhr = $.ajaxSettings.xhr;
+	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');
+	if ( options && options.urlId && form.elements['id'] && form.elements['id'].value && form.dataset.settingsUpdateMethod ) {
+		xhrMethod = form.dataset.settingsUpdateMethod.toUpperCase();
+	}
 	var jqXhrOpts = {
-		method: (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST'),
+		method: xhrMethod,
 		url: submitUrl,
 		xhr: function() {
 			var xhr = origXhr.apply(this, arguments);
