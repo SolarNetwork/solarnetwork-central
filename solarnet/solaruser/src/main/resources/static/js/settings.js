@@ -660,7 +660,6 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
  * ```
  * 
  * @param {event} event the submit event that triggered form submission
- * @returns {boolean} `true` if the event was handled
  */
 SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOrDelete(event) {
 	var target = $(event.target);
@@ -668,7 +667,6 @@ SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOr
 		// handle dynamic list delete item
 		event.preventDefault();
 		target.closest('.dynamic-list-item').remove();
-		return true;
 	} else if (target.closest('.dynamic-list-add').length ) {
 		// handle dynamic list add item
 		event.preventDefault();
@@ -676,7 +674,4 @@ SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOr
 			, listTemplate = listRoot.find('.dynamic-list-item.template')
 			, listContainer = listRoot.find('.dynamic-list-container');
 		SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
-		return true;
 	}
-	return false;
-};
