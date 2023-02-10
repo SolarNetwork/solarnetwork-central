@@ -675,3 +675,30 @@ SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOr
 			, listContainer = listRoot.find('.dynamic-list-container');
 		SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
 	}
+	return; // ensure undefined is returned to allow other event handlers to work
+};
+
+/**
+ * Populate a dynamic list of key/value form element pairs based on the properties of a configuration object.
+ * 
+ * @param {object} listConfig the list configuration object, whose properties will be turned into form elements
+ * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
+ * @param {string} listRootClass the CSS class name of the list root element
+ * @param {string} inputKeyName the form element name to use for the key element
+ * @param {string} inputValueName the form element name to use for the value element
+ */
+SolarReg.Settings.populateDynamicListObjectKeyValues = function populateDynamicListObjectKeyValues(listConfig, container, listRootClass, inputKeyName, inputValueName) {
+	if ( !listConfig ) {
+		return;
+	}
+	let listRoot = container.find('.dynamic-list.'+listRootClass)
+		, listTemplate = listRoot.find('.template')
+		, listContainer = listRoot.find('.dynamic-list-container');
+
+	for ( itemKey in listConfig ) {
+		let itemVal = listConfig[itemKey];
+		let newListItem = SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
+		newListItem.find('*[name='+inputKeyName+']').val(itemKey);
+		newListItem.find('*[name='+inputValueName+']').val(itemVal);
+	}
+};
