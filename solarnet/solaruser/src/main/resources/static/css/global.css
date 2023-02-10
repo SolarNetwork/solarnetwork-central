@@ -231,3 +231,7 @@ td.edit-dropdown,
 th.edit-dropdown {
 	min-width: 100px;
 }
+
+.dynamic-list .dynamic-list-container .dynamic-list-item + .dynamic-list-item {
+	margin-top: 2rem;
+}

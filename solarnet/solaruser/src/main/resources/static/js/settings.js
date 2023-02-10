@@ -39,6 +39,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	// clear out dynamic settings
 	f.find('.service-props-container').empty().addClass('hidden');
 
+	// clear out dynamic lists
+	f.find('.dynamic-list-container').empty();
+
 	// reset form and modal for next item
 	if ( typeof form.reset === 'function' ) {
 		form.reset();
@@ -585,4 +588,58 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		SolarReg.showAlertBefore(el, 'alert-warning', msg);
 		modal.find('button[type=submit]').prop('disabled', false);
 	});
+};
+
+/**
+ * Handle an add or delete dynamic list item event such as `click`.
+ * 
+ * This handler looks for a `dynamic-list-add` or `dynamic-list-delete` class on the event
+ * target hierarchy.
+ * 
+ * If an `add` element is found, then the following actions are taken:
+ * 
+ *  1. Find the closest element with the `dynamic-list` class; this is the dynamic list
+ *     "root" element.
+ *  2. Within the "root" element, find an element with the `dynamic-list-item template`
+ *     classes; this is the list item template to copy.
+ *  3. Within the "root" element, find an element with the `dynamic-list-container` class;
+ *     this is the container element to copy the template element into.
+ *  4. Make a deep clone of the found template element and insert into the container
+ *     element.
+ * 
+ * If a `delete` element is found, then the closest ancester with a `dynamic-list-item`
+ * class is removed.
+ * 
+ * In general, the expected hierarchy of elements looks like this (actual element names
+ * do not matter and are just for illustration, and arbitrary nesting of other elements
+ * are allowed):
+ * 
+ * ```
+ * ─ div.dynamic-list
+ *   ├── button.dynamic-list-add
+ *   ├── div.dynamic-list-item.template
+ *   │   └── button.dynamic-list-delete
+ *   └── div.dynamic-list-container
+ * ```
+ * 
+ * @param {event} event the submit event that triggered form submission
+ * @returns {boolean} `true` if the event was handled
+ */
+SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOrDelete(event) {
+	var target = $(event.target);
+	if ( target.closest('.dynamic-list-delete').length ) {
+		// handle dynamic list delete item
+		event.preventDefault();
+		target.closest('.dynamic-list-item').remove();
+		return true;
+	} else if (target.closest('.dynamic-list-add').length ) {
+		// handle dynamic list add item
+		event.preventDefault();
+		let listRoot = target.closest('.dynamic-list')
+			, listTemplate = listRoot.find('.dynamic-list-item.template')
+			, listContainer = listRoot.find('.dynamic-list-container');
+		SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
+		return true;
+	}
+	return false;
 };
