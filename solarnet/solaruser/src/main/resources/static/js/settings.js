@@ -491,6 +491,13 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 
 /**
  * Handle the submit event for a edit service form.
+ * 
+ * The `POST` HTTP method will be used, unless the form has a `ajax-method` data attribute, in which case that value
+ * will be used. For example to use `PUT` you would have:
+ * 
+ * ```html
+ * <form data-ajax-method="put">
+ * ```
  *
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
@@ -522,7 +529,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
 	var origXhr = $.ajaxSettings.xhr;
 	var jqXhrOpts = {
-		type: 'POST',
+		method: (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST'),
 		url: submitUrl,
 		xhr: function() {
 			var xhr = origXhr.apply(this, arguments);
