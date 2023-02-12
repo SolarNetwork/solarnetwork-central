@@ -3,6 +3,12 @@ $(document).ready(function() {
 
 	$('#oscp-management').first().each(function oscpManagement() {
 		/* ============================
+		   Globals
+		   ============================ */
+		const i18n = SolarReg.i18nData(this);
+
+
+		/* ============================
 		   Capacity Groups
 		   ============================ */
 		const groupsContainer = $('#oscp-groups-container');
@@ -141,8 +147,30 @@ $(document).ready(function() {
 			});
 		})
 		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
+		});
+
+		
+		/* ============================
+		   System Token
+		   ============================ */
+
+	   function showSystemToken(config, type) {
+			if ( config && config.token ) {
+				$('#system-token-name').text(config.name);
+				$('#system-token').val(config.token);
+				$('#oscp-system-token-modal')
+					.attr('data-system-type', type)
+					.find('.system-type').text(i18n['systemType'+type.charAt(0).toUpperCase()+type.substring(1)])
+					.end()
+					.modal('show');
+				delete config.token;
+			}
+		}
+
+		$('#oscp-system-token-modal').on('hidden.bs.modal', function handleModalHidden() {
+			// clear the token value
+			$('#system-token').val('');
 		});
 
 		/* ============================
@@ -176,12 +204,12 @@ $(document).ready(function() {
 					if ( config.serviceProps['oauth-client-id'] ) {
 						model.oauthClientId = config.serviceProps['oauth-client-id'];
 					}
-				}
-				if ( config.serviceProps['http-headers'] ) {
-					model.httpHeaders = config.serviceProps['http-headers'];
-				}
-				if ( config.serviceProps['url-paths'] ) {
-					model.urlPaths = config.serviceProps['url-paths'];
+					if ( config.serviceProps['http-headers'] ) {
+						model.httpHeaders = config.serviceProps['http-headers'];
+					}
+					if ( config.serviceProps['url-paths'] ) {
+						model.urlPaths = config.serviceProps['url-paths'];
+					}
 				}
 				cpConfigsMap.set(config.id, model);
 				return model;
@@ -218,8 +246,11 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function handleCpModalFormSubmit(event) {
+			const modal = $(this);
 			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
 				populateCpConfigs([res], true);
+				// save result as modal context, to possibly show token modal
+				SolarReg.Templates.setContextItem(modal, res);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
 
@@ -235,17 +266,23 @@ $(document).ready(function() {
 			return false;
 		})
 		.on('hidden.bs.modal', function handleModalHidden() {
+			const config = SolarReg.Templates.findContextItem(this);
 			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-cps-container .list-container'), (id, deleted) => {
 				SolarReg.deleteServiceConfiguration(deleted ? id : null, cpConfigs, cpsContainer);
 				if ( deleted ) {
 					cpConfigsMap.delete(id);
 				}
 			});
+			if ( config && config.token ) {
+				// token provided; show value after short delay to allow animation to finish
+				setTimeout(function() {
+					showSystemToken(config, 'cp');
+				}, 200);
+			}
 		})
 		.on('click', SolarReg.Settings.handleDynamicListAddOrDelete)
 		.find('button.toggle').each(function() {
-			var toggle = $(this);
-			SolarReg.Settings.setupSettingToggleButton(toggle, false);
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
 		});
 
 
