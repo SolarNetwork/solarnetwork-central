@@ -91,6 +91,18 @@ section + section {
 	background-color: #c0a2a2;
 }
 
+.modal.danger .modal-header {
+	border-bottom-color: #867575;
+}
+
+.modal.danger .modal-footer {
+	border-top-color: #867575;
+}
+
+.modal.danger legend {
+	border-bottom-color: #867575;
+}
+
 .carousel-indicators.dark li {
 	background-color: #777;
 	border: none;
