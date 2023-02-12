@@ -181,6 +181,19 @@ $(document).ready(function() {
 			$('#system-token').val('');
 		});
 
+		function generateObjectPropertiesDl(container, obj) {
+			if ( obj ) {
+				let listContainer = container.find('dl').empty();
+				for ( let prop in obj ) {
+					$('<dt>').text(prop).appendTo(listContainer);
+					$('<dd>').text(obj[prop]).appendTo(listContainer);
+				}
+				container.removeClass('hidden');
+			} else {
+				container.addClass('hidden');
+			}
+		}
+
 		/* ============================
 		   Capacity Providers
 		   ============================ */
@@ -223,7 +236,10 @@ $(document).ready(function() {
 				cpConfigsMap.set(config.id, model);
 				return model;
 			});
-			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve);
+			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve, function populateCpItem(item, el) {
+				generateObjectPropertiesDl(el.find('.headers-container'), item.httpHeaders);
+				generateObjectPropertiesDl(el.find('.url-paths-container'), item.urlPaths);
+			});
 			SolarReg.saveServiceConfigurations(configs, preserve, cpConfigs, cpsContainer);
 		}
 
