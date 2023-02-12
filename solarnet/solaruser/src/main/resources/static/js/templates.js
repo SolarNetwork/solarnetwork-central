@@ -215,6 +215,7 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 						vkey = String(val).toLowerCase()+'-label';
 						vlabel = vel.data(vkey);
 						vel.toggleClass('label-default', vlabel === undefined);
+						vel.removeClass(['label-success', 'label-info', 'label-warning', 'label-danger']);
 						if ( vlabel ) {
 							vel.addClass('label-' + vlabel);
 						}
