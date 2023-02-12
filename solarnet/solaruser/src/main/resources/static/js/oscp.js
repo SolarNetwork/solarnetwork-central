@@ -7,6 +7,17 @@ $(document).ready(function() {
 		   ============================ */
 		const i18n = SolarReg.i18nData(this);
 
+		function dataAttributeName(prefix, type) {
+			if ( !type ) {
+				return prefix;
+			}
+			return prefix + type.charAt(0).toUpperCase() + type.substring(1);
+		}
+
+		function updateOscpSystemType(el, type) {
+			el.attr('data-system-type', type)
+				.find('.system-type').text(i18n[dataAttributeName('systemType',type)]);
+		}
 
 		/* ============================
 		   Capacity Groups
@@ -149,21 +160,18 @@ $(document).ready(function() {
 		.find('button.toggle').each(function() {
 			SolarReg.Settings.setupSettingToggleButton($(this), false);
 		});
-
 		
 		/* ============================
 		   System Token
 		   ============================ */
 
-	   function showSystemToken(config, type) {
+	   function showSystemToken(config) {
 			if ( config && config.token ) {
 				$('#system-token-name').text(config.name);
 				$('#system-token').val(config.token);
-				$('#oscp-system-token-modal')
-					.attr('data-system-type', type)
-					.find('.system-type').text(i18n['systemType'+type.charAt(0).toUpperCase()+type.substring(1)])
-					.end()
-					.modal('show');
+				let modal = $('#oscp-system-token-modal');
+				updateOscpSystemType(modal, config.systemType);
+				modal.modal('show');
 				delete config.token;
 			}
 		}
@@ -188,6 +196,7 @@ $(document).ready(function() {
 			var items = configs.map(function(config) {
 				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 				config.id = config.configId; // assumed by setttings.js methods
+				config.systemType = 'cp';
 				model.id = config.configId;				
 				model.createdDisplay = moment(config.created).format('D MMM YYYY');
 				model.baseUrl = config.baseUrl;
@@ -218,37 +227,66 @@ $(document).ready(function() {
 			SolarReg.saveServiceConfigurations(configs, preserve, cpConfigs, cpsContainer);
 		}
 
+		$('#oscp-add-cp-button').on('click', function createCp() {
+			const modal = $('#oscp-system-edit-modal');
+			SolarReg.Templates.setContextItem(modal, {systemType:'cp'});
+			modal.modal('show');
+		});
+
 		$('#oscp-cps-container .list-container').on('click', function(event) {
 			// edit cp or cp settings
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
 
-		$('#oscp-cp-edit-modal').on('show.bs.modal', function handleModalShow(event) {
-			var el = $(this)
+		/* ============================
+		   System Edit
+		   ============================ */
+
+		$('#oscp-system-edit-modal').on('show.bs.modal', function handleModalShow() {
+			var modal = $(this)
 				, config = SolarReg.Templates.findContextItem(this)
 				, enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange(el.find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm(el, [], []);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
 
+			updateOscpSystemType(modal, config.systemType);
+
+			// set system action URL
+			const action = this.dataset[dataAttributeName('action', config.systemType)];
+			modal.attr('action', action);
+			
 			if ( !(config && config.serviceProps) ) {
 				return;
 			}
 
 			// populate dynamic HTTP Headers list
-			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['http-headers'], el, 
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['http-headers'], modal, 
 				'http-headers', 'httpHeaderName', 'httpHeaderValue');
 
 			// populate dynamic URL Paths list
-			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['url-paths'], el, 
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['url-paths'], modal, 
 				'url-paths', 'urlPathAction', 'urlPathPath');
 			
 			return;
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function handleCpModalFormSubmit(event) {
-			const modal = $(this);
+			const modal = $(this),
+				config = SolarReg.Templates.findContextItem(this);
+			if ( !config.systemType ) {
+				return;
+			}
+
 			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
-				populateCpConfigs([res], true);
+				res.id = res.configId;
+				res.systemType = config.systemType;
+				
+				if ( config.systemType == 'cp' ) {
+					populateCpConfigs([res], true);
+				} else {
+					// TODO
+				}
+				
 				// save result as modal context, to possibly show token modal
 				SolarReg.Templates.setContextItem(modal, res);
 			}, function serializeDataConfigForm(form) {
@@ -276,7 +314,7 @@ $(document).ready(function() {
 			if ( config && config.token ) {
 				// token provided; show value after short delay to allow animation to finish
 				setTimeout(function() {
-					showSystemToken(config, 'cp');
+					showSystemToken(config);
 				}, 200);
 			}
 		})
