@@ -247,3 +247,9 @@ th.edit-dropdown {
 .dynamic-list .dynamic-list-container .dynamic-list-item + .dynamic-list-item {
 	margin-top: 2rem;
 }
+
+h5, h6 {
+	font-weight: normal;
+	color: #666;
+	text-decoration: underline;
+}
