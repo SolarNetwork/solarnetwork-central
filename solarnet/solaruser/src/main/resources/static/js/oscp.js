@@ -163,6 +163,13 @@ $(document).ready(function() {
 				model.capacityProviderDisplay = systemDisplayName('cp', config.capacityProviderId);
 				model.capacityOptimizerId = config.capacityOptimizerId;
 				model.capacityOptimizerDisplay = systemDisplayName('co', config.capacityOptimizerId);
+				let settings = groupSettingConfigsMap.get(config.id);
+				if ( settings ) {
+					model.settings = settings._contextItem;
+					model.sourceIdTemplate = settings.sourceIdTemplate;
+					model.publishToSolarIn = settings.publishToSolarIn;
+					model.publishToSolarFlux = settings.publishToSolarFlux;
+				}
 			}
 			return model;
 		}
@@ -195,6 +202,13 @@ $(document).ready(function() {
 			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
 				renderObjectPropertiesDl(el.find('.headers-container'), item.httpHeaders);
 				renderObjectPropertiesDl(el.find('.url-paths-container'), item.urlPaths);
+				
+				if ( type === 'cg' ) {
+					let settingsEditContainer = el.find('.settings-container').toggleClass('hidden', item.settings === undefined).parent();
+					// even if item does not have settings, provide a context item with the charger ID so editing works
+					let settingConfig = (item.settings ? item.settings : {id:item.id,groupId:item.id});
+					SolarReg.Templates.setContextItem(settingsEditContainer, settingConfig);
+				}
 			});
 			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 		}
@@ -220,6 +234,18 @@ $(document).ready(function() {
 				}
 				opt.appendTo(el);
 			}
+		}
+
+		/**
+		 * Create a URL serializer function for group settings.
+		 * 
+		 * @param {string} groupId the group ID
+		 * @returns {Function} the URL serializer function; accepts a single 'action' string parameter
+		 */
+		function groupSettingsFormUrlSerializer(groupId) {
+			return (action) => {
+				return action.replace(/\/settings$/, '/' + groupId + '/settings');
+			};
 		}
 
 		/* ============================
@@ -308,6 +334,11 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function handleModalFormSubmit(event) {
+			let form = event.target,
+				options = {};
+			if ( form.elements['groupId'] && form.elements['groupId'].value ) {
+				options.urlSerializer = groupSettingsFormUrlSerializer(form.elements['groupId'].value);
+			}
 			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 				if ( res.groupId === undefined ) {
 					populateSettingConfigs([res], true);
@@ -330,7 +361,7 @@ $(document).ready(function() {
 				}
 
 				return data;
-			});
+			}, options);
 			return false;
 		})
 		.on('hidden.bs.modal', function handleModalHidden() {
@@ -590,14 +621,13 @@ $(document).ready(function() {
 		/* ============================
 		   OSCP entity delete
 		   ============================ */
+
 		$('.oscp.edit-config button.delete-config').on('click', function(event) {
 			var options = {};
 			var form = $(event.target).closest('form').get(0);
 			if ( form && form.elements['groupId'] && form.elements['sourceIdTemplate'] ) {
 				// group settings use /capacity-groups/X/settings path
-				options.urlSerializer = action => {
-					return action.replace(/\/settings$/, '/' + form.elements['groupId'].value + '/settings');
-				};
+				options.urlSerializer = groupSettingsFormUrlSerializer(form.elements['groupId'].value);
 			}
 			SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
 		});
@@ -606,7 +636,7 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 5;
+			var loadCountdown = 6;
 			var settingConfs = [];
 			var groupSettingConfs = [];
 			var cpConfs = [];
@@ -672,6 +702,14 @@ $(document).ready(function() {
 				liftoff();
 			});
 
+			// list all capacity group settings
+			$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-groups/settings'), function(json) {
+				console.debug('Got OSCP capacity group settings: %o', json);
+				if ( json && json.success === true ) {
+					groupSettingConfs = json.data;
+				}
+				liftoff();
+			});
 		})();
 
 	});
