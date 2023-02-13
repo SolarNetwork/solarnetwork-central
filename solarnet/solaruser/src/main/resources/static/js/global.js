@@ -327,6 +327,14 @@ SolarReg.i18nData = function i18nData(el) {
 	return result;
 };
 
+/**
+ * Toggle the visibility of all `.page-loading` (to hidden) and `.page-loaded` (to visible) elements.
+ */
+SolarReg.showPageLoaded = function showPageLoaded() {
+	$('.page-loading').addClass('hidden');
+	$('.page-loaded').removeClass('hidden');
+};
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');
