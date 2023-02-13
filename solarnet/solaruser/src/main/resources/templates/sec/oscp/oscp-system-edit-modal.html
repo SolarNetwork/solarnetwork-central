@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>OSCP Capacity Provider Form</title>
+	<title>OSCP External System Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
@@ -17,10 +17,10 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" data-th-utext="#{oscp.system.edit.title}">Edit OSCP Provider</h4>
+				<h4 class="modal-title" data-th-utext="#{oscp.system.edit.title}">Edit System</h4>
 			</div>
 		 	<div class="modal-body form-horizontal">
-		 		<p data-th-utext="#{oscp.system.edit.intro}">Edit the OSCP Capacity Provider details on this form.</p>
+		 		<p data-th-utext="#{oscp.system.edit.intro}">Edit the OSCP system details on this form.</p>
 		 		<div class="form-group">
 		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.system.name.label}">
 		 				Name
@@ -69,10 +69,10 @@
 		 		</div>
 		 		<fieldset>
 		 			<legend data-th-text="#{oscp.system.sprops.oauth.label}">OAuth</legend>
-		 			<p data-th-utext="#{oscp.system.sprops.oauth.intro}">If the provider supports OAuth
+		 			<p data-th-utext="#{oscp.system.sprops.oauth.intro}">If the system supports OAuth
 		 			2.0 client-credentials style authentication, fill in the OAuth details here.
 		 			Providing OAuth settings means OAuth authentication will replace the OSCP
-		 			standard token authentication scheme when communicating this this provider.</p>
+		 			standard token authentication scheme when communicating this this system.</p>
 					<div class="form-group">
 						<label class="col-sm-3 control-label" data-th-text="#{oscp.system.sprops.oauthTokenUrl.label}">
 							OAuth Token URL
@@ -110,7 +110,7 @@
 							<i class="glyphicon glyphicon-plus"></i>
 						</button>
 		 			</legend>
-		 			<p data-th-utext="#{oscp.system.sprops.httpHeaders.intro}">You can add any custom HTTP headers as required by the provider.</p>
+		 			<p data-th-utext="#{oscp.system.sprops.httpHeaders.intro}">You can add any custom HTTP headers as required by the system.</p>
 					<div class="row dynamic-list-item" data-th-classappend="'template'">
 						<div class="col-sm-5">
 							<input type="text" class="form-control input-sm" name="httpHeaderName" maxlength="64"

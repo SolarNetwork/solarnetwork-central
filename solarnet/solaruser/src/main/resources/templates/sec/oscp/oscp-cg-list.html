@@ -26,6 +26,7 @@
 				<th data-th-text="#{oscp.system.name.label}">Name</th>
 				<th data-th-text="#{oscp.system.created.label}">Created</th>
 				<th data-th-text="#{oscp.cg.identifier.label}">Identifier</th>
+				<th data-th-text="#{oscp.cg.status.label}">Status</th>
 				<th data-th-text="#{oscp.cg.cpDetails.label}">Provider</th>
 				<th data-th-text="#{oscp.cg.coDetails.label}">Optimizer</th>
 			</tr>
@@ -34,10 +35,15 @@
 				<td data-tprop="name"></td>
 				<td data-tprop="createdDisplay"></td>
 				<td data-tprop="identifier"></td>
+				<td>
+					<span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span>
+				</td>
 				<td class="small">
 					<dl class="dl-horizontal">
 						<dt data-th-text="#{oscp.cg.cp.label}">Provider</dt>
-						<dd><a class="edit-link-rel" data-system-type="cp" href="#" data-tprop="capacityProviderId"></a></dd>
+						<dd><a class="edit-link-rel" data-system-type="cp" data-tattr="capacityProviderId@data-system-id" href="#" data-tprop="capacityProviderDisplay"></a></dd>
 
 						<dt data-th-text="#{oscp.cg.measurementPeriod.label}">Measurement Period</dt>
 						<dd data-tprop="capacityProviderMeasurementPeriod"></dd>
@@ -46,7 +52,7 @@
 				<td class="small">
 					<dl class="dl-horizontal">
 						<dt data-th-text="#{oscp.cg.co.label}">Optimizer</dt>
-						<dd><a class="edit-link-rel" data-system-type="co" href="#" data-tprop="capacityOptimizerId"></a></dd>
+						<dd><a class="edit-link-rel" data-system-type="co" data-tattr="capacityOptimizerId@data-system-id" href="#" data-tprop="capacityOptimizerDisplay"></a></dd>
 
 						<dt data-th-text="#{oscp.cg.measurementPeriod.label}">Measurement Period</dt>
 						<dd data-tprop="capacityOptimizerMeasurementPeriod"></dd>
