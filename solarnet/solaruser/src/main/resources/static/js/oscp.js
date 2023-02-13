@@ -2,11 +2,49 @@ $(document).ready(function() {
 	'use strict';
 
 	$('#oscp-management').first().each(function oscpManagement() {
+		/**
+		 * A system configuration.
+		 * 
+		 * @typedef {Object} OscpSystem
+		 * @property {string} type one of 'cp' or 'co' (Capacity Provider, Capacity Optimizer)
+		 * @property {jQuery} container the element that holds the rendered list of systems
+		 * @property {Array<Object>} configs the system configuration entities
+		 * @property {Map<Number, Object>} configsMap a mapping of configuration entity IDs to associated entities
+		 */
+
+		/**
+		 * Create a system configuration.
+		 * 
+		 * @param {jQuery} listContainer the list container
+		 * @param {string} type the system type
+		 * @returns {OscpSystem} the new system object
+		 */
+		function createSystem(listContainer, type) {
+			return Object.freeze({
+				type: type,
+				container: listContainer,
+				configs: [],
+				configsMap: new Map()
+			});
+		}
+
 		/* ============================
 		   Globals
 		   ============================ */
 		const i18n = SolarReg.i18nData(this);
 
+		const systems = Object.freeze({
+			co: createSystem($('#oscp-cos-container'), 'co'),
+			cp: createSystem($('#oscp-cps-container'), 'cp')
+		});
+
+		/**
+		 * Generate a DOM data attribute property name for an OSCP system type.
+		 * 
+		 * @param {string} prefix the desired prefix
+		 * @param {string} type the system type
+		 * @returns {string} the data attribute name
+		 */
 		function dataAttributeName(prefix, type) {
 			if ( !type ) {
 				return prefix;
@@ -14,9 +52,121 @@ $(document).ready(function() {
 			return prefix + type.charAt(0).toUpperCase() + type.substring(1);
 		}
 
-		function updateOscpSystemType(el, type) {
+		/**
+		 * Render system-specific names into a DOM tree.
+		 * @param {jQuery} el the selection to render the OSCP type in
+		 * @param {string} type the system type
+		 */
+		function renderOscpSystemType(el, type) {
 			el.attr('data-system-type', type)
 				.find('.system-type').text(i18n[dataAttributeName('systemType',type)]);
+		}
+
+		/**
+		 * Render the properties of an object into a <dl> list container.
+		 * 
+		 * @param {jQuery} container the DOM container to render the list in
+		 * @param {Object} obj the object whose properties should be rendered into the list
+		 */
+		function renderObjectPropertiesDl(container, obj) {
+			if ( obj ) {
+				let listContainer = container.find('dl').empty();
+				for ( let prop in obj ) {
+					$('<dt>').text(prop).appendTo(listContainer);
+					$('<dd>').text(obj[prop]).appendTo(listContainer);
+				}
+				container.removeClass('hidden');
+			} else {
+				container.addClass('hidden');
+			}
+		}
+
+		/**
+		 * A system configuration model.
+		 * 
+		 * @typedef {Object} OscpSystemModel
+		 * @property {string} systemType the system type (e.g. 'co', 'cp')
+		 * @property {string} [id] the entity ID
+		 * @property {string} [createdDisplay] the entity creation date as a display string
+		 * @property {string} [baseUrl] the system base URL
+		 * @property {boolean} [enabled] the enabled state
+		 * @property {string} [registrationStatus] the system registration status
+		 * @property {Array<String>} [measurementStyles] the system measurement styles
+		 * @property {string} [measurementStylesDisplay] a concatenated list of system measurement styles
+		 * @property {string} [oauthTokenUrl] the OAuth token URL
+		 * @property {string} [oauthClientId] the OAuth client ID
+		 * @property {Object} [httpHeaders] optional HTTP headers
+		 * @property {Object} [urlPaths] optional URL Paths 
+		 */
+
+		/**
+		 * Create a system model out of a configuration entity.
+		 * 
+		 * @param {object} config the OSCP system entity
+		 * @param {string} type the system type
+		 * @returns {OscpSystemModel} the system list model
+		 */
+		function createSystemConfigurationModel(config, type) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			config.id = config.configId; // assumed by setttings.js methods
+			config.systemType = type;
+			model.systemType = type;			
+			model.id = config.configId;	
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.baseUrl = config.baseUrl;
+			model.enabled = config.enabled;
+			model.registrationStatus = config.registrationStatus;
+			if ( config.settings && Array.isArray(config.settings.measurementStyles) ) {
+				model.measurementStyles = config.settings.measurementStyles;
+				model.measurementStylesDisplay = config.settings.measurementStyles.join(', ');
+			}
+			if ( config.serviceProps ) {
+				if ( config.serviceProps['oauth-token-url'] ) {
+					model.oauthTokenUrl = config.serviceProps['oauth-token-url'];
+				}
+				if ( config.serviceProps['oauth-client-id'] ) {
+					model.oauthClientId = config.serviceProps['oauth-client-id'];
+				}
+				if ( config.serviceProps['http-headers'] ) {
+					model.httpHeaders = config.serviceProps['http-headers'];
+				}
+				if ( config.serviceProps['url-paths'] ) {
+					model.urlPaths = config.serviceProps['url-paths'];
+				}
+			}
+			return model;
+		}
+
+		/**
+		 * Render a list of system configuration entities.
+		 * 
+		 * @param {Array<Object>} configs list of systems to render
+		 * @param {string} type the system type
+		 * @param {boolean} preserve `true` to update any existing list; `false` to clear and populate
+		 */
+		function renderSystemConfigs(configs, type, preserve) {
+			/** @type {OscpSystem} */
+			const sys = systems[type];
+			if ( !sys ) {
+				return;
+			}
+			configs = Array.isArray(configs) ? configs : [];
+			if ( !preserve ) {
+				sys.configsMap.clear();
+			}
+
+			/** @type {Array<OscpSystemModel>} */
+			var items = configs.map(function(config) {
+				var model = createSystemConfigurationModel(config, type);
+				sys.configsMap.set(config.id, model);
+				return model;
+			});
+
+			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
+				renderObjectPropertiesDl(el.find('.headers-container'), item.httpHeaders);
+				renderObjectPropertiesDl(el.find('.url-paths-container'), item.urlPaths);
+			});
+			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 		}
 
 		/* ============================
@@ -170,7 +320,7 @@ $(document).ready(function() {
 				$('#system-token-name').text(config.name);
 				$('#system-token').val(config.token);
 				let modal = $('#oscp-system-token-modal');
-				updateOscpSystemType(modal, config.systemType);
+				renderOscpSystemType(modal, config.systemType);
 				modal.modal('show');
 				delete config.token;
 			}
@@ -181,67 +331,9 @@ $(document).ready(function() {
 			$('#system-token').val('');
 		});
 
-		function generateObjectPropertiesDl(container, obj) {
-			if ( obj ) {
-				let listContainer = container.find('dl').empty();
-				for ( let prop in obj ) {
-					$('<dt>').text(prop).appendTo(listContainer);
-					$('<dd>').text(obj[prop]).appendTo(listContainer);
-				}
-				container.removeClass('hidden');
-			} else {
-				container.addClass('hidden');
-			}
-		}
-
 		/* ============================
 		   Capacity Providers
 		   ============================ */
-		const cpsContainer = $('#oscp-cps-container');
-		const cpConfigs = [];
-		const cpConfigsMap = new Map();
-
-		function populateCpConfigs(configs, preserve) {
-			configs = Array.isArray(configs) ? configs : [];
-			if ( !preserve ) {
-				cpConfigsMap.clear();
-			}
-			var items = configs.map(function(config) {
-				var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-				config.id = config.configId; // assumed by setttings.js methods
-				config.systemType = 'cp';
-				model.id = config.configId;				
-				model.createdDisplay = moment(config.created).format('D MMM YYYY');
-				model.baseUrl = config.baseUrl;
-				model.enabled = config.enabled;
-				model.registrationStatus = config.registrationStatus;
-				if ( config.settings && Array.isArray(config.settings.measurementStyles) ) {
-					model.measurementStyles = config.settings.measurementStyles;
-					model.measurementStylesDisplay = config.settings.measurementStyles.join(', ');
-				}
-				if ( config.serviceProps ) {
-					if ( config.serviceProps['oauth-token-url'] ) {
-						model.oauthTokenUrl = config.serviceProps['oauth-token-url'];
-					}
-					if ( config.serviceProps['oauth-client-id'] ) {
-						model.oauthClientId = config.serviceProps['oauth-client-id'];
-					}
-					if ( config.serviceProps['http-headers'] ) {
-						model.httpHeaders = config.serviceProps['http-headers'];
-					}
-					if ( config.serviceProps['url-paths'] ) {
-						model.urlPaths = config.serviceProps['url-paths'];
-					}
-				}
-				cpConfigsMap.set(config.id, model);
-				return model;
-			});
-			SolarReg.Templates.populateTemplateItems(cpsContainer, items, preserve, function populateCpItem(item, el) {
-				generateObjectPropertiesDl(el.find('.headers-container'), item.httpHeaders);
-				generateObjectPropertiesDl(el.find('.url-paths-container'), item.urlPaths);
-			});
-			SolarReg.saveServiceConfigurations(configs, preserve, cpConfigs, cpsContainer);
-		}
 
 		$('#oscp-add-cp-button').on('click', function createCp() {
 			const modal = $('#oscp-system-edit-modal');
@@ -250,11 +342,26 @@ $(document).ready(function() {
 		});
 
 		$('#oscp-cps-container .list-container').on('click', function(event) {
-			// edit cp or cp settings
+			// edit cp settings
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
 
 		/* ============================
+		   Capacity Optimizers
+		   ============================ */
+
+		$('#oscp-add-co-button').on('click', function createCp() {
+			const modal = $('#oscp-system-edit-modal');
+			SolarReg.Templates.setContextItem(modal, {systemType:'co'});
+			modal.modal('show');
+		});
+
+		$('#oscp-cos-container .list-container').on('click', function(event) {
+			// edit co settings
+			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+		});
+
+	   /* ============================
 		   System Edit
 		   ============================ */
 
@@ -265,7 +372,7 @@ $(document).ready(function() {
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
 			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
 
-			updateOscpSystemType(modal, config.systemType);
+			renderOscpSystemType(modal, config.systemType);
 
 			// set system action URL
 			const action = this.dataset[dataAttributeName('action', config.systemType)];
@@ -296,12 +403,7 @@ $(document).ready(function() {
 			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
 				res.id = res.configId;
 				res.systemType = config.systemType;
-				
-				if ( config.systemType == 'cp' ) {
-					populateCpConfigs([res], true);
-				} else {
-					// TODO
-				}
+				renderSystemConfigs([res], config.systemType, true);
 				
 				// save result as modal context, to possibly show token modal
 				SolarReg.Templates.setContextItem(modal, res);
@@ -320,11 +422,19 @@ $(document).ready(function() {
 			return false;
 		})
 		.on('hidden.bs.modal', function handleModalHidden() {
-			const config = SolarReg.Templates.findContextItem(this);
-			SolarReg.Settings.resetEditServiceForm(this, $('#oscp-cps-container .list-container'), (id, deleted) => {
-				SolarReg.deleteServiceConfiguration(deleted ? id : null, cpConfigs, cpsContainer);
+			const config = SolarReg.Templates.findContextItem(this),
+				type = config.systemType,
+
+				/** @type {OscpSystem} */
+				sys = systems[type];
+			if ( !sys ) {
+				return;
+			}
+			const container = sys.container.find('.list-container');
+			SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
 				if ( deleted ) {
-					cpConfigsMap.delete(id);
+					sys.configsMap.delete(id);
 				}
 			});
 			if ( config && config.token ) {
@@ -359,17 +469,19 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 3;
+			var loadCountdown = 4;
 			var settingConfs = [];
 			var groupSettingConfs = [];
 			var cpConfs = [];
+			var coConfs = [];
 
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
 					populateSettingConfigs(settingConfs);
 					populateGroupSettingConfigs(groupSettingConfs);
-					populateCpConfigs(cpConfs);
+					renderSystemConfigs(cpConfs, 'cp');
+					renderSystemConfigs(coConfs, 'co');
 				}
 			}
 
@@ -398,6 +510,15 @@ $(document).ready(function() {
 				console.debug('Got OSCP capacity providers: %o', json);
 				if ( json && json.success === true ) {
 					cpConfs = json.data;
+				}
+				liftoff();
+			});
+
+			// list all capacity optimizers
+			$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-optimizers'), function(json) {
+				console.debug('Got OSCP capacity optimizers: %o', json);
+				if ( json && json.success === true ) {
+					coConfs = json.data;
 				}
 				liftoff();
 			});
