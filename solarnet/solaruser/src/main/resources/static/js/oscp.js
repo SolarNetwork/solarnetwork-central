@@ -3,13 +3,32 @@ $(document).ready(function() {
 
 	$('#oscp-management').first().each(function oscpManagement() {
 		/**
+		 * A system configuration UI model.
+		 * 
+		 * @typedef {Object} OscpSystemModel
+		 * @property {object} _contextItem the configuration entity
+		 * @property {string} systemType the system type (e.g. 'co', 'cp')
+		 * @property {string} [id] the entity ID
+		 * @property {string} [createdDisplay] the entity creation date as a display string
+		 * @property {string} [baseUrl] the system base URL
+		 * @property {boolean} [enabled] the enabled state
+		 * @property {string} [registrationStatus] the system registration status
+		 * @property {Array<String>} [measurementStyles] the system measurement styles
+		 * @property {string} [measurementStylesDisplay] a concatenated list of system measurement styles
+		 * @property {string} [oauthTokenUrl] the OAuth token URL
+		 * @property {string} [oauthClientId] the OAuth client ID
+		 * @property {Object} [httpHeaders] optional HTTP headers
+		 * @property {Object} [urlPaths] optional URL Paths 
+		 */
+
+		/**
 		 * A system configuration.
 		 * 
 		 * @typedef {Object} OscpSystem
 		 * @property {string} type one of 'cp' or 'co' (Capacity Provider, Capacity Optimizer)
 		 * @property {jQuery} container the element that holds the rendered list of systems
 		 * @property {Array<Object>} configs the system configuration entities
-		 * @property {Map<Number, Object>} configsMap a mapping of configuration entity IDs to associated entities
+		 * @property {Map<Number, OscpSystemModel>} configsMap a mapping of configuration entity IDs to associated entities
 		 */
 
 		/**
@@ -35,7 +54,8 @@ $(document).ready(function() {
 
 		const systems = Object.freeze({
 			co: createSystem($('#oscp-cos-container'), 'co'),
-			cp: createSystem($('#oscp-cps-container'), 'cp')
+			cp: createSystem($('#oscp-cps-container'), 'cp'),
+			cg: createSystem($('#oscp-cgs-container'), 'cg'),
 		});
 
 		/**
@@ -82,24 +102,6 @@ $(document).ready(function() {
 		}
 
 		/**
-		 * A system configuration model.
-		 * 
-		 * @typedef {Object} OscpSystemModel
-		 * @property {string} systemType the system type (e.g. 'co', 'cp')
-		 * @property {string} [id] the entity ID
-		 * @property {string} [createdDisplay] the entity creation date as a display string
-		 * @property {string} [baseUrl] the system base URL
-		 * @property {boolean} [enabled] the enabled state
-		 * @property {string} [registrationStatus] the system registration status
-		 * @property {Array<String>} [measurementStyles] the system measurement styles
-		 * @property {string} [measurementStylesDisplay] a concatenated list of system measurement styles
-		 * @property {string} [oauthTokenUrl] the OAuth token URL
-		 * @property {string} [oauthClientId] the OAuth client ID
-		 * @property {Object} [httpHeaders] optional HTTP headers
-		 * @property {Object} [urlPaths] optional URL Paths 
-		 */
-
-		/**
 		 * Create a system model out of a configuration entity.
 		 * 
 		 * @param {object} config the OSCP system entity
@@ -133,6 +135,13 @@ $(document).ready(function() {
 				if ( config.serviceProps['url-paths'] ) {
 					model.urlPaths = config.serviceProps['url-paths'];
 				}
+			}
+			if ( type === 'cg' ) {
+				model.identifier = config.identifier;
+				model.capacityProviderMeasurementPeriod = config.capacityProviderMeasurementPeriod;
+				model.capacityOptimizerMeasurementPeriod = config.capacityOptimizerMeasurementPeriod;
+				model.capacityProviderId = config.capacityProviderId;
+				model.capacityOptimizerId = config.capacityOptimizerId;
 			}
 			return model;
 		}
@@ -449,6 +458,24 @@ $(document).ready(function() {
 			SolarReg.Settings.setupSettingToggleButton($(this), false);
 		});
 
+		/* ============================
+		   Capacity Groups
+		   ============================ */
+
+		$('.edit-link-rel').on('click', function showGroupRelatedEntityModal(event) {
+			event.preventDefault();
+			const type = event.target.dataset['systemType'],
+				configId = Number($(event.target).text()),
+				sys = systems[type];
+			if ( configId && sys ) {
+				let model = sys.configsMap.get(configId);
+				if ( model && model._contextItem ) {
+					let editModal = $('#oscp-system-edit-modal');
+					SolarReg.Templates.setContextItem(editModal, model._contextItem);
+					editModal.modal('show');
+				}
+			}
+		});
 
 		/* ============================
 		   OSCP entity delete
@@ -469,11 +496,12 @@ $(document).ready(function() {
 		   Init
 		   ============================ */
 		(function initOcppManagement() {
-			var loadCountdown = 4;
+			var loadCountdown = 5;
 			var settingConfs = [];
 			var groupSettingConfs = [];
 			var cpConfs = [];
 			var coConfs = [];
+			var cgConfs = [];
 
 			function liftoff() {
 				loadCountdown -= 1;
@@ -482,6 +510,7 @@ $(document).ready(function() {
 					populateGroupSettingConfigs(groupSettingConfs);
 					renderSystemConfigs(cpConfs, 'cp');
 					renderSystemConfigs(coConfs, 'co');
+					renderSystemConfigs(cgConfs, 'cg');
 				}
 			}
 
@@ -519,6 +548,15 @@ $(document).ready(function() {
 				console.debug('Got OSCP capacity optimizers: %o', json);
 				if ( json && json.success === true ) {
 					coConfs = json.data;
+				}
+				liftoff();
+			});
+
+			// list all capacity groups
+			$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-groups'), function(json) {
+				console.debug('Got OSCP capacity groups: %o', json);
+				if ( json && json.success === true ) {
+					cgConfs = json.data;
 				}
 				liftoff();
 			});
