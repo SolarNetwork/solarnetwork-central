@@ -438,6 +438,61 @@ $(document).ready(function() {
 		});
 
 		/* ============================
+		   Capacity Group Assets
+		   ============================ */
+		 const cgGroupAssets = new Map();
+
+		/**
+		 * Create an asset model out of a configuration entity.
+		 * 
+		 * @param {object} config the OSCP system entity
+		 * @param {number} groupId the ID of the group the assets are associated with
+		 * @returns {object} the asset list model
+		 */
+		function createCapacityGroupAssetModel(config) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			config.id = config.configId; // assumed by setttings.js methods
+			model.id = config.configId;
+			model.capacityGroupId = config.capacityGroupId;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.identifier = config.identifier;
+			model.audience = config.audience;
+			model.audienceDisplay = i18n['role'+config.audience];
+			model.enabled = config.enabled;
+			model.nodeId = config.nodeId;
+			model.sourceId = config.sourceId;
+			model.category = config.category;
+			model.phase = config.phase;
+			model.instantaneous = config.instantaneous;
+			model.energy = config.energy;
+			return model;
+		}
+		
+		function renderCapacityGroupAssets(assetsContainer, configs, groupId, preserve) {
+			var sys = cgGroupAssets.get(groupId);
+			if ( !sys ) {
+				sys = createSystem(assetsContainer, 'asset');
+				cgGroupAssets.set(groupId, sys);
+			}
+			configs = Array.isArray(configs) ? configs : [];
+			if ( !preserve ) {
+				sys.configsMap.clear();
+			}
+
+			/** @type {Array<OscpSystemModel>} */
+			var items = configs.map(function(config) {
+				var model = createCapacityGroupAssetModel(config);
+				sys.configsMap.set(config.id, model);
+				return model;
+			});
+
+			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
+				// TODO
+			}, 'asset.');
+			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+		}
+
+		/* ============================
 		   Capacity Groups
 		   ============================ */
 
@@ -448,6 +503,31 @@ $(document).ready(function() {
 		});
 
 		systems.cg.container.find('.list-container').on('click', function(event) {
+			let target = $(event.target);
+			if ( target.hasClass('oscp-cg-toggle-assets') ) {
+				event.preventDefault();
+				let assets = target.closest('.cg-item').next('.cg-item-assets'),
+					hide = !assets.hasClass('hidden'),
+					config = SolarReg.Templates.findContextItem(target),
+					groupId = config ? config.id : undefined;
+				
+				if ( groupId ) {
+					assets.toggleClass('hidden', hide);
+					target.text(i18n[hide ? 'cgAssetsShow' : 'cgAssetsHide']);
+					if ( !cgGroupAssets.get(groupId) ) {
+						$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-groups/' +groupId + '/assets'), function(json) {
+							console.debug('Got OSCP group assets: %o', json);
+							if ( json && json.success === true ) {
+								renderCapacityGroupAssets(assets, json.data, groupId);
+							}
+							assets.find('.assets-loading').addClass('hidden');
+							assets.find('.asset-configs').removeClass('hidden');
+						});
+					}
+				}
+				return;
+			}
+			
 			// edit cg settings
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});

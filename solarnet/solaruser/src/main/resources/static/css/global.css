@@ -244,6 +244,11 @@ th.edit-dropdown {
 	min-width: 100px;
 }
 
+tr.no-rule > td,
+tr.no-rule > th {
+	border-top: none !important;
+}
+
 .dynamic-list .dynamic-list-container .dynamic-list-item + .dynamic-list-item {
 	margin-top: 2rem;
 }
