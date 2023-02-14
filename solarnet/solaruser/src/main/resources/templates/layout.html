@@ -36,8 +36,12 @@
 	<script src="../static/js/expire.js" data-th-src="@{/js/expire.js}"></script>
 	<script src="../static/js/node-event.js" data-th-src="@{/js/node-event.js}"></script>
 	<script src="../static/js/ocpp.js" data-th-src="@{/js/ocpp.js}"></script>
+	<script src="../static/js/oscp.js" data-th-src="@{/js/oscp.js}"></script>
 </head>
-<body>
+<body
+	data-th-data-i18n-copy-tooltip="#{copy.tooltip}"
+	data-th-data-i18n-copied-tooltip="#{copied.tooltip}"
+	data-th-data-i18n-copy-failed-tooltip="#{copy.failed.tooltip}">
 	<nav class="navbar navbar-default" data-th-replace="navbar :: navbar">
 		<div class="container-fluid">
 			<div class="navbar-header">

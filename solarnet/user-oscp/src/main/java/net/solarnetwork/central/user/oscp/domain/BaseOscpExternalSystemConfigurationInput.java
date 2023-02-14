@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.oscp.domain;
 import java.net.URI;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base DTO for external system configuration input.
@@ -47,7 +46,9 @@ public abstract class BaseOscpExternalSystemConfigurationInput<T extends BaseOsc
 	@Override
 	protected void populateConfiguration(T conf) {
 		super.populateConfiguration(conf);
-		conf.setBaseUrl(ObjectUtils.requireNonNullArgument(baseUrl, "baseUrl").toString());
+		if ( baseUrl != null ) {
+			conf.setBaseUrl(baseUrl.toString());
+		}
 		conf.setOscpVersion(oscpVersion);
 		conf.setRegistrationStatus(registrationStatus);
 	}

@@ -93,6 +93,14 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 		if ( el && el.length > 0 ) {
 			// clear any existing props in case values have been deleted
 			el.find('[data-tprop]').text('');
+			el.find('[data-tattr]').each(function() {
+				let attrName = this.dataset.tattr;
+				let splitIdx = attrName.indexOf('@');
+				if ( splitIdx ) {
+					attrName = attrName.substring(splitIdx);
+					$(this).removeAttr(attrName);
+				}
+			});
 
 			SolarReg.Templates.replaceTemplateProperties(el, item);
 			SolarReg.Templates.setContextItem(el, item._contextItem);
@@ -171,6 +179,19 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * 	<dd class="template" data-tprop="serviceProperties.value"></dd>
 * </dl>
 * ```
+*
+* A `data-tattr` attribute can also be used to define dynamic attributes. The syntax of this
+* attribute is `parameterName@attributeName`. For example in this HTML template:
+*
+* ```html
+* <a data-tattr="id@data-entity-id" data-tprop="name"></a>
+* ```
+*
+* When combined with a parameters object like `{id:1, name:"Foo"}` the final HTML would be:
+*
+* ```html
+* <a data-tattr="id@data-entity-id" data-tprop="name" data-entity-id="1">Foo</a>
+* ```
 * 
 * @param {jQuery} el the element to perform replacements on
 * @param {object} obj the object whose properties act as template parameters
@@ -201,7 +222,8 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 				sPropContainer.append(sPropItem);
 			}
 		} else {
-			sel = "[data-tprop='" +(prefix || '') +prop +"']";
+			let qualifiedPropname = (prefix || '') +prop;
+			sel = "[data-tprop='" +qualifiedPropname +"']";
 			if ( Array.isArray(val) ) {
 				el.find(sel).addBack(sel).html(val);
 			} else {
@@ -215,6 +237,7 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 						vkey = String(val).toLowerCase()+'-label';
 						vlabel = vel.data(vkey);
 						vel.toggleClass('label-default', vlabel === undefined);
+						vel.removeClass(['label-success', 'label-info', 'label-warning', 'label-danger']);
 						if ( vlabel ) {
 							vel.addClass('label-' + vlabel);
 						}
@@ -223,6 +246,16 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 				// look for a data property named the lower-case value + '-text' for i18n message replacement
 				vkey = String(val).toLowerCase()+'-text';
 				vel.text(vel.data(vkey) ? vel.data(vkey) : val);
+			}
+			sel = "[data-tattr^='" + qualifiedPropname + "@']";
+			if ( Array.isArray(val) ) {
+				el.find(sel).addBack(sel).html(val);
+			} else {
+				vel = el.find(sel).addBack(sel);
+				vel.each(function() {
+					let attrName = this.dataset.tattr.substring(qualifiedPropname.length + 1);
+					$(this).attr(attrName, val);
+				});
 			}
 		}
 	}

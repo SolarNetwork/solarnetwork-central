@@ -39,6 +39,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 	// clear out dynamic settings
 	f.find('.service-props-container').empty().addClass('hidden');
 
+	// clear out dynamic lists
+	f.find('.dynamic-list-container').empty();
+
 	// reset form and modal for next item
 	if ( typeof form.reset === 'function' ) {
 		form.reset();
@@ -432,7 +435,40 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
 /**
  * Encode a service item configuration form into an object, suitable for encoding into JSON
  * for posting to SolarNetwork.
- *
+ * 
+ * This method iterates over all form fields and maps them into object properties. The field
+ * names are split on `.` characters into nested objects.  * A form field can be ignored by adding a `data-settings-ignore` attribute to that field,
+ * with any non-empty value.
+ * 
+ * The object property name can include a prefix by adding a `data-settings-prefix`
+ * attribute to a form field.
+ * 
+ * The object property name can also be derived from a previous form element value, by
+ * adding a `data-settings-name-field` attribute to that field. The attribute value is
+ * the name of another HTML field that comes before this field (in DOM order).
+ * 
+ * For example, given form fields like
+ * 
+ * ```html
+ * <input name="foo" value="bar">
+ * <input name="info.name" value="Joe">
+ * <input name="into.age" value="99">
+ * <select name="answer">
+ *   <option value="0">0</option>
+ *   <option value="11">11</option>
+ *   <option value="42" selected>42</option>
+ * </select>
+ * <input name="cilent-id" value="abc123" data-settings-prefix="props.">
+ * <input name="key" value="car" data-settings-ignore="true">
+ * <input name="val" value="mini" data-settings-name-field="key" data-settings-prefix="props.">
+ * ```
+ * 
+ * An object like the following would be generated:
+ * 
+ * ```javascript
+ * {foo:"bar", info:{name:"Joe", age:"99"}, answer:"42", props:{"client-id":abc123, car:"mini"}}
+ * ```
+ * 
  * @param {HTMLFormElement} form the form
  * @param {boolean} excludeEmptyProperties {@constant true} to omit empty form field values from the result
  * @returns {Object} the encoded object
@@ -452,8 +488,34 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 	for ( i = 0, iLen = fields.length; i < iLen; i += 1 ) {
 		field = fields.item(i);
 		name = field.name;
-		if ( !name ) {
+		// allow name to be derived from a reference to a previous field's value
+		if ( field.dataset.settingsNameField ) {
+			name = undefined;
+			if ( field.value ) {
+				for ( let b = i - 1; b >= 0; b -= 1 ) {
+					let nameField = fields[b];
+					if ( nameField.name === field.dataset.settingsNameField ) {
+						if ( nameField && nameField.selectedOptions ) {
+							// <select>
+							if ( nameField.selectedOptions.length ) {
+								name = (nameField.selectedOptions[0].hasAttribute('value')
+									? nameField.selectedOptions[0].value
+									: undefined)
+							}
+						} else {
+							// <input>
+							name = nameField.value;
+						}
+						break;
+					}
+				}
+			}
+		}
+		if ( !name || field.dataset.settingsIgnore ) {
 			continue;
+		}
+		if ( field.dataset.settingsPrefix ) {
+			name = field.dataset.settingsPrefix + name;
 		}
 		components = name.split('.');
 		if ( field.selectedOptions ) {
@@ -491,6 +553,20 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 
 /**
  * Handle the submit event for a edit service form.
+ * 
+ * The `POST` HTTP method will be used, unless the form has a `ajax-method` data attribute, in which case that value
+ * will be used. For example to use `PUT` you would have:
+ * 
+ * ```html
+ * <form data-ajax-method="put">
+ * ```
+ * 
+ * If a `urlId` option is provided and the form has a value in its `id` element, and a `settings-update-method` data
+ * attribute exists on the form, that value will be used. For example to `POST` on creation but `PUT` on update:
+ * 
+ * ```html
+ * <form method="post" data-settings-update-method="put">
+ * ```
  *
  * @param {event} event the submit event that triggered form submission
  * @param {function} onSuccess a callback to invoke on success; will be passed the upload body object and the response body object
@@ -521,8 +597,12 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		: form.action);
 	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
 	var origXhr = $.ajaxSettings.xhr;
+	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');
+	if ( options && options.urlId && form.elements['id'] && form.elements['id'].value && form.dataset.settingsUpdateMethod ) {
+		xhrMethod = form.dataset.settingsUpdateMethod.toUpperCase();
+	}
 	var jqXhrOpts = {
-		type: 'POST',
+		method: xhrMethod,
 		url: submitUrl,
 		xhr: function() {
 			var xhr = origXhr.apply(this, arguments);
@@ -578,4 +658,80 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		SolarReg.showAlertBefore(el, 'alert-warning', msg);
 		modal.find('button[type=submit]').prop('disabled', false);
 	});
+};
+
+/**
+ * Handle an add or delete dynamic list item event such as `click`.
+ * 
+ * This handler looks for a `dynamic-list-add` or `dynamic-list-delete` class on the event
+ * target hierarchy.
+ * 
+ * If an `add` element is found, then the following actions are taken:
+ * 
+ *  1. Find the closest element with the `dynamic-list` class; this is the dynamic list
+ *     "root" element.
+ *  2. Within the "root" element, find an element with the `dynamic-list-item template`
+ *     classes; this is the list item template to copy.
+ *  3. Within the "root" element, find an element with the `dynamic-list-container` class;
+ *     this is the container element to copy the template element into.
+ *  4. Make a deep clone of the found template element and insert into the container
+ *     element.
+ * 
+ * If a `delete` element is found, then the closest ancester with a `dynamic-list-item`
+ * class is removed.
+ * 
+ * In general, the expected hierarchy of elements looks like this (actual element names
+ * do not matter and are just for illustration, and arbitrary nesting of other elements
+ * are allowed):
+ * 
+ * ```
+ * ─ div.dynamic-list
+ *   ├── button.dynamic-list-add
+ *   ├── div.dynamic-list-item.template
+ *   │   └── button.dynamic-list-delete
+ *   └── div.dynamic-list-container
+ * ```
+ * 
+ * @param {event} event the submit event that triggered form submission
+ */
+SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOrDelete(event) {
+	var target = $(event.target);
+	if ( target.closest('.dynamic-list-delete').length ) {
+		// handle dynamic list delete item
+		event.preventDefault();
+		target.closest('.dynamic-list-item').remove();
+	} else if (target.closest('.dynamic-list-add').length ) {
+		// handle dynamic list add item
+		event.preventDefault();
+		let listRoot = target.closest('.dynamic-list')
+			, listTemplate = listRoot.find('.dynamic-list-item.template')
+			, listContainer = listRoot.find('.dynamic-list-container');
+		SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
+	}
+	return; // ensure undefined is returned to allow other event handlers to work
+};
+
+/**
+ * Populate a dynamic list of key/value form element pairs based on the properties of a configuration object.
+ * 
+ * @param {object} listConfig the list configuration object, whose properties will be turned into form elements
+ * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
+ * @param {string} listRootClass the CSS class name of the list root element
+ * @param {string} inputKeyName the form element name to use for the key element
+ * @param {string} inputValueName the form element name to use for the value element
+ */
+SolarReg.Settings.populateDynamicListObjectKeyValues = function populateDynamicListObjectKeyValues(listConfig, container, listRootClass, inputKeyName, inputValueName) {
+	if ( !listConfig ) {
+		return;
+	}
+	let listRoot = container.find('.dynamic-list.'+listRootClass)
+		, listTemplate = listRoot.find('.template')
+		, listContainer = listRoot.find('.dynamic-list-container');
+
+	for ( itemKey in listConfig ) {
+		let itemVal = listConfig[itemKey];
+		let newListItem = SolarReg.Templates.appendTemplateItem(listContainer, listTemplate, {});
+		newListItem.find('*[name='+inputKeyName+']').val(itemKey);
+		newListItem.find('*[name='+inputValueName+']').val(itemVal);
+	}
 };

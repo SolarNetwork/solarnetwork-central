@@ -27,6 +27,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +65,7 @@ import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
  * DAO implementation of {@link UserOscpBiz}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserOscpBiz implements UserOscpBiz {
 
@@ -122,18 +123,43 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return userSettingsDao.get(userId);
 	}
 
+	private <T extends BaseOscpExternalSystemConfiguration<C>, C extends BaseOscpExternalSystemConfiguration<C>> T withoutSensitiveProperties(
+			T entity) {
+		if ( entity.getServiceProps() != null ) {
+			Map<String, Object> props = entity.getServiceProps();
+
+			// remove any OAuth client secret
+			props.remove(ExternalSystemServiceProperties.OAUTH_CLIENT_SECRET);
+		}
+		return entity;
+	}
+
+	private <T extends BaseOscpExternalSystemConfiguration<C>, C extends BaseOscpExternalSystemConfiguration<C>> Collection<T> withoutSensitiveProperties(
+			Collection<T> entities) {
+		for ( T entity : entities ) {
+			withoutSensitiveProperties(entity);
+		}
+		return entities;
+	}
+
+	private CapacityProviderConfiguration capacityProviderForUser(UserLongCompositePK pk) {
+		return withoutSensitiveProperties(requireNonNullObject(capacityProviderDao.get(pk), pk));
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public CapacityProviderConfiguration capacityProviderForUser(Long userId, Long entityId) {
-		return requireNonNullObject(capacityProviderDao.get(new UserLongCompositePK(userId, entityId)),
-				entityId);
+		return capacityProviderForUser(new UserLongCompositePK(userId, entityId));
+	}
+
+	private CapacityOptimizerConfiguration capacityOptimizerForUser(UserLongCompositePK pk) {
+		return withoutSensitiveProperties(requireNonNullObject(capacityOptimizerDao.get(pk), pk));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public CapacityOptimizerConfiguration capacityOptimizerForUser(Long userId, Long entityId) {
-		return requireNonNullObject(capacityOptimizerDao.get(new UserLongCompositePK(userId, entityId)),
-				entityId);
+		return capacityOptimizerForUser(new UserLongCompositePK(userId, entityId));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -210,13 +236,15 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CapacityProviderConfiguration> capacityProvidersForUser(Long userId) {
-		return capacityProviderDao.findAll(requireNonNullArgument(userId, "userId"), null);
+		return withoutSensitiveProperties(
+				capacityProviderDao.findAll(requireNonNullArgument(userId, "userId"), null));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Collection<CapacityOptimizerConfiguration> capacityOptimizersForUser(Long userId) {
-		return capacityOptimizerDao.findAll(requireNonNullArgument(userId, "userId"), null);
+		return withoutSensitiveProperties(
+				capacityOptimizerDao.findAll(requireNonNullArgument(userId, "userId"), null));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -353,7 +381,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		saveOauthClientSecret(conf);
 
 		UserLongCompositePK pk = requireNonNullObject(capacityProviderDao.save(conf), entityId);
-		return capacityProviderDao.get(pk);
+		return capacityProviderForUser(pk);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -366,7 +394,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		saveOauthClientSecret(conf);
 
 		UserLongCompositePK pk = requireNonNullObject(capacityOptimizerDao.save(conf), entityId);
-		return capacityOptimizerDao.get(pk);
+		return capacityOptimizerForUser(pk);
 	}
 
 	private void saveOauthClientSecret(BaseOscpExternalSystemConfiguration<?> conf) {

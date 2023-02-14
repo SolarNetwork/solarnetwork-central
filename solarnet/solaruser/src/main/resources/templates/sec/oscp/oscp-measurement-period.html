@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>OSCP Capacity Group Measurement Period</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<select data-th-fragment="content">
+	<option value="Minute" data-th-text="#{oscp.measurementPeriod.Minute}">Every minute</option>
+	<option value="FiveMinute" data-th-text="#{oscp.measurementPeriod.FiveMinute}">Five minutes</option>
+	<option value="TenMinute" data-th-text="#{oscp.measurementPeriod.TenMinute}">Ten minutes</option>
+	<option value="FifteenMinute" selected data-th-text="#{oscp.measurementPeriod.FifteenMinute}">Fifteen minutes</option>
+	<option value="TwentyMinute" data-th-text="#{oscp.measurementPeriod.TwentyMinute}">Twenty minutes</option>
+	<option value="ThirtyMinute" data-th-text="#{oscp.measurementPeriod.ThirtyMinute}">Thirty minutes</option>
+	<option value="Hour" data-th-text="#{oscp.measurementPeriod.Hour}">Hour</option>
+</select>
+</body>
+</html>

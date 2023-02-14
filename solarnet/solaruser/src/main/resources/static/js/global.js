@@ -4,7 +4,7 @@
 var SolarReg = {
 	/**
 	 * Insert an alert element before a given element.
-	 * 
+	 *
 	 * @param {jQuery} el the element to insert the alert before
 	 * @param {String} clazz an alert class to add
 	 * @param {String} msg a message to show
@@ -70,7 +70,6 @@ SolarReg.findByIdentifier = function findByIdentifier(array, identifier) {
  * @returns {Object} the first object that has a matching `name` property
  */
 SolarReg.findByName = function findByName(array, name) {
-	var result;
 	if ( name && array ) {
 		for ( const el of array ) {
 			if ( el.name === identifier ) {
@@ -102,7 +101,7 @@ SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
 
  /**
   * Delete empty string properties from an object.
-  * 
+  *
   * @param {Object} obj the object to remove empty string properties from
   * @param {boolean} recurse {@constant true} to recurse into nested objects
   * @returns {void}
@@ -195,7 +194,7 @@ SolarReg.storeServiceConfiguration = function storeServiceConfiguration(config, 
 
 /**
  * Save service configurations to an array.
- * 
+ *
  * @param {Array.<Object>} updates the configurations that have been updated
  * @param {boolean} preserve {@constant true} to update existing configurations, {@constant false} to replace all existing configurations
  * @param {Array.<Object>} configs the service configurations array which will be updated
@@ -299,10 +298,82 @@ SolarReg.extractResponseMessage = function extractResponseMessage(xhr, statusTex
 	return result;
 };
 
+/**
+ * Extract i18n data attributes from a DOM element.
+ *
+ * All data attributes whose name starts with `i18n-` will be returned.
+ *
+ * @param {DOMElement} el the element to extract the i18n data attributes from
+ * @returns {Object} the data attributes
+ */
+SolarReg.i18nData = function i18nData(el) {
+	if ( !el ) {
+		return;
+	}
+	let data = el.dataset,
+		result = {},
+		val;
+	for ( let prop in data ) {
+		if ( prop.startsWith('i18n') ) {
+			val = data[prop];
+			if ( !val ) {
+				continue;
+			}
+			prop = prop.substring(4);
+			prop = prop.charAt(0).toLowerCase() + prop.substring(1);
+			result[prop] = val;
+		}
+	}
+	return result;
+};
+
+/**
+ * Toggle the visibility of all `.page-loading` (to hidden) and `.page-loaded` (to visible) elements.
+ */
+SolarReg.showPageLoaded = function showPageLoaded() {
+	$('.page-loading').addClass('hidden');
+	$('.page-loaded').removeClass('hidden');
+};
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');
 	});
+
+	$('[data-toggle="tooltip"]').tooltip();
+
+	/* ==================
+	   Global i18n
+	   ================== */
+	SolarReg.i18n = SolarReg.i18nData(document.querySelector('body'));
+
+	/* ==================
+	   Copy form support
+	   ================== */
+	$('button.copy').on('click', function copyFieldValue() {
+		var btn = $(this),
+			copyable = btn.closest('.input-group').find('input.copyable');
+		if ( copyable.length ) {
+			copyable[0].select();
+			try {
+				let success = document.execCommand('copy');
+				if ( success ) {
+					btn.trigger('copied', [SolarReg.i18n.copiedTooltip || 'Copied!']);
+				} else {
+					btn.trigger('copied', [SolarReg.i18n.copyFailedTooltip || 'Failed!']);
+				}
+			} catch ( err ) {
+				btn.trigger('copied', [SolarReg.i18n.copyFailedTooltip || 'Failed!']);
+			}
+			}
+	}).on('copied', function handleCopyResult(event, message) {
+		$(this).attr('title', message)
+			.tooltip('fixTitle')
+			.tooltip('show')
+			.attr('title', SolarReg.i18n.copyTooltip)
+			.tooltip('fixTitle');
+	});
+
 }).ajaxComplete(function(event, xhr, ajaxOptions) {
 	// look for X-LoginFormPage header to handle auto client-side redirect to login page
 	if ( xhr.readyState == 4 && "true" === xhr.getResponseHeader("X-LoginFormPage") ) {
