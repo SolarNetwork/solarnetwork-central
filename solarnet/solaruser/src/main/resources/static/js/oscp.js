@@ -4,7 +4,7 @@ $(document).ready(function() {
 	$('#oscp-management').first().each(function oscpManagement() {
 		/**
 		 * A system configuration UI model.
-		 * 
+		 *
 		 * @typedef {Object} OscpSystemModel
 		 * @property {object} _contextItem the configuration entity
 		 * @property {string} systemType the system type (e.g. 'co', 'cp')
@@ -18,12 +18,12 @@ $(document).ready(function() {
 		 * @property {string} [oauthTokenUrl] the OAuth token URL
 		 * @property {string} [oauthClientId] the OAuth client ID
 		 * @property {Object} [httpHeaders] optional HTTP headers
-		 * @property {Object} [urlPaths] optional URL Paths 
+		 * @property {Object} [urlPaths] optional URL Paths
 		 */
 
 		/**
 		 * A system configuration.
-		 * 
+		 *
 		 * @typedef {Object} OscpSystem
 		 * @property {string} type one of 'cp' or 'co' (Capacity Provider, Capacity Optimizer)
 		 * @property {jQuery} container the element that holds the rendered list of systems
@@ -33,7 +33,7 @@ $(document).ready(function() {
 
 		/**
 		 * Create a system configuration.
-		 * 
+		 *
 		 * @param {jQuery} listContainer the list container
 		 * @param {string} type the system type
 		 * @returns {OscpSystem} the new system object
@@ -60,7 +60,7 @@ $(document).ready(function() {
 
 		/**
 		 * Generate a DOM data attribute property name for an OSCP system type.
-		 * 
+		 *
 		 * @param {string} prefix the desired prefix
 		 * @param {string} type the system type
 		 * @returns {string} the data attribute name
@@ -74,7 +74,7 @@ $(document).ready(function() {
 
 		/**
 		 * Render system-specific names into a DOM tree.
-		 * 
+		 *
 		 * @param {jQuery} el the selection to render the OSCP type in
 		 * @param {string} type the system type
 		 */
@@ -85,7 +85,7 @@ $(document).ready(function() {
 
 		/**
 		 * Render the properties of an object into a <dl> list container.
-		 * 
+		 *
 		 * @param {jQuery} container the DOM container to render the list in
 		 * @param {Object} obj the object whose properties should be rendered into the list
 		 */
@@ -101,10 +101,10 @@ $(document).ready(function() {
 				container.addClass('hidden');
 			}
 		}
-		
+
 		/**
 		 * Generate a display name for a system entity.
-		 * 
+		 *
 		 * @param {string} type the system type
 		 * @param {number} id the system ID
 		 * @returns {string} the display name
@@ -122,7 +122,7 @@ $(document).ready(function() {
 
 		/**
 		 * Create a system model out of a configuration entity.
-		 * 
+		 *
 		 * @param {object} config the OSCP system entity
 		 * @param {string} type the system type
 		 * @returns {OscpSystemModel} the system list model
@@ -131,15 +131,15 @@ $(document).ready(function() {
 			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 			config.id = config.configId; // assumed by setttings.js methods
 			config.systemType = type;
-			model.systemType = type;			
-			model.id = config.configId;	
+			model.systemType = type;
+			model.id = config.configId;
 			model.createdDisplay = moment(config.created).format('D MMM YYYY');
 			model.baseUrl = config.baseUrl;
 			model.enabled = config.enabled;
 			model.registrationStatus = config.registrationStatus;
 			if ( config.settings && Array.isArray(config.settings.measurementStyles) ) {
 				model.measurementStyles = config.settings.measurementStyles;
-				model.measurementStylesDisplay = config.settings.measurementStyles.join(', ');
+				model.measurementStylesDisplay = SolarReg.arrayAsDelimitedString(config.settings.measurementStyles);
 			}
 			if ( config.serviceProps ) {
 				if ( config.serviceProps['oauth-token-url'] ) {
@@ -176,7 +176,7 @@ $(document).ready(function() {
 
 		/**
 		 * Render a list of system configuration entities.
-		 * 
+		 *
 		 * @param {Array<Object>} configs list of systems to render
 		 * @param {string} type the system type
 		 * @param {boolean} preserve `true` to update any existing list; `false` to clear and populate
@@ -202,7 +202,7 @@ $(document).ready(function() {
 			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
 				renderObjectPropertiesDl(el.find('.headers-container'), item.httpHeaders);
 				renderObjectPropertiesDl(el.find('.url-paths-container'), item.urlPaths);
-				
+
 				if ( type === 'cg' ) {
 					let settingsEditContainer = el.find('.settings-container').toggleClass('hidden', item.settings === undefined).parent();
 					// even if item does not have settings, provide a context item with the charger ID so editing works
@@ -215,7 +215,7 @@ $(document).ready(function() {
 
 		/**
 		 * Render a set of `<option>` elements for selecting from a list of system configurations.
-		 * 
+		 *
 		 * @param {HTMLSelectElement} select the select element to update
 		 * @param {Array<OscpSystem>} configs the list of system configurations to render
 		 * @param {number} [selectedConfigId] the currently selected configuration ID, if available
@@ -238,7 +238,7 @@ $(document).ready(function() {
 
 		/**
 		 * Create a URL serializer function for group settings.
-		 * 
+		 *
 		 * @param {string} groupId the group ID
 		 * @returns {Function} the URL serializer function; accepts a single 'action' string parameter
 		 */
@@ -280,14 +280,14 @@ $(document).ready(function() {
 			return model;
 		}
 
-		function populateSettingConfigs(configs, preserve) {
+		function renderSettingConfigs(configs, preserve) {
 			configs = Array.isArray(configs) ? configs : [];
 			var items = configs.map(settingModel);
 			SolarReg.Templates.populateTemplateItems(settingsContainer, items, preserve);
 			SolarReg.saveServiceConfigurations(configs, preserve, settingConfigs, settingsContainer);
 		}
 
-		function populateGroupSettingConfigs(configs, preserve) {
+		function renderGroupSettingConfigs(configs, preserve) {
 			configs = Array.isArray(configs) ? configs : [];
 			if ( !preserve ) {
 				groupSettingConfigsMap.clear();
@@ -341,9 +341,9 @@ $(document).ready(function() {
 			}
 			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 				if ( res.groupId === undefined ) {
-					populateSettingConfigs([res], true);
+					renderSettingConfigs([res], true);
 				} else {
-					populateGroupSettingConfigs([res], true);
+					renderGroupSettingConfigs([res], true);
 				}
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true),
@@ -386,7 +386,7 @@ $(document).ready(function() {
 		.find('button.toggle').each(function() {
 			SolarReg.Settings.setupSettingToggleButton($(this), false);
 		});
-		
+
 		/* ============================
 		   System Token
 		   ============================ */
@@ -438,6 +438,116 @@ $(document).ready(function() {
 		});
 
 		/* ============================
+		   Capacity Group Assets
+		   ============================ */
+		 const cgGroupAssets = new Map();
+
+		/**
+		 * Create an asset model out of a configuration entity.
+		 *
+		 * @param {object} config the OSCP system entity
+		 * @param {number} groupId the ID of the group the assets are associated with
+		 * @returns {object} the asset list model
+		 */
+		function createCapacityGroupAssetModel(config) {
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			config.id = 'asset:' + config.configId; // qualify with asset: to distinguish from CG ID
+			config.systemType = 'asset';
+			model.id = config.configId;
+			model.systemType = config.systemType;
+			model.capacityGroupId = config.capacityGroupId;
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			model.identifier = config.identifier;
+			model.audience = config.audience;
+			model.audienceDisplay = i18n['role'+config.audience];
+			model.enabled = config.enabled;
+			model.nodeId = config.nodeId;
+			model.sourceId = config.sourceId;
+			model.category = config.category;
+			model.phase = config.phase;
+			model.instantaneous = Object.assign({}, config.instantaneous);
+			if ( Array.isArray(model.instantaneous.propertyNames) ) {
+				model.instantaneous.propertyNamesDisplay = SolarReg.arrayAsDelimitedString(model.instantaneous.propertyNames);
+			}
+			model.energy = Object.assign({}, config.energy);
+			if ( Array.isArray(model.energy.propertyNames) ) {
+				model.energy.propertyNamesDisplay = SolarReg.arrayAsDelimitedString(model.energy.propertyNames);
+			}
+			return model;
+		}
+
+		function renderCapacityGroupAssets(assetsContainer, configs, groupId, preserve) {
+			var sys = cgGroupAssets.get(groupId);
+			if ( !sys ) {
+				sys = createSystem(assetsContainer, 'asset');
+				cgGroupAssets.set(groupId, sys);
+			}
+			configs = Array.isArray(configs) ? configs : [];
+			if ( !preserve ) {
+				sys.configsMap.clear();
+			}
+
+			/** @type {Array<OscpSystemModel>} */
+			var items = configs.map(function(config) {
+				var model = createCapacityGroupAssetModel(config);
+				sys.configsMap.set(config.id, model);
+				return model;
+			});
+
+			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
+				// TODO
+			}, 'asset.');
+			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+		}
+
+		$('#oscp-asset-edit-modal').on('show.bs.modal', function handleModalShow() {
+			const modal = $(this)
+				, config = SolarReg.Templates.findContextItem(this)
+				, enabled = (config && config.enabled === true ? true : false)
+				, idField = $(this.elements['id']);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+			if ( idField.val() ) {
+				idField.val(config.configId); // set to actual ID, as config.id has asset: prefix
+			}
+		})
+		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
+		.on('submit', function handleAssetModalFormSubmit(event) {
+			const config = SolarReg.Templates.findContextItem(this),
+				sys = cgGroupAssets.get(config.capacityGroupId);
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+				renderCapacityGroupAssets(sys.container, [res], config.capacityGroupId, true);
+			}, function serializeDataConfigForm(form) {
+				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
+				return data;
+			}, {
+				urlId: true
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', function handleModalHidden() {
+			const config = SolarReg.Templates.findContextItem(this)
+				, sys = cgGroupAssets.get(config.capacityGroupId)
+				, idField = $(this.elements['id']);
+			if ( !sys ) {
+				return;
+			}
+			const container = sys.container.find('.list-container');
+			if ( idField.val() ) {
+				idField.val('asset:' +config.configId); // add asset: prefix back to UI can update
+			}
+			SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
+				if ( deleted ) {
+					sys.configsMap.delete(id);
+				}
+			});
+		})
+		.find('button.toggle').each(function() {
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
+		});
+
+		/* ============================
 		   Capacity Groups
 		   ============================ */
 
@@ -448,6 +558,42 @@ $(document).ready(function() {
 		});
 
 		systems.cg.container.find('.list-container').on('click', function(event) {
+			let target = $(event.target);
+			if ( target.hasClass('oscp-cg-toggle-assets') ) {
+				event.preventDefault();
+				let assets = target.closest('.cg-item').next('.cg-item-assets'),
+					hide = !assets.hasClass('hidden'),
+					config = SolarReg.Templates.findContextItem(target),
+					groupId = config ? config.id : undefined;
+
+				if ( groupId ) {
+					assets.toggleClass('hidden', hide);
+					target.text(i18n[hide ? 'cgAssetsShow' : 'cgAssetsHide']);
+					if ( !cgGroupAssets.get(groupId) ) {
+						$.getJSON(SolarReg.solarUserURL('/sec/oscp/capacity-groups/' +groupId + '/assets'), function(json) {
+							console.debug('Got OSCP group assets: %o', json);
+							if ( json && json.success === true ) {
+								renderCapacityGroupAssets(assets, json.data, groupId);
+							}
+							assets.find('.assets-loading').addClass('hidden');
+							assets.find('.asset-configs').removeClass('hidden');
+						});
+					}
+				}
+				return;
+			} else if ( target.closest('.oscp-add-cg-asset-button').length ) {
+				let config = SolarReg.Templates.findContextItem(target)
+					, groupId = config ? config.id : undefined
+					, editModal = $('#oscp-asset-edit-modal');
+
+				SolarReg.Templates.setContextItem(editModal, {
+					systemType: 'asset',
+					capacityGroupId: groupId
+				});
+				editModal.modal('show');
+				return;
+			}
+
 			// edit cg settings
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
@@ -481,8 +627,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function handleCpModalFormSubmit(event) {
-			const modal = $(this),
-				config = SolarReg.Templates.findContextItem(this);
+			const config = SolarReg.Templates.findContextItem(this);
 			if ( !config.systemType ) {
 				return;
 			}
@@ -542,19 +687,19 @@ $(document).ready(function() {
 			// set system action URL
 			const action = this.dataset[dataAttributeName('action', config.systemType)];
 			modal.attr('action', action);
-			
+
 			if ( !(config && config.serviceProps) ) {
 				return;
 			}
 
 			// populate dynamic HTTP Headers list
-			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['http-headers'], modal, 
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['http-headers'], modal,
 				'http-headers', 'httpHeaderName', 'httpHeaderValue');
 
 			// populate dynamic URL Paths list
-			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['url-paths'], modal, 
+			SolarReg.Settings.populateDynamicListObjectKeyValues(config.serviceProps['url-paths'], modal,
 				'url-paths', 'urlPathAction', 'urlPathPath');
-			
+
 			return;
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
@@ -569,11 +714,11 @@ $(document).ready(function() {
 				res.id = res.configId;
 				res.systemType = config.systemType;
 				renderSystemConfigs([res], config.systemType, true);
-				
+
 				// update display name references in any groups
 				systems.cg.container.find('[data-system-type=' + res.systemType + '][data-system-id=' + res.id + ']')
 					.text(systemDisplayName(res.systemType, res.id));
-				
+
 				// save result as modal context, to possibly show token modal
 				SolarReg.Templates.setContextItem(modal, res);
 			}, function serializeDataConfigForm(form) {
@@ -646,8 +791,8 @@ $(document).ready(function() {
 			function liftoff() {
 				loadCountdown -= 1;
 				if ( loadCountdown === 0 ) {
-					populateSettingConfigs(settingConfs);
-					populateGroupSettingConfigs(groupSettingConfs);
+					renderSettingConfigs(settingConfs);
+					renderGroupSettingConfigs(groupSettingConfs);
 					renderSystemConfigs(cpConfs, 'cp');
 					renderSystemConfigs(coConfs, 'co');
 					renderSystemConfigs(cgConfs, 'cg');

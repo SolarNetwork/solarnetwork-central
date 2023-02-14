@@ -443,6 +443,9 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
  * The object property name can include a prefix by adding a `data-settings-prefix`
  * attribute to a form field.
  * 
+ * The object property can be split into an array by adding a `data-array-delim`
+ * attribute with a regular expression value to split the form field with.
+ * 
  * The object property name can also be derived from a previous form element value, by
  * adding a `data-settings-name-field` attribute to that field. The attribute value is
  * the name of another HTML field that comes before this field (in DOM order).
@@ -461,12 +464,13 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
  * <input name="cilent-id" value="abc123" data-settings-prefix="props.">
  * <input name="key" value="car" data-settings-ignore="true">
  * <input name="val" value="mini" data-settings-name-field="key" data-settings-prefix="props.">
+ * <input name="array" value="1,2,3" data-array-delim=",">
  * ```
  * 
  * An object like the following would be generated:
  * 
  * ```javascript
- * {foo:"bar", info:{name:"Joe", age:"99"}, answer:"42", props:{"client-id":abc123, car:"mini"}}
+ * {foo:"bar", info:{name:"Joe", age:"99"}, answer:"42", props:{"client-id":abc123, car:"mini"}, array:["1","2","3"]}
  * ```
  * 
  * @param {HTMLFormElement} form the form
@@ -534,6 +538,15 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 				// don't populate empty ID value or when excludeEmptyProperties === true
 				continue;
 			}
+		}
+		if ( value && field.dataset.arrayDelim ) {
+			let delim = field.dataset.arrayDelim;
+			try {
+				delim = new RegExp(field.dataset.arrayDelim);
+			} catch ( err ) {
+				// ignore and use as normal string
+			}
+			value = value.split(delim);
 		}
 
 		bodyPart = body;

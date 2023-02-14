@@ -67,13 +67,16 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * @param {boolean} preserve `true` to only append items, do not clear out any existing items
  * @param {Function} [callback] a callback function, will be passed an item and the jQuery object associated with that item,
  *                              after template properties have been applied
+ * @param {string} [prefix] an optional template prefix
  * @see #appendTemplateItem
  */
-SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback) {
+SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback, prefix) {
 	var itemTemplate = container.find('.template')
 		.not('.service-props-template .template') // ignore service prop templates that might be in container
 		.not('.template .template');              // ignore nested templates 
-	var itemContainer = container.find('.list-container').first();
+	var itemContainer = container.find('.list-container')
+		.not('.template .list-container')
+		.first();
 	if ( itemContainer.length < 1 ) {
 		// .list-container not found; use parent as container, and clear siblings following template if !preserve
 		itemContainer = itemTemplate.parent();
@@ -102,10 +105,10 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 				}
 			});
 
-			SolarReg.Templates.replaceTemplateProperties(el, item);
+			SolarReg.Templates.replaceTemplateProperties(el, item, prefix);
 			SolarReg.Templates.setContextItem(el, item._contextItem);
 		} else {
-			el = SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item);
+			el = SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item, prefix);
 		}
 		if ( typeof callback === 'function' ) {
 			callback(item, el);
@@ -167,6 +170,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 * template for each dynamic property are the elements matching a `.service-props-template .template` 
 * selector. Within the tempalte, the `serviceProperties.name` template property will be replaced
 * by the service property name and `serviceProperty.value` its associated value.
+* 
+* If an object property value is itself another object, then this method will recurse, passing that
+* object as the `obj` argument and appending the property name and a `.` character to the `prefix`.
 *
 * For example, the following HTML contains a `<dl>` container for service properties and associated
 * template HTML that generates `<dt>` and `<dd>` elements:
@@ -201,7 +207,8 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 	var prop, sel, val, vel, vkey, vlabel,
 		sPropKey, sPropVal, sPropItem,
 		sPropContainer = el.find('.service-props-container').first(),
-		sPropTemplate = el.find('.service-props-template .template');
+		sPropTemplate = el.find('.service-props-template .template'),
+		qualifiedPropName;
 	for ( prop in obj ) {
 		if ( prop.startsWith('_') || !obj.hasOwnProperty(prop) ) {
 			continue;
@@ -222,10 +229,13 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 				sPropContainer.append(sPropItem);
 			}
 		} else {
-			let qualifiedPropname = (prefix || '') +prop;
-			sel = "[data-tprop='" +qualifiedPropname +"']";
+			qualifiedPropName = (prefix || '') +prop;
+			sel = "[data-tprop='" +qualifiedPropName +"']";
 			if ( Array.isArray(val) ) {
 				el.find(sel).addBack(sel).html(val);
+			} else if ( typeof val === 'object' ) {
+				replaceTemplateProperties(el, val, prefix + prop + '.');
+				continue;
 			} else {
 				vel = el.find(sel).addBack(sel);
 				if ( vel.hasClass('label') ) {
@@ -247,13 +257,13 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 				vkey = String(val).toLowerCase()+'-text';
 				vel.text(vel.data(vkey) ? vel.data(vkey) : val);
 			}
-			sel = "[data-tattr^='" + qualifiedPropname + "@']";
+			sel = "[data-tattr^='" + qualifiedPropName + "@']";
 			if ( Array.isArray(val) ) {
 				el.find(sel).addBack(sel).html(val);
 			} else {
 				vel = el.find(sel).addBack(sel);
 				vel.each(function() {
-					let attrName = this.dataset.tattr.substring(qualifiedPropname.length + 1);
+					let attrName = this.dataset.tattr.substring(qualifiedPropName.length + 1);
 					$(this).attr(attrName, val);
 				});
 			}
@@ -272,9 +282,10 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 * @param {jQuery} container the container element to append the new item into
 * @param {jQuery} template the template to clone
 * @param {object} item the parameter object
+* @param {string} [prefix] an optional prefix to prepend to each template parameter
 * @returns {jQuery} the newly inserted element
 */
-SolarReg.Templates.appendTemplateItem = function appendTemplateItem(container, template, item) {
+SolarReg.Templates.appendTemplateItem = function appendTemplateItem(container, template, item, prefix) {
    if ( !(container && template && item) ) {
 	   return;
    }
@@ -282,7 +293,7 @@ SolarReg.Templates.appendTemplateItem = function appendTemplateItem(container, t
    if ( item._contextItem ) {
 	   SolarReg.Templates.setContextItem(newItem, item._contextItem);
    }
-   SolarReg.Templates.replaceTemplateProperties(newItem, item).appendTo(container);
+   SolarReg.Templates.replaceTemplateProperties(newItem, item, prefix).appendTo(container);
    newItem.find('a.edit-link').on('click', function(event) {
 	   // don't handle this directly; assume will propagate and get handled at container level
 	   event.preventDefault();
