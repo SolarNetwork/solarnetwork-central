@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>OSCP Flexibility Asset Form</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<form id="oscp-asset-edit-modal" class="edit-config oscp" data-th-classappend="'modal fade'"
+		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/oscp/assets}"
+		data-settings-update-method="put">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" data-th-utext="#{oscp.asset.edit.title}">Edit OSCP Flexibility Asset</h4>
+			</div>
+		 	<div class="modal-body form-horizontal">
+		 		<p data-th-utext="#{oscp.asset.edit.intro}">Edit the OSCP Flexibility Asset details on this form.</p>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.name.label}">
+		 				Name
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input class="form-control" name="name" type="text" maxlength="64" required>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.identifier.label}">
+		 				Identifier
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="text" class="form-control" name="identifier" maxlength="128" required>
+		 				<div class="help-block" data-th-utext="#{oscp.asset.identifier.caption}">
+							The identifier must be unique.
+						</div>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.audience.label}">
+		 				Audience
+		 			</label>
+		 			<div class="col-sm-8">
+						<select name="audience" class="form-control">
+							<option value="CapacityOptimizer" data-th-text="#{oscp.role.CapacityOptimizer}">Capacity Optimizer</option>
+							<option value="CapacityProvider" data-th-text="#{oscp.role.CapacityProvider}" selected>Capacity Provider</option>
+						</select>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.enabled.label}">
+		 				Enabled
+		 			</label>
+		 			<div class="col-sm-8">
+						<button type="button" name="enabled" class="form-control setting-form-element toggle btn btn-default"
+							data-toggle="setting-toggle" aria-pressed="false"
+							data-th-data-on-text="#{settings.enabled.label}"
+							data-th-data-off-text="#{settings.disabled.label}"
+							data-th-text="#{settings.toggle.disabled}">
+							Disabled
+						</button>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.nodeId.label}">
+		 				Node ID
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="number" class="form-control" name="nodeId" required>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.sourceId.label}">
+		 				Source ID
+		 			</label>
+		 			<div class="col-sm-8">
+		 				<input type="text" class="form-control" name="sourceId" maxlength="64" required>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.category.label}">
+		 				Category
+		 			</label>
+		 			<div class="col-sm-8">
+						<select name="category" class="form-control">
+							<option value="Charging" data-th-text="#{oscp.assetCategory.Charging}">Charging</option>
+							<option value="Consumption" data-th-text="#{oscp.assetCategory.Consumption}">Consumption</option>
+							<option value="Generation" data-th-text="#{oscp.assetCategory.Generation}">Generation</option>
+							<option value="Storage" data-th-text="#{oscp.assetCategory.Storage}">Storage</option>
+						</select>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.phase.label}">
+		 				Phase
+		 			</label>
+		 			<div class="col-sm-8">
+						<select name="phase" class="form-control">
+							<option value="Unknown" data-th-text="#{oscp.phase.Unknown}">Unknown</option>
+							<option value="A" data-th-text="#{oscp.phase.A}">A</option>
+							<option value="B" data-th-text="#{oscp.phase.B}">B</option>
+							<option value="C" data-th-text="#{oscp.phase.C}">C</option>
+							<option value="All" data-th-text="#{oscp.phase.All}" selected>All</option>
+						</select>
+		 			</div>
+		 		</div>
+		 		<fieldset>
+		 			<legend data-th-text="#{oscp.asset.instantaneous.label}">Instantaneous</legend>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.propertyNames.label}">
+							Properties
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="instantaneous.propertyNames" data-array-delim="\s*,\s*">
+							<div class="help-block" data-th-utext="#{oscp.asset.instantaneous.propertyNames.caption}">
+								A comma-delimited list of instantaneous datum property names.
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.unit.label}">
+							Unit
+						</label>
+						<div class="col-sm-8">
+							<select name="instantaneous.unit" class="form-control">
+								<option value="A" data-th-text="#{oscp.measurementUnit.A}">A</option>
+								<option value="W" data-th-text="#{oscp.measurementUnit.W}">W</option>
+								<option value="kW" data-th-text="#{oscp.measurementUnit.kW}">kW</option>
+								<option value="Wh" data-th-text="#{oscp.measurementUnit.Wh}">Wh</option>
+								<option value="kWh" data-th-text="#{oscp.measurementUnit.kWh}">kWh</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.multiplier.label}">
+							Multiplier
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="instantaneous.multiplier">
+							<div class="help-block" data-th-utext="#{oscp.asset.multiplier.caption}">
+								An optional value to multiply the measurement value by.
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.statisticType.label}">
+							Statistic Type
+						</label>
+						<div class="col-sm-8">
+							<select name="instantaneous.statisticType" class="form-control">
+								<option value="Average" data-th-text="#{oscp.statisticType.Average}" selected>Average</option>
+								<option value="Count" data-th-text="#{oscp.statisticType.Count}">Count</option>
+								<option value="Minimum" data-th-text="#{oscp.statisticType.Minimum}">Minimum</option>
+								<option value="Maximum" data-th-text="#{oscp.statisticType.Maximum}">Maximum</option>
+							</select>
+						</div>
+					</div>
+		 		</fieldset>
+		 		<fieldset>
+		 			<legend data-th-text="#{oscp.asset.energy.label}">Energy</legend>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.propertyNames.label}">
+							Properties
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="energy.propertyNames" data-array-delim="\s*,\s*">
+							<div class="help-block" data-th-utext="#{oscp.asset.energy.propertyNames.caption}">
+								A comma-delimited list of accumulating datum property names.
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.unit.label}">
+							Unit
+						</label>
+						<div class="col-sm-8">
+							<select name="energy.unit" class="form-control">
+								<option value="Wh" data-th-text="#{oscp.measurementUnit.Wh}">Wh</option>
+								<option value="kWh" data-th-text="#{oscp.measurementUnit.kWh}">kWh</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.multiplier.label}">
+							Multiplier
+						</label>
+						<div class="col-sm-8">
+							<input type="text" class="form-control" name="energy.multiplier">
+							<div class="help-block" data-th-utext="#{oscp.asset.multiplier.caption}">
+								An optional value to multiply the measurement value by.
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.statisticType.label}">
+							Statistic Type
+						</label>
+						<div class="col-sm-8">
+							<select name="energy.statisticType" class="form-control">
+								<option value="Difference" data-th-text="#{oscp.statisticType.Difference}" selected>Difference</option>
+								<option value="Start" data-th-text="#{oscp.statisticType.Start}">Start</option>
+								<option value="End" data-th-text="#{oscp.statisticType.End}">End</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.energyType.label}">
+							Energy Type
+						</label>
+						<div class="col-sm-8">
+							<select name="energy.type" class="form-control">
+								<option value="Flexible" data-th-text="#{oscp.energyType.Flexible}">Flexible</option>
+								<option value="NonFlexible" data-th-text="#{oscp.energyType.NonFlexible}">NonFlexible</option>
+								<option value="Total" data-th-text="#{oscp.energyType.Total}" selected>Total</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" data-th-text="#{oscp.asset.energyDirection.label}">
+							Energy Direction
+						</label>
+						<div class="col-sm-8">
+							<select name="energy.direction" class="form-control">
+								<option value="Net" data-th-text="#{oscp.energyDirection.Net}">Net</option>
+								<option value="Import" data-th-text="#{oscp.energyDirection.Import}" selected>Import</option>
+								<option value="Export" data-th-text="#{oscp.energyDirection.Export}">Export</option>
+							</select>
+						</div>
+					</div>
+		 		</fieldset>
+		 	</div>
+		 	<div class="modal-body delete-confirm" data-th-classappend="'hidden'">
+		 		<p class="alert alert-danger" data-th-utext="#{oscp.asset.delete.confirm.intro}">
+		 			Are you sure you want to delete this configuration?
+		 		</p>
+		 	</div>
+		 	<div class="modal-footer">
+		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'">
+		 			<span class="glyphicon glyphicon-trash"></span>
+		 			<span data-th-text="#{oscp.asset.delete.label}">Delete</span>
+		 		</button>
+				<button type="button" class="btn btn-default" data-dismiss="modal" data-th-text="#{cancel.label}">Cancel</button>
+		 		<button type="submit" class="btn btn-primary" data-th-text="#{save.label}">Save</button>
+		 	</div>
+		 </div>
+ 	</div>
+	<input type="hidden" name="id">
+	<input type="hidden" name="capacityGroupId">
+</form>
+</body>
+</html>

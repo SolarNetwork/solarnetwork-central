@@ -92,7 +92,7 @@
 				<td colspan="6">
 					<h3>
 						<span data-th-text="#{oscp.cg.assets.header}">Flexibility Assets</span>
-						<button type="button" id="oscp-add-cg-asset-button" class="btn btn-primary pull-right" data-th-title="#{oscp.cg.assets.add}">
+						<button type="button" class="btn btn-primary pull-right oscp-add-cg-asset-button" data-th-title="#{oscp.cg.assets.add}">
 							<i class="glyphicon glyphicon-plus"></i>
 						</button>
 					</h3>
@@ -112,16 +112,16 @@
 					<table class="table asset-configs" data-th-classappend="'hidden'">
 						<thead>
 							<tr>
-								<th data-th-text="#{oscp.cg.asset.id.label}">ID</th>
-								<th data-th-text="#{oscp.cg.asset.name.label}">Name</th>
-								<th data-th-text="#{oscp.cg.asset.created.label}">Created</th>
-								<th data-th-text="#{oscp.cg.asset.identifier.label}">Identifier</th>
-								<th data-th-text="#{oscp.cg.asset.audience.label}">Audience</th>
-								<th data-th-text="#{oscp.cg.asset.status.label}">Status</th>
-								<th data-th-text="#{oscp.cg.asset.details.label}">Details</th>
+								<th data-th-text="#{oscp.asset.id.label}">ID</th>
+								<th data-th-text="#{oscp.asset.name.label}">Name</th>
+								<th data-th-text="#{oscp.asset.created.label}">Created</th>
+								<th data-th-text="#{oscp.asset.identifier.label}">Identifier</th>
+								<th data-th-text="#{oscp.asset.audience.label}">Audience</th>
+								<th data-th-text="#{oscp.asset.status.label}">Status</th>
+								<th data-th-text="#{oscp.asset.details.label}">Details</th>
 							</tr>
 							<tr class="template">
-								<td><a href="#" class="edit-link-rel" data-tprop="asset.id" data-edit-modal="#oscp-cg-asset-edit-modal"></a></td>
+								<td><a href="#" class="edit-link" data-tprop="asset.id" data-edit-modal="#oscp-asset-edit-modal"></a></td>
 								<td data-tprop="asset.name"></td>
 								<td data-tprop="asset.createdDisplay"></td>
 								<td data-tprop="asset.identifier"></td>
@@ -133,52 +133,52 @@
 								</td>
 								<td class="small">
 									<dl class="dl-horizontal">
-										<dt data-th-text="#{oscp.cg.asset.nodeId.label}">Node ID</dt>
+										<dt data-th-text="#{oscp.asset.nodeId.label}">Node ID</dt>
 										<dd data-tprop="asset.nodeId"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.sourceId.label}">Source ID</dt>
+
+										<dt data-th-text="#{oscp.asset.sourceId.label}">Source ID</dt>
 										<dd data-tprop="asset.sourceId"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.category.label}">Category</dt>
+
+										<dt data-th-text="#{oscp.asset.category.label}">Category</dt>
 										<dd data-tprop="asset.category"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.phase.label}">Phase</dt>
+
+										<dt data-th-text="#{oscp.asset.phase.label}">Phase</dt>
 										<dd data-tprop="asset.phase"></dd>
 									</dl>
 
-									<h5 data-th-text="#{oscp.cg.asset.instantaneous.label}">Instantaneous</h5>
+									<h5 data-th-text="#{oscp.asset.instantaneous.label}">Instantaneous</h5>
 									<dl class="dl-horizontal">
-										<dt data-th-text="#{oscp.cg.asset.propertyNames.label}">Properties</dt>
-										<dd data-tprop="asset.instantaneous.propertyNames"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.unit.label}">Unit</dt>
+										<dt data-th-text="#{oscp.asset.propertyNames.label}">Properties</dt>
+										<dd data-tprop="asset.instantaneous.propertyNamesDisplay"></dd>
+
+										<dt data-th-text="#{oscp.asset.unit.label}">Unit</dt>
 										<dd data-tprop="asset.instantaneous.unit"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.statisticType.label}">Statistic Type</dt>
+
+										<dt data-th-text="#{oscp.asset.statisticType.label}">Statistic Type</dt>
 										<dd data-tprop="asset.instantaneous.statisticType"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.multiplier.label}">Multiplier</dt>
+
+										<dt data-th-text="#{oscp.asset.multiplier.label}">Multiplier</dt>
 										<dd data-tprop="asset.instantaneous.multiplier"></dd>
 									</dl>
 
-									<h5 data-th-text="#{oscp.cg.asset.energy.label}">Energy</h5>
+									<h5 data-th-text="#{oscp.asset.energy.label}">Energy</h5>
 									<dl class="dl-horizontal">
-										<dt data-th-text="#{oscp.cg.asset.propertyNames.label}">Properties</dt>
-										<dd data-tprop="asset.energy.propertyNames"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.unit.label}">Unit</dt>
+										<dt data-th-text="#{oscp.asset.propertyNames.label}">Properties</dt>
+										<dd data-tprop="asset.energy.propertyNamesDisplay"></dd>
+
+										<dt data-th-text="#{oscp.asset.unit.label}">Unit</dt>
 										<dd data-tprop="asset.energy.unit"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.statisticType.label}">Statistic Type</dt>
+
+										<dt data-th-text="#{oscp.asset.statisticType.label}">Statistic Type</dt>
 										<dd data-tprop="asset.energy.statisticType"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.energyType.label}">Type</dt>
+
+										<dt data-th-text="#{oscp.asset.energyType.label}">Type</dt>
 										<dd data-tprop="asset.energy.type"></dd>
-				
-										<dt data-th-text="#{oscp.cg.asset.energyDirection.label}">Direction</dt>
+
+										<dt data-th-text="#{oscp.asset.energyDirection.label}">Direction</dt>
 										<dd data-tprop="asset.energy.direction"></dd>
 
-										<dt data-th-text="#{oscp.cg.asset.multiplier.label}">Multiplier</dt>
+										<dt data-th-text="#{oscp.asset.multiplier.label}">Multiplier</dt>
 										<dd data-tprop="asset.energy.multiplier"></dd>
 									</dl>
 								</td>
@@ -199,25 +199,25 @@
 									<dl class="dl-horizontal">
 										<dt>Node ID</dt>
 										<dd>123</dd>
-				
+
 										<dt>Source ID</dt>
 										<dd>/charger/1</dd>
-				
+
 										<dt>Category</dt>
 										<dd>Charging</dd>
-				
+
 										<dt>Phase</dt>
 										<dd>All</dd>
 									</dl>
-								
+
 									<h5>Instantaneous</h5>
 									<dl class="dl-horizontal">
 										<dt>Properties</dt>
 										<dd>watts</dd>
-				
+
 										<dt>Statistic Type</dt>
 										<dd>Maximum</dd>
-				
+
 										<dt>Multiplier</dt>
 										<dd></dd>
 									</dl>
@@ -226,16 +226,16 @@
 									<dl class="dl-horizontal">
 										<dt>Properties</dt>
 										<dd>wattHours</dd>
-				
+
 										<dt>Statistic Type</dt>
 										<dd>Difference</dd>
-				
+
 										<dt>Type</dt>
 										<dd>Total</dd>
-				
+
 										<dt>Direction</dt>
 										<dd>Import</dd>
-				
+
 										<dt>Multiplier</dt>
 										<dd></dd>
 									</dl>
