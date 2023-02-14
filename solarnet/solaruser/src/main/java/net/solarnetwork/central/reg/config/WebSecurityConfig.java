@@ -317,6 +317,7 @@ public class WebSecurityConfig {
 		      	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
 		        .requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .requestMatchers("/api/v1/pub/**").permitAll()
 		        .anyRequest().denyAll()
