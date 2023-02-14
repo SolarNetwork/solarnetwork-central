@@ -92,6 +92,9 @@ public class WebSecurityConfig {
 	/** The OCPP authority. */
 	public static final String OCPP_AUTHORITY = "ROLE_OCPP";
 
+	/** The OSCP authority. */
+	public static final String OSCP_AUTHORITY = "ROLE_OSCP";
+
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
 
@@ -191,6 +194,7 @@ public class WebSecurityConfig {
 		      	.requestMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.requestMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		      	.requestMatchers("/u/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
 		        .requestMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .requestMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
 		        .anyRequest().denyAll()
@@ -313,6 +317,7 @@ public class WebSecurityConfig {
 		      	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
 		        .requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 		        .requestMatchers("/api/v1/pub/**").permitAll()
 		        .anyRequest().denyAll()

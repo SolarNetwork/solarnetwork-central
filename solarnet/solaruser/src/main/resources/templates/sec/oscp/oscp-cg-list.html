@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Capacity Groups</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<div data-th-fragment="content">
+<section id="oscp-cgs">
+	<h2>
+		<span data-th-text="#{oscp.cgs.header}">Capacity Groups</span>
+		<button type="button" id="oscp-add-cg-button" class="btn btn-primary pull-right" data-th-title="#{oscp.cgs.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{oscp.cgs.intro(0)}">
+		Your Capacity Groups are shown here. Use the + button to add new providers.
+	</p>
+	<table id="oscp-cgs-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{oscp.system.id.label}">ID</th>
+				<th data-th-text="#{oscp.system.name.label}">Name</th>
+				<th data-th-text="#{oscp.system.created.label}">Created</th>
+				<th data-th-text="#{oscp.cg.identifier.label}">Identifier</th>
+				<th data-th-text="#{oscp.cg.status.label}">Status</th>
+				<th data-th-text="#{oscp.cg.details.label}">Details</th>
+				<th data-th-text="#{oscp.cg.settings.label}">Settings</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#oscp-cg-edit-modal"></a></td>
+				<td data-tprop="name"></td>
+				<td data-tprop="createdDisplay"></td>
+				<td data-tprop="identifier"></td>
+				<td>
+					<span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span>
+				</td>
+				<td class="small">
+					<h5 data-th-text="#{oscp.cg.cpDetails.label}">Provider</h5>
+					<dl class="dl-horizontal">
+						<dt data-th-text="#{oscp.cg.cp.label}">Provider</dt>
+						<dd><a class="edit-link-rel" data-system-type="cp" data-tattr="capacityProviderId@data-system-id" href="#" data-tprop="capacityProviderDisplay"></a></dd>
+
+						<dt data-th-text="#{oscp.cg.measurementPeriod.label}">Measurement Period</dt>
+						<dd data-tprop="capacityProviderMeasurementPeriod"></dd>
+					</dl>
+
+					<h5 data-th-text="#{oscp.cg.coDetails.label}">Optimizer</h5>
+					<dl class="dl-horizontal">
+						<dt data-th-text="#{oscp.cg.co.label}">Optimizer</dt>
+						<dd><a class="edit-link-rel" data-system-type="co" data-tattr="capacityOptimizerId@data-system-id" href="#" data-tprop="capacityOptimizerDisplay"></a></dd>
+
+						<dt data-th-text="#{oscp.cg.measurementPeriod.label}">Measurement Period</dt>
+						<dd data-tprop="capacityOptimizerMeasurementPeriod"></dd>
+					</dl>
+				</td>
+				<td class="small">
+					<dl class="dl-horizontal settings-container hidden">
+						<dt data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</dt>
+						<dd data-tprop="sourceIdTemplate"></dd>
+						<dt data-th-text="#{ocpp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
+						<dd><span class="label label-default" data-tprop="publishToSolarIn"
+								data-th-data-true-text="#{settings.enabled.label}"
+								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
+						<dt data-th-text="#{ocpp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
+						<dd><span class="label label-default" data-tprop="publishToSolarFlux"
+								data-th-data-true-text="#{settings.enabled.label}"
+								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
+					</dl>
+					<dl class="dl-horizontal">
+						<dt></dt>
+						<dd>
+							<button type="button" class="btn btn-xs btn-default edit-link" data-th-text="#{oscp.settings.edit.label}"
+								data-edit-modal="#oscp-settings-edit-modal">
+								Edit Settings
+							</button>
+						</dd>
+					</dl>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</div>
+</body>
+</html>

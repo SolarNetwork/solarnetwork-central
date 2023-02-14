@@ -30,7 +30,7 @@ section + section {
 	text-align: center;
 }
 
-.tz-picker-container div, 
+.tz-picker-container div,
 .tz-picker-container map {
     margin: auto;
 }
@@ -89,6 +89,18 @@ section + section {
 
 .modal.danger .modal-content {
 	background-color: #c0a2a2;
+}
+
+.modal.danger .modal-header {
+	border-bottom-color: #867575;
+}
+
+.modal.danger .modal-footer {
+	border-top-color: #867575;
+}
+
+.modal.danger legend {
+	border-bottom-color: #867575;
 }
 
 .carousel-indicators.dark li {
@@ -209,6 +221,14 @@ table.table-body-borderless tbody tr.rule + tr th {
 	content: close-quote;
 }
 
+.edit-config fieldset {
+	margin-top: 2rem;
+}
+
+.edit-config fieldset.dynamic-list + fieldset.dynamic-list {
+	margin-top: 4rem;
+}
+
 .input-line {
 	display: inline-block;
 	font-family: monospace;
@@ -222,4 +242,14 @@ table.table-body-borderless tbody tr.rule + tr th {
 td.edit-dropdown,
 th.edit-dropdown {
 	min-width: 100px;
+}
+
+.dynamic-list .dynamic-list-container .dynamic-list-item + .dynamic-list-item {
+	margin-top: 2rem;
+}
+
+h5, h6 {
+	font-weight: normal;
+	color: #666;
+	text-decoration: underline;
 }

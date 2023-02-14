@@ -426,7 +426,7 @@ $(document).ready(function() {
 					config = SolarReg.Templates.findContextItem(form);
 
 				if ( !config || config.chargePointId === undefined ) {
-					delete data.chargePointid;
+					delete data.chargePointId;
 				}
 
 				delete data.id;
@@ -512,7 +512,7 @@ $(document).ready(function() {
 			// get settings
 			$.getJSON(SolarReg.solarUserURL('/sec/ocpp/settings'), function(json) {
 				console.debug('Got OCPP settings: %o', json);
-				if ( json && json.success === true && Array.isArray(json.data) ) {
+				if ( json && json.success === true && (typeof json.data === 'object') ) {
 					settingConfs = [json.data];
 				} else {
 					settingConfs = [{}];

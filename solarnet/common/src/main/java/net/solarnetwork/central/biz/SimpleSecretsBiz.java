@@ -54,15 +54,16 @@ public class SimpleSecretsBiz implements SecretsBiz {
 
 	private final Path dir;
 	private final ConcurrentMap<String, String> data;
-	private final BytesEncryptor encryptor;
+
+	private final String salt;
+	private final BytesKeyGenerator iv;
+	private final String password;
 
 	public SimpleSecretsBiz(Path dir, String password) {
 		super();
 		this.dir = ObjectUtils.requireNonNullArgument(dir, "dir");
 		this.data = new ConcurrentHashMap<>(8, 0.9f, 2);
-
-		String salt;
-		BytesKeyGenerator iv;
+		this.password = password;
 
 		Path metaPath = dir.resolve(SECRETS_META);
 		if ( Files.exists(metaPath) ) {
@@ -73,7 +74,7 @@ public class SimpleSecretsBiz implements SecretsBiz {
 				if ( salt == null || ivString == null ) {
 					throw new RuntimeException("Missing metadata in [%s]".formatted(metaPath));
 				}
-				byte[] ivData = HexFormat.of().parseHex(ivString);
+				final byte[] ivData = HexFormat.of().parseHex(ivString);
 				iv = new BytesKeyGenerator() {
 
 					@Override
@@ -109,14 +110,13 @@ public class SimpleSecretsBiz implements SecretsBiz {
 			}
 		}
 
-		this.encryptor = new AesBytesEncryptor(password.toString(), salt, iv, CipherAlgorithm.GCM);
-
 		Path dataPath = dir.resolve(SECRETS_DATA);
 		if ( Files.isReadable(dataPath) ) {
+			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
 			try {
 				byte[] enc = Files.readAllBytes(dataPath);
 				Map<String, Object> map = JsonUtils
-						.getStringMap(new String(this.encryptor.decrypt(enc), StandardCharsets.UTF_8));
+						.getStringMap(new String(encryptor.decrypt(enc), StandardCharsets.UTF_8));
 				map.forEach((k, v) -> {
 					data.put(k, v.toString());
 				});
@@ -148,6 +148,7 @@ public class SimpleSecretsBiz implements SecretsBiz {
 		Path dataPath = dir.resolve(SECRETS_DATA);
 		try {
 			String json = JsonUtils.getJSONString(data, "{}");
+			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
 			byte[] enc = encryptor.encrypt(json.getBytes(StandardCharsets.UTF_8));
 			Files.write(dataPath, enc);
 		} catch ( IOException e ) {
