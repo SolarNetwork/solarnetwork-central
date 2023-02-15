@@ -494,9 +494,7 @@ $(document).ready(function() {
 				return model;
 			});
 
-			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function populateSystemItem(item, el) {
-				// TODO
-			}, 'asset.');
+			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, undefined, 'asset.');
 			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 		}
 
