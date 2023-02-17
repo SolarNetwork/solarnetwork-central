@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import java.time.Duration;
 import java.util.Arrays;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -41,10 +43,92 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * HTTP client configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class HttpClientConfig {
+
+	/** Settings for the HTTP client. */
+	public static class HttpClientSettings {
+
+		/** The HTTP client connect timeout. */
+		private Duration connectTimeout = Duration.ofSeconds(10);
+		private Duration connectionRequestTimeout = Duration.ofSeconds(15);
+		private Duration socketTimeout = Duration.ofSeconds(20);
+
+		/**
+		 * Get the connection timeout.
+		 * 
+		 * @return the timeout
+		 */
+		public Duration getConnectTimeout() {
+			return connectTimeout;
+		}
+
+		/**
+		 * Set the connection timeout.
+		 * 
+		 * @param connectTimeout
+		 *        the timeout to set
+		 */
+		public void setConnectTimeout(Duration connectTimeout) {
+			this.connectTimeout = connectTimeout;
+		}
+
+		/**
+		 * Get the connection pool borrow timeout.
+		 * 
+		 * @return the timeout
+		 */
+		public Duration getConnectionRequestTimeout() {
+			return connectionRequestTimeout;
+		}
+
+		/**
+		 * Set the connection pool borrow timeout.
+		 * 
+		 * @param connectionRequestTimeout
+		 *        the connectionRequestTimeout to set
+		 */
+		public void setConnectionRequestTimeout(Duration connectionRequestTimeout) {
+			this.connectionRequestTimeout = connectionRequestTimeout;
+		}
+
+		/**
+		 * Get the socket timeout.
+		 * 
+		 * @return the timeout
+		 */
+		public Duration getSocketTimeout() {
+			return socketTimeout;
+		}
+
+		/**
+		 * Set the socket timeout.
+		 * 
+		 * @param socketTimeout
+		 *        the timeout to set
+		 */
+		public void setSocketTimeout(Duration socketTimeout) {
+			this.socketTimeout = socketTimeout;
+		}
+
+	}
+
+	@Bean
+	@ConfigurationProperties(prefix = "app.http.client.settings")
+	public HttpClientSettings asyncDatumCollectorSettings() {
+		return new HttpClientSettings();
+	}
+
+	@Bean
+	public RequestConfig httpRequestConfig(HttpClientSettings settings) {
+		RequestConfig config = RequestConfig.custom()
+				.setConnectTimeout((int) settings.connectTimeout.toMillis())
+				.setConnectionRequestTimeout((int) settings.connectionRequestTimeout.toMillis())
+				.setSocketTimeout((int) settings.socketTimeout.toMillis()).build();
+		return config;
+	}
 
 	@ConfigurationProperties(prefix = "app.http.client.connections")
 	@Bean
@@ -54,9 +138,11 @@ public class HttpClientConfig {
 	}
 
 	@Bean
-	public CloseableHttpClient httpClient(HttpClientConnectionManager connectionManager) {
+	public CloseableHttpClient httpClient(HttpClientConnectionManager connectionManager,
+			RequestConfig requestConfig) {
 		// @formatter:off
         return HttpClients.custom()
+        		.setDefaultRequestConfig(requestConfig)
         		.useSystemProperties()
                 .setConnectionManager(connectionManager)
                 .build();
