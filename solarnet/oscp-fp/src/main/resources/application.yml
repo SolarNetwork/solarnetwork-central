@@ -22,8 +22,13 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 5
-  http.client.connections:
-    max-total: 20
+  http.client:
+    connections:
+      max-total: 20
+    settings:
+      connect-timeout: 10s
+      connection-request-timeout: 15s
+      socket-timeout: 20s
   job.oscp:
     heartbeat.co:
       maximum-iterations: 1000
