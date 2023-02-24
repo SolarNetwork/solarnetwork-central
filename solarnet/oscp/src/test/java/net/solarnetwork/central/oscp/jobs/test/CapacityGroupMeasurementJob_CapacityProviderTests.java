@@ -214,38 +214,155 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		assertThat("Include one AssetMeasurement per AssetConfiguration", post.getMeasurements(),
 				hasSize(1));
 		AssetMeasurement m = post.getMeasurements().get(0);
-		assertThat("Measurement asset category from asset configuration", m.getAssetCategory(),
-				is(equalTo(cpAsset.getCategory().toOscp20Value())));
-		assertThat("Measurement asset ID from asset configuration", m.getAssetId(),
-				is(equalTo(cpAsset.getIdentifier())));
+		assertAssetMeasurement("1", cpAsset, m, im, em, start, end);
+	}
+
+	private void assertAssetMeasurement(String prefix, AssetConfiguration asset, AssetMeasurement m,
+			Measurement im, Measurement em, Instant start, Instant end) {
+		assertThat("Measurement asset %s category from asset configuration".formatted(prefix),
+				m.getAssetCategory(), is(equalTo(asset.getCategory().toOscp20Value())));
+		assertThat("Measurement asset %s ID from asset configuration".formatted(prefix), m.getAssetId(),
+				is(equalTo(asset.getIdentifier())));
 
 		InstantaneousMeasurement aim = m.getInstantaneousMeasurement();
-		assertThat("Instantaneous measurement populated", aim, is(notNullValue()));
-		assertThat("Instantaneous measurement value from DAO IM", aim.getValue(),
-				is(equalTo(im.value().doubleValue())));
-		assertThat("Instantaneous measurement phase from DAO IM", aim.getPhase(),
-				is(equalTo(im.phase().toOscp20Value())));
-		assertThat("Instantaneous measurement unit from DAO IM", aim.getUnit(),
-				is(equalTo(im.unit().toOscp20InstantaneousValue())));
-		assertThat("Instantaneous measurement measure time from end criteria", aim.getMeasureTime(),
-				is(equalTo(end)));
+		assertInstantaneousMeasurement("1", im, aim, end);
 
 		EnergyMeasurement aem = m.getEnergyMeasurement();
-		assertThat("Energy measurement populated", aem, is(notNullValue()));
-		assertThat("Energy measurement value from DAO EM", aem.getValue(),
+		assertEnergyMeasurement("1", em, aem, start, end);
+	}
+
+	private void assertInstantaneousMeasurement(String prefix, Measurement im,
+			InstantaneousMeasurement aim, final Instant end) {
+		assertThat("Instantaneous measurement %s populated".formatted(prefix), aim, is(notNullValue()));
+		assertThat("Instantaneous measurement %s value from DAO IM".formatted(prefix), aim.getValue(),
+				is(equalTo(im.value().doubleValue())));
+		assertThat("Instantaneous measurement %s phase from DAO IM".formatted(prefix), aim.getPhase(),
+				is(equalTo(im.phase().toOscp20Value())));
+		assertThat("Instantaneous measurement %s unit from DAO IM".formatted(prefix), aim.getUnit(),
+				is(equalTo(im.unit().toOscp20InstantaneousValue())));
+		assertThat("Instantaneous measurement %s measure time from end criteria".formatted(prefix),
+				aim.getMeasureTime(), is(equalTo(end)));
+	}
+
+	private void assertEnergyMeasurement(String prefix, Measurement em, EnergyMeasurement aem,
+			final Instant start, final Instant end) {
+		assertThat("Energy measurement %s populated".formatted(prefix), aem, is(notNullValue()));
+		assertThat("Energy measurement %s value from DAO EM", aem.getValue(),
 				is(equalTo(em.value().doubleValue())));
-		assertThat("Energy measurement phase from DAO EM", aem.getPhase(),
+		assertThat("Energy measurement %s phase from DAO EM", aem.getPhase(),
 				is(equalTo(em.phase().toOscp20Value())));
-		assertThat("Energy measurement unit from DAO EM", aem.getUnit(),
+		assertThat("Energy measurement %s unit from DAO EM", aem.getUnit(),
 				is(equalTo(em.unit().toOscp20EnergyValue())));
-		assertThat("Energy measurement measure time from DAO EM", aem.getMeasureTime(),
+		assertThat("Energy measurement %s measure time from DAO EM", aem.getMeasureTime(),
 				is(equalTo(end)));
-		assertThat("Energy measurement energy type from DAO EM", aem.getEnergyType(),
+		assertThat("Energy measurement %s energy type from DAO EM", aem.getEnergyType(),
 				is(equalTo(em.energyType().toOscp20Value())));
-		assertThat("Energy measurement energy direction from DAO EM", aem.getDirection(),
+		assertThat("Energy measurement %s energy direction from DAO EM", aem.getDirection(),
 				is(equalTo(em.energyDirection().toOscp20Value())));
-		assertThat("Energy measurement energy initial measurement time from start criteria",
+		assertThat("Energy measurement %s energy initial measurement time from start criteria",
 				aem.getInitialMeasureTime(), is(equalTo(start)));
+	}
+
+	@Test
+	public void runJob_provider_assets() {
+		// GIVEN
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(10, ChronoUnit.MINUTES);
+		final CapacityProviderConfiguration systemConf = systemConf();
+		final CapacityGroupConfiguration group = OscpJdbcTestUtils
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
+						start)
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+
+		final var results = new ArrayList<Instant>();
+
+		// iterate over expired configurations
+		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
+				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
+				capacityProviderDao, Collections.emptyMap());
+		will((Answer<Void>) invocation -> {
+			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
+					.getArgument(0);
+			if ( !results.isEmpty() ) {
+				return null;
+			}
+			Instant result = handler.apply(ctx);
+			results.add(result);
+
+			return null;
+		}).given(capacityProviderDao).processExternalSystemWithExpiredMeasurement(any());
+
+		// get group configuration for expired system configuration
+		given(capacityGroupDao.findForCapacityProvider(systemConf.getUserId(), systemConf.getEntityId(),
+				group.getIdentifier())).willReturn(group);
+
+		AssetConfiguration cpAsset1 = OscpJdbcTestUtils
+				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+		AssetConfiguration cpAsset2 = OscpJdbcTestUtils
+				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+		AssetConfiguration coAsset = OscpJdbcTestUtils
+				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+		coAsset.setAudience(OscpRole.CapacityOptimizer);
+
+		// get all assets for group
+		given(assetDao.findAllForCapacityGroup(systemConf.getUserId(), group.getEntityId(), null))
+				.willReturn(asList(cpAsset1, cpAsset2, coAsset));
+
+		// get measurements for system assets
+		Measurement em1 = Measurement.energyMeasurement(new BigDecimal("123"), Phase.All,
+				MeasurementUnit.kWh, end, EnergyType.Total, EnergyDirection.Import, start);
+		Measurement im1 = Measurement.instantaneousMeasurement(new BigDecimal("345"), Phase.All,
+				MeasurementUnit.kW, end);
+		given(measurementDao.getMeasurements(same(cpAsset1), any())).willReturn(asList(im1, em1));
+
+		Measurement em2 = Measurement.energyMeasurement(new BigDecimal("234"), Phase.All,
+				MeasurementUnit.kWh, end, EnergyType.Total, EnergyDirection.Import, start);
+		Measurement im2 = Measurement.instantaneousMeasurement(new BigDecimal("456"), Phase.All,
+				MeasurementUnit.kW, end);
+		given(measurementDao.getMeasurements(same(cpAsset2), any())).willReturn(asList(im2, em2));
+
+		// WHEN
+		job.run();
+
+		// THEN
+		assertThat("Result processed", results, hasSize(1));
+
+		then(measurementDao).should().getMeasurements(same(cpAsset1), criteriaCaptor.capture());
+		assertThat("Measurement criteria 1 start date from task date",
+				criteriaCaptor.getValue().getStartDate(), is(equalTo(start)));
+		assertThat("Measurement criteria 1 end date from task date + measurement period",
+				criteriaCaptor.getValue().getEndDate(), is(equalTo(end)));
+
+		then(measurementDao).should().getMeasurements(same(cpAsset2), criteriaCaptor.capture());
+		assertThat("Measurement criteria 2 start date from task date",
+				criteriaCaptor.getValue().getStartDate(), is(equalTo(start)));
+		assertThat("Measurement criteria 2 end date from task date + measurement period",
+				criteriaCaptor.getValue().getEndDate(), is(equalTo(end)));
+
+		then(client).should().systemExchange(same(ctx), eq(HttpMethod.POST),
+				pathSupplierCaptor.capture(), postBodyCaptor.capture());
+		assertThat("POST path is for asset measurements", pathSupplierCaptor.getValue().get(),
+				is(equalTo(UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH)));
+		assertThat("POST body is OSCP 2 Update Asset Measurements", postBodyCaptor.getValue(),
+				is(instanceOf(UpdateAssetMeasurement.class)));
+		UpdateAssetMeasurement post = (UpdateAssetMeasurement) postBodyCaptor.getValue();
+		assertThat("POST group_id from group identifier", post.getGroupId(),
+				is(equalTo(group.getIdentifier())));
+		assertThat("Include one AssetMeasurement per AssetConfiguration", post.getMeasurements(),
+				hasSize(2));
+
+		AssetMeasurement m1 = post.getMeasurements().get(0);
+		assertAssetMeasurement("1", cpAsset1, m1, im1, em1, start, end);
+
+		AssetMeasurement m2 = post.getMeasurements().get(1);
+		assertAssetMeasurement("2", cpAsset2, m2, im2, em2, start, end);
 	}
 
 }

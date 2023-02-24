@@ -238,16 +238,19 @@ $(document).ready(function() {
 		if ( loc.country ) {
 			locDisplay.push(loc.country);
 		}
+		if ( loc.zone ) {
+			locDisplay.push(loc.zone);
+		}
 		if ( locDisplay.length > 0 ) {
 			text = locDisplay.join(', ');
 		}
-		if ( loc.latitude !== undefined && loc.longitude !== undefined ) {
+		if ( loc.lat !== undefined && loc.lon !== undefined ) {
 			if ( text.length > 0 ) {
 				text += ' (';
 			}
-			text += Number(loc.latitude).toFixed(3) + ', ' + Number(loc.longitude).toFixed(3);
-			if ( loc.elevation ) {
-				text += ' @ ' +loc.elevation + 'm';
+			text += Number(loc.lat).toFixed(3) + ', ' + Number(loc.lon).toFixed(3);
+			if ( loc.el ) {
+				text += ' @ ' +loc.el + 'm';
 			}
 			text += ')';
 		}
@@ -421,8 +424,8 @@ $(document).ready(function() {
 		}
 		var form = $('#edit-node-modal');
 		var elements = form.get(0).elements;
-		var criteria = ['country', 'timeZoneId', 'region', 'stateOrProvince', 'locality', 'postalCode', 
-		                'street', 'latitude', 'longitude', 'elevation'];
+		var criteria = ['zone', 'country', 'region', 'stateOrProvince', 'locality', 'postalCode', 
+		                'street', 'lat', 'lon', 'el'];
 		var input;
 		criteria.forEach(function(prop) {
 			input = elements['node.location.'+prop];
@@ -447,7 +450,7 @@ $(document).ready(function() {
 		var form = $('#edit-node-modal');
 		var elements = form.get(0).elements;
 		var url = $('#edit-node-location-details').data('lookup-url');
-		var criteria = ['timeZoneId', 'country', 'region', 'stateOrProvince', 'locality', 'postalCode'];
+		var criteria = ['zone', 'country', 'region', 'stateOrProvince', 'locality', 'postalCode'];
 		var req = {}, input;
 		criteria.forEach(function(prop) {
 			input = elements['node.location.'+prop];
