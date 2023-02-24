@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A location entity.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SolarLocation extends BaseEntity
 		implements Cloneable, Serializable, Location, LocationMatch {
@@ -303,6 +303,23 @@ public class SolarLocation extends BaseEntity
 		this.latitude = latitude;
 	}
 
+	/**
+	 * Set the latitude.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link #setLatitude(BigDecimal)} and is
+	 * provided for compatibility with the JSON serialized form of
+	 * {@link Location}.
+	 * </p>
+	 * 
+	 * @param latitude
+	 *        the latitude to set
+	 * @since 2.1
+	 */
+	public void setLat(BigDecimal latitude) {
+		setLatitude(latitude);
+	}
+
 	@Override
 	public BigDecimal getLongitude() {
 		return longitude;
@@ -310,6 +327,23 @@ public class SolarLocation extends BaseEntity
 
 	public void setLongitude(BigDecimal longitude) {
 		this.longitude = longitude;
+	}
+
+	/**
+	 * Set the longitude.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link #setLongitude(BigDecimal)} and is
+	 * provided for compatibility with the JSON serialized form of
+	 * {@link Location}.
+	 * </p>
+	 * 
+	 * @param longitude
+	 *        the longitude to set
+	 * @since 2.1
+	 */
+	public void setLon(BigDecimal longitude) {
+		setLongitude(longitude);
 	}
 
 	@Override
@@ -321,6 +355,23 @@ public class SolarLocation extends BaseEntity
 		this.timeZoneId = timeZoneId;
 	}
 
+	/**
+	 * Set the time zone ID.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link #setTimeZoneId(String)} and is
+	 * provided for compatibility with the JSON serialized form of
+	 * {@link Location}.
+	 * </p>
+	 * 
+	 * @param timeZoneId
+	 *        the zone ID to set
+	 * @since 2.1
+	 */
+	public void setZone(String timeZoneId) {
+		setTimeZoneId(timeZoneId);
+	}
+
 	@Override
 	public BigDecimal getElevation() {
 		return elevation;
@@ -328,6 +379,23 @@ public class SolarLocation extends BaseEntity
 
 	public void setElevation(BigDecimal elevation) {
 		this.elevation = elevation;
+	}
+
+	/**
+	 * Set the elevation.
+	 * 
+	 * <p>
+	 * This method is an alias for {@link #setElevation(BigDecimal)} and is
+	 * provided for compatibility with the JSON serialized form of
+	 * {@link Location}.
+	 * </p>
+	 * 
+	 * @param elevation
+	 *        the elevation to set
+	 * @since 2.1
+	 */
+	public void setEl(BigDecimal elevation) {
+		setElevation(elevation);
 	}
 
 }
