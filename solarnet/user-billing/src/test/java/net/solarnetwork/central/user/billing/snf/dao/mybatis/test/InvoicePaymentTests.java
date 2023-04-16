@@ -359,4 +359,48 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice2.getTotalAmount()),
 				equalTo(0));
 	}
+
+	@Test
+	public void addPartialInvoicePayments_procedure() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		final BigDecimal underAmount = new BigDecimal("1.00");
+		final BigDecimal paymentAmount = invoice.getTotalAmount().subtract(underAmount);
+
+		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
+				new Long[] { invoice.getId().getId() }, paymentAmount, now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for partial payment amount", val.compareTo(paymentAmount), equalTo(0));
+
+		// now verify invoice payment is present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment row added", invPayRows, hasSize(1));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),
+				equalTo(0));
+
+		// now add another partial payment
+		List<Map<String, Object>> payRows2 = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
+				new Long[] { invoice.getId().getId() }, underAmount, now());
+		assertThat("Payment row added", payRows2, hasSize(1));
+		val = (BigDecimal) payRows2.get(0).get("amount");
+		assertThat("Payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
+
+		// now verify 2 invoice payments are present
+		invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment rows added", invPayRows, hasSize(2));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),
+				equalTo(0));
+		val = (BigDecimal) invPayRows.get(1).get("amount");
+		assertThat("Invoice payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
+	}
+
 }
