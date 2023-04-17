@@ -47,6 +47,7 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
+import net.solarnetwork.central.datum.v2.support.CsvStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -103,6 +104,10 @@ public class DatumStreamController {
 						objectMapper.createGenerator(response.getOutputStream()),
 						objectMapper.getSerializerProvider(),
 						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+				break;
+			} else if ( CsvStreamDatumFilteredResultsProcessor.TEXT_CSV_MIME_TYPE
+					.isCompatibleWith(acceptType) ) {
+				processor = new CsvStreamDatumFilteredResultsProcessor(response.getWriter());
 				break;
 			} else {
 				throw new IllegalArgumentException(
