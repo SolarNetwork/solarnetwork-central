@@ -88,7 +88,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	private final ICsvListWriter writer;
 
 	/**
-	 * A mapping of column names to associatd column index; linked so insertion
+	 * A mapping of column names to associated column index; linked so insertion
 	 * order is column order.
 	 */
 	private Map<String, Integer> columnOrder = new LinkedHashMap<>(8);

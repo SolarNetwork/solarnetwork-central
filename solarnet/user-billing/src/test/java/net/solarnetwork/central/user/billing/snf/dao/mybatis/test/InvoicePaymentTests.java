@@ -27,9 +27,9 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.math.BigDecimal;
@@ -156,6 +156,47 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		} catch ( DataIntegrityViolationException e ) {
 			// good one
 		}
+	}
+
+	@Test
+	public void addInvoicePayment_partialPayments() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		final BigDecimal dollarShortAmount = invoice.getTotalAmount().add(new BigDecimal("-1.00"));
+
+		// create payment
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
+		payment.setAmount(dollarShortAmount);
+		payment.setCurrencyCode(account.getCurrencyCode());
+		payment.setExternalKey(randomUUID().toString());
+		payment.setPaymentType(PaymentType.Payment);
+		payment.setReference(randomUUID().toString());
+
+		paymentDao.save(payment);
+		getSqlSessionTemplate().flushStatements();
+
+		// add one payment, $1 short amount
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+				dollarShortAmount);
+		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
+
+		// add 2nd payment, $1 to fully pay invoice
+		Payment payment2 = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+				now());
+		payment2.setAmount(new BigDecimal("1.00"));
+		payment2.setCurrencyCode(account.getCurrencyCode());
+		payment2.setExternalKey(randomUUID().toString());
+		payment2.setPaymentType(PaymentType.Payment);
+		payment2.setReference(randomUUID().toString());
+
+		paymentDao.save(payment2);
+		getSqlSessionTemplate().flushStatements();
+
+		addInvoicePayment(invoice.getAccountId(), payment2.getId().getId(), invoice.getId().getId(),
+				payment2.getAmount());
+		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), invoice.getTotalAmount());
 	}
 
 	@Test
@@ -318,4 +359,48 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice2.getTotalAmount()),
 				equalTo(0));
 	}
+
+	@Test
+	public void addPartialInvoicePayments_procedure() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		final BigDecimal underAmount = new BigDecimal("1.00");
+		final BigDecimal paymentAmount = invoice.getTotalAmount().subtract(underAmount);
+
+		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
+				new Long[] { invoice.getId().getId() }, paymentAmount, now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for partial payment amount", val.compareTo(paymentAmount), equalTo(0));
+
+		// now verify invoice payment is present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment row added", invPayRows, hasSize(1));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),
+				equalTo(0));
+
+		// now add another partial payment
+		List<Map<String, Object>> payRows2 = addInvoicePaymentsViaProcedure(invoice.getAccountId(),
+				new Long[] { invoice.getId().getId() }, underAmount, now());
+		assertThat("Payment row added", payRows2, hasSize(1));
+		val = (BigDecimal) payRows2.get(0).get("amount");
+		assertThat("Payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
+
+		// now verify 2 invoice payments are present
+		invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment rows added", invPayRows, hasSize(2));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for partial payment amount", val.compareTo(paymentAmount),
+				equalTo(0));
+		val = (BigDecimal) invPayRows.get(1).get("amount");
+		assertThat("Invoice payment 2 for under payment amount", val.compareTo(underAmount), equalTo(0));
+	}
+
 }

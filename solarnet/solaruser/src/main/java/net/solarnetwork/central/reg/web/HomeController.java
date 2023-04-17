@@ -35,6 +35,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RequestMapping(method = RequestMethod.GET)
 public class HomeController {
 
+	/**
+	 * Default constructor.
+	 */
+	public HomeController() {
+		super();
+	}
+
 	@RequestMapping({ "/", "/index.do" })
 	public String index() {
 		return "index";

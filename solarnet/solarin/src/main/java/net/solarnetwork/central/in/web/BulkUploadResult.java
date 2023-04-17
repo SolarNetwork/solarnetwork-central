@@ -36,18 +36,47 @@ public class BulkUploadResult {
 	private List<Object> datum;
 	private List<Instruction> instructions;
 
+	/**
+	 * Default constructor.
+	 */
+	public BulkUploadResult() {
+		super();
+	}
+
+	/**
+	 * Get the datum list.
+	 * 
+	 * @return the datum
+	 */
 	public List<Object> getDatum() {
 		return datum;
 	}
 
+	/**
+	 * Set the datum list.
+	 * 
+	 * @param datum
+	 *        the list to set
+	 */
 	public void setDatum(List<Object> datum) {
 		this.datum = datum;
 	}
 
+	/**
+	 * Get the instruction list.
+	 * 
+	 * @return the instructions
+	 */
 	public List<Instruction> getInstructions() {
 		return instructions;
 	}
 
+	/**
+	 * Set the instructions list.
+	 * 
+	 * @param instructions
+	 *        the list to set
+	 */
 	public void setInstructions(List<Instruction> instructions) {
 		this.instructions = instructions;
 	}

@@ -205,7 +205,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 		this.metadataProvider = (ObjectDatumStreamMetadataProvider) attributes
 				.get(METADATA_PROVIDER_ATTR);
 		this.streamIds = metadataProvider.metadataStreamIds();
-		this.metaIndexMap = new HashMap<>(streamIds.size());
+		this.metaIndexMap = new HashMap<>(streamIds != null ? streamIds.size() : 0);
 
 		int count = 1 + (expectedResultCount != null ? 1 : 0) + (startingOffset != null ? 1 : 0)
 				+ (totalResultCount != null ? 1 : 0)
