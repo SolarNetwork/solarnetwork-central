@@ -38,6 +38,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
@@ -107,6 +109,91 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				2022-04-29T01:52:00Z,%1$s,123,test/source,1.23,2.34,3.45,foo,a\r
 				2022-04-29T01:52:01Z,%1$s,123,test/source,3.21,4.32,5.43,bar,\r
 				""".formatted(meta.getStreamId())));
+	}
+
+	@Test
+	public void multiStream_datum() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta1 = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, new String[] { "d" });
+		ObjectDatumStreamMetadata meta2 = nodeMeta(123L, "test/source", new String[] { "b", "c" }, null,
+				new String[] { "d" });
+		ObjectDatumStreamMetadata meta3 = nodeMeta(123L, "test/source", new String[] { "e" },
+				new String[] { "f" }, null);
+		Instant start = Instant
+				.from(LocalDateTime.of(2022, 4, 29, 13, 52).atZone(ZoneId.of("Pacific/Auckland")));
+
+		final List<ObjectDatumStreamMetadata> metas = asList(meta1, meta2, meta3);
+		final int datumCount = 2;
+		final List<StreamDatum> datum = new ArrayList<>(datumCount * metas.size());
+
+		DatumProperties p;
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("1.1", "1.2"));
+		p.setAccumulating(decimalArray("1.3"));
+		p.setStatus(new String[] { "foo" });
+		p.setTags(new String[] { "t1" });
+		datum.add(new BasicStreamDatum(meta1.getStreamId(), start, p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("10.1", "10.2"));
+		p.setStatus(new String[] { "bar" });
+		p.setTags(new String[] { "t2" });
+		datum.add(new BasicStreamDatum(meta2.getStreamId(), start, p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("100.1"));
+		p.setAccumulating(decimalArray("100.2"));
+		datum.add(new BasicStreamDatum(meta3.getStreamId(), start, p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("2.1", "2.2"));
+		p.setAccumulating(decimalArray("2.3"));
+		p.setTags(new String[] { "t1.1" });
+		datum.add(new BasicStreamDatum(meta1.getStreamId(), start.plusSeconds(1), p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("20.1", "20.2"));
+		p.setStatus(new String[] { "bar.1" });
+		p.setTags(new String[] { "t2.1" });
+		datum.add(new BasicStreamDatum(meta2.getStreamId(), start.plusSeconds(1), p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("200.1"));
+		p.setAccumulating(decimalArray("200.2"));
+		datum.add(new BasicStreamDatum(meta3.getStreamId(), start.plusSeconds(1), p));
+
+		p = new DatumProperties();
+		p.setInstantaneous(decimalArray("300.1"));
+		p.setAccumulating(decimalArray("300.2"));
+		p.setTags(new String[] { "t3" });
+		datum.add(new BasicStreamDatum(meta3.getStreamId(), start.plusSeconds(2), p));
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(metas, datum);
+
+		// WHEN
+		StringWriter out = new StringWriter();
+		try (CsvStreamDatumFilteredResultsProcessor processor = new CsvStreamDatumFilteredResultsProcessor(
+				out)) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			for ( StreamDatum d : datum ) {
+				processor.handleResultItem(d);
+			}
+		}
+
+		// THEN
+		String csv = out.toString();
+		assertThat("Datum CSV", csv, is("""
+				ts,streamId,objectId,sourceId,a,b,c,d,e,f,tags\r
+				2022-04-29T01:52:00Z,%1$s,123,test/source,1.1,1.2,1.3,foo,,,t1\r
+				2022-04-29T01:52:00Z,%2$s,123,test/source,,10.1,10.2,bar,,,t2\r
+				2022-04-29T01:52:00Z,%3$s,123,test/source,,,,,100.1,100.2,\r
+				2022-04-29T01:52:01Z,%1$s,123,test/source,2.1,2.2,2.3,,,,t1.1\r
+				2022-04-29T01:52:01Z,%2$s,123,test/source,,20.1,20.2,bar.1,,,t2.1\r
+				2022-04-29T01:52:01Z,%3$s,123,test/source,,,,,200.1,200.2,\r
+				2022-04-29T01:52:02Z,%3$s,123,test/source,,,,,300.1,300.2,t3\r
+				""".formatted(meta1.getStreamId(), meta2.getStreamId(), meta3.getStreamId())));
 	}
 
 	@Test
