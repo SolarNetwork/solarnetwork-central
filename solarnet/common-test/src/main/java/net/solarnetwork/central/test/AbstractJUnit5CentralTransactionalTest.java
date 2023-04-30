@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringJUnitConfig
 @Transactional
@@ -145,9 +145,22 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the ID of the user to create
 	 */
 	protected void setupTestUser(Long userId) {
+		setupTestUser(userId, "test" + userId + "@localhost");
+	}
+
+	/**
+	 * Insert a test user into the {@literal solaruser.sn_user} table.
+	 * 
+	 * @param userId
+	 *        the ID of the user to create
+	 * @param username
+	 *        the username to use
+	 * @since 1.1
+	 */
+	protected void setupTestUser(Long userId, String username) {
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
-				userId, "Test User " + userId, "test" + userId + "@localhost", "password-" + userId);
+				userId, "Test User " + userId, username, "password-" + userId);
 	}
 
 	/**

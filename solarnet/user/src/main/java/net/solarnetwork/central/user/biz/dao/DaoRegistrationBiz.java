@@ -164,6 +164,12 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	 */
 	public static final int DEFAULT_APPROVE_CSR_MAX_WAIT_SECS = 15;
 
+	// number of salt bytes to add to reset password confirmation codes
+	private static final int RESET_PASSWORD_SALT_LENGTH = 16;
+
+	// expected length is SHA-256 Hex + salt
+	private static final int RESET_PASSWORD_CONF_CODE_LENGTH = 64 + RESET_PASSWORD_SALT_LENGTH;
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private UserDao userDao;
@@ -1185,12 +1191,12 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	private String calculateResetPasswordConfirmationCode(User entity, String salt) {
 		StringBuilder buf = new StringBuilder();
 		if ( salt == null ) {
-			// generate 8-byte salt
+			// generate 8-byte salt of "safe" ASCII characters a-z
 			final SecureRandom random = new SecureRandom();
 			final int start = 97;
 			final int end = 122;
 			final int range = end - start;
-			for ( int i = 0; i < 8; i++ ) {
+			for ( int i = 0; i < RESET_PASSWORD_SALT_LENGTH; i++ ) {
 				buf.append((char) (random.nextInt(range) + start));
 			}
 			salt = buf.toString();
@@ -1199,7 +1205,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		}
 
 		// use data from the existing user to create the confirmation hash
-		buf.append(entity.getId()).append(entity.getCreated().toEpochMilli())
+		buf.append(salt).append(entity.getId()).append(entity.getCreated().toEpochMilli())
 				.append(entity.getPassword());
 
 		return salt + DigestUtils.sha256Hex(buf.toString());
@@ -1209,7 +1215,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void resetPassword(RegistrationReceipt receipt, PasswordEntry password) {
 		if ( receipt == null || receipt.getUsername() == null || receipt.getConfirmationCode() == null
-				|| receipt.getConfirmationCode().length() != 72 || password.getPassword() == null
+				|| receipt.getConfirmationCode().length() != RESET_PASSWORD_CONF_CODE_LENGTH
+				|| password.getPassword() == null
 				|| !password.getPassword().equals(password.getPasswordConfirm()) ) {
 			throw new AuthorizationException(receipt.getUsername(),
 					Reason.FORGOTTEN_PASSWORD_NOT_CONFIRMED);
@@ -1220,7 +1227,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			throw new AuthorizationException(receipt.getUsername(), Reason.UNKNOWN_EMAIL);
 		}
 
-		final String salt = receipt.getConfirmationCode().substring(0, 8);
+		final String salt = receipt.getConfirmationCode().substring(0, RESET_PASSWORD_SALT_LENGTH);
 		final String expectedCode = calculateResetPasswordConfirmationCode(entity, salt);
 		if ( !expectedCode.equals(receipt.getConfirmationCode()) ) {
 			throw new AuthorizationException(receipt.getUsername(),
