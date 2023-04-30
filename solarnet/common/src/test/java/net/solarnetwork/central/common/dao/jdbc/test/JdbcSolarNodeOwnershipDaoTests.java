@@ -88,7 +88,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	@Captor
 	private ArgumentCaptor<SolarNodeOwnership> ownershipCaptor;
 
-	private void setupTestUser(Long id, String username) {
+	private void setupTestUserInternal(Long id, String username) {
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id,email,password,disp_name,enabled) values (?,?,?,?,?)",
 				id, username, DigestUtils.sha256Hex("password"), "Unit Test", Boolean.TRUE);
@@ -133,7 +133,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 
 		// WHEN
@@ -150,7 +150,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 
 		dao.setUserNodeCache(cache);
@@ -176,7 +176,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 
 		dao.setUserNodeCache(cache);
@@ -209,7 +209,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 
 		// WHEN
@@ -226,7 +226,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	public void ownershipsForUserId_matchMulti() {
 		// GIVEN
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		List<BasicSolarNodeOwnership> expected = new ArrayList<>(5);
 		SecureRandom r = new SecureRandom();
 		for ( int i = 0; i < 5; i++ ) {
@@ -237,7 +237,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 					"Pacific/Auckland"));
 		}
 		// toss in some nodes for a different user, to verify they are NOT returned
-		setupTestUser(TEST_USER_ID_2, TEST_USERNAME_2);
+		setupTestUserInternal(TEST_USER_ID_2, TEST_USERNAME_2);
 		for ( int i = 0; i < 5; i++ ) {
 			Long nodeId = r.nextLong();
 			setupTestNode(nodeId, TEST_LOC_ID);
@@ -262,7 +262,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 
 	private void setupTestUserNode() {
 		setupTestLocation(TEST_LOC_ID, "Pacific/Auckland");
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		setupTestNode(TEST_NODE_ID, TEST_LOC_ID);
 		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID, "Test Node");
 	}
@@ -289,7 +289,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		setupTestUserNode();
 
 		// create a new user without any nodes
-		setupTestUser(TEST_USER_ID_2, TEST_USERNAME_2);
+		setupTestUserInternal(TEST_USER_ID_2, TEST_USERNAME_2);
 		final String tokenId = setupTestToken(TEST_USER_ID_2, User);
 
 		Long[] nodeIds = dao.nonArchivedNodeIdsForToken(tokenId);
@@ -318,7 +318,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	public void findNodeIdsForUserTokenMultipleNodes() {
 		SortedSet<Long> expectedNodeIds = new TreeSet<>();
 		setupTestLocation();
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_NODE_ID - i;
 			setupTestNode(nodeId);
@@ -336,7 +336,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	@Test
 	public void findNodeIdsForUserTokenMultipleNodesFilteredByPolicy() {
 		setupTestLocation();
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_NODE_ID - i;
 			setupTestNode(nodeId);
@@ -354,7 +354,7 @@ public class JdbcSolarNodeOwnershipDaoTests extends AbstractJUnit5JdbcDaoTestSup
 	@Test
 	public void findNodeIdsForReadNodeDataTokenMultipleNodesFilteredByPolicy() {
 		setupTestLocation();
-		setupTestUser(TEST_USER_ID, TEST_USERNAME);
+		setupTestUserInternal(TEST_USER_ID, TEST_USERNAME);
 		for ( int i = 0; i < 3; i++ ) {
 			Long nodeId = TEST_NODE_ID - i;
 			setupTestNode(nodeId);
