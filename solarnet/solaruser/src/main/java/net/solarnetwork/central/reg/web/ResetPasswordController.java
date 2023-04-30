@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.stereotype.Controller;
@@ -49,29 +51,62 @@ import net.solarnetwork.domain.RegistrationReceipt;
  * Controller for managing the reset password functionality.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 @RequestMapping("/u/resetPassword")
 public class ResetPasswordController extends ControllerSupport {
 
-	@Autowired
-	private RegistrationBiz registrationBiz;
+	private final RegistrationBiz registrationBiz;
+	private final MailService mailService;
+	private final MessageSource messageSource;
+	private final AuthenticationManager authenticationManager;
 
-	@Autowired
-	private MailService mailService;
+	/**
+	 * Constructor.
+	 * 
+	 * @param registrationBiz
+	 *        the registration service
+	 * @param mailService
+	 *        the mail service
+	 * @param messageSource
+	 *        the message source
+	 * @param authenticationManager
+	 *        the authentication manager
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public ResetPasswordController(RegistrationBiz registrationBiz, MailService mailService,
+			MessageSource messageSource, AuthenticationManager authenticationManager) {
+		super();
+		this.registrationBiz = requireNonNullArgument(registrationBiz, "registrationBiz");
+		this.mailService = requireNonNullArgument(mailService, "mailService");
+		this.messageSource = requireNonNullArgument(messageSource, "messageSource");
+		this.authenticationManager = requireNonNullArgument(authenticationManager,
+				"authenticationManager");
+	}
 
-	@Autowired
-	private MessageSource messageSource;
-
-	@Autowired
-	private AuthenticationManager authenticationManager;
-
+	/**
+	 * View the reset password start form.
+	 * 
+	 * @return the view name
+	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public String home() {
 		return "resetpass/start";
 	}
 
+	/**
+	 * Generate an account reset email with a reset link.
+	 * 
+	 * @param email
+	 *        the account email to generate a reset link for
+	 * @param locale
+	 *        the desired locale for the mail message
+	 * @param uriBuilder
+	 *        the application URI builder to generate the reset link with
+	 * @return the view name
+	 */
 	@RequestMapping(value = "/generate", method = RequestMethod.POST)
 	public ModelAndView generateResetCode(@RequestParam("email") String email, Locale locale,
 			UriComponentsBuilder uriBuilder) {
@@ -83,11 +118,13 @@ public class ResetPasswordController extends ControllerSupport {
 			uriBuilder.pathSegment("u", "resetPassword", "confirm");
 			uriBuilder.replaceQuery(null);
 			uriBuilder.queryParam("c", receipt.getConfirmationCode());
-			uriBuilder.queryParam("m", email);
+
+			// Base64 encode email to avoid issues with browsers decoding + character as space
+			uriBuilder.queryParam("m", Base64.getUrlEncoder().encodeToString(email.getBytes(UTF_8)));
 
 			Map<String, Object> mailModel = new HashMap<String, Object>(2);
 			mailModel.put("receipt", receipt);
-			mailModel.put("url", uriBuilder.build().toUriString());
+			mailModel.put("url", uriBuilder.build().encode().toUriString());
 
 			mailService.sendMail(new BasicMailAddress(null, receipt.getUsername()),
 					new ClasspathResourceMessageTemplateDataSource(locale,
@@ -102,15 +139,37 @@ public class ResetPasswordController extends ControllerSupport {
 		return new ModelAndView("resetpass/generated", "receipt", receipt);
 	}
 
+	/**
+	 * Confirm a reset password link, and return a form view to set a new
+	 * password.
+	 * 
+	 * @param confirmationCode
+	 *        the confirmation code generated in
+	 *        {@link #generateResetCode(String, Locale, UriComponentsBuilder)}
+	 * @param emailBase64
+	 *        the Base64-encoded email address being reset
+	 * @return the view name
+	 */
 	@RequestMapping(value = "confirm", method = RequestMethod.GET)
 	public ModelAndView confirmResetPassword(@RequestParam("c") String confirmationCode,
-			@RequestParam("m") String email) {
+			@RequestParam("m") String emailBase64) {
+		String email = new String(Base64.getDecoder().decode(emailBase64), UTF_8);
 		PasswordEntry form = new PasswordEntry();
 		form.setConfirmationCode(confirmationCode);
 		form.setUsername(email);
 		return new ModelAndView("resetpass/confirm", "form", form);
 	}
 
+	/**
+	 * Reset an account password, login, and return the logged-in home view.
+	 * 
+	 * @param form
+	 *        the reset form with the confirmation code and new password
+	 *        details.
+	 * @param req
+	 *        the request
+	 * @return the view name
+	 */
 	@RequestMapping(value = "reset", method = RequestMethod.POST)
 	public ModelAndView resetPassword(PasswordEntry form, HttpServletRequest req) {
 		try {
@@ -128,22 +187,6 @@ public class ResetPasswordController extends ControllerSupport {
 		req.getSession().setAttribute(WebConstants.MODEL_KEY_STATUS_MSG,
 				"user.resetpassword.reset.message");
 		return new ModelAndView("redirect:/u/sec/home");
-	}
-
-	public void setRegistrationBiz(RegistrationBiz registrationBiz) {
-		this.registrationBiz = registrationBiz;
-	}
-
-	public void setMailService(MailService mailService) {
-		this.mailService = mailService;
-	}
-
-	public void setMessageSource(MessageSource messageSource) {
-		this.messageSource = messageSource;
-	}
-
-	public void setAuthenticationManager(AuthenticationManager authenticationManager) {
-		this.authenticationManager = authenticationManager;
 	}
 
 }
