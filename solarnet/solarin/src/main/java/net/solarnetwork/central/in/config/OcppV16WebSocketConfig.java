@@ -139,14 +139,26 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-		WebSocketHandlerRegistration reg = registry.addHandler(ocppWebSocketHandler_v16(),
+		WebSocketHandlerRegistration basicAuthReg = registry.addHandler(ocppWebSocketHandler_v16(),
 				"/ocpp/j/v16/**");
 
-		CentralOcppWebSocketHandshakeInterceptor interceptor = new CentralOcppWebSocketHandshakeInterceptor(
+		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
-		interceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
-		interceptor.setUserEventAppenderBiz(userEventAppenderBiz);
-		reg.addInterceptors(interceptor);
+		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
+		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
+		basicAuthReg.addInterceptors(basicAuthInterceptor);
+
+		WebSocketHandlerRegistration pathAuthReg = registry.addHandler(ocppWebSocketHandler_v16(),
+				"/ocpp/j/v16u/**");
+
+		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
+				ocppSystemUserDao, passwordEncoder);
+		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16u/.*/.*/(.*)"));
+		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
+		pathAuthInterceptor.setClientCredentialsExtractor(CentralOcppWebSocketHandshakeInterceptor
+				.pathCredentialsExtractor("/ocpp/j/v16u/(.*)/(.*)/.*"));
+		pathAuthReg.addInterceptors(pathAuthInterceptor);
+
 	}
 
 }

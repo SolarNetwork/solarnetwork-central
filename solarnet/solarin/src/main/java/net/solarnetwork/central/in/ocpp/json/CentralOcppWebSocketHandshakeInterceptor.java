@@ -24,6 +24,12 @@ package net.solarnetwork.central.in.ocpp.json;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.server.ServerHttpRequest;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
@@ -38,10 +44,12 @@ import net.solarnetwork.service.PasswordEncoder;
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
+
+	private static final Logger log = LoggerFactory.getLogger(OcppWebSocketHandshakeInterceptor.class);
 
 	/** User event kind for OCPP connection forbidden events. */
 	public static final String[] CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS = new String[] {
@@ -61,6 +69,29 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
 			PasswordEncoder passwordEncoder) {
 		super(systemUserDao, passwordEncoder);
+	}
+
+	/**
+	 * Get a credentials extractor function that extracts from the request path.
+	 * 
+	 * @param regex
+	 *        the path regular expression: it must provide 2 groups, for the
+	 *        username and password
+	 * @return the function
+	 */
+	public static BiFunction<ServerHttpRequest, String, String[]> pathCredentialsExtractor(
+			String regex) {
+		Pattern p = Pattern.compile(regex);
+		return (request, identifier) -> {
+			String path = request.getURI().getPath();
+			Matcher m = p.matcher(path);
+			if ( m.matches() ) {
+				return new String[] { m.group(1), m.group(2) };
+			}
+			log.warn("OCPP handshake request rejected for {}, path-based credentials not provided.",
+					identifier);
+			return null;
+		};
 	}
 
 	@Override
