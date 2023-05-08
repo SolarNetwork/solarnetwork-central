@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.7'
+	id 'org.springframework.boot' version '2.7.11'
 }
 
 apply plugin: 'java'
