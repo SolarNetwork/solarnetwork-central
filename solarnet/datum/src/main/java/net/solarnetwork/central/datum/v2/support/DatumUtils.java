@@ -56,6 +56,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.MostRecentFilter;
+import net.solarnetwork.central.datum.domain.ReadingTypeFilter;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.SourceFilter;
@@ -105,7 +106,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 2.8
  */
 public final class DatumUtils {
@@ -160,6 +161,7 @@ public final class DatumUtils {
 			c.setUserIds(f.getUserIds());
 			c.setAggregation(f.getAggregation());
 			c.setPartialAggregation(f.getPartialAggregation());
+			c.setReadingType(f.getReadingType());
 			c.setStartDate(f.getStartDate());
 			c.setEndDate(f.getEndDate());
 			c.setLocalStartDate(f.getLocalStartDate());
@@ -248,6 +250,9 @@ public final class DatumUtils {
 			if ( filter instanceof AggregationFilter f ) {
 				c.setAggregation(f.getAggregation());
 				c.setPartialAggregation(f.getPartialAggregation());
+			}
+			if ( filter instanceof ReadingTypeFilter f ) {
+				c.setReadingType(f.getReadingType());
 			}
 			if ( filter instanceof DateRangeFilter f ) {
 				c.setStartDate(f.getStartDate());

@@ -53,20 +53,20 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
-		"partialAggregation", "partialAggregationKey", "combiningType", "combiningTypeKey",
-		"nodeIdMappings", "sourceIdMappings", "rollupTypes", "rollupTypeKeys", "tags", "metadataFilter",
-		"dataPath", "mostRecent", "startDate", "endDate", "localStartDate", "localEndDate", "max",
-		"offset", "sorts", "type", "location", "withoutTotalResultsCount" })
+		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
+		"combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes", "rollupTypeKeys",
+		"tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate", "localStartDate",
+		"localEndDate", "max", "offset", "sorts", "type", "location", "withoutTotalResultsCount" })
 public class DatumFilterCommand extends FilterSupport implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
 		GeneralNodeDatumAuxiliaryFilter, GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter,
-		Serializable {
+		ReadingTypeFilter, Serializable {
 
-	private static final long serialVersionUID = -2228844248261809839L;
+	private static final long serialVersionUID = -2340410285910280329L;
 
 	private final SolarLocation location;
 	private Instant startDate;
@@ -80,6 +80,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private Integer max;
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
+	private DatumReadingType readingType;
 	private Aggregation aggregation;
 	private Aggregation partialAggregation;
 	private boolean withoutTotalResultsCount;
@@ -173,12 +174,15 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		setStartDate(other.getStartDate());
 		setMostRecent(other.isMostRecent());
 		setWithoutTotalResultsCount(other.isWithoutTotalResultsCount());
-		if ( other instanceof DatumRollupFilter ) {
-			setDatumRollupTypes(((DatumRollupFilter) other).getDatumRollupTypes());
+		if ( other instanceof DatumRollupFilter f ) {
+			setDatumRollupTypes(f.getDatumRollupTypes());
 		}
-		if ( other instanceof AggregationFilter ) {
-			setAggregate(((AggregationFilter) other).getAggregation());
-			setPartialAggregation(((AggregationFilter) other).getPartialAggregation());
+		if ( other instanceof AggregationFilter f ) {
+			setAggregate(f.getAggregation());
+			setPartialAggregation(f.getPartialAggregation());
+		}
+		if ( other instanceof ReadingTypeFilter f ) {
+			setReadingType(f.getReadingType());
 		}
 	}
 
@@ -192,6 +196,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( aggregation != null ) {
 			builder.append("aggregation=");
 			builder.append(aggregation);
+			builder.append(", ");
+		}
+		if ( readingType != null ) {
+			builder.append("readingType=");
+			builder.append(readingType);
 			builder.append(", ");
 		}
 		if ( startDate != null ) {
@@ -314,6 +323,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		}
 		if ( aggregation != null ) {
 			filter.put("aggregation", aggregation.toString());
+		}
+		if ( readingType != null ) {
+			filter.put("readingType", readingType.toString());
 		}
 		if ( combiningType != null ) {
 			filter.put("combiningType", combiningType.toString());
@@ -843,6 +855,22 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		this.datumRollupTypes = datumRollupTypes;
 	}
 
+	@Override
+	public DatumReadingType getReadingType() {
+		return readingType;
+	}
+
+	/**
+	 * Set the reading type.
+	 * 
+	 * @param readingType
+	 *        the type to set
+	 * @since 2.3
+	 */
+	public void setReadingType(DatumReadingType readingType) {
+		this.readingType = readingType;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -853,9 +881,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(datumRollupTypes);
-		result = prime * result + Objects.hash(aggregation, combiningType, dataPath, endDate,
-				localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset, sorts,
-				sourceIdMappings, startDate, type, withoutTotalResultsCount);
+		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
+				endDate, localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset,
+				sorts, sourceIdMappings, startDate, type, withoutTotalResultsCount);
 		return result;
 	}
 
@@ -877,7 +905,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		}
 		DatumFilterCommand other = (DatumFilterCommand) obj;
 		return aggregation == other.aggregation && combiningType == other.combiningType
-				&& Objects.equals(dataPath, other.dataPath)
+				&& readingType == other.readingType && Objects.equals(dataPath, other.dataPath)
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate)
 				&& Objects.equals(localEndDate, other.localEndDate)
