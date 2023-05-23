@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -44,21 +45,22 @@ import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
+import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
 import net.solarnetwork.dao.BulkExportingDao.ExportResult;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
@@ -204,6 +206,59 @@ public class JdbcDatumEntityDao_BulkExportDaoTests extends BaseDatumJdbcTestSupp
 
 		assertThat("Result available", result, notNullValue());
 		assertThat("Num processed count", result.getNumProcessed(), equalTo(4L));
+		assertThat("Total result count estimates", totalResultCountEstimates, contains((Long) null));
+	}
+
+	@Test
+	public void bulkExport_readingHourly() {
+		// GIVEN
+		setupTestNode();
+		UUID streamId = UUID.randomUUID();
+		ObjectDatumStreamMetadata meta = emptyMeta(streamId, TEST_TZ, ObjectDatumKind.Node, TEST_NODE_ID,
+				TEST_SOURCE_ID);
+		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+		ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		insertDatum(TEST_NODE_ID, TEST_SOURCE_ID, "a", start, Duration.ofMinutes(5), 72);
+		processStaleAggregateDatum(log, jdbcTemplate);
+
+		// WHEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeId(TEST_NODE_ID);
+		filter.setSourceId(TEST_SOURCE_ID);
+		filter.setStartDate(start.toInstant());
+		filter.setEndDate(start.plusHours(3).toInstant());
+		filter.setReadingType(DatumReadingType.Difference);
+		filter.setAggregation(Aggregation.Hour);
+		filter.setWithoutTotalResultsCount(true);
+
+		BasicBulkExportOptions options = new BasicBulkExportOptions("test",
+				singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
+
+		List<Long> totalResultCountEstimates = new ArrayList<>(1);
+
+		ExportResult result = dao.bulkExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+			private int count = 0;
+
+			@Override
+			public void didBegin(Long totalResultCountEstimate) {
+				totalResultCountEstimates.add(totalResultCountEstimate);
+			}
+
+			@Override
+			public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+				assertThat("Datum ts", d.getId().getCreated(),
+						equalTo(start.plusHours(count).toInstant()));
+				assertThat("Datum node ID", d.getId().getNodeId(), equalTo(TEST_NODE_ID));
+				assertThat("Datum source ID", d.getId().getSourceId(), equalTo(TEST_SOURCE_ID));
+				log.debug("Exported datum: {}", d);
+				count++;
+				return ExportCallbackAction.CONTINUE;
+			}
+		}, options);
+
+		assertThat("Result available", result, notNullValue());
+		assertThat("Num processed count", result.getNumProcessed(), equalTo(3L));
 		assertThat("Total result count estimates", totalResultCountEstimates, contains((Long) null));
 	}
 
