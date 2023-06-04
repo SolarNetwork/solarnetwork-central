@@ -1,5 +1,6 @@
 app:
   meta.name: SolarOCPP
+  cache.persistence.path: "var/cache"
   datasource:
     hikari:
       minimumIdle: 1
@@ -12,34 +13,9 @@ app:
     password: "solartest"
     platform: "postgres"
     initialize: false
-  datum:
-    stream-metadata-cache:
-      ttl: 300
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
-    stream-metadata-id-cache:
-      ttl: 900
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
-  email-throttle-cache:
-    ttl: 600
-    heap-max-entries: 1000
-    disk-max-size-mb: 100
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
-  network-identity:
-    network-identity-key: "replace:identity:here"
-    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-tos.txt"
-    host: "localhost"
-    port: 9083
-    force-tls: false
-    service-urls:
-      node-dashboard: "http://localhost/node-dashboard"
-      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
-      solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost:9082/solarquery"
-      solaruser: "http://localhost:9081/solaruser"
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
@@ -69,8 +45,6 @@ app:
       publish-qos-level: 0
     user-events:
       publish-qos-level: 0
-  solarocpp:
-    cache.persistence.path: "var/cache"
   solarqueue:
     connection:
       uid: "SolarOCPP-${app.meta.instance-id}"
@@ -85,9 +59,6 @@ app:
         keep-alive-seconds: 60
         read-timeout-seconds: -1
         write-timeout-seconds: -1
-    data-collector:
-      node-datum-topic-template: "node/%s/datum"
-      subscribe-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10
