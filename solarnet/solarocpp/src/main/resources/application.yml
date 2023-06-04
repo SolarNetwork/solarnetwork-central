@@ -1,0 +1,170 @@
+app:
+  meta.name: SolarOCPP
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
+    platform: "postgres"
+    initialize: false
+  datum:
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 100
+  email-throttle-cache:
+    ttl: 600
+    heap-max-entries: 1000
+    disk-max-size-mb: 100
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
+  network-identity:
+    network-identity-key: "replace:identity:here"
+    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-tos.txt"
+    host: "localhost"
+    port: 9083
+    force-tls: false
+    service-urls:
+      node-dashboard: "http://localhost/node-dashboard"
+      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solarin-mqtt: "mqtts://localhost:8883"
+      solarquery: "http://localhost:9082/solarquery"
+      solaruser: "http://localhost:9081/solaruser"
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
+  ocpp.v16:
+    cs:
+      boot-notification:
+        heartbeat-interval-seconds: 300
+    mqtt.instr-handler:
+      mqtt-topic: "instr/OCPP_v16"
+      subscribe-timeout: 30
+      publish-only: false
+  solarflux:
+    connection:
+      uid: "SolarFlux-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solarocpp-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
+    datum-publish:
+      publish-qos-level: 0
+    user-events:
+      publish-qos-level: 0
+  solarocpp:
+    cache.persistence.path: "var/cache"
+  solarqueue:
+    connection:
+      uid: "SolarOCPP-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solarocpp-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: false
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: -1
+        write-timeout-seconds: -1
+    data-collector:
+      node-datum-topic-template: "node/%s/datum"
+      subscribe-qos-level: 1
+  task.executor:
+    thread-name-prefix: "SolarNet-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarNet-Sched-"
+    pool-size: 2
+  user.events:
+    async-appender:
+      threads: 1
+      stat-frequency: 500
+      queue-lag-alert-threshold: 500
+
+logging:
+  level:
+    ROOT: "INFO"
+    org.mybatis.spring.mapper.ClassPathMapperScanner: "OFF"
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: "classpath*:net/solarnetwork/**/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.datum.export.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9085
+  tomcat.threads:
+    min-spare: 10
+    max: 50
+
+spring:
+  jmx.enabled: false
+  mvc.format:
+    date: "iso"
+    date-time: "iso"
+    time: "iso"
+
+---
+spring:
+  config.activate.on-profile: "development"
+  thymeleaf.cache: false
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost/solarnetwork"
+    username: "solarnet"
+    password: "solarnet"
+
+debug: true
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
+
+---
+spring:
+  config.activate.on-profile: "production"
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
