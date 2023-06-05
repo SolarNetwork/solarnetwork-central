@@ -49,6 +49,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
@@ -62,8 +63,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-	/** The system operator authority. */
-	public static final String OPS_AUTHORITY = "ROLE_OPS";
+	private static final String OPS_AUTHORITY = Role.ROLE_OPS.toString();
 
 	@Autowired
 	private DataSource dataSource;
