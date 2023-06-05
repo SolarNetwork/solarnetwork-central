@@ -1,6 +1,6 @@
 app:
+  meta.name: SolarOCPP
   cache.persistence.path: "var/cache"
-  meta.name: SolarIn
   datasource:
     hikari:
       minimumIdle: 1
@@ -13,37 +13,9 @@ app:
     password: "solartest"
     platform: "postgres"
     initialize: false
-  datum:
-    stream-metadata-cache:
-      ttl: 300
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
-    stream-metadata-id-cache:
-      ttl: 900
-      heap-max-entries: 10000
-      disk-max-size-mb: 100
-  email-throttle-cache:
-    ttl: 600
-    heap-max-entries: 1000
-    disk-max-size-mb: 100
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
-  network-identity:
-    network-identity-key: "replace:identity:here"
-    terms-of-service: "classpath:/net/solarnetwork/central/in/config/placeholder-tos.txt"
-    host: "localhost"
-    port: 9083
-    force-tls: false
-    service-urls:
-      node-dashboard: "http://localhost/node-dashboard"
-      node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
-      solarin-mqtt: "mqtts://localhost:8883"
-      solarquery: "http://localhost:9082/solarquery"
-      solaruser: "http://localhost:9081/solaruser"
-  node.pki.cs:
-    certificate-expire-days: 730
-    signature-algorithm: "SHA256WithRSA"
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
@@ -58,11 +30,11 @@ app:
       publish-only: false
   solarflux:
     connection:
-      uid: "SolarFlux-@@SOLAR_FLUX_PUB_ID@@"
+      uid: "SolarFlux-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://solarflux.solarnetwork:1883"
-        client-id: "solarin-${app.meta.instance-id}"
+        client-id: "solarocpp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
         connect-timeout-seconds: 10
@@ -73,34 +45,20 @@ app:
       publish-qos-level: 0
     user-events:
       publish-qos-level: 0
-  solarin:
-    async-collector:
-      threads: 2
-      shutdown-wait-secs: 30
-      queue-size: 200
-      stat-frequency: 200
-      datum-cache-removal-alert-threshold: 500
-    datum-buffer:
-      temp-max-entries: 100
-      heap-max-entries: 200
-      disk-max-size-mb: 2000
   solarqueue:
     connection:
-      uid: "SolarIn-@@SOLAR_IN_ID@@"
+      uid: "SolarOCPP-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://queue.solarnetwork:1883"
-        client-id: "solarin-@@SOLAR_IN_ID@@"
+        client-id: "solarocpp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
-        clean-session: false
+        clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
         read-timeout-seconds: -1
         write-timeout-seconds: -1
-    data-collector:
-      node-datum-topic-template: "node/%s/datum"
-      subscribe-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10
@@ -108,11 +66,6 @@ app:
   task.scheduler:
     thread-name-prefix: "SolarNet-Sched-"
     pool-size: 2
-  user.reg:
-    biz:
-      network-certificate-subject-format: "UID=%s,O=SolarNetwork"
-      approve-csr-maximum-wait-secs: 15
-      node-certificate-renewal-period-months: 3
   user.events:
     async-appender:
       threads: 1
@@ -150,7 +103,7 @@ server:
     mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
     min-response-size: 2048
   error.whitelabel.enabled: false
-  port: 9083
+  port: 9085
   tomcat.threads:
     min-spare: 10
     max: 50
