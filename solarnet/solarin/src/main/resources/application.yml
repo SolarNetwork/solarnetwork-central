@@ -127,6 +127,13 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
 
+management:
+  endpoints:
+    web:
+      base-path: "/ops"
+      exposure:
+        include: "*"
+      
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
