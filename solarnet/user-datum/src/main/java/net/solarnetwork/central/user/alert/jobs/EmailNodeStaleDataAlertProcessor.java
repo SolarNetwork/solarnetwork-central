@@ -263,6 +263,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					}
 					if ( sit.getNotified().equals(now) || sit.getInfo() == null
 							|| !staleInfo.equals(sit.getInfo()) ) {
+						sit.setInfo(staleInfo);
 						userAlertSituationDao.store(sit);
 					}
 				} else {
