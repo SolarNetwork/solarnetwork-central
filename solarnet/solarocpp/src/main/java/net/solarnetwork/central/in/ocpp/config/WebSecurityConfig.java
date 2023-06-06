@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.in.ocpp.config;
 
-import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,9 +44,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -82,18 +78,6 @@ public class WebSecurityConfig {
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		return new Http403ForbiddenEntryPoint();
-	}
-
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowCredentials(false);
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "HEAD"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "X-SN-Date"));
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
 	}
 
 	@Bean
@@ -145,8 +129,8 @@ public class WebSecurityConfig {
 		        // CSRF not needed for stateless calls
 		      .csrf().disable()
 		      
-		      // make sure CORS honored
-		      .cors().and()
+		      // CORS not needed
+		      .cors().disable()
 		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
@@ -182,8 +166,8 @@ public class WebSecurityConfig {
 		        // CSRF not needed for stateless calls
 		      .csrf().disable()
 		      
-		      // make sure CORS honored
-		      .cors().and()
+		      // CORS not needed
+		      .cors().disable()
 		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()

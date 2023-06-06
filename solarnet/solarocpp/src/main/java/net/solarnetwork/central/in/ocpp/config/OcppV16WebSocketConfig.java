@@ -139,8 +139,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-		WebSocketHandlerRegistration basicAuthReg = registry.addHandler(ocppWebSocketHandler_v16(),
-				"/ocpp/j/v16/**");
+		WebSocketHandlerRegistration basicAuthReg = registry
+				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
@@ -148,8 +148,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
-		WebSocketHandlerRegistration pathAuthReg = registry.addHandler(ocppWebSocketHandler_v16(),
-				"/ocpp/j/v16u/**");
+		WebSocketHandlerRegistration pathAuthReg = registry
+				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16u/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
