@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarIn'
-version = '1.13.0'
+version = '1.14.0'
 archivesBaseName = 'solarin'
 
 configurations {
@@ -23,7 +23,6 @@ dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
-	implementation project(':solarnet-ocpp')
 	implementation project(':solarnet-user')
 
 	// Spring
@@ -34,7 +33,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security';
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
@@ -46,8 +44,6 @@ dependencies {
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web:${snCommonOcppWebVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
