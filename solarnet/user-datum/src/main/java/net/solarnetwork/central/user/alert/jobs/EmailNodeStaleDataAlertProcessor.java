@@ -29,7 +29,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,6 +41,8 @@ import java.util.TimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -76,7 +77,7 @@ import net.solarnetwork.util.DateUtils;
  * Process stale data alerts for nodes.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 
@@ -197,16 +198,14 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					continue;
 				}
 
+				final PathMatcher sourceIdMatcher = new AntPathMatcher();
+
 				// extract options
 				Number age;
-				String[] sourceIds = null;
+				List<String> sourceIdPatterns = null;
 				try {
 					age = (Number) alertOptions.get(UserAlertOptions.AGE_THRESHOLD);
-					@SuppressWarnings("unchecked")
-					List<String> sources = (List<String>) alertOptions.get(UserAlertOptions.SOURCE_IDS);
-					if ( sources != null ) {
-						sourceIds = sources.toArray(new String[sources.size()]);
-					}
+					sourceIdPatterns = alert.optionSourceIds();
 				} catch ( ClassCastException e ) {
 					log.warn("Unexpected option data type in alert {}: {}", alert, e.getMessage());
 					continue;
@@ -218,15 +217,10 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					continue;
 				}
 
-				if ( sourceIds != null ) {
-					// sort so we can to binarySearch later
-					Arrays.sort(sourceIds);
-				}
-
 				// look for first stale data matching age + source criteria
 				final List<DateInterval> timePeriods = new ArrayList<>(2);
-				NodeDatumStreamPK stale = getFirstStaleDatum(alert, now, age, sourceIds, timeFormatter,
-						timePeriods);
+				NodeDatumStreamPK stale = getFirstStaleDatum(alert, now, age, sourceIdMatcher,
+						sourceIdPatterns, timeFormatter, timePeriods);
 
 				Map<String, Object> staleInfo = new HashMap<>(4);
 				if ( stale != null ) {
@@ -247,7 +241,6 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						sit.setStatus(UserAlertSituationStatus.Active);
 						sit.setNotified(now);
 						sit.setInfo(staleInfo);
-
 					} else if ( sit.getNotified().equals(sit.getCreated()) ) {
 						notifyOffset = (initialAlertReminderDelayMinutes * 60L * 1000L);
 					} else {
@@ -285,7 +278,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						sit.setNotified(now);
 						userAlertSituationDao.store(sit);
 
-						NodeDatumStreamPK nonStale = getFirstNonStaleDatum(alert, now, age, sourceIds);
+						NodeDatumStreamPK nonStale = getFirstNonStaleDatum(alert, now, age,
+								sourceIdMatcher, sourceIdPatterns);
 
 						sendAlertMail(alert, "user.alert.NodeStaleData.Resolved.mail.subject",
 								mailTemplateResolvedResource, nonStale);
@@ -524,8 +518,8 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 	}
 
 	private NodeDatumStreamPK getFirstStaleDatum(final UserAlert alert, final Instant now,
-			final Number age, final String[] sourceIds, final DateTimeFormatter timeFormatter,
-			final List<DateInterval> outputIntervals) {
+			final Number age, PathMatcher sourceIdMatcher, final List<String> sourceIdPatterns,
+			final DateTimeFormatter timeFormatter, final List<DateInterval> outputIntervals) {
 		NodeDatumStreamPK stale = null;
 		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
 		List<DateInterval> intervals = new ArrayList<>(2);
@@ -556,7 +550,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 			}
 			if ( datum.getTimestamp().toEpochMilli() + (long) (age.doubleValue() * 1000) < now
 					.toEpochMilli()
-					&& (sourceIds == null || Arrays.binarySearch(sourceIds, datum.getSourceId()) >= 0)
+					&& sourceIdMatches(sourceIdMatcher, sourceIdPatterns, datum.getSourceId())
 					&& withinIntervals(now, nodeIntervals) ) {
 				stale = datum;
 				break;
@@ -568,14 +562,30 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 		return stale;
 	}
 
+	private static boolean sourceIdMatches(PathMatcher matcher, List<String> sourceIdPatterns,
+			String sourceId) {
+		if ( sourceIdPatterns == null ) {
+			return true;
+		}
+		for ( String sourceIdPattern : sourceIdPatterns ) {
+			if ( matcher.isPattern(sourceIdPattern) ) {
+				if ( matcher.match(sourceIdPattern, sourceId) ) {
+					return true;
+				}
+			} else if ( sourceIdPattern.equals(sourceId) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private NodeDatumStreamPK getFirstNonStaleDatum(final UserAlert alert, final Instant now,
-			final Number age, final String[] sourceIds) {
+			final Number age, final PathMatcher sourceIdMatcher, final List<String> sourceIdPatterns) {
 		NodeDatumStreamPK nonStale = null;
 		List<NodeDatumStreamPK> latestNodeData = getLatestNodeData(alert);
 		for ( NodeDatumStreamPK datum : latestNodeData ) {
 			if ( !datum.getTimestamp().plusMillis((long) (age.doubleValue() * 1000)).isBefore(now)
-					&& (sourceIds == null
-							|| Arrays.binarySearch(sourceIds, datum.getSourceId()) >= 0) ) {
+					&& sourceIdMatches(sourceIdMatcher, sourceIdPatterns, datum.getSourceId()) ) {
 				nonStale = datum;
 				break;
 			}
