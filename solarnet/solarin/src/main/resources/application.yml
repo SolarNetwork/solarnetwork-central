@@ -48,14 +48,6 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
-  ocpp.v16:
-    cs:
-      boot-notification:
-        heartbeat-interval-seconds: 300
-    mqtt.instr-handler:
-      mqtt-topic: "instr/OCPP_v16"
-      subscribe-timeout: 30
-      publish-only: false
   solarflux:
     connection:
       uid: "SolarFlux-@@SOLAR_FLUX_PUB_ID@@"
