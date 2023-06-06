@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.in.ocpp.config;
 
 import java.nio.file.Path;
 import javax.cache.CacheManager;

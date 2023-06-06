@@ -20,9 +20,8 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.config;
+package net.solarnetwork.central.in.ocpp.config;
 
-import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,12 +44,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
-import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import net.solarnetwork.central.security.NodeUserDetailsService;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
@@ -66,8 +60,6 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
 public class WebSecurityConfig {
 
 	private static final String OPS_AUTHORITY = Role.ROLE_OPS.toString();
-
-	private static final String NODE_AUTHORITY = Role.ROLE_NODE.toString();
 
 	@Autowired
 	private DataSource dataSource;
@@ -86,29 +78,6 @@ public class WebSecurityConfig {
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		return new Http403ForbiddenEntryPoint();
-	}
-
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowCredentials(false);
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"));
-		configuration.setAllowedHeaders(Arrays.asList("Authorization", "X-SN-Date"));
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
-	}
-
-	@Bean
-	public StrictHttpFirewall httpFirewall() {
-		StrictHttpFirewall firewall = new StrictHttpFirewall();
-
-		// this following is disabled to allow for the SSL_CLIENT_CERT header value
-		// which is a full PEM encoded certificate with newline characters
-		firewall.setAllowedHeaderValues((header) -> true);
-
-		return firewall;
 	}
 
 	@Bean
@@ -160,8 +129,8 @@ public class WebSecurityConfig {
 		        // CSRF not needed for stateless calls
 		      .csrf().disable()
 		      
-		      // make sure CORS honored
-		      .cors().and()
+		      // CORS not needed
+		      .cors().disable()
 		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
@@ -178,54 +147,40 @@ public class WebSecurityConfig {
 	}
 
 	/**
-	 * Security rules for the management API.
+	 * Last set of security rules, for public resources else deny all others.
 	 */
 	@Configuration
 	@Order(2)
-	public static class AppWebSecurityConfig {
+	public static class PublicWebSecurityConfig {
 
 		@Order(2)
 		@Bean
-		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
 		    http
 		      // limit this configuration to specific paths
 		      .securityMatchers()
-		        .requestMatchers("/solarin/**")
+		        .requestMatchers("/solarocpp/**")
 		        .and()
 	
 		        // CSRF not needed for stateless calls
 		      .csrf().disable()
 		      
-		      // make sure CORS honored
-		      .cors().and()
-		      	      
+		      // CORS not needed
+		      .cors().disable()
+		      
 		      // no sessions
 		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		      
-		      .x509()
-		        .userDetailsService(new NodeUserDetailsService())
-		        .subjectPrincipalRegex("UID=(.*?),")
-		        .and()
-		        
 		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
+		      	.requestMatchers(HttpMethod.OPTIONS, "/solarocpp/**").permitAll()
 		        .requestMatchers(HttpMethod.GET, 
-		        		"/solarin/",
-		        		"/solarin/error",
-		        		"/solarin/*.html",
-		        		"/solarin/css/**",
-		        		"/solarin/img/**",
-		        		"/solarin/ping",
-		        		"/solarin/api/v1/pub/**",
-		        		"/solarin/identity.do").permitAll()
-		        
-		        .requestMatchers( 
-		        		"/solarin/bulkCollector.do",
-		        		"/solarin/u/bulkCollector.do").hasAnyAuthority(NODE_AUTHORITY)
-		        .requestMatchers("/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITY)
-		        
-		        .anyRequest().authenticated()
+		        		"/solarocpp/",
+		        		"/solarocpp/error",
+		        		"/solarocpp/*.html",
+		        		"/solarocpp/css/**",
+		        		"/solarocpp/img/**",
+		        		"/solarocpp/ping").permitAll()		    
 		    ;
 		    // @formatter:on
 			return http.build();

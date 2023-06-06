@@ -6,6 +6,7 @@ The main application projects are:
 
  * [SolarIn](./solarin/)
  * [SolarJobs](./solarjobs/)
+ * [SolarOCPP](./solarocpp/)
  * [SolarQuery](./solarquery/)
  * [SolarUser](./solaruser/)
 
