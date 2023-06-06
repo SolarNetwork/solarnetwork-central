@@ -79,6 +79,10 @@ $(document).ready(function() {
 		});
 	}).on('shown.bs.modal', function() {
 		populateSourceList($('#create-node-data-alert-node-id').val(), $('#create-node-data-alert-sources-list'));
+	}).on('hidden.bs.modal', function() {
+		this.reset();
+		$('#create-node-data-alert-carousel').carousel(0);
+		$('#create-node-data-alert-sources-list').addClass('hidden').find('.sources').empty();
 	}).on('click', 'button.action-delete', function(event) {
 		var form = $('#create-node-data-alert-modal').get(0),
 			alertId = form.elements['id'].value,

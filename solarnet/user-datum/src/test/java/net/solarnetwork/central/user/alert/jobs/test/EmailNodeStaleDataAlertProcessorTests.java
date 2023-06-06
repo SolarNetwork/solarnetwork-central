@@ -93,7 +93,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the {@link EmailNodeStaleDataAlertProcessor} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
@@ -354,6 +354,128 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		assertThat("Mail sent", MailSender.getSent().size(), is(1));
 		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
 		assertThat("Mail sent to custom address", sentMail.getTo(), is(arrayContaining(alertEmailTo)));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
+	}
+
+	@Test
+	public void processOneAlertTrigger_sourceIdFilter() {
+		final Instant batchTime = Instant.now();
+
+		final List<String> sourceIdPatterns = Arrays.asList("foo", TEST_SOURCE_ID);
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.SOURCE_IDS, sourceIdPatterns);
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address", sentMail.getTo(),
+				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
+		assertThat("Mail subject", sentMail.getSubject(),
+				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
+		assertThat("Mail has source ID", sentMail.getText(),
+				containsString("source \"" + TEST_SOURCE_ID));
+		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
+				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
+		assertThat("Situation created", newSituation.hasCaptured(), is(true));
+		assertThat(newSituation.getValue().getAlert(), is(equalTo(pendingAlerts.get(0))));
+		assertThat(newSituation.getValue().getStatus(), is(equalTo(UserAlertSituationStatus.Active)));
+		assertThat(newSituation.getValue().getNotified(), is(notNullValue()));
+		assertThat("Saved alert validTo not increased",
+				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo), is(true));
+	}
+
+	@Test
+	public void processOneAlertTrigger_sourceIdPatternFilter() {
+		final Instant batchTime = Instant.now();
+
+		final List<String> sourceIdPatterns = Arrays.asList("test.*");
+		final UserAlert alert = newUserAlertInstance();
+		alert.getOptions().put(UserAlertOptions.SOURCE_IDS, sourceIdPatterns);
+		List<UserAlert> pendingAlerts = Arrays.asList(alert);
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setNodeIds(new Long[] { TEST_NODE_ID });
+		filter.setMostRecent(true);
+		final Instant pendingAlertValidTo = pendingAlerts.get(0).getValidTo();
+
+		final UUID streamId = UUID.randomUUID();
+		final ObjectDatumStreamFilterResults<Datum, DatumPK> nodeDataResults = newTestResults(
+				ZonedDateTime.now().minusSeconds(10), streamId);
+
+		// first query for pending alerts, starting at beginning
+		expect(userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null, batchTime,
+				service.getBatchSize())).andReturn(pendingAlerts);
+
+		// then query for most recent node datum
+		expect(datumDao.findFiltered(anyObject())).andReturn(nodeDataResults);
+
+		// then query for the node, to grab time zone
+		expect(solarNodeDao.get(TEST_NODE_ID)).andReturn(testNode);
+
+		// then query for active situation
+		expect(userAlertSituationDao.getActiveAlertSituationForAlert(pendingAlerts.get(0).getId()))
+				.andReturn(null);
+
+		// get User for alert
+		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
+
+		// then save active situation
+		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
+		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+				.andReturn(AlertIdCounter.getAndIncrement());
+
+		replayAll();
+		Long startingId = service.processAlerts(null, batchTime);
+		assertThat("Next staring ID is last processed alert ID", startingId,
+				is(pendingAlerts.get(0).getId()));
+		assertThat("Mail sent", MailSender.getSent().size(), is(1));
+		SimpleMailMessage sentMail = (SimpleMailMessage) MailSender.getSent().element();
+		assertThat("Mail sent to owner address", sentMail.getTo(),
+				is(arrayContaining(String.format("\"%s\" <%s>", TEST_USER_NAME, TEST_USER_EMAIL))));
 		assertThat("Mail subject", sentMail.getSubject(),
 				is(equalTo("SolarNetwork alert: SolarNode " + TEST_NODE_ID + " data is stale")));
 		assertThat("Mail has source ID", sentMail.getText(),

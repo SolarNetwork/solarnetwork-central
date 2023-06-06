@@ -258,3 +258,9 @@ h5, h6 {
 	color: #666;
 	text-decoration: underline;
 }
+
+.alert-form .sources {
+	display: block;
+	max-height: 18rem;
+	overflow-y: scroll;
+}

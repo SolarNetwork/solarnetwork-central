@@ -24,8 +24,12 @@ package net.solarnetwork.central.user.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -47,7 +51,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * </ul>
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @JsonPropertyOrder({ "id", "created", "userId", "nodeId", "type", "status", "validTo", "options" })
 public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
@@ -183,6 +187,30 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 				result = ((Collection<?>) o).stream().map(Object::toString).toArray(String[]::new);
 			} else if ( o instanceof String[] ) {
 				result = (String[]) o;
+			} else if ( o != null ) {
+				result = new String[] { o.toString() };
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Get the {@link UserAlertOptions#SOURCE_IDS} list.
+	 * 
+	 * @return the source ID list, or {@literal null} if the option is not
+	 *         available
+	 * @since 2.2
+	 */
+	public List<String> optionSourceIds() {
+		List<String> result = null;
+		if ( options != null ) {
+			Object o = options.get(UserAlertOptions.SOURCE_IDS);
+			if ( o instanceof Collection<?> ) {
+				result = ((List<?>) o).stream().map(Object::toString).collect(Collectors.toList());
+			} else if ( o instanceof String[] ) {
+				result = Arrays.asList((String[]) o);
+			} else if ( o != null ) {
+				result = Collections.singletonList(o.toString());
 			}
 		}
 		return result;
