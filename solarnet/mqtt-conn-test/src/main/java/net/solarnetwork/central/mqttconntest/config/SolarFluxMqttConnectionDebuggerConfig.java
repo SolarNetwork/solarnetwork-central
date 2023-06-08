@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.mqttconntest.config;
 
-import static net.solarnetwork.central.mqttconntest.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
+import static net.solarnetwork.central.mqttconntest.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,16 +37,16 @@ import net.solarnetwork.central.mqttconntest.impl.MqttConnectionDebugger;
  * @author matt
  * @version 1.0
  */
-@Profile("mqtt")
+@Profile("mqtt & !no-solarflux")
 @Configuration(proxyBeanMethods = false)
-public class MqttConnectionDebuggerConfig {
+public class SolarFluxMqttConnectionDebuggerConfig {
 
-	@Value("${app.mqtt.debugger.topic:instr/OCPP_v16}")
+	@Value("${app.solarflux.debugger.topic:instr/OCPP_v16}")
 	private String mqttDebuggerTopic = "instr/OCPP_v16";
 
 	@Bean
-	@Qualifier(SOLARQUEUE)
-	public MqttConnectionDebugger mqttConnectionDebugger(Executor executor) {
+	@Qualifier(SOLARFLUX)
+	public MqttConnectionDebugger solarFluxMqttConnectionDebugger(Executor executor) {
 		MqttConnectionDebugger debugger = new MqttConnectionDebugger(mqttDebuggerTopic, executor);
 		return debugger;
 	}

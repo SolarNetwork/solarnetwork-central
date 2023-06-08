@@ -20,10 +20,25 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
-  mqtt.debugger.topic: "instr/OCPP_v16"
-  solarqueue:
+  solarflux:
+    debugger.topic: "instr/OCPP_v16"
     connection:
-      uid: "MQTT-Tester-${app.meta.instance-id}"
+      uid: "MQTT-Tester-Flux-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "mqttconntest-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: true
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
+  solarqueue:
+    debugger.topic: "instr/OCPP_v16"
+    connection:
+      uid: "MQTT-Tester-Queue-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://queue.solarnetwork:1883"
