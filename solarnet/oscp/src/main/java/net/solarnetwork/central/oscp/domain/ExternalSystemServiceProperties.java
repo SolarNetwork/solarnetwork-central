@@ -26,7 +26,7 @@ package net.solarnetwork.central.oscp.domain;
  * Constants and helpers for OSCP external system service property handling.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ExternalSystemServiceProperties {
 
@@ -91,4 +91,15 @@ public interface ExternalSystemServiceProperties {
 	 */
 	String URL_PATHS = "url-paths";
 
+	/**
+	 * A service property for a "combined asset" identifier.
+	 * 
+	 * <p>
+	 * If non-{@literal null} then all assets with a capacity group should be
+	 * reported as a single, combined asset with this ID.
+	 * </p>
+	 * 
+	 * @since 1.1
+	 */
+	String COMBINED_ASSET_ID = "group-combined-asset-id";
 }

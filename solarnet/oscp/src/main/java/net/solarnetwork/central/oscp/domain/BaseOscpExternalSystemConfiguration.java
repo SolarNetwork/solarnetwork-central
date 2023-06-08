@@ -33,7 +33,7 @@ import net.solarnetwork.util.StringUtils;
  * Base OSCP configuration entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "token", "baseUrl",
 		"oscpVersion", "flexibilityProviderId", "registrationStatus", "settings", "heartbeatDate",
@@ -130,6 +130,13 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 			return StringUtils.parseBoolean(v.toString());
 		}
 		return false;
+	}
+
+	@Override
+	public String combinedGroupAssetId() {
+		Map<String, Object> props = getServiceProps();
+		Object v = (props != null ? props.get(ExternalSystemServiceProperties.COMBINED_ASSET_ID) : null);
+		return (v != null ? v.toString() : null);
 	}
 
 	/**

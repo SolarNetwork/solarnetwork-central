@@ -64,10 +64,11 @@ import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
-import net.solarnetwork.central.oscp.domain.CapacityGroupServiceProperties;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;
+import net.solarnetwork.central.oscp.domain.ExternalSystemConfiguration;
+import net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties;
 import net.solarnetwork.central.oscp.domain.Measurement;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
@@ -215,16 +216,16 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		assertThat("Include one AssetMeasurement per AssetConfiguration", post.getMeasurements(),
 				hasSize(1));
 		AssetMeasurement m = post.getMeasurements().get(0);
-		assertAssetMeasurement("1", group, cpAsset, m, im, em, start, end);
+		assertAssetMeasurement("1", systemConf, cpAsset, m, im, em, start, end);
 	}
 
-	private void assertAssetMeasurement(String prefix, CapacityGroupConfiguration group,
+	private void assertAssetMeasurement(String prefix, ExternalSystemConfiguration sys,
 			AssetConfiguration asset, AssetMeasurement m, Measurement im, Measurement em, Instant start,
 			Instant end) {
 		assertThat("Measurement asset %s category from asset configuration".formatted(prefix),
 				m.getAssetCategory(), is(equalTo(asset.getCategory().toOscp20Value())));
 		assertThat("Measurement asset %s ID from asset configuration".formatted(prefix), m.getAssetId(),
-				is(equalTo(group.combinedAssetId() != null ? group.combinedAssetId()
+				is(equalTo(sys.combinedGroupAssetId() != null ? sys.combinedGroupAssetId()
 						: asset.getIdentifier())));
 
 		InstantaneousMeasurement aim = m.getInstantaneousMeasurement();
@@ -362,10 +363,10 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				hasSize(2));
 
 		AssetMeasurement m1 = post.getMeasurements().get(0);
-		assertAssetMeasurement("1", group, cpAsset1, m1, im1, em1, start, end);
+		assertAssetMeasurement("1", systemConf, cpAsset1, m1, im1, em1, start, end);
 
 		AssetMeasurement m2 = post.getMeasurements().get(1);
-		assertAssetMeasurement("2", group, cpAsset2, m2, im2, em2, start, end);
+		assertAssetMeasurement("2", systemConf, cpAsset2, m2, im2, em2, start, end);
 	}
 
 	@Test
@@ -381,7 +382,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 						randomUUID().getMostSignificantBits()));
 
 		final String combinedAssetId = "combined.asset";
-		group.putServiceProp(CapacityGroupServiceProperties.COMBINED_ASSET_ID, combinedAssetId);
+		systemConf.putServiceProp(ExternalSystemServiceProperties.COMBINED_ASSET_ID, combinedAssetId);
 
 		final var results = new ArrayList<Instant>();
 
@@ -472,7 +473,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		Measurement combinedEm = Measurement.energyMeasurement(em1.value().add(em2.value()), em1.phase(),
 				em1.unit(), em1.measureTime(), em1.energyType(), em1.energyDirection(),
 				em1.startMeasureTime());
-		assertAssetMeasurement("Combined", group, cpAsset1, m1, combinedIm, combinedEm, start, end);
+		assertAssetMeasurement("Combined", systemConf, cpAsset1, m1, combinedIm, combinedEm, start, end);
 	}
 
 }

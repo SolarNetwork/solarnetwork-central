@@ -157,7 +157,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				default -> throw new IllegalArgumentException(
 						"OSCP role [%s] not supported.".formatted(role));
 			};
-			final String combinedAssetId = group.combinedAssetId();
+			final String combinedAssetId = ctx.config().combinedGroupAssetId();
 			final MeasurementPeriod period = switch (role) {
 				case CapacityProvider -> group.getCapacityProviderMeasurementPeriod();
 				case CapacityOptimizer -> group.getCapacityOptimizerMeasurementPeriod();
