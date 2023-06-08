@@ -471,7 +471,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 		Measurement combinedEm = Measurement.energyMeasurement(em1.value().add(em2.value()), em1.phase(),
 				em1.unit(), em1.measureTime(), em1.energyType(), em1.energyDirection(),
 				em1.startMeasureTime());
-		assertAssetMeasurement("1", group, cpAsset1, m1, combinedIm, combinedEm, start, end);
+		assertAssetMeasurement("Combined", group, cpAsset1, m1, combinedIm, combinedEm, start, end);
 	}
 
 }
