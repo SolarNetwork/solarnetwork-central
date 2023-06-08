@@ -29,6 +29,7 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -47,25 +48,28 @@ import net.solarnetwork.util.ObjectUtils;
  */
 public class MqttConnectionDebugger extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
-	private String mqttTopic;
+	private final String mqttTopic;
+	private final Executor executor;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param mqttTopic
 	 *        the topic to subscribe to
+	 * @param executor
+	 *        the executor
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public MqttConnectionDebugger(String mqttTopic) {
+	public MqttConnectionDebugger(String mqttTopic, Executor executor) {
 		super();
 		this.mqttTopic = ObjectUtils.requireNonNullArgument(mqttTopic, "mqttTopic");
+		this.executor = ObjectUtils.requireNonNullArgument(executor, "executor");
 	}
 
 	@Override
 	public void onMqttServerConnectionEstablished(MqttConnection connection, boolean reconnected) {
 		super.onMqttServerConnectionEstablished(connection, reconnected);
-		logThreadDump();
 		try {
 			connection.subscribe(mqttTopic, MqttQos.AtLeastOnce, this).get(getSubscribeTimeoutSeconds(),
 					TimeUnit.SECONDS);
@@ -74,17 +78,25 @@ public class MqttConnectionDebugger extends BaseMqttConnectionObserver implement
 			log.error("Failed to subscribe to MQTT topic {} @ {}: {}", mqttTopic, connection,
 					e.toString());
 		}
+		logThreadDump();
 	}
 
 	private void logThreadDump() {
-		try {
-			ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-			ThreadInfo[] infos = bean.dumpAllThreads(true, true);
-			log.debug("THREAD DUMP:\n{}",
-					Arrays.stream(infos).map(e -> stackDump(e, 50)).collect(Collectors.joining()));
-		} catch ( Exception e ) {
-			log.error("Error logging thread dump: {}", e.toString());
-		}
+		executor.execute(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+					ThreadInfo[] infos = bean.dumpAllThreads(true, true);
+					log.debug("THREAD DUMP:\n{}", Arrays.stream(infos).map(e -> stackDump(e, 50))
+							.collect(Collectors.joining()));
+				} catch ( Exception e ) {
+					log.error("Error logging thread dump: {}", e.toString());
+				}
+			}
+
+		});
 	}
 
 	private static String stackDump(ThreadInfo info, final int maxFrames) {

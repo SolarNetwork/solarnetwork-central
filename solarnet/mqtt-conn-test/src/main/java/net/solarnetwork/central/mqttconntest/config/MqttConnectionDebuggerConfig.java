@@ -23,6 +23,7 @@
 package net.solarnetwork.central.mqttconntest.config;
 
 import static net.solarnetwork.central.mqttconntest.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
+import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -45,8 +46,8 @@ public class MqttConnectionDebuggerConfig {
 
 	@Bean
 	@Qualifier(SOLARQUEUE)
-	public MqttConnectionDebugger mqttConnectionDebugger() {
-		MqttConnectionDebugger debugger = new MqttConnectionDebugger(mqttDebuggerTopic);
+	public MqttConnectionDebugger mqttConnectionDebugger(Executor executor) {
+		MqttConnectionDebugger debugger = new MqttConnectionDebugger(mqttDebuggerTopic, executor);
 		return debugger;
 	}
 
