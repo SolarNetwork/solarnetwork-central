@@ -30,11 +30,14 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * Configuration for capacity groups.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<CapacityGroupConfiguration> {
 
-	private static final long serialVersionUID = 2002817702265442625L;
+	/** The service property for a "combined asset" identifier. */
+	public static final String COMBINED_ASSET_ID_PROP = "combinedAssetId";
+
+	private static final long serialVersionUID = -2130790926715247167L;
 
 	private String identifier;
 	private MeasurementPeriod capacityProviderMeasurementPeriod;
@@ -113,6 +116,19 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 				&& Objects.equals(this.capacityProviderMeasurementDate, other.capacityProviderMeasurementDate)
 				&& Objects.equals(this.capacityOptimizerMeasurementDate, other.capacityOptimizerMeasurementDate));
 		// @formatter:on
+	}
+
+	/**
+	 * Test if the {@code combineAssets} property is configured as
+	 * {@literal true}.
+	 * 
+	 * @return {@literal true} if {@link #getCombineAssets()} returns
+	 *         {@literal true}
+	 * @since 1.1
+	 */
+	public String combinedAssetId() {
+		Object val = getServiceProp(COMBINED_ASSET_ID_PROP);
+		return (val != null ? val.toString() : null);
 	}
 
 	/**
