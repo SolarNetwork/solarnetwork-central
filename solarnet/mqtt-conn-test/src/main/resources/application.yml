@@ -20,9 +20,10 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
+  mqtt.debugger.topic: "instr/OCPP_v16"
   solarqueue:
     connection:
-      uid: "SolarOCPP-${app.meta.instance-id}"
+      uid: "MQTT-Tester-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://queue.solarnetwork:1883"
