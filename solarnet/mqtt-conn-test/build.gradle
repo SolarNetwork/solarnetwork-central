@@ -1,0 +1,73 @@
+plugins {
+	id 'java'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.7.12'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'MQTT Connection Test'
+version = '1.0.0'
+archivesBaseName = 'mqttconntest'
+
+configurations {
+	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
+	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet.jsp'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
+	implementation project(':solarnet-user')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-security';
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+
+	// Utilities
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+		
+	// SolarNetwork
+	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation 'io.moquette:moquette-broker:0.15'
+    testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+}
+
+eclipse {
+	project {
+		//natures 'net.sf.eclipsecs.core.CheckstyleNature'
+		//buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
+	}
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'MQTT Connection Test',
+					'Implementation-Version': archiveVersion
+	}
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-17'
+	}
+}

@@ -1,0 +1,2 @@
+::: MQTT Connection Tester ::: ${application.version}
+                                                           
