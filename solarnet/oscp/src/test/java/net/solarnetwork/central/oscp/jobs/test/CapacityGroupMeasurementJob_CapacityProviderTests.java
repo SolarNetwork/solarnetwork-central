@@ -64,6 +64,7 @@ import net.solarnetwork.central.oscp.dao.MeasurementDao;
 import net.solarnetwork.central.oscp.dao.jdbc.test.OscpJdbcTestUtils;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
+import net.solarnetwork.central.oscp.domain.CapacityGroupServiceProperties;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;
@@ -380,7 +381,7 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 						randomUUID().getMostSignificantBits()));
 
 		final String combinedAssetId = "combined.asset";
-		group.putServiceProp(CapacityGroupConfiguration.COMBINED_ASSET_ID_PROP, combinedAssetId);
+		group.putServiceProp(CapacityGroupServiceProperties.COMBINED_ASSET_ID, combinedAssetId);
 
 		final var results = new ArrayList<Instant>();
 

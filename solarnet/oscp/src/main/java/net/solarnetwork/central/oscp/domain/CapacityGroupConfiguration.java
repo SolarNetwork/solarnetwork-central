@@ -34,9 +34,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<CapacityGroupConfiguration> {
 
-	/** The service property for a "combined asset" identifier. */
-	public static final String COMBINED_ASSET_ID_PROP = "combinedAssetId";
-
 	private static final long serialVersionUID = -2130790926715247167L;
 
 	private String identifier;
@@ -127,7 +124,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * @since 1.1
 	 */
 	public String combinedAssetId() {
-		Object val = getServiceProp(COMBINED_ASSET_ID_PROP);
+		Object val = getServiceProp(CapacityGroupServiceProperties.COMBINED_ASSET_ID);
 		return (val != null ? val.toString() : null);
 	}
 
