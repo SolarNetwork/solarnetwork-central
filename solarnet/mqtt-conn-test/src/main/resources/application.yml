@@ -15,7 +15,7 @@ app:
     initialize: false
   mqtt.client:
     io-thread-count: 2
-    wire-logging-enabled: true
+    wire-logging-enabled: false
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
