@@ -24,14 +24,22 @@ package net.solarnetwork.central.query.config;
 
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
@@ -66,6 +74,9 @@ public class WebSecurityConfig {
 	private DataSource dataSource;
 
 	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
 
 	@Bean
@@ -77,86 +88,159 @@ public class WebSecurityConfig {
 	public UserDetailsService userDetailsService() {
 		JdbcUserDetailsService service = new JdbcUserDetailsService();
 		service.setDataSource(dataSource);
-		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
+		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
 		service.setAuthoritiesByUsernameQuery(
-				JdbcUserDetailsService.DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL);
+				JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
 		return service;
 	}
 
 	@Bean
-	public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
-		SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
-		ep.setHandlerExceptionResolver(handlerExceptionResolver);
-		return ep;
-	}
-
-	@ConfigurationProperties(prefix = "app.web.security.token")
-	@Bean
-	public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
-		return new SecurityTokenFilterSettings();
+	public AuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+		provider.setUserDetailsService(userDetailsService());
+		provider.setPasswordEncoder(passwordEncoder);
+		return provider;
 	}
 
 	@Bean
-	public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
-		AntPathMatcher pathMatcher = new AntPathMatcher();
-		pathMatcher.setCachePatterns(true);
-		pathMatcher.setCaseSensitive(true);
-		SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
-				"/api/v1/sec");
-		filter.setUserDetailsService(userDetailsService());
-		filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
-
-		SecurityTokenFilterSettings settings = tokenAuthenticationFilterSettings();
-		filter.setMaxDateSkew(settings.getMaxDateSkew());
-		filter.setMaxRequestBodySize((int) settings.getMaxRequestBodySize().toBytes());
-
-		return filter;
+	public AuthenticationManager authenticationManager() {
+		return new ProviderManager(authenticationProvider());
 	}
 
 	@Bean
-	public AuthenticationTokenService authenticationTokenService() {
-		return new UserDetailsAuthenticationTokenService(userDetailsService());
+	public AuthenticationEventPublisher authenticationEventPublisher(
+			ApplicationEventPublisher appEventPublisher) {
+		return new DefaultAuthenticationEventPublisher(appEventPublisher);
 	}
 
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		// @formatter:off
-	    http
-	      // CSRF not needed for stateless calls
-	      .csrf().disable()
-	      
-	      // make sure CORS honored
-	      .cors().and()
-	      
-	      // can simply return 401 on auth failures
-	      .exceptionHandling()
-	      	.authenticationEntryPoint(unauthorizedEntryPoint())
-	      	.accessDeniedHandler(unauthorizedEntryPoint())
-	      	.and()
-	      
-	      // no sessions
-	      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-	      
-	      // token auth filter
-	      .addFilterBefore(tokenAuthenticationFilter(),
-					UsernamePasswordAuthenticationFilter.class)
-	      
-	      .authorizeHttpRequests()
-		    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-	        .requestMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
-	            "/api/v1/pub/**").permitAll()
-	        
-	        .requestMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
-	        .requestMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
-	        
-	        .requestMatchers(HttpMethod.DELETE, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .requestMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .requestMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .requestMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
-	        .anyRequest().authenticated()
-	    ;
-	    // @formatter:on
-		return http.build();
+	/**
+	 * Security rules for the management API.
+	 */
+	@Configuration
+	@Order(1)
+	public static class ManagementWebSecurityConfig {
+
+		@Order(3)
+		@Bean
+		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
+			// @formatter:off
+		    http
+		      // limit this configuration to specific paths
+		      .securityMatchers()
+		        .requestMatchers("/ops/**")
+		        .and()
+	
+		        // CSRF not needed for stateless calls
+		      .csrf().disable()
+		      
+		      // make sure CORS honored
+		      .cors().and()
+		      
+		      // no sessions
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      
+		      .httpBasic().realmName("SN Operations").and()
+		      
+		      .authorizeHttpRequests()
+		        .anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString())
+		        
+		    ;
+		    // @formatter:on
+			return http.build();
+		}
+	}
+
+	/**
+	 * API security rules, for stateless REST access.
+	 */
+	@Configuration
+	@Order(2)
+	public static class ApiWebSecurityConfig {
+
+		@Autowired
+		private DataSource dataSource;
+
+		@Autowired
+		private HandlerExceptionResolver handlerExceptionResolver;
+
+		@Autowired
+		private SecurityTokenFilterSettings securityTokenFilterSettings;
+
+		public UserDetailsService tokenUserDetailsService() {
+			JdbcUserDetailsService service = new JdbcUserDetailsService();
+			service.setDataSource(dataSource);
+			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
+			service.setAuthoritiesByUsernameQuery(
+					JdbcUserDetailsService.DEFAULT_TOKEN_AUTHORITIES_BY_USERNAME_SQL);
+			return service;
+		}
+
+		@Bean
+		public SecurityTokenAuthenticationEntryPoint unauthorizedEntryPoint() {
+			SecurityTokenAuthenticationEntryPoint ep = new SecurityTokenAuthenticationEntryPoint();
+			ep.setHandlerExceptionResolver(handlerExceptionResolver);
+			return ep;
+		}
+
+		@Bean
+		public SecurityTokenAuthenticationFilter tokenAuthenticationFilter() {
+			AntPathMatcher pathMatcher = new AntPathMatcher();
+			pathMatcher.setCachePatterns(true);
+			pathMatcher.setCaseSensitive(true);
+			SecurityTokenAuthenticationFilter filter = new SecurityTokenAuthenticationFilter(pathMatcher,
+					"/api/v1/sec", securityTokenFilterSettings);
+			filter.setUserDetailsService(tokenUserDetailsService());
+			filter.setAuthenticationEntryPoint(unauthorizedEntryPoint());
+
+			return filter;
+		}
+
+		@Bean
+		public AuthenticationTokenService authenticationTokenService() {
+			return new UserDetailsAuthenticationTokenService(tokenUserDetailsService());
+		}
+
+		@Bean
+		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+			// @formatter:off
+		    http
+		      // CSRF not needed for stateless calls
+		      .csrf().disable()
+		      
+		      // make sure CORS honored
+		      .cors().and()
+		      
+		      // can simply return 401 on auth failures
+		      .exceptionHandling()
+		      	.authenticationEntryPoint(unauthorizedEntryPoint())
+		      	.accessDeniedHandler(unauthorizedEntryPoint())
+		      	.and()
+		      
+		      // no sessions
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      
+		      // token auth filter
+		      .addFilterBefore(tokenAuthenticationFilter(),
+						UsernamePasswordAuthenticationFilter.class)
+		      
+		      .authorizeHttpRequests()
+			    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		        .requestMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
+		            "/api/v1/pub/**").permitAll()
+		        
+		        .requestMatchers(HttpMethod.GET, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
+		        .requestMatchers(HttpMethod.HEAD, "/api/v1/sec/**").hasAnyAuthority(READ_AUTHORITIES)
+		        
+		        .requestMatchers(HttpMethod.DELETE, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+		        .requestMatchers(HttpMethod.PATCH, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+		        .requestMatchers(HttpMethod.POST, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+		        .requestMatchers(HttpMethod.PUT, "/api/v1/sec/**").hasAnyAuthority(WRITE_AUTHORITIES)
+		        .anyRequest().authenticated()
+		    ;
+		    // @formatter:on
+			return http.build();
+		}
+
 	}
 
 }
