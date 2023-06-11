@@ -26,7 +26,7 @@ package net.solarnetwork.central.oscp.domain;
  * Read-only API for an external system configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ExternalSystemConfiguration {
 
@@ -95,5 +95,15 @@ public interface ExternalSystemConfiguration {
 	 * @return {@literal true} if asset measurements should be used
 	 */
 	boolean useGroupAssetMeasurement();
+
+	/**
+	 * An asset ID to use to combine all capacity group assets into a single
+	 * virtual asset.
+	 * 
+	 * @return a combined virtual asset ID, or {@literal null} to report
+	 *         individual assets
+	 * @since 1.1
+	 */
+	String combinedGroupAssetId();
 
 }

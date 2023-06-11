@@ -30,6 +30,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,6 +51,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.dao.DateRangeCriteria;
 import oscp.v20.AssetMeasurement;
 import oscp.v20.EnergyMeasurement;
+import oscp.v20.InstantaneousMeasurement;
 import oscp.v20.UpdateAssetMeasurement;
 import oscp.v20.UpdateGroupMeasurements;
 
@@ -57,7 +59,7 @@ import oscp.v20.UpdateGroupMeasurements;
  * Job to post OSCP measurement messages to external systems.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CapacityGroupMeasurementJob extends JobSupport {
 
@@ -155,6 +157,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				default -> throw new IllegalArgumentException(
 						"OSCP role [%s] not supported.".formatted(role));
 			};
+			final String combinedAssetId = ctx.config().combinedGroupAssetId();
 			final MeasurementPeriod period = switch (role) {
 				case CapacityProvider -> group.getCapacityProviderMeasurementPeriod();
 				case CapacityOptimizer -> group.getCapacityOptimizerMeasurementPeriod();
@@ -178,9 +181,20 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				Object msg;
 				if ( useAssetMeasurement ) {
 					List<AssetMeasurement> measurements = assetMeasurements(assets, dateCriteria);
+					if ( combinedAssetId != null ) {
+						AssetMeasurement combined = combineAssetMeasurements(combinedAssetId,
+								measurements);
+						measurements = (combined == null ? Collections.emptyList()
+								: Collections.singletonList(combined));
+					}
 					msg = new UpdateAssetMeasurement(group.getIdentifier(), measurements);
 				} else {
 					List<EnergyMeasurement> measurements = energyMeasurements(assets, dateCriteria);
+					if ( combinedAssetId != null ) {
+						EnergyMeasurement combined = combineEnergyMeasurements(measurements);
+						measurements = (combined == null ? Collections.emptyList()
+								: Collections.singletonList(combined));
+					}
 					msg = new UpdateGroupMeasurements(group.getIdentifier(), measurements);
 				}
 				try {
@@ -200,6 +214,93 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 			return endDate;
 		});
+	}
+
+	private EnergyMeasurement combineEnergyMeasurements(List<EnergyMeasurement> measurements) {
+		if ( measurements == null || measurements.isEmpty() ) {
+			return null;
+		}
+		if ( measurements.size() == 1 ) {
+			return measurements.get(0);
+		}
+		/*-
+		"value",
+		"phase",
+		"unit",
+		"direction",
+		"energy_type",
+		"measure_time",
+		"initial_measure_time"
+		 */
+		EnergyMeasurement result = null;
+		for ( EnergyMeasurement m : measurements ) {
+			if ( m.getValue() == null ) {
+				continue;
+			}
+			if ( result == null ) {
+				result = new EnergyMeasurement(m.getValue(), m.getPhase(), m.getUnit(), m.getDirection(),
+						m.getMeasureTime());
+				result.setInitialMeasureTime(m.getInitialMeasureTime());
+				result.setEnergyType(m.getEnergyType());
+			} else {
+				result.setValue(result.getValue() + m.getValue());
+			}
+		}
+		return result;
+	}
+
+	private InstantaneousMeasurement combineInstantaneousMeasurements(
+			List<InstantaneousMeasurement> measurements) {
+		if ( measurements == null || measurements.isEmpty() ) {
+			return null;
+		}
+		if ( measurements.size() == 1 ) {
+			return measurements.get(0);
+		}
+		/*-
+		"value",
+		"phase",
+		"unit",
+		"measure_time"
+		 */
+		InstantaneousMeasurement result = null;
+		for ( InstantaneousMeasurement m : measurements ) {
+			if ( m.getValue() == null ) {
+				continue;
+			}
+			if ( result == null ) {
+				result = new InstantaneousMeasurement(m.getValue(), m.getPhase(), m.getUnit(),
+						m.getMeasureTime());
+			} else {
+				result.setValue(result.getValue() + m.getValue());
+			}
+		}
+		return result;
+	}
+
+	private AssetMeasurement combineAssetMeasurements(String combinedAssetId,
+			List<AssetMeasurement> measurements) {
+		if ( measurements == null || measurements.isEmpty() ) {
+			return null;
+		}
+		if ( measurements.size() == 1 ) {
+			return measurements.get(0);
+		}
+		/*-
+		"asset_id",
+		"asset_category",
+		"energy_measurement",
+		"instantaneous_measurement"
+		 */
+		EnergyMeasurement energy = combineEnergyMeasurements(
+				measurements.stream().map(AssetMeasurement::getEnergyMeasurement).toList());
+		InstantaneousMeasurement inst = combineInstantaneousMeasurements(
+				measurements.stream().map(AssetMeasurement::getInstantaneousMeasurement).toList());
+		AssetMeasurement result = new AssetMeasurement(combinedAssetId,
+				measurements.get(0).getAssetCategory());
+		result.setEnergyMeasurement(energy);
+		result.setInstantaneousMeasurement(inst);
+		return result;
 	}
 
 	private List<AssetMeasurement> assetMeasurements(List<AssetConfiguration> assets,
