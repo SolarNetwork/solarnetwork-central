@@ -91,6 +91,7 @@ app:
         client-id: "solaroscp-fp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
+        clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
         read-timeout-seconds: 0
@@ -99,14 +100,14 @@ app:
       publish-qos-level: 0
   solarqueue:
     connection:
-      uid: "SolarQueue-@@SOLAROSCP_FP_ID@@"
+      uid: "SolarQueue-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
         server-uri: "mqtt://queue.solarnetwork:1883"
-        client-id: "solaroscp-fp-@@SOLAROSCP_FP_ID@@"
+        client-id: "solaroscp-fp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
-        clean-session: false
+        clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
         read-timeout-seconds: -1
