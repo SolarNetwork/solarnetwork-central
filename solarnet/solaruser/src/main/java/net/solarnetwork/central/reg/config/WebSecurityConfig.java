@@ -328,13 +328,50 @@ public class WebSecurityConfig {
 	}
 
 	/**
-	 * Last set of security rules, for public resources else deny all others.
+	 * Security rules for the management API.
 	 */
 	@Configuration
 	@Order(3)
-	public static class PublicWebSecurityConfig {
+	public static class ManagementWebSecurityConfig {
 
 		@Order(3)
+		@Bean
+		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
+			// @formatter:off
+		    http
+		      // limit this configuration to specific paths
+		      .securityMatchers()
+		        .requestMatchers("/ops/**")
+		        .and()
+	
+		        // CSRF not needed for stateless calls
+		      .csrf().disable()
+		      
+		      // make sure CORS honored
+		      .cors().and()
+		      
+		      // no sessions
+		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+		      
+		      .httpBasic().realmName("SN Operations").and()
+		      
+		      .authorizeHttpRequests()
+		        .anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString())
+		        
+		    ;
+		    // @formatter:on
+			return http.build();
+		}
+	}
+
+	/**
+	 * Last set of security rules, for public resources else deny all others.
+	 */
+	@Configuration
+	@Order(4)
+	public static class PublicWebSecurityConfig {
+
+		@Order(4)
 		@Bean
 		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off

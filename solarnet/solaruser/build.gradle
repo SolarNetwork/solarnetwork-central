@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '1.14.6'
+version = '1.15.0'
 archivesBaseName = 'solaruser'
 
 configurations {
@@ -35,6 +35,7 @@ dependencies {
 
 	// Spring support
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'

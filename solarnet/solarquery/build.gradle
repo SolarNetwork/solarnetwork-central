@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarQuery'
-version = '1.6.0'
+version = '1.7.0'
 archivesBaseName = 'solarquery'
 
 configurations {
@@ -23,6 +23,7 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
