@@ -37,11 +37,14 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * MyBatis implementation of {@link CentralChargePointConnectorDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisCentralChargePointConnectorDao
 		extends BaseMyBatisGenericDaoSupport<ChargePointConnector, ChargePointConnectorKey>
 		implements CentralChargePointConnectorDao {
+
+	/** A connector ID representing "all connectors". */
+	public static final int ALL_CONNECTORS = -1;
 
 	/** Query name enumeration. */
 	public enum QueryName {
@@ -96,7 +99,8 @@ public class MyBatisCentralChargePointConnectorDao
 	public Collection<ChargePointConnector> findByChargePointId(long chargePointId) {
 		return selectList(getQueryForAll(),
 				singletonMap(FILTER_PROPERTY,
-						new CentralChargePointConnector(new ChargePointConnectorKey(chargePointId, 0))),
+						new CentralChargePointConnector(
+								new ChargePointConnectorKey(chargePointId, ALL_CONNECTORS))),
 				null, null);
 	}
 
@@ -108,8 +112,10 @@ public class MyBatisCentralChargePointConnectorDao
 
 	@Override
 	public Collection<CentralChargePointConnector> findByChargePointId(Long userId, long chargePointId) {
-		return selectList(getQueryForAll(), singletonMap(FILTER_PROPERTY,
-				new CentralChargePointConnector(chargePointId, 0, userId, null)), null, null);
+		return selectList(getQueryForAll(),
+				singletonMap(FILTER_PROPERTY,
+						new CentralChargePointConnector(chargePointId, ALL_CONNECTORS, userId, null)),
+				null, null);
 	}
 
 	@Override

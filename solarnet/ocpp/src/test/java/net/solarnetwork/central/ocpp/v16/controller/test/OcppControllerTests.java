@@ -156,7 +156,7 @@ public class OcppControllerTests {
 	}
 
 	@Test
-	public void updateStatus_chargePoint() {
+	public void updateStatus_conn0() {
 		// GIVEN
 		Long nodeId = randomUUID().getMostSignificantBits();
 		Long userId = randomUUID().getMostSignificantBits();
@@ -169,11 +169,15 @@ public class OcppControllerTests {
 		// @formatter:off
 		StatusNotification info = StatusNotification.builder()
 				.withConnectorId(0)
-				.withStatus(ChargePointStatus.Charging)
+				.withStatus(ChargePointStatus.Available)
+				.withErrorCode(ChargePointErrorCode.NoError)
+				.withTimestamp(Instant.now())
+				.withInfo("Hello.")
+				.withVendorId("SolarNetwork")
 				.build();
 		// @formatter:on
-		expect(chargePointConnectorDao.updateChargePointStatus(cp.getId().longValue(), 0,
-				info.getStatus())).andReturn(1);
+		expect(chargePointConnectorDao.saveStatusInfo(cp.getId().longValue(), info))
+				.andReturn(new ChargePointConnectorKey(cp.getId().longValue(), 1));
 
 		// WHEN
 		replayAll();

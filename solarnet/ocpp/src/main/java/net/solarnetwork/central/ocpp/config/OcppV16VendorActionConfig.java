@@ -28,11 +28,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
+import net.solarnetwork.central.ocpp.v16.vendor.abb.MeterTransferDataTransferDatumPublisher;
 import net.solarnetwork.central.ocpp.v16.vendor.zjbeny.DlbMeterDataTransferDatumPublisher;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import ocpp.v16.cs.DataTransferRequest;
@@ -70,6 +72,18 @@ public class OcppV16VendorActionConfig {
 		DlbMeterDataTransferDatumPublisher publisher = new DlbMeterDataTransferDatumPublisher(
 				ocppCentralChargePointDao, ocppChargePointSettingsDao,
 				ocppCentralChargePointConnectorDao, datumDao);
+		publisher.setFluxPublisher(fluxPublisher);
+		return publisher;
+	}
+
+	@Bean
+	@OcppCentralServiceQualifier(OCPP_V16)
+	@Order(0)
+	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppVendorAbb_MeterTransferDataTransferDatumPublisher_v16(
+			ObjectMapper mapper) {
+		MeterTransferDataTransferDatumPublisher publisher = new MeterTransferDataTransferDatumPublisher(
+				ocppCentralChargePointDao, ocppChargePointSettingsDao,
+				ocppCentralChargePointConnectorDao, datumDao, mapper);
 		publisher.setFluxPublisher(fluxPublisher);
 		return publisher;
 	}

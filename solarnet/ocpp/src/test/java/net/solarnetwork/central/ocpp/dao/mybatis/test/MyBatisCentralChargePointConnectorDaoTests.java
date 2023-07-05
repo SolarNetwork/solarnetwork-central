@@ -53,7 +53,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * Test cases for the {@link MyBatisCentralChargePointConnectorDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -314,7 +314,7 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	}
 
 	@Test
-	public void updateStatusForChargePoint() {
+	public void updateStatusForAllConnectors() {
 		// given
 		insert();
 
@@ -336,17 +336,49 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		insert();
 
 		// when
-		int result = lastUpdateCount(dao.updateChargePointStatus(cpc.getId().getChargePointId(), 0,
-				ChargePointStatus.Charging));
+		int result = lastUpdateCount(dao.updateChargePointStatus(cpc.getId().getChargePointId(),
+				MyBatisCentralChargePointConnectorDao.ALL_CONNECTORS, ChargePointStatus.Charging));
 
 		// then
-		assertThat("Two row updated", result, equalTo(2));
+		assertThat("Two rows updated", result, equalTo(2));
 		assertThat("Status updated for charge point",
 				dao.findByChargePointId(cpc.getId().getChargePointId()).stream()
 						.map(c -> c.getInfo().getStatus()).collect(Collectors.toList()),
 				contains(ChargePointStatus.Charging, ChargePointStatus.Charging));
 		assertThat("Other charge point status unchanged", dao.get(last.getId()).getInfo().getStatus(),
 				equalTo(last.getInfo().getStatus()));
+	}
+
+	@Test
+	public void updateStatusForConn0() {
+		// given
+		insert();
+
+		// add conn 0 for same charge point
+		ChargePointConnector cpc = new ChargePointConnector(
+				new ChargePointConnectorKey(last.getId().getChargePointId(), 0),
+				Instant.ofEpochMilli(System.currentTimeMillis()));
+
+		// @formatter:off
+		cpc.setInfo(StatusNotification.builder()
+				.withConnectorId(cpc.getId().getConnectorId())
+				.withStatus(ChargePointStatus.Available)
+				.withErrorCode(ChargePointErrorCode.NoError)
+				.withTimestamp(Instant.ofEpochMilli(System.currentTimeMillis())).build());
+		// @formatter:on
+		dao.save(cpc);
+
+		// add another for a different charge point, to verify we don't update this
+		insert();
+
+		// when
+		int result = lastUpdateCount(dao.updateChargePointStatus(cpc.getId().getChargePointId(), 0,
+				ChargePointStatus.Charging));
+
+		// then
+		assertThat("One row updated", result, equalTo(1));
+		assertThat("Status updated", dao.get(cpc.getId()).getInfo().getStatus(),
+				equalTo(ChargePointStatus.Charging));
 	}
 
 	@Test
