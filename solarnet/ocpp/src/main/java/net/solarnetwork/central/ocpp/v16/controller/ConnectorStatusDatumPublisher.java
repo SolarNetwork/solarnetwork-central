@@ -23,7 +23,6 @@
 package net.solarnetwork.central.ocpp.v16.controller;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.Collection;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -45,7 +44,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * Publish status notification updates as datum.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class ConnectorStatusDatumPublisher {
 
@@ -147,20 +146,12 @@ public class ConnectorStatusDatumPublisher {
 			return;
 		}
 
-		if ( info.getConnectorId() == 0 ) {
-			Collection<CentralChargePointConnector> connectors = pubSupport.getChargePointConnectorDao()
-					.findByChargePointId(chargePoint.getUserId(), chargePoint.getId());
-			for ( CentralChargePointConnector cpc : connectors ) {
-				processStatusNotification(chargePoint, cps, cpc.getInfo());
-			}
-		} else {
-			ChargePointConnectorKey key = new ChargePointConnectorKey(chargePoint.getId(),
-					info.getConnectorId());
-			CentralChargePointConnector cpc = pubSupport.getChargePointConnectorDao()
-					.get(chargePoint.getUserId(), key);
-			if ( cpc != null ) {
-				processStatusNotification(chargePoint, cps, cpc.getInfo());
-			}
+		ChargePointConnectorKey key = new ChargePointConnectorKey(chargePoint.getId(),
+				info.getConnectorId());
+		CentralChargePointConnector cpc = pubSupport.getChargePointConnectorDao()
+				.get(chargePoint.getUserId(), key);
+		if ( cpc != null ) {
+			processStatusNotification(chargePoint, cps, cpc.getInfo());
 		}
 	}
 

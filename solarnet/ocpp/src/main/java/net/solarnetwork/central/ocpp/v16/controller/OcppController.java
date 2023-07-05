@@ -216,12 +216,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
 		}
 		log.info("Received Charge Point {} status: {}", identity, info);
-		if ( info.getConnectorId() == 0 ) {
-			chargePointConnectorDao.updateChargePointStatus(chargePoint.getId(), info.getConnectorId(),
-					info.getStatus());
-		} else {
-			chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
-		}
+		chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
 		ConnectorStatusDatumPublisher publisher = getDatumPublisher();
 		if ( publisher != null ) {
 			publisher.processStatusNotification(chargePoint, info);

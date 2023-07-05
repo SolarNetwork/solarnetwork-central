@@ -47,7 +47,7 @@
 			status = #{info.status,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
 		WHERE
 			cp_id = #{id.chargePointId}
-			<if test="id.connectorId &gt; 0">AND conn_id = #{id.connectorId}</if>
+			<if test="id.connectorId &gt;= 0">AND conn_id = #{id.connectorId}</if>
 	</update>
 
 	<sql id="fragment-CentralChargePointConnector-full-result">
@@ -102,7 +102,7 @@
 				<if test="filter.chargePointId != null">
 					AND cc.cp_id = #{filter.chargePointId}
 				</if>
-				<if test="filter.connectorId != null and filter.connectorId &gt; 0">
+				<if test="filter.connectorId != null and filter.connectorId &gt;= 0">
 					AND cc.conn_id = #{filter.connectorId}
 				</if>
 				<if test="filter.userId != null">
