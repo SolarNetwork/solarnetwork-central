@@ -120,7 +120,7 @@ subprojects {
 	}
 	
 	ext['netty.version'] = '4.1.96.Final'
-	ext['snakeyaml.version'] = '1.33' // SECFIX
+	ext['snakeyaml.version'] = '2.0' // SECFIX
 	ext['spring-security.version']='5.8.1'
 	
 	dependencies {
