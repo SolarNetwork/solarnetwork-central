@@ -104,6 +104,7 @@ subprojects {
 
 		libraries = [
 			batik: [
+				'org.jsoup:jsoup:1.16.1',
 				"org.apache.xmlgraphics:batik-transcoder:${batikVersion}",
 				"org.apache.xmlgraphics:batik-codec:${batikVersion}",
 				"org.apache.xmlgraphics:batik-ext:${batikVersion}"
@@ -118,7 +119,8 @@ subprojects {
 		]
 	}
 	
-	ext['netty.version'] = '4.1.93.Final'
+	ext['netty.version'] = '4.1.96.Final'
+	ext['snakeyaml.version'] = '1.33' // SECFIX
 	ext['spring-security.version']='5.8.1'
 	
 	dependencies {

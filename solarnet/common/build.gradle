@@ -60,8 +60,8 @@ dependencies {
 	implementation 'io.netty:netty-transport'
 
 	// Utilities
-	implementation 'com.amazonaws:aws-java-sdk-ec2:1.11.1034'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation 'com.amazonaws:aws-java-sdk-ec2:1.12.518'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.518'
 	implementation 'software.amazon.awssdk:secretsmanager:2.17+'
 	implementation 'com.cronutils:cron-utils:9.1.5'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
@@ -76,6 +76,7 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
+	api 'commons-beanutils:commons-beanutils:1.9.4'
 	api 'com.cronutils:cron-utils:9.2.0'
 	api 'org.apache.commons:commons-compress:1.22'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"

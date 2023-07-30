@@ -50,7 +50,7 @@ dependencies {
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 	
 	// Use Commons FileUpload instead of built-in Servlet, so SecurityTokenAuthenticationFilter works as expected
-	implementation 'commons-fileupload:commons-fileupload:1.4'
+	implementation 'commons-fileupload:commons-fileupload:1.5'
 
 	// Utils
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
