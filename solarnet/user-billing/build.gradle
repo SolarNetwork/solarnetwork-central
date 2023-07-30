@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.12' apply false
+	id 'org.springframework.boot' version '2.7.14' apply false
 }
 
 apply plugin: 'java-library'
@@ -49,6 +49,9 @@ dependencies {
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// PDF Support
+	implementation libraries.batik
 	
 	// PDF
 	implementation 'com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10'

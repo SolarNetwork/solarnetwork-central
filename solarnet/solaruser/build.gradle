@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.12'
+	id 'org.springframework.boot' version '2.7.14'
 }
 
 //apply plugin: 'checkstyle'
