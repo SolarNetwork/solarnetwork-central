@@ -18,14 +18,14 @@ $$
 	WITH d AS (
 		(
 		SELECT d.*, 0::SMALLINT AS rtype
-		FROM solardatm.find_datm_around(sid, start_ts, tolerance) AS d
+		FROM solardatm.find_datm_around(sid, start_ts, tolerance, TRUE) AS d
 		ORDER BY d.ts
 		LIMIT 1
 		)
 		UNION
 		(
 		SELECT d.*, 0::SMALLINT AS rtype
-		FROM solardatm.find_datm_around(sid, end_ts, tolerance) AS d
+		FROM solardatm.find_datm_around(sid, end_ts, tolerance, TRUE) AS d
 		ORDER BY d.ts
 		LIMIT 1
 		)

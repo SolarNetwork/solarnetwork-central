@@ -112,11 +112,13 @@ $$;
  * @param sid 				the stream ID of the datum that has been changed (inserted, deleted)
  * @param ts_at				the date of the datum to find adjacent datm for
  * @param tolerance 		the maximum time to look forward/backward for adjacent datm
+ * @param must_a			if TRUE then only consider rows where data_a is not NULL
  */
 CREATE OR REPLACE FUNCTION solardatm.find_datm_around(
 		sid 		UUID,
 		ts_at 		TIMESTAMP WITH TIME ZONE,
-		tolerance 	INTERVAL DEFAULT interval '1 months'
+		tolerance 	INTERVAL DEFAULT interval '1 months',
+		must_a		BOOLEAN DEFAULT FALSE
 	) RETURNS SETOF solardatm.da_datm LANGUAGE SQL STABLE ROWS 2 AS
 $$
 	WITH b AS (
@@ -126,6 +128,7 @@ $$
 			FROM solardatm.da_datm d
 			WHERE d.stream_id = sid
 				AND d.ts = ts_at
+				AND (NOT must_a OR d.data_a IS NOT NULL)
 		)
 		UNION ALL
 		-- prev
@@ -135,6 +138,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts < ts_at
 				AND d.ts > ts_at - tolerance
+				AND (NOT must_a OR d.data_a IS NOT NULL)
 			ORDER BY d.stream_id, d.ts DESC
 			LIMIT 1
 		)
@@ -146,6 +150,7 @@ $$
 			WHERE d.stream_id = sid
 				AND d.ts > ts_at
 				AND d.ts < ts_at + tolerance
+				AND (NOT must_a OR d.data_a IS NOT NULL)
 			ORDER BY d.stream_id, d.ts
 			LIMIT 1
 		)
