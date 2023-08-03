@@ -1,0 +1,6 @@
+{"nodeId":1,"sourceId":"a","created":"2018-07-20 03:57:00Z","samples":{"i":{"x":1.1,"y":1.1},"a":{"w":10,"wr":100}}}
+
+{"nodeId":1,"sourceId":"a","created":"2020-06-01 13:01:00Z","type":"Reset","final":{"a":{"w":20}},"start":{"a":{"w":40}}}
+{"nodeId":1,"sourceId":"a","created":"2020-09-01 13:01:00Z","type":"Reset","final":{"a":{"w":60}},"start":{"a":{"w":90}}}
+
+{"nodeId":1,"sourceId":"a","created":"2022-06-01 13:09:00Z","samples":{"i":{"x":1.8,"y":8.1},"a":{"w":105,"wr":200}}}

@@ -237,8 +237,8 @@ BEGIN
 						min(val) FILTER (WHERE rtype = 1)
 				END) AS val_start
 
-			-- end value as current value
-			, min(val) FILTER (WHERE rtype = 1) AS val_end
+			-- end value as current value, if none fall back to last end
+			, COALESCE(min(val) FILTER (WHERE rtype = 1), min(val_end) FILTER (WHERE rtype = 0)) AS val_end
 
 		FROM wa
 		GROUP BY idx

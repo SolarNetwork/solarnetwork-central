@@ -316,6 +316,24 @@ public class DbDiffDatumTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
+	public void resetRecord_twoResetInMiddle_sparseProperties() throws IOException {
+		// GIVEN
+		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-39.txt",
+				getClass(), "UTC");
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2018, 8, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ZonedDateTime end = ZonedDateTime.of(2022, 8, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		ReadingDatum result = calcDiffDatum(streamId, start.toInstant(), end.toInstant());
+
+		// THEN
+		assertReadingDatum("Two reset with way-back start", result,
+				readingWith(streamId, null, Instant.parse("2018-07-20T03:57:00Z").atZone(ZoneOffset.UTC),
+						Instant.parse("2022-06-01T13:09:00Z").atZone(ZoneOffset.UTC),
+						decimalArray("45", "10", "105"), decimalArray("100", "100", "200")));
+	}
+
+	@Test
 	public void resetRecord_resetJustBeforeStart() throws IOException {
 		// GIVEN
 		UUID streamId = insertOneDatumStreamWithAuxiliary(log, jdbcTemplate, "test-datum-26.txt",
