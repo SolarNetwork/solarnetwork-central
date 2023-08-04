@@ -24,7 +24,7 @@ package net.solarnetwork.central.dnp3.app.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.dnp3.app.config.ConfigurationConstants.PROFILE_TEST;
-import static net.solarnetwork.central.net.proxy.util.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,7 +49,7 @@ import net.solarnetwork.central.net.proxy.service.DynamicPortRegistrar;
 import net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer;
 import net.solarnetwork.central.net.proxy.service.impl.SimplePrincipalMapping;
 import net.solarnetwork.central.net.proxy.service.impl.SimpleProxyConfigurationProvider;
-import net.solarnetwork.central.net.proxy.util.CertificateUtils;
+import net.solarnetwork.central.security.CertificateUtils;
 
 /**
  * Testing configuration.
@@ -101,8 +101,8 @@ public class TestProxyServerConfig {
 				settings.bindPort());
 		server.setWireLogging(settings.isWireLoggingEnabled());
 		if ( settings.hasTlsSettings() ) {
-			KeyStore keyStore = CertificateUtils.serverKeyStore(settings.tls(),
-					NettyDynamicProxyServer.DEFAULT_KEYSTORE_ALIAS);
+			KeyStore keyStore = CertificateUtils.serverKeyStore(settings.tls().certificatePath(),
+					settings.tls().certificateKey(), NettyDynamicProxyServer.DEFAULT_KEYSTORE_ALIAS);
 			server.setKeyStore(keyStore);
 		}
 		server.registerConfigurationProvider(provider);

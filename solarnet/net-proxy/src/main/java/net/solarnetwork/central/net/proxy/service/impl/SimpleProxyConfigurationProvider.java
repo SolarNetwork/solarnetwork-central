@@ -23,7 +23,7 @@
 package net.solarnetwork.central.net.proxy.service.impl;
 
 import static java.util.stream.Collectors.joining;
-import static net.solarnetwork.central.net.proxy.util.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.security.KeyStore;
@@ -44,9 +44,9 @@ import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
 import net.solarnetwork.central.net.proxy.domain.ProxyConnectionSettings;
 import net.solarnetwork.central.net.proxy.service.DynamicPortRegistrar;
 import net.solarnetwork.central.net.proxy.service.ProxyConfigurationProvider;
-import net.solarnetwork.central.net.proxy.util.CertificateUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StringUtils;
 

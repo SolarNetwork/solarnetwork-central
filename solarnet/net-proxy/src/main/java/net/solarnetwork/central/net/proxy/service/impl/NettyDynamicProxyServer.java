@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.net.proxy.service.impl;
 
-import static net.solarnetwork.central.net.proxy.util.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;

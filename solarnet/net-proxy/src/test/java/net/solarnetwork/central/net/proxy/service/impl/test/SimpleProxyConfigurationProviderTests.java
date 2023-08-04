@@ -23,7 +23,7 @@
 package net.solarnetwork.central.net.proxy.service.impl.test;
 
 import static java.util.Arrays.asList;
-import static net.solarnetwork.central.net.proxy.util.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;

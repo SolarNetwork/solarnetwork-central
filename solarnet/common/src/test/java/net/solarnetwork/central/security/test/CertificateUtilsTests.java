@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.net.proxy.util.test;
+package net.solarnetwork.central.security.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -36,8 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
-import net.solarnetwork.central.net.proxy.config.TlsServerSettings;
-import net.solarnetwork.central.net.proxy.util.CertificateUtils;
+import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
@@ -87,10 +86,9 @@ public class CertificateUtilsTests {
 		// GIVEN
 		Path certPath = Path.of(getClass().getResource("test-server-01.fullchain").toURI());
 		Path keyPath = Path.of(getClass().getResource("test-server-01.key").toURI());
-		final TlsServerSettings settings = new TlsServerSettings(certPath, keyPath, "required");
 
 		// WHEN
-		KeyStore result = CertificateUtils.serverKeyStore(settings, "server");
+		KeyStore result = CertificateUtils.serverKeyStore(certPath, keyPath, "server");
 
 		// THEN
 		then(result).as("Key store created").isNotNull();

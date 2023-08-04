@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.net.proxy.util;
+package net.solarnetwork.central.security;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.security.auth.x500.X500Principal.RFC2253;
@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -51,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import net.solarnetwork.central.net.proxy.config.TlsServerSettings;
 import net.solarnetwork.service.CertificateException;
 
 /**
@@ -152,31 +152,31 @@ public final class CertificateUtils {
 	/**
 	 * Create a new key store from TLS server settings.
 	 * 
-	 * @param settings
-	 *        the settings
+	 * @param certificatePath
+	 *        the path to the PEM encoded certificate file
+	 * @param certificateKey
+	 *        the path to the PEM encoded, unencrypted private key
 	 * @param alias
-	 *        the key store alias to use for the server certificate
+	 *        the key store alias to use for the certificate
 	 * @return the key store, or {@literal null} if no settings are available
 	 * @throws net.solarnetwork.service.CertificateException
 	 *         if an error occurs initializing the key store
 	 */
-	public static KeyStore serverKeyStore(TlsServerSettings settings, String alias)
+	public static KeyStore serverKeyStore(Path certificatePath, Path certificateKey, String alias)
 			throws net.solarnetwork.service.CertificateException {
-		if ( settings == null || settings.certificatePath() == null
-				|| settings.certificateKey() == null ) {
+		if ( certificatePath == null || certificateKey == null || alias == null ) {
 			return null;
 		}
-
 		X509Certificate[] certs;
 		try {
-			certs = parsePemCertificates(Files.newBufferedReader(settings.certificatePath(), UTF_8));
+			certs = parsePemCertificates(Files.newBufferedReader(certificatePath, UTF_8));
 		} catch ( IOException e ) {
 			throw new net.solarnetwork.service.CertificateException(
-					"Error reading server certificate path [%s]: %s"
-							.formatted(settings.certificatePath(), e.toString()));
+					"Error reading server certificate path [%s]: %s".formatted(certificatePath,
+							e.toString()));
 		}
 
-		try (Reader reader = Files.newBufferedReader(settings.certificateKey());
+		try (Reader reader = Files.newBufferedReader(certificateKey);
 				PemReader pemReader = new PemReader(reader)) {
 			KeyStore result = KeyStore.getInstance(KeyStore.getDefaultType());
 			result.load(null);
@@ -192,7 +192,7 @@ public final class CertificateUtils {
 			return result;
 		} catch ( Exception e ) {
 			throw new net.solarnetwork.service.CertificateException(
-					"Error initializing server TLS key store.", e);
+					"Error initializing certificate key store.", e);
 		}
 	}
 
