@@ -218,7 +218,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 			try {
 				serverCommand = cmd;
 				server = pb.start();
-				log.info("Started dynamic echo server {} with command: {}", server.pid(),
+				log.info("Started dynamic external server {} with command: {}", server.pid(),
 						Arrays.stream(cmd).collect(joining(" ")));
 				try {
 					Thread.sleep(200); // give server a chance to start listening; could make time configurable
@@ -235,7 +235,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 		@Override
 		public synchronized void serviceDidShutdown() {
 			if ( server != null && server.isAlive() ) {
-				log.info("Stopping dynamic echo server {} [{}]", server.pid(),
+				log.info("Stopping dynamic external server {} [{}]", server.pid(),
 						Arrays.stream(serverCommand).collect(joining(" ")));
 				server.destroy();
 				server = null;
