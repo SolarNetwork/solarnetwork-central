@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.net.proxy.service.impl;
 
+import static net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer.SSL_SESSION_PROXY_SETTINGS_KEY;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -30,66 +31,100 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOption;
-import net.solarnetwork.central.net.proxy.domain.ProxyConfiguration;
-import net.solarnetwork.util.ObjectUtils;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import net.solarnetwork.central.net.proxy.domain.ProxyConnectionSettings;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Proxy frontend handler.
+ * 
+ * <p>
+ * This handler expects a {@link SslHandler} to be available in the channel
+ * context's pipeline, and for that handler's engine's {@code SSLSession} to
+ * have a {@link ProxyConnectionSettings} instance available on the
+ * {@link NettyDynamicProxyServer#SSL_SESSION_PROXY_SETTINGS_KEY
+ * SSL_SESSION_PROXY_SETTINGS_KEY} key. If the settings instance also implements
+ * {@link ServiceLifecycleObserver}, then
+ * {@link ServiceLifecycleObserver#serviceDidStartup() serviceDidStartup()} will
+ * be called <b>before</b> the destination server connection is attempted. This
+ * gives the settings a change to dynamically allocate a server. The
+ * {@link ServiceLifecycleObserver#serviceDidShutdown() serviceDidShutdown()}
+ * method will be called <b>after</b> the connection is closed.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
-	private final ProxyConfiguration config;
-
+	private Bootstrap b;
 	private Channel outboundChannel;
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param config
-	 *        the configuration
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
 	 */
-	public ProxyFrontendHandler(ProxyConfiguration config) {
+	public ProxyFrontendHandler() {
 		super();
-		this.config = ObjectUtils.requireNonNullArgument(config, "config");
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		if ( evt instanceof SslHandshakeCompletionEvent hs && hs.isSuccess() ) {
+			// get proxy settings from SSL session
+			final Channel inboundChannel = ctx.channel();
+			final SslHandler ssl = inboundChannel.pipeline().get(SslHandler.class);
+			ProxyConnectionSettings settings = (ssl != null
+					? (ProxyConnectionSettings) ssl.engine().getSession()
+							.getValue(SSL_SESSION_PROXY_SETTINGS_KEY)
+					: null);
+			if ( settings == null ) {
+				// TODO: freak out
+				return;
+			}
+
+			if ( settings instanceof ServiceLifecycleObserver obs ) {
+				obs.serviceDidStartup();
+			}
+			ChannelFuture f = b.connect(settings.destinationHost(), settings.destinationPort());
+			outboundChannel = f.channel();
+			f.addListener(new ChannelFutureListener() {
+
+				@Override
+				public void operationComplete(ChannelFuture future) {
+					if ( !future.isSuccess() ) {
+						// Close the connection if the destination connection attempt failed
+						inboundChannel.close();
+					}
+				}
+			});
+			if ( settings instanceof ServiceLifecycleObserver obs ) {
+				outboundChannel.closeFuture().addListener((close) -> {
+					obs.serviceDidShutdown();
+				});
+			}
+		}
+		super.userEventTriggered(ctx, evt);
 	}
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) {
 		final Channel inboundChannel = ctx.channel();
 
-		// connect to destination server
-		Bootstrap b = new Bootstrap();
+		b = new Bootstrap();
 		// @formatter:off
 		b.group(inboundChannel.eventLoop())
 			.channel(ctx.channel().getClass())
 			.handler(new ProxyBackendHandler(inboundChannel))
 			.option(ChannelOption.AUTO_READ, false);
 		// @formatter:off
-		ChannelFuture f = b.connect(config.destinationHost(), config.destinationPort());
-		outboundChannel = f.channel();
-		f.addListener(new ChannelFutureListener() {
-
-			@Override
-			public void operationComplete(ChannelFuture future) {
-				if ( future.isSuccess() ) {
-					// connection complete start to read first data
-					inboundChannel.read();
-				} else {
-					// Close the connection if the connection attempt has failed.
-					inboundChannel.close();
-				}
-			}
-		});
+		
+		inboundChannel.read(); // to start TLS handshake
 	}
 
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, Object msg) {
-		if ( outboundChannel.isActive() ) {
+		if ( outboundChannel != null && outboundChannel.isActive() ) {
 			outboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
 
 				@Override

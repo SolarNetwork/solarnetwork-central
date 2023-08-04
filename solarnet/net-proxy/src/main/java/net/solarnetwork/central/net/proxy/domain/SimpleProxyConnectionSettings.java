@@ -27,12 +27,19 @@ import java.security.KeyStore;
 /**
  * Simple implementation of {@link ProxyConnectionSettings}.
  * 
+ * @param connectionRequest
+ *        the original connection request
  * @param clientTrustStore
  *        the client trust store
+ * @param destinationHost
+ *        the destination host
+ * @param destinationPort
+ *        the destination port
  * @author matt
  * @version 1.0
  */
-public record SimpleProxyConnectionSettings(KeyStore clientTrustStore)
+public record SimpleProxyConnectionSettings(ProxyConnectionRequest connectionRequest,
+		KeyStore clientTrustStore, String destinationHost, int destinationPort)
 		implements ProxyConnectionSettings {
 
 }

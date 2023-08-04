@@ -44,9 +44,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -60,12 +62,11 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import net.solarnetwork.central.net.proxy.domain.ProxyConfiguration;
 import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
+import net.solarnetwork.central.net.proxy.domain.ProxyConnectionSettings;
 import net.solarnetwork.central.net.proxy.domain.SimpleProxyConnectionRequest;
 import net.solarnetwork.central.net.proxy.service.DynamicProxyServer;
 import net.solarnetwork.central.net.proxy.service.ProxyConfigurationProvider;
-import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
@@ -75,13 +76,16 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @version 1.0
  */
 public class NettyDynamicProxyServer
-		implements DynamicProxyServer, ServiceLifecycleObserver, X509TrustManager, X509KeyManager {
+		implements DynamicProxyServer, ServiceLifecycleObserver, X509KeyManager {
 
 	/** The {@code keyStoreAlias} property default value. */
 	public static final String DEFAULT_KEYSTORE_ALIAS = "server";
 
 	/** The wire-level logger name. */
 	public static final String WIRE_LOG_NAME = "net.solarnetwork.central.net.proxy.WIRE";
+
+	/** The SSL session key for the proxy connection settings. */
+	public static final String SSL_SESSION_PROXY_SETTINGS_KEY = "ProxyConnectionSettings";
 
 	private static final Logger log = LoggerFactory.getLogger(NettyDynamicProxyServer.class);
 
@@ -173,8 +177,8 @@ public class NettyDynamicProxyServer
 			ServerBootstrap b = new ServerBootstrap();
 			SslContext sslContext = null;
 			if ( keyStore != null ) {
-				sslContext = SslContextBuilder.forServer(this).trustManager(this).protocols("TLSv1.3")
-						.clientAuth(ClientAuth.REQUIRE).build();
+				sslContext = SslContextBuilder.forServer(this).trustManager(new InternalTrustManager())
+						.protocols("TLSv1.3").clientAuth(ClientAuth.REQUIRE).build();
 			}
 
 			// @formatter:off
@@ -223,19 +227,7 @@ public class NettyDynamicProxyServer
 			if ( wireLogging ) {
 				ch.pipeline().addLast(new LoggingHandler(WIRE_LOG_NAME));
 			}
-			// TODO: front end needs to be dynamic based on client cert
-			ch.pipeline().addLast(new ProxyFrontendHandler(new ProxyConfiguration() {
-
-				@Override
-				public int destinationPort() {
-					return 2000;
-				}
-
-				@Override
-				public String destinationHost() {
-					return "127.0.0.1";
-				}
-			}));
+			ch.pipeline().addLast(new ProxyFrontendHandler());
 		}
 	}
 
@@ -292,68 +284,103 @@ public class NettyDynamicProxyServer
 		return null;
 	}
 
-	@Override
-	public void checkClientTrusted(X509Certificate[] chain, String authType)
-			throws CertificateException {
-		requireNonEmptyArgument(chain, "chain");
-		log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
-		chain[0].checkValidity();
-		for ( ProxyConfigurationProvider provider : providers ) {
-			Iterable<X509Certificate> issuerCerts = provider.acceptedIdentityIssuers();
-			if ( issuerCerts != null ) {
-				for ( X509Certificate issuerCert : issuerCerts ) {
-					for ( X509Certificate clientCert : chain ) {
-						if ( clientCert.getIssuerX500Principal()
-								.equals(issuerCert.getSubjectX500Principal()) ) {
-							ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null, chain);
-							try {
-								if ( Boolean.TRUE.equals(provider.authorize(req)) ) {
-									return;
+	private final class InternalTrustManager extends X509ExtendedTrustManager {
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] chain, String authType)
+				throws CertificateException {
+			checkClientTrusted(chain, authType, (SSLEngine) null);
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] chain, String authType)
+				throws CertificateException {
+			throw new UnsupportedOperationException();
+		}
+
+		private static final X509Certificate[] EMPTY_CERT_ARRAY = new X509Certificate[0];
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			/*- Could returns known issuers, but over time the list can grow unbounded
+			 	and this would "leak" information about supported issuers.
+			List<X509Certificate> result = new ArrayList<>(32);
+			for ( ProxyConfigurationProvider provider : providers ) {
+				Iterable<X509Certificate> certs = provider.acceptedIdentityIssuers();
+				if ( certs != null ) {
+					for ( X509Certificate cert : certs ) {
+						result.add(cert);
+					}
+				}
+			}
+			return result.toArray(X509Certificate[]::new);
+			*/
+			return EMPTY_CERT_ARRAY;
+		}
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket)
+				throws CertificateException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+				throws CertificateException {
+			requireNonEmptyArgument(chain, "chain");
+			log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
+			chain[0].checkValidity();
+			for ( ProxyConfigurationProvider provider : providers ) {
+				Iterable<X509Certificate> issuerCerts = provider.acceptedIdentityIssuers();
+				if ( issuerCerts != null ) {
+					for ( X509Certificate issuerCert : issuerCerts ) {
+						for ( X509Certificate clientCert : chain ) {
+							if ( clientCert.getIssuerX500Principal()
+									.equals(issuerCert.getSubjectX500Principal()) ) {
+								ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null,
+										chain);
+								try {
+									ProxyConnectionSettings settings = provider.authorize(req);
+									if ( settings != null ) {
+										if ( engine != null ) {
+											SSLSession session = engine.getSession();
+											session.putValue(SSL_SESSION_PROXY_SETTINGS_KEY, settings);
+											return;
+										}
+										throw new CertificateException("Internal TLS misconfiguration.");
+									}
+								} catch ( Exception e ) {
+									Throwable cause = e.getCause() != null ? e.getCause() : e;
+									log.warn("Unauthorized client certificate [{}]: {}",
+											chain[0].getSubjectX500Principal().getName(), e.toString());
+									if ( cause instanceof CertificateException ce ) {
+										throw ce;
+									}
+									throw new CertificateException("Client authorization failed.", e);
 								}
-							} catch ( AuthorizationException e ) {
-								Throwable cause = e.getCause() != null ? e.getCause() : e;
-								log.warn("Unauthorized client certificate [{}]: {}",
-										chain[0].getSubjectX500Principal().getName(), e.toString());
-								if ( cause instanceof CertificateException ce ) {
-									throw ce;
-								}
-								throw new CertificateException("Client authorization failed.", e);
 							}
 						}
 					}
 				}
 			}
+			log.warn(
+					"Unauthorized client certificate [{}] (not supported by any proxy configuration provider)",
+					chain[0].getSubjectX500Principal().getName());
+			throw new CertificateException("Unauthorized client certificate.");
 		}
-		log.warn(
-				"Unauthorized client certificate [{}] (not supported by any proxy configuration provider)",
-				chain[0].getSubjectX500Principal().getName());
-		throw new CertificateException("Unauthorized client certificate.");
-	}
 
-	@Override
-	public void checkServerTrusted(X509Certificate[] chain, String authType)
-			throws CertificateException {
-		// not implemented
-	}
-
-	private static final X509Certificate[] EMPTY_CERT_ARRAY = new X509Certificate[0];
-
-	@Override
-	public X509Certificate[] getAcceptedIssuers() {
-		/*- Could returns known issuers, but over time the list can grow unbounded
-		 	and this would "leak" information about supported issuers.
-		List<X509Certificate> result = new ArrayList<>(32);
-		for ( ProxyConfigurationProvider provider : providers ) {
-			Iterable<X509Certificate> certs = provider.acceptedIdentityIssuers();
-			if ( certs != null ) {
-				for ( X509Certificate cert : certs ) {
-					result.add(cert);
-				}
-			}
+		@Override
+		public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket)
+				throws CertificateException {
+			throw new UnsupportedOperationException();
 		}
-		return result.toArray(X509Certificate[]::new);
-		*/
-		return EMPTY_CERT_ARRAY;
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine)
+				throws CertificateException {
+			throw new UnsupportedOperationException();
+		}
+
 	}
 
 	/**

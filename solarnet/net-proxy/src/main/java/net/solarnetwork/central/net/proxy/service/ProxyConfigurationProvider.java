@@ -36,7 +36,15 @@ import net.solarnetwork.central.security.AuthorizationException;
 public interface ProxyConfigurationProvider {
 
 	/**
-	 * Authorize a connection request.
+	 * Get a list of accepted identity issuers.
+	 * 
+	 * @return the accepted issuers
+	 */
+	Iterable<X509Certificate> acceptedIdentityIssuers();
+
+	/**
+	 * Authorize a connection request, returning appropriate connection settings
+	 * for the proxy destination.
 	 * 
 	 * @param request
 	 *        the request information
@@ -47,28 +55,6 @@ public interface ProxyConfigurationProvider {
 	 *         other providers for handling and the client connection is denied
 	 *         and closed
 	 */
-	Boolean authorize(ProxyConnectionRequest request) throws AuthorizationException;
-
-	/**
-	 * Get connection settings for a connection request.
-	 * 
-	 * @param request
-	 *        the request information
-	 * @return the settings, or {@literal null} if none found but the request
-	 *         can be passed to another provider for possible handling
-	 * @throws AuthorizationException
-	 *         if the request is not authorized and should not be passed to any
-	 *         other providers for handling and the client connection is denied
-	 *         and closed
-	 */
-	ProxyConnectionSettings settingsForRequest(ProxyConnectionRequest request)
-			throws AuthorizationException;
-
-	/**
-	 * Get a list of accepted identity issuers.
-	 * 
-	 * @return the accepted issuers
-	 */
-	Iterable<X509Certificate> acceptedIdentityIssuers();
+	ProxyConnectionSettings authorize(ProxyConnectionRequest request) throws AuthorizationException;
 
 }

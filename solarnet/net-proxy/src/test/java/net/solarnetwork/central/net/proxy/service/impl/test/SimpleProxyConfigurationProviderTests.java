@@ -112,7 +112,7 @@ public class SimpleProxyConfigurationProviderTests {
 	}
 
 	@Test
-	public void settingsForRequest() throws Exception {
+	public void authorize() throws Exception {
 		// GIVEN
 		final String principal = UUID.randomUUID().toString();
 
@@ -131,7 +131,7 @@ public class SimpleProxyConfigurationProviderTests {
 		// WHEN
 		X509Certificate[] ident = new X509Certificate[] { clientSignedCert };
 		SimpleProxyConnectionRequest req = new SimpleProxyConnectionRequest(principal, ident);
-		ProxyConnectionSettings conf = service.settingsForRequest(req);
+		ProxyConnectionSettings conf = service.authorize(req);
 
 		// THEN
 		// @formatter:off

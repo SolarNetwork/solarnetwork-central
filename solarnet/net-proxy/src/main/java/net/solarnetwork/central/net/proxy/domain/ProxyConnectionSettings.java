@@ -23,14 +23,29 @@
 package net.solarnetwork.central.net.proxy.domain;
 
 import java.security.KeyStore;
+import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Proxy connection settings.
  * 
+ * <p>
+ * Note if an implementation of {@link ProxyConnectionSettings} implements
+ * {@link ServiceLifecycleObserver} those methods will be called before the
+ * destination connection is opened and then after the destination connection
+ * closes.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
-public interface ProxyConnectionSettings {
+public interface ProxyConnectionSettings extends ProxyConfiguration {
+
+	/**
+	 * Get the original connection request.
+	 * 
+	 * @return the connection request
+	 */
+	ProxyConnectionRequest connectionRequest();
 
 	/**
 	 * Get a client key store for trust validation.
