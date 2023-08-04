@@ -32,12 +32,18 @@ import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorResult;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.PKIXParameters;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -187,6 +193,32 @@ public final class CertificateUtils {
 		} catch ( Exception e ) {
 			throw new net.solarnetwork.service.CertificateException(
 					"Error initializing server TLS key store.", e);
+		}
+	}
+
+	/**
+	 * Validate a certificate chain.
+	 * 
+	 * @param trustStore
+	 *        the trust store containing all available trusted CA certificates
+	 * @param chain
+	 *        the certificate chain to validate
+	 * @return the validation result, if successful
+	 * @throws net.solarnetwork.service.CertificateException
+	 *         if validation fails for any reason
+	 */
+	public static PKIXCertPathValidatorResult validateCertificateChain(KeyStore trustStore,
+			X509Certificate[] chain) throws net.solarnetwork.service.CertificateException {
+		try {
+			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			CertPath path = cf.generateCertPath(Arrays.asList(chain));
+			PKIXParameters pkixParams = new PKIXParameters(trustStore);
+			pkixParams.setRevocationEnabled(false); // possibly enable in future
+			CertPathValidator validator = CertPathValidator.getInstance("PKIX");
+			CertPathValidatorResult result = validator.validate(path, pkixParams);
+			return (PKIXCertPathValidatorResult) result;
+		} catch ( Exception e ) {
+			throw new net.solarnetwork.service.CertificateException(e);
 		}
 	}
 

@@ -95,7 +95,8 @@ public class TestProxyServerConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public NettyDynamicProxyServer testProxyServer(DynamicProxyServerSettings settings) {
+	public NettyDynamicProxyServer testProxyServer(DynamicProxyServerSettings settings,
+			SimpleProxyConfigurationProvider provider) {
 		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindAddress(),
 				settings.bindPort());
 		server.setWireLogging(settings.isWireLoggingEnabled());
@@ -104,6 +105,7 @@ public class TestProxyServerConfig {
 					NettyDynamicProxyServer.DEFAULT_KEYSTORE_ALIAS);
 			server.setKeyStore(keyStore);
 		}
+		server.registerConfigurationProvider(provider);
 		return server;
 	}
 

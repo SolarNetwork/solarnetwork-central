@@ -27,6 +27,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -38,7 +40,9 @@ import net.solarnetwork.central.net.proxy.domain.ProxyConnectionSettings;
 import net.solarnetwork.central.net.proxy.domain.SimpleProxyConnectionSettings;
 import net.solarnetwork.central.net.proxy.service.DynamicPortRegistrar;
 import net.solarnetwork.central.net.proxy.service.ProxyConfigurationProvider;
+import net.solarnetwork.central.net.proxy.util.CertificateUtils;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 
 /**
  * Simple proxy configuration provider designed for testing.
@@ -71,14 +75,40 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	}
 
 	@Override
+	public Boolean authorize(ProxyConnectionRequest request) throws AuthorizationException {
+		final String ident = requestIdentity(request);
+		if ( log.isDebugEnabled() ) {
+			log.debug("Connection authorization request received for: [{}]", request.principal(), ident);
+		}
+		final X509Certificate[] clientChain = request.principalIdentity();
+
+		for ( SimplePrincipalMapping mapping : userMappings ) {
+			if ( mapping.subjectUserMapping().containsKey(ident) ) {
+				KeyStore trustStore = mapping.trustStore();
+				try {
+					PKIXCertPathValidatorResult vr = CertificateUtils
+							.validateCertificateChain(trustStore, clientChain);
+					if ( log.isInfoEnabled() ) {
+						TrustAnchor ta = vr.getTrustAnchor();
+						log.info(
+								"Validated connection authorization request identity [{}], trusted by [{}]",
+								ident, ta.getTrustedCert().getSubjectX500Principal());
+					}
+					return Boolean.TRUE;
+				} catch ( Exception e ) {
+					throw new AuthorizationException(Reason.ACCESS_DENIED, ident, e);
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public ProxyConnectionSettings settingsForRequest(ProxyConnectionRequest request)
 			throws AuthorizationException {
-		final String ident = request.principalIdentity() != null
-				&& request.principalIdentity().length > 0
-						? canonicalSubjectDn(request.principalIdentity()[0])
-						: request.principal();
+		final String ident = requestIdentity(request);
 		if ( log.isDebugEnabled() ) {
-			log.debug("Connection request received for '{}'; identity: {}", request.principal(), ident);
+			log.debug("Connection settings request received for [{}]", request.principal(), ident);
 		}
 		for ( SimplePrincipalMapping mapping : userMappings ) {
 			if ( mapping.subjectUserMapping().containsKey(ident) ) {
@@ -86,6 +116,14 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 			}
 		}
 		return null;
+	}
+
+	private String requestIdentity(ProxyConnectionRequest request) {
+		final String ident = request.principalIdentity() != null
+				&& request.principalIdentity().length > 0
+						? canonicalSubjectDn(request.principalIdentity()[0])
+						: request.principal();
+		return ident;
 	}
 
 	@Override

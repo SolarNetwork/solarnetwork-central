@@ -57,11 +57,15 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import net.solarnetwork.central.net.proxy.domain.ProxyConfiguration;
+import net.solarnetwork.central.net.proxy.domain.ProxyConnectionRequest;
+import net.solarnetwork.central.net.proxy.domain.SimpleProxyConnectionRequest;
 import net.solarnetwork.central.net.proxy.service.DynamicProxyServer;
 import net.solarnetwork.central.net.proxy.service.ProxyConfigurationProvider;
+import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
@@ -170,7 +174,7 @@ public class NettyDynamicProxyServer
 			SslContext sslContext = null;
 			if ( keyStore != null ) {
 				sslContext = SslContextBuilder.forServer(this).trustManager(this).protocols("TLSv1.3")
-						.build();
+						.clientAuth(ClientAuth.REQUIRE).build();
 			}
 
 			// @formatter:off
@@ -293,8 +297,37 @@ public class NettyDynamicProxyServer
 			throws CertificateException {
 		requireNonEmptyArgument(chain, "chain");
 		log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
-		// TODO Auto-generated method stub
-
+		chain[0].checkValidity();
+		for ( ProxyConfigurationProvider provider : providers ) {
+			Iterable<X509Certificate> issuerCerts = provider.acceptedIdentityIssuers();
+			if ( issuerCerts != null ) {
+				for ( X509Certificate issuerCert : issuerCerts ) {
+					for ( X509Certificate clientCert : chain ) {
+						if ( clientCert.getIssuerX500Principal()
+								.equals(issuerCert.getSubjectX500Principal()) ) {
+							ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null, chain);
+							try {
+								if ( Boolean.TRUE.equals(provider.authorize(req)) ) {
+									return;
+								}
+							} catch ( AuthorizationException e ) {
+								Throwable cause = e.getCause() != null ? e.getCause() : e;
+								log.warn("Unauthorized client certificate [{}]: {}",
+										chain[0].getSubjectX500Principal().getName(), e.toString());
+								if ( cause instanceof CertificateException ce ) {
+									throw ce;
+								}
+								throw new CertificateException("Client authorization failed.", e);
+							}
+						}
+					}
+				}
+			}
+		}
+		log.warn(
+				"Unauthorized client certificate [{}] (not supported by any proxy configuration provider)",
+				chain[0].getSubjectX500Principal().getName());
+		throw new CertificateException("Unauthorized client certificate.");
 	}
 
 	@Override
@@ -303,8 +336,12 @@ public class NettyDynamicProxyServer
 		// not implemented
 	}
 
+	private static final X509Certificate[] EMPTY_CERT_ARRAY = new X509Certificate[0];
+
 	@Override
 	public X509Certificate[] getAcceptedIssuers() {
+		/*- Could returns known issuers, but over time the list can grow unbounded
+		 	and this would "leak" information about supported issuers.
 		List<X509Certificate> result = new ArrayList<>(32);
 		for ( ProxyConfigurationProvider provider : providers ) {
 			Iterable<X509Certificate> certs = provider.acceptedIdentityIssuers();
@@ -315,6 +352,8 @@ public class NettyDynamicProxyServer
 			}
 		}
 		return result.toArray(X509Certificate[]::new);
+		*/
+		return EMPTY_CERT_ARRAY;
 	}
 
 	/**

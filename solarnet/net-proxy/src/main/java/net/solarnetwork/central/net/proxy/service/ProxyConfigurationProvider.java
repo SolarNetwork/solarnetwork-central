@@ -36,6 +36,20 @@ import net.solarnetwork.central.security.AuthorizationException;
 public interface ProxyConfigurationProvider {
 
 	/**
+	 * Authorize a connection request.
+	 * 
+	 * @param request
+	 *        the request information
+	 * @return {@literal true} if the request is authorized, or anything else to
+	 *         allow passing to other providers for authorization
+	 * @throws AuthorizationException
+	 *         if the request is not authorized and should not be passed to any
+	 *         other providers for handling and the client connection is denied
+	 *         and closed
+	 */
+	Boolean authorize(ProxyConnectionRequest request) throws AuthorizationException;
+
+	/**
 	 * Get connection settings for a connection request.
 	 * 
 	 * @param request
