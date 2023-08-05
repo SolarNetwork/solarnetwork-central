@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
+import net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.net.proxy.config.SolarNetCommonNetProxyConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
@@ -51,6 +52,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetCommonNetProxyConfiguration.class,
+		SolarNetDnp3Configuration.class,
 		SolarDnp3App.class,
 })
 @Import({
