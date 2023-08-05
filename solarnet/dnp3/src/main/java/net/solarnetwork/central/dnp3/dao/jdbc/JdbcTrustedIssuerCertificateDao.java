@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectTrustedIssuerCertificate;
@@ -103,10 +104,14 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 		throw new UnsupportedOperationException();
 	}
 
+	private static final String TABLE_NAME = "solardnp3.dnp3_ca_cert";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "subject_dn" };
+
 	@Override
 	public void delete(TrustedIssuerCertificate entity) {
-		// TODO Auto-generated method stub
-
+		DeleteForCompositeKey sql = new DeleteForCompositeKey(
+				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
+		jdbcOps.update(sql);
 	}
 
 }

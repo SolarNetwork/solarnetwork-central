@@ -39,6 +39,24 @@ public class UserUuidPK extends BasePK
 
 	private static final long serialVersionUID = 417842772182618447L;
 
+	/**
+	 * A special "not a value" instance to be used for generated UUID values yet
+	 * to be generated.
+	 */
+	public static final UUID UNASSIGNED_UUID_ID = UUID
+			.fromString("00000000-0000-7000-b000-000000000000");
+
+	/**
+	 * Create a new instance using the "unassigned" UUID value.
+	 * 
+	 * @param userId
+	 *        the ID of the user to use
+	 * @return the new key instance
+	 */
+	public static UserUuidPK unassignedUuidKey(Long userId) {
+		return new UserUuidPK(userId, UNASSIGNED_UUID_ID);
+	}
+
 	private final Long userId;
 	private final UUID uuid;
 
@@ -133,6 +151,24 @@ public class UserUuidPK extends BasePK
 	@Override
 	public final UUID keyComponent2() {
 		return getUuid();
+	}
+
+	@Override
+	public final boolean keyComponentIsAssigned(int index) {
+		if ( index == 1 ) {
+			return (uuid != null && uuid != UNASSIGNED_UUID_ID);
+		}
+		return CompositeKey2.super.keyComponentIsAssigned(index);
+	}
+
+	/**
+	 * Test if the UUID is assigned.
+	 * 
+	 * @return {@literal true} if the entity ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	public final boolean uuidIsAssigned() {
+		return keyComponentIsAssigned(1);
 	}
 
 }

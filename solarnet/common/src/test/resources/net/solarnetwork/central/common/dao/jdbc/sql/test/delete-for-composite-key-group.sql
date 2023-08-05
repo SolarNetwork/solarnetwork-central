@@ -1,0 +1,2 @@
+DELETE FROM t
+WHERE a = ?
