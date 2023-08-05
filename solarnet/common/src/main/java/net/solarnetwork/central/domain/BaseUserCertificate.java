@@ -25,6 +25,7 @@ package net.solarnetwork.central.domain;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Objects;
@@ -33,6 +34,7 @@ import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.service.CertificateException;
 
 /**
  * Base user-related certificate entity.
@@ -225,6 +227,20 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 			return null;
 		}
 		return cert.getNotAfter().toInstant();
+	}
+
+	/**
+	 * Get the DER-encoded certificate data.
+	 * 
+	 * @return the certificate data
+	 */
+	public byte[] certificateData() {
+		final X509Certificate cert = getCertificate();
+		try {
+			return (cert != null ? cert.getEncoded() : null);
+		} catch ( CertificateEncodingException e ) {
+			throw new CertificateException(e);
+		}
 	}
 
 }

@@ -68,11 +68,43 @@ public final class CertificateUtils {
 	/** The {@code emailAddress} OID. */
 	public static final String EMAIL_ADDRESS_OID = "1.2.840.113549.1.9.1";
 
+	/** The X.509 certificate type. */
+	public static final String X509_CERTIFICATE_TYPE = "X.509";
+
 	private static final Map<String, String> CANONICAL_DN_MAPPING;
 	static {
 		Map<String, String> m = new HashMap<>(4);
 		m.put("1.2.840.113549.1.9.1", "emailAddress");
 		CANONICAL_DN_MAPPING = Collections.unmodifiableMap(m);
+	}
+
+	private static final CertificateFactory X509_CERT_FACTORY = defaultX509CertificateFactory();
+
+	private static CertificateFactory defaultX509CertificateFactory() {
+		try {
+			return CertificateFactory.getInstance(X509_CERTIFICATE_TYPE);
+		} catch ( Exception e ) {
+			// damn
+			return null;
+		}
+	}
+
+	/**
+	 * Get a certificate factory for X.509 certificates.
+	 * 
+	 * @return the factory
+	 * @throws CertificateException
+	 *         if unable to instantiate the factory
+	 */
+	public static CertificateFactory x509CertificateFactory() {
+		if ( X509_CERT_FACTORY != null ) {
+			return X509_CERT_FACTORY;
+		}
+		try {
+			return CertificateFactory.getInstance(X509_CERTIFICATE_TYPE);
+		} catch ( Exception e ) {
+			throw new CertificateException("Error obtaining X.509 certificate factory.", e);
+		}
 	}
 
 	/**

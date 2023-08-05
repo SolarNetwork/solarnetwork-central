@@ -37,10 +37,11 @@ import net.solarnetwork.domain.SortDescriptor;
  * Basic implementation of some core criteria APIs.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class BasicCoreCriteria extends SimplePagination implements PaginationCriteria, LocationCriteria,
-		NodeCriteria, SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria {
+public class BasicCoreCriteria extends SimplePagination
+		implements PaginationCriteria, LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria,
+		SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
@@ -49,6 +50,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 	private String[] tokenIds;
 	private SimpleLocation location;
 	private String searchFilter;
+	private Boolean enabled;
 
 	/**
 	 * Default constructor.
@@ -85,6 +87,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		result = prime * result + Arrays.hashCode(userIds);
 		result = prime * result + Objects.hashCode(location);
 		result = prime * result + Objects.hashCode(searchFilter);
+		result = prime * result + Objects.hashCode(enabled);
 		return result;
 	}
 
@@ -103,7 +106,8 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
 				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location)
-				&& Objects.equals(searchFilter, other.searchFilter);
+				&& Objects.equals(searchFilter, other.searchFilter)
+				&& Objects.equals(enabled, other.enabled);
 	}
 
 	/**
@@ -129,6 +133,7 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 			setUserIds(c.getUserIds());
 			setTokenIds(c.getTokenIds());
 			setSearchFilter(c.getSearchFilter());
+			setEnabled(c.getEnabled());
 		} else {
 			if ( criteria instanceof LocationCriteria c ) {
 				setLocationIds(c.getLocationIds());
@@ -148,6 +153,9 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 			}
 			if ( criteria instanceof SearchFilterCriteria c ) {
 				setSearchFilter(c.getSearchFilter());
+			}
+			if ( criteria instanceof EnabledCriteria c ) {
+				setEnabled(c.getEnabled());
 			}
 		}
 	}
@@ -429,6 +437,22 @@ public class BasicCoreCriteria extends SimplePagination implements PaginationCri
 					desc);
 		}).toList();
 		setSorts(sorts);
+	}
+
+	@Override
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * Set the enabled flag.
+	 * 
+	 * @param enabled
+	 *        the enabled to set
+	 * @since 1.3
+	 */
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
 	}
 
 }
