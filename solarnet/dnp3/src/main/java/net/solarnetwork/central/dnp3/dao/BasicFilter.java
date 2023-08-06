@@ -30,9 +30,46 @@ import net.solarnetwork.central.common.dao.BasicCoreCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria implements CertificateFilter {
+public class BasicFilter extends BasicCoreCriteria implements CertificateFilter, ServerFilter {
 
+	private Integer[] indexes;
 	private String[] subjectDns;
+	private Long[] serverIds;
+
+	@Override
+	public BasicFilter clone() {
+		return (BasicFilter) super.clone();
+	}
+
+	/**
+	 * Set the index.
+	 * 
+	 * @param index
+	 *        the index to set
+	 */
+	public void setIndex(Integer index) {
+		setIndexes(index != null ? new Integer[] { index } : null);
+	}
+
+	/**
+	 * Get the indexes
+	 * 
+	 * @return the indexes
+	 */
+	@Override
+	public Integer[] getIndexes() {
+		return indexes;
+	}
+
+	/**
+	 * Set the indexes.
+	 * 
+	 * @param indexes
+	 *        the indexes to set
+	 */
+	public void setIndexes(Integer[] indexes) {
+		this.indexes = indexes;
+	}
 
 	/**
 	 * Set the certificate subject DN.
@@ -41,7 +78,7 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter 
 	 *        the subject DN to set
 	 */
 	public void setSubjectDn(String subjectDn) {
-		setSubjectDns(new String[] { subjectDn });
+		setSubjectDns(subjectDn != null ? new String[] { subjectDn } : null);
 	}
 
 	/**
@@ -62,6 +99,36 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter 
 	 */
 	public void setSubjectDns(String[] subjectDns) {
 		this.subjectDns = subjectDns;
+	}
+
+	/**
+	 * Set the server ID.
+	 * 
+	 * @param serverId
+	 *        the server ID to set
+	 */
+	public void setServerId(Long serverId) {
+		setServerIds(serverId != null ? new Long[] { serverId } : null);
+	}
+
+	/**
+	 * Get the server IDs.
+	 * 
+	 * @return the server IDs
+	 */
+	@Override
+	public Long[] getServerIds() {
+		return serverIds;
+	}
+
+	/**
+	 * Set the server IDs.
+	 * 
+	 * @param serverIds
+	 *        the server IDs to set
+	 */
+	public void setServerIds(Long[] serverIds) {
+		this.serverIds = serverIds;
 	}
 
 }

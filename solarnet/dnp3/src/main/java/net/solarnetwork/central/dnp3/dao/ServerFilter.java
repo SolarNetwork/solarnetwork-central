@@ -1,5 +1,5 @@
 /* ==================================================================
- * CertificateCriteria.java - 5/08/2023 12:15:02 pm
+ * ServerFilter.java - 6/08/2023 6:12:49 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,45 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao;
+package net.solarnetwork.central.dnp3.dao;
+
+import net.solarnetwork.central.common.dao.EnabledCriteria;
+import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * Search criteria for certificate related data.
+ * A filter for DNP3 server-related certificates.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CertificateCriteria {
-
-	/**
-	 * Get the first subject DN.
-	 * 
-	 * <p>
-	 * This returns the first available subject DN from the
-	 * {@link #getSubjectDns()} array, or {@literal null} if not available.
-	 * </p>
-	 * 
-	 * @return the first subject DN, or {@literal null} if not available
-	 */
-	default String getSubjectDn() {
-		final String[] array = getSubjectDns();
-		return (array != null && array.length > 0 ? array[0] : null);
-	}
-
-	/**
-	 * Get an array of subject DNs.
-	 * 
-	 * @return array of subject DNs (may be {@literal null})
-	 */
-	String[] getSubjectDns();
-
-	/**
-	 * Test if this filter has any user certificate criteria.
-	 * 
-	 * @return {@literal true} if the subject DN is non-null
-	 */
-	default boolean hasCertificateCriteria() {
-		return getSubjectDn() != null;
-	}
+public interface ServerFilter
+		extends UserCriteria, ServerCriteria, IndexCriteria, EnabledCriteria, PaginationCriteria {
 
 }

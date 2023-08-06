@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserLongCompositePK.java - 11/08/2022 9:50:38 am
+ * LongIntegerCompositePK.java - 6/08/2023 9:57:28 am
  * 
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2023 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -27,59 +27,70 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable primary key for user-related entities using a Long entity key.
+ * Basic implementation of a Long, Long, String composite key.
  * 
  * @author matt
  * @version 1.0
  */
-public final class UserLongCompositePK extends BasePK
-		implements Serializable, Cloneable, Comparable<UserLongCompositePK>, CompositeKey2<Long, Long> {
+public final class UserLongStringCompositePK extends BasePK implements Serializable, Cloneable,
+		Comparable<UserLongStringCompositePK>, CompositeKey3<Long, Long, String> {
 
-	private static final long serialVersionUID = 2537083574768869025L;
+	private static final long serialVersionUID = 6089539799437151759L;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
-	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
+	public static final String UNASSIGNED_ENTITY_ID = "";
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
 	 * 
 	 * @param userId
-	 *        the ID of the user to use
+	 *        the user ID to use
+	 * @param groupId
+	 *        the ID of the group to use
 	 * @return the new key instance
 	 */
-	public static UserLongCompositePK unassignedEntityIdKey(Long userId) {
-		return new UserLongCompositePK(userId, UNASSIGNED_ENTITY_ID);
+	public static UserLongStringCompositePK unassignedEntityIdKey(Long userId, Long groupId) {
+		return new UserLongStringCompositePK(userId, groupId, UNASSIGNED_ENTITY_ID);
 	}
 
 	private final Long userId;
-	private final Long entityId;
+	private final Long groupId;
+	private final String entityId;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param userId
 	 *        the user ID
+	 * @param groupId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserLongCompositePK(Long userId, Long entityId) {
+	public UserLongStringCompositePK(Long userId, Long groupId, String entityId) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
+		this.groupId = requireNonNullArgument(groupId, "groupId");
 		this.entityId = requireNonNullArgument(entityId, "entityId");
 	}
 
 	@Override
-	public int compareTo(UserLongCompositePK o) {
+	public int compareTo(UserLongStringCompositePK o) {
 		if ( o == null ) {
 			return 1;
 		}
 
 		int comparison = userId.compareTo(o.userId);
+		if ( comparison != 0 ) {
+			return comparison;
+		}
+
+		comparison = groupId.compareTo(o.groupId);
 		if ( comparison != 0 ) {
 			return comparison;
 		}
@@ -90,12 +101,14 @@ public final class UserLongCompositePK extends BasePK
 	@Override
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("u=").append(userId);
+		buf.append(";g=").append(groupId);
 		buf.append(";i=").append(entityId);
 	}
 
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		buf.append("userId=").append(userId);
+		buf.append(", groupId=").append(groupId);
 		buf.append(", entityId=").append(entityId);
 	}
 
@@ -106,7 +119,7 @@ public final class UserLongCompositePK extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, entityId);
+		return Objects.hash(userId, groupId, entityId);
 	}
 
 	@Override
@@ -114,24 +127,25 @@ public final class UserLongCompositePK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserLongCompositePK) ) {
+		if ( !(obj instanceof UserLongStringCompositePK) ) {
 			return false;
 		}
-		UserLongCompositePK other = (UserLongCompositePK) obj;
-		return Objects.equals(userId, other.userId) && Objects.equals(entityId, other.entityId);
+		UserLongStringCompositePK other = (UserLongStringCompositePK) obj;
+		return Objects.equals(userId, other.userId) && Objects.equals(groupId, other.groupId)
+				&& Objects.equals(entityId, other.entityId);
 	}
 
 	/**
 	 * Get a short identifier string.
 	 * 
 	 * <p>
-	 * The format of the returned string is {@code (userId,entityId)}.
+	 * The format of the returned string is {@code (userId,groupId,entityId)}.
 	 * </p>
 	 * 
 	 * @return the identifier
 	 */
 	public String ident() {
-		return String.format("(%d,%d)", userId, entityId);
+		return String.format("(%d,%d,%d)", userId, groupId, entityId);
 	}
 
 	/**
@@ -144,11 +158,20 @@ public final class UserLongCompositePK extends BasePK
 	}
 
 	/**
+	 * Get the user ID.
+	 * 
+	 * @return the user ID
+	 */
+	public final Long getGroupId() {
+		return groupId;
+	}
+
+	/**
 	 * Get the entity ID.
 	 * 
 	 * @return the entity ID
 	 */
-	public final Long getEntityId() {
+	public final String getEntityId() {
 		return entityId;
 	}
 
@@ -159,15 +182,20 @@ public final class UserLongCompositePK extends BasePK
 
 	@Override
 	public final Long keyComponent2() {
+		return getGroupId();
+	}
+
+	@Override
+	public final String keyComponent3() {
 		return getEntityId();
 	}
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 1 ) {
+		if ( index == 2 ) {
 			return (entityId != null && entityId != UNASSIGNED_ENTITY_ID);
 		}
-		return CompositeKey2.super.keyComponentIsAssigned(index);
+		return CompositeKey3.super.keyComponentIsAssigned(index);
 	}
 
 	/**
@@ -177,7 +205,7 @@ public final class UserLongCompositePK extends BasePK
 	 *         {@literal false} if it is considered "not a value"
 	 */
 	public final boolean entityIdIsAssigned() {
-		return keyComponentIsAssigned(1);
+		return keyComponentIsAssigned(2);
 	}
 
 }

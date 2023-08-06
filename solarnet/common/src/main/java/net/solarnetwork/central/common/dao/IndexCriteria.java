@@ -1,5 +1,5 @@
 /* ==================================================================
- * CertificateCriteria.java - 5/08/2023 12:15:02 pm
+ * IndexCriteria.java - 5/08/2023 12:15:02 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -23,42 +23,42 @@
 package net.solarnetwork.central.common.dao;
 
 /**
- * Search criteria for certificate related data.
+ * Search criteria for indexed related data.
  * 
  * @author matt
  * @version 1.0
  */
-public interface CertificateCriteria {
+public interface IndexCriteria {
 
 	/**
-	 * Get the first subject DN.
+	 * Get the first index.
 	 * 
 	 * <p>
-	 * This returns the first available subject DN from the
-	 * {@link #getSubjectDns()} array, or {@literal null} if not available.
+	 * This returns the first available value from the {@link #getIndexes()}
+	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the first subject DN, or {@literal null} if not available
+	 * @return the first index, or {@literal null} if not available
 	 */
-	default String getSubjectDn() {
-		final String[] array = getSubjectDns();
+	default Integer getIndex() {
+		final Integer[] array = getIndexes();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
 
 	/**
-	 * Get an array of subject DNs.
+	 * Get an array of indexes.
 	 * 
-	 * @return array of subject DNs (may be {@literal null})
+	 * @return array of indexes (may be {@literal null})
 	 */
-	String[] getSubjectDns();
+	Integer[] getIndexes();
 
 	/**
-	 * Test if this filter has any user certificate criteria.
+	 * Test if this filter has any index criteria.
 	 * 
-	 * @return {@literal true} if the subject DN is non-null
+	 * @return {@literal true} if the index is non-null
 	 */
-	default boolean hasCertificateCriteria() {
-		return getSubjectDn() != null;
+	default boolean hasIndexCriteria() {
+		return getIndex() != null;
 	}
 
 }

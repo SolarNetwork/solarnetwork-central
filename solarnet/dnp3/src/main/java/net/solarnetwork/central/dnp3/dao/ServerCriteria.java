@@ -1,5 +1,5 @@
 /* ==================================================================
- * CertificateCriteria.java - 5/08/2023 12:15:02 pm
+ * ServerCriteria.java - 06/08/2023 12:52:35 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,45 +20,46 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.dao;
+package net.solarnetwork.central.dnp3.dao;
 
 /**
- * Search criteria for certificate related data.
+ * Search criteria for server related data.
  * 
  * @author matt
  * @version 1.0
+ * @since 2.8
  */
-public interface CertificateCriteria {
+public interface ServerCriteria {
 
 	/**
-	 * Get the first subject DN.
+	 * Get the first server ID.
 	 * 
 	 * <p>
-	 * This returns the first available subject DN from the
-	 * {@link #getSubjectDns()} array, or {@literal null} if not available.
+	 * This returns the first available server ID from the
+	 * {@link #getServerIds()} array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the first subject DN, or {@literal null} if not available
+	 * @return the first server ID, or {@literal null} if not available
 	 */
-	default String getSubjectDn() {
-		final String[] array = getSubjectDns();
+	default Long getServerId() {
+		final Long[] array = getServerIds();
 		return (array != null && array.length > 0 ? array[0] : null);
 	}
 
 	/**
-	 * Get an array of subject DNs.
+	 * Get an array of server IDs.
 	 * 
-	 * @return array of subject DNs (may be {@literal null})
+	 * @return array of server IDs (may be {@literal null})
 	 */
-	String[] getSubjectDns();
+	Long[] getServerIds();
 
 	/**
-	 * Test if this filter has any user certificate criteria.
+	 * Test if this filter has any server criteria.
 	 * 
-	 * @return {@literal true} if the subject DN is non-null
+	 * @return {@literal true} if the server ID is non-null
 	 */
-	default boolean hasCertificateCriteria() {
-		return getSubjectDn() != null;
+	default boolean hasServerCriteria() {
+		return getServerId() != null;
 	}
 
 }

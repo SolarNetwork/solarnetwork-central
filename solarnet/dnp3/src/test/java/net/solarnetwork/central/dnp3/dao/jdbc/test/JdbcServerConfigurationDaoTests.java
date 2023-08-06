@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcTrustedIssuerCertificateDaoTests.java - 5/08/2023 6:09:58 pm
+ * JdbcServerConfigurationTests.java - 6/08/2023 7:30:21 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -22,76 +22,77 @@
 
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
-import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allTrustedIssuerCertificateData;
-import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.newTrustedIssuerCertificate;
+import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerConfigurationData;
+import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.newServerConfiguration;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.dnp3.dao.jdbc.JdbcTrustedIssuerCertificateDao;
-import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
-import net.solarnetwork.central.dnp3.test.Dnp3TestUtils;
-import net.solarnetwork.central.domain.UserStringCompositePK;
+import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerConfigurationDao;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
-import net.solarnetwork.pki.bc.BCCertificateService;
 
 /**
- * Test cases for the {@link JdbcTrustedIssuerCertificateDao} class.
+ * Test cases for the {@link JdbcServerConfigurationDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
+public class JdbcServerConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
-	private JdbcTrustedIssuerCertificateDao dao;
+	private JdbcServerConfigurationDao dao;
 	private Long userId;
 
-	private TrustedIssuerCertificate last;
+	private ServerConfiguration last;
 
 	@BeforeEach
 	public void setup() {
-		dao = new JdbcTrustedIssuerCertificateDao(jdbcTemplate);
+		dao = new JdbcServerConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 	}
 
 	@Test
 	public void insert() {
 		// GIVEN
-		TrustedIssuerCertificate conf = newTrustedIssuerCertificate(userId, "test-ca-01.pem");
+		ServerConfiguration conf = newServerConfiguration(userId, UUID.randomUUID().toString());
 
 		// WHEN
-		UserStringCompositePK result = dao.create(userId, conf);
+		UserLongCompositePK result = dao.create(userId, conf);
 
 		// THEN
-		List<Map<String, Object>> data = allTrustedIssuerCertificateData(jdbcTemplate);
+
 		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserLongCompositePK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserLongCompositePK::getEntityId)
+			;
+
+		List<Map<String, Object>> data = allServerConfigurationData(jdbcTemplate);
 		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
 			.as("Row user ID")
 			.containsEntry("user_id", userId)
-			.as("Row subject DN")
-			.containsEntry("subject_dn", conf.getSubjectDn())
+			.as("Row ID generated")
+			.containsKey("id")
 			.as("Row creation date")
 			.containsEntry("created", Timestamp.from(conf.getCreated()))
 			.as("Row modification date")
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
-			.as("Row expires")
-			.containsEntry("expires", Timestamp.from(conf.getExpires()))
 			.as("Row enabled")
 			.containsEntry("enabled", conf.isEnabled())
-			.as("Row certificate data")
-			.containsEntry("cert", conf.certificateData())
+			.as("Row name")
+			.containsEntry("cname", conf.getName())
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -103,7 +104,7 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 		insert();
 
 		// WHEN
-		TrustedIssuerCertificate result = dao.get(last.getId());
+		ServerConfiguration result = dao.get(last.getId());
 
 		// THEN
 		then(result).as("Retrieved entity matches source").isEqualTo(last);
@@ -115,16 +116,16 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 		insert();
 
 		// WHEN
-		TrustedIssuerCertificate conf = last.copyWithId(last.getId());
+		ServerConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
 		conf.setModified(Instant.now().plusMillis(474));
-		conf.setCertificate(Dnp3TestUtils.certificatesFromResource("test-client-01.pem")[0]);
+		conf.setName(UUID.randomUUID().toString());
 
-		UserStringCompositePK result = dao.save(conf);
-		TrustedIssuerCertificate updated = dao.get(result);
+		UserLongCompositePK result = dao.save(conf);
+		ServerConfiguration updated = dao.get(result);
 
 		// THEN
-		List<Map<String, Object>> data = allTrustedIssuerCertificateData(jdbcTemplate);
+		List<Map<String, Object>> data = allServerConfigurationData(jdbcTemplate);
 		then(data).as("Table has 1 row").hasSize(1);
 		// @formatter:off
 		then(updated).as("Retrieved entity matches updated source")
@@ -143,7 +144,7 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 		dao.delete(last);
 
 		// THEN
-		List<Map<String, Object>> data = allTrustedIssuerCertificateData(jdbcTemplate);
+		List<Map<String, Object>> data = allServerConfigurationData(jdbcTemplate);
 		then(data).as("Row deleted from db").isEmpty();
 	}
 
@@ -153,18 +154,7 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<TrustedIssuerCertificate> confs = new ArrayList<>(count);
-
-		final BCCertificateService certService = new BCCertificateService();
-		final KeyPairGenerator keyGen;
-		try {
-			keyGen = KeyPairGenerator.getInstance("RSA");
-		} catch ( NoSuchAlgorithmException e ) {
-			throw new RuntimeException(e);
-		}
-		keyGen.initialize(2048, SecureRandom.getInstanceStrong());
-
-		final String caDnTemplate = "CN=Test CA %d.%d, O=Solar Test CA";
+		final List<ServerConfiguration> confs = new ArrayList<>(count);
 
 		for ( int i = 0; i < count; i++ ) {
 			for ( int u = 0; u < userCount; u++ ) {
@@ -176,12 +166,9 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 					userId = userIds.get(u);
 				}
 
-				KeyPair caKey = keyGen.generateKeyPair();
-				X509Certificate caCert = certService.generateCertificationAuthorityCertificate(
-						caDnTemplate.formatted(userId, i), caKey.getPublic(), caKey.getPrivate());
-				TrustedIssuerCertificate conf = Dnp3JdbcTestUtils.newTrustedIssuerCertificate(userId,
-						caCert);
-				UserStringCompositePK id = dao.create(userId, conf);
+				ServerConfiguration conf = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+						UUID.randomUUID().toString());
+				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
 			}
@@ -189,11 +176,11 @@ public class JdbcTrustedIssuerCertificateDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// WHEN
 		final Long userId = userIds.get(1);
-		Collection<TrustedIssuerCertificate> results = dao.findAll(userId, null);
+		Collection<ServerConfiguration> results = dao.findAll(userId, null);
 
 		// THEN
-		TrustedIssuerCertificate[] expected = confs.stream().filter(e -> userId.equals(e.getUserId()))
-				.toArray(TrustedIssuerCertificate[]::new);
+		ServerConfiguration[] expected = confs.stream().filter(e -> userId.equals(e.getUserId()))
+				.toArray(ServerConfiguration[]::new);
 		then(results).as("Results for single user returned").contains(expected);
 	}
 

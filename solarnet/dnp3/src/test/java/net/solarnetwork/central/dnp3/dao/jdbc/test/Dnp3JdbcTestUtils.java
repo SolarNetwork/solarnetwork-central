@@ -24,6 +24,7 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.dnp3.test.Dnp3TestUtils.certificatesFromResource;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 
 /**
@@ -86,10 +88,88 @@ public final class Dnp3JdbcTestUtils {
 	 *        the JDBC operations
 	 * @return the rows
 	 */
-	public static List<Map<String, Object>> allAssetConfigurationData(JdbcOperations jdbcOps) {
+	public static List<Map<String, Object>> allTrustedIssuerCertificateData(JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardnp3.dnp3_ca_cert ORDER BY user_id, subject_dn");
 		log.debug("solardnp3.dnp3_ca_cert table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new server configuration instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the name
+	 * @return the entity
+	 */
+	public static ServerConfiguration newServerConfiguration(Long userId, String name) {
+		ServerConfiguration conf = new ServerConfiguration(unassignedEntityIdKey(userId), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setEnabled(true);
+		conf.setName(name);
+		return conf;
+	}
+
+	/**
+	 * List server configuration rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allServerConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardnp3.dnp3_server ORDER BY user_id, id");
+		log.debug("solardnp3.dnp3_server table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List server auth configuration rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allServerAuthConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardnp3.dnp3_server_auth ORDER BY user_id, server_id, ident");
+		log.debug("solardnp3.dnp3_server_auth table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List server measurement configuration rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allServerMeasurementConfigurationData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardnp3.dnp3_server_meas ORDER BY user_id, server_id, idx");
+		log.debug("solardnp3.dnp3_server_meas table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List server control configuration rows.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allServerControlConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardnp3.dnp3_server_ctrl ORDER BY user_id, server_id, idx");
+		log.debug("solardnp3.dnp3_server_ctrl table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
