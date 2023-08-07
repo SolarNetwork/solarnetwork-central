@@ -24,6 +24,8 @@ package net.solarnetwork.central.dnp3.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -33,6 +35,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
+@JsonIgnoreProperties({ "id" })
+@JsonPropertyOrder({ "userId", "serverId", "created", "modified", "enabled", "name" })
 public class ServerConfiguration
 		extends BaseUserModifiableEntity<ServerConfiguration, UserLongCompositePK> {
 

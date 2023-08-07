@@ -26,7 +26,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.JdbcTrustedIssuerCertificateDao;
 
 /**
@@ -42,13 +50,53 @@ public class Dnp3DaoConfig {
 	private JdbcOperations jdbcOperations;
 
 	/**
-	 * The OSCP users settings DAO.
+	 * The DNP3 trusted issuer certificate DAO.
 	 * 
 	 * @return the DAO
 	 */
 	@Bean
 	public TrustedIssuerCertificateDao dnp3TrustedIssuerCertificateDao() {
 		return new JdbcTrustedIssuerCertificateDao(jdbcOperations);
+	}
+
+	/**
+	 * The DNP3 server DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public ServerConfigurationDao dnp3ServerConfigurationDao() {
+		return new JdbcServerConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The DNP3 server auth DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public ServerAuthConfigurationDao dnp3ServerAuthConfigurationDao() {
+		return new JdbcServerAuthConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The DNP3 server measurement DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public ServerMeasurementConfigurationDao dnp3ServerMeasurementConfigurationDao() {
+		return new JdbcServerMeasurementConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The DNP3 server control DAO.
+	 * 
+	 * @return the DAO
+	 */
+	@Bean
+	public ServerControlConfigurationDao dnp3ServerControlConfigurationDao() {
+		return new JdbcServerControlConfigurationDao(jdbcOperations);
 	}
 
 }

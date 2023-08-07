@@ -24,6 +24,9 @@ package net.solarnetwork.central.user.dnp3.domain;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -36,6 +39,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class ServerConfigurationInput
 		extends BaseDnp3ConfigurationInput<ServerConfiguration, UserLongCompositePK> {
 
+	@NotNull
+	@NotBlank
+	@Size(max = 64)
+	private String name;
+
 	@Override
 	public ServerConfiguration toEntity(UserLongCompositePK id) {
 		ServerConfiguration conf = new ServerConfiguration(requireNonNullArgument(id, "id"), now());
@@ -46,6 +54,26 @@ public class ServerConfigurationInput
 	@Override
 	protected void populateConfiguration(ServerConfiguration conf) {
 		super.populateConfiguration(conf);
+		conf.setName(name);
+	}
+
+	/**
+	 * Get the name.
+	 * 
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * Set the name
+	 * 
+	 * @param name
+	 *        the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

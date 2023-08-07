@@ -25,6 +25,8 @@ package net.solarnetwork.central.dnp3.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 
@@ -34,6 +36,9 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @author matt
  * @version 1.0
  */
+@JsonIgnoreProperties({ "id" })
+@JsonPropertyOrder({ "userId", "serverId", "index", "created", "modified", "enabled", "nodeId",
+		"sourceId", "property", "measurementType", "multiplier", "offset", "scale" })
 public class ServerMeasurementConfiguration
 		extends BaseUserModifiableEntity<ServerMeasurementConfiguration, UserLongIntegerCompositePK> {
 

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.dnp3.biz.dao;
 
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.cert.X509Certificate;
@@ -33,10 +35,18 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
+import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -48,18 +58,37 @@ import net.solarnetwork.dao.FilterResults;
 public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	private final TrustedIssuerCertificateDao trustedCertDao;
+	private final ServerConfigurationDao serverDao;
+	private final ServerAuthConfigurationDao serverAuthDao;
+	private final ServerMeasurementConfigurationDao serverMeasurementDao;
+	private final ServerControlConfigurationDao serverControlDao;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param trustedCertDao
 	 *        the trusted certificate DAO to use
+	 * @param serverDao
+	 *        the server DAO to use
+	 * @param serverAuthDao
+	 *        the server auth DAO to use
+	 * @param serverMeasurementDao
+	 *        the server measurement DAO to use
+	 * @param serverControlDao
+	 *        the server control DAO to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserDnp3Biz(TrustedIssuerCertificateDao trustedCertDao) {
+	public DaoUserDnp3Biz(TrustedIssuerCertificateDao trustedCertDao, ServerConfigurationDao serverDao,
+			ServerAuthConfigurationDao serverAuthDao,
+			ServerMeasurementConfigurationDao serverMeasurementDao,
+			ServerControlConfigurationDao serverControlDao) {
 		super();
 		this.trustedCertDao = requireNonNullArgument(trustedCertDao, "trustedCertDao");
+		this.serverDao = requireNonNullArgument(serverDao, "serverDao");
+		this.serverAuthDao = requireNonNullArgument(serverAuthDao, "serverAuthDao");
+		this.serverMeasurementDao = requireNonNullArgument(serverMeasurementDao, "serverMeasurementDao");
+		this.serverControlDao = requireNonNullArgument(serverControlDao, "serverControlDao");
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -86,6 +115,35 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return trustedCertDao.findFiltered(userFilter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerConfiguration createServer(Long userId, ServerConfigurationInput input) {
+		UserLongCompositePK unassignedId = unassignedEntityIdKey(userId);
+		ServerConfiguration conf = requireNonNullArgument(input, "input").toEntity(unassignedId);
+
+		UserLongCompositePK pk = serverDao.create(userId, conf);
+		return serverDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerConfiguration updateServer(Long userId, Long serverId, ServerConfigurationInput input) {
+		ServerConfiguration conf = requireNonNullArgument(input, "input")
+				.toEntity(new UserLongCompositePK(userId, serverId));
+
+		UserLongCompositePK pk = requireNonNullObject(serverDao.save(conf), serverId);
+		return serverDao.get(pk);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
+			ServerFilter filter) {
+		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
+		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
+		return serverDao.findFiltered(userFilter);
 	}
 
 }

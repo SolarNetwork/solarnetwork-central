@@ -22,28 +22,41 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
+import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.PUT;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 import java.io.IOException;
+import java.net.URI;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -58,7 +71,7 @@ import net.solarnetwork.service.CertificateException;
 @Profile(DNP3)
 @GlobalExceptionRestController
 @RestController("v1Dnp3Controller")
-@RequestMapping(value = { "/u/sec/dnp3", "/api/v1/sec/user/dnp3" })
+@RequestMapping(value = { "/api/v1/sec/user/dnp3", "/u/sec/dnp3" })
 public class UserDnp3Controller {
 
 	private final UserDnp3Biz userDnp3Biz;
@@ -130,6 +143,54 @@ public class UserDnp3Controller {
 			final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		return success(userDnp3Biz().trustedIssuerCertificatesForUser(userId, criteria));
+	}
+
+	/**
+	 * Create a new server configuration.
+	 * 
+	 * @param input
+	 *        the configuration input
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/servers", consumes = APPLICATION_JSON_VALUE)
+	public ResponseEntity<Result<ServerConfiguration>> createServer(
+			@Valid @RequestBody ServerConfigurationInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ServerConfiguration result = userDnp3Biz().createServer(userId, input);
+		URI loc = uriWithoutHost(
+				fromMethodCall(on(UserDnp3Controller.class).getServer(result.getServerId())));
+		return ResponseEntity.created(loc).body(success(result));
+	}
+
+	/**
+	 * Get a server configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @return the configuration
+	 */
+	@RequestMapping(method = GET, value = "/servers/{serverId}")
+	public Result<ServerConfiguration> getServer(@PathVariable("serverId") Long serverId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		var results = userDnp3Biz.serversForUser(userId, filter);
+		ServerConfiguration result = stream(results.spliterator(), false).findFirst().orElse(null);
+		return success(result);
+	}
+
+	/**
+	 * Update a server configuration for the current user.
+	 * 
+	 * @param
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/servers/{serverId}", consumes = APPLICATION_JSON_VALUE)
+	public Result<ServerConfiguration> updateServer(@PathVariable("serverId") Long serverId,
+			@Valid @RequestBody ServerConfigurationInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ServerConfiguration result = userDnp3Biz().updateServer(userId, serverId, input);
+		return success(result);
 	}
 
 }

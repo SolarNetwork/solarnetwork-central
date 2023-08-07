@@ -66,8 +66,28 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.create*(..)) && args(userId,..)")
+	public void createUserRelatedEntity(Long userId) {
+	}
+
+	/**
+	 * Match methods like {@code save*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.save*(..)) && args(userId,..)")
 	public void saveUserRelatedEntity(Long userId) {
+	}
+
+	/**
+	 * Match methods like {@code update*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.update*(..)) && args(userId,..)")
+	public void updateUserRelatedEntity(Long userId) {
 	}
 
 	@Before("readForUser(userId)")
@@ -75,7 +95,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("saveUserRelatedEntity(userId)")
+	@Before("createUserRelatedEntity(userId) || saveUserRelatedEntity(userId) || updateUserRelatedEntity(userId)")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}

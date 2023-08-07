@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
  * DAO API for {@link ServerMeasurementConfiguration} entities.
@@ -33,6 +34,7 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @version 1.0
  */
 public interface ServerMeasurementConfigurationDao extends
-		GenericCompositeKey3Dao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, Long, Long, Integer> {
+		GenericCompositeKey3Dao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, Long, Long, Integer>,
+		FilterableDao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, ServerFilter> {
 
 }

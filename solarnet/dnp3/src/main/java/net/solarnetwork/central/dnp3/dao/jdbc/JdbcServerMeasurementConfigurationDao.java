@@ -30,11 +30,13 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -116,6 +118,15 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
 				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> findFiltered(
+			ServerFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		var sql = new SelectServerMeasurementConfiguration(filter);
+		return executeFilterQuery(jdbcOps, filter, sql,
+				ServerMeasurementConfigurationRowMapper.INSTANCE);
 	}
 
 }

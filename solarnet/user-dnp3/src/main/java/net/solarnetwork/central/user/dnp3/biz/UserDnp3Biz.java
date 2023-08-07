@@ -25,8 +25,13 @@ package net.solarnetwork.central.user.dnp3.biz;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -61,5 +66,46 @@ public interface UserDnp3Biz {
 	 */
 	FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
 			Long userId, CertificateFilter filter);
+
+	/**
+	 * Create a new server configuration.
+	 * 
+	 * @param userId
+	 *        the ID of the user to create the configuration for
+	 * @param input
+	 *        the configuration input
+	 * @return the persisted configuration; never {@literal null}
+	 */
+	ServerConfiguration createServer(Long userId, ServerConfigurationInput input);
+
+	/**
+	 * Update an existing server configuration.
+	 * 
+	 * @param userId
+	 *        the ID of the user to update the configuration for
+	 * @param serverId
+	 *        the ID of the server to update
+	 * @param input
+	 *        the configuration input
+	 * @return the persisted configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if an
+	 *         entity matching {@code userId} and {@code serverId} does not
+	 *         exist
+	 */
+	ServerConfiguration updateServer(Long userId, Long serverId, ServerConfigurationInput input);
+
+	/**
+	 * List the available server configurations for a given user, optionally
+	 * filtered.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @return the matching configurations; never {@literal null}
+	 */
+	FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
+			ServerFilter filter);
 
 }

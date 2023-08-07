@@ -32,11 +32,13 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.InsertServerConfiguration;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerConfiguration;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -120,6 +122,14 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
 				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public FilterResults<ServerConfiguration, UserLongCompositePK> findFiltered(ServerFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		var sql = new SelectServerConfiguration(filter);
+		return executeFilterQuery(jdbcOps, filter, sql, ServerConfigurationRowMapper.INSTANCE);
 	}
 
 }

@@ -31,10 +31,12 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -115,6 +117,14 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
 				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> findFiltered(
+			ServerFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		var sql = new SelectServerAuthConfiguration(filter);
+		return executeFilterQuery(jdbcOps, filter, sql, ServerAuthConfigurationRowMapper.INSTANCE);
 	}
 
 }

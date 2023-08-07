@@ -42,6 +42,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.security.CertificateUtils;
@@ -62,6 +66,18 @@ public class DaoUserDnp3BizTests {
 
 	@Mock
 	private TrustedIssuerCertificateDao trustedCertDao;
+
+	@Mock
+	private ServerConfigurationDao serverDao;
+
+	@Mock
+	private ServerAuthConfigurationDao serverAuthDao;
+
+	@Mock
+	private ServerMeasurementConfigurationDao serverMeasurementDao;
+
+	@Mock
+	private ServerControlConfigurationDao serverControlDao;
 
 	@Captor
 	private ArgumentCaptor<TrustedIssuerCertificate> trustedCertCaptor;
@@ -86,7 +102,8 @@ public class DaoUserDnp3BizTests {
 		caCert = certService.generateCertificationAuthorityCertificate(TEST_CA_DN, caKey.getPublic(),
 				caKey.getPrivate());
 
-		service = new DaoUserDnp3Biz(trustedCertDao);
+		service = new DaoUserDnp3Biz(trustedCertDao, serverDao, serverAuthDao, serverMeasurementDao,
+				serverControlDao);
 	}
 
 	private X509Certificate[] generateCertificates(String name, int start, int count) {
@@ -115,8 +132,8 @@ public class DaoUserDnp3BizTests {
 		});
 
 		// WHEN
-		Collection<TrustedIssuerCertificate> result = service
-				.saveTrustedIssuerCertificates(userId, certs);
+		Collection<TrustedIssuerCertificate> result = service.saveTrustedIssuerCertificates(userId,
+				certs);
 
 		// THEN
 		// @formatter:off

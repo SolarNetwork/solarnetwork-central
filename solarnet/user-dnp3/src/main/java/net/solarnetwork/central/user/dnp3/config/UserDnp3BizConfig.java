@@ -27,6 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
 import net.solarnetwork.central.user.dnp3.biz.dao.DaoUserDnp3Biz;
 
@@ -43,9 +47,22 @@ public class UserDnp3BizConfig {
 	@Autowired
 	private TrustedIssuerCertificateDao trustedCertDao;
 
+	@Autowired
+	private ServerConfigurationDao serverDao;
+
+	@Autowired
+	private ServerAuthConfigurationDao serverAuthDao;
+
+	@Autowired
+	private ServerMeasurementConfigurationDao serverMeasurementDao;
+
+	@Autowired
+	private ServerControlConfigurationDao serverControlDao;
+
 	@Bean
 	public DaoUserDnp3Biz userDnp3Biz() {
-		var biz = new DaoUserDnp3Biz(trustedCertDao);
+		var biz = new DaoUserDnp3Biz(trustedCertDao, serverDao, serverAuthDao, serverMeasurementDao,
+				serverControlDao);
 		return biz;
 	}
 
