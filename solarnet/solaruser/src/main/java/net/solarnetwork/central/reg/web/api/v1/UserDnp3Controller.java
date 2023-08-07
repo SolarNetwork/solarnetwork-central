@@ -96,7 +96,7 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the parsed certificate configurations
 	 */
-	@RequestMapping(method = POST, value = "/trusted-issuer-certs/import", consumes = MULTIPART_FORM_DATA_VALUE)
+	@RequestMapping(method = POST, value = "/trusted-issuer-certs", consumes = MULTIPART_FORM_DATA_VALUE)
 	public Result<Collection<TrustedIssuerCertificate>> saveTrustedIssuerCertificate(
 			@RequestPart("file") MultipartFile data) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
