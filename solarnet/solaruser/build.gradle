@@ -30,6 +30,7 @@ dependencies {
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-dnp3')
 	implementation project(':solarnet-user-ocpp')
 	implementation project(':solarnet-user-oscp')
 

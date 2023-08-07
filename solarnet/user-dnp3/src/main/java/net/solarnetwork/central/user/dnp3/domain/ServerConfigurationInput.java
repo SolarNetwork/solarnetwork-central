@@ -1,5 +1,5 @@
 /* ==================================================================
- * TrustedIssuerCertificateDao.java - 5/08/2023 11:54:33 am
+ * ServerConfigurationInput.java - 7/08/2023 10:31:14 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,21 +20,32 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.dao;
+package net.solarnetwork.central.user.dnp3.domain;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
-import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.dao.FilterableDao;
+import static java.time.Instant.now;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * DAO API for {@link TrustedIssuerCertificate} entities.
+ * DTO for DNP3 server configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public interface TrustedIssuerCertificateDao
-		extends GenericCompositeKey2Dao<TrustedIssuerCertificate, UserStringCompositePK, Long, String>,
-		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter> {
+public class ServerConfigurationInput
+		extends BaseDnp3ConfigurationInput<ServerConfiguration, UserLongCompositePK> {
+
+	@Override
+	public ServerConfiguration toEntity(UserLongCompositePK id) {
+		ServerConfiguration conf = new ServerConfiguration(requireNonNullArgument(id, "id"), now());
+		populateConfiguration(conf);
+		return conf;
+	}
+
+	@Override
+	protected void populateConfiguration(ServerConfiguration conf) {
+		super.populateConfiguration(conf);
+	}
 
 }

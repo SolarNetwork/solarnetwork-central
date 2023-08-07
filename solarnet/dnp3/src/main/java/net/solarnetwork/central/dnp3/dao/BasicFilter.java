@@ -23,6 +23,10 @@
 package net.solarnetwork.central.dnp3.dao;
 
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.CertificateCriteria;
+import net.solarnetwork.central.common.dao.EnabledCriteria;
+import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of DNP3 query filter.
@@ -39,6 +43,40 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 	@Override
 	public BasicFilter clone() {
 		return (BasicFilter) super.clone();
+	}
+
+	/**
+	 * Constructor.
+	 */
+	public BasicFilter() {
+		super();
+	}
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param criteria
+	 *        the criteria to copy
+	 */
+	public BasicFilter(PaginationCriteria criteria) {
+		super(criteria);
+	}
+
+	@Override
+	public void copyFrom(PaginationCriteria criteria) {
+		super.copyFrom(criteria);
+		if ( criteria instanceof EnabledCriteria f ) {
+			setEnabled(f.getEnabled());
+		}
+		if ( criteria instanceof IndexCriteria f ) {
+			setIndexes(f.getIndexes());
+		}
+		if ( criteria instanceof CertificateCriteria f ) {
+			setSubjectDns(f.getSubjectDns());
+		}
+		if ( criteria instanceof ServerCriteria f ) {
+			setServerIds(f.getServerIds());
+		}
 	}
 
 	/**

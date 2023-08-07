@@ -1,5 +1,5 @@
 /* ==================================================================
- * TrustedIssuerCertificateDao.java - 5/08/2023 11:54:33 am
+ * Dnp3ConfigurationInput.java - 7/08/2023 10:32:26 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,21 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.dao;
+package net.solarnetwork.central.user.dnp3.domain;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
-import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 
 /**
- * DAO API for {@link TrustedIssuerCertificate} entities.
+ * API for DNP3 configuration input.
  * 
  * @author matt
  * @version 1.0
  */
-public interface TrustedIssuerCertificateDao
-		extends GenericCompositeKey2Dao<TrustedIssuerCertificate, UserStringCompositePK, Long, String>,
-		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter> {
+public interface Dnp3ConfigurationInput<T extends UserRelatedEntity<K>, K> {
+
+	/**
+	 * Create an entity from the input properties and a given primary key.
+	 * 
+	 * @param id
+	 *        the primary key to use
+	 * @return the new entity
+	 */
+	T toEntity(K id);
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * BaseDnp3ServerConfigurationEntity.java - 6/08/2023 10:06:17 am
+ * BaseUserModifiableEntity.java - 7/08/2023 10:47:02 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,33 +20,28 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.domain;
+package net.solarnetwork.central.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
-import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.CopyingIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
- * Base DNP3 user-related configuration entity, where the first composite key
- * component is a Long user ID.
- * 
- * <p>
- * The composite key might be user related, or server related, for example.
- * </p>
+ * Base mutable user-related configuration entity, where the first component of
+ * its primary key is a Long user ID.
  * 
  * @author matt
  * @version 1.0
  */
-public abstract class BaseDnp3ConfigurationEntity<C extends BaseDnp3ConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
+public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
 		extends BasicEntity<K> implements UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>,
 		Serializable, Cloneable {
 
-	private static final long serialVersionUID = 1608207090197702797L;
+	private static final long serialVersionUID = -8201311252309117005L;
 
 	private Instant modified;
 	private boolean enabled;
@@ -61,7 +56,7 @@ public abstract class BaseDnp3ConfigurationEntity<C extends BaseDnp3Configuratio
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BaseDnp3ConfigurationEntity(K id, Instant created) {
+	public BaseUserModifiableEntity(K id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
 	}
 

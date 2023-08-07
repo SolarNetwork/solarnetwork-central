@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
+import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 
 /**
@@ -34,9 +35,9 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @version 1.0
  */
 public class ServerMeasurementConfiguration
-		extends BaseDnp3ConfigurationEntity<ServerMeasurementConfiguration, UserLongIntegerCompositePK> {
+		extends BaseUserModifiableEntity<ServerMeasurementConfiguration, UserLongIntegerCompositePK> {
 
-	private static final long serialVersionUID = -6645715641643850671L;
+	private static final long serialVersionUID = 4025037339553169877L;
 
 	private Long nodeId;
 	private String sourceId;

@@ -24,16 +24,11 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Objects;
-import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.CopyingIdentity;
-import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.service.CertificateException;
 
 /**
@@ -43,14 +38,10 @@ import net.solarnetwork.service.CertificateException;
  * @version 1.0
  */
 public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
-		extends BasicEntity<UserStringCompositePK>
-		implements Entity<UserStringCompositePK>, UserRelatedEntity<UserStringCompositePK>,
-		CopyingIdentity<UserStringCompositePK, C>, Differentiable<C>, Serializable, Cloneable {
+		extends BaseUserModifiableEntity<C, UserStringCompositePK> {
 
-	private static final long serialVersionUID = -1255883832923942269L;
+	private static final long serialVersionUID = -8325998663783331582L;
 
-	private Instant modified;
-	private boolean enabled;
 	private X509Certificate certificate;
 
 	/**
@@ -104,16 +95,9 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 		setCertificate(certificate);
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public C clone() {
-		return (C) super.clone();
-	}
-
 	@Override
 	public void copyTo(C entity) {
-		entity.setModified(modified);
-		entity.setEnabled(enabled);
+		super.copyTo(entity);
 		entity.setCertificate(certificate);
 	}
 
@@ -130,22 +114,9 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	 * @return {@literal true} if the properties of this entity are equal to the
 	 *         other's
 	 */
+	@Override
 	public boolean isSameAs(C other) {
-		// @formatter:off
-		return (this.enabled == other.isEnabled() 
-				&& Objects.equals(this.certificate, other.getCertificate()));
-		// @formatter:on
-	}
-
-	@Override
-	public boolean differsFrom(C other) {
-		return !isSameAs(other);
-	}
-
-	@Override
-	public Long getUserId() {
-		UserStringCompositePK pk = getId();
-		return (pk != null ? pk.getUserId() : null);
+		return (super.isSameAs(other) && Objects.equals(this.certificate, other.getCertificate()));
 	}
 
 	/**
@@ -156,44 +127,6 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	public String getSubjectDn() {
 		UserStringCompositePK pk = getId();
 		return (pk != null ? pk.getEntityId() : null);
-	}
-
-	/**
-	 * Get the modification date.
-	 * 
-	 * @return the modified date
-	 */
-	public Instant getModified() {
-		return modified;
-	}
-
-	/**
-	 * Set the modification date.
-	 * 
-	 * @param modified
-	 *        the modified date to set
-	 */
-	public void setModified(Instant modified) {
-		this.modified = modified;
-	}
-
-	/**
-	 * Get the enabled flag.
-	 * 
-	 * @return {@literal true} if enabled
-	 */
-	public boolean isEnabled() {
-		return enabled;
-	}
-
-	/**
-	 * Set the enabled flag.
-	 * 
-	 * @param enabled
-	 *        the value to set
-	 */
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
 	}
 
 	/**

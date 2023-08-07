@@ -1,5 +1,5 @@
 /* ==================================================================
- * TrustedIssuerCertificateDao.java - 5/08/2023 11:54:33 am
+ * Dnp3Config.java - 7/08/2023 10:13:14 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,21 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.dao;
+package net.solarnetwork.central.reg.config;
 
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
-import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.dao.FilterableDao;
+import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration;
 
 /**
- * DAO API for {@link TrustedIssuerCertificate} entities.
+ * Configuration for DNP3.
  * 
  * @author matt
  * @version 1.0
  */
-public interface TrustedIssuerCertificateDao
-		extends GenericCompositeKey2Dao<TrustedIssuerCertificate, UserStringCompositePK, Long, String>,
-		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter> {
+@Configuration(proxyBeanMethods = false)
+@Profile(DNP3)
+@ComponentScan(basePackageClasses = SolarNetDnp3Configuration.class)
+public class Dnp3Config {
 
 }

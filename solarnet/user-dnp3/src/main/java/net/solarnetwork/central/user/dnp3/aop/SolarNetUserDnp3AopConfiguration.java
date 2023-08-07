@@ -1,5 +1,5 @@
 /* ==================================================================
- * TrustedIssuerCertificateDao.java - 5/08/2023 11:54:33 am
+ * SolarNetUserDnp3AopConfiguration.java - 7/08/2023 10:02:06 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,21 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.dao;
-
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
-import net.solarnetwork.central.domain.UserStringCompositePK;
-import net.solarnetwork.dao.FilterableDao;
+package net.solarnetwork.central.user.dnp3.aop;
 
 /**
- * DAO API for {@link TrustedIssuerCertificate} entities.
+ * Marker interface for the user DNP3 AOP configuration package.
  * 
  * @author matt
  * @version 1.0
  */
-public interface TrustedIssuerCertificateDao
-		extends GenericCompositeKey2Dao<TrustedIssuerCertificate, UserStringCompositePK, Long, String>,
-		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter> {
-
+public interface SolarNetUserDnp3AopConfiguration {
+	// nothing here
 }

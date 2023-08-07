@@ -22,6 +22,13 @@
 
 package net.solarnetwork.central.user.dnp3.biz;
 
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import net.solarnetwork.central.dnp3.dao.CertificateFilter;
+import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
+import net.solarnetwork.central.domain.UserStringCompositePK;
+import net.solarnetwork.dao.FilterResults;
+
 /**
  * Service API for SolarUser DNP3 support.
  * 
@@ -29,5 +36,30 @@ package net.solarnetwork.central.user.dnp3.biz;
  * @version 1.0
  */
 public interface UserDnp3Biz {
+
+	/**
+	 * Save a collection of X.509 "trusted root" certificates.
+	 * 
+	 * @param userId
+	 *        the user to save the certificates for
+	 * @param certificates
+	 *        the certificates to save
+	 * @return the saved certificate entities
+	 */
+	Collection<TrustedIssuerCertificate> saveTrustedIssuerCertificates(Long userId,
+			X509Certificate[] certificates);
+
+	/**
+	 * List the available trusted issuer certificates for a given user,
+	 * optionally filtered.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @return the matching certificates; never {@literal null}
+	 */
+	FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
+			Long userId, CertificateFilter filter);
 
 }

@@ -24,6 +24,7 @@ package net.solarnetwork.central.dnp3.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 
 /**
@@ -33,9 +34,9 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @version 1.0
  */
 public class ServerControlConfiguration
-		extends BaseDnp3ConfigurationEntity<ServerControlConfiguration, UserLongIntegerCompositePK> {
+		extends BaseUserModifiableEntity<ServerControlConfiguration, UserLongIntegerCompositePK> {
 
-	private static final long serialVersionUID = 1252781573079023190L;
+	private static final long serialVersionUID = -2941963465397580108L;
 
 	private Long nodeId;
 	private String controlId;

@@ -29,5 +29,8 @@ package net.solarnetwork.central.dnp3.config;
  * @version 1.0
  */
 public interface SolarNetDnp3Configuration {
-	// nothing here
+
+	/** A qualifier for DNP3 support. */
+	String DNP3 = "dnp3";
+
 }
