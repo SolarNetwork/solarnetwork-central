@@ -331,36 +331,25 @@ public class NettyDynamicProxyServer
 			log.debug("Validating client trust using {}: {}", authType, canonicalSubjectDn(chain[0]));
 			chain[0].checkValidity();
 			for ( ProxyConfigurationProvider provider : providers ) {
-				Iterable<X509Certificate> issuerCerts = provider.acceptedIdentityIssuers();
-				if ( issuerCerts != null ) {
-					for ( X509Certificate issuerCert : issuerCerts ) {
-						for ( X509Certificate clientCert : chain ) {
-							if ( clientCert.getIssuerX500Principal()
-									.equals(issuerCert.getSubjectX500Principal()) ) {
-								ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null,
-										chain);
-								try {
-									ProxyConnectionSettings settings = provider.authorize(req);
-									if ( settings != null ) {
-										if ( engine != null ) {
-											SSLSession session = engine.getSession();
-											session.putValue(SSL_SESSION_PROXY_SETTINGS_KEY, settings);
-											return;
-										}
-										throw new CertificateException("Internal TLS misconfiguration.");
-									}
-								} catch ( Exception e ) {
-									Throwable cause = e.getCause() != null ? e.getCause() : e;
-									log.warn("Unauthorized client certificate [{}]: {}",
-											chain[0].getSubjectX500Principal().getName(), e.toString());
-									if ( cause instanceof CertificateException ce ) {
-										throw ce;
-									}
-									throw new CertificateException("Client authorization failed.", e);
-								}
-							}
+				ProxyConnectionRequest req = new SimpleProxyConnectionRequest(null, chain);
+				try {
+					ProxyConnectionSettings settings = provider.authorize(req);
+					if ( settings != null ) {
+						if ( engine != null ) {
+							SSLSession session = engine.getSession();
+							session.putValue(SSL_SESSION_PROXY_SETTINGS_KEY, settings);
+							return;
 						}
+						throw new CertificateException("Internal TLS misconfiguration.");
 					}
+				} catch ( Exception e ) {
+					Throwable cause = e.getCause() != null ? e.getCause() : e;
+					log.warn("Unauthorized client certificate [{}]: {}",
+							chain[0].getSubjectX500Principal().getName(), e.toString());
+					if ( cause instanceof CertificateException ce ) {
+						throw ce;
+					}
+					throw new CertificateException("Client authorization failed.", e);
 				}
 			}
 			log.warn(
