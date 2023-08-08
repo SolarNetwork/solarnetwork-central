@@ -23,7 +23,6 @@ dependencies {
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-net-proxy')
 	implementation project(':solarnet-user')
-	implementation project(':solarnet-user-dnp3')
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
