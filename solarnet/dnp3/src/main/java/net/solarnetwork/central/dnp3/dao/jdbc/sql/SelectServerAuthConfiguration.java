@@ -100,6 +100,9 @@ public class SelectServerAuthConfiguration
 		if ( filter.hasServerCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getServerIds(), "dsa.server_id", where);
 		}
+		if ( filter.hasIdentifierCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIdentifiers(), "dsa.ident", where);
+		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dsa.enabled = ?\n");
 			idx += 1;
@@ -131,6 +134,9 @@ public class SelectServerAuthConfiguration
 		}
 		if ( filter.hasServerCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
+		}
+		if ( filter.hasIdentifierCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIdentifiers());
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			stmt.setBoolean(++p, filter.getEnabled().booleanValue());

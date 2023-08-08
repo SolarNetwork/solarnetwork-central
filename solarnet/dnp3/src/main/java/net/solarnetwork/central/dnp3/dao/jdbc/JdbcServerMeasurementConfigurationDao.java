@@ -33,6 +33,7 @@ import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerMeasurementConfiguration;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -111,7 +112,9 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	}
 
 	private static final String TABLE_NAME = "solardnp3.dnp3_server_meas";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "server_id", "idx" };
+	private static final String SERVER_ID_COLUMN_NAME = "server_id";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", SERVER_ID_COLUMN_NAME,
+			"idx" };
 
 	@Override
 	public void delete(ServerMeasurementConfiguration entity) {
@@ -129,4 +132,10 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 				ServerMeasurementConfigurationRowMapper.INSTANCE);
 	}
 
+	@Override
+	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
+				enabled);
+		return jdbcOps.update(sql);
+	}
 }

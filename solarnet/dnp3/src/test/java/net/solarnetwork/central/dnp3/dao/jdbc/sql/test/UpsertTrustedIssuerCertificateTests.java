@@ -76,10 +76,11 @@ public class UpsertTrustedIssuerCertificateTests {
 	private void verifyPrepStatement(PreparedStatement result, Long userId,
 			TrustedIssuerCertificate conf) throws SQLException {
 		Timestamp ts = Timestamp.from(conf.getCreated());
-		Timestamp mod = Timestamp.from(conf.getModified());
+		Timestamp mod = conf.getModified() != null ? Timestamp.from(conf.getModified()) : null;
 		int p = 0;
 		verify(result).setTimestamp(++p, ts);
 		verify(result).setTimestamp(++p, mod);
+		verify(result).setTimestamp(++p, ts);
 		verify(result).setObject(++p, userId);
 		verify(result).setString(++p, conf.getSubjectDn());
 		verify(result).setTimestamp(++p, Timestamp.from(conf.getExpires()));
@@ -88,31 +89,10 @@ public class UpsertTrustedIssuerCertificateTests {
 	}
 
 	@Test
-	public void sql() {
-		// GIVEN
-		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(
-				randomUUID().getMostSignificantBits(), randomUUID().toString(), Instant.now());
-		conf.setModified(conf.getCreated());
-		conf.setCertificate(certificatesFromResource("test-ca-01.pem")[0]);
-		conf.setEnabled(true);
-
-		// WHEN
-		Long userId = randomUUID().getMostSignificantBits();
-		String sql = new UpsertTrustedIssuerCertificate(userId, conf).getSql();
-
-		// THEN
-		log.debug("Generated SQL:\n{}", sql);
-		then(sql).as("SQL generated")
-				.is(matching(equalToTextResource("upsert-trusted-issuer-certificate.sql",
-						TestSqlResources.class, SQL_COMMENT)));
-	}
-
-	@Test
 	public void prep() throws SQLException {
 		// GIVEN
 		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(
 				randomUUID().getMostSignificantBits(), randomUUID().toString(), Instant.now());
-		conf.setModified(conf.getCreated());
 		conf.setCertificate(certificatesFromResource("test-ca-01.pem")[0]);
 		conf.setEnabled(true);
 

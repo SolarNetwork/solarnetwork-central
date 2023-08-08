@@ -28,6 +28,7 @@ import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
@@ -50,13 +51,22 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
+import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
+import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -146,6 +156,25 @@ public class UserDnp3Controller {
 	}
 
 	/**
+	 * Update trusted issuer certificate enabled status for the current user.
+	 * 
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param criteria
+	 *        the optional criteria; if not provided then update all entities
+	 *        for the active user
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/trusted-issuer-certs/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	public Result<Void> updateTrustedIssuerCertificateEnabledStatus(
+			@PathVariable("enabled") boolean enabled,
+			@RequestBody(required = false) final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().updateTrustedIssuerCertificateEnabledStatus(userId, criteria, enabled);
+		return success();
+	}
+
+	/**
 	 * Create a new server configuration.
 	 * 
 	 * @param input
@@ -160,6 +189,39 @@ public class UserDnp3Controller {
 		URI loc = uriWithoutHost(
 				fromMethodCall(on(UserDnp3Controller.class).getServer(result.getServerId())));
 		return ResponseEntity.created(loc).body(success(result));
+	}
+
+	/**
+	 * List server configurations for the current user.
+	 * 
+	 * @param criteria
+	 *        the optional criteria; if not provided then list all servers for
+	 *        the active user
+	 * @return the results
+	 */
+	@RequestMapping(method = GET, value = "/servers")
+	public Result<FilterResults<ServerConfiguration, UserLongCompositePK>> listServers(
+			final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userDnp3Biz().serversForUser(userId, criteria));
+	}
+
+	/**
+	 * Update server enabled status for the current user.
+	 * 
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param criteria
+	 *        the optional criteria; if not provided then update all entities
+	 *        for the active user
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/servers/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	public Result<Void> updateServerEnabledStatus(@PathVariable("enabled") boolean enabled,
+			@RequestBody(required = false) final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().updateServerEnabledStatus(userId, criteria, enabled);
+		return success();
 	}
 
 	/**
@@ -193,4 +255,295 @@ public class UserDnp3Controller {
 		return success(result);
 	}
 
+	/**
+	 * Delete a server configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}")
+	public Result<Void> deleteServer(@PathVariable("serverId") Long serverId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz.deleteServer(userId, serverId);
+		return success();
+	}
+
+	/**
+	 * List server auth configurations for the current user.
+	 * 
+	 * @param criteria
+	 *        the optional criteria; if not provided then list all servers for
+	 *        the active user
+	 * @return the results
+	 */
+	@RequestMapping(method = GET, value = "/servers/auths")
+	public Result<FilterResults<ServerAuthConfiguration, UserLongStringCompositePK>> listServerAuths(
+			final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userDnp3Biz().serverAuthsForUser(userId, criteria));
+	}
+
+	/**
+	 * Get a server auth configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param identifier
+	 *        the identifier to fetch
+	 * @return the configuration
+	 */
+	@RequestMapping(method = GET, value = "/servers/{serverId}/auths/{identifier}")
+	public Result<ServerAuthConfiguration> getServerAuth(@PathVariable("serverId") Long serverId,
+			@PathVariable("identifier") String identifier) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		filter.setIdentifier(identifier);
+		var results = userDnp3Biz.serverAuthsForUser(userId, filter);
+		ServerAuthConfiguration result = stream(results.spliterator(), false).findFirst().orElse(null);
+		return success(result);
+	}
+
+	/**
+	 * Update a server auth configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param identifier
+	 *        the identifier to fetch
+	 * @param input
+	 *        the input
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/servers/{serverId}/auths/{identifier}", consumes = APPLICATION_JSON_VALUE)
+	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable("serverId") Long serverId,
+			@PathVariable("identifier") String identifier,
+			@Valid @RequestBody ServerAuthConfigurationInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId, identifier,
+				input);
+		return success(result);
+	}
+
+	/**
+	 * Delete a server auth configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param identifier
+	 *        the identifier to fetch
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths/{identifier}")
+	public Result<Void> deleteServerAuth(@PathVariable("serverId") Long serverId,
+			@PathVariable("identifier") String identifier) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz.deleteServerAuth(userId, serverId, identifier);
+		return success();
+	}
+
+	/**
+	 * Update server auth enabled status for the current user.
+	 * 
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param criteria
+	 *        the optional criteria; if not provided then update all entities
+	 *        for the active user
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/servers/auths/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	public Result<Void> updateServerAuthEnabledStatus(@PathVariable("enabled") boolean enabled,
+			@RequestBody(required = false) final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().updateServerAuthEnabledStatus(userId, criteria, enabled);
+		return success();
+	}
+
+	/**
+	 * List server measurement configurations for the current user.
+	 * 
+	 * @param criteria
+	 *        the optional criteria; if not provided then list all servers for
+	 *        the active user
+	 * @return the results
+	 */
+	@RequestMapping(method = GET, value = "/servers/measurements")
+	public Result<FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK>> listServerMeasurements(
+			final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userDnp3Biz().serverMeasurementsForUser(userId, criteria));
+	}
+
+	/**
+	 * Get a server measurement configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @return the configuration
+	 */
+	@RequestMapping(method = GET, value = "/servers/{serverId}/measurements/{index}")
+	public Result<ServerMeasurementConfiguration> getServerMeasurement(
+			@PathVariable("serverId") Long serverId, @PathVariable("index") Integer index) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		filter.setIndex(index);
+		var results = userDnp3Biz.serverMeasurementsForUser(userId, filter);
+		ServerMeasurementConfiguration result = stream(results.spliterator(), false).findFirst()
+				.orElse(null);
+		return success(result);
+	}
+
+	/**
+	 * Update a server measurement configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @param input
+	 *        the input
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/servers/{serverId}/measurements/{index}", consumes = APPLICATION_JSON_VALUE)
+	public Result<ServerMeasurementConfiguration> saveServerMeasurement(
+			@PathVariable("serverId") Long serverId, @PathVariable("index") Integer index,
+			@Valid @RequestBody ServerMeasurementConfigurationInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ServerMeasurementConfiguration result = userDnp3Biz().saveServerMeasurement(userId, serverId,
+				index, input);
+		return success(result);
+	}
+
+	/**
+	 * Delete a server measurement configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}/measurements/{index}")
+	public Result<Void> deleteServerMeasurement(@PathVariable("serverId") Long serverId,
+			@PathVariable("index") Integer index) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz.deleteServerMeasurement(userId, serverId, index);
+		return success();
+	}
+
+	/**
+	 * Update server measurement enabled status for the current user.
+	 * 
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param criteria
+	 *        the optional criteria; if not provided then update all entities
+	 *        for the active user
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/servers/measurements/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	public Result<Void> updateServerMeasurementEnabledStatus(@PathVariable("enabled") boolean enabled,
+			@RequestBody(required = false) final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().updateServerMeasurementEnabledStatus(userId, criteria, enabled);
+		return success();
+	}
+
+	/**
+	 * List server control configurations for the current user.
+	 * 
+	 * @param criteria
+	 *        the optional criteria; if not provided then list all servers for
+	 *        the active user
+	 * @return the results
+	 */
+	@RequestMapping(method = GET, value = "/servers/controls")
+	public Result<FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK>> listServerControls(
+			final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userDnp3Biz().serverControlsForUser(userId, criteria));
+	}
+
+	/**
+	 * Get a server control configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @return the configuration
+	 */
+	@RequestMapping(method = GET, value = "/servers/{serverId}/controls/{index}")
+	public Result<ServerControlConfiguration> getServerControl(@PathVariable("serverId") Long serverId,
+			@PathVariable("index") Integer index) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		filter.setIndex(index);
+		var results = userDnp3Biz.serverControlsForUser(userId, filter);
+		ServerControlConfiguration result = stream(results.spliterator(), false).findFirst()
+				.orElse(null);
+		return success(result);
+	}
+
+	/**
+	 * Update a server control configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @param input
+	 *        the input
+	 * @return the configuration
+	 */
+	@RequestMapping(method = PUT, value = "/servers/{serverId}/controls/{index}", consumes = APPLICATION_JSON_VALUE)
+	public Result<ServerControlConfiguration> saveServerControl(@PathVariable("serverId") Long serverId,
+			@PathVariable("index") Integer index,
+			@Valid @RequestBody ServerControlConfigurationInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		ServerControlConfiguration result = userDnp3Biz().saveServerControl(userId, serverId, index,
+				input);
+		return success(result);
+	}
+
+	/**
+	 * Delete a server control configuration for the current user.
+	 * 
+	 * @param serverId
+	 *        the server ID to fetch
+	 * @param index
+	 *        the index to fetch
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}/controls/{index}")
+	public Result<Void> deleteServerControl(@PathVariable("serverId") Long serverId,
+			@PathVariable("index") Integer index) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz.deleteServerControl(userId, serverId, index);
+		return success();
+	}
+
+	/**
+	 * Update server control enabled status for the current user.
+	 * 
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param criteria
+	 *        the optional criteria; if not provided then update all entities
+	 *        for the active user
+	 * @return the result
+	 */
+	@RequestMapping(method = POST, value = "/servers/controls/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	public Result<Void> updateServerControlEnabledStatus(@PathVariable("enabled") boolean enabled,
+			@RequestBody(required = false) final BasicFilter criteria) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().updateServerControlEnabledStatus(userId, criteria, enabled);
+		return success();
+	}
 }

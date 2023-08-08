@@ -33,6 +33,7 @@ import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerControlConfiguration;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -111,7 +112,9 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	}
 
 	private static final String TABLE_NAME = "solardnp3.dnp3_server_ctrl";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "server_id", "idx" };
+	private static final String SERVER_ID_COLUMN_NAME = "server_id";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", SERVER_ID_COLUMN_NAME,
+			"idx" };
 
 	@Override
 	public void delete(ServerControlConfiguration entity) {
@@ -126,6 +129,13 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerControlConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerControlConfigurationRowMapper.INSTANCE);
+	}
+
+	@Override
+	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
+				enabled);
+		return jdbcOps.update(sql);
 	}
 
 }

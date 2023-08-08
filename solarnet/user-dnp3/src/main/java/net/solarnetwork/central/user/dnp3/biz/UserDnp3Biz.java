@@ -26,12 +26,20 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -68,6 +76,30 @@ public interface UserDnp3Biz {
 			Long userId, CertificateFilter filter);
 
 	/**
+	 * Update the enabled status of trusted issuer certificates, optionally
+	 * filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateTrustedIssuerCertificateEnabledStatus(Long userId, CertificateFilter filter,
+			boolean enabled);
+
+	/**
+	 * Delete an existing trusted issuer certificate.
+	 * 
+	 * @param userId
+	 *        the user ID to delete the configuration for
+	 * @param subjectDn
+	 *        the subject DN of the certificate to delete
+	 */
+	void deleteTrustedIssuerCertificate(Long userId, String subjectDn);
+
+	/**
 	 * Create a new server configuration.
 	 * 
 	 * @param userId
@@ -96,6 +128,28 @@ public interface UserDnp3Biz {
 	ServerConfiguration updateServer(Long userId, Long serverId, ServerConfigurationInput input);
 
 	/**
+	 * Update the enabled status of servers, optionally filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateServerEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+
+	/**
+	 * Delete an existing server configuration.
+	 * 
+	 * @param userId
+	 *        the ID of the user to delete the configuration for
+	 * @param serverId
+	 *        the ID of the server to delete
+	 */
+	void deleteServer(Long userId, Long serverId);
+
+	/**
 	 * List the available server configurations for a given user, optionally
 	 * filtered.
 	 * 
@@ -107,5 +161,176 @@ public interface UserDnp3Biz {
 	 */
 	FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
 			ServerFilter filter);
+
+	/**
+	 * Create or update a server auth configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param identifier
+	 *        the identifier of the configuration to update
+	 * @param input
+	 *        the configuration input
+	 * @return the persisted configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         server entity matching {@code userId} and {@code serverId} does
+	 *         not exist
+	 */
+	ServerAuthConfiguration saveServerAuth(Long userId, Long serverId, String identifier,
+			ServerAuthConfigurationInput input);
+
+	/**
+	 * Update the enabled status of server auths, optionally filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateServerAuthEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+
+	/**
+	 * Delete an existing server auth configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param identifier
+	 *        the identifier of the configuration to update
+	 */
+	void deleteServerAuth(Long userId, Long serverId, String identifier);
+
+	/**
+	 * List the available server auth configurations for a given user,
+	 * optionally filtered.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @return the matching configurations; never {@literal null}
+	 */
+	FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> serverAuthsForUser(Long userId,
+			ServerFilter filter);
+
+	/**
+	 * Create or update a server measurement configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param index
+	 *        the index of the configuration to update
+	 * @param input
+	 *        the configuration input
+	 * @return the persisted configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         server entity matching {@code userId} and {@code serverId} does
+	 *         not exist
+	 */
+	ServerMeasurementConfiguration saveServerMeasurement(Long userId, Long serverId, Integer index,
+			ServerMeasurementConfigurationInput input);
+
+	/**
+	 * Update the enabled status of server measurements, optionally filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateServerMeasurementEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+
+	/**
+	 * Delete a server measurement configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param index
+	 *        the index of the configuration to update
+	 */
+	void deleteServerMeasurement(Long userId, Long serverId, Integer index);
+
+	/**
+	 * List the available server measurement configurations for a given user,
+	 * optionally filtered.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @return the matching configurations; never {@literal null}
+	 */
+	FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
+			Long userId, ServerFilter filter);
+
+	/**
+	 * Create or update a server control configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param index
+	 *        the index of the configuration to update the configuration index
+	 * @param input
+	 *        the configuration input
+	 * @return the persisted configuration; never {@literal null}
+	 * @throws AuthorizationException
+	 *         with {@link AuthorizationException.Reason#UNKNOWN_OBJECT} if a
+	 *         server entity matching {@code userId} and {@code serverId} does
+	 *         not exist
+	 */
+	ServerControlConfiguration saveServerControl(Long userId, Long serverId, Integer index,
+			ServerControlConfigurationInput input);
+
+	/**
+	 * Update the enabled status of server controls, optionally filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 */
+	void updateServerControlEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+
+	/**
+	 * Delete a server control configuration.
+	 * 
+	 * @param userId
+	 *        the user ID of the configuration to update
+	 * @param serverId
+	 *        the server ID of the configuration to update
+	 * @param index
+	 *        the index of the configuration to update
+	 */
+	void deleteServerControl(Long userId, Long serverId, Integer index);
+
+	/**
+	 * List the available server control configurations for a given user,
+	 * optionally filtered.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @return the matching configurations; never {@literal null}
+	 */
+	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
+			Long userId, ServerFilter filter);
 
 }

@@ -100,6 +100,9 @@ public class SelectServerControlConfiguration
 		if ( filter.hasServerCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getServerIds(), "dsc.server_id", where);
 		}
+		if ( filter.hasIndexCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIndexes(), "dsc.idx", where);
+		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dsc.enabled = ?\n");
 			idx += 1;
@@ -131,6 +134,9 @@ public class SelectServerControlConfiguration
 		}
 		if ( filter.hasServerCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
+		}
+		if ( filter.hasIndexCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			stmt.setBoolean(++p, filter.getEnabled().booleanValue());

@@ -41,12 +41,20 @@ import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
+import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
+import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -108,6 +116,12 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return result;
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteTrustedIssuerCertificate(Long userId, String subjectDn) {
+		trustedCertDao.delete(new TrustedIssuerCertificate(userId, subjectDn, Instant.now()));
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<TrustedIssuerCertificate, UserStringCompositePK> trustedIssuerCertificatesForUser(
@@ -137,6 +151,12 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverDao.get(pk);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteServer(Long userId, Long serverId) {
+		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH));
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerConfiguration, UserLongCompositePK> serversForUser(Long userId,
@@ -144,6 +164,116 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverDao.findFiltered(userFilter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerAuthConfiguration saveServerAuth(Long userId, Long serverId, String identity,
+			ServerAuthConfigurationInput input) {
+		ServerAuthConfiguration conf = requireNonNullArgument(input, "input")
+				.toEntity(new UserLongStringCompositePK(userId, serverId, identity));
+
+		UserLongStringCompositePK pk = requireNonNullObject(serverAuthDao.save(conf), serverId);
+		return serverAuthDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteServerAuth(Long userId, Long serverId, String identifier) {
+		serverAuthDao.delete(new ServerAuthConfiguration(userId, serverId, identifier, Instant.EPOCH));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ServerAuthConfiguration, UserLongStringCompositePK> serverAuthsForUser(
+			Long userId, ServerFilter filter) {
+		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
+		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
+		return serverAuthDao.findFiltered(userFilter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerMeasurementConfiguration saveServerMeasurement(Long userId, Long serverId,
+			Integer index, ServerMeasurementConfigurationInput input) {
+		ServerMeasurementConfiguration conf = requireNonNullArgument(input, "input")
+				.toEntity(new UserLongIntegerCompositePK(userId, serverId, index));
+
+		UserLongIntegerCompositePK pk = requireNonNullObject(serverMeasurementDao.save(conf), serverId);
+		return serverMeasurementDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteServerMeasurement(Long userId, Long serverId, Integer index) {
+		serverMeasurementDao
+				.delete(new ServerMeasurementConfiguration(userId, serverId, index, Instant.EPOCH));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
+			Long userId, ServerFilter filter) {
+		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
+		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
+		return serverMeasurementDao.findFiltered(userFilter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerControlConfiguration saveServerControl(Long userId, Long serverId, Integer index,
+			ServerControlConfigurationInput input) {
+		ServerControlConfiguration conf = requireNonNullArgument(input, "input")
+				.toEntity(new UserLongIntegerCompositePK(userId, serverId, index));
+
+		UserLongIntegerCompositePK pk = requireNonNullObject(serverControlDao.save(conf), serverId);
+		return serverControlDao.get(pk);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteServerControl(Long userId, Long serverId, Integer index) {
+		serverControlDao.delete(new ServerControlConfiguration(userId, serverId, index, Instant.EPOCH));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
+			Long userId, ServerFilter filter) {
+		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
+		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
+		return serverControlDao.findFiltered(userFilter);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateTrustedIssuerCertificateEnabledStatus(Long userId, CertificateFilter filter,
+			boolean enabled) {
+		trustedCertDao.updateEnabledStatus(userId, filter, enabled);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateServerEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		serverDao.updateEnabledStatus(userId, filter, enabled);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateServerAuthEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		serverAuthDao.updateEnabledStatus(userId, filter, enabled);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateServerMeasurementEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		serverMeasurementDao.updateEnabledStatus(userId, filter, enabled);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void updateServerControlEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		serverControlDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 }

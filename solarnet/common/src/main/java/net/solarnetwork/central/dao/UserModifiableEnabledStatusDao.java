@@ -1,5 +1,5 @@
 /* ==================================================================
- * ServerFilter.java - 6/08/2023 6:12:49 pm
+ * UserModifiableEnabledStatusDao.java - 8/08/2023 8:22:16 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -20,20 +20,29 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dnp3.dao;
-
-import net.solarnetwork.central.common.dao.EnabledCriteria;
-import net.solarnetwork.central.common.dao.IndexCriteria;
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
+package net.solarnetwork.central.dao;
 
 /**
- * A filter for DNP3 server-related certificates.
+ * DAO API for updating user-modifiable enabled status on entities.
  * 
+ * @param <F>
+ *        the filter type
  * @author matt
  * @version 1.0
  */
-public interface ServerFilter extends UserCriteria, ServerCriteria, IdentifierCriteria, IndexCriteria,
-		EnabledCriteria, PaginationCriteria {
+public interface UserModifiableEnabledStatusDao<F> {
+
+	/**
+	 * Update the enabled status of server controls, optionally filtered.
+	 * 
+	 * @param userId
+	 *        the user ID to update configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param enabled
+	 *        the enabled status to set
+	 * @return the number of entities updated
+	 */
+	int updateEnabledStatus(Long userId, F filter, boolean enabled);
 
 }

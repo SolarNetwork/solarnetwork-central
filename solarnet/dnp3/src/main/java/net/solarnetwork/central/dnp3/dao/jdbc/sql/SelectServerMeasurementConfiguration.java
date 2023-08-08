@@ -101,6 +101,9 @@ public class SelectServerMeasurementConfiguration
 		if ( filter.hasServerCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getServerIds(), "dsm.server_id", where);
 		}
+		if ( filter.hasIndexCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIndexes(), "dsm.idx", where);
+		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dsm.enabled = ?\n");
 			idx += 1;
@@ -132,6 +135,9 @@ public class SelectServerMeasurementConfiguration
 		}
 		if ( filter.hasServerCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
+		}
+		if ( filter.hasIndexCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			stmt.setBoolean(++p, filter.getEnabled().booleanValue());

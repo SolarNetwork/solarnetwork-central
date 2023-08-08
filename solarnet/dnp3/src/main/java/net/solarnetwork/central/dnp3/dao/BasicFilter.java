@@ -36,6 +36,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  */
 public class BasicFilter extends BasicCoreCriteria implements CertificateFilter, ServerFilter {
 
+	private String[] identifiers;
 	private Integer[] indexes;
 	private String[] subjectDns;
 	private Long[] serverIds;
@@ -65,6 +66,9 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 	@Override
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
+		if ( criteria instanceof IdentifierCriteria f ) {
+			setIdentifiers(f.getIdentifiers());
+		}
 		if ( criteria instanceof EnabledCriteria f ) {
 			setEnabled(f.getEnabled());
 		}
@@ -79,6 +83,46 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 		}
 	}
 
+	@Override
+	public String getIdentifier() {
+		return ServerFilter.super.getIdentifier();
+	}
+
+	/**
+	 * Set the identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	public void setIdentifier(String identifier) {
+		setIdentifiers(identifier != null ? new String[] { identifier } : null);
+	}
+
+	/**
+	 * Get the identifiers.
+	 * 
+	 * @return the identifiers
+	 */
+	@Override
+	public String[] getIdentifiers() {
+		return identifiers;
+	}
+
+	/**
+	 * Set the identifiers.
+	 * 
+	 * @param identifiers
+	 *        the identifiers to set
+	 */
+	public void setIdentifiers(String[] identifiers) {
+		this.identifiers = identifiers;
+	}
+
+	@Override
+	public Integer getIndex() {
+		return ServerFilter.super.getIndex();
+	}
+
 	/**
 	 * Set the index.
 	 * 
@@ -90,7 +134,7 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 	}
 
 	/**
-	 * Get the indexes
+	 * Get the indexes.
 	 * 
 	 * @return the indexes
 	 */
@@ -107,6 +151,11 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 	 */
 	public void setIndexes(Integer[] indexes) {
 		this.indexes = indexes;
+	}
+
+	@Override
+	public String getSubjectDn() {
+		return CertificateFilter.super.getSubjectDn();
 	}
 
 	/**
@@ -137,6 +186,11 @@ public class BasicFilter extends BasicCoreCriteria implements CertificateFilter,
 	 */
 	public void setSubjectDns(String[] subjectDns) {
 		this.subjectDns = subjectDns;
+	}
+
+	@Override
+	public Long getServerId() {
+		return ServerFilter.super.getServerId();
 	}
 
 	/**

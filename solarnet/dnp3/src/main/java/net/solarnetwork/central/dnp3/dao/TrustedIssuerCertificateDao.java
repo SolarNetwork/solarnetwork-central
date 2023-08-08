@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.dao;
 
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.dao.FilterableDao;
@@ -35,6 +36,7 @@ import net.solarnetwork.dao.FilterableDao;
  */
 public interface TrustedIssuerCertificateDao
 		extends GenericCompositeKey2Dao<TrustedIssuerCertificate, UserStringCompositePK, Long, String>,
-		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter> {
+		FilterableDao<TrustedIssuerCertificate, UserStringCompositePK, CertificateFilter>,
+		UserModifiableEnabledStatusDao<CertificateFilter> {
 
 }

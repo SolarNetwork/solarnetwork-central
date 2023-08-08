@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.dao;
 
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
+import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.dao.FilterableDao;
@@ -35,6 +36,7 @@ import net.solarnetwork.dao.FilterableDao;
  */
 public interface ServerAuthConfigurationDao extends
 		GenericCompositeKey3Dao<ServerAuthConfiguration, UserLongStringCompositePK, Long, Long, String>,
-		FilterableDao<ServerAuthConfiguration, UserLongStringCompositePK, ServerFilter> {
+		FilterableDao<ServerAuthConfiguration, UserLongStringCompositePK, ServerFilter>,
+		UserModifiableEnabledStatusDao<ServerFilter> {
 
 }

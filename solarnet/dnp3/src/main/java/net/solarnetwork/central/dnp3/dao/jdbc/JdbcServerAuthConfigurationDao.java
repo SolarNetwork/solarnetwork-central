@@ -33,6 +33,7 @@ import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerAuthConfiguration;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
@@ -110,7 +111,9 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	}
 
 	private static final String TABLE_NAME = "solardnp3.dnp3_server_auth";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "server_id", "ident" };
+	private static final String SERVER_ID_COLUMN_NAME = "server_id";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", SERVER_ID_COLUMN_NAME,
+			"ident" };
 
 	@Override
 	public void delete(ServerAuthConfiguration entity) {
@@ -125,6 +128,13 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerAuthConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerAuthConfigurationRowMapper.INSTANCE);
+	}
+
+	@Override
+	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
+				enabled);
+		return jdbcOps.update(sql);
 	}
 
 }

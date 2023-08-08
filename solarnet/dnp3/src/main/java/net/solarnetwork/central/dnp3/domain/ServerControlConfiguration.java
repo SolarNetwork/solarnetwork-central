@@ -146,7 +146,7 @@ public class ServerControlConfiguration
 	}
 
 	/**
-	 * Get the datum source ID.
+	 * Get the control ID.
 	 * 
 	 * @return the controlId
 	 */
@@ -155,7 +155,7 @@ public class ServerControlConfiguration
 	}
 
 	/**
-	 * Set the datum source ID.
+	 * Set the control ID.
 	 * 
 	 * @param controlId
 	 *        the controlId to set
@@ -165,7 +165,7 @@ public class ServerControlConfiguration
 	}
 
 	/**
-	 * Set the measurement type.
+	 * Set the control type.
 	 * 
 	 * @return the controlType
 	 */
@@ -174,13 +174,13 @@ public class ServerControlConfiguration
 	}
 
 	/**
-	 * Get the measurement type.
+	 * Get the control type.
 	 * 
 	 * @param controlType
 	 *        the measurement type to set
 	 */
-	public void setControlType(ControlType measurementType) {
-		this.controlType = measurementType;
+	public void setControlType(ControlType controlType) {
+		this.controlType = controlType;
 	}
 
 }

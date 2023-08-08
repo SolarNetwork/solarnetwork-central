@@ -47,10 +47,10 @@ public class UpsertTrustedIssuerCertificate implements PreparedStatementCreator,
 				, expires,enabled,cert
 			)
 			VALUES (
-				  ?,?,?,?
+				  ?,CAST(COALESCE(?, ?) AS TIMESTAMP WITH TIME ZONE),?,?
 				, ?,?,?)
 			ON CONFLICT (user_id, subject_dn) DO UPDATE
-				SET modified = EXCLUDED.modified
+				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, expires = EXCLUDED.expires
 					, enabled = EXCLUDED.enabled
 					, cert = EXCLUDED.cert
@@ -84,11 +84,11 @@ public class UpsertTrustedIssuerCertificate implements PreparedStatementCreator,
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.NO_GENERATED_KEYS);
 		Timestamp ts = Timestamp.from(entity.getCreated() != null ? entity.getCreated() : Instant.now());
-		Timestamp mod = Timestamp
-				.from(entity.getModified() != null ? entity.getModified() : Instant.now());
+		Timestamp mod = entity.getModified() != null ? Timestamp.from(entity.getModified()) : null;
 		int p = 0;
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, mod);
+		stmt.setTimestamp(++p, ts);
 		stmt.setObject(++p, userId);
 		stmt.setString(++p, entity.getSubjectDn());
 		stmt.setTimestamp(++p, Timestamp.from(entity.getExpires()));

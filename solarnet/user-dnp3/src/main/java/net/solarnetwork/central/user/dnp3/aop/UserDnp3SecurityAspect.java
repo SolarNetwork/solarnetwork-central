@@ -90,12 +90,22 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 	public void updateUserRelatedEntity(Long userId) {
 	}
 
+	/**
+	 * Match methods like {@code delete*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.delete*(..)) && args(userId,..)")
+	public void deleteUserRelatedEntity(Long userId) {
+	}
+
 	@Before("readForUser(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("createUserRelatedEntity(userId) || saveUserRelatedEntity(userId) || updateUserRelatedEntity(userId)")
+	@Before("createUserRelatedEntity(userId) || saveUserRelatedEntity(userId) || updateUserRelatedEntity(userId) || deleteUserRelatedEntity(userId)")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}

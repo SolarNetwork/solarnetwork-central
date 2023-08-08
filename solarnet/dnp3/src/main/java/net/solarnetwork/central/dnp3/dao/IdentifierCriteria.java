@@ -1,5 +1,5 @@
 /* ==================================================================
- * ServerFilter.java - 6/08/2023 6:12:49 pm
+ * IdentifierCriteria.java - 8/08/2023 6:38:17 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -22,18 +22,44 @@
 
 package net.solarnetwork.central.dnp3.dao;
 
-import net.solarnetwork.central.common.dao.EnabledCriteria;
-import net.solarnetwork.central.common.dao.IndexCriteria;
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-
 /**
- * A filter for DNP3 server-related certificates.
+ * Criteria API for a identified entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ServerFilter extends UserCriteria, ServerCriteria, IdentifierCriteria, IndexCriteria,
-		EnabledCriteria, PaginationCriteria {
+public interface IdentifierCriteria {
+
+	/**
+	 * Get the first identifier.
+	 * 
+	 * <p>
+	 * This returns the first available value from the {@link #getIdentifiers()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the identifier, or {@literal null} if not available
+	 */
+	default String getIdentifier() {
+		String[] array = getIdentifiers();
+		return (array != null && array.length > 0 ? array[0] : null);
+	}
+
+	/**
+	 * Get an array of identifiers.
+	 * 
+	 * @return array of identifiers (may be {@literal null})
+	 */
+	String[] getIdentifiers();
+
+	/**
+	 * Test if any identifier criteria exists.
+	 * 
+	 * @return {@literal true} if an identifier criteria exists
+	 */
+	default boolean hasIdentifierCriteria() {
+		String id = getIdentifier();
+		return (id != null);
+	}
 
 }

@@ -33,6 +33,7 @@ import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectTrustedIssuerCertificate;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledCertificateFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertTrustedIssuerCertificate;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
 import net.solarnetwork.central.domain.UserStringCompositePK;
@@ -124,4 +125,9 @@ public class JdbcTrustedIssuerCertificateDao implements TrustedIssuerCertificate
 		return executeFilterQuery(jdbcOps, filter, sql, TrustedIssuerCertificateRowMapper.INSTANCE);
 	}
 
+	@Override
+	public int updateEnabledStatus(Long userId, CertificateFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledCertificateFilter(TABLE_NAME, userId, filter, enabled);
+		return jdbcOps.update(sql);
+	}
 }
