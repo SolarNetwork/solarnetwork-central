@@ -39,4 +39,17 @@ public interface ServerAuthConfigurationDao extends
 		FilterableDao<ServerAuthConfiguration, UserLongStringCompositePK, ServerFilter>,
 		UserModifiableEnabledStatusDao<ServerFilter> {
 
+	/**
+	 * Get the server auth associated with an identifier.
+	 * 
+	 * <p>
+	 * Identifier values are assumed to be globally unique.
+	 * </p>
+	 * 
+	 * @param identifier
+	 *        the identifier to search for
+	 * @return the entity, or {@literal null} if not found
+	 */
+	ServerAuthConfiguration findForIdentifier(String identifier);
+
 }

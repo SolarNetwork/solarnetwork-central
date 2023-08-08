@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerAuthConfigurationData;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -245,6 +246,44 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 				.filter(e -> groups.getKey().equals(e.getUserId()) && groupId.equals(e.getServerId()))
 				.toArray(ServerAuthConfiguration[]::new);
 		then(results).as("Results for single group returned").contains(expected);
+	}
+
+	@Test
+	public void findForIdentifier() {
+		// GIVEN
+		final int userCount = 3;
+		final int serverCount = 3;
+		final int count = 3;
+		final List<Long> userIds = new ArrayList<>(userCount);
+		final List<ServerAuthConfiguration> confs = new ArrayList<>(count);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			userIds.add(userId);
+
+			for ( int s = 0; s < serverCount; s++ ) {
+				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+						UUID.randomUUID().toString());
+				UserLongCompositePK serverId = serverDao.create(userId, server);
+				server = server.copyWithId(serverId);
+
+				for ( int i = 0; i < count; i++ ) {
+					ServerAuthConfiguration conf = new ServerAuthConfiguration(userId,
+							server.getServerId(), UUID.randomUUID().toString(), Instant.now());
+					conf.setModified(conf.getCreated());
+					conf.setName(UUID.randomUUID().toString());
+					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
+					confs.add(conf.copyWithId(id));
+				}
+			}
+		}
+
+		// WHEN
+		final var expected = confs.get(new SecureRandom().nextInt(confs.size()));
+		ServerAuthConfiguration result = dao.findForIdentifier(expected.getIdentifier());
+
+		// THEN
+		then(result).as("Result found for identifier").isEqualTo(expected);
 	}
 
 }

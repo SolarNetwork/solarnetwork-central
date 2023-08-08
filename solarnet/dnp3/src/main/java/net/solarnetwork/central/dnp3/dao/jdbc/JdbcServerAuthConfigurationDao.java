@@ -27,6 +27,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.StreamSupport;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
@@ -135,6 +136,16 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
 				enabled);
 		return jdbcOps.update(sql);
+	}
+
+	@Override
+	public ServerAuthConfiguration findForIdentifier(String subjectDn) {
+		BasicFilter filter = new BasicFilter();
+		filter.setIdentifier(subjectDn);
+		var sql = new SelectServerAuthConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql,
+				ServerAuthConfigurationRowMapper.INSTANCE);
+		return StreamSupport.stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
 }
