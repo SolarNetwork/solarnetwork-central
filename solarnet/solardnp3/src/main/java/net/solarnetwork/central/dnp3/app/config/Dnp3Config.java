@@ -1,7 +1,7 @@
 /* ==================================================================
- * CacheConfig.java - 5/10/2021 6:43:38 AM
+ * Dnp3Config.java - 9/08/2023 4:22:12 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2023 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,48 +22,32 @@
 
 package net.solarnetwork.central.dnp3.app.config;
 
-import java.nio.file.Path;
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.spi.CachingProvider;
-import org.ehcache.core.config.DefaultConfiguration;
-import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
-import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.automatak.dnp3.DNP3Manager;
+import com.automatak.dnp3.impl.DNP3ManagerFactory;
+import net.solarnetwork.dnp3.util.Slf4jLogHandler;
 
 /**
- * Cache configuration.
+ * DNP3 configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@EnableCaching
-public class CacheConfig {
+public class Dnp3Config {
 
-	@Value("${app.cache.persistence.path}")
-	private Path persistencePath;
+	/** The default concurrency. */
+	public static final int DEFAULT_CONCURRENCY = 2;
 
-	/**
-	 * The cache manager.
-	 * 
-	 * @return the manager
-	 */
-	@Bean
-	public CacheManager jCacheManager() {
-		CachingProvider cachingProvider = Caching.getCachingProvider();
-		if ( cachingProvider instanceof EhcacheCachingProvider ) {
-			DefaultConfiguration configuration = new DefaultConfiguration(
-					cachingProvider.getDefaultClassLoader(),
-					new DefaultPersistenceConfiguration(persistencePath.toFile()));
-			return ((EhcacheCachingProvider) cachingProvider)
-					.getCacheManager(cachingProvider.getDefaultURI(), configuration);
-		} else {
-			return cachingProvider.getCacheManager();
-		}
+	@Value("${app.dnp3.concurrency:#{null}}")
+	private Integer concurrency;
+
+	@Bean(destroyMethod = "shutdown")
+	public DNP3Manager dnp3Manager() {
+		final int c = (concurrency != null ? concurrency.intValue() : DEFAULT_CONCURRENCY);
+		return DNP3ManagerFactory.createManager(c, new Slf4jLogHandler());
 	}
 
 }

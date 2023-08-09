@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.biz;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,12 +32,13 @@ import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.InstructionStatus;
 
 /**
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public interface InstructorBiz {
 
@@ -236,5 +238,26 @@ public interface InstructorBiz {
 	 */
 	void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
 			Map<Long, Map<String, ?>> resultParameters);
+
+	/**
+	 * Create a result parameter map for an error message and/or code.
+	 * 
+	 * @param message
+	 *        the message
+	 * @param code
+	 *        the code
+	 * @return the map, never {@literal null}
+	 * @since 1.6
+	 */
+	static Map<String, Object> createErrorResultParameters(String message, String code) {
+		Map<String, Object> result = new LinkedHashMap<>(2);
+		if ( message != null && !message.isEmpty() ) {
+			result.put(InstructionStatus.MESSAGE_RESULT_PARAM, message);
+		}
+		if ( code != null && !code.isEmpty() ) {
+			result.put(InstructionStatus.ERROR_CODE_RESULT_PARAM, code);
+		}
+		return result;
+	}
 
 }

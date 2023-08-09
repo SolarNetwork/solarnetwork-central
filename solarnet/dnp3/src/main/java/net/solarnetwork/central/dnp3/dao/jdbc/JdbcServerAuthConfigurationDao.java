@@ -142,6 +142,7 @@ public class JdbcServerAuthConfigurationDao implements ServerAuthConfigurationDa
 	public ServerAuthConfiguration findForIdentifier(String subjectDn) {
 		BasicFilter filter = new BasicFilter();
 		filter.setIdentifier(subjectDn);
+		filter.setEnabled(true);
 		var sql = new SelectServerAuthConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
 				ServerAuthConfigurationRowMapper.INSTANCE);

@@ -44,9 +44,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.net.proxy.config.DynamicProxyServerSettings;
 import net.solarnetwork.central.net.proxy.service.DynamicPortRegistrar;
-import net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer;
 import net.solarnetwork.central.net.proxy.service.impl.SimplePrincipalMapping;
 import net.solarnetwork.central.net.proxy.service.impl.SimpleProxyConfigurationProvider;
 import net.solarnetwork.central.security.CertificateUtils;
@@ -92,21 +90,6 @@ public class TestProxyServerConfig {
 		SimpleProxyConfigurationProvider provider = new SimpleProxyConfigurationProvider(portRegistrar,
 				userMappings);
 		return provider;
-	}
-
-	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public NettyDynamicProxyServer testProxyServer(DynamicProxyServerSettings settings,
-			SimpleProxyConfigurationProvider provider) {
-		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindAddress(),
-				settings.bindPort());
-		server.setWireLogging(settings.isWireLoggingEnabled());
-		if ( settings.hasTlsSettings() ) {
-			KeyStore keyStore = CertificateUtils.serverKeyStore(settings.tls().certificatePath(),
-					settings.tls().certificateKey(), NettyDynamicProxyServer.DEFAULT_KEYSTORE_ALIAS);
-			server.setKeyStore(keyStore);
-		}
-		server.registerConfigurationProvider(provider);
-		return server;
 	}
 
 }

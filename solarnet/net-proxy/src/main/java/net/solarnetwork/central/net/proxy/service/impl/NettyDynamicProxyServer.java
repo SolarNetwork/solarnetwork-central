@@ -344,8 +344,8 @@ public class NettyDynamicProxyServer
 					}
 				} catch ( Exception e ) {
 					Throwable cause = e.getCause() != null ? e.getCause() : e;
-					log.warn("Unauthorized client certificate [{}]: {}",
-							chain[0].getSubjectX500Principal().getName(), e.toString());
+					log.warn("Unauthorized client certificate [{}]: {}", canonicalSubjectDn(chain[0]),
+							e.getMessage());
 					if ( cause instanceof CertificateException ce ) {
 						throw ce;
 					}
