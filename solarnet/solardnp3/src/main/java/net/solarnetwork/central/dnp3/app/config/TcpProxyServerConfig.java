@@ -56,6 +56,7 @@ public class TcpProxyServerConfig {
 				settings.bindPort());
 		server.setWireLogging(settings.isWireLoggingEnabled());
 		if ( settings.hasTlsSettings() ) {
+			server.setTlsProtocols(settings.tls().protocols());
 			KeyStore keyStore = CertificateUtils.serverKeyStore(settings.tls().certificatePath(),
 					settings.tls().certificateKey(), NettyDynamicProxyServer.DEFAULT_KEYSTORE_ALIAS);
 			server.setKeyStore(keyStore);

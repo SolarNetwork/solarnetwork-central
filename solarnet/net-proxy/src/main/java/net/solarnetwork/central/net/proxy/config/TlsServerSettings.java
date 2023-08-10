@@ -30,6 +30,7 @@ import java.nio.file.Path;
  * @author matt
  * @version 1.0
  */
-public record TlsServerSettings(Path certificatePath, Path certificateKey, String verifyClient) {
+public record TlsServerSettings(String[] protocols, Path certificatePath, Path certificateKey,
+		String verifyClient) {
 
 }

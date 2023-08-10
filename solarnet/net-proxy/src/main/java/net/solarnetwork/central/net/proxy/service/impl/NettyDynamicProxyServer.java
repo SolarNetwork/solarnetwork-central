@@ -40,10 +40,12 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
@@ -87,12 +89,15 @@ public class NettyDynamicProxyServer
 	/** The SSL session key for the proxy connection settings. */
 	public static final String SSL_SESSION_PROXY_SETTINGS_KEY = "ProxyConnectionSettings";
 
+	private static final String[] DEFAULT_TLS_PROTOCOLS = new String[] { "TLSv1.3" };
+
 	private static final Logger log = LoggerFactory.getLogger(NettyDynamicProxyServer.class);
 
 	private final Queue<ProxyConfigurationProvider> providers = new ConcurrentLinkedQueue<>();
 	private final SocketAddress bindAddress;
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
+	private String[] tlsProtocols = DEFAULT_TLS_PROTOCOLS;
 	private String[] keyStoreAliases = new String[] { DEFAULT_KEYSTORE_ALIAS };
 	private KeyStore keyStore;
 	private boolean wireLogging = false;
@@ -178,7 +183,7 @@ public class NettyDynamicProxyServer
 			SslContext sslContext = null;
 			if ( keyStore != null ) {
 				sslContext = SslContextBuilder.forServer(this).trustManager(new InternalTrustManager())
-						.protocols("TLSv1.3").clientAuth(ClientAuth.REQUIRE).build();
+						.protocols(tlsProtocols).clientAuth(ClientAuth.REQUIRE).build();
 			}
 
 			// @formatter:off
@@ -189,7 +194,8 @@ public class NettyDynamicProxyServer
 				.childOption(ChannelOption.AUTO_READ, false)
 				.bind(bindAddress).sync()
 				.addListener((f) -> {
-					log.info("Proxy server started on {}", bindAddress);
+					log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress, 
+							Arrays.stream(tlsProtocols).collect(Collectors.joining(", ")));
 				})
 				.channel().closeFuture().addListener((f) -> {
 					log.info("Proxy server stopped on {}", bindAddress);
@@ -336,7 +342,10 @@ public class NettyDynamicProxyServer
 					ProxyConnectionSettings settings = provider.authorize(req);
 					if ( settings != null ) {
 						if ( engine != null ) {
-							SSLSession session = engine.getSession();
+							SSLSession session = engine.getHandshakeSession();
+							if ( session == null ) {
+								session = engine.getSession();
+							}
 							session.putValue(SSL_SESSION_PROXY_SETTINGS_KEY, settings);
 							return;
 						}
@@ -389,6 +398,27 @@ public class NettyDynamicProxyServer
 	 */
 	public void setWireLogging(boolean wireLogging) {
 		this.wireLogging = wireLogging;
+	}
+
+	/**
+	 * Get the supported TLS protocols.
+	 * 
+	 * @return the protocols to support
+	 */
+	public String[] getTlsProtocols() {
+		return tlsProtocols;
+	}
+
+	/**
+	 * Set the supported TLS protocols.
+	 * 
+	 * @param tlsProtocols
+	 *        the protocols to support; if {@literal null} then the default
+	 *        protocols will be set
+	 */
+	public void setTlsProtocols(String[] tlsProtocols) {
+		this.tlsProtocols = (tlsProtocols != null && tlsProtocols.length > 0 ? tlsProtocols
+				: DEFAULT_TLS_PROTOCOLS);
 	}
 
 	/**

@@ -42,6 +42,8 @@ app:
       port: 8802
       wire-logging: false
       tls:
+        protocols:
+          - "TLSv1.3"
         certificate-path: "local/server.pem"
         certificate-key: "local/server.key"
         verify-client: "required"
