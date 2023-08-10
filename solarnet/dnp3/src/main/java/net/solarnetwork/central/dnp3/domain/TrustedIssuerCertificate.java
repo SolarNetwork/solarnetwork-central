@@ -94,4 +94,29 @@ public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerC
 		return copy;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("TrustedIssuerCertificate{");
+		if ( getUserId() != null ) {
+			builder.append("userId=");
+			builder.append(getUserId());
+			builder.append(", ");
+		}
+		if ( getSubjectDn() != null ) {
+			builder.append("subjectDn=");
+			builder.append(getSubjectDn());
+			builder.append(", ");
+		}
+		if ( getExpires() != null ) {
+			builder.append("expires=");
+			builder.append(getExpires());
+			builder.append(", ");
+		}
+		builder.append("enabled=");
+		builder.append(isEnabled());
+		builder.append("}");
+		return builder.toString();
+	}
+
 }

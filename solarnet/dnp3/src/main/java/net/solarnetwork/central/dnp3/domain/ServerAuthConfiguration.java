@@ -98,6 +98,36 @@ public class ServerAuthConfiguration
 		return Objects.equals(this.name, other.getName());
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ServerAuth{");
+		if ( getUserId() != null ) {
+			builder.append("userId=");
+			builder.append(getUserId());
+			builder.append(", ");
+		}
+		if ( getServerId() != null ) {
+			builder.append("serverId=");
+			builder.append(getServerId());
+			builder.append(", ");
+		}
+		if ( getIdentifier() != null ) {
+			builder.append("identifier=");
+			builder.append(getIdentifier());
+			builder.append(", ");
+		}
+		if ( name != null ) {
+			builder.append("name=");
+			builder.append(name);
+			builder.append(", ");
+		}
+		builder.append("enabled=");
+		builder.append(isEnabled());
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get the server ID.
 	 * 

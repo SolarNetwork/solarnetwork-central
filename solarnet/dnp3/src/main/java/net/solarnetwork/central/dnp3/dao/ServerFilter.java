@@ -24,6 +24,7 @@ package net.solarnetwork.central.dnp3.dao;
 
 import net.solarnetwork.central.common.dao.EnabledCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.central.common.dao.NodeOwnershipCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -34,6 +35,6 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @version 1.0
  */
 public interface ServerFilter extends UserCriteria, ServerCriteria, IdentifierCriteria, IndexCriteria,
-		EnabledCriteria, PaginationCriteria {
+		EnabledCriteria, NodeOwnershipCriteria, PaginationCriteria {
 
 }

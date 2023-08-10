@@ -32,14 +32,16 @@ import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
 import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
 import com.automatak.dnp3.DNP3Manager;
+import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
@@ -66,7 +68,6 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 1.0
  */
-@Service
 public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvider {
 
 	/** The qualifier name for the user trust store cache. */
@@ -81,9 +82,9 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	private final ServerAuthConfigurationDao serverAuthDao;
 	private final ServerMeasurementConfigurationDao serverMeasurementDao;
 	private final ServerControlConfigurationDao serverControlDao;
+	private final NodeEventObservationRegistrar<ObjectDatum> datumObserver;
 
-	@Autowired(required = false)
-	@Qualifier(USER_TRUST_STORE_CACHE_QUALIFIER)
+	private Executor taskExecutor;
 	private Cache<Long, KeyStore> userTrustStoreCache;
 
 	/**
@@ -103,6 +104,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 *        the server measurement DAO
 	 * @param serverControlDao
 	 *        the server control DAO
+	 * @param datumObserver
+	 *        the node event observer for datum
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -110,7 +113,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			DynamicPortRegistrar portRegistrar, TrustedIssuerCertificateDao trustedCertDao,
 			ServerAuthConfigurationDao serverAuthDao,
 			ServerMeasurementConfigurationDao serverMeasurementDao,
-			ServerControlConfigurationDao serverControlDao) {
+			ServerControlConfigurationDao serverControlDao,
+			NodeEventObservationRegistrar<ObjectDatum> datumObserver) {
 		super();
 		this.manager = requireNonNullArgument(manager, "manager");
 		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
@@ -119,6 +123,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		this.serverAuthDao = requireNonNullArgument(serverAuthDao, "serverAuthDao");
 		this.serverMeasurementDao = requireNonNullArgument(serverMeasurementDao, "serverMeasurementDao");
 		this.serverControlDao = requireNonNullArgument(serverControlDao, "serverControlDao");
+		this.datumObserver = requireNonNullArgument(datumObserver, "datumObserver");
 	}
 
 	@Override
@@ -239,20 +244,52 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			}
 			final int newPort = portRegistrar.reserveNewPort();
 
-			BasicFilter filter = new BasicFilter();
+			final BasicFilter filter = new BasicFilter();
 			filter.setUserId(auth.getUserId());
 			filter.setServerId(auth.getServerId());
 			filter.setEnabled(true);
-			List<ServerMeasurementConfiguration> mConfigs = stream(
-					serverMeasurementDao.findFiltered(filter).spliterator(), false).toList();
-			List<ServerControlConfiguration> cConfigs = stream(
-					serverControlDao.findFiltered(filter).spliterator(), false).toList();
+			filter.setValidNodeOwnership(true);
+			final List<ServerMeasurementConfiguration> mConfigs = stream(
+					serverMeasurementDao.findFiltered(filter).spliterator(), false)
+							.filter(ServerMeasurementConfiguration::isValid).toList();
+			final List<ServerControlConfiguration> cConfigs = stream(
+					serverControlDao.findFiltered(filter).spliterator(), false)
+							.filter(ServerControlConfiguration::isValid).toList();
 			if ( mConfigs.isEmpty() && cConfigs.isEmpty() ) {
+				// TODO user event
+				log.warn(
+						"User {} DNP3 server {} has no valid measurement or control configurations: authorized connection for [{}] denied.",
+						auth.getUserId(), auth.getServerId(), auth.getIdentifier());
 				requireNonNullObject(null, "DNP3 Configuration");
 			}
+
+			// TODO: user event
+			log.info(
+					"User {} DNP3 server {} starting with {} measurement and {} control configurations: authorized connection for [{}].",
+					auth.getUserId(), auth.getServerId(), mConfigs.size(), cConfigs.size(),
+					auth.getIdentifier());
+
 			server = new OutstationService(manager, instructorBiz, auth, destinationHost(), newPort,
 					mConfigs, cConfigs);
 			server.serviceDidStartup();
+
+			final Runnable reg = () -> {
+				final Set<Long> nodeIds = new HashSet<>(mConfigs.size() + cConfigs.size());
+				for ( var c : mConfigs ) {
+					nodeIds.add(c.getNodeId());
+				}
+				for ( var c : cConfigs ) {
+					nodeIds.add(c.getNodeId());
+				}
+				datumObserver.registerNodeObserver(server, nodeIds.toArray(Long[]::new));
+			};
+			final Executor taskExecutor = getTaskExecutor();
+			if ( taskExecutor != null ) {
+				taskExecutor.execute(reg);
+			} else {
+				reg.run();
+			}
+
 			port = newPort;
 		}
 
@@ -260,6 +297,7 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		public synchronized void serviceDidShutdown() {
 			if ( server != null ) {
 				log.info("Stopping DNP3 outstation [{}]", server.getUid());
+				datumObserver.unregisterNodeObserver(server);
 				try {
 					server.serviceDidShutdown();
 				} catch ( Exception e ) {
@@ -274,6 +312,25 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			}
 		}
 
+	}
+
+	/**
+	 * Get the task executor.
+	 * 
+	 * @return the taskExecutor
+	 */
+	public Executor getTaskExecutor() {
+		return taskExecutor;
+	}
+
+	/**
+	 * Set the task executor.
+	 * 
+	 * @param taskExecutor
+	 *        the taskExecutor to set
+	 */
+	public void setTaskExecutor(Executor taskExecutor) {
+		this.taskExecutor = taskExecutor;
 	}
 
 	/**

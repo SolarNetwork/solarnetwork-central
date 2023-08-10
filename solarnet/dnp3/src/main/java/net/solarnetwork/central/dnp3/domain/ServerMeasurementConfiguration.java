@@ -123,6 +123,86 @@ public class ServerMeasurementConfiguration
 	}
 
 	/**
+	 * Test if this configuration is valid.
+	 * 
+	 * <p>
+	 * This only checks the existence and non-blankness of the fields necessary
+	 * to configure in DNP3.
+	 * </p>
+	 * 
+	 * @return {@literal true} if the configuration is valid
+	 */
+	public boolean isValid() {
+		final Long nodeId = getNodeId();
+		final String sourceId = getSourceId();
+		final String property = getProperty();
+		final MeasurementType type = getMeasurementType();
+		return (nodeId != null && sourceId != null && property != null && type != null
+				&& !sourceId.isBlank() && !property.isBlank());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ServerMeasurement{");
+		if ( getUserId() != null ) {
+			builder.append("userId=");
+			builder.append(getUserId());
+			builder.append(", ");
+		}
+		if ( getServerId() != null ) {
+			builder.append("serverId=");
+			builder.append(getServerId());
+			builder.append(", ");
+		}
+		if ( getIndex() != null ) {
+			builder.append("index=");
+			builder.append(getIndex());
+			builder.append(", ");
+		}
+		if ( nodeId != null ) {
+			builder.append("nodeId=");
+			builder.append(nodeId);
+			builder.append(", ");
+		}
+		if ( sourceId != null ) {
+			builder.append("sourceId=");
+			builder.append(sourceId);
+			builder.append(", ");
+		}
+		if ( property != null ) {
+			builder.append("property=");
+			builder.append(property);
+			builder.append(", ");
+		}
+		if ( measurementType != null ) {
+			builder.append("measurementType=");
+			builder.append(measurementType);
+			builder.append(", ");
+		}
+		if ( multiplier != null ) {
+			builder.append("multiplier=");
+			builder.append(multiplier);
+			builder.append(", ");
+		}
+		if ( offset != null ) {
+			builder.append("offset=");
+			builder.append(offset);
+			builder.append(", ");
+		}
+		if ( scale != null ) {
+			builder.append("scale=");
+			builder.append(scale);
+			builder.append(", ");
+			builder.append(", ");
+		}
+		builder.append("enabled=");
+		builder.append(isEnabled());
+		builder.append("}");
+		return builder.toString();
+	}
+
+	/**
 	 * Get the server ID.
 	 * 
 	 * @return the server ID

@@ -90,6 +90,10 @@ public class SelectServerMeasurementConfiguration
 					, dsm.dmult, dsm.doffset, dsm.dscale
 				FROM solardnp3.dnp3_server_meas dsm
 				""");
+		if ( Boolean.TRUE.equals(filter.getValidNodeOwnership()) ) {
+			buf.append(
+					"INNER JOIN solaruser.user_node un ON un.node_id = dsm.node_id AND un.user_id = dsm.user_id\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {

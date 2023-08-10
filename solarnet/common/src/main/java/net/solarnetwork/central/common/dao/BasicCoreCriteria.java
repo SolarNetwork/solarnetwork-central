@@ -41,7 +41,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class BasicCoreCriteria extends SimplePagination
 		implements PaginationCriteria, LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria,
-		SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria {
+		SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria, NodeOwnershipCriteria {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;
@@ -51,6 +51,7 @@ public class BasicCoreCriteria extends SimplePagination
 	private SimpleLocation location;
 	private String searchFilter;
 	private Boolean enabled;
+	private Boolean validNodeOwnership;
 
 	/**
 	 * Default constructor.
@@ -88,6 +89,7 @@ public class BasicCoreCriteria extends SimplePagination
 		result = prime * result + Objects.hashCode(location);
 		result = prime * result + Objects.hashCode(searchFilter);
 		result = prime * result + Objects.hashCode(enabled);
+		result = prime * result + Objects.hashCode(validNodeOwnership);
 		return result;
 	}
 
@@ -107,7 +109,8 @@ public class BasicCoreCriteria extends SimplePagination
 				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
 				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location)
 				&& Objects.equals(searchFilter, other.searchFilter)
-				&& Objects.equals(enabled, other.enabled);
+				&& Objects.equals(enabled, other.enabled)
+				&& Objects.equals(validNodeOwnership, other.validNodeOwnership);
 	}
 
 	/**
@@ -134,6 +137,7 @@ public class BasicCoreCriteria extends SimplePagination
 			setTokenIds(c.getTokenIds());
 			setSearchFilter(c.getSearchFilter());
 			setEnabled(c.getEnabled());
+			setValidNodeOwnership(c.getValidNodeOwnership());
 		} else {
 			if ( criteria instanceof LocationCriteria c ) {
 				setLocationIds(c.getLocationIds());
@@ -156,6 +160,9 @@ public class BasicCoreCriteria extends SimplePagination
 			}
 			if ( criteria instanceof EnabledCriteria c ) {
 				setEnabled(c.getEnabled());
+			}
+			if ( criteria instanceof NodeOwnershipCriteria c ) {
+				setValidNodeOwnership(c.getValidNodeOwnership());
 			}
 		}
 	}
@@ -453,6 +460,22 @@ public class BasicCoreCriteria extends SimplePagination
 	 */
 	public void setEnabled(Boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	@Override
+	public Boolean getValidNodeOwnership() {
+		return validNodeOwnership;
+	}
+
+	/**
+	 * Set the valid node ownership flag.
+	 * 
+	 * @param validNodeOwnership
+	 *        the flag to set
+	 * @since 1.3
+	 */
+	public void setValidNodeOwnership(Boolean validNodeOwnership) {
+		this.validNodeOwnership = validNodeOwnership;
 	}
 
 }

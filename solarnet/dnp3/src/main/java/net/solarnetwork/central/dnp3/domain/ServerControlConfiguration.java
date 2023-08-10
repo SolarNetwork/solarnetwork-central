@@ -107,6 +107,64 @@ public class ServerControlConfiguration
 	}
 
 	/**
+	 * Test if this configuration is valid.
+	 * 
+	 * <p>
+	 * This only checks the existence and non-blankness of the fields necessary
+	 * to configure in DNP3.
+	 * </p>
+	 * 
+	 * @return {@literal true} if the configuration is valid
+	 */
+	public boolean isValid() {
+		final Long nodeId = getNodeId();
+		final String controlId = getControlId();
+		final ControlType type = getControlType();
+		return (nodeId != null && controlId != null && type != null && !controlId.isBlank()
+				&& !controlId.isBlank());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ServerControl{");
+		if ( getUserId() != null ) {
+			builder.append("userId=");
+			builder.append(getUserId());
+			builder.append(", ");
+		}
+		if ( getServerId() != null ) {
+			builder.append("serverId=");
+			builder.append(getServerId());
+			builder.append(", ");
+		}
+		if ( getIndex() != null ) {
+			builder.append("index=");
+			builder.append(getIndex());
+			builder.append(", ");
+		}
+		if ( nodeId != null ) {
+			builder.append("nodeId=");
+			builder.append(nodeId);
+			builder.append(", ");
+		}
+		if ( controlId != null ) {
+			builder.append("controlId=");
+			builder.append(controlId);
+			builder.append(", ");
+		}
+		if ( controlType != null ) {
+			builder.append("controlType=");
+			builder.append(controlType);
+			builder.append(", ");
+		}
+		builder.append("enabled=");
+		builder.append(isEnabled());
+		builder.append("}");
+		return builder.toString();
+	}
+
+	/**
 	 * Get the server ID.
 	 * 
 	 * @return the server ID

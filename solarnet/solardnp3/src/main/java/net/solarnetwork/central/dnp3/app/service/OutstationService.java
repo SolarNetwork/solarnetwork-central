@@ -31,10 +31,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskExecutor;
@@ -73,6 +74,7 @@ import com.automatak.dnp3.enums.DoubleBitBinaryQuality;
 import com.automatak.dnp3.enums.FrozenCounterQuality;
 import com.automatak.dnp3.enums.OperateType;
 import com.automatak.dnp3.enums.ServerAcceptMode;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
@@ -94,7 +96,8 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
-public class OutstationService implements ServiceLifecycleObserver, ChannelListener {
+public class OutstationService
+		implements ServiceLifecycleObserver, ChannelListener, Consumer<ObjectDatum> {
 
 	private static final Logger log = LoggerFactory.getLogger(OutstationService.class);
 
@@ -119,8 +122,15 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 	private final Application app;
 	private final CommandHandler commandHandler;
 	private final OutstationConfig outstationConfig;
+
+	// the following two maps define the DNP3 set point record tables for each type
 	private final Map<MeasurementType, List<ServerMeasurementConfiguration>> measurementTypes;
 	private final Map<ControlType, List<ServerControlConfiguration>> controlTypes;
+
+	// the following two maps support fast lookup to map datum passed to accept() to associated
+	// measurements and controls that reference the datum's node and source ID
+	private final Map<Long, Map<String, List<ServerMeasurementConfiguration>>> datumMeasurements;
+	private final Map<Long, Map<String, List<ServerControlConfiguration>>> datumControls;
 
 	private TaskExecutor taskExecutor;
 	private int eventBufferSize = DEFAULT_EVENT_BUFFER_SIZE;
@@ -163,6 +173,8 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		this.outstationConfig = new OutstationConfig();
 		this.measurementTypes = createMeasurementTypeMap();
 		this.controlTypes = createControlTypeMap();
+		this.datumMeasurements = createDatumMeasurements();
+		this.datumControls = createDatumControls();
 	}
 
 	@Override
@@ -389,7 +401,8 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		return result;
 	}
 
-	private void handleDatumCapturedEvent(Datum datum) {
+	@Override
+	public void accept(final ObjectDatum datum) {
 		if ( datum == null ) {
 			return;
 		}
@@ -403,7 +416,7 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		}
 	}
 
-	private void applyDatumCapturedUpdates(Datum datum) {
+	private void applyDatumCapturedUpdates(final Datum datum) {
 		OutstationChangeSet changes = changeSetForDatumCapturedEvent(datum);
 		if ( changes == null ) {
 			return;
@@ -421,149 +434,132 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		if ( datum == null || (measurementTypes.isEmpty() && controlTypes.isEmpty()) ) {
 			return null;
 		}
+		final Long nodeId = datum.getObjectId();
 		final String sourceId = datum.getSourceId();
+
+		final List<ServerMeasurementConfiguration> measurementConfigs = (datumMeasurements
+				.containsKey(nodeId) ? datumMeasurements.get(nodeId).get(sourceId) : null);
+		final List<ServerControlConfiguration> controlConfigs = (datumControls.containsKey(nodeId)
+				? datumControls.get(nodeId).get(sourceId)
+				: null);
+		if ( measurementConfigs == null && controlConfigs == null ) {
+			return null;
+		}
+
 		final Instant timestamp = datum.getTimestamp();
 		if ( timestamp == null ) {
 			return null;
 		}
 		final long ts = timestamp.toEpochMilli();
-		final Map<String, ?> datumProps = datum.getSampleData();
+
 		OutstationChangeSet changes = null;
 
-		for ( Map.Entry<MeasurementType, List<ServerMeasurementConfiguration>> me : measurementTypes
-				.entrySet() ) {
-			MeasurementType type = me.getKey();
-			List<ServerMeasurementConfiguration> list = me.getValue();
-			for ( ListIterator<ServerMeasurementConfiguration> itr = list.listIterator(); itr
-					.hasNext(); ) {
-				ServerMeasurementConfiguration config = itr.next();
-				if ( sourceId.equals(config.getSourceId()) ) {
-					Object propVal = datumProps.get(config.getProperty());
-					if ( propVal != null ) {
-						if ( propVal instanceof Number ) {
-							if ( config.getMultiplier() != null ) {
-								propVal = applyUnitMultiplier((Number) propVal, config.getMultiplier());
-							}
-							if ( config.getScale() >= 0 ) {
-								propVal = applyDecimalScale((Number) propVal, config.getScale());
-							}
-						}
-						if ( changes == null ) {
-							changes = new OutstationChangeSet();
-						}
-						log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", type, itr.previousIndex(),
-								sourceId, config.getProperty(), propVal);
-						switch (type) {
-							case AnalogInput:
-								if ( propVal instanceof Number ) {
-									changes.update(
-											new AnalogInput(((Number) propVal).doubleValue(),
-													(byte) AnalogQuality.ONLINE.toType(), ts),
-											itr.previousIndex());
-								}
-								break;
+		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
+			Object propVal = datum.asSampleOperations().findSampleValue(config.getProperty());
+			if ( propVal instanceof Number propNum ) {
+				if ( config.getMultiplier() != null ) {
+					propNum = applyUnitMultiplier(propNum, config.getMultiplier());
+				}
+				if ( config.getScale() != null ) {
+					propNum = applyDecimalScale(propNum, config.getScale());
+				}
+				propVal = propNum;
+			}
+			final int idx = measurementTypes.get(config.getMeasurementType()).indexOf(config);
+			if ( idx < 0 ) {
+				// really shouldn't be here
+				continue;
+			}
+			if ( changes == null ) {
+				changes = new OutstationChangeSet();
+			}
+			log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", config.getMeasurementType(), idx,
+					sourceId, config.getProperty(), propVal);
+			switch (config.getMeasurementType()) {
+				case AnalogInput -> {
+					if ( propVal instanceof Number propNum ) {
+						changes.update(new AnalogInput(propNum.doubleValue(),
+								(byte) AnalogQuality.ONLINE.toType(), ts), idx);
+					}
+				}
 
-							case AnalogOutputStatus:
-								if ( propVal instanceof Number ) {
-									changes.update(
-											new AnalogOutputStatus(((Number) propVal).doubleValue(),
-													(byte) AnalogOutputStatusQuality.ONLINE.toType(),
-													ts),
-											itr.previousIndex());
-								}
-								break;
+				case AnalogOutputStatus -> {
+					if ( propVal instanceof Number propNum ) {
+						changes.update(new AnalogOutputStatus(propNum.doubleValue(),
+								(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts), idx);
+					}
+				}
 
-							case BinaryInput:
-								changes.update(
-										new BinaryInput(booleanPropertyValue(propVal),
-												(byte) BinaryQuality.ONLINE.toType(), ts),
-										itr.previousIndex());
-								break;
+				case BinaryInput -> changes.update(new BinaryInput(booleanPropertyValue(propVal),
+						(byte) BinaryQuality.ONLINE.toType(), ts), idx);
 
-							case BinaryOutputStatus:
-								changes.update(
-										new BinaryOutputStatus(booleanPropertyValue(propVal),
-												(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts),
-										itr.previousIndex());
-								break;
+				case BinaryOutputStatus -> changes
+						.update(new BinaryOutputStatus(booleanPropertyValue(propVal),
+								(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), idx);
 
-							case Counter:
-								if ( propVal instanceof Number ) {
-									changes.update(
-											new Counter(((Number) propVal).longValue(),
-													(byte) CounterQuality.ONLINE.toType(), ts),
-											itr.previousIndex());
-								}
-								break;
+				case Counter -> {
+					if ( propVal instanceof Number propNum ) {
+						changes.update(new Counter(propNum.longValue(),
+								(byte) CounterQuality.ONLINE.toType(), ts), idx);
+					}
+				}
 
-							case DoubleBitBinaryInput:
-								changes.update(
-										new DoubleBitBinaryInput(
-												booleanPropertyValue(propVal) ? DoubleBit.DETERMINED_ON
-														: DoubleBit.DETERMINED_OFF,
-												(byte) DoubleBitBinaryQuality.ONLINE.toType(), ts),
-										itr.previousIndex());
-								break;
+				case DoubleBitBinaryInput -> changes.update(new DoubleBitBinaryInput(
+						booleanPropertyValue(propVal) ? DoubleBit.DETERMINED_ON
+								: DoubleBit.DETERMINED_OFF,
+						(byte) DoubleBitBinaryQuality.ONLINE.toType(), ts), idx);
 
-							case FrozenCounter:
-								if ( propVal instanceof Number ) {
-									changes.update(
-											new FrozenCounter(((Number) propVal).longValue(),
-													(byte) FrozenCounterQuality.ONLINE.toType(), ts),
-											itr.previousIndex());
-								}
-								break;
-						}
+				case FrozenCounter -> {
+					if ( propVal instanceof Number propNum ) {
+						changes.update(new FrozenCounter(propNum.longValue(),
+								(byte) FrozenCounterQuality.ONLINE.toType(), ts), idx);
 					}
 				}
 			}
 		}
 
-		int analogStatusOffset = typeConfigCount(MeasurementType.AnalogOutputStatus, measurementTypes);
-		int binaryStatusOffset = typeConfigCount(MeasurementType.BinaryOutputStatus, measurementTypes);
-		for ( Map.Entry<ControlType, List<ServerControlConfiguration>> me : controlTypes.entrySet() ) {
-			ControlType type = me.getKey();
-			List<ServerControlConfiguration> list = me.getValue();
-			for ( ListIterator<ServerControlConfiguration> itr = list.listIterator(); itr.hasNext(); ) {
-				ServerControlConfiguration config = itr.next();
-				if ( sourceId.equals(config.getControlId()) ) {
-					if ( changes == null ) {
-						changes = new OutstationChangeSet();
-					}
+		final int analogStatusOffset = typeConfigCount(MeasurementType.AnalogOutputStatus,
+				measurementTypes);
+		final int binaryStatusOffset = typeConfigCount(MeasurementType.BinaryOutputStatus,
+				measurementTypes);
 
-					int index = (type == ControlType.Analog ? analogStatusOffset : binaryStatusOffset)
-							+ itr.previousIndex();
-
-					Object propVal = datumProps.get("value");
-					log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", type, index,
-							sourceId, propVal);
-					switch (type) {
-						case Analog:
-							try {
-								Number n = null;
-								if ( propVal instanceof Number ) {
-									n = (Number) propVal;
-								} else {
-									n = new BigDecimal(propVal.toString());
-								}
-								changes.update(
-										new AnalogOutputStatus(n.doubleValue(),
-												(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts),
-										index);
-							} catch ( NumberFormatException e ) {
-								log.warn("Cannot convert control [{}] value [{}] to number: {}",
-										sourceId, propVal, e.getMessage());
+		final Object controlVal = datum.asSampleOperations().findSampleValue("value");
+		if ( controlVal != null ) {
+			for ( ServerControlConfiguration config : controlConfigs ) {
+				final int idx = controlTypes.get(config.getControlType()).indexOf(config);
+				if ( idx < 0 ) {
+					// really shouldn't be here
+					continue;
+				}
+				if ( changes == null ) {
+					changes = new OutstationChangeSet();
+				}
+				int index = (config.getControlType() == ControlType.Analog ? analogStatusOffset
+						: binaryStatusOffset) + idx;
+				log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", config.getControlType(),
+						index, sourceId, controlVal);
+				switch (config.getControlType()) {
+					case Analog -> {
+						try {
+							Number n = null;
+							if ( controlVal instanceof Number controlNum ) {
+								n = controlNum;
+							} else {
+								n = new BigDecimal(controlVal.toString());
 							}
-							break;
-
-						case Binary:
 							changes.update(
-									new BinaryOutputStatus(booleanPropertyValue(propVal),
-											(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts),
+									new AnalogOutputStatus(n.doubleValue(),
+											(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts),
 									index);
-							break;
-
+						} catch ( NumberFormatException e ) {
+							log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
+									controlVal, e.getMessage());
+						}
 					}
+
+					case Binary -> changes
+							.update(new BinaryOutputStatus(booleanPropertyValue(controlVal),
+									(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), index);
 				}
 			}
 		}
@@ -641,6 +637,30 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		return config;
 	}
 
+	private Map<Long, Map<String, List<ServerMeasurementConfiguration>>> createDatumMeasurements() {
+		Map<Long, Map<String, List<ServerMeasurementConfiguration>>> map = new LinkedHashMap<>(
+				measurementConfigs.size());
+		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
+			if ( config.isValid() ) {
+				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getSourceId(), k -> new ArrayList<>(4)).add(config);
+			}
+		}
+		return map;
+	}
+
+	private Map<Long, Map<String, List<ServerControlConfiguration>>> createDatumControls() {
+		Map<Long, Map<String, List<ServerControlConfiguration>>> map = new LinkedHashMap<>(
+				measurementConfigs.size());
+		for ( ServerControlConfiguration config : controlConfigs ) {
+			if ( config.isValid() ) {
+				map.computeIfAbsent(config.getNodeId(), k -> new HashMap<>(measurementConfigs.size()))
+						.computeIfAbsent(config.getControlId(), k -> new ArrayList<>(4)).add(config);
+			}
+		}
+		return map;
+	}
+
 	private Map<MeasurementType, List<ServerMeasurementConfiguration>> createMeasurementTypeMap() {
 		Map<MeasurementType, List<ServerMeasurementConfiguration>> map = new LinkedHashMap<>(
 				measurementConfigs.size());
@@ -671,7 +691,7 @@ public class OutstationService implements ServiceLifecycleObserver, ChannelListe
 		if ( list != null ) {
 			int i = 0;
 			for ( ServerMeasurementConfiguration conf : list ) {
-				buf.append(String.format("  %3d: %s\n", i, conf.getSourceId()));
+				buf.append(String.format("  %3d: %s.%s\n", i, conf.getSourceId(), conf.getProperty()));
 				i++;
 			}
 		}

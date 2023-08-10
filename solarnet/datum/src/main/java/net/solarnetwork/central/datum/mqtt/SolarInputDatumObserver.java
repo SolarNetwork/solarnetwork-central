@@ -101,7 +101,6 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	private final DatumStreamMetadataDao datumStreamMetadataDao;
 
 	private Cache<DatumId, ObjectDatumStreamMetadata> metadataCache;
-	private Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache;
 	private String nodeDatumTopicTemplate = DEFAULT_NODE_DATUM_TOPIC_TEMPLATE;
 	private Pattern nodeDatumTopicRegex = DEFAULT_NODE_TOPIC_REGEX;
 
@@ -393,17 +392,10 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	}
 
 	private ObjectDatumStreamMetadata metadataForStreamId(Long userId, UUID id) {
-		final var cache = getStreamMetadataCache();
-		var result = (cache != null ? cache.get(id) : null);
-		if ( result != null ) {
-			return result;
-		}
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
-		criteria.setUserId(userId);
-		criteria.setObjectKind(ObjectDatumKind.Node);
 		criteria.setStreamId(id);
-		var results = datumStreamMetadataDao.findDatumStreamMetadata(criteria);
-		return StreamSupport.stream(results.spliterator(), false).findFirst().orElse(null);
+		ObjectDatumStreamMetadata meta = datumStreamMetadataDao.findStreamMetadata(criteria);
+		return (meta != null && meta.getKind() == ObjectDatumKind.Node ? meta : null);
 	}
 
 	/**
@@ -423,25 +415,6 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	 */
 	public void setMetadataCache(Cache<DatumId, ObjectDatumStreamMetadata> metadataCache) {
 		this.metadataCache = metadataCache;
-	}
-
-	/**
-	 * Get the stream metadata cache.
-	 * 
-	 * @return the metadata cache to use
-	 */
-	public Cache<UUID, ObjectDatumStreamMetadata> getStreamMetadataCache() {
-		return streamMetadataCache;
-	}
-
-	/**
-	 * Set the stream metadata cache
-	 * 
-	 * @param streamMetadataCache
-	 *        the metadata cache to set
-	 */
-	public void setStreamMetadataCache(Cache<UUID, ObjectDatumStreamMetadata> streamMetadataCache) {
-		this.streamMetadataCache = streamMetadataCache;
 	}
 
 	/**

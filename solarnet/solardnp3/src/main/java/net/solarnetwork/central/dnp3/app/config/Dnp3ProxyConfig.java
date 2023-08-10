@@ -22,14 +22,27 @@
 
 package net.solarnetwork.central.dnp3.app.config;
 
+import static net.solarnetwork.central.dnp3.app.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
 import static net.solarnetwork.central.dnp3.app.service.Dnp3ProxyConfigurationProvider.USER_TRUST_STORE_CACHE_QUALIFIER;
 import java.security.KeyStore;
 import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import com.automatak.dnp3.DNP3Manager;
+import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.central.dnp3.app.service.Dnp3ProxyConfigurationProvider;
+import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.instructor.biz.InstructorBiz;
+import net.solarnetwork.central.net.proxy.service.DynamicPortRegistrar;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.support.SimpleCache;
 
@@ -41,6 +54,34 @@ import net.solarnetwork.central.support.SimpleCache;
  */
 @Configuration(proxyBeanMethods = false)
 public class Dnp3ProxyConfig {
+
+	@Autowired
+	private TaskExecutor taskExecutor;
+
+	@Autowired
+	private DNP3Manager manager;
+
+	@Autowired
+	private InstructorBiz instructorBiz;
+
+	@Autowired
+	private DynamicPortRegistrar portRegistrar;
+
+	@Autowired
+	private TrustedIssuerCertificateDao trustedCertDao;
+
+	@Autowired
+	private ServerAuthConfigurationDao serverAuthDao;
+
+	@Autowired
+	private ServerMeasurementConfigurationDao serverMeasurementDao;
+
+	@Autowired
+	private ServerControlConfigurationDao serverControlDao;
+
+	@Autowired
+	@Qualifier(SOLARQUEUE)
+	private NodeEventObservationRegistrar<ObjectDatum> datumObserver;
 
 	/**
 	 * Cache settings for the DNP3 proxy configuration provider.
@@ -62,6 +103,17 @@ public class Dnp3ProxyConfig {
 		cache.setTtl(settings.getTtl());
 		cache.setTimeUnit(TimeUnit.SECONDS);
 		return cache;
+	}
+
+	@Bean
+	public Dnp3ProxyConfigurationProvider dnp3ProxyConfigurationProvider(
+			@Autowired(required = false) @Qualifier(USER_TRUST_STORE_CACHE_QUALIFIER) Cache<Long, KeyStore> userTrustStoreCache) {
+		Dnp3ProxyConfigurationProvider provider = new Dnp3ProxyConfigurationProvider(manager,
+				instructorBiz, portRegistrar, trustedCertDao, serverAuthDao, serverMeasurementDao,
+				serverControlDao, datumObserver);
+		provider.setTaskExecutor(taskExecutor);
+		provider.setUserTrustStoreCache(userTrustStoreCache);
+		return provider;
 	}
 
 }

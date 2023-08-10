@@ -22,20 +22,29 @@
 
 package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerControlConfigurationData;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
+import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.JdbcServerControlConfigurationDao;
 import net.solarnetwork.central.dnp3.domain.ControlType;
@@ -45,6 +54,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.central.user.domain.UserNodePK;
 
 /**
  * Test cases for the {@link JdbcServerControlConfigurationDao} class.
@@ -258,6 +268,74 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 				.filter(e -> groups.getKey().equals(e.getUserId()) && groupId.equals(e.getServerId()))
 				.toArray(ServerControlConfiguration[]::new);
 		then(results).as("Results for single group returned").contains(expected);
+	}
+
+	@Test
+	public void findForGroup_validOwnership() throws Exception {
+		// GIVEN
+		final int userCount = 3;
+		final int serverCount = 3;
+		final int count = 6;
+		final Map<Long, List<Long>> userGroups = new HashMap<>(userCount);
+		final List<ServerControlConfiguration> confs = new ArrayList<>(count);
+		final Set<UserNodePK> userNodeOwnership = new HashSet<>();
+		final SecureRandom rng = new SecureRandom();
+
+		final Long locationId = insertLocation(jdbcTemplate, TEST_LOC_COUNTRY, TEST_TZ);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			userGroups.put(userId, new ArrayList<>(serverCount));
+
+			for ( int s = 0; s < serverCount; s++ ) {
+				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+						UUID.randomUUID().toString());
+				UserLongCompositePK serverId = serverDao.create(userId, server);
+				server = server.copyWithId(serverId);
+				userGroups.get(userId).add(server.getServerId());
+
+				for ( int i = 0; i < count; i++ ) {
+					ServerControlConfiguration conf = new ServerControlConfiguration(userId,
+							server.getServerId(), i, Instant.now());
+					conf.setModified(conf.getCreated());
+					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
+
+					// always insert a node record, but only sometimes a user_node record
+					// so some records should not be returned
+					insertNode(jdbcTemplate, conf.getNodeId(), locationId);
+					if ( rng.nextBoolean() ) {
+						insertUserNode(jdbcTemplate, userId, conf.getNodeId());
+						userNodeOwnership.add(new UserNodePK(userId, conf.getNodeId()));
+					}
+
+					conf.setControlId(UUID.randomUUID().toString());
+					conf.setControlType(ControlType.Binary);
+					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
+					confs.add(conf.copyWithId(id));
+				}
+			}
+		}
+
+		// WHEN
+		final Entry<Long, List<Long>> groups = userGroups.entrySet().iterator().next();
+		final Long groupId = groups.getValue().get(1);
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(groups.getKey());
+		filter.setServerId(groupId);
+		filter.setValidNodeOwnership(true);
+		List<ServerControlConfiguration> results = stream(dao.findFiltered(filter).spliterator(), false)
+				.toList();
+
+		log.debug("Valid configurations found: [{}]", results.stream().map(Object::toString)
+				.collect(Collectors.joining(",\n\t", "\n\t", "\n")));
+
+		// THEN
+		ServerControlConfiguration[] expected = confs.stream()
+				.filter(e -> groups.getKey().equals(e.getUserId()) && groupId.equals(e.getServerId())
+						&& userNodeOwnership.contains(new UserNodePK(e.getUserId(), e.getNodeId())))
+				.toArray(ServerControlConfiguration[]::new);
+		then(results).as("Results for single group with valid node ownership returned")
+				.contains(expected);
 	}
 
 }

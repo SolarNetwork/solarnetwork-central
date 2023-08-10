@@ -1,5 +1,5 @@
 /* ==================================================================
- * EnabledCriteria.java - 5/08/2023 2:45:01 pm
+ * NodeOwnershipCriteria.java - 10/08/2023 1:27:29 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -23,28 +23,36 @@
 package net.solarnetwork.central.common.dao;
 
 /**
- * Search criteria for enabled-state data.
+ * Search criteria for node ownership.
  * 
  * @author matt
  * @version 1.0
  */
-public interface EnabledCriteria {
+public interface NodeOwnershipCriteria {
 
 	/**
-	 * Get the enabled flag.
+	 * Get the valid node ownership flag.
+	 * 
+	 * <p>
+	 * This flag, when {@literal true}, indicates a desire to filter the results
+	 * to only the set of nodes actually owned by the users specified with the
+	 * data. For example, a table might have a node ID column that is <b>not</b>
+	 * a foreign key to the user_node mapping table, so there is no guarantee
+	 * the record's node ID is actually owned by that record's account owner.
+	 * </p>
 	 * 
 	 * @return the {@literal true} or {@literal false} to filter by that state,
 	 *         or {@literal null} to not filter
 	 */
-	Boolean getEnabled();
+	Boolean getValidNodeOwnership();
 
 	/**
-	 * Test if this filter has any enabled criteria.
+	 * Test if this filter has any node ownership criteria.
 	 * 
-	 * @return {@literal true} if the enabled is non-null
+	 * @return {@literal true} if the node ownership is non-null
 	 */
-	default boolean hasEnabledCriteria() {
-		return getEnabled() != null;
+	default boolean hasNodeOwnershipCriteria() {
+		return getValidNodeOwnership() != null;
 	}
 
 }

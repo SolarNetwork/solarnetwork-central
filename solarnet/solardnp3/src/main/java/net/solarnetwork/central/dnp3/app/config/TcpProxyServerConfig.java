@@ -50,7 +50,7 @@ public class TcpProxyServerConfig {
 	 * @return the server instance
 	 */
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public NettyDynamicProxyServer testProxyServer(DynamicProxyServerSettings settings,
+	public NettyDynamicProxyServer tcpProxyServer(DynamicProxyServerSettings settings,
 			List<ProxyConfigurationProvider> providers) {
 		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindAddress(),
 				settings.bindPort());

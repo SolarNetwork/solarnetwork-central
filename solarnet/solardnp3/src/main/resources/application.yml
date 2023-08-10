@@ -13,9 +13,22 @@ app:
     password: "solartest"
     platform: "postgres"
     initialize: false
+  datum:
+    datum-metadata-cache:
+      ttl: 300
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 5
   dnp3:
     user-trust-store-cache:
-      ttl: 60
+      ttl: 300
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false

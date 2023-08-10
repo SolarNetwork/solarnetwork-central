@@ -89,6 +89,10 @@ public class SelectServerControlConfiguration
 					, dsc.node_id, dsc.control_id, dsc.ctype
 				FROM solardnp3.dnp3_server_ctrl dsc
 				""");
+		if ( Boolean.TRUE.equals(filter.getValidNodeOwnership()) ) {
+			buf.append(
+					"INNER JOIN solaruser.user_node un ON un.node_id = dsc.node_id AND un.user_id = dsc.user_id\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
