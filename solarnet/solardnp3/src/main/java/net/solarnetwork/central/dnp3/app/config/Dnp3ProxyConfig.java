@@ -35,6 +35,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
 import com.automatak.dnp3.DNP3Manager;
 import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.dnp3.app.service.Dnp3ProxyConfigurationProvider;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
@@ -83,6 +85,12 @@ public class Dnp3ProxyConfig {
 	@Qualifier(SOLARQUEUE)
 	private NodeEventObservationRegistrar<ObjectDatum> datumObserver;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
 	/**
 	 * Cache settings for the DNP3 proxy configuration provider.
 	 * 
@@ -110,7 +118,7 @@ public class Dnp3ProxyConfig {
 			@Autowired(required = false) @Qualifier(USER_TRUST_STORE_CACHE_QUALIFIER) Cache<Long, KeyStore> userTrustStoreCache) {
 		Dnp3ProxyConfigurationProvider provider = new Dnp3ProxyConfigurationProvider(manager,
 				instructorBiz, portRegistrar, trustedCertDao, serverAuthDao, serverMeasurementDao,
-				serverControlDao, datumObserver);
+				serverControlDao, datumObserver, datumDao, userEventAppenderBiz);
 		provider.setTaskExecutor(taskExecutor);
 		provider.setUserTrustStoreCache(userTrustStoreCache);
 		return provider;

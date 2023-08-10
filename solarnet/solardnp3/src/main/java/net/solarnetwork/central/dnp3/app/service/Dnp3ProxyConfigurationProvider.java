@@ -23,10 +23,13 @@
 package net.solarnetwork.central.dnp3.app.service;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import java.io.IOException;
 import java.security.KeyStore;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
@@ -34,6 +37,7 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.cache.Cache;
@@ -41,12 +45,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.automatak.dnp3.DNP3Manager;
 import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
+import net.solarnetwork.central.datum.v2.support.BasicStreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.dnp3.domain.Dnp3UserEvents;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
@@ -59,6 +68,9 @@ import net.solarnetwork.central.net.proxy.service.ProxyConfigurationProvider;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.CertificateUtils;
+import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
@@ -68,10 +80,19 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 1.0
  */
-public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvider {
+public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvider, Dnp3UserEvents {
 
 	/** The qualifier name for the user trust store cache. */
 	public static final String USER_TRUST_STORE_CACHE_QUALIFIER = "user-trust-store-cache";
+
+	/** User event tags for authorization events. */
+	public static final String[] AUTHORIZATION_TAGS = new String[] { DNP3_TAG, AUTHORIZATION_TAG };
+
+	/** User event tags for session events. */
+	public static final String[] SESSION_TAGS = new String[] { DNP3_TAG, SESSION_TAG };
+
+	/** User event tags for datum events. */
+	public static final String[] DATUM_TAGS = new String[] { DNP3_TAG, DATUM_TAG };
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -83,6 +104,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	private final ServerMeasurementConfigurationDao serverMeasurementDao;
 	private final ServerControlConfigurationDao serverControlDao;
 	private final NodeEventObservationRegistrar<ObjectDatum> datumObserver;
+	private final DatumEntityDao datumDao;
+	private final UserEventAppenderBiz userEventAppenderBiz;
 
 	private Executor taskExecutor;
 	private Cache<Long, KeyStore> userTrustStoreCache;
@@ -106,6 +129,10 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 *        the server control DAO
 	 * @param datumObserver
 	 *        the node event observer for datum
+	 * @param datumDao
+	 *        the datum DAO
+	 * @param userEventAppenderBiz
+	 *        the user event appender
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -114,7 +141,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			ServerAuthConfigurationDao serverAuthDao,
 			ServerMeasurementConfigurationDao serverMeasurementDao,
 			ServerControlConfigurationDao serverControlDao,
-			NodeEventObservationRegistrar<ObjectDatum> datumObserver) {
+			NodeEventObservationRegistrar<ObjectDatum> datumObserver, DatumEntityDao datumDao,
+			UserEventAppenderBiz userEventAppenderBiz) {
 		super();
 		this.manager = requireNonNullArgument(manager, "manager");
 		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
@@ -124,6 +152,8 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		this.serverMeasurementDao = requireNonNullArgument(serverMeasurementDao, "serverMeasurementDao");
 		this.serverControlDao = requireNonNullArgument(serverControlDao, "serverControlDao");
 		this.datumObserver = requireNonNullArgument(datumObserver, "datumObserver");
+		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 	}
 
 	@Override
@@ -198,14 +228,20 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	 * {@link ProxyConnectionSettings} that also implements
 	 * {@link ServiceLifecycleObserver} and resolves a dynamic unused port when
 	 * {@link #serviceDidStartup()} is invoked.
+	 * 
+	 * <p>
+	 * This class extends {@link BasicStreamDatumFilteredResultsProcessor} for
+	 * convenience, to support the initial data load of the DNP3 server.
+	 * </p>
 	 */
-	private final class DynamicConnectionSettings
+	private final class DynamicConnectionSettings extends BasicStreamDatumFilteredResultsProcessor
 			implements ProxyConnectionSettings, ServiceLifecycleObserver {
 
 		private final ProxyConnectionRequest request;
 		private final ServerAuthConfiguration auth;
 		private final KeyStore trustStore;
 		private int port = 0;
+		private int datumLoadCount = 0;
 
 		private OutstationService server;
 
@@ -256,32 +292,81 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 					serverControlDao.findFiltered(filter).spliterator(), false)
 							.filter(ServerControlConfiguration::isValid).toList();
 			if ( mConfigs.isEmpty() && cConfigs.isEmpty() ) {
-				// TODO user event
-				log.warn(
-						"User {} DNP3 server {} has no valid measurement or control configurations: authorized connection for [{}] denied.",
-						auth.getUserId(), auth.getServerId(), auth.getIdentifier());
-				requireNonNullObject(null, "DNP3 Configuration");
+				log.warn("""
+						User {} DNP3 server {} has no valid measurement or control configurations: \
+						authorized connection for [{}] denied.""", auth.getUserId(), auth.getServerId(),
+						auth.getIdentifier());
+				userEventAppenderBiz
+						.addEvent(auth.getUserId(),
+								event(AUTHORIZATION_TAGS,
+										"No valid measurement or control configurations.",
+										getJSONString(
+												Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
+														IDENTIFIER_DATA_KEY, auth.getIdentifier()),
+												null),
+										ERROR_TAG));
+				requireNonNullObject(null, "DNP3 Configuration"); // generate exception
 			}
 
-			// TODO: user event
-			log.info(
-					"User {} DNP3 server {} starting with {} measurement and {} control configurations: authorized connection for [{}].",
-					auth.getUserId(), auth.getServerId(), mConfigs.size(), cConfigs.size(),
-					auth.getIdentifier());
+			log.info("""
+					User {} DNP3 server {} starting with {} measurement and {} control configurations: \
+					authorized connection for [{}] on port {}.""", auth.getUserId(), auth.getServerId(),
+					mConfigs.size(), cConfigs.size(), auth.getIdentifier(), newPort);
+			userEventAppenderBiz.addEvent(auth.getUserId(),
+					event(SESSION_TAGS,
+							"Server starting with %d and %d control configurations."
+									.formatted(mConfigs.size(), cConfigs.size()),
+							getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
+									IDENTIFIER_DATA_KEY, auth.getIdentifier()), null),
+							START_TAG));
 
 			server = new OutstationService(manager, instructorBiz, auth, destinationHost(), newPort,
 					mConfigs, cConfigs);
+			server.setTaskExecutor(taskExecutor);
 			server.serviceDidStartup();
 
 			final Runnable reg = () -> {
+				// get list of unique node and source IDs referenced by configurations
 				final Set<Long> nodeIds = new HashSet<>(mConfigs.size() + cConfigs.size());
+				final Set<String> sourceIds = new HashSet<>(mConfigs.size() + cConfigs.size());
 				for ( var c : mConfigs ) {
 					nodeIds.add(c.getNodeId());
+					sourceIds.add(c.getSourceId());
 				}
 				for ( var c : cConfigs ) {
 					nodeIds.add(c.getNodeId());
+					sourceIds.add(c.getControlId());
 				}
-				datumObserver.registerNodeObserver(server, nodeIds.toArray(Long[]::new));
+				final Long[] nodeIdsArray = nodeIds.toArray(Long[]::new);
+				final String[] sourceIdsArray = sourceIds.toArray(String[]::new);
+
+				// load initial data from database for datum streams referenced by configurations
+				BasicDatumCriteria datumFilter = new BasicDatumCriteria();
+				datumFilter.setNodeIds(nodeIdsArray);
+				datumFilter.setSourceIds(sourceIdsArray);
+				datumFilter.setMostRecent(true);
+				try {
+					datumDao.findFilteredStream(datumFilter, this);
+					log.info("User {} DNP3 server {} loaded {} initial datum.", auth.getUserId(),
+							auth.getServerId(), datumLoadCount);
+					userEventAppenderBiz.addEvent(auth.getUserId(),
+							event(DATUM_TAGS, "Loaded initial data.",
+									getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
+											COUNT_DATA_KEY, datumLoadCount), null)));
+				} catch ( Exception e ) {
+					userEventAppenderBiz
+							.addEvent(auth.getUserId(),
+									event(DATUM_TAGS, "Error loading initial data.",
+											getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
+													MESSAGE_DATA_KEY, e.getMessage()), null),
+											ERROR_TAG));
+				}
+
+				// add observers for node datum streams referenced by configurations
+				datumObserver.registerNodeObserver(server, nodeIdsArray);
+				userEventAppenderBiz.addEvent(auth.getUserId(),
+						event(DATUM_TAGS, "Subscribed to datum stream updates.",
+								getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId()), null)));
 			};
 			final Executor taskExecutor = getTaskExecutor();
 			if ( taskExecutor != null ) {
@@ -295,8 +380,13 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 
 		@Override
 		public synchronized void serviceDidShutdown() {
+			final int port = destinationPort();
 			if ( server != null ) {
-				log.info("Stopping DNP3 outstation [{}]", server.getUid());
+				log.info("Stopping DNP3 outstation [{}] on port {}", server.getUid(), port);
+				userEventAppenderBiz.addEvent(auth.getUserId(),
+						event(SESSION_TAGS, "Server stopped.", getJSONString(Map.of(SERVER_ID_DATA_KEY,
+								auth.getServerId(), IDENTIFIER_DATA_KEY, auth.getIdentifier()), null),
+								END_TAG));
 				datumObserver.unregisterNodeObserver(server);
 				try {
 					server.serviceDidShutdown();
@@ -305,11 +395,25 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 				}
 				server = null;
 			}
-			final int port = destinationPort();
 			if ( port > 0 ) {
 				portRegistrar.releasePort(port);
 				this.port = 0;
 			}
+		}
+
+		@Override
+		public void handleResultItem(StreamDatum resultItem) throws IOException {
+			final OutstationService server = this.server;
+			if ( server == null ) {
+				return;
+			}
+			ObjectDatumStreamMetadata meta = getMetadataProvider()
+					.metadataForStreamId(resultItem.getStreamId());
+			ObjectDatum d = ObjectDatum.forStreamDatum(resultItem, auth.getUserId(),
+					DatumId.nodeId(meta.getObjectId(), meta.getSourceId(), resultItem.getTimestamp()),
+					meta);
+			server.accept(d);
+			datumLoadCount++;
 		}
 
 	}

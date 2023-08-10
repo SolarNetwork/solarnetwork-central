@@ -35,10 +35,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.task.TaskExecutor;
 import com.automatak.dnp3.AnalogInput;
 import com.automatak.dnp3.AnalogOutputDouble64;
 import com.automatak.dnp3.AnalogOutputFloat32;
@@ -132,7 +132,7 @@ public class OutstationService
 	private final Map<Long, Map<String, List<ServerMeasurementConfiguration>>> datumMeasurements;
 	private final Map<Long, Map<String, List<ServerControlConfiguration>>> datumControls;
 
-	private TaskExecutor taskExecutor;
+	private Executor taskExecutor;
 	private int eventBufferSize = DEFAULT_EVENT_BUFFER_SIZE;
 	private int startupDelaySecs = DEFAULT_STARTUP_DELAY_SECONDS;
 
@@ -250,7 +250,7 @@ public class OutstationService
 			}
 			log.info("DNP3 outstation [{}] received CROB operation request {} on {}[{}] control [{}]",
 					getUid(), command.function, config.getControlType(), index, config.getControlId());
-			final TaskExecutor executor = getTaskExecutor();
+			final Executor executor = getTaskExecutor();
 			if ( executor != null ) {
 				executor.execute(new Runnable() {
 
@@ -300,7 +300,7 @@ public class OutstationService
 			}
 			log.info("DNP3 outstation [{}] received analog operation request {} on {}[{}] control [{}]",
 					getUid(), opDescription, config.getControlType(), index, config.getControlId());
-			TaskExecutor executor = getTaskExecutor();
+			Executor executor = getTaskExecutor();
 			if ( executor != null ) {
 				executor.execute(new Runnable() {
 
@@ -406,7 +406,7 @@ public class OutstationService
 		if ( datum == null ) {
 			return;
 		}
-		final TaskExecutor executor = getTaskExecutor();
+		final Executor executor = getTaskExecutor();
 		if ( executor != null ) {
 			executor.execute(() -> {
 				applyDatumCapturedUpdates(datum);
@@ -910,7 +910,7 @@ public class OutstationService
 	 * 
 	 * @return the task executor
 	 */
-	public TaskExecutor getTaskExecutor() {
+	public Executor getTaskExecutor() {
 		return taskExecutor;
 	}
 
@@ -920,7 +920,7 @@ public class OutstationService
 	 * @param taskExecutor
 	 *        the task executor to set
 	 */
-	public void setTaskExecutor(TaskExecutor taskExecutor) {
+	public void setTaskExecutor(Executor taskExecutor) {
 		this.taskExecutor = taskExecutor;
 	}
 
