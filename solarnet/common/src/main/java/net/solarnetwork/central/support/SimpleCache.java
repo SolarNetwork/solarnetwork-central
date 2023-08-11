@@ -127,7 +127,8 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 		}
 
 		/**
-		 * Compares the {@link #getValue()} against another object.
+		 * Compares the {@link #getKey()} and {@link #getResult()} values
+		 * against another cached object's values.
 		 */
 		@Override
 		public boolean equals(Object obj) {
@@ -140,6 +141,11 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 				return Objects.equals(key, v.key) && Objects.equals(getResult(), v.getResult());
 			}
 			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key, getResult());
 		}
 
 	}
