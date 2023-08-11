@@ -86,7 +86,7 @@ public class SelectServerControlConfiguration
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT dsc.user_id, dsc.server_id, dsc.idx, dsc.created, dsc.modified, dsc.enabled
-					, dsc.node_id, dsc.control_id, dsc.ctype
+					, dsc.node_id, dsc.control_id, dsc.pname, dsc.ctype
 				FROM solardnp3.dnp3_server_ctrl dsc
 				""");
 		if ( Boolean.TRUE.equals(filter.getValidNodeOwnership()) ) {

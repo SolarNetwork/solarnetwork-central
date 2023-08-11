@@ -47,16 +47,17 @@ public class UpsertServerControlConfiguration implements PreparedStatementCreato
 	private static final String SQL = """
 			INSERT INTO solardnp3.dnp3_server_ctrl (
 				  created,modified,user_id,server_id,idx
-				, enabled,node_id,control_id,ctype
+				, enabled,node_id,control_id,pname,ctype
 			)
 			VALUES (
 				  ?,CAST(COALESCE(?, ?) AS TIMESTAMP WITH TIME ZONE),?,?,?
-				, ?,?,?,?)
+				, ?,?,?,?,?)
 			ON CONFLICT (user_id, server_id, idx) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
 					, node_id = EXCLUDED.node_id
 					, control_id = EXCLUDED.control_id
+					, pname = EXCLUDED.pname
 					, ctype = EXCLUDED.ctype
 			""";
 
@@ -105,7 +106,8 @@ public class UpsertServerControlConfiguration implements PreparedStatementCreato
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getControlId());
-		p = prepareCodedValueChar(stmt, p, entity.getControlType(), ControlType.Binary, false);
+		stmt.setString(++p, entity.getProperty());
+		p = prepareCodedValueChar(stmt, p, entity.getType(), ControlType.Binary, false);
 		return stmt;
 	}
 

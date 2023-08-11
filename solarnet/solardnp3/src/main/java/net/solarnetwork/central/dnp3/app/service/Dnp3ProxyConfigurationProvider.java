@@ -168,6 +168,10 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 		final ServerAuthConfiguration auth = requireNonNullObject(
 				serverAuthDao.findForIdentifier(clientSubjectDn), clientSubjectDn);
 
+		if ( !auth.isEnabled() ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, clientSubjectDn);
+		}
+
 		// load trust store
 		KeyStore trustStore = userTrustStore(auth.getUserId());
 

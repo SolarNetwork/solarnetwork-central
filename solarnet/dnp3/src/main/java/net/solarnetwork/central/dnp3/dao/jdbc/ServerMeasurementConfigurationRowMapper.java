@@ -95,7 +95,7 @@ public class ServerMeasurementConfigurationRowMapper
 		conf.setSourceId(rs.getString(++p));
 		conf.setProperty(rs.getString(++p));
 		try {
-			conf.setMeasurementType(MeasurementType.forCode(rs.getString(++p).charAt(0)));
+			conf.setType(MeasurementType.forCode(rs.getString(++p).charAt(0)));
 		} catch ( IllegalArgumentException e ) {
 			// ignore, move on
 		}

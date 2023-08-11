@@ -85,7 +85,7 @@ CREATE TABLE solardnp3.dnp3_server_auth (
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
  * @column node_id		node ID
  * @column source_id	source ID
- * @column pname		property
+ * @column pname		property name
  * @column mtype		measurement type (code)
  * @column dmult		optional decimal multiplier
  * @column doffset		optional decimal addition
@@ -122,6 +122,7 @@ CREATE TABLE solardnp3.dnp3_server_meas (
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
  * @column node_id		node ID
  * @column control_id	control ID
+ * @column pname		property name
  * @column ctype		control type (code)
  */
 CREATE TABLE solardnp3.dnp3_server_ctrl (
@@ -133,6 +134,7 @@ CREATE TABLE solardnp3.dnp3_server_ctrl (
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
 	node_id			BIGINT NOT NULL,
 	control_id		CHARACTER VARYING(64) NOT NULL,
+	pname			CHARACTER VARYING(255),
 	ctype			CHARACTER NOT NULL,
 	CONSTRAINT dnp3_server_ctrl_pk PRIMARY KEY (user_id, server_id, idx),
 	CONSTRAINT dnp3_server_ctrl_server_fk FOREIGN KEY (user_id, server_id)

@@ -23,10 +23,8 @@
 package net.solarnetwork.central.dnp3.domain;
 
 import java.time.Instant;
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 
 /**
@@ -35,17 +33,13 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id" })
+@JsonIgnoreProperties({ "id", "sourceId" })
 @JsonPropertyOrder({ "userId", "serverId", "index", "created", "modified", "enabled", "nodeId",
-		"controlId", "controlType" })
-public class ServerControlConfiguration
-		extends BaseUserModifiableEntity<ServerControlConfiguration, UserLongIntegerCompositePK> {
+		"controlId", "type" })
+public final class ServerControlConfiguration
+		extends BaseServerDatumStreamConfiguration<ServerControlConfiguration, ControlType> {
 
-	private static final long serialVersionUID = -2941963465397580108L;
-
-	private Long nodeId;
-	private String controlId;
-	private ControlType controlType;
+	private static final long serialVersionUID = -5228026661855816666L;
 
 	/**
 	 * Constructor.
@@ -84,28 +78,6 @@ public class ServerControlConfiguration
 		return copy;
 	}
 
-	@Override
-	public void copyTo(ServerControlConfiguration entity) {
-		super.copyTo(entity);
-		entity.setNodeId(nodeId);
-		entity.setControlId(controlId);
-		entity.setControlType(controlType);
-	}
-
-	@Override
-	public boolean isSameAs(ServerControlConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
-			return false;
-		}
-		// @formatter:off
-		return Objects.equals(this.nodeId, other.getNodeId())
-				&& Objects.equals(this.controlId, other.getControlId())
-				&& Objects.equals(this.controlType, other.getControlType())
-				;
-		// @formatter:on
-	}
-
 	/**
 	 * Test if this configuration is valid.
 	 * 
@@ -116,129 +88,39 @@ public class ServerControlConfiguration
 	 * 
 	 * @return {@literal true} if the configuration is valid
 	 */
+	@Override
 	public boolean isValid() {
 		final Long nodeId = getNodeId();
 		final String controlId = getControlId();
-		final ControlType type = getControlType();
-		return (nodeId != null && controlId != null && type != null && !controlId.isBlank()
-				&& !controlId.isBlank());
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("ServerControl{");
-		if ( getUserId() != null ) {
-			builder.append("userId=");
-			builder.append(getUserId());
-			builder.append(", ");
-		}
-		if ( getServerId() != null ) {
-			builder.append("serverId=");
-			builder.append(getServerId());
-			builder.append(", ");
-		}
-		if ( getIndex() != null ) {
-			builder.append("index=");
-			builder.append(getIndex());
-			builder.append(", ");
-		}
-		if ( nodeId != null ) {
-			builder.append("nodeId=");
-			builder.append(nodeId);
-			builder.append(", ");
-		}
-		if ( controlId != null ) {
-			builder.append("controlId=");
-			builder.append(controlId);
-			builder.append(", ");
-		}
-		if ( controlType != null ) {
-			builder.append("controlType=");
-			builder.append(controlType);
-			builder.append(", ");
-		}
-		builder.append("enabled=");
-		builder.append(isEnabled());
-		builder.append("}");
-		return builder.toString();
-	}
-
-	/**
-	 * Get the server ID.
-	 * 
-	 * @return the server ID
-	 */
-	public Long getServerId() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getGroupId() : null);
-	}
-
-	/**
-	 * Get the index.
-	 * 
-	 * @return the index
-	 */
-	public Integer getIndex() {
-		UserLongIntegerCompositePK id = getId();
-		return (id != null ? id.getEntityId() : null);
-	}
-
-	/**
-	 * Get the datum node ID.
-	 * 
-	 * @return the nodeId
-	 */
-	public Long getNodeId() {
-		return nodeId;
-	}
-
-	/**
-	 * Set the datum node ID.
-	 * 
-	 * @param nodeId
-	 *        the nodeId to set
-	 */
-	public void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+		final ControlType type = getType();
+		return (nodeId != null && controlId != null && type != null && !controlId.isBlank());
 	}
 
 	/**
 	 * Get the control ID.
 	 * 
+	 * <p>
+	 * This is an alias for {@link #getSourceId()}>
+	 * </p>
+	 * 
 	 * @return the controlId
 	 */
 	public String getControlId() {
-		return controlId;
+		return getSourceId();
 	}
 
 	/**
 	 * Set the control ID.
 	 * 
+	 * <p>
+	 * This is an alias for {@link #setSourceId(String)}>
+	 * </p>
+	 * 
 	 * @param controlId
 	 *        the controlId to set
 	 */
 	public void setControlId(String controlId) {
-		this.controlId = controlId;
-	}
-
-	/**
-	 * Set the control type.
-	 * 
-	 * @return the controlType
-	 */
-	public ControlType getControlType() {
-		return controlType;
-	}
-
-	/**
-	 * Get the control type.
-	 * 
-	 * @param controlType
-	 *        the measurement type to set
-	 */
-	public void setControlType(ControlType controlType) {
-		this.controlType = controlType;
+		setSourceId(controlId);
 	}
 
 }

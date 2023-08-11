@@ -55,7 +55,7 @@ public class ServerMeasurementConfigurationInput
 	private String property;
 
 	@NotNull
-	private MeasurementType measurementType;
+	private MeasurementType type;
 
 	private BigDecimal multiplier;
 
@@ -77,7 +77,7 @@ public class ServerMeasurementConfigurationInput
 		conf.setNodeId(nodeId);
 		conf.setSourceId(sourceId);
 		conf.setProperty(property);
-		conf.setMeasurementType(measurementType);
+		conf.setType(type);
 		conf.setMultiplier(multiplier);
 		conf.setOffset(offset);
 		conf.setScale(scale);
@@ -143,20 +143,20 @@ public class ServerMeasurementConfigurationInput
 	/**
 	 * Set the measurement type.
 	 * 
-	 * @return the measurementType
+	 * @return the type
 	 */
-	public MeasurementType getMeasurementType() {
-		return measurementType;
+	public MeasurementType getType() {
+		return type;
 	}
 
 	/**
 	 * Get the measurement type.
 	 * 
-	 * @param measurementType
+	 * @param type
 	 *        the measurement type to set
 	 */
-	public void setMeasurementType(MeasurementType measurementType) {
-		this.measurementType = measurementType;
+	public void setType(MeasurementType type) {
+		this.type = type;
 	}
 
 	/**

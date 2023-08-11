@@ -210,11 +210,11 @@ public interface Dnp3UserEvents {
 		if ( entity instanceof ServerControlConfiguration c ) {
 			data.put(NODE_ID_DATA_KEY, c.getNodeId());
 			data.put(CONTROL_ID_DATA_KEY, c.getControlId());
-			data.put(TYPE_DATA_KEY, c.getControlType());
+			data.put(TYPE_DATA_KEY, c.getType());
 		} else if ( entity instanceof ServerMeasurementConfiguration c ) {
 			data.put(NODE_ID_DATA_KEY, c.getNodeId());
 			data.put(SOURCE_ID_DATA_KEY, c.getSourceId());
-			data.put(TYPE_DATA_KEY, c.getMeasurementType());
+			data.put(TYPE_DATA_KEY, c.getType());
 		}
 		return data;
 	}

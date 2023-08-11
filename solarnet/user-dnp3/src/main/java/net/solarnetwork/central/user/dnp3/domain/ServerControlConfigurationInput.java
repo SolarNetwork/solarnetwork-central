@@ -49,7 +49,7 @@ public class ServerControlConfigurationInput
 	private String controlId;
 
 	@NotNull
-	private ControlType controlType;
+	private ControlType type;
 
 	@Override
 	public ServerControlConfiguration toEntity(UserLongIntegerCompositePK id) {
@@ -64,7 +64,7 @@ public class ServerControlConfigurationInput
 		super.populateConfiguration(conf);
 		conf.setNodeId(nodeId);
 		conf.setControlId(controlId);
-		conf.setControlType(controlType);
+		conf.setType(type);
 	}
 
 	/**
@@ -108,20 +108,20 @@ public class ServerControlConfigurationInput
 	/**
 	 * Set the control type.
 	 * 
-	 * @return the controlType
+	 * @return the type
 	 */
-	public ControlType getControlType() {
-		return controlType;
+	public ControlType getType() {
+		return type;
 	}
 
 	/**
 	 * Get the control type.
 	 * 
-	 * @param controlType
-	 *        the measurement type to set
+	 * @param type
+	 *        the control type to set
 	 */
-	public void setControlType(ControlType controlType) {
-		this.controlType = controlType;
+	public void setType(ControlType type) {
+		this.type = type;
 	}
 
 }

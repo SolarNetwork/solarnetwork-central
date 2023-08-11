@@ -45,6 +45,7 @@ import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
  * <li>enabled (BOOLEAN)</li>
  * <li>node_id (LONG)</li>
  * <li>control_id (TEXT)</li>
+ * <li>pname (TEXT)</li>
  * <li>ctype (CHARACTER)</li>
  * </ol>
  * 
@@ -88,8 +89,9 @@ public class ServerControlConfigurationRowMapper implements RowMapper<ServerCont
 		conf.setEnabled(rs.getObject(++p, Boolean.class));
 		conf.setNodeId(rs.getObject(++p, Long.class));
 		conf.setControlId(rs.getString(++p));
+		conf.setProperty(rs.getString(++p));
 		try {
-			conf.setControlType(ControlType.forCode(rs.getString(++p).charAt(0)));
+			conf.setType(ControlType.forCode(rs.getString(++p).charAt(0)));
 		} catch ( IllegalArgumentException e ) {
 			// ignore, move on
 		}

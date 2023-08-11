@@ -113,8 +113,7 @@ public class UpsertServerMeasurementConfiguration implements PreparedStatementCr
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());
 		stmt.setString(++p, entity.getProperty());
-		p = prepareCodedValueChar(stmt, p, entity.getMeasurementType(), MeasurementType.AnalogInput,
-				false);
+		p = prepareCodedValueChar(stmt, p, entity.getType(), MeasurementType.AnalogInput, false);
 		if ( entity.getMultiplier() != null ) {
 			stmt.setBigDecimal(++p, entity.getMultiplier());
 		} else {

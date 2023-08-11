@@ -264,7 +264,7 @@ public class OutstationService
 				return CommandStatus.NOT_AUTHORIZED;
 			}
 			log.info("DNP3 outstation [{}] received CROB operation request {} on {}[{}] control [{}]",
-					getUid(), command.function, config.getControlType(), index, config.getControlId());
+					getUid(), command.function, config.getType(), index, config.getControlId());
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
 					INSTRUCTION_TAGS, "CROB control operation request received."));
 
@@ -278,8 +278,8 @@ public class OutstationService
 									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
 					log.error(
 							"Error processing DNP3 outstation [{}] operate request {} on {}[{}] control [{}]",
-							getUid(), command.function, config.getControlType(), index,
-							config.getControlId(), e);
+							getUid(), command.function, config.getType(), index, config.getControlId(),
+							e);
 				}
 			};
 			final Executor executor = getTaskExecutor();
@@ -322,7 +322,7 @@ public class OutstationService
 				return CommandStatus.NOT_AUTHORIZED;
 			}
 			log.info("DNP3 outstation [{}] received analog operation request {} on {}[{}] control [{}]",
-					getUid(), opDescription, config.getControlType(), index, config.getControlId());
+					getUid(), opDescription, config.getType(), index, config.getControlId());
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
 					INSTRUCTION_TAGS, opDescription + " control operation request received."));
 
@@ -336,8 +336,7 @@ public class OutstationService
 									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
 					log.error(
 							"Error processing DNP3 outstation [{}] analog operation request {} on {}[{}] control [{}]",
-							getUid(), opDescription, config.getControlType(), index,
-							config.getControlId(), e);
+							getUid(), opDescription, config.getType(), index, config.getControlId(), e);
 				}
 			};
 			Executor executor = getTaskExecutor();
@@ -413,7 +412,7 @@ public class OutstationService
 		} finally {
 			log.info(
 					"DNP3 outstation [{}] {} control operation request on {}[{}] node {} control [{}] result: {}",
-					getUid(), opDescription, config.getControlType(), index, config.getNodeId(),
+					getUid(), opDescription, config.getType(), index, config.getNodeId(),
 					config.getControlId(), result);
 		}
 		if ( result.getInstructionState() == InstructionState.Declined ) {
@@ -505,7 +504,7 @@ public class OutstationService
 				}
 				propVal = propNum;
 			}
-			final int idx = measurementTypes.get(config.getMeasurementType()).indexOf(config);
+			final int idx = measurementTypes.get(config.getType()).indexOf(config);
 			if ( idx < 0 ) {
 				// really shouldn't be here
 				continue;
@@ -513,10 +512,10 @@ public class OutstationService
 			if ( changes == null ) {
 				changes = new OutstationChangeSet();
 			}
-			log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", config.getMeasurementType(), idx,
-					sourceId, config.getProperty(), propVal);
+			log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", config.getType(), idx, sourceId,
+					config.getProperty(), propVal);
 			updatedValues.put(config, propVal);
-			switch (config.getMeasurementType()) {
+			switch (config.getType()) {
 				case AnalogInput -> {
 					if ( propVal instanceof Number propNum ) {
 						changes.update(new AnalogInput(propNum.doubleValue(),
@@ -564,45 +563,40 @@ public class OutstationService
 		final int binaryStatusOffset = typeConfigCount(MeasurementType.BinaryOutputStatus,
 				measurementTypes);
 
-		final Object controlVal = (controlConfigs.isEmpty() ? null : controlValue(datum));
-		if ( controlVal != null ) {
-			for ( ServerControlConfiguration config : controlConfigs ) {
-				final int idx = controlTypes.get(config.getControlType()).indexOf(config);
-				if ( idx < 0 ) {
-					// really shouldn't be here
-					continue;
-				}
-				if ( changes == null ) {
-					changes = new OutstationChangeSet();
-				}
-				int index = (config.getControlType() == ControlType.Analog ? analogStatusOffset
-						: binaryStatusOffset) + idx;
-				log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", config.getControlType(),
-						index, sourceId, controlVal);
-				updatedValues.put(config, controlVal);
-				switch (config.getControlType()) {
-					case Analog -> {
-						try {
-							Number n = null;
-							if ( controlVal instanceof Number controlNum ) {
-								n = controlNum;
-							} else {
-								n = new BigDecimal(controlVal.toString());
-							}
-							changes.update(
-									new AnalogOutputStatus(n.doubleValue(),
-											(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts),
-									index);
-						} catch ( NumberFormatException e ) {
-							log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
-									controlVal, e.getMessage());
+		for ( ServerControlConfiguration config : controlConfigs ) {
+			final Object controlVal = controlValue(datum, config.getProperty());
+			final int idx = controlTypes.get(config.getType()).indexOf(config);
+			if ( idx < 0 ) {
+				// really shouldn't be here
+				continue;
+			}
+			if ( changes == null ) {
+				changes = new OutstationChangeSet();
+			}
+			int index = (config.getType() == ControlType.Analog ? analogStatusOffset
+					: binaryStatusOffset) + idx;
+			log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", config.getType(), index,
+					sourceId, controlVal);
+			updatedValues.put(config, controlVal);
+			switch (config.getType()) {
+				case Analog -> {
+					try {
+						Number n = null;
+						if ( controlVal instanceof Number controlNum ) {
+							n = controlNum;
+						} else {
+							n = new BigDecimal(controlVal.toString());
 						}
+						changes.update(new AnalogOutputStatus(n.doubleValue(),
+								(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts), index);
+					} catch ( NumberFormatException e ) {
+						log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
+								controlVal, e.getMessage());
 					}
-
-					case Binary -> changes
-							.update(new BinaryOutputStatus(booleanPropertyValue(controlVal),
-									(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), index);
 				}
+
+				case Binary -> changes.update(new BinaryOutputStatus(booleanPropertyValue(controlVal),
+						(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), index);
 			}
 		}
 
@@ -625,16 +619,22 @@ public class OutstationService
 	 * Extract a control value from a datum.
 	 * 
 	 * <p>
-	 * Try the node-default "val" first, followed by "value". If neither of
-	 * those work, return the first-available status property.
+	 * If {@code property} is given, return that value. Otherwise try the
+	 * node-default "val" first, followed by "value". If neither of those work,
+	 * return the first-available status property.
 	 * </p>
 	 * 
 	 * @param datum
 	 *        the datum
+	 * @param property
+	 *        the optional datum property name to extract
 	 * @return the control value, or {@literal null}
 	 */
-	public static final Object controlValue(final Datum datum) {
+	private static final Object controlValue(final Datum datum, final String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();
+		if ( property != null && !property.isBlank() ) {
+			return ops.findSampleValue(property);
+		}
 		Object v = ops.findSampleValue("val");
 		if ( v != null ) {
 			return v;
@@ -748,7 +748,7 @@ public class OutstationService
 		Map<MeasurementType, List<ServerMeasurementConfiguration>> map = new LinkedHashMap<>(
 				measurementConfigs.size());
 		for ( ServerMeasurementConfiguration config : measurementConfigs ) {
-			MeasurementType type = config.getMeasurementType();
+			MeasurementType type = config.getType();
 			if ( type != null && config.getProperty() != null && !config.getProperty().isEmpty() ) {
 				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
 			}
@@ -760,7 +760,7 @@ public class OutstationService
 		Map<ControlType, List<ServerControlConfiguration>> map = new LinkedHashMap<>(
 				controlConfigs.size());
 		for ( ServerControlConfiguration config : controlConfigs ) {
-			ControlType type = config.getControlType();
+			ControlType type = config.getType();
 			if ( type != null && config.getControlId() != null && !config.getControlId().isEmpty() ) {
 				map.computeIfAbsent(type, k -> new ArrayList<>(4)).add(config);
 			}

@@ -91,7 +91,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setModified(Instant.now().plusMillis(234L));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setControlId(UUID.randomUUID().toString());
-		conf.setControlType(ControlType.Analog);
+		conf.setType(ControlType.Analog);
 		UserLongIntegerCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -125,7 +125,62 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 			.as("Row control ID")
 			.containsEntry("control_id", conf.getControlId())
 			.as("Row control type")
-			.containsEntry("ctype", String.valueOf((char)conf.getControlType().getCode()))
+			.containsEntry("ctype", String.valueOf((char)conf.getType().getCode()))
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
+	public void insert_withProperty() {
+		// GIVEN
+		lastServer = serverDao.get(serverDao.create(userId,
+				Dnp3JdbcTestUtils.newServerConfiguration(userId, UUID.randomUUID().toString())));
+
+		// WHEN
+		ServerControlConfiguration conf = new ServerControlConfiguration(userId,
+				lastServer.getServerId(), 0, Instant.now());
+		conf.setModified(Instant.now().plusMillis(234L));
+		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
+		conf.setControlId(UUID.randomUUID().toString());
+		conf.setProperty(UUID.randomUUID().toString());
+		conf.setType(ControlType.Analog);
+		UserLongIntegerCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
+
+		// THEN
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(conf.getUserId(), UserLongIntegerCompositePK::getUserId)
+			.as("Server ID as provided")
+			.returns(conf.getServerId(), UserLongIntegerCompositePK::getGroupId)
+			.as("Index as provided")
+			.returns(conf.getIndex(), UserLongIntegerCompositePK::getEntityId)
+			;
+
+		List<Map<String, Object>> data = allServerControlConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", conf.getUserId())
+			.as("Row server ID")
+			.containsEntry("server_id", conf.getServerId())
+			.as("Row index")
+			.containsEntry("idx", conf.getIndex())
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row node ID")
+			.containsEntry("node_id", conf.getNodeId())
+			.as("Row control ID")
+			.containsEntry("control_id", conf.getControlId())
+			.as("Row property")
+			.containsEntry("pname", conf.getProperty())
+			.as("Row control type")
+			.containsEntry("ctype", String.valueOf((char)conf.getType().getCode()))
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -135,6 +190,18 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 	public void get() {
 		// GIVEN
 		insert();
+
+		// WHEN
+		ServerControlConfiguration result = dao.get(last.getId());
+
+		// THEN
+		then(result).as("Retrieved entity matches source").isEqualTo(last);
+	}
+
+	@Test
+	public void get_withProperty() {
+		// GIVEN
+		insert_withProperty();
 
 		// WHEN
 		ServerControlConfiguration result = dao.get(last.getId());
@@ -154,7 +221,35 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setControlId(UUID.randomUUID().toString());
-		conf.setControlType(ControlType.Binary);
+		conf.setType(ControlType.Binary);
+
+		UserLongIntegerCompositePK result = dao.save(conf);
+		ServerControlConfiguration updated = dao.get(result);
+
+		// THEN
+		List<Map<String, Object>> data = allServerControlConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1);
+		// @formatter:off
+		then(updated).as("Retrieved entity matches updated source")
+			.isEqualTo(conf)
+			.as("Entity saved updated values")
+			.matches(c -> c.isSameAs(updated));
+		// @formatter:on
+	}
+
+	@Test
+	public void update_withProperty() {
+		// GIVEN
+		insert_withProperty();
+
+		// WHEN
+		ServerControlConfiguration conf = last.copyWithId(last.getId());
+		conf.setEnabled(false);
+		conf.setModified(Instant.now().plusMillis(474));
+		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
+		conf.setControlId(UUID.randomUUID().toString());
+		conf.setProperty(UUID.randomUUID().toString());
+		conf.setType(ControlType.Binary);
 
 		UserLongIntegerCompositePK result = dao.save(conf);
 		ServerControlConfiguration updated = dao.get(result);
@@ -208,7 +303,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 					conf.setModified(conf.getCreated());
 					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 					conf.setControlId(UUID.randomUUID().toString());
-					conf.setControlType(ControlType.Binary);
+					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -251,7 +346,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 					conf.setModified(conf.getCreated());
 					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 					conf.setControlId(UUID.randomUUID().toString());
-					conf.setControlType(ControlType.Binary);
+					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -309,7 +404,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 					}
 
 					conf.setControlId(UUID.randomUUID().toString());
-					conf.setControlType(ControlType.Binary);
+					conf.setType(ControlType.Binary);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}

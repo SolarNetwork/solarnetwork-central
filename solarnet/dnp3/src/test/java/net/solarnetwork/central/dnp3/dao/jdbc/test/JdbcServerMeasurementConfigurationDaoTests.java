@@ -83,7 +83,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setSourceId(UUID.randomUUID().toString());
 		conf.setProperty(UUID.randomUUID().toString());
-		conf.setMeasurementType(MeasurementType.AnalogInput);
+		conf.setType(MeasurementType.AnalogInput);
 		conf.setMultiplier(new BigDecimal("1.23"));
 		conf.setOffset(new BigDecimal("2.34"));
 		conf.setScale(3);
@@ -122,7 +122,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 			.as("Row property")
 			.containsEntry("pname", conf.getProperty())
 			.as("Row measurement type")
-			.containsEntry("mtype", String.valueOf((char)conf.getMeasurementType().getCode()))
+			.containsEntry("mtype", String.valueOf((char)conf.getType().getCode()))
 			.as("Row multiplier")
 			.containsEntry("dmult", conf.getMultiplier())
 			.as("Row offset")
@@ -157,7 +157,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 		conf.setProperty(UUID.randomUUID().toString());
-		conf.setMeasurementType(MeasurementType.BinaryInput);
+		conf.setType(MeasurementType.BinaryInput);
 		conf.setMultiplier(new BigDecimal("3.21"));
 		conf.setOffset(new BigDecimal("4.32"));
 		conf.setScale(2);
@@ -215,7 +215,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 					conf.setSourceId(UUID.randomUUID().toString());
 					conf.setProperty(UUID.randomUUID().toString());
-					conf.setMeasurementType(MeasurementType.AnalogInput);
+					conf.setType(MeasurementType.AnalogInput);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -260,7 +260,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
 					conf.setSourceId(UUID.randomUUID().toString());
 					conf.setProperty(UUID.randomUUID().toString());
-					conf.setMeasurementType(MeasurementType.AnalogInput);
+					conf.setType(MeasurementType.AnalogInput);
 					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
