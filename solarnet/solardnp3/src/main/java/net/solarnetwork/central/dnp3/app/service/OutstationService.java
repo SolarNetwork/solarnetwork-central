@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -74,18 +75,24 @@ import com.automatak.dnp3.enums.DoubleBitBinaryQuality;
 import com.automatak.dnp3.enums.FrozenCounterQuality;
 import com.automatak.dnp3.enums.OperateType;
 import com.automatak.dnp3.enums.ServerAcceptMode;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.dnp3.domain.ControlType;
+import net.solarnetwork.central.dnp3.domain.Dnp3UserEvents;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
+import net.solarnetwork.central.domain.CompositeKey3;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumSamplesOperations;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
@@ -97,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * @version 1.0
  */
 public class OutstationService
-		implements ServiceLifecycleObserver, ChannelListener, Consumer<ObjectDatum> {
+		implements ServiceLifecycleObserver, ChannelListener, Dnp3UserEvents, Consumer<ObjectDatum> {
 
 	private static final Logger log = LoggerFactory.getLogger(OutstationService.class);
 
@@ -112,6 +119,7 @@ public class OutstationService
 
 	private final LinkLayerConfig linkLayerConfig = new LinkLayerConfig(false);
 	private final DNP3Manager manager;
+	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final InstructorBiz instructorBiz;
 	private final ServerAuthConfiguration auth;
 	private final String bindAddress;
@@ -144,10 +152,12 @@ public class OutstationService
 	 * 
 	 * @param manager
 	 *        the manager
+	 * @param userEventAppenderBiz
+	 *        the event appender service
 	 * @param instructorBiz
 	 *        the instructor service
 	 * @param auth
-	 *        the auth associated with the server
+	 *        the authorization associated with the server
 	 * @param bindAddress
 	 *        the bind address, e.g. 127.0.0.1, localhost, etc.
 	 * @param port
@@ -155,13 +165,14 @@ public class OutstationService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OutstationService(DNP3Manager manager, InstructorBiz instructorBiz,
-			ServerAuthConfiguration auth, String bindAddress, int port,
+	public OutstationService(DNP3Manager manager, UserEventAppenderBiz userEventAppenderBiz,
+			InstructorBiz instructorBiz, ServerAuthConfiguration auth, String bindAddress, int port,
 			List<ServerMeasurementConfiguration> measurementConfigs,
 			List<ServerControlConfiguration> controlConfigs) {
 		super();
 		this.manager = requireNonNullArgument(manager, "manager");
 		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
+		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.auth = requireNonNullArgument(auth, "auth");
 		this.bindAddress = requireNonNullArgument(bindAddress, "bindAddress");
 		this.port = port;
@@ -246,28 +257,36 @@ public class OutstationService
 				OperateType opType) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Binary, index);
 			if ( config == null ) {
+				userEventAppenderBiz.addEvent(auth.getUserId(),
+						Dnp3UserEvents.eventWithEntity(auth, INSTRUCTION_TAGS,
+								"Binary control does not exist.", Map.of(INDEX_DATA_KEY, index),
+								ERROR_TAG));
 				return CommandStatus.NOT_AUTHORIZED;
 			}
 			log.info("DNP3 outstation [{}] received CROB operation request {} on {}[{}] control [{}]",
 					getUid(), command.function, config.getControlType(), index, config.getControlId());
+			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
+					INSTRUCTION_TAGS, "CROB control operation request received."));
+
+			final Runnable task = () -> {
+				try {
+					operateBinaryControl(command, index, opType, config);
+				} catch ( Exception e ) {
+					userEventAppenderBiz.addEvent(auth.getUserId(),
+							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
+									"Binary control operation failed.",
+									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
+					log.error(
+							"Error processing DNP3 outstation [{}] operate request {} on {}[{}] control [{}]",
+							getUid(), command.function, config.getControlType(), index,
+							config.getControlId(), e);
+				}
+			};
 			final Executor executor = getTaskExecutor();
 			if ( executor != null ) {
-				executor.execute(new Runnable() {
-
-					@Override
-					public void run() {
-						try {
-							operateBinaryControl(command, index, opType, config);
-						} catch ( Exception e ) {
-							log.error(
-									"Error processing DNP3 outstation [{}] operate request {} on {}[{}] control [{}]",
-									getUid(), command.function, config.getControlType(), index,
-									config.getControlId(), e);
-						}
-					}
-				});
+				executor.execute(task);
 			} else {
-				operateBinaryControl(command, index, opType, config);
+				task.run();
 			}
 			return CommandStatus.SUCCESS;
 		}
@@ -296,28 +315,36 @@ public class OutstationService
 				Number value) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Analog, index);
 			if ( config == null ) {
+				userEventAppenderBiz.addEvent(auth.getUserId(),
+						Dnp3UserEvents.eventWithEntity(auth, INSTRUCTION_TAGS,
+								opDescription + " control does not exist.",
+								Map.of(INDEX_DATA_KEY, index), ERROR_TAG));
 				return CommandStatus.NOT_AUTHORIZED;
 			}
 			log.info("DNP3 outstation [{}] received analog operation request {} on {}[{}] control [{}]",
 					getUid(), opDescription, config.getControlType(), index, config.getControlId());
+			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
+					INSTRUCTION_TAGS, opDescription + " control operation request received."));
+
+			final Runnable task = () -> {
+				try {
+					operateAnalogControl(command, index, opDescription, config, value);
+				} catch ( Exception e ) {
+					userEventAppenderBiz.addEvent(auth.getUserId(),
+							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
+									opDescription + " control operation failed.",
+									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
+					log.error(
+							"Error processing DNP3 outstation [{}] analog operation request {} on {}[{}] control [{}]",
+							getUid(), opDescription, config.getControlType(), index,
+							config.getControlId(), e);
+				}
+			};
 			Executor executor = getTaskExecutor();
 			if ( executor != null ) {
-				executor.execute(new Runnable() {
-
-					@Override
-					public void run() {
-						try {
-							operateAnalogControl(command, index, opDescription, config, value);
-						} catch ( Exception e ) {
-							log.error(
-									"Error processing DNP3 outstation [{}] analog operation request {} on {}[{}] control [{}]",
-									getUid(), opDescription, config.getControlType(), index,
-									config.getControlId(), e);
-						}
-					}
-				});
+				executor.execute(task);
 			} else {
-				operateAnalogControl(command, index, opDescription, config, value);
+				task.run();
 			}
 			return CommandStatus.SUCCESS;
 		}
@@ -349,12 +376,24 @@ public class OutstationService
 
 			case LATCH_OFF:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-				instr.addParameter(config.getControlId(), Boolean.TRUE.toString());
+				instr.addParameter(config.getControlId(), Boolean.FALSE.toString());
 				break;
 
 			default:
 				// nothing
 		}
+		return issueInstruction("CROB " + command.function, index, config, instr);
+	}
+
+	private InstructionStatus operateAnalogControl(Object type, int index, String opDescription,
+			ServerControlConfiguration config, Number value) {
+		Instruction instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
+		instr.addParameter(config.getControlId(), value.toString());
+		return issueInstruction(opDescription, index, config, instr);
+	}
+
+	private InstructionStatus issueInstruction(String opDescription, int index,
+			ServerControlConfiguration config, Instruction instr) {
 		InstructionStatus result = null;
 		try {
 			if ( instr != null ) {
@@ -368,35 +407,29 @@ public class OutstationService
 			} else {
 				result = createStatus(null, InstructionState.Declined, now(),
 						createErrorResultParameters(
-								"Control function %s not supported.".formatted(command.function),
+								"Control function %s not supported.".formatted(opDescription),
 								"DNP3.011"));
 			}
 		} finally {
-			log.info("DNP3 outstation [{}] CROB operation request {} on {}[{}] control [{}] result: {}",
-					getUid(), command.function, config.getControlType(), index, config.getControlId(),
-					result);
-		}
-		return result;
-	}
-
-	private InstructionStatus operateAnalogControl(Object command, int index, String opDescription,
-			ServerControlConfiguration config, Number value) {
-		Instruction instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
-		instr.addParameter(config.getControlId(), value.toString());
-		InstructionStatus result = null;
-		try {
-			NodeInstruction entity = instructorBiz.queueInstruction(config.getNodeId(), instr);
-			if ( entity != null ) {
-				result = entity.toStatus();
-			} else {
-				result = createStatus(null, InstructionState.Declined, now(),
-						createErrorResultParameters("Failed to queue instruction.", "DNP3.012"));
-			}
-		} finally {
 			log.info(
-					"DNP3 outstation [{}] analog operation request {} on {}[{}] control [{}] result: {}",
-					getUid(), opDescription, config.getControlType(), index, config.getControlId(),
-					result);
+					"DNP3 outstation [{}] {} control operation request on {}[{}] node {} control [{}] result: {}",
+					getUid(), opDescription, config.getControlType(), index, config.getNodeId(),
+					config.getControlId(), result);
+		}
+		if ( result.getInstructionState() == InstructionState.Declined ) {
+			userEventAppenderBiz.addEvent(auth.getUserId(),
+					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
+							opDescription + " control operation failed.", result.getResultParameters(),
+							ERROR_TAG));
+		} else {
+			Map<String, Object> eventData = new LinkedHashMap<>(2);
+			eventData.put(TOPIC_DATA_KEY, instr.getTopic());
+			if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
+				eventData.put(VALUE_DATA_KEY, instr.getParameters().get(0).getValue());
+			}
+			userEventAppenderBiz.addEvent(auth.getUserId(),
+					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
+							opDescription + " control operation queued.", eventData, ERROR_TAG));
 		}
 		return result;
 	}
@@ -430,6 +463,10 @@ public class OutstationService
 		}
 	}
 
+	private static <T> List<T> nonNullList(List<T> list) {
+		return (list != null ? list : Collections.emptyList());
+	}
+
 	private OutstationChangeSet changeSetForDatumCapturedEvent(final Datum datum) {
 		if ( datum == null || (measurementTypes.isEmpty() && controlTypes.isEmpty()) ) {
 			return null;
@@ -437,12 +474,12 @@ public class OutstationService
 		final Long nodeId = datum.getObjectId();
 		final String sourceId = datum.getSourceId();
 
-		final List<ServerMeasurementConfiguration> measurementConfigs = (datumMeasurements
-				.containsKey(nodeId) ? datumMeasurements.get(nodeId).get(sourceId) : null);
-		final List<ServerControlConfiguration> controlConfigs = (datumControls.containsKey(nodeId)
-				? datumControls.get(nodeId).get(sourceId)
-				: null);
-		if ( measurementConfigs == null && controlConfigs == null ) {
+		final List<ServerMeasurementConfiguration> measurementConfigs = nonNullList(
+				datumMeasurements.containsKey(nodeId) ? datumMeasurements.get(nodeId).get(sourceId)
+						: null);
+		final List<ServerControlConfiguration> controlConfigs = nonNullList(
+				datumControls.containsKey(nodeId) ? datumControls.get(nodeId).get(sourceId) : null);
+		if ( measurementConfigs.isEmpty() && controlConfigs.isEmpty() ) {
 			return null;
 		}
 
@@ -451,6 +488,9 @@ public class OutstationService
 			return null;
 		}
 		final long ts = timestamp.toEpochMilli();
+
+		final Map<Entity<? extends CompositeKey3<Long, Long, ?>>, Object> updatedValues = new LinkedHashMap<>(
+				measurementConfigs.size() + controlConfigs.size());
 
 		OutstationChangeSet changes = null;
 
@@ -475,6 +515,7 @@ public class OutstationService
 			}
 			log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", config.getMeasurementType(), idx,
 					sourceId, config.getProperty(), propVal);
+			updatedValues.put(config, propVal);
 			switch (config.getMeasurementType()) {
 				case AnalogInput -> {
 					if ( propVal instanceof Number propNum ) {
@@ -523,7 +564,7 @@ public class OutstationService
 		final int binaryStatusOffset = typeConfigCount(MeasurementType.BinaryOutputStatus,
 				measurementTypes);
 
-		final Object controlVal = datum.asSampleOperations().findSampleValue("value");
+		final Object controlVal = (controlConfigs.isEmpty() ? null : controlValue(datum));
 		if ( controlVal != null ) {
 			for ( ServerControlConfiguration config : controlConfigs ) {
 				final int idx = controlTypes.get(config.getControlType()).indexOf(config);
@@ -538,6 +579,7 @@ public class OutstationService
 						: binaryStatusOffset) + idx;
 				log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", config.getControlType(),
 						index, sourceId, controlVal);
+				updatedValues.put(config, controlVal);
 				switch (config.getControlType()) {
 					case Analog -> {
 						try {
@@ -564,7 +606,48 @@ public class OutstationService
 			}
 		}
 
+		if ( !updatedValues.isEmpty() ) {
+			List<Map<String, Object>> updates = new ArrayList<>(updatedValues.size());
+			for ( var e : updatedValues.entrySet() ) {
+				Map<String, Object> update = Dnp3UserEvents.eventDataForEntity(e.getKey());
+				update.remove(SERVER_ID_DATA_KEY);
+				update.put(VALUE_DATA_KEY, e.getValue());
+				updates.add(update);
+			}
+			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
+					DATUM_TAGS, "Processing datum updates.", Map.of(UPDATE_LIST_DATA_KEY, updates)));
+		}
+
 		return changes;
+	}
+
+	/**
+	 * Extract a control value from a datum.
+	 * 
+	 * <p>
+	 * Try the node-default "val" first, followed by "value". If neither of
+	 * those work, return the first-available status property.
+	 * </p>
+	 * 
+	 * @param datum
+	 *        the datum
+	 * @return the control value, or {@literal null}
+	 */
+	public static final Object controlValue(final Datum datum) {
+		final DatumSamplesOperations ops = datum.asSampleOperations();
+		Object v = ops.findSampleValue("val");
+		if ( v != null ) {
+			return v;
+		}
+		v = ops.findSampleValue("value");
+		if ( v != null ) {
+			return v;
+		}
+		Map<String, ?> status = ops.getSampleData(DatumSamplesType.Status);
+		if ( status != null && !status.isEmpty() ) {
+			v = status.values().iterator().next();
+		}
+		return v;
 	}
 
 	private <T, C> int typeConfigCount(T key, Map<T, List<C>> map) {

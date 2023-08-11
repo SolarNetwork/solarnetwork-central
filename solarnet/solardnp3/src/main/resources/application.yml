@@ -76,8 +76,10 @@ app:
         clean-session: true
         connect-timeout-seconds: 10
         keep-alive-seconds: 60
-        read-timeout-seconds: -1
+        read-timeout-seconds: 0
         write-timeout-seconds: -1
+    instr-publish:
+      publish-qos-level: 1
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10

@@ -134,6 +134,24 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 			}
 			return copy.toStatus();
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("NodeInstructionStatus{");
+			if ( getInstructionId() != null ) {
+				builder.append("id=");
+				builder.append(getInstructionId());
+				builder.append(", ");
+			}
+			if ( getResultParameters() != null ) {
+				builder.append("resultParameters=");
+				builder.append(getResultParameters());
+			}
+			builder.append("}");
+			return builder.toString();
+		}
+
 	}
 
 	/**

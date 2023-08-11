@@ -85,15 +85,6 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 	/** The qualifier name for the user trust store cache. */
 	public static final String USER_TRUST_STORE_CACHE_QUALIFIER = "user-trust-store-cache";
 
-	/** User event tags for authorization events. */
-	public static final String[] AUTHORIZATION_TAGS = new String[] { DNP3_TAG, AUTHORIZATION_TAG };
-
-	/** User event tags for session events. */
-	public static final String[] SESSION_TAGS = new String[] { DNP3_TAG, SESSION_TAG };
-
-	/** User event tags for datum events. */
-	public static final String[] DATUM_TAGS = new String[] { DNP3_TAG, DATUM_TAG };
-
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final DNP3Manager manager;
@@ -296,15 +287,9 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 						User {} DNP3 server {} has no valid measurement or control configurations: \
 						authorized connection for [{}] denied.""", auth.getUserId(), auth.getServerId(),
 						auth.getIdentifier());
-				userEventAppenderBiz
-						.addEvent(auth.getUserId(),
-								event(AUTHORIZATION_TAGS,
-										"No valid measurement or control configurations.",
-										getJSONString(
-												Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
-														IDENTIFIER_DATA_KEY, auth.getIdentifier()),
-												null),
-										ERROR_TAG));
+				userEventAppenderBiz.addEvent(auth.getUserId(),
+						Dnp3UserEvents.eventWithEntity(auth, AUTHORIZATION_TAGS,
+								"No valid measurement or control configurations.", ERROR_TAG));
 				requireNonNullObject(null, "DNP3 Configuration"); // generate exception
 			}
 
@@ -312,16 +297,11 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 					User {} DNP3 server {} starting with {} measurement and {} control configurations: \
 					authorized connection for [{}] on port {}.""", auth.getUserId(), auth.getServerId(),
 					mConfigs.size(), cConfigs.size(), auth.getIdentifier(), newPort);
-			userEventAppenderBiz.addEvent(auth.getUserId(),
-					event(SESSION_TAGS,
-							"Server starting with %d and %d control configurations."
-									.formatted(mConfigs.size(), cConfigs.size()),
-							getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
-									IDENTIFIER_DATA_KEY, auth.getIdentifier()), null),
-							START_TAG));
+			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
+					SESSION_TAGS, "Server starting with %d and %d control configurations.", START_TAG));
 
-			server = new OutstationService(manager, instructorBiz, auth, destinationHost(), newPort,
-					mConfigs, cConfigs);
+			server = new OutstationService(manager, userEventAppenderBiz, instructorBiz, auth,
+					destinationHost(), newPort, mConfigs, cConfigs);
 			server.setTaskExecutor(taskExecutor);
 			server.serviceDidStartup();
 
@@ -349,24 +329,17 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 					datumDao.findFilteredStream(datumFilter, this);
 					log.info("User {} DNP3 server {} loaded {} initial datum.", auth.getUserId(),
 							auth.getServerId(), datumLoadCount);
-					userEventAppenderBiz.addEvent(auth.getUserId(),
-							event(DATUM_TAGS, "Loaded initial data.",
-									getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
-											COUNT_DATA_KEY, datumLoadCount), null)));
+					userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
+							DATUM_TAGS, "Loaded initial data.", Map.of(COUNT_DATA_KEY, datumLoadCount)));
 				} catch ( Exception e ) {
-					userEventAppenderBiz
-							.addEvent(auth.getUserId(),
-									event(DATUM_TAGS, "Error loading initial data.",
-											getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId(),
-													MESSAGE_DATA_KEY, e.getMessage()), null),
-											ERROR_TAG));
+					userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
+							DATUM_TAGS, "Error loading initial data.", ERROR_TAG));
 				}
 
 				// add observers for node datum streams referenced by configurations
 				datumObserver.registerNodeObserver(server, nodeIdsArray);
-				userEventAppenderBiz.addEvent(auth.getUserId(),
-						event(DATUM_TAGS, "Subscribed to datum stream updates.",
-								getJSONString(Map.of(SERVER_ID_DATA_KEY, auth.getServerId()), null)));
+				userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(auth,
+						DATUM_TAGS, "Subscribed to datum stream updates."));
 			};
 			final Executor taskExecutor = getTaskExecutor();
 			if ( taskExecutor != null ) {
