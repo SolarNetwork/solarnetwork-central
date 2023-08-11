@@ -264,6 +264,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 			for ( int s = 0; s < serverCount; s++ ) {
 				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
 						UUID.randomUUID().toString());
+				server.setEnabled(true);
 				UserLongCompositePK serverId = serverDao.create(userId, server);
 				server = server.copyWithId(serverId);
 
@@ -272,6 +273,7 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 							server.getServerId(), UUID.randomUUID().toString(), Instant.now());
 					conf.setModified(conf.getCreated());
 					conf.setName(UUID.randomUUID().toString());
+					conf.setEnabled(true);
 					UserLongStringCompositePK id = dao.create(userId, server.getServerId(), conf);
 					confs.add(conf.copyWithId(id));
 				}
@@ -284,6 +286,52 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// THEN
 		then(result).as("Result found for identifier").isEqualTo(expected);
+	}
+
+	@Test
+	public void findForIdentifier_disabledServer() {
+		// GIVEN
+		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+				UUID.randomUUID().toString());
+		server.setEnabled(false);
+		UserLongCompositePK serverId = serverDao.create(userId, server);
+		server = server.copyWithId(serverId);
+
+		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
+				UUID.randomUUID().toString(), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(UUID.randomUUID().toString());
+		conf.setEnabled(true);
+		dao.create(userId, server.getServerId(), conf);
+
+		// WHEN
+		ServerAuthConfiguration result = dao.findForIdentifier(conf.getIdentifier());
+
+		// THEN
+		then(result).as("Result not found for identifier when associated server is disabled").isNull();
+	}
+
+	@Test
+	public void findForIdentifier_disabledAuth() {
+		// GIVEN
+		ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+				UUID.randomUUID().toString());
+		server.setEnabled(true);
+		UserLongCompositePK serverId = serverDao.create(userId, server);
+		server = server.copyWithId(serverId);
+
+		ServerAuthConfiguration conf = new ServerAuthConfiguration(userId, server.getServerId(),
+				UUID.randomUUID().toString(), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(UUID.randomUUID().toString());
+		conf.setEnabled(false);
+		dao.create(userId, server.getServerId(), conf);
+
+		// WHEN
+		ServerAuthConfiguration result = dao.findForIdentifier(conf.getIdentifier());
+
+		// THEN
+		then(result).as("Result not found for identifier when auth is disabled").isNull();
 	}
 
 }

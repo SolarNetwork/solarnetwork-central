@@ -89,6 +89,10 @@ public class SelectServerAuthConfiguration
 					, dsa.cname
 				FROM solardnp3.dnp3_server_auth dsa
 				""");
+		if ( filter.hasEnabledCriteria() ) {
+			buf.append(
+					"INNER JOIN solardnp3.dnp3_server ds ON ds.id = dsa.server_id AND ds.enabled = dsa.enabled\n");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
