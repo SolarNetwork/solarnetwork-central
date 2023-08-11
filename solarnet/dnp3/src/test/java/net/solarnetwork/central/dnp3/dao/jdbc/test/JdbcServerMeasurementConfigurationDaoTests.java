@@ -143,7 +143,8 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		ServerMeasurementConfiguration result = dao.get(last.getId());
 
 		// THEN
-		then(result).as("Retrieved entity matches source").isEqualTo(last);
+		then(result).as("Retrieved entity matches source").isEqualTo(last)
+				.matches(c -> c.isSameAs(last));
 	}
 
 	@Test
@@ -172,7 +173,7 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 

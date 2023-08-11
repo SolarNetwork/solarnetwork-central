@@ -87,6 +87,7 @@ public class SelectServerControlConfiguration
 		buf.append("""
 				SELECT dsc.user_id, dsc.server_id, dsc.idx, dsc.created, dsc.modified, dsc.enabled
 					, dsc.node_id, dsc.control_id, dsc.pname, dsc.ctype
+					, dsc.dmult, dsc.doffset, dsc.dscale
 				FROM solardnp3.dnp3_server_ctrl dsc
 				""");
 		if ( Boolean.TRUE.equals(filter.getValidNodeOwnership()) ) {

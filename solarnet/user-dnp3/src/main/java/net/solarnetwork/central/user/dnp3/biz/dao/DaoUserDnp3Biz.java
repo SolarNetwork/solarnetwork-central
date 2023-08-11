@@ -26,11 +26,14 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.springframework.core.io.InputStreamSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
@@ -53,6 +56,7 @@ import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
@@ -274,6 +278,22 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Override
 	public void updateServerControlEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
 		serverControlDao.updateEnabledStatus(userId, filter, enabled);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId,
+			InputStreamSource csv) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out)
+			throws IOException {
+		// TODO Auto-generated method stub
+
 	}
 
 }

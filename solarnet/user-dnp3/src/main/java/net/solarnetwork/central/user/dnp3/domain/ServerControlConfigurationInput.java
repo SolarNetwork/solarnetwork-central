@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.dnp3.domain;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -48,8 +49,17 @@ public class ServerControlConfigurationInput
 	@Size(max = 64)
 	private String controlId;
 
+	@Size(max = 255)
+	private String property;
+
 	@NotNull
 	private ControlType type;
+
+	private BigDecimal multiplier;
+
+	private BigDecimal offset;
+
+	private Integer scale;
 
 	@Override
 	public ServerControlConfiguration toEntity(UserLongIntegerCompositePK id) {
@@ -64,7 +74,11 @@ public class ServerControlConfigurationInput
 		super.populateConfiguration(conf);
 		conf.setNodeId(nodeId);
 		conf.setControlId(controlId);
+		conf.setProperty(property);
 		conf.setType(type);
+		conf.setMultiplier(multiplier);
+		conf.setOffset(offset);
+		conf.setScale(scale);
 	}
 
 	/**
@@ -106,6 +120,25 @@ public class ServerControlConfigurationInput
 	}
 
 	/**
+	 * Get the datum property name.
+	 * 
+	 * @return the property
+	 */
+	public String getProperty() {
+		return property;
+	}
+
+	/**
+	 * Set the datum property name.
+	 * 
+	 * @param property
+	 *        the property to set
+	 */
+	public void setProperty(String property) {
+		this.property = property;
+	}
+
+	/**
 	 * Set the control type.
 	 * 
 	 * @return the type
@@ -122,6 +155,63 @@ public class ServerControlConfigurationInput
 	 */
 	public void setType(ControlType type) {
 		this.type = type;
+	}
+
+	/**
+	 * Get the decimal multiplier.
+	 * 
+	 * @return the multiplier
+	 */
+	public BigDecimal getMultiplier() {
+		return multiplier;
+	}
+
+	/**
+	 * Set the decimal multiplier.
+	 * 
+	 * @param multiplier
+	 *        the multiplier to set
+	 */
+	public void setMultiplier(BigDecimal multiplier) {
+		this.multiplier = multiplier;
+	}
+
+	/**
+	 * Get the decimal offset.
+	 * 
+	 * @return the offset
+	 */
+	public BigDecimal getOffset() {
+		return offset;
+	}
+
+	/**
+	 * Set the decimal offset.
+	 * 
+	 * @param offset
+	 *        the offset to set
+	 */
+	public void setOffset(BigDecimal offset) {
+		this.offset = offset;
+	}
+
+	/**
+	 * Get the decimal scale
+	 * 
+	 * @return the scale
+	 */
+	public Integer getScale() {
+		return scale;
+	}
+
+	/**
+	 * Set the decimal scale.
+	 * 
+	 * @param scale
+	 *        the scale to set
+	 */
+	public void setScale(Integer scale) {
+		this.scale = scale;
 	}
 
 }

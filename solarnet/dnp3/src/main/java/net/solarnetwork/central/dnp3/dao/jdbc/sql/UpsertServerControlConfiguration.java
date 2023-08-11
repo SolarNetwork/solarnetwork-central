@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
@@ -48,10 +49,12 @@ public class UpsertServerControlConfiguration implements PreparedStatementCreato
 			INSERT INTO solardnp3.dnp3_server_ctrl (
 				  created,modified,user_id,server_id,idx
 				, enabled,node_id,control_id,pname,ctype
+				, dmult,doffset,dscale
 			)
 			VALUES (
 				  ?,CAST(COALESCE(?, ?) AS TIMESTAMP WITH TIME ZONE),?,?,?
-				, ?,?,?,?,?)
+				, ?,?,?,?,?
+				, ?,?,?)
 			ON CONFLICT (user_id, server_id, idx) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
@@ -59,6 +62,9 @@ public class UpsertServerControlConfiguration implements PreparedStatementCreato
 					, control_id = EXCLUDED.control_id
 					, pname = EXCLUDED.pname
 					, ctype = EXCLUDED.ctype
+					, dmult = EXCLUDED.dmult
+					, doffset = EXCLUDED.doffset
+					, dscale = EXCLUDED.dscale
 			""";
 
 	private final Long userId;
@@ -108,6 +114,21 @@ public class UpsertServerControlConfiguration implements PreparedStatementCreato
 		stmt.setString(++p, entity.getControlId());
 		stmt.setString(++p, entity.getProperty());
 		p = prepareCodedValueChar(stmt, p, entity.getType(), ControlType.Binary, false);
+		if ( entity.getMultiplier() != null ) {
+			stmt.setBigDecimal(++p, entity.getMultiplier());
+		} else {
+			stmt.setNull(++p, Types.NUMERIC);
+		}
+		if ( entity.getOffset() != null ) {
+			stmt.setBigDecimal(++p, entity.getOffset());
+		} else {
+			stmt.setNull(++p, Types.NUMERIC);
+		}
+		if ( entity.getScale() != null ) {
+			stmt.setObject(++p, entity.getScale());
+		} else {
+			stmt.setNull(++p, Types.INTEGER);
+		}
 		return stmt;
 	}
 

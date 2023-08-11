@@ -22,10 +22,15 @@
 
 package net.solarnetwork.central.user.dnp3.biz;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import org.springframework.core.io.InputStreamSource;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.domain.ControlType;
+import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
@@ -38,6 +43,7 @@ import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
@@ -332,5 +338,55 @@ public interface UserDnp3Biz {
 	 */
 	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
 			Long userId, ServerFilter filter);
+
+	/**
+	 * Import a CSV resource of server measurement and control configurations.
+	 * 
+	 * <p>
+	 * The expected structure of the CSV is:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li><b>Node ID</b> - a datum stream node ID</li>
+	 * <li><b>Source ID</b> - a datum stream source ID, or control ID for
+	 * control types</li>
+	 * <li><b>Property</b> - the datum stream property name; optional for
+	 * control types</li>
+	 * <li><b>Type</b> - a {@link MeasurementType} or {@link ControlType}</li>
+	 * <li><b>Multiplier</b> - an optional number to multiple property values
+	 * by</li>
+	 * <li><b>Offset</b> - an optional number to add to property values</li>
+	 * <li><b>Decimal Scale</b> - an optional integer decimal scale to round
+	 * decimals to; empty or -1 for no rounding</li>
+	 * </ol>
+	 * 
+	 * @param userId
+	 *        the ID of the user to import configurations for
+	 * @param serverId
+	 *        the ID of the server to import configurations for
+	 * @param csv
+	 *        the CSV resource to import
+	 * @return the generated server configurations
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId, InputStreamSource csv)
+			throws IOException;
+
+	/**
+	 * Export server measurement and control configurations as CSV.
+	 * 
+	 * @param userId
+	 *        the ID of the user to import configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param out
+	 *        the output steram to write to
+	 * @throws IOException
+	 *         if an IO error occurs
+	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource)
+	 */
+	void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out)
+			throws IOException;
 
 }

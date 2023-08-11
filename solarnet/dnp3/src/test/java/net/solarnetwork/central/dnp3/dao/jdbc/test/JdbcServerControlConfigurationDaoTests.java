@@ -29,6 +29,7 @@ import static net.solarnetwork.central.test.CommonDbTestUtils.insertNode;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -145,6 +146,9 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setControlId(UUID.randomUUID().toString());
 		conf.setProperty(UUID.randomUUID().toString());
 		conf.setType(ControlType.Analog);
+		conf.setMultiplier(new BigDecimal("1.23"));
+		conf.setOffset(new BigDecimal("2.34"));
+		conf.setScale(3);
 		UserLongIntegerCompositePK result = dao.create(userId, lastServer.getServerId(), conf);
 
 		// THEN
@@ -181,6 +185,12 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 			.containsEntry("pname", conf.getProperty())
 			.as("Row control type")
 			.containsEntry("ctype", String.valueOf((char)conf.getType().getCode()))
+			.as("Row multiplier")
+			.containsEntry("dmult", conf.getMultiplier())
+			.as("Row offset")
+			.containsEntry("doffset", conf.getOffset())
+			.as("Row scale")
+			.containsEntry("dscale", conf.getScale())
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -195,7 +205,8 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		ServerControlConfiguration result = dao.get(last.getId());
 
 		// THEN
-		then(result).as("Retrieved entity matches source").isEqualTo(last);
+		then(result).as("Retrieved entity matches source").isEqualTo(last)
+				.matches(c -> c.isSameAs(last));
 	}
 
 	@Test
@@ -207,7 +218,8 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		ServerControlConfiguration result = dao.get(last.getId());
 
 		// THEN
-		then(result).as("Retrieved entity matches source").isEqualTo(last);
+		then(result).as("Retrieved entity matches source").isEqualTo(last)
+				.matches(c -> c.isSameAs(last));
 	}
 
 	@Test
@@ -233,7 +245,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 
@@ -250,6 +262,9 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		conf.setControlId(UUID.randomUUID().toString());
 		conf.setProperty(UUID.randomUUID().toString());
 		conf.setType(ControlType.Binary);
+		conf.setMultiplier(new BigDecimal("3.21"));
+		conf.setOffset(new BigDecimal("4.32"));
+		conf.setScale(2);
 
 		UserLongIntegerCompositePK result = dao.save(conf);
 		ServerControlConfiguration updated = dao.get(result);
@@ -261,7 +276,7 @@ public class JdbcServerControlConfigurationDaoTests extends AbstractJUnit5JdbcDa
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 

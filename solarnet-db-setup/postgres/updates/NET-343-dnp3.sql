@@ -122,8 +122,11 @@ CREATE TABLE solardnp3.dnp3_server_meas (
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
  * @column node_id		node ID
  * @column control_id	control ID
- * @column pname		property name
+ * @column pname		optional property name
  * @column ctype		control type (code)
+ * @column dmult		optional decimal multiplier
+ * @column doffset		optional decimal addition
+ * @column dscale		optional decimal scale
  */
 CREATE TABLE solardnp3.dnp3_server_ctrl (
 	user_id			BIGINT NOT NULL,
@@ -136,6 +139,9 @@ CREATE TABLE solardnp3.dnp3_server_ctrl (
 	control_id		CHARACTER VARYING(64) NOT NULL,
 	pname			CHARACTER VARYING(255),
 	ctype			CHARACTER NOT NULL,
+	dmult			NUMERIC,
+	doffset			NUMERIC,
+	dscale			INTEGER,
 	CONSTRAINT dnp3_server_ctrl_pk PRIMARY KEY (user_id, server_id, idx),
 	CONSTRAINT dnp3_server_ctrl_server_fk FOREIGN KEY (user_id, server_id)
 		REFERENCES solardnp3.dnp3_server (user_id, id) MATCH SIMPLE

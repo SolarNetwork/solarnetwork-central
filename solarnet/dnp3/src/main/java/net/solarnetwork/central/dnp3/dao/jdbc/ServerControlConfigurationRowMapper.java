@@ -47,6 +47,9 @@ import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
  * <li>control_id (TEXT)</li>
  * <li>pname (TEXT)</li>
  * <li>ctype (CHARACTER)</li>
+ * <li>dmult (NUMERIC)</li>
+ * <li>doffset (NUMERIC)</li>
+ * <li>dscale (INTEGER)</li>
  * </ol>
  * 
  * @author matt
@@ -95,6 +98,9 @@ public class ServerControlConfigurationRowMapper implements RowMapper<ServerCont
 		} catch ( IllegalArgumentException e ) {
 			// ignore, move on
 		}
+		conf.setMultiplier(rs.getBigDecimal(++p));
+		conf.setOffset(rs.getBigDecimal(++p));
+		conf.setScale(rs.getObject(++p, Integer.class));
 		return conf;
 	}
 
