@@ -30,6 +30,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,7 +43,9 @@ import org.springframework.core.io.InputStreamSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.supercsv.io.CsvListReader;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListReader;
+import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
@@ -68,6 +71,7 @@ import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
+import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvWriter;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -307,21 +311,22 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 					locale != null ? locale : Locale.getDefault()).parse(in);
 		}
 
-		final int mCount = (result.measurementConfigs() != null ? result.measurementConfigs().size()
-				: 0);
-		if ( mCount > 0 ) {
+		int mCount = 0;
+		if ( result.measurementConfigs() != null ) {
 			for ( var conf : result.measurementConfigs() ) {
 				serverMeasurementDao.save(conf);
+				mCount++;
 			}
 		}
 		// delete any indexes higher than the ones just saved
 		serverMeasurementDao
 				.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, mCount));
 
-		final int cCount = (result.controlConfigs() != null ? result.controlConfigs().size() : 0);
-		if ( mCount > 0 ) {
+		int cCount = 0;
+		if ( result.controlConfigs() != null ) {
 			for ( var conf : result.controlConfigs() ) {
 				serverControlDao.save(conf);
+				cCount++;
 			}
 		}
 		// delete any indexes higher than the ones just saved
@@ -332,9 +337,16 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out)
-			throws IOException {
-		// TODO Auto-generated method stub
+	public void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out,
+			Locale locale) throws IOException {
+		try (ICsvListWriter csv = new CsvListWriter(new OutputStreamWriter(out, UTF_8),
+				CsvPreference.STANDARD_PREFERENCE)) {
+			var measurements = serverMeasurementsForUser(userId, filter);
+			var controls = serverControlsForUser(userId, filter);
+			new ServerConfigurationsCsvWriter(csv, csvImportMessageSource,
+					locale != null ? locale : Locale.getDefault())
+							.generateCsv(new ServerConfigurations(measurements, controls));
+		}
 
 	}
 

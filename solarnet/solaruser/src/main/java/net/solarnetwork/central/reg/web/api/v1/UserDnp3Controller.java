@@ -26,6 +26,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.web.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
@@ -40,13 +41,18 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Locale;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,12 +71,14 @@ import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
+import net.solarnetwork.web.domain.Response;
 
 /**
  * Web service API for DNP3 management.
@@ -120,7 +128,7 @@ public class UserDnp3Controller {
 	 * @return the parsed certificate configurations
 	 */
 	@RequestMapping(method = POST, value = "/trusted-issuer-certs", consumes = MULTIPART_FORM_DATA_VALUE)
-	public Result<Collection<TrustedIssuerCertificate>> saveTrustedIssuerCertificate(
+	public Result<Collection<TrustedIssuerCertificate>> importTrustedIssuerCertificates(
 			@RequestPart("file") MultipartFile data) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		CertificateFactory cf = CertificateUtils.x509CertificateFactory();
@@ -546,4 +554,63 @@ public class UserDnp3Controller {
 		userDnp3Biz().updateServerControlEnabledStatus(userId, criteria, enabled);
 		return success();
 	}
+
+	/**
+	 * Import measurement and control configuration for a specific server from a
+	 * CSV resource.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param serverId
+	 *        the ID of the server configuration to import for
+	 * @param data
+	 *        the CSV data to import
+	 * @param locale
+	 *        the locale
+	 * @return the result
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public Response<ServerConfigurations> importServerConfigurationCsv(
+			@PathVariable("serverId") Long serverId, @RequestPart("file") MultipartFile data,
+			Locale locale) throws IOException {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final ServerConfigurations result = userDnp3Biz().importServerConfigurationsCsv(userId, serverId,
+				data, locale);
+		return response(result);
+	}
+
+	/**
+	 * Export measurement and control configuration for a specific server as a
+	 * CSV resource.
+	 * 
+	 * <p>
+	 * The actor must have an associated user ID as provided by
+	 * {@link SecurityUtils#getCurrentActorUserId()}.
+	 * </p>
+	 * 
+	 * @param serverId
+	 *        the ID of the server configuration to import for
+	 * @param response
+	 *        the HTTP response
+	 * @param locale
+	 *        the locale
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.GET)
+	public void exportServerConfigurationCsv(@PathVariable("serverId") Long serverId,
+			HttpServletResponse response, Locale locale) throws IOException {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+				"attachment; filename=\"solarnet-dnp3-server-%d.csv\"".formatted(serverId));
+		final BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		userDnp3Biz().exportServerConfigurationsCsv(userId, filter, response.getOutputStream(), locale);
+	}
+
 }

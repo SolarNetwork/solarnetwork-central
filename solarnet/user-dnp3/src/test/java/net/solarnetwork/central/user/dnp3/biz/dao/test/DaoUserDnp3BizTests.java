@@ -22,17 +22,22 @@
 
 package net.solarnetwork.central.user.dnp3.biz.dao.test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
@@ -46,11 +51,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
+import net.solarnetwork.central.dnp3.domain.ControlType;
+import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
@@ -59,6 +68,7 @@ import net.solarnetwork.central.security.CertificateUtils;
 import net.solarnetwork.central.user.dnp3.biz.dao.DaoUserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.support.test.ServerConfigurationsCsvParserTests;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.pki.bc.BCCertificateService;
 
@@ -97,6 +107,9 @@ public class DaoUserDnp3BizTests {
 
 	@Captor
 	private ArgumentCaptor<ServerControlConfiguration> controlConfigurationsCaptor;
+
+	@Captor
+	private ArgumentCaptor<ServerFilter> serverFilterCaptor;
 
 	private KeyPairGenerator keyGen;
 	private BCCertificateService certService;
@@ -205,6 +218,61 @@ public class DaoUserDnp3BizTests {
 		verify(serverControlDao, times(2)).save(controlConfigurationsCaptor.capture());
 		then(result.controlConfigs()).as("Control configurations persited and returned")
 				.hasSameElementsAs(controlConfigurationsCaptor.getAllValues());
+	}
+
+	@Test
+	public void exportCsv() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		final ServerMeasurementConfiguration m = new ServerMeasurementConfiguration(userId, serverId, 0,
+				Instant.now());
+		m.setNodeId(123L);
+		m.setSourceId("foo");
+		m.setProperty("bar");
+		m.setType(MeasurementType.FrozenCounter);
+		m.setEnabled(true);
+		m.setMultiplier(new BigDecimal("1.2"));
+		m.setOffset(new BigDecimal("2.1"));
+		m.setScale(3);
+
+		given(serverMeasurementDao.findFiltered(any())).willReturn(new BasicFilterResults<>(asList(m)));
+
+		final ServerControlConfiguration c = new ServerControlConfiguration(userId, serverId, 0,
+				Instant.now());
+		c.setNodeId(234L);
+		c.setSourceId("bim");
+		c.setType(ControlType.Binary);
+		c.setEnabled(false);
+
+		given(serverControlDao.findFiltered(any())).willReturn(new BasicFilterResults<>(asList(c)));
+
+		// WHEN
+		BasicFilter filter = new BasicFilter();
+		filter.setServerId(serverId);
+		ByteArrayOutputStream byos = new ByteArrayOutputStream(512);
+		service.exportServerConfigurationsCsv(userId, filter, byos, Locale.getDefault());
+
+		// THEN
+		final String csv = new String(byos.toByteArray(), StandardCharsets.UTF_8);
+		then(csv).as("CSV generated").isEqualTo("""
+				Node ID,Source ID,Property,DNP3 Type,Enabled,Multiplier,Offset,Decimal Scale\r
+				123,foo,bar,FrozenCounter,true,1.2,2.1,3\r
+				234,bim,,ControlBinary,false,,,\r
+				""");
+
+		verify(serverMeasurementDao).findFiltered(serverFilterCaptor.capture());
+		verify(serverControlDao).findFiltered(serverFilterCaptor.capture());
+		// @formatter:off
+		then(serverFilterCaptor.getAllValues())
+			.as("DAO filters")
+			.hasSize(2)
+			.as("User ID provided in DAO filter")
+			.allMatch(e -> userId.equals(e.getUserId()))
+			.allMatch(e -> serverId.equals(e.getServerId()))
+			;
+		// @formatter:on
 	}
 
 }

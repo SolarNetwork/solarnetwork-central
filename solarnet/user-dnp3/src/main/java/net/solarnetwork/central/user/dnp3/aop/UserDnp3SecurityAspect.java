@@ -100,12 +100,38 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 	public void deleteUserRelatedEntity(Long userId) {
 	}
 
-	@Before("readForUser(userId)")
+	/**
+	 * Match methods like {@code update*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.import*(..)) && args(userId,..)")
+	public void importUserRelatedEntity(Long userId) {
+	}
+
+	/**
+	 * Match methods like {@code update*(userId, ...)}.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz.export*(..)) && args(userId,..)")
+	public void exportUserRelatedEntity(Long userId) {
+	}
+
+	@Before("readForUser(userId) || exportUserRelatedEntity(userId)")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("createUserRelatedEntity(userId) || saveUserRelatedEntity(userId) || updateUserRelatedEntity(userId) || deleteUserRelatedEntity(userId)")
+	@Before("""
+			createUserRelatedEntity(userId)
+			|| saveUserRelatedEntity(userId)
+			|| updateUserRelatedEntity(userId)
+			|| deleteUserRelatedEntity(userId)
+			|| importUserRelatedEntity(userId)
+			""")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}

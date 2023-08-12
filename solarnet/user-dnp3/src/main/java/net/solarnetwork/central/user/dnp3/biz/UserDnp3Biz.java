@@ -386,11 +386,14 @@ public interface UserDnp3Biz {
 	 *        an optional filter
 	 * @param out
 	 *        the output steram to write to
+	 * @param locale
+	 *        a locale for messages, or {@literal null} to use the runtime
+	 *        default
 	 * @throws IOException
 	 *         if an IO error occurs
 	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource)
 	 */
-	void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out)
+	void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out, Locale locale)
 			throws IOException;
 
 }

@@ -40,7 +40,7 @@ import net.solarnetwork.domain.CodedValue;
  * @author matt
  * @version 1.0
  */
-public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends CodedValue>
+public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseUserModifiableEntity<C, UserLongIntegerCompositePK> {
 
 	private static final long serialVersionUID = 659642643824344175L;

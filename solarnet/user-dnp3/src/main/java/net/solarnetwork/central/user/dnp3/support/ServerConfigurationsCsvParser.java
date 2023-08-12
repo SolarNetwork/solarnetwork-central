@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dnp3.support;
 
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.DECIMAL_SCALE;
+import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.ENABLED;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.MULTIPLIER;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.NODE_ID;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.OFFSET;
@@ -30,6 +31,7 @@ import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsv
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.SOURCE_ID;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.TYPE;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.parseBoolean;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -60,6 +62,7 @@ import net.solarnetwork.domain.CodedValue;
  * <li><b>Property</b> - the datum stream property name; optional for control
  * types</li>
  * <li><b>Type</b> - a {@link MeasurementType} or {@link ControlType}</li>
+ * <li><b>Enabled</b> - a boolean on/off state</li>
  * <li><b>Multiplier</b> - an optional number to multiple property values
  * by</li>
  * <li><b>Offset</b> - an optional number to add to property values</li>
@@ -92,10 +95,10 @@ public class ServerConfigurationsCsvParser {
 	 *        the date to assign
 	 * @param messageSource
 	 *        the message source
-	 * @param messages
-	 *        the list of output messages to add messages to
 	 * @param locale
 	 *        the locale for messages
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
 	public ServerConfigurationsCsvParser(Long userId, Long serverId, Instant date,
 			MessageSource messageSource, Locale locale) {
@@ -136,6 +139,7 @@ public class ServerConfigurationsCsvParser {
 			final CodedValue type = parseTypeValue(row, rowLen, rowNum);
 			final String property = parseStringValue(row, rowLen, rowNum, PROPERTY,
 					type instanceof MeasurementType);
+			final boolean enabled = parseBoolean(parseStringValue(row, rowLen, rowNum, ENABLED, false));
 			final BigDecimal mult = parseBigDecimalValue(row, rowLen, rowNum, MULTIPLIER, false);
 			final BigDecimal offset = parseBigDecimalValue(row, rowLen, rowNum, OFFSET, false);
 			final Integer scale = parseIntegerValue(row, rowLen, rowNum, DECIMAL_SCALE, false);
@@ -157,6 +161,7 @@ public class ServerConfigurationsCsvParser {
 				// shouldn't be here
 				throw new IllegalArgumentException("Unsupported type [" + type + "]");
 			}
+			config.setEnabled(enabled);
 			config.setNodeId(nodeId);
 			config.setSourceId(sourceId);
 			config.setProperty(property);

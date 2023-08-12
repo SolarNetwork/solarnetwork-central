@@ -44,14 +44,17 @@ public enum ServerConfigurationsCsvColumn implements CodedValue {
 	/** The DNP3 type. */
 	TYPE(3, "DNP3 Type"),
 
+	/** The enabled flag. */
+	ENABLED(4, "Enabled"),
+
 	/** The multiplier. */
-	MULTIPLIER(4, "Multiplier"),
+	MULTIPLIER(5, "Multiplier"),
 
 	/** The offset. */
-	OFFSET(5, "Offset"),
+	OFFSET(6, "Offset"),
 
 	/** The decimal scale. */
-	DECIMAL_SCALE(6, "Decimal Scale"),
+	DECIMAL_SCALE(7, "Decimal Scale"),
 
 	;
 

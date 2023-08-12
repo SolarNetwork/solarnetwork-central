@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.dnp3.domain;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 
@@ -32,8 +32,8 @@ import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
  * @author matt
  * @version 1.0
  */
-public record ServerConfigurations(List<ServerMeasurementConfiguration> measurementConfigs,
-		List<ServerControlConfiguration> controlConfigs) {
+public record ServerConfigurations(Iterable<ServerMeasurementConfiguration> measurementConfigs,
+		Iterable<ServerControlConfiguration> controlConfigs) {
 
 	/**
 	 * Return {@literal true} if there are no measurement or control
@@ -41,9 +41,10 @@ public record ServerConfigurations(List<ServerMeasurementConfiguration> measurem
 	 * 
 	 * @return {@literal true} if empty
 	 */
+	@JsonIgnore
 	public boolean isEmpty() {
-		return ((measurementConfigs == null || measurementConfigs.isEmpty())
-				&& (controlConfigs == null && controlConfigs.isEmpty()));
+		return ((measurementConfigs == null || measurementConfigs.iterator().hasNext())
+				&& (controlConfigs == null && controlConfigs.iterator().hasNext()));
 	}
 
 }

@@ -99,6 +99,10 @@ public class ServerConfigurationsCsvParserTests {
 			.as("Measurement server ID set to provided value")
 			.allMatch(serverId::equals);
 
+		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::isEnabled)
+			.as("Measurement enabled set to TRUE")
+			.allMatch(Boolean.TRUE::equals);
+
 		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getNodeId)
 			.as("Parsed measurement node ID values")
 			.containsExactly(123L, 123L);
@@ -136,6 +140,10 @@ public class ServerConfigurationsCsvParserTests {
 			.as("Control server ID set to provided value")
 			.allMatch(serverId::equals);
 		
+		then(result.controlConfigs()).map(ServerControlConfiguration::isEnabled)
+			.as("Control enabled set to TRUE")
+			.allMatch(Boolean.TRUE::equals);
+
 		then(result.controlConfigs()).extracting(ServerControlConfiguration::getNodeId)
 			.as("Parsed control node ID values")
 			.containsExactly(234L, 345L);
@@ -169,7 +177,7 @@ public class ServerConfigurationsCsvParserTests {
 
 	private static String csv(String body) {
 		return """
-				Node ID,Source ID,Property, DNP3 Type,Multiplier,Offset,Decimal Scale
+				Node ID,Source ID,Property, DNP3 Type,Enabled,Multiplier,Offset,Decimal Scale
 				""".concat(body);
 	}
 
@@ -217,7 +225,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					,power/1,watts,AnalogInput,0.1,100,1
+					,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -240,7 +248,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					blah,power/1,watts,AnalogInput,0.1,100,1
+					blah,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -263,7 +271,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,,watts,AnalogInput,0.1,100,1
+					123,,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -286,7 +294,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123, ,watts,AnalogInput,0.1,100,1
+					123, ,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -309,7 +317,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,,AnalogInput,0.1,100,1
+					123,power/1,,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -332,7 +340,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1, ,AnalogInput,0.1,100,1
+					123,power/1, ,AnalogInput,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -369,6 +377,8 @@ public class ServerConfigurationsCsvParserTests {
 			.returns(null, ServerControlConfiguration::getProperty)
 			.as("Type parsed")
 			.returns(ControlType.Binary, ServerControlConfiguration::getType)
+			.as("Enabled implied")
+			.returns(false, ServerControlConfiguration::isEnabled)
 			;
 		// @formatter:on
 	}
@@ -384,7 +394,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,watts,,0.1,100,1
+					123,power/1,watts,,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -407,7 +417,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,watts,FooBar,0.1,100,1
+					123,power/1,watts,FooBar,TRUE,0.1,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -416,6 +426,37 @@ public class ServerConfigurationsCsvParserTests {
 				.isInstanceOf(IllegalArgumentException.class)
 				.as("Exception message referes to row/column")
 				.matches(rowColumnMessage(2, 4));
+		// @formatter:on
+	}
+
+	@Test
+	public void wonkyEnabled() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		ServerConfigurations result = null;
+		try (ICsvListReader in = csvData("""
+				123,switch/1,,ControlBinary,NO WAY NO HOW
+				""")) {
+			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+					.parse(in);
+		}
+		// @formatter:off
+		then(result.controlConfigs()).hasSize(1).element(0)
+			.as("Node ID parsed")
+			.returns(123L, ServerControlConfiguration::getNodeId)
+			.as("Control ID parsed")
+			.returns("switch/1", ServerControlConfiguration::getControlId)
+			.as("Property is null")
+			.returns(null, ServerControlConfiguration::getProperty)
+			.as("Type parsed")
+			.returns(ControlType.Binary, ServerControlConfiguration::getType)
+			.as("Wonky enabled parsed to fales")
+			.returns(false, ServerControlConfiguration::isEnabled)
+			;
 		// @formatter:on
 	}
 
@@ -430,7 +471,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,watts,AnalogInput,a,100,1
+					123,power/1,watts,AnalogInput,TRUE,a,100,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -438,7 +479,7 @@ public class ServerConfigurationsCsvParserTests {
 		}).as("Validation exception thrown from invalid multiplier")
 				.isInstanceOf(IllegalArgumentException.class)
 				.as("Exception message referes to row/column")
-				.matches(rowColumnMessage(2, 5));
+				.matches(rowColumnMessage(2, 6));
 		// @formatter:on
 	}
 
@@ -453,7 +494,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,watts,AnalogInput,1,a,1
+					123,power/1,watts,AnalogInput,TRUE,1,a,1
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -461,7 +502,7 @@ public class ServerConfigurationsCsvParserTests {
 		}).as("Validation exception thrown from invalid offset")
 				.isInstanceOf(IllegalArgumentException.class)
 				.as("Exception message referes to row/column")
-				.matches(rowColumnMessage(2, 6));
+				.matches(rowColumnMessage(2, 7));
 		// @formatter:on
 	}
 
@@ -476,7 +517,7 @@ public class ServerConfigurationsCsvParserTests {
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
-					123,power/1,watts,AnalogInput,1,1,a
+					123,power/1,watts,AnalogInput,TRUE,1,1,a
 					""")) {
 				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 						.parse(in);
@@ -484,7 +525,7 @@ public class ServerConfigurationsCsvParserTests {
 		}).as("Validation exception thrown from invalid scale")
 				.isInstanceOf(IllegalArgumentException.class)
 				.as("Exception message referes to row/column")
-				.matches(rowColumnMessage(2, 7));
+				.matches(rowColumnMessage(2, 8));
 		// @formatter:on
 	}
 
