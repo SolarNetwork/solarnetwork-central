@@ -68,10 +68,8 @@ public class ServerConfigurationsCsvParserTests {
 		locale = Locale.getDefault();
 	}
 
-	private CsvListReader csvResource(String resouce) {
-		return new CsvListReader(
-				new InputStreamReader(getClass().getResourceAsStream("server-confs-example-01.csv"),
-						UTF_8),
+	private CsvListReader csvResource(String resource) {
+		return new CsvListReader(new InputStreamReader(getClass().getResourceAsStream(resource), UTF_8),
 				STANDARD_PREFERENCE);
 	}
 

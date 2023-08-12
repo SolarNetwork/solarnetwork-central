@@ -39,4 +39,14 @@ public interface ServerMeasurementConfigurationDao extends
 		FilterableDao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, ServerFilter>,
 		UserModifiableEnabledStatusDao<ServerFilter> {
 
+	/**
+	 * Delete all rows in a group with an index equal to or greater than a given
+	 * index.
+	 * 
+	 * @param minimumIndex
+	 *        the minimum index to delete from
+	 * @return the number of rows deleted
+	 */
+	int deleteForMinimumIndex(UserLongIntegerCompositePK minimumIndex);
+
 }

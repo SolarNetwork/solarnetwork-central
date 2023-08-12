@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
+import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForGroupMinimumIndex;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
@@ -135,6 +136,12 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
 		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
 				enabled);
+		return jdbcOps.update(sql);
+	}
+
+	@Override
+	public int deleteForMinimumIndex(UserLongIntegerCompositePK minimumIndex) {
+		var sql = new DeleteForGroupMinimumIndex(minimumIndex, TABLE_NAME, PK_COLUMN_NAMES);
 		return jdbcOps.update(sql);
 	}
 

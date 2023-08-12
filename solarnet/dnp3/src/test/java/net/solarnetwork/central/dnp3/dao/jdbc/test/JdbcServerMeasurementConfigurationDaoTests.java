@@ -280,4 +280,56 @@ public class JdbcServerMeasurementConfigurationDaoTests extends AbstractJUnit5Jd
 		then(results).as("Results for single group returned").contains(expected);
 	}
 
+	@Test
+	public void deleteForMinimumIndex() {
+		// GIVEN
+		final int userCount = 2;
+		final int serverCount = 2;
+		final int count = 8;
+		final Map<Long, List<Long>> userGroups = new HashMap<>(userCount);
+		final List<ServerMeasurementConfiguration> confs = new ArrayList<>(count);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			userGroups.put(userId, new ArrayList<>(serverCount));
+
+			for ( int s = 0; s < serverCount; s++ ) {
+				ServerConfiguration server = Dnp3JdbcTestUtils.newServerConfiguration(userId,
+						UUID.randomUUID().toString());
+				UserLongCompositePK serverId = serverDao.create(userId, server);
+				server = server.copyWithId(serverId);
+				userGroups.get(userId).add(server.getServerId());
+
+				for ( int i = 0; i < count; i++ ) {
+					ServerMeasurementConfiguration conf = new ServerMeasurementConfiguration(userId,
+							server.getServerId(), i, Instant.now());
+					conf.setModified(conf.getCreated());
+					conf.setNodeId(UUID.randomUUID().getMostSignificantBits());
+					conf.setSourceId(UUID.randomUUID().toString());
+					conf.setProperty(UUID.randomUUID().toString());
+					conf.setType(MeasurementType.AnalogInput);
+					UserLongIntegerCompositePK id = dao.create(userId, server.getServerId(), conf);
+					confs.add(conf.copyWithId(id));
+				}
+			}
+		}
+
+		// WHEN
+		final Entry<Long, List<Long>> groups = userGroups.entrySet().iterator().next();
+		final Long groupId = groups.getValue().get(1);
+		final UserLongIntegerCompositePK minIndex = new UserLongIntegerCompositePK(groups.getKey(),
+				groupId, 2);
+		final int result = dao.deleteForMinimumIndex(minIndex);
+
+		// THEN
+		then(result).as("Deleted indexes 2-7").isEqualTo(6);
+
+		Collection<ServerMeasurementConfiguration> results = dao.findAll(groups.getKey(), groupId, null);
+		ServerMeasurementConfiguration[] expected = confs
+				.stream().filter(e -> groups.getKey().equals(e.getUserId())
+						&& groupId.equals(e.getServerId()) && e.getIndex().intValue() < 2)
+				.toArray(ServerMeasurementConfiguration[]::new);
+		then(results).as("Results for group returned after deletion").contains(expected);
+	}
+
 }

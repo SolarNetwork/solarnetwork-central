@@ -22,20 +22,28 @@
 
 package net.solarnetwork.central.user.dnp3.biz.dao;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.io.ICsvListReader;
+import org.supercsv.prefs.CsvPreference;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
@@ -59,6 +67,7 @@ import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
+import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -74,6 +83,8 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	private final ServerAuthConfigurationDao serverAuthDao;
 	private final ServerMeasurementConfigurationDao serverMeasurementDao;
 	private final ServerControlConfigurationDao serverControlDao;
+
+	private final MessageSource csvImportMessageSource;
 
 	/**
 	 * Constructor.
@@ -101,6 +112,10 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		this.serverAuthDao = requireNonNullArgument(serverAuthDao, "serverAuthDao");
 		this.serverMeasurementDao = requireNonNullArgument(serverMeasurementDao, "serverMeasurementDao");
 		this.serverControlDao = requireNonNullArgument(serverControlDao, "serverControlDao");
+
+		ResourceBundleMessageSource ms = new ResourceBundleMessageSource();
+		ms.setBasename(ServerConfigurationsCsvParser.class.getName());
+		this.csvImportMessageSource = ms;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -283,9 +298,36 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId,
-			InputStreamSource csv) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+			InputStreamSource csv, Locale locale) throws IOException {
+		final Instant date = Instant.now();
+		ServerConfigurations result = null;
+		try (ICsvListReader in = new CsvListReader(new InputStreamReader(csv.getInputStream(), UTF_8),
+				CsvPreference.STANDARD_PREFERENCE)) {
+			result = new ServerConfigurationsCsvParser(userId, serverId, date, csvImportMessageSource,
+					locale != null ? locale : Locale.getDefault()).parse(in);
+		}
+
+		final int mCount = (result.measurementConfigs() != null ? result.measurementConfigs().size()
+				: 0);
+		if ( mCount > 0 ) {
+			for ( var conf : result.measurementConfigs() ) {
+				serverMeasurementDao.save(conf);
+			}
+		}
+		// delete any indexes higher than the ones just saved
+		serverMeasurementDao
+				.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, mCount));
+
+		final int cCount = (result.controlConfigs() != null ? result.controlConfigs().size() : 0);
+		if ( mCount > 0 ) {
+			for ( var conf : result.controlConfigs() ) {
+				serverControlDao.save(conf);
+			}
+		}
+		// delete any indexes higher than the ones just saved
+		serverControlDao.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, cCount));
+
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

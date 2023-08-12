@@ -35,4 +35,15 @@ import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 public record ServerConfigurations(List<ServerMeasurementConfiguration> measurementConfigs,
 		List<ServerControlConfiguration> controlConfigs) {
 
+	/**
+	 * Return {@literal true} if there are no measurement or control
+	 * configurations.
+	 * 
+	 * @return {@literal true} if empty
+	 */
+	public boolean isEmpty() {
+		return ((measurementConfigs == null || measurementConfigs.isEmpty())
+				&& (controlConfigs == null && controlConfigs.isEmpty()));
+	}
+
 }

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Locale;
 import org.springframework.core.io.InputStreamSource;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
@@ -366,12 +367,15 @@ public interface UserDnp3Biz {
 	 *        the ID of the server to import configurations for
 	 * @param csv
 	 *        the CSV resource to import
+	 * @param locale
+	 *        a locale for messages, or {@literal null} to use the runtime
+	 *        default
 	 * @return the generated server configurations
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId, InputStreamSource csv)
-			throws IOException;
+	ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId, InputStreamSource csv,
+			Locale locale) throws IOException;
 
 	/**
 	 * Export server measurement and control configurations as CSV.
