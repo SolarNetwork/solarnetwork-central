@@ -373,6 +373,10 @@ public interface UserDnp3Biz {
 	 * @return the generated server configurations
 	 * @throws IOException
 	 *         if an IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if a parsing error occurs
+	 * @throws javax.validation.ConstraintViolationException
+	 *         if a validation error occurs
 	 */
 	ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId, InputStreamSource csv,
 			Locale locale) throws IOException;

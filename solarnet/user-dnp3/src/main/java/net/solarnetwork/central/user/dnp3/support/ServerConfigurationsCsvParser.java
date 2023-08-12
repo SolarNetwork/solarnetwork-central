@@ -34,18 +34,17 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.parseBoolean;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.context.MessageSource;
 import org.supercsv.io.ICsvListReader;
-import net.solarnetwork.central.dnp3.domain.BaseServerDatumStreamConfiguration;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
-import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
-import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
-import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
+import net.solarnetwork.central.user.dnp3.domain.BaseServerDatumStreamConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationsInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.domain.CodedValue;
 
 /**
@@ -75,24 +74,15 @@ import net.solarnetwork.domain.CodedValue;
  */
 public class ServerConfigurationsCsvParser {
 
-	private final Long userId;
-	private final Long serverId;
-	private final Instant date;
 	private final MessageSource messageSource;
 	private final Locale locale;
 
-	private final List<ServerMeasurementConfiguration> measurements = new ArrayList<>(16);
-	private final List<ServerControlConfiguration> controls = new ArrayList<>(16);
+	private final List<ServerMeasurementConfigurationInput> measurements = new ArrayList<>(16);
+	private final List<ServerControlConfigurationInput> controls = new ArrayList<>(16);
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param serverId
-	 *        the server ID
-	 * @param date
-	 *        the date to assign
 	 * @param messageSource
 	 *        the message source
 	 * @param locale
@@ -100,12 +90,8 @@ public class ServerConfigurationsCsvParser {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public ServerConfigurationsCsvParser(Long userId, Long serverId, Instant date,
-			MessageSource messageSource, Locale locale) {
+	public ServerConfigurationsCsvParser(MessageSource messageSource, Locale locale) {
 		super();
-		this.userId = requireNonNullArgument(userId, "userId");
-		this.serverId = requireNonNullArgument(serverId, "serverId");
-		this.date = requireNonNullArgument(date, "date");
 		this.messageSource = requireNonNullArgument(messageSource, "messageSource");
 		this.locale = requireNonNullArgument(locale, "locale");
 	}
@@ -120,7 +106,7 @@ public class ServerConfigurationsCsvParser {
 	 * @throws IllegalArgumentException
 	 *         if invalid data is parsed
 	 */
-	public ServerConfigurations parse(ICsvListReader csv) throws IOException {
+	public ServerConfigurationsInput parse(ICsvListReader csv) throws IOException {
 		if ( csv == null ) {
 			return null;
 		}
@@ -144,16 +130,14 @@ public class ServerConfigurationsCsvParser {
 			final BigDecimal offset = parseBigDecimalValue(row, rowLen, rowNum, OFFSET, false);
 			final Integer scale = parseIntegerValue(row, rowLen, rowNum, DECIMAL_SCALE, false);
 
-			BaseServerDatumStreamConfiguration<?, ?> config = null;
+			BaseServerDatumStreamConfigurationInput<?, ?> config = null;
 			if ( type instanceof MeasurementType t ) {
-				ServerMeasurementConfiguration c = new ServerMeasurementConfiguration(userId, serverId,
-						measurements.size(), date);
+				ServerMeasurementConfigurationInput c = new ServerMeasurementConfigurationInput();
 				c.setType(t);
 				config = c;
 				measurements.add(c);
 			} else if ( type instanceof ControlType t ) {
-				ServerControlConfiguration c = new ServerControlConfiguration(userId, serverId,
-						controls.size(), date);
+				ServerControlConfigurationInput c = new ServerControlConfigurationInput();
 				c.setType(t);
 				config = c;
 				controls.add(c);
@@ -168,13 +152,8 @@ public class ServerConfigurationsCsvParser {
 			config.setMultiplier(mult);
 			config.setOffset(offset);
 			config.setScale(scale);
-			if ( !config.isValid() ) {
-				throw new IllegalArgumentException(
-						messageSource.getMessage("dnp3.config.import.csv.error.invalidConfiguration",
-								new Object[] { rowNum }, "Invalid configuration on row {0}.", locale));
-			}
 		}
-		return new ServerConfigurations(measurements, controls);
+		return new ServerConfigurationsInput(measurements, controls);
 	}
 
 	private String colName(ServerConfigurationsCsvColumn col) {

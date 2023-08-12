@@ -30,15 +30,15 @@ import net.solarnetwork.central.domain.CompositeKey;
 /**
  * Base DTO for OSCP configuration.
  * 
- * @param <T>
+ * @param <C>
  *        the configuration type
  * @param <K>
  *        the key type
  * @author matt
  * @version 1.0
  */
-public abstract class BaseDnp3ConfigurationInput<T extends BaseUserModifiableEntity<T, K>, K extends CompositeKey & Comparable<K> & Serializable>
-		implements Dnp3ConfigurationInput<T, K> {
+public abstract class BaseDnp3ConfigurationInput<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
+		implements Dnp3ConfigurationInput<C, K> {
 
 	private boolean enabled;
 
@@ -48,7 +48,7 @@ public abstract class BaseDnp3ConfigurationInput<T extends BaseUserModifiableEnt
 	 * @param conf
 	 *        the configuration to populate
 	 */
-	protected void populateConfiguration(T conf) {
+	protected void populateConfiguration(C conf) {
 		requireNonNullArgument(conf, "conf");
 
 		// if the most-specific key component is not assigned, set the modified date to the creation date

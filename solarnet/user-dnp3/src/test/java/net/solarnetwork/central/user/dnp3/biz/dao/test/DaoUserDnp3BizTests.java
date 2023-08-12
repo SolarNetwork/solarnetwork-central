@@ -213,11 +213,23 @@ public class DaoUserDnp3BizTests {
 		// THEN
 		then(result).as("Result returned").isNotNull();
 		verify(serverMeasurementDao, times(2)).save(measurementConfigurationsCaptor.capture());
+
 		then(result.measurementConfigs()).as("Measurement configurations persited and returned")
 				.hasSameElementsAs(measurementConfigurationsCaptor.getAllValues());
+
+		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getUserId)
+				.as("All entities have user ID from argument").allMatch(userId::equals);
+		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getServerId)
+				.as("All entities have server ID from argument").allMatch(serverId::equals);
+
 		verify(serverControlDao, times(2)).save(controlConfigurationsCaptor.capture());
 		then(result.controlConfigs()).as("Control configurations persited and returned")
 				.hasSameElementsAs(controlConfigurationsCaptor.getAllValues());
+
+		then(result.controlConfigs()).extracting(ServerControlConfiguration::getUserId)
+				.as("All entities have user ID from argument").allMatch(userId::equals);
+		then(result.controlConfigs()).extracting(ServerControlConfiguration::getServerId)
+				.as("All entities have server ID from argument").allMatch(serverId::equals);
 	}
 
 	@Test

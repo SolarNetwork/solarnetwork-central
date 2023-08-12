@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.InputStreamSource;
@@ -68,6 +70,7 @@ import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 import net.solarnetwork.central.user.dnp3.domain.ServerAuthConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationsInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
@@ -89,6 +92,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	private final ServerControlConfigurationDao serverControlDao;
 
 	private final MessageSource csvImportMessageSource;
+	private Validator validator;
 
 	/**
 	 * Constructor.
@@ -304,35 +308,50 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	public ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId,
 			InputStreamSource csv, Locale locale) throws IOException {
 		final Instant date = Instant.now();
-		ServerConfigurations result = null;
+		ServerConfigurationsInput result = null;
 		try (ICsvListReader in = new CsvListReader(new InputStreamReader(csv.getInputStream(), UTF_8),
 				CsvPreference.STANDARD_PREFERENCE)) {
-			result = new ServerConfigurationsCsvParser(userId, serverId, date, csvImportMessageSource,
+			result = new ServerConfigurationsCsvParser(csvImportMessageSource,
 					locale != null ? locale : Locale.getDefault()).parse(in);
 		}
 
+		if ( validator != null ) {
+			var violations = validator.validate(result);
+			if ( violations != null && !violations.isEmpty() ) {
+				throw new ConstraintViolationException("Invalid CSV input detected.", violations);
+			}
+		}
+
+		List<ServerMeasurementConfiguration> mConfs = null;
 		int mCount = 0;
-		if ( result.measurementConfigs() != null ) {
-			for ( var conf : result.measurementConfigs() ) {
-				serverMeasurementDao.save(conf);
-				mCount++;
+		if ( result.getMeasurementConfigs() != null ) {
+			mConfs = new ArrayList<>(result.getMeasurementConfigs().size());
+			for ( var conf : result.getMeasurementConfigs() ) {
+				var c = conf.toEntity(new UserLongIntegerCompositePK(userId, serverId, mCount++), date);
+				c.setModified(date);
+				serverMeasurementDao.save(c);
+				mConfs.add(c);
 			}
 		}
 		// delete any indexes higher than the ones just saved
 		serverMeasurementDao
 				.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, mCount));
 
+		List<ServerControlConfiguration> cConfs = null;
 		int cCount = 0;
-		if ( result.controlConfigs() != null ) {
-			for ( var conf : result.controlConfigs() ) {
-				serverControlDao.save(conf);
-				cCount++;
+		if ( result.getControlConfigs() != null ) {
+			cConfs = new ArrayList<>(result.getControlConfigs().size());
+			for ( var conf : result.getControlConfigs() ) {
+				var c = conf.toEntity(new UserLongIntegerCompositePK(userId, serverId, cCount++), date);
+				c.setModified(date);
+				serverControlDao.save(c);
+				cConfs.add(c);
 			}
 		}
 		// delete any indexes higher than the ones just saved
 		serverControlDao.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, cCount));
 
-		return result;
+		return new ServerConfigurations(mConfs, cConfs);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -347,7 +366,25 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 					locale != null ? locale : Locale.getDefault())
 							.generateCsv(new ServerConfigurations(measurements, controls));
 		}
+	}
 
+	/**
+	 * Get the validator.
+	 * 
+	 * @return the validator
+	 */
+	public Validator getValidator() {
+		return validator;
+	}
+
+	/**
+	 * Set the validator.
+	 * 
+	 * @param validator
+	 *        the validator to set
+	 */
+	public void setValidator(Validator validator) {
+		this.validator = validator;
 	}
 
 }

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.user.dnp3.domain;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -45,8 +45,8 @@ public class ServerConfigurationInput
 	private String name;
 
 	@Override
-	public ServerConfiguration toEntity(UserLongCompositePK id) {
-		ServerConfiguration conf = new ServerConfiguration(requireNonNullArgument(id, "id"), now());
+	public ServerConfiguration toEntity(UserLongCompositePK id, Instant date) {
+		ServerConfiguration conf = new ServerConfiguration(requireNonNullArgument(id, "id"), date);
 		populateConfiguration(conf);
 		return conf;
 	}

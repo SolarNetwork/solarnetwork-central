@@ -30,9 +30,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Locale;
-import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,9 +42,9 @@ import org.supercsv.io.CsvListReader;
 import org.supercsv.io.ICsvListReader;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
-import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
-import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
-import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
+import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationsInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
 
 /**
@@ -76,99 +74,79 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void importExample() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
-		ServerConfigurations result = null;
+		ServerConfigurationsInput result = null;
 		try (ICsvListReader in = csvResource("server-confs-example-01.csv")) {
-			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
-					.parse(in);
+			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
 		}
 
 		// THEN
 		then(result).as("Result provided").isNotNull();
 
 		// @formatter:off
-		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::getCreated)
-			.as("Measurement creation date set to provided value")
-			.allMatch(now::equals);
-
-		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::getServerId)
-			.as("Measurement server ID set to provided value")
-			.allMatch(serverId::equals);
-
-		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::isEnabled)
+		then(result.getMeasurementConfigs()).map(ServerMeasurementConfigurationInput::isEnabled)
 			.as("Measurement enabled set to TRUE")
 			.allMatch(Boolean.TRUE::equals);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getNodeId)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getNodeId)
 			.as("Parsed measurement node ID values")
 			.containsExactly(123L, 123L);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getSourceId)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getSourceId)
 			.as("Parsed measurement source ID values")
 			.containsExactly("power/1", "power/2");
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getProperty)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getProperty)
 			.as("Parsed measurement property values")
 			.containsExactly("watts", "frequency");
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getType)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getType)
 			.as("Parsed measurement type values")
 			.containsExactly(MeasurementType.AnalogInput, MeasurementType.AnalogInput);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getMultiplier)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getMultiplier)
 			.as("Parsed measurement multiplier values")
 			.containsExactly(new BigDecimal("0.001"), null);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getOffset)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getOffset)
 			.as("Parsed measurement offset values")
 			.containsExactly(null, null);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getScale)
+		then(result.getMeasurementConfigs()).extracting(ServerMeasurementConfigurationInput::getScale)
 			.as("Parsed measurement scale values")
 			.containsExactly(3, 1);
 	
 		
-		then(result.controlConfigs()).map(ServerControlConfiguration::getCreated)
-			.as("Control creation date set to provided value")
-			.allMatch(now::equals);
-	
-		then(result.controlConfigs()).map(ServerControlConfiguration::getServerId)
-			.as("Control server ID set to provided value")
-			.allMatch(serverId::equals);
-		
-		then(result.controlConfigs()).map(ServerControlConfiguration::isEnabled)
+		then(result.getControlConfigs()).map(ServerControlConfigurationInput::isEnabled)
 			.as("Control enabled set to TRUE")
 			.allMatch(Boolean.TRUE::equals);
 
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getNodeId)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getNodeId)
 			.as("Parsed control node ID values")
 			.containsExactly(234L, 345L);
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getControlId)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getSourceId)
 			.as("Parsed control control ID values")
 			.containsExactly("switch/1", "setpoint/1");
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getProperty)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getProperty)
 			.as("Parsed control property values")
 			.containsExactly(null, null);
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getType)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getType)
 			.as("Parsed control type values")
 			.containsExactly(ControlType.Binary, ControlType.Analog);
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getMultiplier)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getMultiplier)
 			.as("Parsed control multiplier values")
 			.containsExactly(null, new BigDecimal("0.1"));
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getOffset)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getOffset)
 			.as("Parsed control offset values")
 			.containsExactly(null, new BigDecimal("100"));
 	
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getScale)
+		then(result.getControlConfigs()).extracting(ServerControlConfigurationInput::getScale)
 			.as("Parsed control scale values")
 			.containsExactly(null, 1);
 	
@@ -217,17 +195,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void missingNodeId() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from missing node ID")
@@ -240,17 +215,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void invalidNodeId() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					blah,power/1,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from invalid node ID")
@@ -263,17 +235,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void missingSourceId() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from missing source ID")
@@ -286,17 +255,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void whiespaceSourceId() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123, ,watts,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from whitespace source ID")
@@ -309,17 +275,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void missingProperty() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from missing property")
@@ -332,17 +295,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void whitespaceProperty() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1, ,AnalogInput,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from whitespace property")
@@ -355,30 +315,26 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void missingProperty_allowedForControl() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
-		ServerConfigurations result = null;
+		ServerConfigurationsInput result = null;
 		try (ICsvListReader in = csvData("""
 				123,switch/1,,ControlBinary
 				""")) {
-			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
-					.parse(in);
+			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
 		}
 		// @formatter:off
-		then(result.controlConfigs()).hasSize(1).element(0)
+		then(result.getControlConfigs()).hasSize(1).element(0)
 			.as("Node ID parsed")
-			.returns(123L, ServerControlConfiguration::getNodeId)
+			.returns(123L, ServerControlConfigurationInput::getNodeId)
 			.as("Control ID parsed")
-			.returns("switch/1", ServerControlConfiguration::getControlId)
+			.returns("switch/1", ServerControlConfigurationInput::getSourceId)
 			.as("Property is null")
-			.returns(null, ServerControlConfiguration::getProperty)
+			.returns(null, ServerControlConfigurationInput::getProperty)
 			.as("Type parsed")
-			.returns(ControlType.Binary, ServerControlConfiguration::getType)
+			.returns(ControlType.Binary, ServerControlConfigurationInput::getType)
 			.as("Enabled implied")
-			.returns(false, ServerControlConfiguration::isEnabled)
+			.returns(false, ServerControlConfigurationInput::isEnabled)
 			;
 		// @formatter:on
 	}
@@ -386,17 +342,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void missingType() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,watts,,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser( messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from missing type")
@@ -409,17 +362,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void invalidType() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,watts,FooBar,TRUE,0.1,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser( messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from invalid type")
@@ -432,30 +382,26 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void wonkyEnabled() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
-		ServerConfigurations result = null;
+		ServerConfigurationsInput result = null;
 		try (ICsvListReader in = csvData("""
 				123,switch/1,,ControlBinary,NO WAY NO HOW
 				""")) {
-			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
-					.parse(in);
+			result = new ServerConfigurationsCsvParser(messageSource, locale).parse(in);
 		}
 		// @formatter:off
-		then(result.controlConfigs()).hasSize(1).element(0)
+		then(result.getControlConfigs()).hasSize(1).element(0)
 			.as("Node ID parsed")
-			.returns(123L, ServerControlConfiguration::getNodeId)
+			.returns(123L, ServerControlConfigurationInput::getNodeId)
 			.as("Control ID parsed")
-			.returns("switch/1", ServerControlConfiguration::getControlId)
+			.returns("switch/1", ServerControlConfigurationInput::getSourceId)
 			.as("Property is null")
-			.returns(null, ServerControlConfiguration::getProperty)
+			.returns(null, ServerControlConfigurationInput::getProperty)
 			.as("Type parsed")
-			.returns(ControlType.Binary, ServerControlConfiguration::getType)
+			.returns(ControlType.Binary, ServerControlConfigurationInput::getType)
 			.as("Wonky enabled parsed to fales")
-			.returns(false, ServerControlConfiguration::isEnabled)
+			.returns(false, ServerControlConfigurationInput::isEnabled)
 			;
 		// @formatter:on
 	}
@@ -463,17 +409,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void invalidMultiplier() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,a,100,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from invalid multiplier")
@@ -486,17 +429,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void invalidOffset() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,1,a,1
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser( messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from invalid offset")
@@ -509,17 +449,14 @@ public class ServerConfigurationsCsvParserTests {
 	@Test
 	public void invalidScale() throws IOException {
 		// GIVEN
-		final Long userId = UUID.randomUUID().getMostSignificantBits();
-		final Long serverId = UUID.randomUUID().getMostSignificantBits();
 
 		// WHEN
-		final Instant now = Instant.now();
 		// @formatter:off
 		thenThrownBy(() -> {
 			try (ICsvListReader in = csvData("""
 					123,power/1,watts,AnalogInput,TRUE,1,1,a
 					""")) {
-				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+				new ServerConfigurationsCsvParser(messageSource, locale)
 						.parse(in);
 			}
 		}).as("Validation exception thrown from invalid scale")

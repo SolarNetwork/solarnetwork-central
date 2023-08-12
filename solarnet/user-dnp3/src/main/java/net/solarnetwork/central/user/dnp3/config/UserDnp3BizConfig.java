@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.dnp3.config;
 
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
+import javax.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,10 +60,14 @@ public class UserDnp3BizConfig {
 	@Autowired
 	private ServerControlConfigurationDao serverControlDao;
 
+	@Autowired
+	private Validator validator;
+
 	@Bean
 	public DaoUserDnp3Biz userDnp3Biz() {
 		var biz = new DaoUserDnp3Biz(trustedCertDao, serverDao, serverAuthDao, serverMeasurementDao,
 				serverControlDao);
+		biz.setValidator(validator);
 		return biz;
 	}
 

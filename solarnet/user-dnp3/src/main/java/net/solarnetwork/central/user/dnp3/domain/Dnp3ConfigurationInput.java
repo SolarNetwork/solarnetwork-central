@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dnp3.domain;
 
+import java.time.Instant;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 
 /**
@@ -37,8 +38,25 @@ public interface Dnp3ConfigurationInput<T extends UserRelatedEntity<K>, K> {
 	 * 
 	 * @param id
 	 *        the primary key to use
+	 * @param date
+	 *        the creation date to use
 	 * @return the new entity
 	 */
-	T toEntity(K id);
+	T toEntity(K id, Instant date);
+
+	/**
+	 * Create an entity from the input properties and a given primary key.
+	 * 
+	 * <p>
+	 * The current date will be used.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the primary key to use
+	 * @return the new entity
+	 */
+	default T toEntity(K id) {
+		return toEntity(id, Instant.now());
+	}
 
 }
