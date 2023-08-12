@@ -24,13 +24,18 @@ package net.solarnetwork.central.user.dnp3.support.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.supercsv.prefs.CsvPreference.STANDARD_PREFERENCE;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
@@ -63,7 +68,7 @@ public class ServerConfigurationsCsvParserTests {
 		locale = Locale.getDefault();
 	}
 
-	private CsvListReader csvReader(String resouce) {
+	private CsvListReader csvResource(String resouce) {
 		return new CsvListReader(
 				new InputStreamReader(getClass().getResourceAsStream("server-confs-example-01.csv"),
 						UTF_8),
@@ -79,7 +84,7 @@ public class ServerConfigurationsCsvParserTests {
 		// WHEN
 		final Instant now = Instant.now();
 		ServerConfigurations result = null;
-		try (ICsvListReader in = csvReader("server-confs-example-01.csv")) {
+		try (ICsvListReader in = csvResource("server-confs-example-01.csv")) {
 			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
 					.parse(in);
 		}
@@ -88,6 +93,14 @@ public class ServerConfigurationsCsvParserTests {
 		then(result).as("Result provided").isNotNull();
 
 		// @formatter:off
+		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::getCreated)
+			.as("Measurement creation date set to provided value")
+			.allMatch(now::equals);
+
+		then(result.measurementConfigs()).map(ServerMeasurementConfiguration::getServerId)
+			.as("Measurement server ID set to provided value")
+			.allMatch(serverId::equals);
+
 		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getNodeId)
 			.as("Parsed measurement node ID values")
 			.containsExactly(123L, 123L);
@@ -116,6 +129,15 @@ public class ServerConfigurationsCsvParserTests {
 			.as("Parsed measurement scale values")
 			.containsExactly(3, 1);
 	
+		
+		then(result.controlConfigs()).map(ServerControlConfiguration::getCreated)
+			.as("Control creation date set to provided value")
+			.allMatch(now::equals);
+	
+		then(result.controlConfigs()).map(ServerControlConfiguration::getServerId)
+			.as("Control server ID set to provided value")
+			.allMatch(serverId::equals);
+		
 		then(result.controlConfigs()).extracting(ServerControlConfiguration::getNodeId)
 			.as("Parsed control node ID values")
 			.containsExactly(234L, 345L);
@@ -144,6 +166,327 @@ public class ServerConfigurationsCsvParserTests {
 			.as("Parsed control scale values")
 			.containsExactly(null, 1);
 	
+		// @formatter:on
+	}
+
+	private static String csv(String body) {
+		return """
+				Node ID,Source ID,Property, DNP3 Type,Multiplier,Offset,Decimal Scale
+				""".concat(body);
+	}
+
+	private CsvListReader csvData(String data) {
+		return new CsvListReader(new StringReader(csv(data)), STANDARD_PREFERENCE);
+	}
+
+	private final Pattern ROW_COL_REGEX = Pattern.compile("row (\\d+) column (\\d+)");
+
+	private Predicate<Throwable> rowColumnMessage(int row, int col) {
+		return (t) -> {
+			if ( t == null ) {
+				return false;
+			}
+			final String s = t.getMessage();
+			if ( s == null ) {
+				return false;
+			}
+			final Matcher m = ROW_COL_REGEX.matcher(s);
+			if ( !m.find() ) {
+				return false;
+			}
+			try {
+				int r = Integer.parseInt(m.group(1));
+				if ( r != row ) {
+					return false;
+				}
+				int c = Integer.parseInt(m.group(2));
+				return (c == col);
+			} catch ( NumberFormatException e ) {
+				// shouldn't be here
+				return false;
+			}
+		};
+	}
+
+	@Test
+	public void missingNodeId() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					,power/1,watts,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from missing node ID")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 1));
+		// @formatter:on
+	}
+
+	@Test
+	public void invalidNodeId() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					blah,power/1,watts,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from invalid node ID")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 1));
+		// @formatter:on
+	}
+
+	@Test
+	public void missingSourceId() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,,watts,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from missing source ID")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 2));
+		// @formatter:on
+	}
+
+	@Test
+	public void whiespaceSourceId() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123, ,watts,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from whitespace source ID")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 2));
+		// @formatter:on
+	}
+
+	@Test
+	public void missingProperty() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from missing property")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 3));
+		// @formatter:on
+	}
+
+	@Test
+	public void whitespaceProperty() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1, ,AnalogInput,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from whitespace property")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 3));
+		// @formatter:on
+	}
+
+	@Test
+	public void missingProperty_allowedForControl() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		ServerConfigurations result = null;
+		try (ICsvListReader in = csvData("""
+				123,switch/1,,ControlBinary
+				""")) {
+			result = new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+					.parse(in);
+		}
+		// @formatter:off
+		then(result.controlConfigs()).hasSize(1).element(0)
+			.as("Node ID parsed")
+			.returns(123L, ServerControlConfiguration::getNodeId)
+			.as("Control ID parsed")
+			.returns("switch/1", ServerControlConfiguration::getControlId)
+			.as("Property is null")
+			.returns(null, ServerControlConfiguration::getProperty)
+			.as("Type parsed")
+			.returns(ControlType.Binary, ServerControlConfiguration::getType)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void missingType() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,watts,,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from missing type")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 4));
+		// @formatter:on
+	}
+
+	@Test
+	public void invalidType() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,watts,FooBar,0.1,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from invalid type")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 4));
+		// @formatter:on
+	}
+
+	@Test
+	public void invalidMultiplier() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,watts,AnalogInput,a,100,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from invalid multiplier")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 5));
+		// @formatter:on
+	}
+
+	@Test
+	public void invalidOffset() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,watts,AnalogInput,1,a,1
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from invalid offset")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 6));
+		// @formatter:on
+	}
+
+	@Test
+	public void invalidScale() throws IOException {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getMostSignificantBits();
+		final Long serverId = UUID.randomUUID().getMostSignificantBits();
+
+		// WHEN
+		final Instant now = Instant.now();
+		// @formatter:off
+		thenThrownBy(() -> {
+			try (ICsvListReader in = csvData("""
+					123,power/1,watts,AnalogInput,1,1,a
+					""")) {
+				new ServerConfigurationsCsvParser(userId, serverId, now, messageSource, locale)
+						.parse(in);
+			}
+		}).as("Validation exception thrown from invalid scale")
+				.isInstanceOf(IllegalArgumentException.class)
+				.as("Exception message referes to row/column")
+				.matches(rowColumnMessage(2, 7));
 		// @formatter:on
 	}
 

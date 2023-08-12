@@ -124,7 +124,8 @@ public class ServerConfigurationsCsvParser {
 		csv.getHeader(true); // skip header
 		List<String> row = null;
 		while ( (row = csv.read()) != null ) {
-			if ( row.isEmpty() || row.size() < 4 || row.get(0).startsWith("#") ) {
+			if ( row.isEmpty() || row.size() < 4
+					|| (row.get(0) != null && row.get(0).startsWith("#")) ) {
 				continue;
 			}
 			final int rowLen = row.size();
