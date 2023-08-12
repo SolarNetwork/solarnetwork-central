@@ -1,0 +1,7 @@
+Node ID,Source ID,Property, DNP3 Type,Multiplier,Offset,Decimal Scale
+"# Rows whose first cell starts with ""#"" are ignored.",,,,,,
+"# The next row defines an ASCII string ""error"" message property, that spans 16 Modbus registers for a maximum of 32 characters.",,,,,,
+123,power/1,watts,AnalogInput,0.001,,3
+123,power/2,frequency,AnalogInput,,,1
+234,switch/1,,ControlBinary,,,
+345,setpoint/1,,ControlAnalog,0.1,100,1

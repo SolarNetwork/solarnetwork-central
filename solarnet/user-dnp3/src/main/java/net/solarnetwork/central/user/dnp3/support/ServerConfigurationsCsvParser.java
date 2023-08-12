@@ -26,6 +26,7 @@ import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsv
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.MULTIPLIER;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.NODE_ID;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.OFFSET;
+import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.PROPERTY;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.SOURCE_ID;
 import static net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvColumn.TYPE;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -132,7 +133,7 @@ public class ServerConfigurationsCsvParser {
 			final Long nodeId = parseLongValue(row, rowLen, rowNum, NODE_ID, true);
 			final String sourceId = parseStringValue(row, rowLen, rowNum, SOURCE_ID, true);
 			final CodedValue type = parseTypeValue(row, rowLen, rowNum);
-			final String property = parseStringValue(row, rowLen, rowNum, SOURCE_ID,
+			final String property = parseStringValue(row, rowLen, rowNum, PROPERTY,
 					type instanceof MeasurementType);
 			final BigDecimal mult = parseBigDecimalValue(row, rowLen, rowNum, MULTIPLIER, false);
 			final BigDecimal offset = parseBigDecimalValue(row, rowLen, rowNum, OFFSET, false);
@@ -247,6 +248,8 @@ public class ServerConfigurationsCsvParser {
 		return null;
 	}
 
+	private static final String CONTROL_PREFIX = "control";
+
 	private CodedValue parseTypeValue(List<String> row, int rowLen, int rowNum) {
 		String s = parseStringValue(row, rowLen, rowNum, TYPE, true);
 		try {
@@ -259,6 +262,14 @@ public class ServerConfigurationsCsvParser {
 		} catch ( IllegalArgumentException e ) {
 			// keep trying
 		}
+		// try without "Control" prefix
+		if ( s.toLowerCase().startsWith(CONTROL_PREFIX) ) {
+			try {
+				return ControlType.valueOf(s.substring(CONTROL_PREFIX.length()));
+			} catch ( IllegalArgumentException e ) {
+				// keep trying
+			}
+		}
 		CodedValue result = null;
 		if ( s.length() < 2 ) {
 			result = CodedValue.forCodeValue(s.charAt(0), MeasurementType.class, null);
@@ -267,7 +278,7 @@ public class ServerConfigurationsCsvParser {
 		}
 		if ( result == null ) {
 			throw new IllegalArgumentException(
-					messageSource.getMessage("dnp3.config.import.error.invalidType",
+					messageSource.getMessage("dnp3.config.import.csv.error.invalidType",
 							new Object[] { colName(TYPE), s, rowNum, TYPE.getCode() + 1 },
 							"Invalid {0} value [{1}] on row {2} column {3}.", locale));
 		}
