@@ -35,15 +35,20 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MimeType;
 import org.supercsv.io.CsvListReader;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListReader;
@@ -75,6 +80,7 @@ import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvParser;
 import net.solarnetwork.central.user.dnp3.support.ServerConfigurationsCsvWriter;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -90,6 +96,8 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	private final ServerAuthConfigurationDao serverAuthDao;
 	private final ServerMeasurementConfigurationDao serverMeasurementDao;
 	private final ServerControlConfigurationDao serverControlDao;
+	private final ResourceLoader resourceLoader;
+	private Map<String, String> csvImportExampleResources;
 
 	private final MessageSource csvImportMessageSource;
 	private Validator validator;
@@ -107,23 +115,33 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 *        the server measurement DAO to use
 	 * @param serverControlDao
 	 *        the server control DAO to use
+	 * @param resourceLoader
+	 *        the resource loader to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoUserDnp3Biz(TrustedIssuerCertificateDao trustedCertDao, ServerConfigurationDao serverDao,
 			ServerAuthConfigurationDao serverAuthDao,
 			ServerMeasurementConfigurationDao serverMeasurementDao,
-			ServerControlConfigurationDao serverControlDao) {
+			ServerControlConfigurationDao serverControlDao, ResourceLoader resourceLoader) {
 		super();
 		this.trustedCertDao = requireNonNullArgument(trustedCertDao, "trustedCertDao");
 		this.serverDao = requireNonNullArgument(serverDao, "serverDao");
 		this.serverAuthDao = requireNonNullArgument(serverAuthDao, "serverAuthDao");
 		this.serverMeasurementDao = requireNonNullArgument(serverMeasurementDao, "serverMeasurementDao");
 		this.serverControlDao = requireNonNullArgument(serverControlDao, "serverControlDao");
+		this.resourceLoader = requireNonNullArgument(resourceLoader, "resourceLoader");
 
 		ResourceBundleMessageSource ms = new ResourceBundleMessageSource();
 		ms.setBasename(ServerConfigurationsCsvParser.class.getName());
 		this.csvImportMessageSource = ms;
+
+		Map<String, String> importExampleMapping = new HashMap<>(2);
+		importExampleMapping.put(WebUtils.TEXT_CSV_MEDIA_TYPE_VALUE,
+				"classpath:net/solarnetwork/central/user/dnp3/support/SolarDNP3 Configuration Example.csv");
+		importExampleMapping.put(WebUtils.XLSX_MEDIA_TYPE_VALUE,
+				"classpath:net/solarnetwork/central/user/dnp3/support/SolarDNP3 Configuration Example.xlsx");
+		this.csvImportExampleResources = importExampleMapping;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -303,6 +321,22 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		serverControlDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
+	@Override
+	public Resource serverConfigurationCsvExample(MimeType mimeType) {
+		String path = csvImportExampleResources
+				.get(requireNonNullArgument(mimeType, "mimeType").toString());
+		if ( path == null ) {
+			throw new IllegalArgumentException("MIME type [" + mimeType + "] is not supported.");
+		}
+		Resource result = resourceLoader.getResource(path);
+		if ( !result.exists() ) {
+			throw new RuntimeException(
+					"Server configuration CSV example resource [%s] for MIME type [%s] not found."
+							.formatted(path, mimeType));
+		}
+		return result;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId,
@@ -385,6 +419,35 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	 */
 	public void setValidator(Validator validator) {
 		this.validator = validator;
+	}
+
+	/**
+	 * Get the CSV import example resource mapping of MIME types to resource
+	 * paths.
+	 * 
+	 * @return the resources
+	 */
+	public Map<String, String> getCsvImportExampleResources() {
+		return csvImportExampleResources;
+	}
+
+	/**
+	 * Set the CSV import example resource mapping of MIME types to resource
+	 * paths.
+	 * 
+	 * <p>
+	 * The values are assumed to be file system paths, unless prefixed with
+	 * {@code classpath:} in which case it is treated as a classpath resource.
+	 * </p>
+	 * 
+	 * @param csvImportExampleResources
+	 *        the resource mapping to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public void setCsvImportExampleResources(Map<String, String> csvImportExampleResources) {
+		this.csvImportExampleResources = requireNonNullArgument(csvImportExampleResources,
+				"csvImportExampleResources");
 	}
 
 }

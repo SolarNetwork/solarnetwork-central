@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
@@ -41,16 +42,21 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -75,6 +81,7 @@ import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
@@ -553,6 +560,40 @@ public class UserDnp3Controller {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz().updateServerControlEnabledStatus(userId, criteria, enabled);
 		return success();
+	}
+
+	/**
+	 * Download an example resource to use with the
+	 * {@link #importServerConfigurationCsv(Long, MultipartFile, Locale)} API.
+	 * 
+	 * @param accept
+	 *        the desired type: can be CSV or XLSX
+	 * @return the result
+	 */
+	@RequestMapping(value = "/servers/csv-example", method = RequestMethod.GET, produces = {
+			WebUtils.TEXT_CSV_MEDIA_TYPE_VALUE, WebUtils.XLSX_MEDIA_TYPE_VALUE })
+	public ResponseEntity<Resource> getServerConfigurationCsvExample(
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept) {
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		MimeType mime = null;
+		for ( MediaType acceptType : acceptTypes ) {
+			if ( WebUtils.TEXT_CSV_MEDIA_TYPE.isCompatibleWith(acceptType) ) {
+				mime = MimeType.valueOf(WebUtils.TEXT_CSV_MEDIA_TYPE_VALUE);
+				break;
+			} else if ( WebUtils.XLSX_MEDIA_TYPE.isCompatibleWith(acceptType) ) {
+				mime = MimeType.valueOf(WebUtils.XLSX_MEDIA_TYPE_VALUE);
+				break;
+			}
+		}
+		if ( mime == null ) {
+			return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+		}
+		Resource result = userDnp3Biz().serverConfigurationCsvExample(mime);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.asMediaType(mime));
+		headers.set(HttpHeaders.CONTENT_DISPOSITION,
+				format("attachment; filename=\"%s\"", result.getFilename()));
+		return new ResponseEntity<>(result, headers, HttpStatus.OK);
 	}
 
 	/**

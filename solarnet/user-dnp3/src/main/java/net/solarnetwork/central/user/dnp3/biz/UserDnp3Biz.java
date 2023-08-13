@@ -28,6 +28,8 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Locale;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.domain.ControlType;
@@ -339,6 +341,26 @@ public interface UserDnp3Biz {
 	 */
 	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
 			Long userId, ServerFilter filter);
+
+	/**
+	 * Get an example server configuration CSV.
+	 * 
+	 * <p>
+	 * The supported {@code mimeType} values include:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>text/csv</li>
+	 * <li>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</li>
+	 * </ul>
+	 * 
+	 * @param mimeType
+	 *        the desired example mime type
+	 * @return the resource
+	 * @throws IllegalArgumentException
+	 *         if {@code mimeType} is not supported
+	 */
+	Resource serverConfigurationCsvExample(MimeType mimeType);
 
 	/**
 	 * Import a CSV resource of server measurement and control configurations.

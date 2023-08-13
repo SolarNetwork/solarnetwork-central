@@ -23,11 +23,16 @@
 package net.solarnetwork.central.user.dnp3.config;
 
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ResourceLoader;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
@@ -61,13 +66,27 @@ public class UserDnp3BizConfig {
 	private ServerControlConfigurationDao serverControlDao;
 
 	@Autowired
+	private ResourceLoader resourceLoader;
+
+	@Autowired
 	private Validator validator;
 
+	@ConfigurationProperties("app.dnp3.server-import-csv-example-resources")
 	@Bean
-	public DaoUserDnp3Biz userDnp3Biz() {
+	@Qualifier("server-import-csv-example-resources")
+	public Map<String, String> testTrustSettings() {
+		return new LinkedHashMap<>();
+	}
+
+	@Bean
+	public DaoUserDnp3Biz userDnp3Biz(
+			@Qualifier("server-import-csv-example-resources") Map<String, String> exampleResoruces) {
 		var biz = new DaoUserDnp3Biz(trustedCertDao, serverDao, serverAuthDao, serverMeasurementDao,
-				serverControlDao);
+				serverControlDao, resourceLoader);
 		biz.setValidator(validator);
+		if ( exampleResoruces != null && !exampleResoruces.isEmpty() ) {
+			biz.setCsvImportExampleResources(exampleResoruces);
+		}
 		return biz;
 	}
 

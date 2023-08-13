@@ -44,16 +44,43 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
  * Helper utilities for web APIs.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class WebUtils {
 
+	/**
+	 * The {@literal text/csv} media type value.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String TEXT_CSV_MEDIA_TYPE_VALUE = "text/csv";
+
 	/** The {@literal text/csv} media type. */
-	public static final MediaType TEXT_CSV_MEDIA_TYPE = MediaType.parseMediaType("text/csv");
+	public static final MediaType TEXT_CSV_MEDIA_TYPE = MediaType
+			.parseMediaType(TEXT_CSV_MEDIA_TYPE_VALUE);
+
+	/**
+	 * The {@literal text/csv} media type with a UTF-8 character set value.
+	 */
+	public static final String TEXT_CSV_UTF8_MEDIA_TYPE_VALUE = "text/csv; charset=UTF-8";
 
 	/** The {@literal text/csv} media type with a UTF-8 character set. */
 	public static final MediaType TEXT_CSV_UTF8_MEDIA_TYPE = MediaType
-			.parseMediaType("text/csv; charset=UTF-8");
+			.parseMediaType(TEXT_CSV_UTF8_MEDIA_TYPE_VALUE);
+
+	/**
+	 * The media type value for Microsoft XLSX.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String XLSX_MEDIA_TYPE_VALUE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+	/**
+	 * The media type for Microsoft XLSX.
+	 * 
+	 * @since 1.2
+	 */
+	public static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(XLSX_MEDIA_TYPE_VALUE);
 
 	private WebUtils() {
 		// not allowed

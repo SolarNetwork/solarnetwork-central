@@ -51,6 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
@@ -99,6 +100,9 @@ public class DaoUserDnp3BizTests {
 	@Mock
 	private ServerControlConfigurationDao serverControlDao;
 
+	@Mock
+	private ResourceLoader resourceLoader;
+
 	@Captor
 	private ArgumentCaptor<TrustedIssuerCertificate> trustedCertCaptor;
 
@@ -132,7 +136,7 @@ public class DaoUserDnp3BizTests {
 				caKey.getPrivate());
 
 		service = new DaoUserDnp3Biz(trustedCertDao, serverDao, serverAuthDao, serverMeasurementDao,
-				serverControlDao);
+				serverControlDao, resourceLoader);
 	}
 
 	private X509Certificate[] generateCertificates(String name, int start, int count) {
