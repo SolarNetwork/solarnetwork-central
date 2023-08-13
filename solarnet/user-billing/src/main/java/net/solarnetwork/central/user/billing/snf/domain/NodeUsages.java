@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Node usage constants.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface NodeUsages {
 
@@ -44,5 +44,8 @@ public interface NodeUsages {
 
 	/** A key to use for OSCP Capacity Group usage. */
 	String OSCP_CAPACITY_GROUPS_KEY = "oscp-cap-groups";
+
+	/** A key to use for DNP3 data points usage. */
+	String DNP3_DATA_POINTS_KEY = "dnp3-data-points";
 
 }
