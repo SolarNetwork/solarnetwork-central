@@ -36,8 +36,8 @@ import net.solarnetwork.dao.FilterableDao;
  */
 public interface ServerMeasurementConfigurationDao extends
 		GenericCompositeKey3Dao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, Long, Long, Integer>,
-		FilterableDao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, ServerFilter>,
-		UserModifiableEnabledStatusDao<ServerFilter> {
+		FilterableDao<ServerMeasurementConfiguration, UserLongIntegerCompositePK, ServerDataPointFilter>,
+		UserModifiableEnabledStatusDao<ServerDataPointFilter> {
 
 	/**
 	 * Delete all rows in a group with an index equal to or greater than a given

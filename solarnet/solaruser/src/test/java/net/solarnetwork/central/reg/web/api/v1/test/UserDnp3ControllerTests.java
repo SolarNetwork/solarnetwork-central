@@ -41,6 +41,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
@@ -66,6 +67,9 @@ public class UserDnp3ControllerTests {
 
 	@Captor
 	private ArgumentCaptor<ServerFilter> filterCaptor;
+
+	@Captor
+	private ArgumentCaptor<ServerDataPointFilter> dataPointFilterCaptor;
 
 	private UserDnp3Controller controller;
 
@@ -167,17 +171,17 @@ public class UserDnp3ControllerTests {
 		// @formatter:off
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
-		verify(userDnp3Biz).serverMeasurementsForUser(eq(userId), filterCaptor.capture());
+		verify(userDnp3Biz).serverMeasurementsForUser(eq(userId), dataPointFilterCaptor.capture());
 		
-		then(filterCaptor.getValue())
+		then(dataPointFilterCaptor.getValue())
 			.as("Server ID provided in criteria")
-			.returns(serverId, ServerFilter::getServerId)
+			.returns(serverId, ServerDataPointFilter::getServerId)
 			.as("No identifier criteria")
-			.returns(false, ServerFilter::hasIdentifierCriteria)
+			.returns(false, ServerDataPointFilter::hasIdentifierCriteria)
 			.as("Index provided in criteria")
-			.returns(index, ServerFilter::getIndex)
+			.returns(index, ServerDataPointFilter::getIndex)
 			.as("No enabled criteria")
-			.returns(false, ServerFilter::hasEnabledCriteria)
+			.returns(false, ServerDataPointFilter::hasEnabledCriteria)
 			;
 		// @formatter:on
 	}
@@ -201,17 +205,17 @@ public class UserDnp3ControllerTests {
 		// @formatter:off
 		then(result.getData()).as("First query result returned").isSameAs(conf);
 
-		verify(userDnp3Biz).serverControlsForUser(eq(userId), filterCaptor.capture());
+		verify(userDnp3Biz).serverControlsForUser(eq(userId), dataPointFilterCaptor.capture());
 		
-		then(filterCaptor.getValue())
+		then(dataPointFilterCaptor.getValue())
 			.as("Server ID provided in criteria")
-			.returns(serverId, ServerFilter::getServerId)
+			.returns(serverId, ServerDataPointFilter::getServerId)
 			.as("No identifier criteria")
-			.returns(false, ServerFilter::hasIdentifierCriteria)
+			.returns(false, ServerDataPointFilter::hasIdentifierCriteria)
 			.as("Index provided in criteria")
-			.returns(index, ServerFilter::getIndex)
+			.returns(index, ServerDataPointFilter::getIndex)
 			.as("No enabled criteria")
-			.returns(false, ServerFilter::hasEnabledCriteria)
+			.returns(false, ServerDataPointFilter::hasEnabledCriteria)
 			;
 		// @formatter:on
 	}

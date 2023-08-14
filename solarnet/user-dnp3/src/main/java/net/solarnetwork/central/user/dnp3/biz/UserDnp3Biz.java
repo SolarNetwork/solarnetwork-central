@@ -31,6 +31,7 @@ import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.domain.ControlType;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
@@ -258,7 +259,8 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerMeasurementEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+	void updateServerMeasurementEnabledStatus(Long userId, ServerDataPointFilter filter,
+			boolean enabled);
 
 	/**
 	 * Delete a server measurement configuration.
@@ -283,7 +285,7 @@ public interface UserDnp3Biz {
 	 * @return the matching configurations; never {@literal null}
 	 */
 	FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
-			Long userId, ServerFilter filter);
+			Long userId, ServerDataPointFilter filter);
 
 	/**
 	 * Create or update a server control configuration.
@@ -315,7 +317,7 @@ public interface UserDnp3Biz {
 	 * @param enabled
 	 *        the enabled status to set
 	 */
-	void updateServerControlEnabledStatus(Long userId, ServerFilter filter, boolean enabled);
+	void updateServerControlEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled);
 
 	/**
 	 * Delete a server control configuration.
@@ -340,7 +342,7 @@ public interface UserDnp3Biz {
 	 * @return the matching configurations; never {@literal null}
 	 */
 	FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
-			Long userId, ServerFilter filter);
+			Long userId, ServerDataPointFilter filter);
 
 	/**
 	 * Get an example server configuration CSV.
@@ -419,7 +421,7 @@ public interface UserDnp3Biz {
 	 *         if an IO error occurs
 	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource)
 	 */
-	void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out, Locale locale)
-			throws IOException;
+	void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter, OutputStream out,
+			Locale locale) throws IOException;
 
 }

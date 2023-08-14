@@ -59,6 +59,7 @@ import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
@@ -258,7 +259,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> serverMeasurementsForUser(
-			Long userId, ServerFilter filter) {
+			Long userId, ServerDataPointFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverMeasurementDao.findFiltered(userFilter);
@@ -284,7 +285,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> serverControlsForUser(
-			Long userId, ServerFilter filter) {
+			Long userId, ServerDataPointFilter filter) {
 		var userFilter = new BasicFilter(requireNonNullArgument(filter, "filter"));
 		userFilter.setUserId(requireNonNullArgument(userId, "userId"));
 		return serverControlDao.findFiltered(userFilter);
@@ -311,13 +312,15 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerMeasurementEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+	public void updateServerMeasurementEnabledStatus(Long userId, ServerDataPointFilter filter,
+			boolean enabled) {
 		serverMeasurementDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void updateServerControlEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
+	public void updateServerControlEnabledStatus(Long userId, ServerDataPointFilter filter,
+			boolean enabled) {
 		serverControlDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
@@ -390,8 +393,8 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public void exportServerConfigurationsCsv(Long userId, ServerFilter filter, OutputStream out,
-			Locale locale) throws IOException {
+	public void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter,
+			OutputStream out, Locale locale) throws IOException {
 		try (ICsvListWriter csv = new CsvListWriter(new OutputStreamWriter(out, UTF_8),
 				CsvPreference.STANDARD_PREFERENCE)) {
 			var measurements = serverMeasurementsForUser(userId, filter);

@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 
 /**
@@ -48,7 +48,7 @@ public class SelectServerMeasurementConfiguration
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final ServerFilter filter;
+	private final ServerDataPointFilter filter;
 	private final int fetchSize;
 
 	/**
@@ -57,7 +57,7 @@ public class SelectServerMeasurementConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectServerMeasurementConfiguration(ServerFilter filter) {
+	public SelectServerMeasurementConfiguration(ServerDataPointFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
 	}
 
@@ -67,7 +67,7 @@ public class SelectServerMeasurementConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectServerMeasurementConfiguration(ServerFilter filter, int fetchSize) {
+	public SelectServerMeasurementConfiguration(ServerDataPointFilter filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
@@ -108,6 +108,12 @@ public class SelectServerMeasurementConfiguration
 		if ( filter.hasIndexCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIndexes(), "dsm.idx", where);
 		}
+		if ( filter.hasNodeCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "dsm.node_id", where);
+		}
+		if ( filter.hasSourceCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getSourceIds(), "dsm.source_id", where);
+		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dsm.enabled = ?\n");
 			idx += 1;
@@ -142,6 +148,12 @@ public class SelectServerMeasurementConfiguration
 		}
 		if ( filter.hasIndexCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
+		}
+		if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
+		}
+		if ( filter.hasSourceCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			stmt.setBoolean(++p, filter.getEnabled().booleanValue());

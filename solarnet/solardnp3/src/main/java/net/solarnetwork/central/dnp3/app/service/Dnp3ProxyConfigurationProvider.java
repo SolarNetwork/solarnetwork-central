@@ -203,7 +203,11 @@ public class Dnp3ProxyConfigurationProvider implements ProxyConfigurationProvide
 			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null);
 
-			final var certs = trustedCertDao.findAll(userId, null).stream()
+			final BasicFilter filter = new BasicFilter();
+			filter.setUserId(userId);
+			filter.setEnabled(true);
+
+			final var certs = stream(trustedCertDao.findFiltered(filter).spliterator(), false)
 					.map(TrustedIssuerCertificate::getCertificate).toArray(X509Certificate[]::new);
 			for ( X509Certificate cert : certs ) {
 				String alias = sha1Hex(canonicalSubjectDn(cert));

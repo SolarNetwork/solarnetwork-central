@@ -33,7 +33,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
-import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 
 /**
@@ -48,7 +48,7 @@ public class SelectServerControlConfiguration
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final ServerFilter filter;
+	private final ServerDataPointFilter filter;
 	private final int fetchSize;
 
 	/**
@@ -57,7 +57,7 @@ public class SelectServerControlConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectServerControlConfiguration(ServerFilter filter) {
+	public SelectServerControlConfiguration(ServerDataPointFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
 	}
 
@@ -67,7 +67,7 @@ public class SelectServerControlConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectServerControlConfiguration(ServerFilter filter, int fetchSize) {
+	public SelectServerControlConfiguration(ServerDataPointFilter filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
@@ -108,6 +108,12 @@ public class SelectServerControlConfiguration
 		if ( filter.hasIndexCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIndexes(), "dsc.idx", where);
 		}
+		if ( filter.hasNodeCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getNodeIds(), "dsc.node_id", where);
+		}
+		if ( filter.hasSourceCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getSourceIds(), "dsc.source_id", where);
+		}
 		if ( filter.hasEnabledCriteria() ) {
 			where.append("\tAND dsc.enabled = ?\n");
 			idx += 1;
@@ -142,6 +148,12 @@ public class SelectServerControlConfiguration
 		}
 		if ( filter.hasIndexCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
+		}
+		if ( filter.hasNodeCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getNodeIds());
+		}
+		if ( filter.hasSourceCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
 			stmt.setBoolean(++p, filter.getEnabled().booleanValue());

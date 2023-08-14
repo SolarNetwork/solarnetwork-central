@@ -56,7 +56,7 @@ import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
-import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.TrustedIssuerCertificateDao;
 import net.solarnetwork.central.dnp3.domain.ControlType;
@@ -113,7 +113,7 @@ public class DaoUserDnp3BizTests {
 	private ArgumentCaptor<ServerControlConfiguration> controlConfigurationsCaptor;
 
 	@Captor
-	private ArgumentCaptor<ServerFilter> serverFilterCaptor;
+	private ArgumentCaptor<ServerDataPointFilter> serverDataPointFilterCaptor;
 
 	private KeyPairGenerator keyGen;
 	private BCCertificateService certService;
@@ -278,10 +278,10 @@ public class DaoUserDnp3BizTests {
 				234,bim,,ControlBinary,false,,,\r
 				""");
 
-		verify(serverMeasurementDao).findFiltered(serverFilterCaptor.capture());
-		verify(serverControlDao).findFiltered(serverFilterCaptor.capture());
+		verify(serverMeasurementDao).findFiltered(serverDataPointFilterCaptor.capture());
+		verify(serverControlDao).findFiltered(serverDataPointFilterCaptor.capture());
 		// @formatter:off
-		then(serverFilterCaptor.getAllValues())
+		then(serverDataPointFilterCaptor.getAllValues())
 			.as("DAO filters")
 			.hasSize(2)
 			.as("User ID provided in DAO filter")

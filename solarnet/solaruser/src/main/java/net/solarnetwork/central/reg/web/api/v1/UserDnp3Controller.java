@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static java.lang.String.format;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.web.domain.Response.response;
@@ -252,7 +253,8 @@ public class UserDnp3Controller {
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
 		var results = userDnp3Biz.serversForUser(userId, filter);
-		ServerConfiguration result = stream(results.spliterator(), false).findFirst().orElse(null);
+		ServerConfiguration result = requireNonNullObject(
+				stream(results.spliterator(), false).findFirst().orElse(null), serverId);
 		return success(result);
 	}
 
@@ -316,7 +318,8 @@ public class UserDnp3Controller {
 		filter.setServerId(serverId);
 		filter.setIdentifier(identifier);
 		var results = userDnp3Biz.serverAuthsForUser(userId, filter);
-		ServerAuthConfiguration result = stream(results.spliterator(), false).findFirst().orElse(null);
+		ServerAuthConfiguration result = requireNonNullObject(
+				stream(results.spliterator(), false).findFirst().orElse(null), identifier);
 		return success(result);
 	}
 
@@ -408,8 +411,8 @@ public class UserDnp3Controller {
 		filter.setServerId(serverId);
 		filter.setIndex(index);
 		var results = userDnp3Biz.serverMeasurementsForUser(userId, filter);
-		ServerMeasurementConfiguration result = stream(results.spliterator(), false).findFirst()
-				.orElse(null);
+		ServerMeasurementConfiguration result = requireNonNullObject(
+				stream(results.spliterator(), false).findFirst().orElse(null), index);
 		return success(result);
 	}
 
@@ -501,8 +504,8 @@ public class UserDnp3Controller {
 		filter.setServerId(serverId);
 		filter.setIndex(index);
 		var results = userDnp3Biz.serverControlsForUser(userId, filter);
-		ServerControlConfiguration result = stream(results.spliterator(), false).findFirst()
-				.orElse(null);
+		ServerControlConfiguration result = requireNonNullObject(
+				stream(results.spliterator(), false).findFirst().orElse(null), index);
 		return success(result);
 	}
 

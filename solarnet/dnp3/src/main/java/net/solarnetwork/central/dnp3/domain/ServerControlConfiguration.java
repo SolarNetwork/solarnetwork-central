@@ -33,9 +33,9 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "sourceId" })
+@JsonIgnoreProperties({ "id", "sourceId", "valid" })
 @JsonPropertyOrder({ "userId", "serverId", "index", "created", "modified", "enabled", "nodeId",
-		"controlId", "type" })
+		"controlId", "property", "type", "multiplier", "offset", "scale" })
 public final class ServerControlConfiguration
 		extends BaseServerDatumStreamConfiguration<ServerControlConfiguration, ControlType> {
 
@@ -61,14 +61,16 @@ public final class ServerControlConfiguration
 	 * @param userId
 	 *        the user ID
 	 * @param serverId
-	 *        the server ID * @param entityId the entity ID
+	 *        the server ID
+	 * @param index
+	 *        the index
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public ServerControlConfiguration(Long userId, Long serverId, Integer entityId, Instant created) {
-		this(new UserLongIntegerCompositePK(userId, serverId, entityId), created);
+	public ServerControlConfiguration(Long userId, Long serverId, Integer index, Instant created) {
+		this(new UserLongIntegerCompositePK(userId, serverId, index), created);
 	}
 
 	@Override

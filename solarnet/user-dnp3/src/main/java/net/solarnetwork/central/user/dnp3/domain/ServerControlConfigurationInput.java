@@ -45,4 +45,29 @@ public class ServerControlConfigurationInput
 		return conf;
 	}
 
+	/**
+	 * Get the control ID.
+	 * <p>
+	 * This is an alias for {@link #getSourceId()}.
+	 * </p>
+	 * 
+	 * @return the control ID
+	 */
+	public String getControlId() {
+		return getSourceId();
+	}
+
+	/**
+	 * Set the control ID.
+	 * <p>
+	 * This is an alias for {@link #setSourceId(String)}.
+	 * </p>
+	 * 
+	 * @param controlId
+	 *        the control ID to set
+	 */
+	public void setControlId(String controlId) {
+		setSourceId(controlId);
+	}
+
 }

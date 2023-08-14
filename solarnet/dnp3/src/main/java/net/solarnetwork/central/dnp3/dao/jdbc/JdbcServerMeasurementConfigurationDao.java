@@ -31,10 +31,10 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForGroupMinimumIndex;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
-import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.ServerMeasurementConfigurationDao;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerMeasurementConfiguration;
-import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerFilter;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerMeasurementConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -126,7 +126,7 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 
 	@Override
 	public FilterResults<ServerMeasurementConfiguration, UserLongIntegerCompositePK> findFiltered(
-			ServerFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			ServerDataPointFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerMeasurementConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,
@@ -134,9 +134,9 @@ public class JdbcServerMeasurementConfigurationDao implements ServerMeasurementC
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
-		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
-				enabled);
+	public int updateEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledServerDataPointFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId,
+				filter, enabled);
 		return jdbcOps.update(sql);
 	}
 

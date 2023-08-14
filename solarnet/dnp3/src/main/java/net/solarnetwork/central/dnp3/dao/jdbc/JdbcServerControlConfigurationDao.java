@@ -32,9 +32,9 @@ import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForGroupMinimumIndex;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.ServerControlConfigurationDao;
-import net.solarnetwork.central.dnp3.dao.ServerFilter;
+import net.solarnetwork.central.dnp3.dao.ServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.SelectServerControlConfiguration;
-import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerFilter;
+import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpdateEnabledServerDataPointFilter;
 import net.solarnetwork.central.dnp3.dao.jdbc.sql.UpsertServerControlConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerControlConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -126,16 +126,16 @@ public class JdbcServerControlConfigurationDao implements ServerControlConfigura
 
 	@Override
 	public FilterResults<ServerControlConfiguration, UserLongIntegerCompositePK> findFiltered(
-			ServerFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			ServerDataPointFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerControlConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerControlConfigurationRowMapper.INSTANCE);
 	}
 
 	@Override
-	public int updateEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
-		var sql = new UpdateEnabledServerFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId, filter,
-				enabled);
+	public int updateEnabledStatus(Long userId, ServerDataPointFilter filter, boolean enabled) {
+		var sql = new UpdateEnabledServerDataPointFilter(TABLE_NAME, SERVER_ID_COLUMN_NAME, userId,
+				filter, enabled);
 		return jdbcOps.update(sql);
 	}
 

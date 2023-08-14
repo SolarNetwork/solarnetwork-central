@@ -65,7 +65,7 @@ public class SimpleCacheTests {
 		// @formatter:off
 		then(cache).asInstanceOf(type(SimpleCache.class)) // cast from IterableAssert
 			.as("Given name")
-			.returns(name, SimpleCache::getName)
+			.returns(name, c -> c.getName())
 			;
 		// @formatter:on
 	}

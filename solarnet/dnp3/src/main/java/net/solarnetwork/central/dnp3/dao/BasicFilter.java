@@ -34,7 +34,8 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria implements CertificateFilter, ServerFilter {
+public class BasicFilter extends BasicCoreCriteria
+		implements CertificateFilter, ServerFilter, ServerDataPointFilter {
 
 	private String[] identifiers;
 	private Integer[] indexes;
