@@ -26,7 +26,7 @@ package net.solarnetwork.central.common.dao;
  * Search criteria for source related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface SourceCriteria {
@@ -49,5 +49,15 @@ public interface SourceCriteria {
 	 * @return array of source IDs (may be {@literal null})
 	 */
 	String[] getSourceIds();
+
+	/**
+	 * Test if this filter has any source criteria.
+	 * 
+	 * @return {@literal true} if the source ID is non-null
+	 * @since 1.1
+	 */
+	default boolean hasSourceCriteria() {
+		return getSourceId() != null;
+	}
 
 }
