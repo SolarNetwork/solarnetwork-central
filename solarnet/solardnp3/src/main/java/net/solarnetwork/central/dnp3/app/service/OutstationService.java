@@ -54,10 +54,13 @@ import com.automatak.dnp3.ControlRelayOutputBlock;
 import com.automatak.dnp3.Counter;
 import com.automatak.dnp3.DNP3Exception;
 import com.automatak.dnp3.DNP3Manager;
+import com.automatak.dnp3.DNPTime;
+import com.automatak.dnp3.Database;
 import com.automatak.dnp3.DatabaseConfig;
 import com.automatak.dnp3.DoubleBitBinaryInput;
 import com.automatak.dnp3.EventBufferConfig;
-import com.automatak.dnp3.FrozenCounter;
+import com.automatak.dnp3.Flags;
+import com.automatak.dnp3.IPEndpoint;
 import com.automatak.dnp3.LinkLayerConfig;
 import com.automatak.dnp3.Outstation;
 import com.automatak.dnp3.OutstationChangeSet;
@@ -253,7 +256,7 @@ public class OutstationService
 		}
 
 		@Override
-		public CommandStatus operateCROB(ControlRelayOutputBlock command, int index,
+		public CommandStatus operate(ControlRelayOutputBlock command, int index, Database database,
 				OperateType opType) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Binary, index);
 			if ( config == null ) {
@@ -264,7 +267,7 @@ public class OutstationService
 				return CommandStatus.NOT_AUTHORIZED;
 			}
 			log.info("DNP3 outstation [{}] received CROB operation request {} on {}[{}] control [{}]",
-					getUid(), command.function, config.getType(), index, config.getControlId());
+					getUid(), command.opType, config.getType(), index, config.getControlId());
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
 					INSTRUCTION_TAGS, "CROB control operation request received."));
 
@@ -278,8 +281,7 @@ public class OutstationService
 									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
 					log.error(
 							"Error processing DNP3 outstation [{}] operate request {} on {}[{}] control [{}]",
-							getUid(), command.function, config.getType(), index, config.getControlId(),
-							e);
+							getUid(), command.opType, config.getType(), index, config.getControlId(), e);
 				}
 			};
 			final Executor executor = getTaskExecutor();
@@ -292,27 +294,32 @@ public class OutstationService
 		}
 
 		@Override
-		public CommandStatus operateAOI16(AnalogOutputInt16 command, int index, OperateType opType) {
-			return handleAnalogOperation(command, index, "AnalogOutputInt16", command.value);
+		public CommandStatus operate(AnalogOutputInt16 command, int index, Database database,
+				OperateType opType) {
+			return handleAnalogOperation(command, index, database, "AnalogOutputInt16", command.value);
 		}
 
 		@Override
-		public CommandStatus operateAOI32(AnalogOutputInt32 command, int index, OperateType opType) {
-			return handleAnalogOperation(command, index, "AnalogOutputInt32", command.value);
+		public CommandStatus operate(AnalogOutputInt32 command, int index, Database database,
+				OperateType opType) {
+			return handleAnalogOperation(command, index, database, "AnalogOutputInt32", command.value);
 		}
 
 		@Override
-		public CommandStatus operateAOF32(AnalogOutputFloat32 command, int index, OperateType opType) {
-			return handleAnalogOperation(command, index, "AnalogOutputFloat32", command.value);
+		public CommandStatus operate(AnalogOutputFloat32 command, int index, Database database,
+				OperateType opType) {
+			return handleAnalogOperation(command, index, database, "AnalogOutputFloat32", command.value);
 		}
 
 		@Override
-		public CommandStatus operateAOD64(AnalogOutputDouble64 command, int index, OperateType opType) {
-			return handleAnalogOperation(command, index, "AnalogOutputDouble64", command.value);
+		public CommandStatus operate(AnalogOutputDouble64 command, int index, Database database,
+				OperateType opType) {
+			return handleAnalogOperation(command, index, database, "AnalogOutputDouble64",
+					command.value);
 		}
 
-		private CommandStatus handleAnalogOperation(Object command, int index, String opDescription,
-				Number value) {
+		private CommandStatus handleAnalogOperation(Object command, int index, Database database,
+				String opDescription, Number value) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Analog, index);
 			if ( config == null ) {
 				userEventAppenderBiz.addEvent(auth.getUserId(),
@@ -367,7 +374,7 @@ public class OutstationService
 	private InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
 			OperateType opType, ServerControlConfiguration config) {
 		Instruction instr = null;
-		switch (command.function) {
+		switch (command.opType) {
 			case LATCH_ON:
 				instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
 				instr.addParameter(config.getControlId(), Boolean.TRUE.toString());
@@ -381,7 +388,7 @@ public class OutstationService
 			default:
 				// nothing
 		}
-		return issueInstruction("CROB " + command.function, index, config, instr);
+		return issueInstruction("CROB " + command.opType, index, config, instr);
 	}
 
 	private InstructionStatus operateAnalogControl(Object type, int index, String opDescription,
@@ -486,7 +493,7 @@ public class OutstationService
 		if ( timestamp == null ) {
 			return null;
 		}
-		final long ts = timestamp.toEpochMilli();
+		final DNPTime ts = new DNPTime(timestamp.toEpochMilli());
 
 		final Map<Entity<? extends CompositeKey3<Long, Long, ?>>, Object> updatedValues = new LinkedHashMap<>(
 				measurementConfigs.size() + controlConfigs.size());
@@ -519,40 +526,44 @@ public class OutstationService
 				case AnalogInput -> {
 					if ( propVal instanceof Number propNum ) {
 						changes.update(new AnalogInput(propNum.doubleValue(),
-								(byte) AnalogQuality.ONLINE.toType(), ts), idx);
+								new Flags((byte) AnalogQuality.ONLINE.toType()), ts), idx);
 					}
 				}
 
 				case AnalogOutputStatus -> {
 					if ( propVal instanceof Number propNum ) {
-						changes.update(new AnalogOutputStatus(propNum.doubleValue(),
-								(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts), idx);
+						changes.update(
+								new AnalogOutputStatus(propNum.doubleValue(),
+										new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
+								idx);
 					}
 				}
 
 				case BinaryInput -> changes.update(new BinaryInput(booleanPropertyValue(propVal),
-						(byte) BinaryQuality.ONLINE.toType(), ts), idx);
+						new Flags((byte) BinaryQuality.ONLINE.toType()), ts), idx);
 
 				case BinaryOutputStatus -> changes
 						.update(new BinaryOutputStatus(booleanPropertyValue(propVal),
-								(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), idx);
+								new Flags((byte) BinaryOutputStatusQuality.ONLINE.toType()), ts), idx);
 
 				case Counter -> {
 					if ( propVal instanceof Number propNum ) {
 						changes.update(new Counter(propNum.longValue(),
-								(byte) CounterQuality.ONLINE.toType(), ts), idx);
+								new Flags((byte) CounterQuality.ONLINE.toType()), ts), idx);
 					}
 				}
 
 				case DoubleBitBinaryInput -> changes.update(new DoubleBitBinaryInput(
 						booleanPropertyValue(propVal) ? DoubleBit.DETERMINED_ON
 								: DoubleBit.DETERMINED_OFF,
-						(byte) DoubleBitBinaryQuality.ONLINE.toType(), ts), idx);
+						new Flags((byte) DoubleBitBinaryQuality.ONLINE.toType()), ts), idx);
 
 				case FrozenCounter -> {
 					if ( propVal instanceof Number propNum ) {
-						changes.update(new FrozenCounter(propNum.longValue(),
-								(byte) FrozenCounterQuality.ONLINE.toType(), ts), idx);
+						changes.update(
+								new Counter(propNum.longValue(),
+										new Flags((byte) FrozenCounterQuality.ONLINE.toType()), ts),
+								idx);
 					}
 				}
 			}
@@ -587,8 +598,10 @@ public class OutstationService
 						} else {
 							n = new BigDecimal(controlVal.toString());
 						}
-						changes.update(new AnalogOutputStatus(n.doubleValue(),
-								(byte) AnalogOutputStatusQuality.ONLINE.toType(), ts), index);
+						changes.update(
+								new AnalogOutputStatus(n.doubleValue(),
+										new Flags((byte) AnalogOutputStatusQuality.ONLINE.toType()), ts),
+								index);
 					} catch ( NumberFormatException e ) {
 						log.warn("Cannot convert control [{}] value [{}] to number: {}", sourceId,
 								controlVal, e.getMessage());
@@ -596,7 +609,7 @@ public class OutstationService
 				}
 
 				case Binary -> changes.update(new BinaryOutputStatus(booleanPropertyValue(controlVal),
-						(byte) BinaryOutputStatusQuality.ONLINE.toType(), ts), index);
+						new Flags((byte) BinaryOutputStatusQuality.ONLINE.toType()), ts), index);
 			}
 		}
 
@@ -706,9 +719,9 @@ public class OutstationService
 	}
 
 	private Channel channel(TcpServerChannelConfiguration configuration) throws DNP3Exception {
+		IPEndpoint endpoint = new IPEndpoint(bindAddress, port);
 		return getManager().addTCPServer(auth.getIdentifier(), configuration.getLogLevels(),
-				ServerAcceptMode.CloseNew, configuration.getBindAddress(), configuration.getPort(),
-				this);
+				ServerAcceptMode.CloseNew, endpoint, this);
 	}
 
 	private OutstationStackConfig createOutstationStackConfig() {

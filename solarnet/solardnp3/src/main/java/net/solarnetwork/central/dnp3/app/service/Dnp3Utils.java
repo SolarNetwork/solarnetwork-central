@@ -49,10 +49,8 @@ public final class Dnp3Utils {
 		to.isMaster = from.isMaster;
 		to.keepAliveTimeout = from.keepAliveTimeout;
 		to.localAddr = from.localAddr;
-		to.numRetry = from.numRetry;
 		to.remoteAddr = from.remoteAddr;
 		to.responseTimeout = from.responseTimeout;
-		to.useConfirms = from.useConfirms;
 	}
 
 	/**
@@ -65,13 +63,15 @@ public final class Dnp3Utils {
 	 */
 	public static void copySettings(OutstationConfig from, OutstationConfig to) {
 		to.allowUnsolicited = from.allowUnsolicited;
-		to.indexMode = from.indexMode;
 		to.maxControlsPerRequest = from.maxControlsPerRequest;
 		to.maxRxFragSize = from.maxRxFragSize;
 		to.maxTxFragSize = from.maxTxFragSize;
+		to.numUnsolRetries = from.numUnsolRetries;
 		to.selectTimeout = from.selectTimeout;
 		to.solConfirmTimeout = from.solConfirmTimeout;
-		to.unsolRetryTimeout = from.unsolRetryTimeout;
+		to.typesAllowedInClass0 = from.typesAllowedInClass0;
+		to.unsolConfirmTimeout = from.unsolConfirmTimeout;
+		to.noDefferedReadDuringUnsolicitedNullResponse = from.noDefferedReadDuringUnsolicitedNullResponse;
 	}
 
 }

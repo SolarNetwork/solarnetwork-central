@@ -28,7 +28,6 @@ import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjec
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import java.security.KeyPair;
@@ -45,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.automatak.dnp3.Channel;
 import com.automatak.dnp3.DNP3Manager;
+import com.automatak.dnp3.IPEndpoint;
 import com.automatak.dnp3.Outstation;
 import net.solarnetwork.central.biz.NodeEventObservationRegistrar;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -118,6 +118,9 @@ public class Dnp3ProxyConfigurationProviderTests {
 
 	@Captor
 	private ArgumentCaptor<CertificateFilter> certificateFilterCaptor;
+
+	@Captor
+	private ArgumentCaptor<IPEndpoint> ipEndpointCaptor;
 
 	private static final String TEST_CA_DN = "CN=Test CA, O=Solar Test CA";
 	private static final String TEST_DN = "CN=Test Client, O=Test Org";
@@ -196,7 +199,7 @@ public class Dnp3ProxyConfigurationProviderTests {
 		given(portRegistrar.reserveNewPort()).willReturn(port);
 
 		// create channel
-		given(manager.addTCPServer(any(), anyInt(), any(), any(), eq(port), any())).willReturn(channel);
+		given(manager.addTCPServer(any(), anyInt(), any(), any(), any())).willReturn(channel);
 
 		// create Outstation
 		given(channel.addOutstation(any(), any(), any(), any())).willReturn(outstation);
@@ -233,6 +236,9 @@ public class Dnp3ProxyConfigurationProviderTests {
 			.as("Connection request provided")
 			.isSameAs(req)
 			;
+		
+		verify(manager).addTCPServer(any(), anyInt(), any(), ipEndpointCaptor.capture(), any());
+		then(ipEndpointCaptor.getValue()).as("Listen on specified port").returns(port, o -> o.port);
 		
 		verify(outstation).enable();
 		// @formatter:on
