@@ -44,7 +44,7 @@ app:
       tls:
         protocols:
           - "TLSv1.3"
-        certificate-path: "local/server.pem"
+        certificate-path: "local/server.crt"
         certificate-key: "local/server.key"
         verify-client: "required"
   solarflux:
