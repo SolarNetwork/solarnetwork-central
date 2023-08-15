@@ -266,8 +266,10 @@ public class OutstationService
 								ERROR_TAG));
 				return CommandStatus.NOT_AUTHORIZED;
 			}
-			log.info("DNP3 outstation [{}] received CROB operation request {} on {}[{}] control [{}]",
-					getUid(), command.opType, config.getType(), index, config.getControlId());
+			log.info(
+					"User {} DNP3 outstation {} [{}] received CROB operation request {} on {}[{}] control [{}]",
+					auth.getUserId(), auth.getServerId(), getUid(), command.opType, config.getType(),
+					index, config.getControlId());
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
 					INSTRUCTION_TAGS, "CROB control operation request received."));
 
@@ -280,8 +282,9 @@ public class OutstationService
 									"Binary control operation failed.",
 									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
 					log.error(
-							"Error processing DNP3 outstation [{}] operate request {} on {}[{}] control [{}]",
-							getUid(), command.opType, config.getType(), index, config.getControlId(), e);
+							"Error processing user {} DNP3 outstation {} [{}] operate request {} on {}[{}] control [{}]",
+							auth.getUserId(), auth.getServerId(), getUid(), command.opType,
+							config.getType(), index, config.getControlId(), e);
 				}
 			};
 			final Executor executor = getTaskExecutor();
@@ -328,8 +331,10 @@ public class OutstationService
 								Map.of(INDEX_DATA_KEY, index), ERROR_TAG));
 				return CommandStatus.NOT_AUTHORIZED;
 			}
-			log.info("DNP3 outstation [{}] received analog operation request {} on {}[{}] control [{}]",
-					getUid(), opDescription, config.getType(), index, config.getControlId());
+			log.info(
+					"User {} DNP3 outstation {} [{}] received analog operation request {} on {}[{}] control [{}]",
+					auth.getUserId(), auth.getServerId(), getUid(), opDescription, config.getType(),
+					index, config.getControlId());
 			userEventAppenderBiz.addEvent(auth.getUserId(), Dnp3UserEvents.eventWithEntity(config,
 					INSTRUCTION_TAGS, opDescription + " control operation request received."));
 
@@ -342,8 +347,9 @@ public class OutstationService
 									opDescription + " control operation failed.",
 									Map.of(MESSAGE_DATA_KEY, e.getMessage()), ERROR_TAG));
 					log.error(
-							"Error processing DNP3 outstation [{}] analog operation request {} on {}[{}] control [{}]",
-							getUid(), opDescription, config.getType(), index, config.getControlId(), e);
+							"Error processing user {} DNP3 outstation {} [{}] analog operation request {} on {}[{}] control [{}]",
+							auth.getUserId(), auth.getServerId(), getUid(), opDescription,
+							config.getType(), index, config.getControlId(), e);
 				}
 			};
 			Executor executor = getTaskExecutor();
@@ -418,9 +424,9 @@ public class OutstationService
 			}
 		} finally {
 			log.info(
-					"DNP3 outstation [{}] {} control operation request on {}[{}] node {} control [{}] result: {}",
-					getUid(), opDescription, config.getType(), index, config.getNodeId(),
-					config.getControlId(), result);
+					"User {} DNP3 outstation {} [{}] {} control operation request on {}[{}] node {} control [{}] result: {}",
+					auth.getUserId(), auth.getServerId(), getUid(), opDescription, config.getType(),
+					index, config.getNodeId(), config.getControlId(), result);
 		}
 		if ( result.getInstructionState() == InstructionState.Declined ) {
 			userEventAppenderBiz.addEvent(auth.getUserId(),
@@ -463,7 +469,8 @@ public class OutstationService
 		synchronized ( this ) {
 			final Outstation station = this.outstation;
 			if ( station != null ) {
-				log.info("Applying changes to DNP3 [{}]", getUid());
+				log.info("Applying changes to user {} DNP3 outstation {} [{}]", auth.getUserId(),
+						auth.getServerId(), getUid());
 				station.apply(changes);
 			}
 		}
@@ -519,8 +526,8 @@ public class OutstationService
 			if ( changes == null ) {
 				changes = new OutstationChangeSet();
 			}
-			log.debug("Updating DNP3 {}[{}] from [{}].{} -> {}", config.getType(), idx, sourceId,
-					config.getProperty(), propVal);
+			log.info("Updating user {} DNP3 outstation {} {}[{}] from [{}].{} -> {}", auth.getUserId(),
+					auth.getServerId(), config.getType(), idx, sourceId, config.getProperty(), propVal);
 			updatedValues.put(config, propVal);
 			switch (config.getType()) {
 				case AnalogInput -> {
@@ -586,8 +593,9 @@ public class OutstationService
 			}
 			int index = (config.getType() == ControlType.Analog ? analogStatusOffset
 					: binaryStatusOffset) + idx;
-			log.debug("Updating DNP3 control {}[{}] from [{}].value -> {}", config.getType(), index,
-					sourceId, controlVal);
+			log.info("Updating user {} DNP3 outstation {} [{}] control {}[{}] from [{}].value -> {}",
+					auth.getUserId(), auth.getServerId(), getUid(), config.getType(), index, sourceId,
+					controlVal);
 			updatedValues.put(config, controlVal);
 			switch (config.getType()) {
 				case Analog -> {
@@ -710,10 +718,12 @@ public class OutstationService
 				log.info("DNP3 channel not available for outstation [{}]", getUid());
 				return null;
 			}
-			log.info("Initializing DNP3 outstation [{}]", getUid());
+			log.info("Initializing user {} DNP3 outstation {} [{}]", auth.getUserId(),
+					auth.getServerId(), getUid());
 			return channel.addOutstation(getUid(), commandHandler, app, createOutstationStackConfig());
 		} catch ( DNP3Exception e ) {
-			log.error("Error creating outstation application [{}]: {}", getUid(), e.getMessage(), e);
+			log.error("Error creating user {} DNP3 outstation {} [{}] application: {}", auth.getUserId(),
+					auth.getServerId(), getUid(), e.getMessage(), e);
 			return null;
 		}
 	}
@@ -883,8 +893,8 @@ public class OutstationService
 				}
 			}
 		}
-		log.info("DNP3 outstation [{}] database configured with following registers:\n{}", getUid(),
-				infoBuf);
+		log.info("User {} DNP3 outstation {} [{}] database configured with following registers:\n{}",
+				auth.getUserId(), auth.getServerId(), getUid(), infoBuf);
 		return new DatabaseConfig(binaryCount, doubleBinaryCount, analogCount, counterCount,
 				frozenCounterCount, boStatusCount, aoStatusCount);
 	}
