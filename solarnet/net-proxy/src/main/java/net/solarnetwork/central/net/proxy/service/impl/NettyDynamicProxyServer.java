@@ -94,7 +94,7 @@ public class NettyDynamicProxyServer
 	private static final Logger log = LoggerFactory.getLogger(NettyDynamicProxyServer.class);
 
 	private final Queue<ProxyConfigurationProvider> providers = new ConcurrentLinkedQueue<>();
-	private final SocketAddress bindAddress;
+	private final SocketAddress[] bindAddresses;
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
 	private String[] tlsProtocols = DEFAULT_TLS_PROTOCOLS;
@@ -137,8 +137,20 @@ public class NettyDynamicProxyServer
 	 *         if any argument is {@literal null}
 	 */
 	public NettyDynamicProxyServer(SocketAddress bindAddress) {
+		this(new SocketAddress[] { requireNonNullArgument(bindAddress, "bindAddress") });
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param bindAddress
+	 *        the server bind address
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public NettyDynamicProxyServer(SocketAddress[] bindAddresses) {
 		super();
-		this.bindAddress = requireNonNullArgument(bindAddress, "bindAddress");
+		this.bindAddresses = requireNonEmptyArgument(bindAddresses, "bindAddresses");
 		this.bossGroup = new NioEventLoopGroup(1);
 		this.workerGroup = new NioEventLoopGroup();
 	}
@@ -191,8 +203,9 @@ public class NettyDynamicProxyServer
 				.option(ChannelOption.SO_REUSEADDR, true)
 				.childHandler(new ProxyChannelInitializer(sslContext))
 				.childOption(ChannelOption.SO_REUSEADDR, true)
-				.childOption(ChannelOption.AUTO_READ, false)
-				.bind(bindAddress).sync()
+				.childOption(ChannelOption.AUTO_READ, false);
+			for ( SocketAddress bindAddress : bindAddresses ) {
+				b.bind(bindAddress).sync()
 				.addListener((f) -> {
 					log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress, 
 							Arrays.stream(tlsProtocols).collect(Collectors.joining(", ")));
@@ -200,6 +213,7 @@ public class NettyDynamicProxyServer
 				.channel().closeFuture().addListener((f) -> {
 					log.info("Proxy server stopped on {}", bindAddress);
 				});
+			}
 			// @formatter:on
 		} catch ( InterruptedException e ) {
 			log.warn("Proxy server ineterrupted: shutting down.");

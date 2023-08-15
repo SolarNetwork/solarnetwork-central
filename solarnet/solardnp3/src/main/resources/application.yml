@@ -38,7 +38,8 @@ app:
     disk-max-size-mb: 100
   proxy:
     server:
-      bind-address: "127.0.0.1"
+      bind-addresses:
+        - "127.0.0.1"
       port: 8802
       wire-logging: false
       tls:

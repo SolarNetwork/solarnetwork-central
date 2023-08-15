@@ -52,8 +52,7 @@ public class TcpProxyServerConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public NettyDynamicProxyServer tcpProxyServer(DynamicProxyServerSettings settings,
 			List<ProxyConfigurationProvider> providers) {
-		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindAddress(),
-				settings.bindPort());
+		NettyDynamicProxyServer server = new NettyDynamicProxyServer(settings.bindSocketAddresses());
 		server.setWireLogging(settings.isWireLoggingEnabled());
 		if ( settings.hasTlsSettings() ) {
 			server.setTlsProtocols(settings.tls().protocols());

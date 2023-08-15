@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.net.proxy.config;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Configuration settings for the dynamic proxy server.
  * 
- * @param bindAddress
- *        the address to bind the server to, for example 127.0.0.1 or 0.0.0.0
+ * @param bindAddresses
+ *        array of socket addresses to bind the server to, for example 127.0.0.1
+ *        or 0.0.0.0
  * @param port
  *        the socket port to listen on
  * @param wireLoggingEnabled
@@ -39,19 +42,28 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @version 1.0
  */
 @ConfigurationProperties(prefix = "app.proxy.server")
-public record DynamicProxyServerSettings(String bindAddress, Integer port, Boolean wireLoggingEnabled,
-		TlsServerSettings tls) {
+public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
+		Boolean wireLoggingEnabled, TlsServerSettings tls) {
 
 	/** The default port value. */
 	public static final int DEFAULT_PORT = 8802;
 
 	/**
-	 * Get the bind port.
+	 * Get the bind socket addresses.
 	 * 
-	 * @return the bind port, defaulting to {@link #DEFAULT_PORT} if not defined
+	 * @return the socket addresses
 	 */
-	public int bindPort() {
-		return port() != null ? port().intValue() : DEFAULT_PORT;
+	public SocketAddress[] bindSocketAddresses() {
+		if ( bindAddresses == null ) {
+			return null;
+		}
+		SocketAddress[] result = new SocketAddress[bindAddresses.length];
+		for ( int i = 0; i < result.length; i++ ) {
+			String name = bindAddresses[i];
+			int port = (this.port != null ? this.port.intValue() : DEFAULT_PORT);
+			result[i] = new InetSocketAddress(name, port);
+		}
+		return result;
 	}
 
 	/**
