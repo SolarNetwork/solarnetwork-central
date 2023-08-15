@@ -29,6 +29,10 @@ app:
   dnp3:
     user-trust-store-cache:
       ttl: 300
+  job.dnp3:
+    server-reload-tls:
+      maximum-wait-ms: 240000
+      schedule: "0 0 3 * * Mon"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
@@ -48,6 +52,9 @@ app:
         certificate-path: "local/server.crt"
         certificate-key: "local/server.key"
         verify-client: "required"
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
