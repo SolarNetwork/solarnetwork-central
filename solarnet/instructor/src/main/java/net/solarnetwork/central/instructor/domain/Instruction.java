@@ -38,14 +38,15 @@ import net.solarnetwork.codec.JsonUtils;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class Instruction extends BaseEntity {
 
-	private static final long serialVersionUID = 8334540833040646617L;
+	private static final long serialVersionUID = -7005343646718912195L;
 
 	private String topic;
 	private Instant instructionDate;
+	private Instant statusDate;
 	private InstructionState state = InstructionState.Unknown;
 	private List<InstructionParameter> parameters;
 	private Map<String, Object> resultParameters;
@@ -141,6 +142,25 @@ public class Instruction extends BaseEntity {
 
 	public void setInstructionDate(Instant instructionDate) {
 		this.instructionDate = instructionDate;
+	}
+
+	/**
+	 * Get the status date.
+	 * 
+	 * @return the status date
+	 */
+	public Instant getStatusDate() {
+		return statusDate;
+	}
+
+	/**
+	 * Set the status date.
+	 * 
+	 * @param statusDate
+	 *        the date to set
+	 */
+	public void setStatusDate(Instant statusDate) {
+		this.statusDate = statusDate;
 	}
 
 	public InstructionState getState() {

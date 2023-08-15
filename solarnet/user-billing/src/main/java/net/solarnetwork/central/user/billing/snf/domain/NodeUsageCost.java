@@ -34,7 +34,7 @@ import java.util.Objects;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NodeUsageCost {
 
@@ -43,12 +43,14 @@ public class NodeUsageCost {
 	private BigDecimal datumOutCost;
 	private BigDecimal ocppChargersCost;
 	private BigDecimal oscpCapacityGroupsCost;
+	private BigDecimal dnp3DataPointsCost;
 
 	/**
 	 * Constructor.
 	 */
 	public NodeUsageCost() {
-		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+				BigDecimal.ZERO);
 	}
 
 	/**
@@ -99,6 +101,34 @@ public class NodeUsageCost {
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * This constructor converts all costs to {@link BigDecimal} values.
+	 * </p>
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @since 1.2
+	 */
+	public NodeUsageCost(String datumPropertiesInCost, String datumOutCost, String datumDaysStoredCost,
+			String ocppChargersCost, String oscpCapacityGroupsCost, String dnp3DataPointsCost) {
+		this(new BigDecimal(datumPropertiesInCost), new BigDecimal(datumOutCost),
+				new BigDecimal(datumDaysStoredCost), new BigDecimal(ocppChargersCost),
+				new BigDecimal(oscpCapacityGroupsCost), new BigDecimal(dnp3DataPointsCost));
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -129,18 +159,43 @@ public class NodeUsageCost {
 	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
 			BigDecimal datumDaysStoredCost, BigDecimal ocppChargersCost,
 			BigDecimal oscpCapacityGroupsCost) {
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, ocppChargersCost,
+				oscpCapacityGroupsCost, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @since 1.2
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal ocppChargersCost,
+			BigDecimal oscpCapacityGroupsCost, BigDecimal dnp3DataPointsCost) {
 		super();
 		setDatumPropertiesInCost(datumPropertiesInCost);
 		setDatumOutCost(datumOutCost);
 		setDatumDaysStoredCost(datumDaysStoredCost);
 		setOcppChargersCost(ocppChargersCost);
 		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
+		setDnp3DataPointsCost(dnp3DataPointsCost);
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost, ocppChargersCost,
-				oscpCapacityGroupsCost);
+				oscpCapacityGroupsCost, dnp3DataPointsCost);
 	}
 
 	@Override
@@ -156,7 +211,8 @@ public class NodeUsageCost {
 				&& Objects.equals(datumOutCost, other.datumOutCost)
 				&& Objects.equals(datumPropertiesInCost, other.datumPropertiesInCost)
 				&& Objects.equals(ocppChargersCost, other.ocppChargersCost)
-				&& Objects.equals(oscpCapacityGroupsCost, other.oscpCapacityGroupsCost);
+				&& Objects.equals(oscpCapacityGroupsCost, other.oscpCapacityGroupsCost)
+				&& Objects.equals(dnp3DataPointsCost, other.dnp3DataPointsCost);
 	}
 
 	@Override
@@ -173,6 +229,8 @@ public class NodeUsageCost {
 		builder.append(ocppChargersCost);
 		builder.append(", oscpCapacityGroupsCost=");
 		builder.append(oscpCapacityGroupsCost);
+		builder.append(", dnp3DataPointsCost=");
+		builder.append(dnp3DataPointsCost);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -285,6 +343,30 @@ public class NodeUsageCost {
 			oscpCapacityGroupsCost = BigDecimal.ZERO;
 		}
 		this.oscpCapacityGroupsCost = oscpCapacityGroupsCost;
+	}
+
+	/**
+	 * Get the DNP3 Data Points cost.
+	 * 
+	 * @return the cost, never {@literal null}
+	 * @since 1.2
+	 */
+	public BigDecimal getDnp3DataPointsCost() {
+		return dnp3DataPointsCost;
+	}
+
+	/**
+	 * Set the DNP3 Data Points cost.
+	 * 
+	 * @param dnp3DataPointsCost
+	 *        the cost to set
+	 * @since 1.2
+	 */
+	public void setDnp3DataPointsCost(BigDecimal dnp3DataPointsCost) {
+		if ( dnp3DataPointsCost == null ) {
+			dnp3DataPointsCost = BigDecimal.ZERO;
+		}
+		this.dnp3DataPointsCost = dnp3DataPointsCost;
 	}
 
 }

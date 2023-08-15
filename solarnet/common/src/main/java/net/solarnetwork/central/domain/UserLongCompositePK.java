@@ -32,7 +32,7 @@ import java.util.Objects;
  * @author matt
  * @version 1.0
  */
-public class UserLongCompositePK extends BasePK
+public final class UserLongCompositePK extends BasePK
 		implements Serializable, Cloneable, Comparable<UserLongCompositePK>, CompositeKey2<Long, Long> {
 
 	private static final long serialVersionUID = 2537083574768869025L;

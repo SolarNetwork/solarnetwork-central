@@ -30,7 +30,7 @@ package net.solarnetwork.central.domain;
  * @param <K2>
  *        the second key component type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CompositeKey2<K1, K2> extends CompositeKey {
 
@@ -63,6 +63,21 @@ public interface CompositeKey2<K1, K2> extends CompositeKey {
 				return keyComponent2() != null;
 		}
 		return false;
+	}
+
+	@Override
+	default Object keyComponent(int index) {
+		if ( !keyComponentIsAssigned(index) ) {
+			return null;
+		}
+		switch (index) {
+			case 0:
+				return keyComponent1();
+
+			case 1:
+				return keyComponent2();
+		}
+		return null;
 	}
 
 }

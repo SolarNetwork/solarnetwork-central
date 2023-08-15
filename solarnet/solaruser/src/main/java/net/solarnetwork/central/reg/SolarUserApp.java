@@ -43,6 +43,8 @@ import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
+import net.solarnetwork.central.user.dnp3.aop.SolarNetUserDnp3AopConfiguration;
+import net.solarnetwork.central.user.dnp3.config.SolarNetUserDnp3Configuration;
 import net.solarnetwork.central.user.event.aop.SolarNetUserEventAopConfiguration;
 import net.solarnetwork.central.user.event.config.SolarNetUserEventConfiguration;
 import net.solarnetwork.central.user.expire.aop.SolarNetUserExpireAopConfiguration;
@@ -72,6 +74,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
+		SolarNetUserDnp3AopConfiguration.class,
+		SolarNetUserDnp3Configuration.class,
 		SolarNetUserOcppAopConfiguration.class,
 		SolarNetUserOcppConfiguration.class,
 		SolarNetUserOscpAopConfiguration.class,

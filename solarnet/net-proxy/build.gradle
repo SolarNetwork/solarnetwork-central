@@ -1,0 +1,53 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.7.14' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Network Proxy'
+version = '1.0.0'
+archivesBaseName = 'solarnet-net-proxy'
+
+configurations {
+	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	
+	// Netty
+	implementation 'io.netty:netty-buffer'
+	implementation 'io.netty:netty-codec'
+	implementation 'io.netty:netty-common'
+	implementation 'io.netty:netty-handler'
+	implementation 'io.netty:netty-resolver'
+	implementation 'io.netty:netty-transport'
+
+	// Testing
+	testImplementation project(':solarnet-common-test')
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-17'
+	}
+}

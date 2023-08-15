@@ -45,6 +45,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+  dnp3:
+    server-import-csv-example-resources:
+       "[text/csv]": "classpath:net/solarnetwork/central/user/dnp3/support/SolarDNP3 Configuration Example.csv"
+       "[application/vnd.openxmlformats-officedocument.spreadsheetml.sheet]": "classpath:net/solarnetwork/central/user/dnp3/support/SolarDNP3 Configuration Example.xlsx"
   email-throttle-cache:
     ttl: 600
     heap-max-entries: 1000
