@@ -100,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
