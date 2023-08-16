@@ -90,7 +90,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -421,7 +421,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		sessions.put(sess.getId(), sess);
 		Map<ChargePointIdentity, CentralChargePoint> chargePoints = new HashMap<>(2);
 		chargePoints.put(info.getChargePointId(), cp);
-		addReadings(info.getChargePointId(), readings, sessions, chargePoints, new HashMap<>(2));
+		addReadings(info.getChargePointId(), sess.getConnectorId(), readings, sessions, chargePoints,
+				new HashMap<>(2));
 
 		return new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.Accepted, null,
 				null);
@@ -457,8 +458,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				reading.getValue());
 		if ( d.getSamples() != null && !d.getSamples().isEmpty() ) {
 			d.setCreated(reading.getTimestamp());
-			d.setSourceId(sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-					sess != null ? sess.getConnectorId() : 0, reading.getLocation()));
+			d.setSourceId(sourceId);
 			if ( sess != null ) {
 				d.getSamples().putSampleValue(DatumProperty.AuthorizationToken.getClassification(),
 						DatumProperty.AuthorizationToken.getPropertyName(), sess.getAuthId());
@@ -505,15 +505,17 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void addChargingSessionReadings(ChargePointIdentity chargePointId,
+	public void addChargingSessionReadings(ChargePointIdentity chargePointId, Integer connectorId,
 			Iterable<SampledValue> readings) {
-		addReadings(chargePointId, readings, new HashMap<>(2), new HashMap<>(2), new HashMap<>(2));
+		addReadings(chargePointId, connectorId, readings, new HashMap<>(2), new HashMap<>(2),
+				new HashMap<>(2));
 	}
 
 	// NOTE that the Map implementations passed here MUST support null key and values,
 	// in order to support meter values not associated with a charge session
-	private void addReadings(ChargePointIdentity chargePointId, Iterable<SampledValue> readings,
-			Map<UUID, ChargeSession> sessions, Map<ChargePointIdentity, CentralChargePoint> chargePoints,
+	private void addReadings(ChargePointIdentity chargePointId, Integer connectorId,
+			Iterable<SampledValue> readings, Map<UUID, ChargeSession> sessions,
+			Map<ChargePointIdentity, CentralChargePoint> chargePoints,
 			Map<Long, ChargePointSettings> settings) {
 		if ( readings == null ) {
 			return;
@@ -569,7 +571,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 					settings.put(cp.getId(), cps);
 				}
 				final String sourceId = sourceId(cps, cp.getInfo().getId(),
-						s != null ? s.getConnectorId() : 0, reading.getLocation());
+						s != null ? s.getConnectorId()
+								: connectorId != null ? connectorId.intValue() : 0,
+						reading.getLocation());
 				Datum d = datumBySourceId.get(sourceId);
 				if ( d == null || !d.getCreated().equals(reading.getTimestamp()) ) {
 					if ( d != null ) {
