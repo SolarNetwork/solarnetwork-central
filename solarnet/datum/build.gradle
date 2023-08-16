@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '1.12.0'
+version = '1.13.0'
 archivesBaseName = 'solarnet-datum'
 
 configurations {
