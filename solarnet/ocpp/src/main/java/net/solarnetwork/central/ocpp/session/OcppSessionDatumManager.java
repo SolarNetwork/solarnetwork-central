@@ -385,8 +385,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		ChargeSession sess = chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(),
 				info.getTransactionId());
 		if ( sess == null ) {
-			throw new AuthorizationException("No active charging session found.", new AuthorizationInfo(
-					info.getAuthorizationId(), AuthorizationStatus.Invalid, null, null));
+			return null;
 		}
 
 		sess.setEndAuthId(info.getAuthorizationId());
