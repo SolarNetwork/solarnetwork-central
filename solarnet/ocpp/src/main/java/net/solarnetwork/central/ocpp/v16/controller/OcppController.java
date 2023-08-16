@@ -100,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -271,7 +271,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 								.iterator(); itr.hasNext(); ) {
 							Entry<Integer, ChargePointConnector> e = itr.next();
 							int connId = e.getKey().intValue();
-							if ( connId < 1 || connId > cp.getConnectorCount() ) {
+							if ( connId < 0 || connId > cp.getConnectorCount() ) {
 								log.info("Deleting excess ChargePointConnector {} from Charge Point {}",
 										connId, cp.getId());
 								chargePointConnectorDao.delete(e.getValue());

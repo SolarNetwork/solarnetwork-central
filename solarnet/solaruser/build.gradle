@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.12'
+	id 'org.springframework.boot' version '2.7.14'
 }
 
 //apply plugin: 'checkstyle'
@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '1.15.0'
+version = '1.16.0'
 archivesBaseName = 'solaruser'
 
 configurations {
@@ -24,12 +24,14 @@ configurations {
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-dnp3')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
 	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-dnp3')
 	implementation project(':solarnet-user-ocpp')
 	implementation project(':solarnet-user-oscp')
 
@@ -50,7 +52,7 @@ dependencies {
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
 	
 	// Use Commons FileUpload instead of built-in Servlet, so SecurityTokenAuthenticationFilter works as expected
-	implementation 'commons-fileupload:commons-fileupload:1.4'
+	implementation 'commons-fileupload:commons-fileupload:1.5'
 
 	// Utils
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"

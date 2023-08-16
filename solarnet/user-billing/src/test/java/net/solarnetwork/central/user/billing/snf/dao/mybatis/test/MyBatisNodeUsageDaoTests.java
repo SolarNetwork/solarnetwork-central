@@ -35,12 +35,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -503,12 +506,27 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				""", userId, nodeId, ident, vendor, model);
 	}
 
-	protected void addOcppCapacityGroup(Long userId, Long nodeId, String ident, String vendor,
-			String model) {
+	protected void addDnp3Server(Long userId, Long serverId) {
 		jdbcTemplate.update("""
-				INSERT INTO solarev.ocpp_charge_point (user_id,node_id,ident,vendor,model)
-				VALUES (?,?,?,?,?)
-				""", userId, nodeId, ident, vendor, model);
+				INSERT INTO solardnp3.dnp3_server (user_id, id, enabled, cname)
+				VALUES (?, ?, TRUE, ?)
+				""", userId, serverId, "Server %d".formatted(serverId));
+	}
+
+	protected void addDnp3Measurement(Long userId, Long serverId, Integer idx, Long nodeId) {
+		jdbcTemplate.update("""
+				INSERT INTO solardnp3.dnp3_server_meas
+					(user_id, server_id, idx, enabled, node_id, source_id, pname, mtype)
+				VALUES (?, ?, ?, TRUE, ?, 'm/1', 'p', 'a')
+				""", userId, serverId, idx, nodeId);
+	}
+
+	protected void addDnp3Control(Long userId, Long serverId, Integer idx, Long nodeId) {
+		jdbcTemplate.update("""
+				INSERT INTO solardnp3.dnp3_server_ctrl
+					(user_id, server_id, idx, enabled, node_id, control_id, ctype)
+				VALUES (?, ?, ?, TRUE, ?, 's/1', 'B')
+				""", userId, serverId, idx, nodeId);
 	}
 
 	@Test
@@ -663,6 +681,220 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						NamedCost.forTier(1, "30",  new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "70",  new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()).toString()),
 						NamedCost.forTier(2, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()).toString())
+						));
+				// @formatter:on
+			}
+			i++;
+		}
+
+	}
+
+	@Test
+	public void usageForUser_oneNodeOneSource_withOcppOscpDnp3() {
+		// GIVEN
+		final LocalDate month = LocalDate.of(2023, 11, 1);
+		final String sourceId = "S1";
+
+		// add 10 days worth of audit data
+		final int numDays = 10;
+		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
+			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
+			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
+			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
+					(short) 500000, true);
+		}
+
+		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
+		debugQuery(format(
+				"select * from solarbill.billing_usage_tier_details(%d, '2023-11-01'::timestamp, '2023-12-01'::timestamp, '2023-11-01'::date)",
+				userId));
+
+		final int numOcppChargers = 2000;
+		for ( int i = 0; i < numOcppChargers; i++ ) {
+			addOcppCharger(userId, nodeId, "cp-%d".formatted(i), "ACME", "Test");
+		}
+		debugQuery("""
+				SELECT COUNT(*) FROM solarev.ocpp_charge_point WHERE user_id = %d AND enabled = TRUE
+				""".formatted(userId));
+
+		final Long fpId = OscpTestUtils.saveFlexibilityProviderAuthId(jdbcTemplate, userId,
+				randomUUID().toString());
+		final Long cpId = OscpTestUtils.saveCapacityProvider(jdbcTemplate, userId, fpId, "CP");
+		final Long coId = OscpTestUtils.saveCapacityOptimizer(jdbcTemplate, userId, fpId, "CO");
+		final int numOscpCapacityGroups = 200;
+		for ( int i = 0; i < numOscpCapacityGroups; i++ ) {
+			OscpTestUtils.saveCapacityGroup(jdbcTemplate, userId, "CG-%d".formatted(i),
+					"CG-%d".formatted(i), cpId, coId);
+		}
+		debugQuery("""
+				SELECT COUNT(*) AS oscp_cg_count
+				FROM solaroscp.oscp_cg_conf WHERE user_id = %d AND enabled = TRUE
+				""".formatted(userId));
+
+		final int maxServers = 20;
+		final int numDnp3DataPoints = 1000;
+		final SecureRandom rng = new SecureRandom();
+		int dnp3CountM = 0;
+		int dnp3CountC = 0;
+		final Set<Long> dnp3ServerIds = new LinkedHashSet<>();
+		for ( int i = 0; i < numDnp3DataPoints; i++ ) {
+			Long serverId = rng.nextLong(maxServers);
+			if ( !dnp3ServerIds.contains(serverId) ) {
+				addDnp3Server(userId, serverId);
+				dnp3ServerIds.add(serverId);
+			}
+			if ( rng.nextBoolean() ) {
+				addDnp3Measurement(userId, serverId, dnp3CountM++, nodeId);
+			} else {
+				addDnp3Control(userId, serverId, dnp3CountC++, nodeId);
+			}
+		}
+		debugQuery("""
+				SELECT COUNT(*) AS dnp3_meas_count
+				FROM solardnp3.dnp3_server_meas WHERE user_id = %d AND enabled = TRUE
+				""".formatted(userId));
+
+		debugQuery("""
+				SELECT COUNT(*) AS dnp3_ctrl_count
+				FROM solardnp3.dnp3_server_ctrl WHERE user_id = %d AND enabled = TRUE
+				""".formatted(userId));
+
+		// WHEN
+		UsageTiers tiers = dao.effectiveUsageTiers(month);
+		Map<String, List<UsageTier>> tierMap = tiers.tierMap();
+
+		List<NodeUsage> r1 = dao.findNodeUsageForAccount(userId, month, month.plusMonths(1));
+		List<NodeUsage> r2 = dao.findUsageForAccount(userId, month, month.plusMonths(1));
+
+		// THEN
+		int i = 0;
+		for ( List<NodeUsage> results : Arrays.asList(r1, r2) ) {
+			assertThat("Results non-null with single result", results, hasSize(1));
+			NodeUsage usage = results.get(0);
+			if ( i == 0 ) {
+				assertThat("Node ID present for node-level usage", usage.getId(), equalTo(nodeId));
+				assertThat("Node usage description is node name", usage.getDescription(),
+						equalTo(format("Test Node %d", nodeId)));
+			} else {
+				assertThat("No node ID for account-level usage", usage.getId(), nullValue());
+			}
+			assertThat("Properties in count aggregated", usage.getDatumPropertiesIn(),
+					equalTo(BigInteger.valueOf(100000L * numDays)));
+			assertThat("Datum out count aggregated", usage.getDatumOut(),
+					equalTo(BigInteger.valueOf(200000L * numDays)));
+			assertThat("Datum stored count aggregated", usage.getDatumDaysStored(),
+					equalTo(BigInteger.valueOf((1000000L + 2000000L + 3000000L + 4000000L) * numDays)));
+
+			// see tiersForDate_202211
+			Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
+			List<NamedCost> propsInTiersCost = tiersBreakdown.get(NodeUsage.DATUM_PROPS_IN_KEY);
+			assertThat("Properties in cost tier count", propsInTiersCost, hasSize(2));
+			List<NamedCost> datumOutTiersCost = tiersBreakdown.get(NodeUsage.DATUM_OUT_KEY);
+			assertThat("Datum out cost tier count", datumOutTiersCost, hasSize(1));
+			List<NamedCost> datumStoredTiersCost = tiersBreakdown.get(NodeUsage.DATUM_DAYS_STORED_KEY);
+			assertThat("Datum stored cost tier count", datumStoredTiersCost, hasSize(2));
+
+			if ( i == 0 ) {
+				List<NamedCost> ocppChargersTiersCost = tiersBreakdown.get(NodeUsage.OCPP_CHARGERS_KEY);
+				assertThat("No node-level OCPP charger costs", ocppChargersTiersCost, hasSize(0));
+				List<NamedCost> oscpCapacityGroupsTiersCost = tiersBreakdown
+						.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY);
+				assertThat("No node-level OSCP capacity group costs", oscpCapacityGroupsTiersCost,
+						hasSize(0));
+				List<NamedCost> dnp3DataPointsTiersCost = tiersBreakdown
+						.get(NodeUsage.DNP3_DATA_POINTS_KEY);
+				assertThat("No node-level DNP3 Data Points costs", dnp3DataPointsTiersCost, hasSize(0));
+			} else {
+				List<NamedCost> ocppChargersTiersCost = tiersBreakdown.get(NodeUsage.OCPP_CHARGERS_KEY);
+				assertThat("Account-level OCPP charger costs", ocppChargersTiersCost, hasSize(2));
+				List<NamedCost> oscpCapacityGroupsTiersCost = tiersBreakdown
+						.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY);
+				assertThat("Account-level OSCP capacity group costs", oscpCapacityGroupsTiersCost,
+						hasSize(3));
+				List<NamedCost> dnp3DataPointsTiersCost = tiersBreakdown
+						.get(NodeUsage.DNP3_DATA_POINTS_KEY);
+				assertThat("Account-level DNP3 Data Points costs", dnp3DataPointsTiersCost, hasSize(4));
+				/*-
+				datum-props-in=[
+					NamedCost{name=Tier 1, quantity=500000, cost=2.500000},
+					NamedCost{name=Tier 2, quantity=500000, cost=1.500000}],
+				datum-out=[
+					NamedCost{name=Tier 1, quantity=2000000, cost=0.2000000}],
+				datum-days-stored=[
+					NamedCost{name=Tier 1, quantity=10000000, cost=0.50000000},
+					NamedCost{name=Tier 2, quantity=90000000, cost=0.90000000}],
+				ocpp-chargers=[
+					NamedCost{name=Tier 1, quantity=250, cost=500},
+					NamedCost{name=Tier 2, quantity=1750, cost=1750}],
+				oscp-cap-groups=[
+					NamedCost{name=Tier 1, quantity=30, cost=1500},
+					NamedCost{name=Tier 2, quantity=70, cost=2100},
+					NamedCost{name=Tier 3, quantity=100, cost=1500}]
+				dnp3-data-points=[
+					NamedCost{name=Tier 1, quantity=20, cost=20},
+					NamedCost{name=Tier 2, quantity=80, cost=48.0},
+					NamedCost{name=Tier 3, quantity=400, cost=160.0},
+					NamedCost{name=Tier 4, quantity=500, cost=100.0}]
+				*/
+				// @formatter:off
+				assertThat("Properties in cost", usage.getDatumPropertiesInCost().setScale(3), equalTo(
+								new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost())
+						.add(	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("Properties in cost tiers", propsInTiersCost, contains(
+						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
+				
+				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
+								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
+						.setScale(3)
+						));
+				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
+						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+				
+				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
+								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
+						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("Datum stored cost tiers", datumStoredTiersCost, contains(
+						NamedCost.forTier(1, "10000000", 	new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "90000000", 	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()).toString())));
+
+				assertThat("OCPP charger cost", usage.getOcppChargersCost().setScale(3), equalTo(
+								new BigDecimal("250") .multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost())
+						.add(	new BigDecimal("1750").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("OCPP Charger cost tiers", ocppChargersTiersCost, contains(
+						NamedCost.forTier(1, "250",  new BigDecimal("250") .multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "1750", new BigDecimal("1750").multiply(tierMap.get(NodeUsage.OCPP_CHARGERS_KEY).get(1).getCost()).toString())));
+
+				assertThat("OSCP Capacity Groups cost", usage.getOscpCapacityGroupsCost().setScale(3), equalTo(
+								new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost())
+						.add(	new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()))
+						.add(	new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()))
+						.setScale(3)
+						));
+				assertThat("OSCP Capacity Groups cost tiers", oscpCapacityGroupsTiersCost, contains(
+						NamedCost.forTier(1, "30",  new BigDecimal("30") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "70",  new BigDecimal("70") .multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(1).getCost()).toString()),
+						NamedCost.forTier(3, "100", new BigDecimal("100").multiply(tierMap.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY).get(2).getCost()).toString())
+						));
+
+				assertThat("DNP3 Data Points cost", usage.getDnp3DataPointsCost().setScale(3), equalTo(
+								new BigDecimal("20") .multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(0).getCost())
+						.add(	new BigDecimal("80") .multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(1).getCost()))
+						.add(	new BigDecimal("400").multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(2).getCost()))
+						.add(	new BigDecimal("500").multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(3).getCost()))
+						.setScale(3)
+						));
+				assertThat("DNP3 Data Points cost tiers", dnp3DataPointsTiersCost, contains(
+						NamedCost.forTier(1, "20",  new BigDecimal("20") .multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "80",  new BigDecimal("80") .multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(1).getCost()).toString()),
+						NamedCost.forTier(3, "400", new BigDecimal("400").multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(2).getCost()).toString()),
+						NamedCost.forTier(4, "500", new BigDecimal("500").multiply(tierMap.get(NodeUsage.DNP3_DATA_POINTS_KEY).get(3).getCost()).toString())
 						));
 				// @formatter:on
 			}

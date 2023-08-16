@@ -623,7 +623,8 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3456")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2, r3, r4, r5, r6));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId,
+				asList(r1, r2, r3, r4, r5, r6));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(),
@@ -721,7 +722,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("305.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -800,7 +801,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -876,7 +877,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.5")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1, r2));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1, r2));
@@ -1021,7 +1022,7 @@ public class OcppSessionDatumManagerTests {
 				.withUnit(UnitOfMeasure.Celsius)
 				.build());
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), sampledValues);
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, sampledValues);
 
 		// THEN
 		SampledValue[] sortedSampledValues = sampledValues
@@ -1103,7 +1104,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1174,7 +1175,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1239,7 +1240,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1298,7 +1299,7 @@ public class OcppSessionDatumManagerTests {
 				.build();
 		
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, asList(r1, r2));
 
 		// then
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
@@ -1376,7 +1377,7 @@ public class OcppSessionDatumManagerTests {
 				.build();
 		
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, asList(r1, r2));
 
 		// then
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
@@ -1400,6 +1401,86 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Datum @ trigger", d.getCreated(), equalTo(r1.getTimestamp()));
 		assertThat("Datum consolidated properties", d.getSampleData(),
 				hasEntry("wattHours", new BigDecimal(r1.getValue())));
+
+		List<Identity<GeneralNodeDatumPK>> fluxDatum = fluxPublishCaptor.getValues();
+		assertThat("Same number datum published to SolarFlux as SolarIn", fluxDatum.size(),
+				equalTo(persistedDatum.size()));
+		for ( int i = 0; i < fluxDatum.size(); i++ ) {
+			assertThat("Same datum published to SolarFlux as SolarIn", fluxDatum.get(i),
+					sameInstance(persistedDatum.get(i)));
+		}
+	}
+
+	@Test
+	public void addReadings_noTransaction_manualConnectorId() {
+		// given
+		String identifier = UUID.randomUUID().toString();
+		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
+				Instant.now(), new ChargePointInfo(identifier));
+
+		// get ChargePoint
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
+
+		// get ChargePointSettings
+		ChargePointSettings cps = new ChargePointSettings(cp.getId(), cp.getUserId(), Instant.now());
+		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
+
+		final int expectedDatumCount = 1;
+
+		// save readings (datum only)
+		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
+		UUID streamId = UUID.randomUUID();
+		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, null))
+				.times(expectedDatumCount);
+
+		// publish to SolarFlux
+		Capture<Identity<GeneralNodeDatumPK>> fluxPublishCaptor = new Capture<>(CaptureType.ALL);
+		expect(fluxPublisher.isConfigured()).andReturn(true).times(expectedDatumCount);
+		expect(fluxPublisher.processDatum(capture(fluxPublishCaptor))).andReturn(true)
+				.times(expectedDatumCount);
+
+		// when
+		replayAll();
+
+		// @formatter:off
+		final Instant ts = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		SampledValue r1 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Inlet)
+				.withMeasurand(Measurand.EnergyActiveImportRegister)
+				.withUnit(UnitOfMeasure.Wh)
+				.withValue("1234")
+				.build();
+		SampledValue r2 = SampledValue.builder()
+				.withTimestamp(ts)
+				.withContext(ReadingContext.Trigger)
+				.withLocation(Location.Inlet)
+				.withMeasurand(Measurand.PowerActiveImport)
+				.withUnit(UnitOfMeasure.W)
+				.withValue("500")
+				.build();
+		
+		final Integer connectorId =3;
+		
+		// @formatter:on
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1, r2));
+
+		// then
+		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
+		assertThat("Consolidated readings into 1 datum based on date", persistedDatum,
+				hasSize(expectedDatumCount));
+
+		GeneralNodeDatum d = persistedDatum.get(0);
+		assertThat("Datum source ID", d.getSourceId(), equalTo("/ocpp/cp/" + identifier + "/3/Inlet"));
+		assertThat("Datum session ID", d.getSamples().getStatusSampleString("sessionId"),
+				is(nullValue()));
+		assertThat("Datum @ trigger", d.getCreated(), equalTo(r1.getTimestamp()));
+		assertThat("Datum consolidated properties", d.getSampleData(),
+				allOf(hasEntry("wattHours", new BigDecimal(r1.getValue())),
+						hasEntry("watts", new BigDecimal(r2.getValue()))));
 
 		List<Identity<GeneralNodeDatumPK>> fluxDatum = fluxPublishCaptor.getValues();
 		assertThat("Same number datum published to SolarFlux as SolarIn", fluxDatum.size(),

@@ -182,9 +182,26 @@ public final class ExceptionUtils {
 			}
 			break;
 		}
-		BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
-		new SpringValidatorAdapterSupport(validator, e, bindingResult);
-		return bindingResult;
+		try {
+			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
+			new SpringValidatorAdapterSupport(validator, e, bindingResult);
+			return bindingResult;
+		} catch ( IllegalStateException e2 ) {
+			// try with root bean instead of leaf
+			for ( ConstraintViolation<?> violation : e.getConstraintViolations() ) {
+				object = violation.getRootBean();
+				break;
+			}
+			BindingResult bindingResult = new BeanPropertyBindingResult(object, "input");
+			try {
+				new SpringValidatorAdapterSupport(validator, e, bindingResult);
+				return bindingResult;
+			} catch ( IllegalStateException e3 ) {
+				// fall back to generic message
+				bindingResult.addError(new ObjectError("input", "Input is invalid."));
+				return bindingResult;
+			}
+		}
 	}
 
 	private static class SpringValidatorAdapterSupport extends SpringValidatorAdapter {

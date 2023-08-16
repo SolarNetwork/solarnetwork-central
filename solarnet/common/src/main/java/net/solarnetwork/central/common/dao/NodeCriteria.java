@@ -26,7 +26,7 @@ package net.solarnetwork.central.common.dao;
  * Search criteria for node related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.8
  */
 public interface NodeCriteria {
@@ -49,5 +49,15 @@ public interface NodeCriteria {
 	 * @return array of node IDs (may be {@literal null})
 	 */
 	Long[] getNodeIds();
+
+	/**
+	 * Test if this filter has any node criteria.
+	 * 
+	 * @return {@literal true} if the node ID is non-null
+	 * @since 1.1
+	 */
+	default boolean hasNodeCriteria() {
+		return getNodeId() != null;
+	}
 
 }

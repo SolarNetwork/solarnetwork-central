@@ -56,7 +56,7 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
@@ -75,6 +75,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger datumDaysStored;
 	private BigInteger ocppChargers;
 	private BigInteger oscpCapacityGroups;
+	private BigInteger dnp3DataPoints;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
 
@@ -83,6 +84,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] datumDaysStoredTiers;
 	private BigInteger[] ocppChargersTiers;
 	private BigInteger[] oscpCapacityGroupsTiers;
+	private BigInteger[] dnp3DataPointsTiers;
 	private NodeUsageCost[] costsTiers;
 
 	/**
@@ -134,6 +136,7 @@ public class NodeUsage extends BasicLongEntity
 		setDatumDaysStored(BigInteger.ZERO);
 		setOcppChargers(BigInteger.ZERO);
 		setOscpCapacityGroups(BigInteger.ZERO);
+		setDnp3DataPoints(BigInteger.ZERO);
 		setTotalCost(BigDecimal.ZERO);
 		this.costs = new NodeUsageCost();
 	}
@@ -161,6 +164,8 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(costs.getOcppChargersCost());
 		builder.append(", oscpCapacityGroupsCost=");
 		builder.append(costs.getOscpCapacityGroupsCost());
+		builder.append(", dnp3DataPointsCost=");
+		builder.append(costs.getDnp3DataPointsCost());
 		builder.append(", totalCost=");
 		builder.append(totalCost);
 		builder.append("}");
@@ -190,7 +195,8 @@ public class NodeUsage extends BasicLongEntity
 				&& Objects.equals(datumOut, other.datumOut)
 				&& Objects.equals(datumDaysStored, other.datumDaysStored)
 				&& Objects.equals(ocppChargers, other.ocppChargers)
-				&& Objects.equals(oscpCapacityGroups, other.oscpCapacityGroups);
+				&& Objects.equals(oscpCapacityGroups, other.oscpCapacityGroups)
+				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints);
 		// @formatter:on
 	}
 
@@ -535,6 +541,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
+	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * </ol>
 	 * 
 	 * @return the map, never {@literal null}
@@ -546,6 +553,7 @@ public class NodeUsage extends BasicLongEntity
 		result.put(DATUM_DAYS_STORED_KEY, getDatumDaysStoredTiersCostBreakdown());
 		result.put(OCPP_CHARGERS_KEY, getOcppChargersTiersCostBreakdown());
 		result.put(OSCP_CAPACITY_GROUPS_KEY, getOscpCapacityGroupsTiersCostBreakdown());
+		result.put(DNP3_DATA_POINTS_KEY, getDnp3DataPointsTiersCostBreakdown());
 		return result;
 	}
 
@@ -561,6 +569,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
+	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * </ol>
 	 * 
 	 * @return the map, never {@literal null}
@@ -577,6 +586,8 @@ public class NodeUsage extends BasicLongEntity
 				costs.getOcppChargersCost()));
 		result.put(OSCP_CAPACITY_GROUPS_KEY, new UsageInfo(OSCP_CAPACITY_GROUPS_KEY,
 				new BigDecimal(oscpCapacityGroups), costs.getOscpCapacityGroupsCost()));
+		result.put(DNP3_DATA_POINTS_KEY, new UsageInfo(DNP3_DATA_POINTS_KEY,
+				new BigDecimal(dnp3DataPoints), costs.getDnp3DataPointsCost()));
 		return result;
 	}
 
@@ -920,6 +931,122 @@ public class NodeUsage extends BasicLongEntity
 			BigDecimal val = (oscpCapacityGroupsCostTiers != null
 					&& i < oscpCapacityGroupsCostTiers.length ? oscpCapacityGroupsCostTiers[i] : null);
 			costsTiers[i].setOscpCapacityGroupsCost(val);
+		}
+	}
+
+	/**
+	 * Get the count of DNP3 Data Points.
+	 * 
+	 * @return the count
+	 * @since 2.3
+	 */
+	public BigInteger getDnp3DataPoints() {
+		return dnp3DataPoints;
+	}
+
+	/**
+	 * Set the count of DNP3 Data Points.
+	 * 
+	 * @param oscpCapacityGroups
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.3
+	 */
+	public void setDnp3DataPoints(BigInteger dnp3DataPoints) {
+		if ( dnp3DataPoints == null ) {
+			dnp3DataPoints = BigInteger.ZERO;
+		}
+		this.dnp3DataPoints = dnp3DataPoints;
+	}
+
+	/**
+	 * Get the cost of DNP3 Data Points.
+	 * 
+	 * @return the cost
+	 * @since 2.3
+	 */
+	public BigDecimal getDnp3DataPointsCost() {
+		return costs.getDnp3DataPointsCost();
+	}
+
+	/**
+	 * Set the cost of DNP3 Data Points.
+	 * 
+	 * @param dnp3DataPointsCost
+	 *        the cost to set
+	 * @since 2.3
+	 */
+	public void setDnp3DataPointsCost(BigDecimal dnp3DataPointsCost) {
+		costs.setDnp3DataPointsCost(dnp3DataPointsCost);
+	}
+
+	/**
+	 * Get the DNP3 Data Points tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 * @since 2.3
+	 */
+	@JsonIgnore
+	public List<NamedCost> getDnp3DataPointsTiersCostBreakdown() {
+		return tiersCostBreakdown(dnp3DataPointsTiers, costsTiers, NodeUsageCost::getDnp3DataPointsCost);
+	}
+
+	/**
+	 * Get the count of DNP3 Data Points, per tier.
+	 * 
+	 * @return the counts
+	 * @since 2.3
+	 */
+	public BigInteger[] getDnp3DataPointsTiers() {
+		return dnp3DataPointsTiers;
+	}
+
+	/**
+	 * Set the count of DNP3 Data Points, per tier.
+	 * 
+	 * @param dnp3DataPointsTiers
+	 *        the counts to set
+	 * @since 2.3
+	 */
+	public void setDnp3DataPointsTiers(BigInteger[] dnp3DataPointsTiers) {
+		this.dnp3DataPointsTiers = dnp3DataPointsTiers;
+	}
+
+	/**
+	 * Set the count of DNP3 Data Points, per tier, as decimals.
+	 * 
+	 * @param oscpCapacityGroupsTiers
+	 *        the counts to set
+	 * @since 2.3
+	 */
+	public void setDnp3DataPointsTiersNumeric(BigDecimal[] dnp3DataPointsTiers) {
+		this.dnp3DataPointsTiers = decimalsToIntegers(dnp3DataPointsTiers);
+	}
+
+	/**
+	 * Get the cost of DNP3 Data Points, per tier.
+	 * 
+	 * @return the cost
+	 * @since 2.3
+	 */
+	public BigDecimal[] getDnp3DataPointsCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getDnp3DataPointsCost);
+	}
+
+	/**
+	 * Set the cost of DNP3 Data Points, per tier.
+	 * 
+	 * @param dnp3DataPointsCostTiers
+	 *        the costs to set
+	 * @since 2.3
+	 */
+	public void setDnp3DataPointsCostTiers(BigDecimal[] dnp3DataPointsCostTiers) {
+		prepCostsTiers(dnp3DataPointsCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (dnp3DataPointsCostTiers != null && i < dnp3DataPointsCostTiers.length
+					? dnp3DataPointsCostTiers[i]
+					: null);
+			costsTiers[i].setDnp3DataPointsCost(val);
 		}
 	}
 

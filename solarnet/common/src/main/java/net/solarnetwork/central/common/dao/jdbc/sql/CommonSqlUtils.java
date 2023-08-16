@@ -42,7 +42,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public final class CommonSqlUtils {
 
@@ -785,6 +785,38 @@ public final class CommonSqlUtils {
 			stmt.setInt(++parameterOffset, defaultValue.getCode());
 		} else if ( setNull ) {
 			stmt.setNull(++parameterOffset, Types.INTEGER);
+		}
+		return parameterOffset;
+	}
+
+	/**
+	 * Prepare a SQL query {@code CodedValue} parameter as a {@code CHARACTER}.
+	 * 
+	 * @param stmt
+	 *        the JDBC statement
+	 * @param parameterOffset
+	 *        the zero-based starting JDBC statement parameter offset
+	 * @param value
+	 *        the value to set
+	 * @param defaultValue
+	 *        the value to set if {@code value} is {@literal null}
+	 * @param setNull
+	 *        {@literal true} to set a NULL parameter if {@code value} is
+	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or
+	 *        {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
+	 * @throws SQLException
+	 *         if any SQL error occurs
+	 * @since 2.5
+	 */
+	public static int prepareCodedValueChar(PreparedStatement stmt, int parameterOffset,
+			CodedValue value, CodedValue defaultValue, boolean setNull) throws SQLException {
+		if ( value != null ) {
+			stmt.setObject(++parameterOffset, (char) value.getCode());
+		} else if ( defaultValue != null ) {
+			stmt.setObject(++parameterOffset, (char) defaultValue.getCode());
+		} else if ( setNull ) {
+			stmt.setNull(++parameterOffset, Types.CHAR);
 		}
 		return parameterOffset;
 	}

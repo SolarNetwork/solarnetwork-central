@@ -23,13 +23,16 @@
 package net.solarnetwork.central.instructor.domain;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.domain.InstructionStatus;
 
 /**
  * Instruction for a specific node.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class NodeInstruction extends Instruction implements EntityMatch {
 
@@ -72,10 +75,100 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 
 	}
 
+	public InstructionStatus toStatus() {
+		return new NodeInstructionStatus();
+	}
+
+	private final class NodeInstructionStatus implements net.solarnetwork.domain.InstructionStatus {
+
+		@Override
+		public Long getInstructionId() {
+			return getId();
+		}
+
+		@Override
+		public Instant getStatusDate() {
+			return NodeInstruction.this.getStatusDate();
+		}
+
+		@Override
+		public Map<String, ?> getResultParameters() {
+			return NodeInstruction.this.getResultParameters();
+		}
+
+		@Override
+		public InstructionStatus.InstructionState getInstructionState() {
+			return switch (getState()) {
+				case Completed -> InstructionStatus.InstructionState.Completed;
+				case Declined -> InstructionStatus.InstructionState.Declined;
+				case Executing -> InstructionStatus.InstructionState.Executing;
+				case Queued -> InstructionStatus.InstructionState.Queued;
+				case Queuing -> InstructionStatus.InstructionState.Queuing;
+				case Received -> InstructionStatus.InstructionState.Received;
+				case Unknown -> InstructionStatus.InstructionState.Unknown;
+			};
+		}
+
+		@Override
+		public InstructionStatus newCopyWithState(InstructionStatus.InstructionState newState,
+				Map<String, ?> resultParameters) {
+			var copy = new NodeInstruction(NodeInstruction.this);
+			copy.setState(switch (newState) {
+				case Completed -> net.solarnetwork.central.instructor.domain.InstructionState.Completed;
+				case Declined -> net.solarnetwork.central.instructor.domain.InstructionState.Declined;
+				case Executing -> net.solarnetwork.central.instructor.domain.InstructionState.Executing;
+				case Queued -> net.solarnetwork.central.instructor.domain.InstructionState.Queued;
+				case Queuing -> net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
+				case Received -> net.solarnetwork.central.instructor.domain.InstructionState.Received;
+				case Unknown -> net.solarnetwork.central.instructor.domain.InstructionState.Unknown;
+			});
+			copy.setStatusDate(Instant.now());
+			if ( resultParameters != null ) {
+				if ( copy.getResultParameters() != null ) {
+					copy.getResultParameters().putAll(resultParameters);
+				} else {
+					Map<String, Object> p = new HashMap<>(resultParameters.size());
+					p.putAll(resultParameters);
+					copy.setResultParameters(p);
+				}
+			}
+			return copy.toStatus();
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("NodeInstructionStatus{");
+			if ( getInstructionId() != null ) {
+				builder.append("id=");
+				builder.append(getInstructionId());
+				builder.append(", ");
+			}
+			if ( getResultParameters() != null ) {
+				builder.append("resultParameters=");
+				builder.append(getResultParameters());
+			}
+			builder.append("}");
+			return builder.toString();
+		}
+
+	}
+
+	/**
+	 * Get the node ID.
+	 * 
+	 * @return the node ID
+	 */
 	public Long getNodeId() {
 		return nodeId;
 	}
 
+	/**
+	 * Set the node ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID to set
+	 */
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}

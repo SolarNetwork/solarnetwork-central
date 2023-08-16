@@ -95,6 +95,9 @@ public class WebSecurityConfig {
 	/** The OSCP authority. */
 	public static final String OSCP_AUTHORITY = "ROLE_OSCP";
 
+	/** The DNP3 authority. */
+	public static final String DNP3_AUTHORITY = "ROLE_DNP3";
+
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
 
@@ -190,6 +193,7 @@ public class WebSecurityConfig {
 		        .requestMatchers("/*.do").permitAll()
 		        .requestMatchers("/register/**").permitAll()
 		      	.requestMatchers("/u/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+		      	.requestMatchers("/u/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 		      	.requestMatchers("/u/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.requestMatchers("/u/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.requestMatchers("/u/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
@@ -313,6 +317,7 @@ public class WebSecurityConfig {
 		      .authorizeHttpRequests()
 		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 		      	.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+		      	.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 		      	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)

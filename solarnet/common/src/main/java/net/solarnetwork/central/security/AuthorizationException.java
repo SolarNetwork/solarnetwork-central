@@ -28,7 +28,7 @@ import java.util.Arrays;
  * Exception thrown when authorization to some resource fails.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class AuthorizationException extends SecurityException {
 
@@ -108,7 +108,7 @@ public class AuthorizationException extends SecurityException {
 	}
 
 	/**
-	 * Construct authorization exception related to some primary key
+	 * Construct authorization exception related to some primary key.
 	 * 
 	 * @param reason
 	 *        the reason for the exception
@@ -117,6 +117,24 @@ public class AuthorizationException extends SecurityException {
 	 */
 	public AuthorizationException(Reason reason, Object id) {
 		super();
+		this.reason = reason;
+		this.email = null;
+		this.id = id;
+	}
+
+	/**
+	 * Construct authorization exception related to some primary key and cause.
+	 * 
+	 * @param reason
+	 *        the reason for the exception
+	 * @param id
+	 *        the object ID
+	 * @param cause
+	 *        a cause
+	 * @since 1.3
+	 */
+	public AuthorizationException(Reason reason, Object id, Throwable cause) {
+		super(cause);
 		this.reason = reason;
 		this.email = null;
 		this.id = id;

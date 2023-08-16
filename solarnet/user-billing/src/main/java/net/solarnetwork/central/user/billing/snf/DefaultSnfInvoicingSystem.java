@@ -29,6 +29,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.U
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_DAYS_STORED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DNP3_DATA_POINTS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
@@ -83,6 +84,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsages;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
@@ -100,7 +102,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -140,6 +142,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
 	private String ocppChargersKey = OCPP_CHARGERS_KEY;
 	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
+	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
@@ -292,6 +295,15 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						new BigDecimal(usage.getOscpCapacityGroups()),
 						usage.getOscpCapacityGroupsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_GROUPS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getDnp3DataPoints().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, dnp3DataPointsKey,
+						new BigDecimal(usage.getDnp3DataPoints()), usage.getDnp3DataPointsCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DNP3_DATA_POINTS_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -578,7 +590,6 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 					}
 				}
 				for ( Map.Entry<String, BigDecimal> me : taxAmounts.entrySet() ) {
-
 					SnfInvoiceItem taxItem = newItem(invoice, InvoiceItemType.Tax, me.getKey(),
 							BigDecimal.ONE, me.getValue().setScale(2, RoundingMode.HALF_UP));
 					taxItems.add(taxItem);
@@ -688,7 +699,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for OSCP Capacity Groups.
 	 * 
 	 * @return the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#OSCP_CAPACITY_GROUPS_KEY}
+	 *         {@link NodeUsages#OSCP_CAPACITY_GROUPS_KEY}
 	 * @since 1.1
 	 */
 	public String getOscpCapacityGroupsKey() {
@@ -707,6 +718,30 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
 		this.oscpCapacityGroupsKey = requireNonNullArgument(oscpCapacityGroupsKey,
 				"oscpCapacityGroupsKey");
+	}
+
+	/**
+	 * Get the item key for DNP3 Data Points.
+	 * 
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#DNP3_DATA_POINTS_KEY}
+	 * @since 1.2
+	 */
+	public String getDnp3DataPointsKey() {
+		return dnp3DataPointsKey;
+	}
+
+	/**
+	 * Set the item key for DNP3 Data Points.
+	 * 
+	 * @param dnp3DataPointsKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.2
+	 */
+	public void setDnp3DataPointsKey(String dnp3DataPointsKey) {
+		this.dnp3DataPointsKey = requireNonNullArgument(dnp3DataPointsKey, "dnp3DataPointsKey");
 	}
 
 	/**

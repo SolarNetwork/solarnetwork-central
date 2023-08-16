@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the "find datum around" database stored procedures.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DbFindDatumAroundTests extends BaseDatumJdbcTestSupport {
 
@@ -65,6 +65,11 @@ public class DbFindDatumAroundTests extends BaseDatumJdbcTestSupport {
 
 	private List<Datum> findAround(UUID streamId, Instant ts, String tolerance) {
 		return jdbcTemplate.query("select * from solardatm.find_datm_around(?::uuid,?,?::interval)",
+				DatumEntityRowMapper.INSTANCE, streamId.toString(), Timestamp.from(ts), tolerance);
+	}
+
+	private List<Datum> findAroundWithAccumulation(UUID streamId, Instant ts, String tolerance) {
+		return jdbcTemplate.query("select * from solardatm.find_datm_around(?::uuid,?,?::interval,TRUE)",
 				DatumEntityRowMapper.INSTANCE, streamId.toString(), Timestamp.from(ts), tolerance);
 	}
 
@@ -163,6 +168,30 @@ public class DbFindDatumAroundTests extends BaseDatumJdbcTestSupport {
 
 		// THEN
 		assertThat("No datum returned", result, hasSize(0));
+	}
+
+	@Test
+	public void misingAccumulationProperties() {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), "UTC",
+				ObjectDatumKind.Node, 1L, "A", new String[] { "flow" },
+				new String[] { "volume", "volume_less_guest" }, null);
+		final UUID streamId = meta.getStreamId();
+		loadCsvStream("sample-raw-data-07-perfect-minutes.csv", meta);
+
+		// WHEN
+		ZonedDateTime start = ZonedDateTime.of(2022, 11, 9, 1, 0, 0, 0, ZoneOffset.UTC);
+		List<Datum> result = findAroundWithAccumulation(streamId, start.toInstant(), "P1Y");
+
+		// THEN
+		assertThat("Surrounding rows with accumulation properties present returned", result, hasSize(2));
+
+		ZonedDateTime expected = ZonedDateTime.of(2022, 10, 31, 11, 28, 0, 0, ZoneOffset.UTC);
+		assertThat("Datum 1 is for latest available with accumulation properties present",
+				result.get(0).getTimestamp(), is(equalTo(expected.toInstant())));
+		expected = ZonedDateTime.of(2022, 11, 9, 1, 24, 0, 0, ZoneOffset.UTC);
+		assertThat("Datum 2 is for earliest available with accumulation properties present",
+				result.get(1).getTimestamp(), is(equalTo(expected.toInstant())));
 	}
 
 }
