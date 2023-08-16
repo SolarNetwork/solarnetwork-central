@@ -172,6 +172,20 @@ public class UserDnp3Controller {
 	}
 
 	/**
+	 * Delete trusted issuer certificate for the current user.
+	 * 
+	 * @param identifier
+	 *        the certificate identifier (subject DN) to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/trusted-issuer-certs/{identifier}")
+	public Result<Void> deleteTrustedIssuerCertificate(@PathVariable("identifier") String identifier) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().deleteTrustedIssuerCertificate(userId, identifier);
+		return success();
+	}
+
+	/**
 	 * Update trusted issuer certificate enabled status for the current user.
 	 * 
 	 * @param enabled

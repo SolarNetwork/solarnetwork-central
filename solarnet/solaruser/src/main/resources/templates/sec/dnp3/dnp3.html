@@ -26,8 +26,8 @@
 </div>
 
 <div class="page-loaded hidden">
+	<div data-th-replace="sec/dnp3/dnp3-ca-list :: content"></div>
 <!--/*
-	<div data-th-replace="sec/dnp3/dnp3-settings :: content"></div>
 	<div data-th-replace="sec/dnp3/dnp3-cp-list :: content"></div>
 	<div data-th-replace="sec/dnp3/dnp3-co-list :: content"></div>
 	<div data-th-replace="sec/dnp3/dnp3-cg-list :: content"></div>
@@ -36,8 +36,9 @@
 
 <!--/* Modal forms */-->
 
+<form data-th-replace="sec/dnp3/dnp3-ca-import-modal :: form"></form>
+<form data-th-replace="sec/dnp3/dnp3-ca-edit-modal :: form"></form>
 <!--/*
-<form data-th-replace="sec/dnp3/dnp3-settings-edit-modal :: form"></form>
 <form data-th-replace="sec/dnp3/dnp3-system-edit-modal :: form"></form>
 <form data-th-replace="sec/dnp3/dnp3-system-token-modal :: div"></form>
 <form data-th-replace="sec/dnp3/dnp3-cg-edit-modal :: form"></form>
