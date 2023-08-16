@@ -24,6 +24,7 @@ package net.solarnetwork.central.net.proxy.service.impl;
 
 import static net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer.SSL_SESSION_PROXY_SETTINGS_KEY;
 import java.io.IOException;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.Bootstrap;
@@ -165,6 +166,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 				msg = msg.substring(0, max) + "... and " +(msg.length() - max) +" more";
 			}
 			log.debug("Non-TLS client message; dropping connection: {}", msg);
+		} else if ( root instanceof SSLException || root.getClass().getName().startsWith("javax.crypto.") ) {
+			log.debug("TLS client error; dropping connection: {}", root.toString());
 		} else if ( root instanceof IOException e) {
 			log.debug("Client IO error; dropping connection: {}", e.toString());
 		} else {
