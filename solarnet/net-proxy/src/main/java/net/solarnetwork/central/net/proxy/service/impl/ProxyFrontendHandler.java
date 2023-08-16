@@ -23,6 +23,9 @@
 package net.solarnetwork.central.net.proxy.service.impl;
 
 import static net.solarnetwork.central.net.proxy.service.impl.NettyDynamicProxyServer.SSL_SESSION_PROXY_SETTINGS_KEY;
+import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -57,6 +60,8 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @version 1.0
  */
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
+
+	private static final Logger log = LoggerFactory.getLogger(ProxyFrontendHandler.class);
 
 	private Bootstrap b;
 	private Channel outboundChannel;
@@ -149,7 +154,22 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
+		Throwable root = cause;
+		while ( root.getCause() != null ) {
+			root = root.getCause();
+		}
+		if (root instanceof io.netty.handler.ssl.NotSslRecordException e ) {
+			String msg = e.getMessage();
+			final int max = 64;
+			if ( msg.length() > max ) {
+				msg = msg.substring(0, max) + "... and " +(msg.length() - max) +" more";
+			}
+			log.debug("Non-TLS client message; dropping connection: {}", msg);
+		} else if ( root instanceof IOException e) {
+			log.debug("Client IO error; dropping connection: {}", e.toString());
+		} else {
+			log.error("Unexpected client connection exception: {}", root.getMessage(), root);
+		}
 		closeOnFlush(ctx.channel());
 	}
 
