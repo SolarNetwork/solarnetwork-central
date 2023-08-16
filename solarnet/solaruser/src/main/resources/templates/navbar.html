@@ -70,11 +70,25 @@
 						</li>
 					</ul>
 				</li>
-				<li data-th-classappend="${navloc == 'ocpp'}?active" sec:authorize="hasRole('ROLE_OCPP')">
-					<a data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
-				</li>
-				<li data-th-classappend="${navloc == 'oscp'}?active" sec:authorize="hasRole('ROLE_OSCP')">
-					<a data-th-href="@{/u/sec/oscp}" data-th-text="#{link.oscp}">OSCP</a>
+				<li class="dropdown" data-th-classappend="${
+						   navloc == 'dnp3'
+						|| navloc == 'ocpp'
+						|| navloc == 'oscp'
+						}?active" sec:authorize="hasAnyRole('ROLE_DNP3', 'ROLE_OCPP', 'ROLE_OSCP')">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+						<span data-th-text="#{nav.label.integrations}" data-th-remove="tag">Integrations</span> <b class="caret"></b>
+					</a>
+					<ul class="dropdown-menu">
+						<li data-th-classappend="${navloc == 'dnp3'}?active" sec:authorize="hasRole('ROLE_DNP3')">
+							<a data-th-href="@{/u/sec/dnp3}" data-th-text="#{link.dnp3}">DNP3</a>
+						</li>
+						<li data-th-classappend="${navloc == 'ocpp'}?active" sec:authorize="hasRole('ROLE_OCPP')">
+							<a data-th-href="@{/u/sec/ocpp}" data-th-text="#{link.ocpp}">OCPP</a>
+						</li>
+						<li data-th-classappend="${navloc == 'oscp'}?active" sec:authorize="hasRole('ROLE_OSCP')">
+							<a data-th-href="@{/u/sec/oscp}" data-th-text="#{link.oscp}">OSCP</a>
+						</li>
+					</ul>
 				</li>
 				<li data-th-classappend="${navloc == 'billing'}?active" sec:authorize="hasRole('ROLE_BILLING')" data-th-if="ocppBiz">
 					<a data-th-href="@{/u/sec/billing}" data-th-text="#{link.billing}">Account</a>
