@@ -22,6 +22,10 @@ section + section {
 	border-top: 2px solid #d6ad15;
 }
 
+.section + .section {
+	margin-top: 1em;
+}
+
 .timezone-pin {
 	display: none;
 }
@@ -263,4 +267,16 @@ h5, h6 {
 	display: block;
 	max-height: 18rem;
 	overflow-y: scroll;
+}
+
+.talign {
+	margin-top: 8px;
+}
+
+.panel-title .btn-link {
+	padding: 0 4px !important;
+}
+
+.panel-title .btn.pull-right + .btn.pull-right {
+	margin-right: 4px;
 }
