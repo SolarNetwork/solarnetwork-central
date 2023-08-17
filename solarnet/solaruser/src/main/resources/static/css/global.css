@@ -277,6 +277,6 @@ h5, h6 {
 	padding: 0 4px !important;
 }
 
-.panel-title .btn.pull-right + .btn.pull-right {
-	margin-right: 4px;
+.panel-title .pull-right + .pull-right {
+	margin-right: 6px;
 }

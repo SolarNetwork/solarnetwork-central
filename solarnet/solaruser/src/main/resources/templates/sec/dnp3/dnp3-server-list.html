@@ -30,32 +30,50 @@
 					<button class="btn btn-link pull-right action csv-export" data-th-title="#{dnp3.server.csv.export.title}">
 						<i class="glyphicon glyphicon-save" aria-hidden="true"></i>
 					</button>
+					<button class="btn btn-link pull-right action edit" data-th-title="#{dnp3.server.edit.title}">
+						<i class="glyphicon glyphicon-edit" aria-hidden="true"></i>
+					</button>
+					<span class="label label-success pull-right" data-th-class="|label pull-right|" data-tprop="enabled"
+							data-th-data-true-text="#{settings.enabled.label}"
+							data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
 					<a role="button" data-tprop="name" data-toggle="collapse" data-parent="#dnp3-servers-container" href="#server-body-0" aria-expanded="true" aria-controls="server-body-0">
+						<!--/*-->
 						Test Server
+						<!--*/-->
 					</a>
 				</h4>
 			</div>
 			<div id="server-body-0" class="panel-collapse collapse" role="tabpanel" aria-labelledby="server-heading-0">
 				<div class="panel-body">
-					<div class="row section server-auths">
-						<label class="col-sm-3 talign" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
+					<div class="loading">
+					   <div class="progress">
+						   <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+							   <span class="amount">0</span>%
+						   </div>
+					   </div>
+				   </div>
+
+				   <div class="row section server-auths hidden">
+						<label class="col-sm-3" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
 						<div class="col-sm-9">
-							<p data-th-class="template"><a href="#" class="edit-link" data-tprop="auth-id" data-edit-modal="#dnp3-auth-edit-modal">CN=System 1,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
-							<!--/*-->
-							<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 2,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
-							<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 3,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
-							<!--*/-->
+							<p class="template"><a href="#" class="edit-link" data-tprop="auth-id" data-edit-modal="#dnp3-auth-edit-modal"></a></p>
+							<div class="list-container">
+								<!--/*-->
+								<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 2,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
+								<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 3,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
+								<!--*/-->
+							</div>
 							<div>
 								<button class="btn btn-sm btn-default" data-th-title="#{dnp3.auths.add}"><i class="glyphicon glyphicon-plus"></i></button>
 							</div>
 						</div>
 					</div>
 
-					<div class="row section server-measurements">
+					<div class="row section server-measurements hidden">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.measurements.header}">Measurements</label>
 						<div class="col-sm-9">
-							<table class="table" data-th-classappend="hidden">
-								<thead>
+							<table class="table">
+								<thead data-th-classappend="hidden">
 									<tr>
 										<th data-th-tetx="#{dnp3.measurement.index.label}">#</th>
 										<th data-th-text="#{dnp3.measurement.nodeId.label}">Node ID</th>
@@ -68,16 +86,16 @@
 										<th data-th-text="#{dnp3.measurement.enabled.label}">Enabled</th>
 									</tr>
 									<tr data-th-class="template">
-										<td><a href="#" class="edit-link" data-tprop="meas-id" data-edit-modal="#dnp3-measurement-edit-modal">1</a></td>
-										<td data-tprop="nodeId">123</td>
-										<td data-tprop="sourceId">inverter/1</td>
-										<td data-tprop="property">watts</td>
-										<td data-tprop="type">AnalogInput</td>
-										<td data-tprop="multiplier">0.001</td>
-										<td data-tprop="offset"></td>
-										<td data-tprop="scale">3</td>
+										<td><a href="#" class="edit-link" data-tprop="meas-id" data-edit-modal="#dnp3-measurement-edit-modal"></a></td>
+										<td data-tprop="meas-nodeId"></td>
+										<td data-tprop="meas-sourceId"></td>
+										<td data-tprop="meas-property"></td>
+										<td data-tprop="meas-type"></td>
+										<td data-tprop="meas-multiplier"></td>
+										<td data-tprop="meas-offset"></td>
+										<td data-tprop="meas-scale"></td>
 										<td>
-											<span class="label label-success" data-th-class="label" data-tprop="enabled"
+											<span class="label label-success" data-th-class="label" data-tprop="meas-enabled"
 												data-th-data-true-text="#{settings.enabled.label}"
 												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
 										</td>
@@ -87,15 +105,15 @@
 								<!--/*-->
 									<tr>
 										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-measurement-edit-modal">2</a></td>
-										<td data-tprop="meas-nodeId">123</td>
-										<td data-tprop="meas-sourceId">inverter/2</td>
-										<td data-tprop="meas-property">watts</td>
-										<td data-tprop="meas-type">AnalogInput</td>
-										<td data-tprop="meas-multiplier">0.001</td>
-										<td data-tprop="meas-offset"></td>
-										<td data-tprop="meas-scale">3</td>
+										<td>123</td>
+										<td>inverter/2</td>
+										<td>watts</td>
+										<td>AnalogInput</td>
+										<td>0.001</td>
+										<td></td>
+										<td>3</td>
 										<td>
-											<span class="label label-success" data-th-class="label" data-tprop="enabled"
+											<span class="label label-success" data-th-class="label"
 												data-th-data-true-text="#{settings.enabled.label}"
 												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
 										</td>
@@ -109,11 +127,11 @@
 						</div>
 					</div>
 
-					<div class="row section server-controls">
+					<div class="row section server-controls hidden">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.controls.header}">Controls</label>
 						<div class="col-sm-9">
-							<table class="table" data-th-classappend="hidden">
-								<thead>
+							<table class="table">
+								<thead data-th-classappend="hidden">
 									<tr>
 										<th data-th-text="#{dnp3.control.index.label}">#</th>
 										<th data-th-text="#{dnp3.control.nodeId.label}">Node ID</th>
@@ -126,16 +144,16 @@
 										<th data-th-text="#{dnp3.control.enabled.label}">Enabled</th>
 									</tr>
 									<tr data-th-class="template">
-										<td><a href="#" class="edit-link" data-tprop="ctrl-id" data-edit-modal="#dnp3-control-edit-modal">1</a></td>
-										<td data-tprop="ctrl-nodeId">123</td>
-										<td data-tprop="ctrl-sourceId">switch/1</td>
+										<td><a href="#" class="edit-link" data-tprop="ctrl-id" data-edit-modal="#dnp3-control-edit-modal"></a></td>
+										<td data-tprop="ctrl-nodeId"></td>
+										<td data-tprop="ctrl-sourceId"></td>
 										<td data-tprop="ctrl-property"></td>
-										<td data-tprop="ctrl-type">Binary</td>
+										<td data-tprop="ctrl-type"></td>
 										<td data-tprop="ctrl-multiplier"></td>
 										<td data-tprop="ctrl-offset"></td>
 										<td data-tprop="ctrl-scale"></td>
 										<td>
-											<span class="label label-success" data-th-class="label" data-tprop="enabled"
+											<span class="label label-success" data-th-class="label" data-tprop="ctrl-enabled"
 												data-th-data-true-text="#{settings.enabled.label}"
 												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
 										</td>
@@ -144,7 +162,7 @@
 								<tbody class="list-container">
 								<!--/*-->
 									<tr>
-										<td><a href="#" class="edit-link".data-edit-modal="#dnp3-control-edit-modal">2</a></td>
+										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-control-edit-modal">2</a></td>
 										<td>setpoint/1</td>
 										<td></td>
 										<td>Analog</td>
@@ -152,7 +170,7 @@
 										<td></td>
 										<td></td>
 										<td>
-											<span class="label label-success" data-th-class="label" data-tprop="enabled"
+											<span class="label label-success" data-th-class="label"
 												data-th-data-true-text="#{settings.enabled.label}"
 												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
 										</td>

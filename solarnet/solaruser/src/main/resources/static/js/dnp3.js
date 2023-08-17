@@ -41,7 +41,6 @@ $(document).ready(function() {
 
 		function updateProgressAmount(bar, barAmount, percentComplete) {
 			var value = (percentComplete * 100).toFixed(0);
-			console.log('Progress now ' + percentComplete);
 			if (bar) {
 				bar.attr('aria-valuenow', value).css('width', value + '%');
 			}
@@ -60,7 +59,8 @@ $(document).ready(function() {
 			ca: createSystem($('#dnp3-cas-container'), 'ca'),
 			s: createSystem($('#dnp3-servers-container'), 's'),
 		});
-
+		
+		const serverSystems = new Map(); // map of server ID to Object of Dnp3System properties
 
 		/* ============================
 		   DNP3 entity delete
@@ -261,17 +261,28 @@ $(document).ready(function() {
 			editModal.modal('show');
 		}
 
-		systems.s.container.on('click', function handleServersClick(event) {
-			console.log('click on servers %o', event);
-			const target = $(event.target).closest('.action');
-			if (!target.length) {
+		systems.s.container.on('click', function handleServersClick(/** @type {MouseEvent} */ event) {
+			console.debug('Click on servers %o', event);
+			const target = $(event.target);
+			if ( target.hasClass('panel-title') || target.hasClass('panel-heading') ) {
+				// toggle this panel
+				let dest = target.parent().find('a[data-parent="#dnp3-servers-container"]').attr('href');
+				if ( dest ) {
+					$(dest).collapse('toggle');
+				}
 				return;
 			}
-			const item = SolarReg.Templates.findContextItem(target);
-			if (target.hasClass('csv-import')) {
+			const action = target.closest('.action');
+			if (!action.length) {
+				return;
+			}
+			const item = SolarReg.Templates.findContextItem(action);
+			if (action.hasClass('csv-import')) {
 				handleServerDataPointsImport(item);
-			} else if (target.hasClass('csv-export')) {
+			} else if (action.hasClass('csv-export')) {
 				handleServerDataPointsExport(item);
+			} else if (action.hasClass('edit')) {
+				// TODO
 			}
 		});
 
@@ -279,6 +290,117 @@ $(document).ready(function() {
 			// edit server
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
+		
+		// ***** Servers accordian
+		$('#dnp3-servers-container').on('show.bs.collapse', function handleServerCollapseShow(event) {
+			const target = event.target;
+			const config = SolarReg.Templates.findContextItem(target);
+			if ( config ) {
+				console.log('Show server details: %o', config);
+				renderServerDetails(config, $(target));
+			}
+		});
+		
+		function renderServerDetails(item, el) {
+			if ( serverSystems.has(item.id) ) {
+				// already loaded
+				return;
+			}
+			const sSystems = Object.freeze({
+				auth: createSystem(el.find('.server-auths'), 'auth'),
+				meas: createSystem(el.find('.server-measurements'), 'meas'),
+				ctrl: createSystem(el.find('.server-controls'), 'ctrl'),
+			});
+			serverSystems.set(item.id, sSystems);
+			
+			// load data
+			const progressBar = $('.loading .progress-bar', el);
+			const progressBarAmount = $('.amount', progressBar);
+			const loadTotal = 3;
+			var loadCountdown = loadTotal;
+			var authConfs = [];
+			var measConfs = [];
+			var ctrlConfs = [];
+
+			function liftoff() {
+				loadCountdown -= 1;
+				updateProgressAmount(progressBar, progressBarAmount, (loadTotal-loadCountdown) / loadTotal);
+				if (loadCountdown === 0) {
+					renderServerDetailConfigs(authConfs, sSystems.auth);
+					renderServerDetailConfigs(measConfs, sSystems.meas);
+					renderServerDetailConfigs(ctrlConfs, sSystems.ctrl);
+					el.find('.loading').addClass('hidden');
+					el.find('.section.hidden').removeClass('hidden');
+					console.log('Server %o data loaded.', item);
+				}
+			}
+
+			// list all auths
+			$.getJSON(SolarReg.solarUserURL('/sec/dnp3/servers/auths?serverId='+item.id), function(json) {
+				console.debug('Got DNP3 server %d auths: %o', item.id, json);
+				if (json && json.success === true) {
+					authConfs = json.data ? json.data.results : undefined;
+				}
+				liftoff();
+			});
+
+			// list all measurements
+			$.getJSON(SolarReg.solarUserURL('/sec/dnp3/servers/measurements?serverId=' +item.id), function(json) {
+				console.debug('Got DNP3 server %d measurements: %o', item.id, json);
+				if (json && json.success === true) {
+					measConfs = json.data ? json.data.results : undefined;
+				}
+				liftoff();
+			});
+
+			// list all controls
+			$.getJSON(SolarReg.solarUserURL('/sec/dnp3/servers/controls?serverId=' +item.id), function(json) {
+				console.debug('Got DNP3 server %d controls: %o', item.id, json);
+				if (json && json.success === true) {
+					ctrlConfs = json.data ? json.data.results : undefined;
+				}
+				liftoff();
+			});
+		}
+		
+		/**
+		 * Render server detail configurations.
+		 * 
+		 * @argument {Array<Object>} configs the entities
+		 * @argument {Dnp3System} sys the server system
+		 * @argument {Boolean} preserve true to preserve existing template instances
+		 */
+		function renderServerDetailConfigs(configs, sys, preserve) {			
+			configs = Array.isArray(configs) ? configs : [];
+			if (!preserve) {
+				sys.configsMap.clear();
+			}
+
+			var items = configs.map(function(config) {
+				var model = createServerDetailModel(config, sys.type);
+				sys.configsMap.set(config.id, model);
+				return model;
+			});
+			
+			// show detail table headers only if at least one item
+			if ( items.length > 0 ) {
+				sys.container.find('thead.hidden').removeClass('hidden');
+			} else {
+				sys.container.find('thead.hidden').addClass('hidden');
+			}
+
+			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, undefined, sys.type+'-');
+			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+		}
+
+		function createServerDetailModel(config, type) {
+			config.id = config.identifier ? config.identifier : config.index;
+			config.systemType = type;
+			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+			Object.assign(model, config);
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
+			return model;
+		}
 
 		// ***** Add server form
 		$('#dnp3-server-add-modal')
@@ -343,7 +465,7 @@ $(document).ready(function() {
 		$('#dnp3-server-data-points-import-modal')
 			.on('show.bs.modal', function() {
 				const modal = $(this);
-				/** @type HTMLFormElement */
+				/** @type {HTMLFormElement} */
 				const form = this;
 				const config = SolarReg.Templates.findContextItem(this);
 				form.elements.name.value = config.name;
