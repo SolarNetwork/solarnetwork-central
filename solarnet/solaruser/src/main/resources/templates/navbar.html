@@ -14,7 +14,7 @@
 	<script src="../static/js-lib/bootstrap.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-default" data-th-fragment="navbar" data-th-with="homeUrl=${#authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}" xmlns:th="http://www.thymeleaf.org">
+<nav class="navbar navbar-default" data-th-fragment="navbar" data-th-with="homeUrl=${#authentication != null && #authorization.expression('hasRole(''ROLE_USER'')')} ? @{/u/sec/home} : @{/index.do}" xmlns:th="http://www.thymeleaf.org">
 	<div class="container-fluid">
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#solaruser-navbar-collapse-1">
