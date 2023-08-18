@@ -66,6 +66,9 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * property replacement will be restricted to those elements. Otherwise template
  * properties within the entire template element are replaced.
  * 
+ * The container will have the `hidden` class toggled based on the emptiness of items,
+ * unless it has a `show-empty` class.
+ * 
  * @param {jQuery} container the container that holds the template item
  * @param {Array} items  the array of parameter objects to populate into cloned templates
  * @param {boolean} preserve `true` to only append items, do not clear out any existing items
@@ -126,7 +129,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 	container.find('dl.details-container > dd:empty').prev('dt').addBack().addClass('hidden');
 	container.find('dl.details-container > dd:not(:empty)').prev('dt').addBack().removeClass('hidden');
 	
-	container.toggleClass('hidden', items.length < 1);
+	if ( !container.hasClass('show-empty') ) {
+		container.toggleClass('hidden', items.length < 1);	
+	}
 };
 
 /**

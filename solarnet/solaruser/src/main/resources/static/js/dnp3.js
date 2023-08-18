@@ -59,7 +59,7 @@ $(document).ready(function() {
 			ca: createSystem($('#dnp3-cas-container'), 'ca'),
 			s: createSystem($('#dnp3-servers-container'), 's'),
 		});
-		
+
 		const serverSystems = new Map(); // map of server ID to Object of Dnp3System properties
 
 		/* ============================
@@ -99,13 +99,11 @@ $(document).ready(function() {
 
 		function createTrustedIssuerModel(config) {
 			config.id = config.subjectDn;
-			config.name = config.subjectDn;
 			config.systemType = 'ca';
 			var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-			model.id = config.id;
-			model.systemType = config.systemType;
+			Object.assign(model, config);
+			model.createdDisplay = moment(config.created).format('D MMM YYYY');
 			model.expiresDisplay = moment(config.expires).format('D MMM YYYY');
-			model.enabled = config.enabled;
 			return model;
 		}
 
@@ -147,6 +145,11 @@ $(document).ready(function() {
 				modal.find('.upload').addClass('hidden');
 				updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
 				SolarReg.Settings.resetEditServiceForm(this);
+				
+				// Some bug somewhere with multiple modal-backdrop elements getting created, then only one destroyed
+				// on modal close, leaving the site unusable. Only happens after uploading file. Work around for now
+				// is to just refresh the page :-(
+				document.location.reload();
 			});
 
 		$('#dnp3-ca-edit-modal').on('show.bs.modal', function handleModalShow() {
@@ -163,20 +166,7 @@ $(document).ready(function() {
 				}
 
 				SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
-					res.id = res.configId;
-					res.systemType = config.systemType;
 					renderTrustedIssuerConfigs([res], true);
-				}, function serializeDataConfigForm(form) {
-					var data = SolarReg.Settings.encodeServiceItemForm(form, true);
-
-					if (!data.userId) {
-						// use actor user ID, i.e. for new entity
-						data.userId = form.elements['userId'].dataset.userId;
-					}
-
-					return data;
-				}, {
-					urlId: true
 				});
 				return false;
 			})
@@ -223,6 +213,7 @@ $(document).ready(function() {
 			});
 
 			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function serverTemplateCallback(item, el) {
+				// update all accordian item IDs to be unique, with the associated server ID
 				let id = item.id;
 				el.find('div.panel-heading').attr('id', 'server-heading-' + id);
 				el.find('.panel-title a').attr('href', '#server-body-' + id).attr('aria-controls', 'server-body-' + id);
@@ -253,7 +244,7 @@ $(document).ready(function() {
 
 		systems.s.container.on('click', function handleServersClick(/** @type {MouseEvent} */ event) {
 			console.debug('Click on servers %o', event);
-			
+
 			// check if clicked on server title bar, to toggle visibility
 			const target = $(event.target);
 			if ( target.hasClass('panel-title') || target.hasClass('panel-heading') ) {
@@ -264,26 +255,19 @@ $(document).ready(function() {
 				}
 				return;
 			}
-			
+
 			// check if clicked on download CSV button
 			const action = target.closest('.action');
 			if (!action.length) {
 				return;
 			}
-			const item = SolarReg.Templates.findContextItem(action);
-			if ( !item ) {
-				return;
-			}
 			if (action.hasClass('csv-export')) {
-				handleServerDataPointsExport(item);
+				handleServerDataPointsExport(SolarReg.Templates.findContextItem(action));
+			} else {
+				SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 			}
 		});
 
-		systems.s.container.find('.list-container').on('click', function(event) {
-			// edit server
-			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
-		});
-		
 		// ***** Servers accordian
 		$('#dnp3-servers-container').on('show.bs.collapse', function handleServerCollapseShow(event) {
 			const target = event.target;
@@ -293,7 +277,7 @@ $(document).ready(function() {
 				renderServerDetails(config, $(target));
 			}
 		});
-		
+
 		function renderServerDetails(item, el) {
 			if ( serverSystems.has(item.id) ) {
 				// already loaded
@@ -305,7 +289,7 @@ $(document).ready(function() {
 				ctrl: createSystem(el.find('.server-controls'), 'ctrl'),
 			});
 			serverSystems.set(item.id, sSystems);
-			
+
 			// load data
 			const progressBar = $('.loading .progress-bar', el);
 			const progressBarAmount = $('.amount', progressBar);
@@ -355,15 +339,15 @@ $(document).ready(function() {
 				liftoff();
 			});
 		}
-		
+
 		/**
 		 * Render server detail configurations.
-		 * 
+		 *
 		 * @argument {Array<Object>} configs the entities
 		 * @argument {Dnp3System} sys the server system
 		 * @argument {Boolean} preserve true to preserve existing template instances
 		 */
-		function renderServerDetailConfigs(configs, sys, preserve) {			
+		function renderServerDetailConfigs(configs, sys, preserve) {
 			configs = Array.isArray(configs) ? configs : [];
 			if (!preserve) {
 				sys.configsMap.clear();
@@ -374,12 +358,12 @@ $(document).ready(function() {
 				sys.configsMap.set(config.id, model);
 				return model;
 			});
-			
+
 			// show detail table headers only if at least one item
 			if ( items.length > 0 ) {
 				sys.container.find('thead.hidden').removeClass('hidden');
 			} else {
-				sys.container.find('thead.hidden').addClass('hidden');
+				sys.container.find('thead').addClass('hidden');
 			}
 
 			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, undefined, sys.type+'-');
@@ -394,21 +378,6 @@ $(document).ready(function() {
 			model.createdDisplay = moment(config.created).format('D MMM YYYY');
 			return model;
 		}
-
-		// ***** Add server form
-		$('#dnp3-server-add-modal')
-			.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
-			.on('submit', function(event) {
-				SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
-					if (Array.isArray(res)) {
-						renderServerConfigs(res, true);
-					}
-				});
-				return false;
-			})
-			.on('hidden.bs.modal', function() {
-				SolarReg.Settings.resetEditServiceForm(this);
-			});
 
 		// ***** Edit server
 		$('#dnp3-server-edit-modal').on('show.bs.modal', function serverEditModalShow() {
@@ -451,7 +420,7 @@ $(document).ready(function() {
 			.find('button.toggle').each(function() {
 				SolarReg.Settings.setupSettingToggleButton($(this), false);
 			});
-			
+
 		// ***** Import data points CSV
 		$('#dnp3-server-data-points-import-modal')
 			.on('show.bs.modal', function() {
@@ -464,16 +433,21 @@ $(document).ready(function() {
 			})
 			.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 			.on('submit', function(event) {
-				var uploadProgressBar = $('.upload .progress-bar', event.target);
-				var uploadProgressBarAmount = $('.amount', uploadProgressBar);
-				var modal = $(event.target);
+				const uploadProgressBar = $('.upload .progress-bar', event.target);
+				const uploadProgressBarAmount = $('.amount', uploadProgressBar);
+				const modal = $(event.target);
+				const config = SolarReg.Templates.findContextItem(this);
 
 				modal.find('.before').addClass('hidden');
 				modal.find('.upload').removeClass('hidden');
 
 				SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
-					// TODO
-					console.log('TODO: render imported data points: %o', res);
+					const sys = serverSystems.get(config.id);
+					if ( !sys ) {
+						return;
+					}
+					renderServerDetailConfigs(res.measurementConfigs, sys['meas'], false);
+					renderServerDetailConfigs(res.controlConfigs, sys['ctrl'], false);
 				}, function serializeServerDataPointsImportForm(form) {
 					var formData = new FormData(form);
 					return formData;

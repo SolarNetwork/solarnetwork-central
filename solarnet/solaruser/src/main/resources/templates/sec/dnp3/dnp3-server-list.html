@@ -12,7 +12,7 @@
 	<h2>
 		<span data-th-text="#{dnp3.servers.header}">Servers</span>
 		<button type="button" class="btn btn-primary pull-right" data-th-title="#{dnp3.servers.add}"
-				data-toggle="modal" data-target="#dnp3-server-add-modal">
+				data-toggle="modal" data-target="#dnp3-server-edit-modal">
 			<i class="glyphicon glyphicon-plus"></i>
 		</button>
 	</h2>
@@ -53,7 +53,7 @@
 					   </div>
 				   </div>
 
-				   <div class="row section relation-template server-auths hidden">
+				   <div class="row section server-auths show-empty">
 						<label class="col-sm-3" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
 						<div class="col-sm-9">
 							<p class="template"><a href="#" class="edit-link" data-tprop="auth-id" data-edit-modal="#dnp3-auth-edit-modal"></a></p>
@@ -69,7 +69,7 @@
 						</div>
 					</div>
 
-					<div class="row section relation-template server-measurements hidden">
+					<div class="row section server-measurements show-empty">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.measurements.header}">Measurements</label>
 						<div class="col-sm-9">
 							<table class="table">
@@ -127,7 +127,7 @@
 						</div>
 					</div>
 
-					<div class="row section relation-template server-controls hidden">
+					<div class="row section server-controls show-empty">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.controls.header}">Controls</label>
 						<div class="col-sm-9">
 							<table class="table">

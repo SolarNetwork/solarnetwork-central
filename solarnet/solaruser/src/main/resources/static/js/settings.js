@@ -68,6 +68,9 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  * will have `/{id}` appended to the URL. On success, the modal form will have a `deleted` class
  * added and it will be dismissed. Use the modal's `hidden.bs.modal` event as a hook to perform
  * additional actions.
+ * 
+ * If a `delete-query-param` data attribute is set on the event target, then the URL will use
+ * a query parameter of the given name to pass the ID value.
  *
  * @param {Event} event the event that triggered the delete action
  * @param {Object} [options] an object with optional configuration properties
@@ -76,15 +79,22 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  *                                           form field
  */
 SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDeleteAction(event, options) {
-	var deleteBtn = event.target;
-	var modal = $(deleteBtn).closest('.modal');
+	var deleteBtn = $(event.target).closest('.delete-config');
+	var modal = $(event.target).closest('.modal');
 	var confirmEl = modal.find('.delete-confirm');
 	var submitBtn = modal.find('button[type=submit]');
 	var urlFn = (options && typeof options.urlSerializer === 'function'
 		? options.urlSerializer
-		: function(action, form) {
+		: function defaultEditServiceItemDeleteUrlSerializer(action, form) {
 			if ( form.elements['id'] && form.elements['id'].value ) {
-				return action + '/' + encodeURIComponent(form.elements['id'].value);
+				let result = action;
+				if ( deleteBtn.data('deleteQueryParam') ) {
+					result += '?' + deleteBtn.data('deleteQueryParam') + '=';
+				} else {
+					result += '/';
+				}
+				result += encodeURIComponent(form.elements['id'].value)
+				return result;
 			}
 			return action;
 		});
@@ -414,7 +424,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
  * @param {Event} event the event that triggered the action
  */
 SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAction(event) {
-	var button = $(event.target).closest('.edit-link', '.action-link');
+	var button = $(event.target).closest('.edit-link,.action-link');
 	if ( button.length < 1 ) {
 		return;
 	}
@@ -623,7 +633,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 				xhr.upload.addEventListener('progress', options.upload);
 			}
 			if ( options && typeof options.download === 'function' ) {
-				xhr.addEventListener('progress', options.upload);
+				xhr.addEventListener('progress', options.download);
 			}
 			return xhr;
 		},
@@ -644,7 +654,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		jqXhrOpts.dataType = 'json';
 	}
 	return $.ajax(jqXhrOpts).done(function(json, statusText) {
-		console.log('Save config result: %o', json);
+		console.debug('Save config result: %o', json);
 		if ( json && json.success === true ) {
 			if ( typeof onSuccess === 'function' ) {
 				onSuccess(body, json.data);
