@@ -49,6 +49,54 @@ $(document).ready(function() {
 			}
 		}
 
+		/**
+		 * Default edit form setup handler.
+		 *
+		 * @this {HTMLFormElement} the modal form
+		 */
+		function modalEditFormShowSetup() {
+			var modal = $(this)
+				, config = SolarReg.Templates.findContextItem(this)
+				, enabled = (config && config.enabled === true ? true : false);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
+			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+		}
+
+		/**
+		 * Default modal edit form submit handler.
+		 *
+		 * @param {Event} event the form submit event
+		 * @param {Function} renderFn the render function to invoke
+		 * @returns {Boolean} `false` to return from event callback
+		 */
+		function modalEditFormSubmit(event, renderFn) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+				renderFn([res], true);
+			});
+			return false;
+		}
+
+		/**
+		 * Default modal edit form cleanup handler.
+		 *
+		 * @this {HTMLFormElement} the modal form element
+		 */
+		function modalEditFormHiddenCleanup() {
+			const systemType = this.dataset.systemType,
+
+					/** @type {Dnp3System} */
+					sys = systems[systemType];
+			if (!sys) {
+				return;
+			}
+			const container = sys.container.find('.list-container');
+			SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
+				SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
+				if (deleted) {
+					sys.configsMap.delete(id);
+				}
+			});
+		}
 
 		/* ============================
 		   Globals
@@ -112,7 +160,12 @@ $(document).ready(function() {
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
 
-		// ***** Import form
+		// ***** CA import button
+		$('#dnp3-ca-add-button').on('click', function() {
+			$('#dnp3-ca-import-modal').modal('show');
+		})
+
+		// ***** CA import form
 		$('#dnp3-ca-import-modal')
 			.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 			.on('submit', function(event) {
@@ -145,48 +198,13 @@ $(document).ready(function() {
 				modal.find('.upload').addClass('hidden');
 				updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
 				SolarReg.Settings.resetEditServiceForm(this);
-				
-				// Some bug somewhere with multiple modal-backdrop elements getting created, then only one destroyed
-				// on modal close, leaving the site unusable. Only happens after uploading file. Work around for now
-				// is to just refresh the page :-(
-				document.location.reload();
 			});
 
-		$('#dnp3-ca-edit-modal').on('show.bs.modal', function handleModalShow() {
-			var modal = $(this)
-				, config = SolarReg.Templates.findContextItem(this)
-				, enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
-		})
+		$('#dnp3-ca-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
 			.on('submit', function handleCaModalFormSubmit(event) {
-				const config = SolarReg.Templates.findContextItem(this);
-				if (!config.systemType) {
-					return;
-				}
-
-				SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
-					renderTrustedIssuerConfigs([res], true);
-				});
-				return false;
+				return modalEditFormSubmit(event, renderTrustedIssuerConfigs);
 			})
-			.on('hidden.bs.modal', function handleModalHidden() {
-				const config = SolarReg.Templates.findContextItem(this),
-					type = config.systemType,
-
-					/** @type {Dnp3System} */
-					sys = systems[type];
-				if (!sys) {
-					return;
-				}
-				const container = sys.container.find('.list-container');
-				SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
-					SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
-					if (deleted) {
-						sys.configsMap.delete(id);
-					}
-				});
-			})
+			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
 			.find('button.toggle').each(function() {
 				SolarReg.Settings.setupSettingToggleButton($(this), false);
 			});
@@ -378,50 +396,23 @@ $(document).ready(function() {
 			model.createdDisplay = moment(config.created).format('D MMM YYYY');
 			return model;
 		}
-
-		// ***** Edit server
-		$('#dnp3-server-edit-modal').on('show.bs.modal', function serverEditModalShow() {
-			var modal = $(this)
-				, config = SolarReg.Templates.findContextItem(this)
-				, enabled = (config && config.enabled === true ? true : false);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
-			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+		
+		// ***** Server add button
+		$('#dnp3-server-add-button').on('click', function() {
+			$('#dnp3-server-edit-modal').modal('show');
 		})
+
+		// ***** Server edit
+		$('#dnp3-server-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
 			.on('submit', function serverEditModalFormSubmit(event) {
-				const config = SolarReg.Templates.findContextItem(this);
-				if (!config.systemType) {
-					return;
-				}
-
-				SolarReg.Settings.handlePostEditServiceForm(event, function onServerEditSuccess(req, res) {
-					renderServerConfigs([res], true);
-				}, undefined, {
-					urlId: true
-				});
-				return false;
+				return modalEditFormSubmit(event, renderServerConfigs);
 			})
-			.on('hidden.bs.modal', function serverEditModalHidden() {
-				const config = SolarReg.Templates.findContextItem(this),
-					type = config.systemType,
-
-					/** @type {Dnp3System} */
-					sys = systems[type];
-				if (!sys) {
-					return;
-				}
-				const container = sys.container.find('.list-container');
-				SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
-					SolarReg.deleteServiceConfiguration(deleted ? id : null, sys.configs, sys.container);
-					if (deleted) {
-						sys.configsMap.delete(id);
-					}
-				});
-			})
+			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
 			.find('button.toggle').each(function() {
 				SolarReg.Settings.setupSettingToggleButton($(this), false);
 			});
 
-		// ***** Import data points CSV
+		// ***** Server data points import CSV
 		$('#dnp3-server-data-points-import-modal')
 			.on('show.bs.modal', function() {
 				const modal = $(this);
