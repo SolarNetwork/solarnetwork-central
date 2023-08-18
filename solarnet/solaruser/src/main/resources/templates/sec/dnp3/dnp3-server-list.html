@@ -63,7 +63,9 @@
 								<!--*/-->
 							</div>
 							<div>
-								<button class="btn btn-sm btn-default" data-th-title="#{dnp3.auths.add}"><i class="glyphicon glyphicon-plus"></i></button>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-auth-edit-modal"
+										data-th-title="#{dnp3.auths.add}"><i class="glyphicon glyphicon-plus"></i></button>
 							</div>
 						</div>
 					</div>
@@ -121,7 +123,9 @@
 								</tbody>
 							</table>
 							<div>
-								<button class="btn btn-sm btn-default" data-th-title="#{dnp3.measurements.add}"><i class="glyphicon glyphicon-plus"></i></button>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-measurement-edit-modal"
+										data-th-title="#{dnp3.measurements.add}"><i class="glyphicon glyphicon-plus"></i></button>
 							</div>
 						</div>
 					</div>
@@ -145,7 +149,7 @@
 									<tr data-th-class="template">
 										<td><a href="#" class="edit-link" data-tprop="ctrl-id" data-edit-modal="#dnp3-control-edit-modal"></a></td>
 										<td data-tprop="ctrl-nodeId"></td>
-										<td data-tprop="ctrl-sourceId"></td>
+										<td data-tprop="ctrl-controlId"></td>
 										<td data-tprop="ctrl-property"></td>
 										<td data-tprop="ctrl-type"></td>
 										<td data-tprop="ctrl-multiplier"></td>
@@ -178,7 +182,9 @@
 								</tbody>
 							</table>
 							<div>
-								<button class="btn btn-sm btn-default" data-th-title="#{dnp3.controls.add}"><i class="glyphicon glyphicon-plus"></i></button>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-control-edit-modal"
+										data-th-title="#{dnp3.controls.add}"><i class="glyphicon glyphicon-plus"></i></button>
 							</div>
 						</div>
 					</div>

@@ -281,10 +281,24 @@ $(document).ready(function() {
 				}
 				return;
 			}
+			
+			// check if clicked on add entity button for a related entity
+			const btn = target.closest('button');
+			if ( btn.hasClass('add-entity') ) {
+				let modal = $(btn.data('editModal'));
+				let config = SolarReg.Templates.findContextItem(btn);
+				// open the edit form, passing the server ID in the context item
+				if ( modal && config ) {
+					SolarReg.Templates.setContextItem(modal, {serverId:config.id});
+					modal.modal('show');
+					event.preventDefault();
+				}
+				return;
+			}
 
 			// check if clicked on download CSV button
 			const action = target.closest('.action');
-			if (action.length && action.hasClass('csv-export')) {
+			if ( action.length && action.hasClass('csv-export') ) {
 				handleServerDataPointsExport(SolarReg.Templates.findContextItem(action));
 			} else {
 				SolarReg.Settings.handleEditServiceItemAction(event, [], []);
@@ -464,11 +478,42 @@ $(document).ready(function() {
 				SolarReg.Settings.resetEditServiceForm(this);
 			});
 			
+		function serverModalEditFormShowSetup(event) {
+			const form = this;
+			const config = SolarReg.Templates.findContextItem(form);
+			const serverSys = serverSystems.get(config.serverId ? config.serverId : config.id);
+			const systemType = form.dataset.systemType;
+			
+			/** @type {Dnp3System} */
+			const sys = serverSys[systemType];
+			
+			// the index field is read-only when editing existing item, write when adding new item
+			if ( config.index !== undefined ) {
+				form.elements['index'].readonly = true;
+			} else {
+				form.elements['index'].readonly = false;
+				
+				// default new index to highest existing index + 1
+				var newIndex = -1;
+				if ( sys ) {
+					sys.configs.forEach(function (e) {
+						if ( e.index > newIndex ) {
+							newIndex = e.index;
+						}
+					});
+					newIndex += 1;
+					form.elements['index'].value = newIndex;
+				}
+			}
+
+			return modalEditFormShowSetup.call(form, event);
+		}
+			
 		function serverEditModalFormSubmit(event) {
 			const config = SolarReg.Templates.findContextItem(this);
 			const sys = serverSystems.get(config.serverId ? config.serverId : config.id);
 			const systemType = this.dataset.systemType;
-			return modalEditFormSubmit(event, function(configs, preserve) {
+			return modalEditFormSubmit.call(this, event, function(configs, preserve) {
 				renderServerDetailConfigs(configs, sys[systemType], preserve);
 			});
 		}
@@ -478,7 +523,7 @@ $(document).ready(function() {
 		   ============================ */
 
 		// ***** Server measurement edit
-		$('#dnp3-measurement-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
+		$('#dnp3-measurement-edit-modal').on('show.bs.modal', serverModalEditFormShowSetup)
 			.on('submit', serverEditModalFormSubmit)
 			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
 			.find('button.toggle').each(function() {
@@ -486,7 +531,7 @@ $(document).ready(function() {
 			});
 
 		// ***** Server control edit
-		$('#dnp3-control-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
+		$('#dnp3-control-edit-modal').on('show.bs.modal', serverModalEditFormShowSetup)
 			.on('submit', serverEditModalFormSubmit)
 			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
 			.find('button.toggle').each(function() {

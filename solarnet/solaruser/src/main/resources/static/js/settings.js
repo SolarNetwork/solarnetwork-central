@@ -68,8 +68,10 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  * @param {Function} [options.urlSerializer] an optional function to generate the submit URL; the `this` object will be the form;
  * 											 will be passed the form action and body parameters; defaults to appending a `/{id}`
  * 											 value where {id} is the value of the `id` form field, unless the form has a data
- * 											 attribute `settings-id-query-param` in which case the ID will be added as a query
- * 											 parameter using the given name
+ * 											 attribute `settings-url-id-create-property` in which case that field's value will
+ * 											 be used instead; if the form has a data attribute `settings-id-query-param` then
+ * 											 the ID value will be added as a query parameter using the given name instead of
+ * 											 appending the value to the path
  * @returns {Function} serializer function either from `options.urlSerializer` or the default implementation
  */
 SolarReg.Settings.settingsFormUrlFunction = function settingsFormUrlFunction(options) {
@@ -78,13 +80,18 @@ SolarReg.Settings.settingsFormUrlFunction = function settingsFormUrlFunction(opt
 		: function defaultEditServiceItemUrlSerializer(action, params) {
 			const form = this;
 			var result = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(action), params));
-			if ( form.elements['id'] && form.elements['id'].value ) {
+			var idVal = (form.elements['id'] ? form.elements['id'].value : undefined);
+			if ( (idVal === undefined || idVal === '') && form.dataset.settingsUrlIdCreateProperty 
+					&& form.elements[form.dataset.settingsUrlIdCreateProperty] ) {
+				idVal = form.elements[form.dataset.settingsUrlIdCreateProperty].value;
+			}
+			if ( idVal !== '' ) {
 				if ( form.dataset.settingsIdQueryParam ) {
 					result += '?' + form.dataset.settingsIdQueryParam + '=';
 				} else {
 					result += '/';
 				}
-				result += encodeURIComponent(form.elements['id'].value)
+				result += encodeURIComponent(idVal);
 			}
 			return result;
 		});
@@ -447,7 +454,7 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
 	var config = SolarReg.Templates.findContextItem(button);
 	var modal;
 	if ( button.hasClass('edit-link') ) {
-		modal = $(button.data('edit-modal'));
+		modal = $(button.data('editModal'));
 	} else if ( button.hasClass('action-link') ) {
 		modal = $(button.data('action-modal'));
 	}
