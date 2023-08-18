@@ -222,12 +222,11 @@ $(document).ready(function() {
 				return model;
 			});
 
-			var idx = 0;
 			SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function serverTemplateCallback(item, el) {
-				idx += 1;
-				el.find('div.panel-heading').attr('id', 'server-heading-' + idx);
-				el.find('.panel-title a').attr('href', '#server-body-' + idx).attr('aria-controls', 'server-body-' + idx);
-				el.find('div.panel-collapse ').attr('id', 'server-body-' + idx).attr('aria-labelledby', 'server-heading-' + idx);
+				let id = item.id;
+				el.find('div.panel-heading').attr('id', 'server-heading-' + id);
+				el.find('.panel-title a').attr('href', '#server-body-' + id).attr('aria-controls', 'server-body-' + id);
+				el.find('div.panel-collapse ').attr('id', 'server-body-' + id).attr('aria-labelledby', 'server-heading-' + id);
 			});
 			SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 		}
@@ -252,37 +251,31 @@ $(document).ready(function() {
 			document.location = url;
 		}
 
-		function handleServerDataPointsImport(item) {
-			if (!(item && item.id)) {
-				return;
-			}
-			let editModal = $('#dnp3-server-data-points-import-modal');
-			SolarReg.Templates.setContextItem(editModal, item);
-			editModal.modal('show');
-		}
-
 		systems.s.container.on('click', function handleServersClick(/** @type {MouseEvent} */ event) {
 			console.debug('Click on servers %o', event);
+			
+			// check if clicked on server title bar, to toggle visibility
 			const target = $(event.target);
 			if ( target.hasClass('panel-title') || target.hasClass('panel-heading') ) {
 				// toggle this panel
-				let dest = target.parent().find('a[data-parent="#dnp3-servers-container"]').attr('href');
+				let dest = target.parent().find('a[data-parent="#dnp3-servers-accordian"]').attr('href');
 				if ( dest ) {
 					$(dest).collapse('toggle');
 				}
 				return;
 			}
+			
+			// check if clicked on download CSV button
 			const action = target.closest('.action');
 			if (!action.length) {
 				return;
 			}
 			const item = SolarReg.Templates.findContextItem(action);
-			if (action.hasClass('csv-import')) {
-				handleServerDataPointsImport(item);
-			} else if (action.hasClass('csv-export')) {
+			if ( !item ) {
+				return;
+			}
+			if (action.hasClass('csv-export')) {
 				handleServerDataPointsExport(item);
-			} else if (action.hasClass('edit')) {
-				// TODO
 			}
 		});
 
@@ -418,29 +411,27 @@ $(document).ready(function() {
 			});
 
 		// ***** Edit server
-		$('#dnp3-server-edit-modal').on('show.bs.modal', function handleModalShow() {
+		$('#dnp3-server-edit-modal').on('show.bs.modal', function serverEditModalShow() {
 			var modal = $(this)
 				, config = SolarReg.Templates.findContextItem(this)
 				, enabled = (config && config.enabled === true ? true : false);
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
 			SolarReg.Settings.prepareEditServiceForm(modal, [], []);
 		})
-			.on('submit', function handleServerModalFormSubmit(event) {
+			.on('submit', function serverEditModalFormSubmit(event) {
 				const config = SolarReg.Templates.findContextItem(this);
 				if (!config.systemType) {
 					return;
 				}
 
-				SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
-					res.id = res.configId;
-					res.systemType = config.systemType;
+				SolarReg.Settings.handlePostEditServiceForm(event, function onServerEditSuccess(req, res) {
 					renderServerConfigs([res], true);
 				}, undefined, {
 					urlId: true
 				});
 				return false;
 			})
-			.on('hidden.bs.modal', function handleModalHidden() {
+			.on('hidden.bs.modal', function serverEditModalHidden() {
 				const config = SolarReg.Templates.findContextItem(this),
 					type = config.systemType,
 

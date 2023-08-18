@@ -20,23 +20,23 @@
 		Your Servers are shown here. Use the + button to add new servers.
 	</p>
 
-	<div id="dnp3-servers-container" class="panel-group" data-th-classappend="hidden" role="tablist" aria-multiselectable="true">
+	<div id="dnp3-servers-container" data-th-classappend="hidden">
 		<div class="panel panel-default" data-th-classappend="template">
-			<div class="panel-heading" role="tab" id="server-heading-0">
+			<div class="panel-heading template-target" role="tab" id="server-heading-0">
 				<h4 class="panel-title">
-					<button class="btn btn-link pull-right action csv-import" data-th-title="#{dnp3.server.csv.import.title}">
+					<button class="btn btn-link pull-right action csv-import action-link" data-action-modal="#dnp3-server-data-points-import-modal" data-th-title="#{dnp3.server.csv.import.action}">
 						<i class="glyphicon glyphicon-open" aria-hidden="true"></i>
 					</button>
-					<button class="btn btn-link pull-right action csv-export" data-th-title="#{dnp3.server.csv.export.title}">
+					<button class="btn btn-link pull-right action csv-export" data-th-title="#{dnp3.server.csv.export.action}">
 						<i class="glyphicon glyphicon-save" aria-hidden="true"></i>
 					</button>
-					<button class="btn btn-link pull-right action edit" data-th-title="#{dnp3.server.edit.title}">
+					<button class="btn btn-link pull-right action edit edit-link" data-edit-modal="#dnp3-server-edit-modal" data-th-title="#{dnp3.server.edit.action}">
 						<i class="glyphicon glyphicon-edit" aria-hidden="true"></i>
 					</button>
 					<span class="label label-success pull-right" data-th-class="|label pull-right|" data-tprop="enabled"
 							data-th-data-true-text="#{settings.enabled.label}"
 							data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
-					<a role="button" data-tprop="name" data-toggle="collapse" data-parent="#dnp3-servers-container" href="#server-body-0" aria-expanded="true" aria-controls="server-body-0">
+					<a role="button" data-tprop="name" data-toggle="collapse" data-parent="#dnp3-servers-accordian" href="#server-body-0" aria-expanded="true" aria-controls="server-body-0">
 						<!--/*-->
 						Test Server
 						<!--*/-->
@@ -53,7 +53,7 @@
 					   </div>
 				   </div>
 
-				   <div class="row section server-auths hidden">
+				   <div class="row section relation-template server-auths hidden">
 						<label class="col-sm-3" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
 						<div class="col-sm-9">
 							<p class="template"><a href="#" class="edit-link" data-tprop="auth-id" data-edit-modal="#dnp3-auth-edit-modal"></a></p>
@@ -69,7 +69,7 @@
 						</div>
 					</div>
 
-					<div class="row section server-measurements hidden">
+					<div class="row section relation-template server-measurements hidden">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.measurements.header}">Measurements</label>
 						<div class="col-sm-9">
 							<table class="table">
@@ -127,7 +127,7 @@
 						</div>
 					</div>
 
-					<div class="row section server-controls hidden">
+					<div class="row section relation-template server-controls hidden">
 						<label class="col-sm-3 talign" data-th-text="#{dnp3.controls.header}">Controls</label>
 						<div class="col-sm-9">
 							<table class="table">
@@ -186,6 +186,8 @@
 
 				</div>
 			</div>
+		</div>
+		<div id="dnp3-servers-accordian" class="panel-group list-container" role="tablist" aria-multiselectable="true">
 		</div>
 	</div>
 </section>

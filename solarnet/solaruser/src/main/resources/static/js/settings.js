@@ -414,15 +414,15 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
  * @param {Event} event the event that triggered the action
  */
 SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAction(event) {
-	if ( !(event.target && event.target.classList) ) {
+	var button = $(event.target).closest('.edit-link', '.action-link');
+	if ( button.length < 1 ) {
 		return;
 	}
-	var config = SolarReg.Templates.findContextItem(event.target);
-	var button = $(event.target);
+	var config = SolarReg.Templates.findContextItem(button);
 	var modal;
-	if ( event.target.classList.contains('edit-link') ) {
+	if ( button.hasClass('edit-link') ) {
 		modal = $(button.data('edit-modal'));
-	} else if ( event.target.classList.contains('action-link') ) {
+	} else if ( button.hasClass('action-link') ) {
 		modal = $(button.data('action-modal'));
 	}
 	if ( modal && modal.modal ) {
