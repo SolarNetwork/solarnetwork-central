@@ -359,34 +359,33 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 			}
 		}
 
-		List<ServerMeasurementConfiguration> mConfs = null;
+		//
 		int mCount = 0;
 		if ( result.getMeasurementConfigs() != null ) {
-			mConfs = new ArrayList<>(result.getMeasurementConfigs().size());
 			for ( var conf : result.getMeasurementConfigs() ) {
 				var c = conf.toEntity(new UserLongIntegerCompositePK(userId, serverId, mCount++), date);
 				c.setModified(date);
 				serverMeasurementDao.save(c);
-				mConfs.add(c);
 			}
 		}
 		// delete any indexes higher than the ones just saved
 		serverMeasurementDao
 				.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, mCount));
 
-		List<ServerControlConfiguration> cConfs = null;
 		int cCount = 0;
 		if ( result.getControlConfigs() != null ) {
-			cConfs = new ArrayList<>(result.getControlConfigs().size());
 			for ( var conf : result.getControlConfigs() ) {
 				var c = conf.toEntity(new UserLongIntegerCompositePK(userId, serverId, cCount++), date);
 				c.setModified(date);
 				serverControlDao.save(c);
-				cConfs.add(c);
 			}
 		}
 		// delete any indexes higher than the ones just saved
 		serverControlDao.deleteForMinimumIndex(new UserLongIntegerCompositePK(userId, serverId, cCount));
+
+		Collection<ServerMeasurementConfiguration> mConfs = serverMeasurementDao.findAll(userId,
+				serverId, null);
+		Collection<ServerControlConfiguration> cConfs = serverControlDao.findAll(userId, serverId, null);
 
 		return new ServerConfigurations(mConfs, cConfs);
 	}
