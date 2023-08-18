@@ -390,7 +390,7 @@ public final class WebServiceControllerSupport {
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
-		log.error("DataIntegrityViolationException in request {}: {}", requestDescription(request),
+		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
 				e.toString());
 		String msg;
 		String msgKey;
