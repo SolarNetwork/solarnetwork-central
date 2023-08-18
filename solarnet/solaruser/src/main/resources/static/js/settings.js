@@ -62,6 +62,35 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 };
 
 /**
+ * Get a settings form URL serializer function.
+ * 
+ * @param {Object} [options] an object with optional configuration properties
+ * @param {Function} [options.urlSerializer] an optional function to generate the submit URL; the `this` object will be the form;
+ * 											 will be passed the form action and body parameters; defaults to appending a `/{id}`
+ * 											 value where {id} is the value of the `id` form field, unless the form has a data
+ * 											 attribute `settings-id-query-param` in which case the ID will be added as a query
+ * 											 parameter using the given name
+ * @returns {Function} serializer function either from `options.urlSerializer` or the default implementation
+ */
+SolarReg.Settings.settingsFormUrlFunction = function settingsFormUrlFunction(options) {
+	return (options && typeof options.urlSerializer === 'function'
+		? options.urlSerializer
+		: function defaultEditServiceItemUrlSerializer(action, params) {
+			const form = this;
+			var result = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(action), params));
+			if ( form.elements['id'] && form.elements['id'].value ) {
+				if ( form.dataset.settingsIdQueryParam ) {
+					result += '?' + form.dataset.settingsIdQueryParam + '=';
+				} else {
+					result += '/';
+				}
+				result += encodeURIComponent(form.elements['id'].value)
+			}
+			return result;
+		});
+};
+
+/**
  * Handle the delete action for a modal edit service item form.
  *
  * This will use an ajax `DELETE` request to submit the service form. By default the form action
@@ -69,7 +98,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  * added and it will be dismissed. Use the modal's `hidden.bs.modal` event as a hook to perform
  * additional actions.
  *
- * If a `delete-query-param` data attribute is set on the event target, then the URL will use
+ * If a `settings-id-query-param` data attribute is set on the form element, then the URL will use
  * a query parameter of the given name to pass the ID value.
  *
  * @param {Event} event the event that triggered the delete action
@@ -79,25 +108,12 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  *                                           form field
  */
 SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDeleteAction(event, options) {
-	var deleteBtn = $(event.target).closest('.delete-config');
 	var modal = $(event.target).closest('.modal');
+	var form = modal.get(0);
 	var confirmEl = modal.find('.delete-confirm');
 	var submitBtn = modal.find('button[type=submit]');
-	var urlFn = (options && typeof options.urlSerializer === 'function'
-		? options.urlSerializer
-		: function defaultEditServiceItemDeleteUrlSerializer(action, form) {
-			if ( form.elements['id'] && form.elements['id'].value ) {
-				let result = action;
-				if ( deleteBtn.data('deleteQueryParam') ) {
-					result += '?' + deleteBtn.data('deleteQueryParam') + '=';
-				} else {
-					result += '/';
-				}
-				result += encodeURIComponent(form.elements['id'].value)
-				return result;
-			}
-			return action;
-		});
+	var body = SolarReg.Settings.encodeServiceItemForm(form);
+	var urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
 	if ( confirmEl && confirmEl.hasClass('hidden') ) {
 		// show confirm
 		confirmEl.removeClass('hidden');
@@ -109,7 +125,7 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 		modal.addClass('danger');
 	} else {
 		// perform delete
-		const deleteUrl = urlFn(modal.attr('action'), modal.get(0));
+		const deleteUrl = urlFn.call(form, form.action, body);
 		$.ajax({
 			type: 'DELETE',
 			url: deleteUrl,
@@ -279,7 +295,7 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 			obj = obj[components[j-1]];
 			component = components[j];
 		}
-		if ( name && obj && obj[component] ) {
+		if ( name && obj && obj[component] !== undefined ) {
 			val = Array.isArray(obj[component])
 				? SolarReg.arrayAsDelimitedString(obj[component])
 				: obj[component];
@@ -403,7 +419,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	SolarReg.Templates.populateServiceSelectOptions(services, 'select[name=serviceIdentifier]');
 	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-	if ( config && config.id ) {
+	if ( config && config.id !== undefined ) {
 		modal.find('button.delete-config').removeClass('hidden');
 	}
 };
@@ -610,17 +626,12 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 	event.preventDefault();
 	const form = event.target;
 	const modal = $(form);
-	const body = (typeof serializer === 'function'
+	var body = (typeof serializer === 'function'
 		? serializer(form)
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	const urlFn = (options && typeof options.urlSerializer === 'function'
-		? options.urlSerializer
-		: SolarReg.replaceTemplateParameters);
+	const urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
 	const urlId = (!!modal.data('settingsUrlId') || (options && options.urlId));
-	const action = (urlId && form.elements['id'] && form.elements['id'].value
-		? form.action + '/' + encodeURIComponent(form.elements['id'].value)
-		: form.action);
-	const submitUrl = encodeURI(urlFn(decodeURI(action), body));
+	const submitUrl = urlFn.call(form, form.action, body);
 	const origXhr = $.ajaxSettings.xhr;
 	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');
 	if ( urlId && form.elements['id'] && form.elements['id'].value && form.dataset.settingsUpdateMethod ) {

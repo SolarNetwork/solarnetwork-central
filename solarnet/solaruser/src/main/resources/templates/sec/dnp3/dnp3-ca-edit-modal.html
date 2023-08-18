@@ -10,7 +10,7 @@
 <body>
 <form id="dnp3-ca-edit-modal" class="edit-config dnp3" data-th-classappend="'modal fade'"
 		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/dnp3/trusted-issuer-certs}"
-		data-settings-url-id="true" data-system-type="ca">
+		data-settings-url-id="true" data-settings-id-query-param="subjectDn" data-system-type="ca" data-settings-query-param>
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -48,8 +48,7 @@
 		 		</p>
 		 	</div>
 		 	<div class="modal-footer">
-		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'"
-						data-delete-query-param="subjectDn">
+		 		<button type="button" class="btn btn-danger pull-left delete-config" data-th-classappend="'hidden'">
 		 			<span class="glyphicon glyphicon-trash"></span>
 		 			<span data-th-text="#{dnp3.ca.delete.label}">Delete</span>
 		 		</button>

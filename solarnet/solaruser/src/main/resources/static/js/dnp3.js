@@ -83,9 +83,17 @@ $(document).ready(function() {
 		 */
 		function modalEditFormHiddenCleanup() {
 			const systemType = this.dataset.systemType,
+					config = SolarReg.Templates.findContextItem(this);
 
-					/** @type {Dnp3System} */
-					sys = systems[systemType];
+			/** @type {Dnp3System} */
+			var sys;
+			
+			if ( systems[systemType] ) {
+				sys = systems[systemType];
+			} else if ( config && config.serverId ) {
+				sys = serverSystems.get(config.serverId);
+				sys = sys ? sys[systemType] : undefined;
+			}
 			if (!sys) {
 				return;
 			}
@@ -276,10 +284,7 @@ $(document).ready(function() {
 
 			// check if clicked on download CSV button
 			const action = target.closest('.action');
-			if (!action.length) {
-				return;
-			}
-			if (action.hasClass('csv-export')) {
+			if (action.length && action.hasClass('csv-export')) {
 				handleServerDataPointsExport(SolarReg.Templates.findContextItem(action));
 			} else {
 				SolarReg.Settings.handleEditServiceItemAction(event, [], []);
@@ -457,6 +462,35 @@ $(document).ready(function() {
 				modal.find('.upload').addClass('hidden');
 				updateProgressAmount(modal.find('.upload .progress-bar'), modal.find('.upload .progress-bar .amount'), 0);
 				SolarReg.Settings.resetEditServiceForm(this);
+			});
+			
+		function serverEditModalFormSubmit(event) {
+			const config = SolarReg.Templates.findContextItem(this);
+			const sys = serverSystems.get(config.serverId ? config.serverId : config.id);
+			const systemType = this.dataset.systemType;
+			return modalEditFormSubmit(event, function(configs, preserve) {
+				renderServerDetailConfigs(configs, sys[systemType], preserve);
+			});
+		}
+
+		/* ============================
+		   Server Measurements
+		   ============================ */
+
+		// ***** Server measurement edit
+		$('#dnp3-measurement-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
+			.on('submit', serverEditModalFormSubmit)
+			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+			.find('button.toggle').each(function() {
+				SolarReg.Settings.setupSettingToggleButton($(this), false);
+			});
+
+		// ***** Server control edit
+		$('#dnp3-control-edit-modal').on('show.bs.modal', modalEditFormShowSetup)
+			.on('submit', serverEditModalFormSubmit)
+			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+			.find('button.toggle').each(function() {
+				SolarReg.Settings.setupSettingToggleButton($(this), false);
 			});
 
 		/* ============================

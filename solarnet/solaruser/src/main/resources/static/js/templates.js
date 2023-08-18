@@ -48,7 +48,7 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
 	return container.children().filter(function(i, e) {
 		var ctx = $(e).data('context-item');
 		// note the loose == here, to handle numbers that might be handed in as strings from form elements
-		return (ctx && ctx.id && ctx.id == itemId);
+		return (ctx && ctx.id !== undefined && ctx.id == itemId);
 	}).first();
 };
 
@@ -78,12 +78,16 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * @see #appendTemplateItem
  */
 SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback, prefix) {
-	var itemTemplate = container.find('.template')
-		.not('.service-props-template .template') // ignore service prop templates that might be in container
-		.not('.template .template');              // ignore nested templates 
 	var itemContainer = container.find('.list-container')
 		.not('.template .list-container')
 		.first();
+	var itemTemplate = container.find('.template')
+		.not(function(idx, el) {
+			// ignore templates already in the destination container
+			return itemContainer.length > 0 && $.contains(itemContainer[0], el);
+		})
+		.not('.service-props-template .template') // ignore service prop templates that might be in container
+		.not('.template .template');              // ignore nested templates 
 	if ( itemContainer.length < 1 ) {
 		// .list-container not found; use parent as container, and clear siblings following template if !preserve
 		itemContainer = itemTemplate.parent();
@@ -96,7 +100,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 	}
 	items.forEach(item => {
 		var el;
-		if ( preserve && item._contextItem && item._contextItem.id ) {
+		if ( preserve && item._contextItem && item._contextItem.id !== undefined ) {
 			// look for existing row to update, rather than append
 			el = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}

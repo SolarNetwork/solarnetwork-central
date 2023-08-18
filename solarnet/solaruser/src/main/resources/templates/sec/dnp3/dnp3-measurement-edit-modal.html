@@ -8,7 +8,7 @@
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
-<form id="dnp3-measurements-edit-modal" class="edit-config dnp3" data-th-classappend="'modal fade'"
+<form id="dnp3-measurement-edit-modal" class="edit-config dnp3" data-th-classappend="'modal fade'"
 		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/dnp3/servers/{serverId}/measurements}"
 		data-settings-url-id="true" data-settings-update-method="put" data-system-type="meas">
 	<div class="modal-dialog" role="document">
@@ -116,6 +116,7 @@
 		 </div>
  	</div>
 	<input type="hidden" name="id">
+	<input type="hidden" name="serverId">
 </form>
 </body>
 </html>
