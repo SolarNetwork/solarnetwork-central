@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DNP3 Measurement Type</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<select data-th-fragment="content">
+	<option value="AnalogInput" data-th-text="#{dnp3.measurementType.AnalogInput}">Analog input</option>
+	<option value="AnalogOutputStatus" data-th-text="#{dnp3.measurementType.AnalogOutputStatus}">Analog output status</option>
+	<option value="BinaryInput" data-th-text="#{dnp3.measurementType.BinaryInput}">Binary input</option>
+	<option value="BinaryOutputStatus" data-th-text="#{dnp3.measurementType.BinaryOutputStatus}">Binary output status</option>
+	<option value="Counter" data-th-text="#{dnp3.measurementType.Counter}">Counter</option>
+	<option value="DoubleBitBinaryInput" data-th-text="#{dnp3.measurementType.DoubleBitBinaryInput}">Double bit binary input</option>
+	<option value="FrozenCounter" data-th-text="#{dnp3.measurementType.FrozenCounter}">Frozen counter</option>
+</select>
+</body>
+</html>

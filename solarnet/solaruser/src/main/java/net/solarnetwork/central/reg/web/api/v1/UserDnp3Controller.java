@@ -60,6 +60,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -81,6 +82,7 @@ import net.solarnetwork.central.user.dnp3.domain.ServerConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerConfigurations;
 import net.solarnetwork.central.user.dnp3.domain.ServerControlConfigurationInput;
 import net.solarnetwork.central.user.dnp3.domain.ServerMeasurementConfigurationInput;
+import net.solarnetwork.central.user.dnp3.domain.TrustedIssuerCertificateInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
@@ -169,6 +171,56 @@ public class UserDnp3Controller {
 			final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		return success(userDnp3Biz().trustedIssuerCertificatesForUser(userId, criteria));
+	}
+
+	/**
+	 * Delete trusted issuer certificate for the current user.
+	 * 
+	 * @param identifier
+	 *        the certificate identifier (subject DN) to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/trusted-issuer-certs/{identifier}")
+	public Result<Void> deleteTrustedIssuerCertificate(@PathVariable("identifier") String identifier) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().deleteTrustedIssuerCertificate(userId, identifier);
+		return success();
+	}
+
+	/**
+	 * Delete trusted issuer certificate for the current user.
+	 * 
+	 * @param identifier
+	 *        the certificate identifier (subject DN) to delete
+	 * @return the result
+	 */
+	@RequestMapping(method = DELETE, value = "/trusted-issuer-certs")
+	public Result<Void> deleteTrustedIssuerCertificateAlt(@RequestParam("subjectDn") String identifier) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userDnp3Biz().deleteTrustedIssuerCertificate(userId, identifier);
+		return success();
+	}
+
+	/**
+	 * Update the enabled status of trusted issuer certificate for the current
+	 * user.
+	 * 
+	 * @param input
+	 *        the input
+	 * @return the updated certificate configuration
+	 */
+	@RequestMapping(method = POST, value = "/trusted-issuer-certs", consumes = APPLICATION_JSON_VALUE)
+	public Result<TrustedIssuerCertificate> updateTrustedIssuerCertificateEnabledStatus(
+			@Valid @RequestBody TrustedIssuerCertificateInput input) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final String subjectDn = input.getSubjectDn();
+		BasicFilter criteria = new BasicFilter();
+		criteria.setSubjectDn(subjectDn);
+		userDnp3Biz().updateTrustedIssuerCertificateEnabledStatus(userId, criteria, input.isEnabled());
+		TrustedIssuerCertificate result = stream(
+				userDnp3Biz().trustedIssuerCertificatesForUser(userId, criteria).spliterator(), false)
+						.findFirst().orElse(null);
+		return success(result);
 	}
 
 	/**
@@ -310,9 +362,9 @@ public class UserDnp3Controller {
 	 *        the identifier to fetch
 	 * @return the configuration
 	 */
-	@RequestMapping(method = GET, value = "/servers/{serverId}/auths/{identifier}")
+	@RequestMapping(method = GET, value = "/servers/{serverId}/auths")
 	public Result<ServerAuthConfiguration> getServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier) {
+			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
@@ -334,13 +386,12 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/servers/{serverId}/auths/{identifier}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/{serverId}/auths", consumes = APPLICATION_JSON_VALUE)
 	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier,
 			@Valid @RequestBody ServerAuthConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId, identifier,
-				input);
+		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId,
+				input.getIdentifier(), input);
 		return success(result);
 	}
 
@@ -353,9 +404,9 @@ public class UserDnp3Controller {
 	 *        the identifier to fetch
 	 * @return the result
 	 */
-	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths/{identifier}")
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths")
 	public Result<Void> deleteServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier) {
+			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServerAuth(userId, serverId, identifier);
 		return success();

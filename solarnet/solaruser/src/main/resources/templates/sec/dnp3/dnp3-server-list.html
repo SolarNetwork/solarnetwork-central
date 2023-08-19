@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DNP3 Servers</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="dnp3-servers" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{dnp3.servers.header}">Servers</span>
+		<button type="button" id="dnp3-server-add-button" class="btn btn-primary pull-right" data-th-title="#{dnp3.servers.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{dnp3.servers.intro(0)}">
+		Your Servers are shown here. Use the + button to add new servers.
+	</p>
+
+	<div id="dnp3-servers-container" data-th-classappend="hidden">
+		<div class="panel panel-default" data-th-classappend="template">
+			<div class="panel-heading template-target" role="tab" id="server-heading-0">
+				<h4 class="panel-title">
+					<button class="btn btn-link pull-right action csv-import action-link" data-action-modal="#dnp3-server-data-points-import-modal" data-th-title="#{dnp3.server.csv.import.action}">
+						<i class="glyphicon glyphicon-open" aria-hidden="true"></i>
+					</button>
+					<button class="btn btn-link pull-right action csv-export" data-th-title="#{dnp3.server.csv.export.action}">
+						<i class="glyphicon glyphicon-save" aria-hidden="true"></i>
+					</button>
+					<button class="btn btn-link pull-right action edit edit-link" data-edit-modal="#dnp3-server-edit-modal" data-th-title="#{dnp3.server.edit.action}">
+						<i class="glyphicon glyphicon-edit" aria-hidden="true"></i>
+					</button>
+					<span class="label label-success pull-right" data-th-class="|label pull-right|" data-tprop="enabled"
+							data-th-data-true-text="#{settings.enabled.label}"
+							data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+					<a role="button" data-tprop="name" data-toggle="collapse" data-parent="#dnp3-servers-accordian" href="#server-body-0" aria-expanded="true" aria-controls="server-body-0">
+						<!--/*-->
+						Test Server
+						<!--*/-->
+					</a>
+				</h4>
+			</div>
+			<div id="server-body-0" class="panel-collapse collapse" role="tabpanel" aria-labelledby="server-heading-0">
+				<div class="panel-body">
+					<div class="loading">
+					   <div class="progress">
+						   <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+							   <span class="amount">0</span>%
+						   </div>
+					   </div>
+				   </div>
+
+				   <div class="row section server-auths show-empty">
+						<label class="col-sm-3 talign" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
+						<div class="col-sm-9">
+							<table class="table">
+								<thead data-th-classappend="hidden">
+									<tr>
+										<th data-th-tetx="#{dnp3.auth.identifier.label}">Identity</th>
+										<th data-th-text="#{dnp3.auth.name.label}">Name</th>
+										<th data-th-text="#{dnp3.auth.enabled.label}">Enabled</th>
+									</tr>
+									<tr data-th-class="template">
+										<td><a href="#" class="edit-link" data-tprop="auth-identifier" data-edit-modal="#dnp3-auth-edit-modal"></a></td>
+										<td data-tprop="auth-name"></td>
+										<td>
+											<span class="label label-success" data-th-class="label" data-tprop="auth-enabled"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								</thead>
+								<tbody class="list-container show-empty">
+								<!--/*-->
+									<tr>
+										<td><a href="#" class="edit-link">CN=System 2,OU=DNP3 Integration,O=Example Org,C=NZ</a></td>
+										<td>Test User</td>
+										<td>
+											<span class="label label-success" data-th-class="label"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								<!--*/-->
+								</tbody>
+							</table>
+							<div>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-auth-edit-modal"
+										data-th-title="#{dnp3.auths.add}"><i class="glyphicon glyphicon-plus"></i></button>
+							</div>
+						</div>
+					</div>
+
+					<div class="row section server-measurements show-empty">
+						<label class="col-sm-3 talign" data-th-text="#{dnp3.measurements.header}">Measurements</label>
+						<div class="col-sm-9">
+							<table class="table">
+								<thead data-th-classappend="hidden">
+									<tr>
+										<th data-th-tetx="#{dnp3.measurement.index.label}">#</th>
+										<th data-th-text="#{dnp3.measurement.nodeId.label}">Node ID</th>
+										<th data-th-text="#{dnp3.measurement.sourceId.label}">Source ID</th>
+										<th data-th-text="#{dnp3.measurement.property.label}">Property</th>
+										<th data-th-text="#{dnp3.measurement.type.label}">Type</th>
+										<th data-th-text="#{dnp3.measurement.multiplier.label}">Multiplier</th>
+										<th data-th-text="#{dnp3.measurement.offset.label}">Offset</th>
+										<th data-th-text="#{dnp3.measurement.scale.label}">Scale</th>
+										<th data-th-text="#{dnp3.measurement.enabled.label}">Enabled</th>
+									</tr>
+									<tr data-th-class="template">
+										<td><a href="#" class="edit-link" data-tprop="meas-id" data-edit-modal="#dnp3-measurement-edit-modal"></a></td>
+										<td data-tprop="meas-nodeId"></td>
+										<td data-tprop="meas-sourceId"></td>
+										<td data-tprop="meas-property"></td>
+										<td data-tprop="meas-type"></td>
+										<td data-tprop="meas-multiplier"></td>
+										<td data-tprop="meas-offset"></td>
+										<td data-tprop="meas-scale"></td>
+										<td>
+											<span class="label label-success" data-th-class="label" data-tprop="meas-enabled"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								</thead>
+								<tbody class="list-container show-empty">
+								<!--/*-->
+									<tr>
+										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-measurement-edit-modal">2</a></td>
+										<td>123</td>
+										<td>inverter/2</td>
+										<td>watts</td>
+										<td>AnalogInput</td>
+										<td>0.001</td>
+										<td></td>
+										<td>3</td>
+										<td>
+											<span class="label label-success" data-th-class="label"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								<!--*/-->
+								</tbody>
+							</table>
+							<div>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-measurement-edit-modal"
+										data-th-title="#{dnp3.measurements.add}"><i class="glyphicon glyphicon-plus"></i></button>
+							</div>
+						</div>
+					</div>
+
+					<div class="row section server-controls show-empty">
+						<label class="col-sm-3 talign" data-th-text="#{dnp3.controls.header}">Controls</label>
+						<div class="col-sm-9">
+							<table class="table">
+								<thead data-th-classappend="hidden">
+									<tr>
+										<th data-th-text="#{dnp3.control.index.label}">#</th>
+										<th data-th-text="#{dnp3.control.nodeId.label}">Node ID</th>
+										<th data-th-text="#{dnp3.control.controlId.label}">Control ID</th>
+										<th data-th-text="#{dnp3.control.property.label}">Property</th>
+										<th data-th-text="#{dnp3.control.type.label}">Type</th>
+										<th data-th-text="#{dnp3.control.multiplier.label}">Multiplier</th>
+										<th data-th-text="#{dnp3.control.offset.label}">Offset</th>
+										<th data-th-text="#{dnp3.control.scale.label}">Scale</th>
+										<th data-th-text="#{dnp3.control.enabled.label}">Enabled</th>
+									</tr>
+									<tr data-th-class="template">
+										<td><a href="#" class="edit-link" data-tprop="ctrl-id" data-edit-modal="#dnp3-control-edit-modal"></a></td>
+										<td data-tprop="ctrl-nodeId"></td>
+										<td data-tprop="ctrl-controlId"></td>
+										<td data-tprop="ctrl-property"></td>
+										<td data-tprop="ctrl-type"></td>
+										<td data-tprop="ctrl-multiplier"></td>
+										<td data-tprop="ctrl-offset"></td>
+										<td data-tprop="ctrl-scale"></td>
+										<td>
+											<span class="label label-success" data-th-class="label" data-tprop="ctrl-enabled"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								</thead>
+								<tbody class="list-container show-empty">
+								<!--/*-->
+									<tr>
+										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-control-edit-modal">2</a></td>
+										<td>setpoint/1</td>
+										<td></td>
+										<td>Analog</td>
+										<td></td>
+										<td></td>
+										<td></td>
+										<td>
+											<span class="label label-success" data-th-class="label"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								<!--*/-->
+								</tbody>
+							</table>
+							<div>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#dnp3-control-edit-modal"
+										data-th-title="#{dnp3.controls.add}"><i class="glyphicon glyphicon-plus"></i></button>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<div id="dnp3-servers-accordian" class="panel-group list-container" role="tablist" aria-multiselectable="true">
+		</div>
+	</div>
+</section>
+</body>
+</html>

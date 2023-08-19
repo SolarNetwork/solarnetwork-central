@@ -21,11 +21,11 @@
 		 			<span class="update" data-th-utext="#{import.job.update.intro}">Update your settings here.</span>
 		 		</p>
 		 		<div class="form-group">
-		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.name.label}">	
+		 			<label class="col-sm-3 control-label" data-th-text="#{import.job.name.label}">
 		 				Name
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<input type="text" class="form-control" name="name" 
+		 				<input type="text" class="form-control" name="name"
 		 					data-th-placeholder="#{import.job.name.placeholder}"
 		 					maxlength="64" required>
 			 		</div>
@@ -36,7 +36,7 @@
 		 			</label>
 		 			<div class="col-sm-8">
 		 				<input type="file" class="form-control" name="data" required>
-		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.file.caption}">The file can be compressed.</span>
+		 				<span class="help-block" data-th-utext="#{import.job.file.caption}">The file can be compressed.</span>
 			 		</div>
 		 		</div>
 		 		<div class="form-group">
@@ -44,10 +44,10 @@
 		 				Time zone
 		 			</label>
 		 			<div class="col-sm-8">
-		 				<input type="text" class="form-control" name="timeZoneId" 
+		 				<input type="text" class="form-control" name="timeZoneId"
 		 					data-th-placeholder="#{import.job.timeZoneId.placeholder}"
 		 					maxlength="64">
-		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.timeZoneId.caption}">Only needed if the data does not specify a time zone.</span>
+		 				<span class="help-block" data-th-utext="#{import.job.timeZoneId.caption}">Only needed if the data does not specify a time zone.</span>
 			 		</div>
 		 		</div>
 		 		<div class="form-group">
@@ -57,7 +57,7 @@
 		 			<div class="col-sm-8">
 		 				<input type="number" class="form-control" name="batchSize" min="0" value="10000"
 		 					data-th-placeholder="#{import.job.batchSize.placeholder}">
-		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.batchSize.caption}">Smaller batch sizes generally process faster.</span>
+		 				<span class="help-block" data-th-utext="#{import.job.batchSize.caption}">Smaller batch sizes generally process faster.</span>
 			 		</div>
 		 		</div>
 		 		<div class="form-group">
@@ -67,7 +67,7 @@
 		 			<div class="col-sm-8">
 		 				<select class="form-control" name="serviceIdentifier" required>
 		 				</select>
-		 				<span id="helpBlock" class="help-block" data-th-utext="#{import.job.inputConfig.type.caption}">See the wiki for help.</span>
+		 				<span class="help-block" data-th-utext="#{import.job.inputConfig.type.caption}">See the wiki for help.</span>
 		 			</div>
 		 		</div>
 		 	</div>

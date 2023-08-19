@@ -38,6 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
@@ -210,6 +211,12 @@ public class DaoUserDnp3BizTests {
 		});
 		given(serverControlDao.deleteForMinimumIndex(minIndex)).willReturn(4);
 
+		Collection<ServerMeasurementConfiguration> measurements = new ArrayList<>();
+		given(serverMeasurementDao.findAll(userId, serverId, null)).willReturn(measurements);
+
+		Collection<ServerControlConfiguration> controls = new ArrayList<>();
+		given(serverControlDao.findAll(userId, serverId, null)).willReturn(controls);
+
 		// WHEN
 		ServerConfigurations result = service.importServerConfigurationsCsv(userId, serverId,
 				csvResource("server-confs-example-01.csv"), Locale.getDefault());
@@ -218,21 +225,25 @@ public class DaoUserDnp3BizTests {
 		then(result).as("Result returned").isNotNull();
 		verify(serverMeasurementDao, times(2)).save(measurementConfigurationsCaptor.capture());
 
-		then(result.measurementConfigs()).as("Measurement configurations persited and returned")
-				.hasSameElementsAs(measurementConfigurationsCaptor.getAllValues());
+		then(result.measurementConfigs()).as("Measurement configurations returned from query")
+				.isSameAs(measurements);
 
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getUserId)
+		then(measurementConfigurationsCaptor.getAllValues())
+				.extracting(ServerMeasurementConfiguration::getUserId)
 				.as("All entities have user ID from argument").allMatch(userId::equals);
-		then(result.measurementConfigs()).extracting(ServerMeasurementConfiguration::getServerId)
+		then(measurementConfigurationsCaptor.getAllValues())
+				.extracting(ServerMeasurementConfiguration::getServerId)
 				.as("All entities have server ID from argument").allMatch(serverId::equals);
 
 		verify(serverControlDao, times(2)).save(controlConfigurationsCaptor.capture());
 		then(result.controlConfigs()).as("Control configurations persited and returned")
-				.hasSameElementsAs(controlConfigurationsCaptor.getAllValues());
+				.isSameAs(controls);
 
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getUserId)
+		then(controlConfigurationsCaptor.getAllValues())
+				.extracting(ServerControlConfiguration::getUserId)
 				.as("All entities have user ID from argument").allMatch(userId::equals);
-		then(result.controlConfigs()).extracting(ServerControlConfiguration::getServerId)
+		then(controlConfigurationsCaptor.getAllValues())
+				.extracting(ServerControlConfiguration::getServerId)
 				.as("All entities have server ID from argument").allMatch(serverId::equals);
 	}
 
