@@ -25,7 +25,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 			var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
 			if ( existing.length > 0 ) {
 				existing.remove();
-				if ( container.children().length < 1 ) {
+				if ( container.children().length < 1 && !container.hasClass('show-empty') ) {
 					// empty container; hide it
 					SolarReg.Templates.findConfigurationContainer(container).addClass('hidden');
 				}
@@ -80,7 +80,7 @@ SolarReg.Settings.settingsFormUrlFunction = function settingsFormUrlFunction(opt
 		: function defaultEditServiceItemUrlSerializer(action, params) {
 			const form = this;
 			var result = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(action), params));
-			var idVal = (form.elements['id'] ? form.elements['id'].value : undefined);
+			var idVal = (form.elements['id'] ? form.elements['id'].value : '');
 			if ( (idVal === undefined || idVal === '') && form.dataset.settingsUrlIdCreateProperty 
 					&& form.elements[form.dataset.settingsUrlIdCreateProperty] ) {
 				idVal = form.elements[form.dataset.settingsUrlIdCreateProperty].value;

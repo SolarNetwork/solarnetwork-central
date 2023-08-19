@@ -53,15 +53,39 @@
 				   </div>
 
 				   <div class="row section server-auths show-empty">
-						<label class="col-sm-3" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
+						<label class="col-sm-3 talign" data-th-text="#{dnp3.auths.header}">Authorized Identities</label>
 						<div class="col-sm-9">
-							<p class="template"><a href="#" class="edit-link" data-tprop="auth-id" data-edit-modal="#dnp3-auth-edit-modal"></a></p>
-							<div class="list-container">
+							<table class="table">
+								<thead data-th-classappend="hidden">
+									<tr>
+										<th data-th-tetx="#{dnp3.auth.identifier.label}">Identity</th>
+										<th data-th-text="#{dnp3.auth.name.label}">Name</th>
+										<th data-th-text="#{dnp3.auth.enabled.label}">Enabled</th>
+									</tr>
+									<tr data-th-class="template">
+										<td><a href="#" class="edit-link" data-tprop="auth-identifier" data-edit-modal="#dnp3-auth-edit-modal"></a></td>
+										<td data-tprop="auth-name"></td>
+										<td>
+											<span class="label label-success" data-th-class="label" data-tprop="auth-enabled"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								</thead>
+								<tbody class="list-container show-empty">
 								<!--/*-->
-								<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 2,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
-								<p><a href="#" class="edit-link" data-edit-modal="#dnp3-auth-edit-modal">CN=System 3,OU=DNP3 Integration,O=Example Org,C=NZ</a></p>
+									<tr>
+										<td><a href="#" class="edit-link">CN=System 2,OU=DNP3 Integration,O=Example Org,C=NZ</a></td>
+										<td>Test User</td>
+										<td>
+											<span class="label label-success" data-th-class="label"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
 								<!--*/-->
-							</div>
+								</tbody>
+							</table>
 							<div>
 								<button class="btn btn-sm btn-default add-entity"
 										data-edit-modal="#dnp3-auth-edit-modal"
@@ -102,7 +126,7 @@
 										</td>
 									</tr>
 								</thead>
-								<tbody class="list-container">
+								<tbody class="list-container show-empty">
 								<!--/*-->
 									<tr>
 										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-measurement-edit-modal">2</a></td>
@@ -162,7 +186,7 @@
 										</td>
 									</tr>
 								</thead>
-								<tbody class="list-container">
+								<tbody class="list-container show-empty">
 								<!--/*-->
 									<tr>
 										<td><a href="#" class="edit-link" data-edit-modal="#dnp3-control-edit-modal">2</a></td>

@@ -40,6 +40,11 @@ public class ServerAuthConfigurationInput
 
 	@NotNull
 	@NotBlank
+	@Size(max = 512)
+	private String identifier;
+
+	@NotNull
+	@NotBlank
 	@Size(max = 64)
 	private String name;
 
@@ -54,6 +59,25 @@ public class ServerAuthConfigurationInput
 	protected void populateConfiguration(ServerAuthConfiguration conf) {
 		super.populateConfiguration(conf);
 		conf.setName(name);
+	}
+
+	/**
+	 * Get the identifier.
+	 * 
+	 * @return the identifier
+	 */
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	/**
+	 * Set the identifier.
+	 * 
+	 * @param identifier
+	 *        the identifier to set
+	 */
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	/**

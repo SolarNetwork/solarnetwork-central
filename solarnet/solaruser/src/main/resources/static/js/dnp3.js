@@ -487,22 +487,29 @@ $(document).ready(function() {
 			/** @type {Dnp3System} */
 			const sys = serverSys[systemType];
 			
-			// the index field is read-only when editing existing item, write when adding new item
-			if ( config.index !== undefined ) {
-				form.elements['index'].readonly = true;
+			var idProperty = undefined;
+			if ( systemType === 'auth' ) {
+				idProperty = 'identifier';
 			} else {
-				form.elements['index'].readonly = false;
-				
-				// default new index to highest existing index + 1
-				var newIndex = -1;
-				if ( sys ) {
-					sys.configs.forEach(function (e) {
-						if ( e.index > newIndex ) {
-							newIndex = e.index;
-						}
-					});
-					newIndex += 1;
-					form.elements['index'].value = newIndex;
+				idProperty = 'index';
+			}
+			// the id property field is read-only when editing existing item, write when adding new item
+			if ( config[idProperty] !== undefined ) {
+				$(form.elements[idProperty]).prop('readonly', true);
+			} else {
+				$(form.elements[idProperty]).prop('readonly', false);
+				if ( idProperty === 'index' ) {				
+					// default new index to highest existing index + 1
+					var newIndex = -1;
+					if ( sys ) {
+						sys.configs.forEach(function (e) {
+							if ( e.index > newIndex ) {
+								newIndex = e.index;
+							}
+						});
+						newIndex += 1;
+						form.elements['index'].value = newIndex;
+					}
 				}
 			}
 
@@ -521,6 +528,14 @@ $(document).ready(function() {
 		/* ============================
 		   Server Measurements
 		   ============================ */
+
+		// ***** Server auth edit
+		$('#dnp3-auth-edit-modal').on('show.bs.modal', serverModalEditFormShowSetup)
+			.on('submit', serverEditModalFormSubmit)
+			.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+			.find('button.toggle').each(function() {
+				SolarReg.Settings.setupSettingToggleButton($(this), false);
+			});
 
 		// ***** Server measurement edit
 		$('#dnp3-measurement-edit-modal').on('show.bs.modal', serverModalEditFormShowSetup)

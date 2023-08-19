@@ -362,9 +362,9 @@ public class UserDnp3Controller {
 	 *        the identifier to fetch
 	 * @return the configuration
 	 */
-	@RequestMapping(method = GET, value = "/servers/{serverId}/auths/{identifier}")
+	@RequestMapping(method = GET, value = "/servers/{serverId}/auths")
 	public Result<ServerAuthConfiguration> getServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier) {
+			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final BasicFilter filter = new BasicFilter();
 		filter.setServerId(serverId);
@@ -386,13 +386,12 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/servers/{serverId}/auths/{identifier}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/{serverId}/auths", consumes = APPLICATION_JSON_VALUE)
 	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier,
 			@Valid @RequestBody ServerAuthConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId, identifier,
-				input);
+		ServerAuthConfiguration result = userDnp3Biz().saveServerAuth(userId, serverId,
+				input.getIdentifier(), input);
 		return success(result);
 	}
 
@@ -405,9 +404,9 @@ public class UserDnp3Controller {
 	 *        the identifier to fetch
 	 * @return the result
 	 */
-	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths/{identifier}")
+	@RequestMapping(method = DELETE, value = "/servers/{serverId}/auths")
 	public Result<Void> deleteServerAuth(@PathVariable("serverId") Long serverId,
-			@PathVariable("identifier") String identifier) {
+			@RequestParam("identifier") String identifier) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userDnp3Biz.deleteServerAuth(userId, serverId, identifier);
 		return success();
