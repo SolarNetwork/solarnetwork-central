@@ -1,5 +1,5 @@
 /* ==================================================================
- * ServerAuthConfigurationInput.java - 8/08/2023 5:48:28 am
+ * TrustedIssuerCertificateInput.java - 18/08/2023 2:58:32 pm
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -26,77 +26,52 @@ import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
-import net.solarnetwork.central.domain.UserLongStringCompositePK;
+import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 
 /**
- * DTO for DNP3 server auth configuration.
+ * DTO for DNP3 trusted issuer certificate configuration.
  * 
  * @author matt
  * @version 1.0
  */
-public class ServerAuthConfigurationInput
-		extends BaseDnp3ConfigurationInput<ServerAuthConfiguration, UserLongStringCompositePK> {
+public class TrustedIssuerCertificateInput
+		extends BaseDnp3ConfigurationInput<TrustedIssuerCertificate, UserStringCompositePK> {
 
 	@NotNull
 	@NotBlank
 	@Size(max = 512)
-	private String identifier;
-
-	@NotNull
-	@NotBlank
-	@Size(max = 64)
-	private String name;
+	private String subjectDn;
 
 	@Override
-	public ServerAuthConfiguration toEntity(UserLongStringCompositePK id, Instant date) {
-		ServerAuthConfiguration conf = new ServerAuthConfiguration(id, date);
+	public TrustedIssuerCertificate toEntity(UserStringCompositePK id, Instant date) {
+		TrustedIssuerCertificate conf = new TrustedIssuerCertificate(id, date);
 		populateConfiguration(conf);
 		return conf;
 	}
 
 	@Override
-	protected void populateConfiguration(ServerAuthConfiguration conf) {
+	protected void populateConfiguration(TrustedIssuerCertificate conf) {
 		super.populateConfiguration(conf);
-		conf.setName(name);
 	}
 
 	/**
-	 * Get the identifier.
+	 * Get the subject distinguished name.
 	 * 
-	 * @return the identifier
+	 * @return the subject distinguished name
 	 */
-	public String getIdentifier() {
-		return identifier;
+	public String getSubjectDn() {
+		return subjectDn;
 	}
 
 	/**
-	 * Set the identifier.
+	 * Set the identifier
 	 * 
-	 * @param identifier
-	 *        the identifier to set
+	 * @param subjectDn
+	 *        the subject distinguished name to set
 	 */
-	public void setIdentifier(String identifier) {
-		this.identifier = identifier;
-	}
-
-	/**
-	 * Get the name.
-	 * 
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Set the name
-	 * 
-	 * @param name
-	 *        the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
+	public void setSubjectDn(String subjectDn) {
+		this.subjectDn = subjectDn;
 	}
 
 }

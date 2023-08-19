@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DNP3 Trusted Issuer Certificates</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="dnp3-cas" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{dnp3.cas.header}">Trusted Issuer Certificates</span>
+		<button type="button" id="dnp3-ca-add-button" class="btn btn-primary pull-right" data-th-title="#{dnp3.cas.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{dnp3.cas.intro(0)}">
+		Your Trusted Issuer Certificates are shown here. Use the + button to add new certificates.
+	</p>
+	<table id="dnp3-cas-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{dnp3.ca.subjectDn.label}">Identifier</th>
+				<th data-th-text="#{dnp3.ca.expires.label}">Expires</th>
+				<th data-th-text="#{dnp3.ca.enabled.label}">Enabled</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#dnp3-ca-edit-modal"></a></td>
+				<td data-tprop="expiresDisplay"></td>
+				<td>
+					<span class="label" data-tprop="enabled"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</body>
+</html>

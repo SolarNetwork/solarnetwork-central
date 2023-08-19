@@ -48,7 +48,7 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
 	return container.children().filter(function(i, e) {
 		var ctx = $(e).data('context-item');
 		// note the loose == here, to handle numbers that might be handed in as strings from form elements
-		return (ctx && ctx.id && ctx.id == itemId);
+		return (ctx && ctx.id !== undefined && ctx.id == itemId);
 	}).first();
 };
 
@@ -62,6 +62,13 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * If `preserve` is `false`, then if `.list-container` is found its children will be
  * removed else the siblings following `.template` will be removed.
  * 
+ * If the template has any elements with the class `template-target` then template
+ * property replacement will be restricted to those elements. Otherwise template
+ * properties within the entire template element are replaced.
+ * 
+ * The container will have the `hidden` class toggled based on the emptiness of items,
+ * unless it has a `show-empty` class.
+ * 
  * @param {jQuery} container the container that holds the template item
  * @param {Array} items  the array of parameter objects to populate into cloned templates
  * @param {boolean} preserve `true` to only append items, do not clear out any existing items
@@ -71,12 +78,16 @@ SolarReg.Templates.findExistingTemplateItem = function findExistingTemplateItem(
  * @see #appendTemplateItem
  */
 SolarReg.Templates.populateTemplateItems = function populateTemplateItems(container, items, preserve, callback, prefix) {
-	var itemTemplate = container.find('.template')
-		.not('.service-props-template .template') // ignore service prop templates that might be in container
-		.not('.template .template');              // ignore nested templates 
 	var itemContainer = container.find('.list-container')
 		.not('.template .list-container')
 		.first();
+	var itemTemplate = container.find('.template')
+		.not(function(idx, el) {
+			// ignore templates already in the destination container
+			return itemContainer.length > 0 && $.contains(itemContainer[0], el);
+		})
+		.not('.service-props-template .template') // ignore service prop templates that might be in container
+		.not('.template .template');              // ignore nested templates 
 	if ( itemContainer.length < 1 ) {
 		// .list-container not found; use parent as container, and clear siblings following template if !preserve
 		itemContainer = itemTemplate.parent();
@@ -89,14 +100,17 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 	}
 	items.forEach(item => {
 		var el;
-		if ( preserve && item._contextItem && item._contextItem.id ) {
+		if ( preserve && item._contextItem && item._contextItem.id !== undefined ) {
 			// look for existing row to update, rather than append
 			el = SolarReg.Templates.findExistingTemplateItem(itemContainer, item._contextItem.id);
 		}
 		if ( el && el.length > 0 ) {
+			let tel = el.find('.template-target').not('.template .template-target');
+			let targetEl = (tel.length ? tel : el);
+	
 			// clear any existing props in case values have been deleted
-			el.find('[data-tprop]').text('');
-			el.find('[data-tattr]').each(function() {
+			targetEl.find('[data-tprop]').text('');
+			targetEl.find('[data-tattr]').each(function() {
 				let attrName = this.dataset.tattr;
 				let splitIdx = attrName.indexOf('@');
 				if ( splitIdx ) {
@@ -105,7 +119,7 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 				}
 			});
 
-			SolarReg.Templates.replaceTemplateProperties(el, item, prefix);
+			SolarReg.Templates.replaceTemplateProperties(targetEl, item, prefix);
 			SolarReg.Templates.setContextItem(el, item._contextItem);
 		} else {
 			el = SolarReg.Templates.appendTemplateItem(itemContainer, itemTemplate, item, prefix);
@@ -119,7 +133,9 @@ SolarReg.Templates.populateTemplateItems = function populateTemplateItems(contai
 	container.find('dl.details-container > dd:empty').prev('dt').addBack().addClass('hidden');
 	container.find('dl.details-container > dd:not(:empty)').prev('dt').addBack().removeClass('hidden');
 	
-	container.toggleClass('hidden', items.length < 1);
+	if ( !container.hasClass('show-empty') ) {
+		container.toggleClass('hidden', items.length < 1);	
+	}
 };
 
 /**
@@ -275,6 +291,10 @@ SolarReg.Templates.replaceTemplateProperties = function replaceTemplatePropertie
 /**
 * Clone a template element, replace template parameters in the clone, and append
 * the clone to a container element.
+*
+* If the template has any elements with the class `template-target` then template
+* property replacement will be restricted to those elements. Otherwise template
+* properties within the entire template element are replaced.
 * 
 * The special `_contextItem` parameter value, if provided, will be stored on 
 * the cloned element as a data attribute named `context-item`.
@@ -293,7 +313,9 @@ SolarReg.Templates.appendTemplateItem = function appendTemplateItem(container, t
    if ( item._contextItem ) {
 	   SolarReg.Templates.setContextItem(newItem, item._contextItem);
    }
-   SolarReg.Templates.replaceTemplateProperties(newItem, item, prefix).appendTo(container);
+   var targetItem = newItem.find('.template-target').not('.template .template-target');
+   SolarReg.Templates.replaceTemplateProperties(targetItem.length ? targetItem : newItem, item, prefix);
+   newItem.appendTo(container);
    newItem.find('a.edit-link').on('click', function(event) {
 	   // don't handle this directly; assume will propagate and get handled at container level
 	   event.preventDefault();

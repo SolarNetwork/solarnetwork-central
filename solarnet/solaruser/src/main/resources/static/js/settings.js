@@ -25,7 +25,7 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 			var existing = SolarReg.Templates.findExistingTemplateItem(container, id);
 			if ( existing.length > 0 ) {
 				existing.remove();
-				if ( container.children().length < 1 ) {
+				if ( container.children().length < 1 && !container.hasClass('show-empty') ) {
 					// empty container; hide it
 					SolarReg.Templates.findConfigurationContainer(container).addClass('hidden');
 				}
@@ -62,12 +62,51 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
 };
 
 /**
- * Handle the delete action for a modal edit service item form.
+ * Get a settings form URL serializer function.
  * 
+ * @param {Object} [options] an object with optional configuration properties
+ * @param {Function} [options.urlSerializer] an optional function to generate the submit URL; the `this` object will be the form;
+ * 											 will be passed the form action and body parameters; defaults to appending a `/{id}`
+ * 											 value where {id} is the value of the `id` form field, unless the form has a data
+ * 											 attribute `settings-url-id-create-property` in which case that field's value will
+ * 											 be used instead; if the form has a data attribute `settings-id-query-param` then
+ * 											 the ID value will be added as a query parameter using the given name instead of
+ * 											 appending the value to the path
+ * @returns {Function} serializer function either from `options.urlSerializer` or the default implementation
+ */
+SolarReg.Settings.settingsFormUrlFunction = function settingsFormUrlFunction(options) {
+	return (options && typeof options.urlSerializer === 'function'
+		? options.urlSerializer
+		: function defaultEditServiceItemUrlSerializer(action, params) {
+			const form = this;
+			var result = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(action), params));
+			var idVal = (form.elements['id'] ? form.elements['id'].value : '');
+			if ( (idVal === undefined || idVal === '') && form.dataset.settingsUrlIdCreateProperty 
+					&& form.elements[form.dataset.settingsUrlIdCreateProperty] ) {
+				idVal = form.elements[form.dataset.settingsUrlIdCreateProperty].value;
+			}
+			if ( idVal !== '' ) {
+				if ( form.dataset.settingsIdQueryParam ) {
+					result += '?' + form.dataset.settingsIdQueryParam + '=';
+				} else {
+					result += '/';
+				}
+				result += encodeURIComponent(idVal);
+			}
+			return result;
+		});
+};
+
+/**
+ * Handle the delete action for a modal edit service item form.
+ *
  * This will use an ajax `DELETE` request to submit the service form. By default the form action
  * will have `/{id}` appended to the URL. On success, the modal form will have a `deleted` class
  * added and it will be dismissed. Use the modal's `hidden.bs.modal` event as a hook to perform
  * additional actions.
+ *
+ * If a `settings-id-query-param` data attribute is set on the form element, then the URL will use
+ * a query parameter of the given name to pass the ID value.
  *
  * @param {Event} event the event that triggered the delete action
  * @param {Object} [options] an object with optional configuration properties
@@ -76,18 +115,12 @@ SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, con
  *                                           form field
  */
 SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditServiceItemDeleteAction(event, options) {
-	var deleteBtn = event.target;
-	var modal = $(deleteBtn).closest('.modal');
+	var modal = $(event.target).closest('.modal');
+	var form = modal.get(0);
 	var confirmEl = modal.find('.delete-confirm');
 	var submitBtn = modal.find('button[type=submit]');
-	var urlFn = (options && typeof options.urlSerializer === 'function'
-		? options.urlSerializer
-		: function(action, form) {
-			if ( form.elements['id'] && form.elements['id'].value ) {
-				return action + '/' + encodeURIComponent(form.elements['id'].value);
-			}
-			return action;
-		});
+	var body = SolarReg.Settings.encodeServiceItemForm(form);
+	var urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
 	if ( confirmEl && confirmEl.hasClass('hidden') ) {
 		// show confirm
 		confirmEl.removeClass('hidden');
@@ -99,7 +132,7 @@ SolarReg.Settings.handleEditServiceItemDeleteAction = function handleEditService
 		modal.addClass('danger');
 	} else {
 		// perform delete
-		const deleteUrl = urlFn(modal.attr('action'), modal.get(0));
+		const deleteUrl = urlFn.call(form, form.action, body);
 		$.ajax({
 			type: 'DELETE',
 			url: deleteUrl,
@@ -269,7 +302,7 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 			obj = obj[components[j-1]];
 			component = components[j];
 		}
-		if ( name && obj && obj[component] ) {
+		if ( name && obj && obj[component] !== undefined ) {
 			val = Array.isArray(obj[component])
 				? SolarReg.arrayAsDelimitedString(obj[component])
 				: obj[component];
@@ -284,7 +317,7 @@ SolarReg.Settings.setupCoreSettings = function setupCoreSettings(form, config) {
 
 /**
  * Handle the configuration of a setting toggle button.
- * 
+ *
  * @param {jQuery} btn the toggle button
  * @param {boolean} enabled {@constant true} if the button is enabled
  */
@@ -302,7 +335,7 @@ SolarReg.Settings.handleSettingToggleButtonChange = function handleSettingToggle
 
 /**
  * Configure a toggle button.
- * 
+ *
  * @param {jQuery} btn the toggle button
  * @param {boolean} enabled {@constant true} if the button is enabled
  */
@@ -393,7 +426,7 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
 	SolarReg.Templates.populateServiceSelectOptions(services, 'select[name=serviceIdentifier]');
 	SolarReg.Settings.setupCoreSettings(modal.get(0), config);
 	SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
-	if ( config && config.id ) {
+	if ( config && config.id !== undefined ) {
 		modal.find('button.delete-config').removeClass('hidden');
 	}
 };
@@ -414,15 +447,15 @@ SolarReg.Settings.prepareEditServiceForm = function prepareEditServiceForm(modal
  * @param {Event} event the event that triggered the action
  */
 SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAction(event) {
-	if ( !(event.target && event.target.classList) ) {
+	var button = $(event.target).closest('.edit-link,.action-link');
+	if ( button.length < 1 ) {
 		return;
 	}
-	var config = SolarReg.Templates.findContextItem(event.target);
-	var button = $(event.target);
+	var config = SolarReg.Templates.findContextItem(button);
 	var modal;
-	if ( event.target.classList.contains('edit-link') ) {
-		modal = $(button.data('edit-modal'));
-	} else if ( event.target.classList.contains('action-link') ) {
+	if ( button.hasClass('edit-link') ) {
+		modal = $(button.data('editModal'));
+	} else if ( button.hasClass('action-link') ) {
 		modal = $(button.data('action-modal'));
 	}
 	if ( modal && modal.modal ) {
@@ -435,23 +468,23 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
 /**
  * Encode a service item configuration form into an object, suitable for encoding into JSON
  * for posting to SolarNetwork.
- * 
+ *
  * This method iterates over all form fields and maps them into object properties. The field
  * names are split on `.` characters into nested objects.  * A form field can be ignored by adding a `data-settings-ignore` attribute to that field,
  * with any non-empty value.
- * 
+ *
  * The object property name can include a prefix by adding a `data-settings-prefix`
  * attribute to a form field.
- * 
+ *
  * The object property can be split into an array by adding a `data-array-delim`
  * attribute with a regular expression value to split the form field with.
- * 
+ *
  * The object property name can also be derived from a previous form element value, by
  * adding a `data-settings-name-field` attribute to that field. The attribute value is
  * the name of another HTML field that comes before this field (in DOM order).
- * 
+ *
  * For example, given form fields like
- * 
+ *
  * ```html
  * <input name="foo" value="bar">
  * <input name="info.name" value="Joe">
@@ -466,13 +499,13 @@ SolarReg.Settings.handleEditServiceItemAction = function handleEditServiceItemAc
  * <input name="val" value="mini" data-settings-name-field="key" data-settings-prefix="props.">
  * <input name="array" value="1,2,3" data-array-delim=",">
  * ```
- * 
+ *
  * An object like the following would be generated:
- * 
+ *
  * ```javascript
  * {foo:"bar", info:{name:"Joe", age:"99"}, answer:"42", props:{"client-id":abc123, car:"mini"}, array:["1","2","3"]}
  * ```
- * 
+ *
  * @param {HTMLFormElement} form the form
  * @param {boolean} excludeEmptyProperties {@constant true} to omit empty form field values from the result
  * @returns {Object} the encoded object
@@ -566,17 +599,17 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
 
 /**
  * Handle the submit event for a edit service form.
- * 
+ *
  * The `POST` HTTP method will be used, unless the form has a `ajax-method` data attribute, in which case that value
  * will be used. For example to use `PUT` you would have:
- * 
+ *
  * ```html
  * <form data-ajax-method="put">
  * ```
- * 
+ *
  * If a `urlId` option is provided and the form has a value in its `id` element, and a `settings-update-method` data
  * attribute exists on the form, that value will be used. For example to `POST` on creation but `PUT` on update:
- * 
+ *
  * ```html
  * <form method="post" data-settings-update-method="put">
  * ```
@@ -590,28 +623,25 @@ SolarReg.Settings.encodeServiceItemForm = function encodeServiceItemForm(form, e
  * @param {function} [options.upload] an optional upload progress event callback function
  * @param {function} [options.urlSerializer] an optional function to generate the submit URL; will be passed the form action (decoded) and the serialized body content;
  *                                           defaults to `SolarReg.replaceTemplateParameters`
- * @param {boolean} [options.urlId] if `true` then if the form has an `id` input with a non-empty value, add the value to the submit URL after a `/`
+ * @param {boolean} [options.urlId] if `true` then if the form has an `id` input with a non-empty value, add the value to the submit URL after a `/`;
+ * 									can also be provided via a `settings-url-id` data attribute on the form element
  * @param {function} [options.errorMessageGenerator] an optional function called after an error to generate the error message to show,
  *                                                   with (xhr, json, form, formData) arguments
  * @returns {jqXHR} the jQuery XHR object
  */
 SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm(event, onSuccess, serializer, options) {
 	event.preventDefault();
-	var form = event.target;
-	var modal = $(form);
+	const form = event.target;
+	const modal = $(form);
 	var body = (typeof serializer === 'function'
 		? serializer(form)
 		: SolarReg.Settings.encodeServiceItemForm(form));
-	var urlFn = (options && typeof options.urlSerializer === 'function'
-		? options.urlSerializer
-		: SolarReg.replaceTemplateParameters);
-	var action = (options && options.urlId && form.elements['id'] && form.elements['id'].value
-		? form.action + '/' + encodeURIComponent(form.elements['id'].value)
-		: form.action);
-	var submitUrl = encodeURI(urlFn(decodeURI(action), body));
-	var origXhr = $.ajaxSettings.xhr;
+	const urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
+	const urlId = (!!modal.data('settingsUrlId') || (options && options.urlId));
+	const submitUrl = urlFn.call(form, form.action, body);
+	const origXhr = $.ajaxSettings.xhr;
 	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');
-	if ( options && options.urlId && form.elements['id'] && form.elements['id'].value && form.dataset.settingsUpdateMethod ) {
+	if ( urlId && form.elements['id'] && form.elements['id'].value && form.dataset.settingsUpdateMethod ) {
 		xhrMethod = form.dataset.settingsUpdateMethod.toUpperCase();
 	}
 	var jqXhrOpts = {
@@ -623,7 +653,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 				xhr.upload.addEventListener('progress', options.upload);
 			}
 			if ( options && typeof options.download === 'function' ) {
-				xhr.addEventListener('progress', options.upload);
+				xhr.addEventListener('progress', options.download);
 			}
 			return xhr;
 		},
@@ -644,7 +674,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		jqXhrOpts.dataType = 'json';
 	}
 	return $.ajax(jqXhrOpts).done(function(json, statusText) {
-		console.log('Save config result: %o', json);
+		console.debug('Save config result: %o', json);
 		if ( json && json.success === true ) {
 			if ( typeof onSuccess === 'function' ) {
 				onSuccess(body, json.data);
@@ -675,12 +705,12 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 
 /**
  * Handle an add or delete dynamic list item event such as `click`.
- * 
+ *
  * This handler looks for a `dynamic-list-add` or `dynamic-list-delete` class on the event
  * target hierarchy.
- * 
+ *
  * If an `add` element is found, then the following actions are taken:
- * 
+ *
  *  1. Find the closest element with the `dynamic-list` class; this is the dynamic list
  *     "root" element.
  *  2. Within the "root" element, find an element with the `dynamic-list-item template`
@@ -689,14 +719,14 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
  *     this is the container element to copy the template element into.
  *  4. Make a deep clone of the found template element and insert into the container
  *     element.
- * 
+ *
  * If a `delete` element is found, then the closest ancester with a `dynamic-list-item`
  * class is removed.
- * 
+ *
  * In general, the expected hierarchy of elements looks like this (actual element names
  * do not matter and are just for illustration, and arbitrary nesting of other elements
  * are allowed):
- * 
+ *
  * ```
  * ─ div.dynamic-list
  *   ├── button.dynamic-list-add
@@ -704,7 +734,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
  *   │   └── button.dynamic-list-delete
  *   └── div.dynamic-list-container
  * ```
- * 
+ *
  * @param {event} event the submit event that triggered form submission
  */
 SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOrDelete(event) {
@@ -726,7 +756,7 @@ SolarReg.Settings.handleDynamicListAddOrDelete = function handleDynamicListAddOr
 
 /**
  * Populate a dynamic list of key/value form element pairs based on the properties of a configuration object.
- * 
+ *
  * @param {object} listConfig the list configuration object, whose properties will be turned into form elements
  * @param {jQuery} container a container element of existing list items to delete from, if the form closed after a delete action
  * @param {string} listRootClass the CSS class name of the list root element
