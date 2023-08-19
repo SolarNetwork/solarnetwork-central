@@ -7,7 +7,7 @@ $(document).ready(function() {
 		 *
 		 * @typedef {Object} Dnp3EntityModel
 		 * @property {object} _contextItem the configuration entity
-		 * @property {string} entityType the system type (e.g. 'ca', 's', 'au', 'm', 'c')
+		 * @property {string} entityType the system type (e.g. 'ca', 's')
 		 * @property {string} [id] the entity ID
 		 * @property {string} [createdDisplay] the entity creation date as a display string
 		 * @property {boolean} [enabled] the enabled state
@@ -17,7 +17,7 @@ $(document).ready(function() {
 		 * A system configuration.
 		 *
 		 * @typedef {Object} Dnp3System
-		 * @property {string} type one of 'ca', 's', 'au', 'm', 'c'
+		 * @property {string} type one of 'ca', 's'
 		 * @property {jQuery} container the element that holds the rendered list of entities
 		 * @property {Array<Object>} configs the entities
 		 * @property {Map<Number, Dnp3EntityModel>} configsMap a mapping of entity IDs to associated entities
@@ -109,7 +109,6 @@ $(document).ready(function() {
 		/* ============================
 		   Globals
 		   ============================ */
-		const i18n = SolarReg.i18nData(this);
 
 		const systems = Object.freeze({
 			ca: createSystem($('#dnp3-cas-container'), 'ca'),
@@ -124,7 +123,6 @@ $(document).ready(function() {
 
 		$('.dnp3.edit-config button.delete-config').on('click', function(event) {
 			var options = {};
-			//var form = $(event.target).closest('form').get(0);
 			SolarReg.Settings.handleEditServiceItemDeleteAction(event, options);
 		});
 
