@@ -43,14 +43,14 @@ import net.solarnetwork.central.instructor.biz.dao.DaoInstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link DaoInstructorBiz} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoInstructorBizTests {
 

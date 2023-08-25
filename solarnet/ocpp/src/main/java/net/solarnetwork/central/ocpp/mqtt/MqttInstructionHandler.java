@@ -39,7 +39,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
@@ -50,6 +49,7 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
@@ -64,7 +64,7 @@ import ocpp.domain.Action;
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
 		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler, CentralOcppUserEvents {

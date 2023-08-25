@@ -32,7 +32,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * Instruction for a specific node.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class NodeInstruction extends Instruction implements EntityMatch {
 
@@ -98,30 +98,14 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 
 		@Override
 		public InstructionStatus.InstructionState getInstructionState() {
-			return switch (getState()) {
-				case Completed -> InstructionStatus.InstructionState.Completed;
-				case Declined -> InstructionStatus.InstructionState.Declined;
-				case Executing -> InstructionStatus.InstructionState.Executing;
-				case Queued -> InstructionStatus.InstructionState.Queued;
-				case Queuing -> InstructionStatus.InstructionState.Queuing;
-				case Received -> InstructionStatus.InstructionState.Received;
-				case Unknown -> InstructionStatus.InstructionState.Unknown;
-			};
+			return getState();
 		}
 
 		@Override
 		public InstructionStatus newCopyWithState(InstructionStatus.InstructionState newState,
 				Map<String, ?> resultParameters) {
 			var copy = new NodeInstruction(NodeInstruction.this);
-			copy.setState(switch (newState) {
-				case Completed -> net.solarnetwork.central.instructor.domain.InstructionState.Completed;
-				case Declined -> net.solarnetwork.central.instructor.domain.InstructionState.Declined;
-				case Executing -> net.solarnetwork.central.instructor.domain.InstructionState.Executing;
-				case Queued -> net.solarnetwork.central.instructor.domain.InstructionState.Queued;
-				case Queuing -> net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
-				case Received -> net.solarnetwork.central.instructor.domain.InstructionState.Received;
-				case Unknown -> net.solarnetwork.central.instructor.domain.InstructionState.Unknown;
-			});
+			copy.setState(newState);
 			copy.setStatusDate(Instant.now());
 			if ( resultParameters != null ) {
 				if ( copy.getResultParameters() != null ) {

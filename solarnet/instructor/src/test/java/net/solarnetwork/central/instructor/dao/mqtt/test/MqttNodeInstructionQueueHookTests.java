@@ -48,12 +48,12 @@ import io.moquette.interception.messages.InterceptPublishMessage;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.mqtt.MqttNodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.dao.mqtt.NodeInstructionQueueHookStat;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
@@ -62,7 +62,7 @@ import net.solarnetwork.test.mqtt.TestingInterceptHandler;
  * Test cases for the {@link MqttNodeInstructionQueueHook} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MqttNodeInstructionQueueHookTests extends MqttServerSupport {
 

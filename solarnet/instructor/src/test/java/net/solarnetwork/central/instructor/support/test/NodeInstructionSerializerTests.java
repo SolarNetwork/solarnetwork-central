@@ -37,16 +37,16 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link NodeInstructionSerializer} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NodeInstructionSerializerTests {
 

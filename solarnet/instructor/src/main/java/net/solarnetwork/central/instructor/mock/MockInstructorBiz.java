@@ -34,15 +34,15 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Mock implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MockInstructorBiz implements InstructorBiz {
 

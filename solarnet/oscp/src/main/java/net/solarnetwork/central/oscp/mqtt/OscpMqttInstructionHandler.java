@@ -24,10 +24,6 @@ package net.solarnetwork.central.oscp.mqtt;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Completed;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Executing;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
@@ -38,6 +34,10 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHA
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_MEASUREMENTS_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.V20;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Completed;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Executing;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,7 +87,7 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		implements MqttMessageHandler, OscpUserEvents, OscpMqttInstructions {

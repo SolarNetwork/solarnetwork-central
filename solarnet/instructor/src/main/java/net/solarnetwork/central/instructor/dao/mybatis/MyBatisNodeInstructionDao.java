@@ -38,16 +38,16 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>

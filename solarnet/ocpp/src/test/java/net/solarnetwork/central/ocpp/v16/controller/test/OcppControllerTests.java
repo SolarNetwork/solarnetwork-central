@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
@@ -58,6 +57,7 @@ import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
@@ -79,7 +79,7 @@ import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
  * Test cases for the {@link OcppController} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class OcppControllerTests {
 

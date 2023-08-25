@@ -47,16 +47,16 @@ import org.junit.Test;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 

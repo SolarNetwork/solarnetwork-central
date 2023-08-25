@@ -23,12 +23,12 @@
 package net.solarnetwork.central.oscp.mqtt;
 
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSAGE_PARAM;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.HashMap;
@@ -45,7 +45,6 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
@@ -63,6 +62,7 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.service.RemoteServiceException;
 import oscp.v20.AdjustGroupCapacityForecast;
 
@@ -77,7 +77,7 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {

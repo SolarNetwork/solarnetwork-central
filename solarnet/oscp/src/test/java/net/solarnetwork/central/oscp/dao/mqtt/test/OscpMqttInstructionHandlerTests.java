@@ -24,10 +24,10 @@ package net.solarnetwork.central.oscp.dao.mqtt.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Completed;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Executing;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Completed;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Executing;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -88,7 +88,7 @@ import oscp.v20.GroupCapacityComplianceError;
  * Test cases for the {@link OscpMqttInstructionHandler} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, OscpUserEvents {

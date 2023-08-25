@@ -29,16 +29,16 @@ import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.domain.InstructionStatus;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public interface InstructorBiz {
 

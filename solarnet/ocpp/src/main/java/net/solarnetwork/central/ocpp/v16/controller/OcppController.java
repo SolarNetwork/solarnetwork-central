@@ -53,7 +53,6 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
@@ -64,6 +63,7 @@ import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.Authorization;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
@@ -100,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
