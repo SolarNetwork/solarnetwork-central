@@ -10,12 +10,14 @@
 		INSERT INTO solarnet.sn_node_instruction 
 			(id
 			<if test="created != null">,created</if>
+			<if test="statusDate != null">,modified</if>
 			, node_id, topic, instr_date, deliver_state
 			<if test="resultParametersJson != null">,jresult_params</if>
 			)
 		VALUES
 			(#{id}
 			<if test="created != null">,#{created}</if>
+			<if test="statusDate != null">,#{statusDate}</if>
 			, #{nodeId}, #{topic}, #{instructionDate}, 
 			CAST(#{state} AS solarnet.instruction_delivery_state)
 			<if test="resultParametersJson != null">,CAST(#{resultParametersJson} AS json)</if>
@@ -27,7 +29,11 @@
 			solarnet.sn_node_instruction
 		SET
 			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
-			jresult_params = CAST(#{resultParametersJson} AS json)
+			jresult_params = CAST(#{resultParametersJson} AS json),
+			modified = <choose>
+					<when test="statusDate != null">#{statusDate}</when>
+					<otherwise>CURRENT_TIMESTAMP</otherwise>
+				</choose>
 		WHERE
 			id = #{id}
 	</update>
@@ -37,7 +43,11 @@
 			solarnet.sn_node_instruction
 		SET
 			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
-			jresult_params = CAST(#{resultParametersJson} AS json)
+			jresult_params = CAST(#{resultParametersJson} AS json),
+			modified = <choose>
+					<when test="statusDate != null">#{statusDate}</when>
+					<otherwise>CURRENT_TIMESTAMP</otherwise>
+				</choose>
 		WHERE
 			id = #{id}
 			AND node_id = #{nodeId}
@@ -49,7 +59,11 @@
 			solarnet.sn_node_instruction
 		SET
 			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
-			jresult_params = CAST(#{resultParametersJson} AS json)
+			jresult_params = CAST(#{resultParametersJson} AS json),
+			modified = <choose>
+					<when test="statusDate != null">#{statusDate}</when>
+					<otherwise>CURRENT_TIMESTAMP</otherwise>
+				</choose>
 		WHERE
 			id = #{id}
 			AND node_id = #{nodeId}
@@ -59,7 +73,11 @@
 		UPDATE 
 			solarnet.sn_node_instruction
 		SET
-			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state)
+			deliver_state = CAST(#{state} AS solarnet.instruction_delivery_state),
+			modified = <choose>
+					<when test="statusDate != null">#{statusDate}</when>
+					<otherwise>CURRENT_TIMESTAMP</otherwise>
+				</choose>
 		WHERE
 			instr_date &lt; #{date, jdbcType=TIMESTAMP}
 			AND deliver_state = CAST(#{expectedState} AS solarnet.instruction_delivery_state)
@@ -68,6 +86,7 @@
 	<sql id="fragment-NodeInstruction-full-result">
 		ni.id AS sn_node_instruction_id,
 		ni.created AS sn_node_instruction_created,
+		ni.modified AS sn_node_instruction_modified,
 		ni.node_id AS sn_node_instruction_node_id,
 		ni.topic AS sn_node_instruction_topic,
 		ni.instr_date AS sn_node_instruction_instr_date,
@@ -78,6 +97,7 @@
 	<resultMap id="NodeInstructionFullResult" type="NodeInstruction">
 		<id property="id" column="sn_node_instruction_id"/>
 		<result property="created" column="sn_node_instruction_created"/>
+		<result property="statusDate" column="sn_node_instruction_modified"/>
 		<result property="nodeId" column="sn_node_instruction_node_id"/>
 		<result property="topic" column="sn_node_instruction_topic"/>
 		<result property="instructionDate" column="sn_node_instruction_instr_date"/>

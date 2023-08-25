@@ -25,6 +25,7 @@ package net.solarnetwork.central.instructor.dao.mybatis;
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -132,6 +133,7 @@ public class MyBatisNodeInstructionDao
 		params.put("state", state);
 		params.put("resultParametersJson",
 				resultParameters != null ? JsonUtils.getJSONString(resultParameters, null) : null);
+		params.put("statusDate", Timestamp.from(Instant.now()));
 		int count = getSqlSession().update(UPDATE_COMPARE_STATE, params);
 		return (count > 0);
 	}
@@ -146,6 +148,7 @@ public class MyBatisNodeInstructionDao
 		params.put("state", state);
 		params.put("resultParametersJson",
 				resultParameters != null ? JsonUtils.getJSONString(resultParameters, null) : null);
+		params.put("statusDate", Timestamp.from(Instant.now()));
 		int count = getSqlSession().update(UPDATE_SET_STATE, params);
 		return (count > 0);
 	}
@@ -158,6 +161,7 @@ public class MyBatisNodeInstructionDao
 		params.put("date", olderThanDate);
 		params.put("expectedState", currentState);
 		params.put("state", desiredState);
+		params.put("statusDate", Timestamp.from(Instant.now()));
 		return getSqlSession().update(UPDATE_STALE_STATE, params);
 	}
 
