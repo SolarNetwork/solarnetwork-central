@@ -6,6 +6,7 @@ CREATE TYPE solarnet.instruction_delivery_state AS ENUM
 CREATE TABLE solarnet.sn_node_instruction (
 	id				BIGINT NOT NULL DEFAULT nextval('solarnet.instruction_seq'),
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	node_id			BIGINT NOT NULL,
 	topic			CHARACTER VARYING(128) NOT NULL,
 	instr_date		TIMESTAMP WITH TIME ZONE NOT NULL,
