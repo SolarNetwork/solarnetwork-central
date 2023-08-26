@@ -36,7 +36,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Serializer for {@link NodeInstruction} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 
@@ -64,6 +64,9 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 		generator.writeObjectField("instructionDate", instr.getInstructionDate());
 		if ( instr.getState() != null ) {
 			generator.writeStringField("state", instr.getState().toString());
+		}
+		if ( instr.getStatusDate() != null ) {
+			generator.writeObjectField("statusDate", instr.getStatusDate());
 		}
 		if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
 			generator.writeFieldName("parameters");

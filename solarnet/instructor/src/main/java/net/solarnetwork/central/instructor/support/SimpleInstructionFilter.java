@@ -31,14 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * Simple implementation of {@link InstructionFilter}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SimpleInstructionFilter implements InstructionFilter {
 

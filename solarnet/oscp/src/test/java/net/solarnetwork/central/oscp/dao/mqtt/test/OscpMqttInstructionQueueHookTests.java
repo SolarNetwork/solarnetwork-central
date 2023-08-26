@@ -23,15 +23,15 @@
 package net.solarnetwork.central.oscp.dao.mqtt.test;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Declined;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Queuing;
-import static net.solarnetwork.central.instructor.domain.InstructionState.Unknown;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_ACTION_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_GROUP_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_CAPACITY_OPTIMIZER_ID_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_MESSAGE_PARAM;
 import static net.solarnetwork.central.oscp.util.OscpInstructionUtils.OSCP_V20_TOPIC;
 import static net.solarnetwork.codec.JsonUtils.getStringMap;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Declined;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
+import static net.solarnetwork.domain.InstructionStatus.InstructionState.Unknown;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -89,7 +89,7 @@ import oscp.v20.GroupCapacityComplianceError;
  * Test cases for the {@link OscpMqttInstructionQueueHook} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, OscpUserEvents {

@@ -47,9 +47,9 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -61,7 +61,7 @@ import net.solarnetwork.web.domain.Response;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do",

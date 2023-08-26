@@ -44,16 +44,16 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * DAO based implementation of {@link InstructorBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoInstructorBiz implements InstructorBiz {
 

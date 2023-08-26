@@ -33,12 +33,13 @@ import com.fasterxml.jackson.annotation.JsonRawValue;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class Instruction extends BaseEntity {
 

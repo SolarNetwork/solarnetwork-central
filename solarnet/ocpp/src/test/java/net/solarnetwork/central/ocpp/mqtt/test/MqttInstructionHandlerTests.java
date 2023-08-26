@@ -48,7 +48,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.mqtt.MqttInstructionHandler;
@@ -56,6 +55,7 @@ import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
@@ -75,7 +75,7 @@ import ocpp.v16.cp.ConfigurationStatus;
  * Test cases for the {@link MattInstructionHandler} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MqttInstructionHandlerTests {
 

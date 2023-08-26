@@ -79,7 +79,6 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
@@ -102,6 +101,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.codec.JavaBeanXmlSerializer;
 import net.solarnetwork.domain.BasicNetworkIdentity;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
@@ -114,7 +114,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoRegistrationBizTests {
 

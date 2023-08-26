@@ -42,7 +42,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
@@ -52,13 +51,14 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.web.domain.Response;
 
 /**
  * Controller for node instruction web service API.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")

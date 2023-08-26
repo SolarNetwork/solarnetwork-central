@@ -1,7 +1,7 @@
 /* ==================================================================
- * InstructionState.java - Sep 29, 2011 6:37:27 PM
+ * OcppJobs.java - 26/08/2023 4:00:26 pm
  * 
- * Copyright 2007-2011 SolarNetwork.net Dev Team
+ * Copyright 2023 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,53 +20,17 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.instructor.domain;
+package net.solarnetwork.central.ocpp.jobs;
 
 /**
- * An instruction state.
+ * Marker interface for OSCP job constants.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public enum InstructionState {
+public interface OcppJobs {
 
-	/**
-	 * The instruction state is not known.
-	 */
-	Unknown,
-
-	/**
-	 * The instruction has been queued, but not acknowledged yet.
-	 */
-	Queued,
-
-	/**
-	 * The instruction is in the process of being queued, potentially jumping to
-	 * the received state.
-	 * 
-	 * @since 1.1
-	 */
-	Queuing,
-
-	/**
-	 * The instruction has been acknowledged, but has not been looked at yet.
-	 */
-	Received,
-
-	/**
-	 * The instruction has been acknowledged and is being executed currently.
-	 */
-	Executing,
-
-	/**
-	 * The instruction was acknowledged but has been declined and will not be
-	 * executed.
-	 */
-	Declined,
-
-	/**
-	 * The instruction was acknowledged and has been executed.
-	 */
-	Completed;
+	/** An OCPP jobs profile name. */
+	String JOBS_PROFILE = "ocpp-jobs";
 
 }

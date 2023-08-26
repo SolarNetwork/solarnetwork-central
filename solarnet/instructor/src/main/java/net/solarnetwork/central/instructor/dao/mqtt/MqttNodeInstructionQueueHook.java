@@ -34,12 +34,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -51,7 +51,7 @@ import net.solarnetwork.common.mqtt.MqttStats;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook {

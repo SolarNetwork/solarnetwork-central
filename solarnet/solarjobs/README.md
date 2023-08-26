@@ -26,6 +26,7 @@ The following Spring runtime profiles are available:
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
+| `ocpp-jobs` | Enable OCPP specific jobs. See [OcppJobsConfig][OcppJobsConfig]. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as
@@ -69,6 +70,7 @@ The build produces an executable JAR at `build/libs/solarjobs-x.y.z.jar`.
 [solarnet-user-billing]: ../user-billing/
 [solarnet-user-datum]: ../user-datum/
 [solarnet-user-ocpp]: ../user-ocpp/
+[OcppJobsConfig]: src/main/java/net/solarnetwork/central/jobs/config/OcppJobsConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java
 [SnfBillingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SnfBillingConfig.java
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SolarFluxPublishingConfig.java

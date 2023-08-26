@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.dao.mybatis.test;
 
 import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -47,16 +48,16 @@ import org.junit.Test;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.3
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -87,6 +88,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
+		datum.setStatusDate(date);
 		datum.setInstructionDate(date);
 		datum.setNodeId(nodeId);
 		datum.setState(InstructionState.Queued);
@@ -111,6 +113,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	private void validate(NodeInstruction src, NodeInstruction entity) {
 		assertNotNull("NodeInstruction should exist", entity);
 		assertNotNull("Created date should be set", entity.getCreated());
+		assertEquals(src.getStatusDate(), entity.getStatusDate());
 		assertEquals(src.getInstructionDate(), entity.getInstructionDate());
 		assertEquals(src.getNodeId(), entity.getNodeId());
 		assertEquals(src.getState(), entity.getState());
@@ -143,6 +146,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.setState(InstructionState.Declined);
+		datum.setStatusDate(Instant.now());
 		Long newId = dao.store(datum);
 		assertEquals(datum.getId(), newId);
 		NodeInstruction datum2 = dao.get(datum.getId());
@@ -154,6 +158,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.setState(InstructionState.Completed);
+		datum.setStatusDate(Instant.now());
 		datum.setResultParameters(Collections.singletonMap("foo", (Object) "bar"));
 		Long newId = dao.store(datum);
 		assertEquals(datum.getId(), newId);
@@ -171,6 +176,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		// store a second for a different node ID, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
+		datum.setStatusDate(Instant.now());
 		datum.setInstructionDate(Instant.now());
 		datum.setNodeId(node2Id);
 		datum.setState(InstructionState.Queued);
@@ -382,6 +388,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		// store a second for a different state, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
+		datum.setStatusDate(Instant.now());
 		datum.setInstructionDate(Instant.now());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Executing);
@@ -414,6 +421,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		// store a second for a different state, to make sure filter working
 		final NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
+		datum.setStatusDate(Instant.now());
 		datum.setInstructionDate(Instant.now());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Executing);
@@ -451,6 +459,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void getWithoutParameters() {
 		final NodeInstruction datum = new NodeInstruction();
 		datum.setCreated(Instant.now());
+		datum.setStatusDate(Instant.now());
 		datum.setInstructionDate(Instant.now());
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Executing);
@@ -578,35 +587,63 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 	@Test
 	public void updateCompareState() {
-		// given
+		// GIVEN
 		storeNew();
 
-		// when
+		// WHEN
+		try {
+			Thread.sleep(50L); // sleep so status date changes
+		} catch ( InterruptedException e ) {
+			// ignore
+		}
 		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
 		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
 				InstructionState.Queued, InstructionState.Completed, resultParams);
 
-		assertThat("Updated", updated, equalTo(true));
+		// THEN
+		then(updated).as("Was updated").isTrue();
 
 		NodeInstruction datum = dao.get(lastDatum.getId());
-		assertThat("State changed", datum.getState(), equalTo(InstructionState.Completed));
-		assertThat("Result parameters saved", datum.getResultParameters(), equalTo(resultParams));
+
+		// @formatter:off		
+		then(datum)
+			.as("State updated")
+			.returns(InstructionState.Completed, NodeInstruction::getState)
+			.as("Result parameters saved")
+			.returns(resultParams, NodeInstruction::getResultParameters)
+			;
+		
+		then(datum.getStatusDate())
+			.as("Status date updated from change")
+			.isAfter(lastDatum.getStatusDate())
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void updateCompareStateDifferentExpectedState() {
-		// given
+		// GIVEN
 		storeNew();
 
-		// when
+		// WHEN
 		Map<String, Object> resultParams = Collections.singletonMap("foo", (Object) "bar");
 		boolean updated = dao.compareAndUpdateInstructionState(lastDatum.getId(), lastDatum.getNodeId(),
 				InstructionState.Executing, InstructionState.Completed, resultParams);
 
-		assertThat("Updated", updated, equalTo(false));
+		// THEN
+		then(updated).as("Was not updated").isFalse();
 
 		NodeInstruction datum = dao.get(lastDatum.getId());
-		assertThat("State unchanged", datum.getState(), equalTo(InstructionState.Queued));
+
+		// @formatter:off		
+		then(datum)
+			.as("State unchanged")
+			.returns(InstructionState.Queued, NodeInstruction::getState)
+			.as("Status date unchanged")
+			.returns(lastDatum.getStatusDate(), NodeInstruction::getStatusDate)
+			;
+		
+		// @formatter:on
 	}
 
 	@Test

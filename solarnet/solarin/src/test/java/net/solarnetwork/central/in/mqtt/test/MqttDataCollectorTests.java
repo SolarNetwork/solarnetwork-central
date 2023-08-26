@@ -58,7 +58,6 @@ import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.in.mqtt.SolarInCountStat;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
@@ -67,6 +66,7 @@ import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
 import net.solarnetwork.domain.BasicInstructionStatus;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.test.mqtt.MqttServerSupport;
 import net.solarnetwork.test.mqtt.TestingInterceptHandler;
@@ -76,7 +76,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link MqttDataCollector} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MqttDataCollectorTests extends MqttServerSupport {
 

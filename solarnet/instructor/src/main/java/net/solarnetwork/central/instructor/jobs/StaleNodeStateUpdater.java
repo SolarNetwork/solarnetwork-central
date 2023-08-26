@@ -25,15 +25,15 @@ package net.solarnetwork.central.instructor.jobs;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Job to periodically find "stale" instructions of a given state and update
  * their state to something else.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.2
  */
 public class StaleNodeStateUpdater extends JobSupport {

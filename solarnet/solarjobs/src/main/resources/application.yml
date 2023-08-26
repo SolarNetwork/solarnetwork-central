@@ -134,6 +134,10 @@ app:
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "40 18/20 * * * *"
+    ocpp:
+      charge-session-cleaner:
+        schedule: "40 30 5 * * *"
+        expirePeriod: "P1Y"
     user-alert:
       stale-data:
         cleaner:

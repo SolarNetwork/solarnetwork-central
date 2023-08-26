@@ -42,7 +42,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.domain.InstructionState;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.codec.JsonUtils;
@@ -50,6 +49,7 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -62,7 +62,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
