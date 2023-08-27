@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Enumeration of node usage types.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public enum NodeUsageType implements NodeUsages {
@@ -38,7 +38,18 @@ public enum NodeUsageType implements NodeUsages {
 	DatumOut(2, DATUM_OUT_KEY),
 
 	/** Datum days stored usage. */
-	DatumDaysStored(3, DATUM_DAYS_STORED_KEY);
+	DatumDaysStored(3, DATUM_DAYS_STORED_KEY),
+
+	/** OCPP Charger usage. */
+	OcppChargers(4, OCPP_CHARGERS_KEY),
+
+	/** OSCP Capacity Group usage. */
+	OscpCapacityGroups(5, OSCP_CAPACITY_GROUPS_KEY),
+
+	/** DNP3 Data Points usage. */
+	Dnp3DataPoints(6, DNP3_DATA_POINTS_KEY),
+
+	;
 
 	private final int order;
 	private final String key;
