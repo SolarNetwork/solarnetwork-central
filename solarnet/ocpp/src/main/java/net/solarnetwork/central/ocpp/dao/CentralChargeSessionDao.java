@@ -39,7 +39,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CentralChargeSessionDao
 		extends ChargeSessionDao, FilterableDao<ChargeSession, UUID, ChargeSessionFilter> {
@@ -86,5 +86,13 @@ public interface CentralChargeSessionDao
 	 * @since 1.2
 	 */
 	boolean endSession(Long userId, UUID sessionId, ChargeSessionEndReason reason, String endAuthId);
+
+	/**
+	 * Get the next available charge session transaction ID.
+	 * 
+	 * @return the next transaction ID
+	 * @since 1.3
+	 */
+	int nextTransactionId();
 
 }

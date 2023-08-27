@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.session.test;
 
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.createMock;
@@ -40,8 +41,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.fail;
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -55,6 +56,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -68,6 +70,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -76,7 +79,6 @@ import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.AcEnergyDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
-import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
 import net.solarnetwork.ocpp.domain.AuthorizationStatus;
@@ -105,7 +107,7 @@ public class OcppSessionDatumManagerTests {
 
 	private AuthorizationService authService;
 	private ChargePointDao chargePointDao;
-	private ChargeSessionDao chargeSessionDao;
+	private CentralChargeSessionDao chargeSessionDao;
 	private DatumEntityDao datumDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private DatumProcessor fluxPublisher;
@@ -117,7 +119,7 @@ public class OcppSessionDatumManagerTests {
 	public void setup() {
 		authService = createMock(AuthorizationService.class);
 		chargePointDao = createMock(ChargePointDao.class);
-		chargeSessionDao = createMock(ChargeSessionDao.class);
+		chargeSessionDao = createMock(CentralChargeSessionDao.class);
 		datumDao = createMock(DatumEntityDao.class);
 		chargePointSettingsDao = createMock(ChargePointSettingsDao.class);
 		fluxPublisher = createMock(DatumProcessor.class);
@@ -182,6 +184,10 @@ public class OcppSessionDatumManagerTests {
 	public void startSession_ok() {
 		// GIVEN
 
+		// get TX ID
+		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
+
 		// verify authorization
 		String identifier = UUID.randomUUID().toString();
 		ChargePointIdentity chargePointId = new ChargePointIdentity(identifier, "foo");
@@ -207,7 +213,7 @@ public class OcppSessionDatumManagerTests {
 
 		// create new session
 		Capture<ChargeSession> sessionCaptor = new Capture<>();
-		expect(chargeSessionDao.save(capture(sessionCaptor))).andAnswer(new IAnswer<UUID>() {
+		expect(chargeSessionDao.save(capture(sessionCaptor))).andAnswer(new IAnswer<>() {
 
 			@Override
 			public UUID answer() throws Throwable {
@@ -217,8 +223,7 @@ public class OcppSessionDatumManagerTests {
 
 		// refresh to get txid
 		Capture<UUID> sessionIdCaptor = new Capture<>();
-		int transactionId = 123;
-		expect(chargeSessionDao.get(capture(sessionIdCaptor))).andAnswer(new IAnswer<ChargeSession>() {
+		expect(chargeSessionDao.get(capture(sessionIdCaptor))).andAnswer(new IAnswer<>() {
 
 			@Override
 			public ChargeSession answer() throws Throwable {
@@ -338,7 +343,11 @@ public class OcppSessionDatumManagerTests {
 
 	@Test
 	public void startSession_concurrentTx() {
-		// given
+		// GIVEN
+
+		// get TX ID
+		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
 
 		// verify authorization
 		String identifier = UUID.randomUUID().toString();
@@ -347,21 +356,18 @@ public class OcppSessionDatumManagerTests {
 				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
 				Instant.now(), new ChargePointInfo(identifier));
 		String idTag = UUID.randomUUID().toString().substring(0, 20);
-		AuthorizationInfo authInfo = new AuthorizationInfo(idTag, AuthorizationStatus.Accepted);
-		expect(authService.authorize(chargePointId, idTag)).andReturn(authInfo);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
 
 		// verify concurrent tx
 		int connectorId = 1;
-		int transactionId = 123;
 		ChargeSession existingSess = new ChargeSession(UUID.randomUUID(), Instant.now().minusSeconds(60),
 				idTag, cp.getId(), connectorId, transactionId);
 		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), connectorId))
 				.andReturn(existingSess);
 
-		// when
+		// WHEN
 		replayAll();
 
 		// @formatter:off
@@ -372,16 +378,95 @@ public class OcppSessionDatumManagerTests {
 				.withConnectorId(connectorId)
 				.withMeterStart(1234)
 				.build();
-		// @formatter:on
 
-		try {
+		// THEN
+		thenThrownBy(() -> {
 			manager.startChargingSession(info);
-			fail("Should have failed with ConcurrentTx");
-		} catch ( AuthorizationException e ) {
-			assertThat("Authorization info available", e.getInfo(), notNullValue());
-			assertThat("Authorization status is ConcurrentTx", e.getInfo().getStatus(),
-					equalTo(AuthorizationStatus.ConcurrentTx));
-		}
+		}).isInstanceOf(AuthorizationException.class)
+				.asInstanceOf(InstanceOfAssertFactories.type(AuthorizationException.class))
+				.as("Transaction ID provided")
+				.returns(transactionId, AuthorizationException::getTransactionId)
+				.extracting(AuthorizationException::getInfo)
+				.as("Auth info available")
+				.isNotNull()
+				.as("Authorization status is ConcurrentTx")
+				.returns(AuthorizationStatus.ConcurrentTx, AuthorizationInfo::getStatus)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void startSession_authFailure() {
+		// GIVEN
+		String identifier = UUID.randomUUID().toString();
+		ChargePointIdentity chargePointId = new ChargePointIdentity(identifier, "foo");
+		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
+				Instant.now(), new ChargePointInfo(identifier));
+
+		// get TX ID
+		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
+
+		// get ChargePoint
+		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
+
+		// verify concurrent tx
+		final int connectorId = 1;
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), connectorId))
+				.andReturn(null);
+
+		// create new session, even though auth failure
+		Capture<ChargeSession> sessionCaptor = new Capture<>();
+		expect(chargeSessionDao.save(capture(sessionCaptor))).andAnswer(new IAnswer<>() {
+
+			@Override
+			public UUID answer() throws Throwable {
+				return sessionCaptor.getValue().getId();
+			}
+		});
+
+		// refresh to get txid
+		Capture<UUID> sessionIdCaptor = new Capture<>();
+		expect(chargeSessionDao.get(capture(sessionIdCaptor))).andAnswer(new IAnswer<>() {
+
+			@Override
+			public ChargeSession answer() throws Throwable {
+				ChargeSession old = sessionCaptor.getValue();
+				return new ChargeSession(old.getId(), old.getCreated(), old.getAuthId(),
+						old.getChargePointId(), old.getConnectorId(), transactionId);
+			}
+		});
+
+		// verify authorization
+		String idTag = UUID.randomUUID().toString().substring(0, 20);
+		AuthorizationInfo authInfo = new AuthorizationInfo(idTag, AuthorizationStatus.Invalid);
+		expect(authService.authorize(chargePointId, idTag)).andReturn(authInfo);
+
+		// WHEN
+		replayAll();
+
+		// @formatter:off
+		ChargeSessionStartInfo info = ChargeSessionStartInfo.builder()
+				.withTimestampStart(Instant.now())
+				.withChargePointId(chargePointId)
+				.withAuthorizationId(idTag)
+				.withConnectorId(connectorId)
+				.withMeterStart(1234)
+				.build();
+
+		// THEN
+		thenThrownBy(() -> {
+			manager.startChargingSession(info);
+		}).isInstanceOf(AuthorizationException.class)
+				.asInstanceOf(InstanceOfAssertFactories.type(AuthorizationException.class))
+				.as("Transaction ID provided")
+				.returns(transactionId, AuthorizationException::getTransactionId)
+				.extracting(AuthorizationException::getInfo)
+				.as("Auth info given as returned from authorize()")
+				.isSameAs(authInfo)
+				;
+		// @formatter:on
 	}
 
 	@Test
@@ -394,7 +479,7 @@ public class OcppSessionDatumManagerTests {
 				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
-		int transactionId = 123;
+		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
