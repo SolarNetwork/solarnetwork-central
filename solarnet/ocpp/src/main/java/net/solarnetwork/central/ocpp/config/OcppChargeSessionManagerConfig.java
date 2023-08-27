@@ -32,10 +32,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
-import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
 
@@ -59,7 +59,7 @@ public class OcppChargeSessionManagerConfig {
 	private ChargePointSettingsDao ocppChargePointSettingsDao;
 
 	@Autowired
-	private ChargeSessionDao ocppChargeSessionDao;
+	private CentralChargeSessionDao ocppChargeSessionDao;
 
 	@Autowired
 	private DatumEntityDao datumDao;

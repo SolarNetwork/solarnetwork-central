@@ -79,6 +79,9 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 		/** End an active session. */
 		EndSession("update-CentralChargeSession-end-session"),
 
+		/** Get the next transaction ID. */
+		GetNextTransactinoId("get-next-transaction-id"),
+
 		;
 
 		private final String queryName;
@@ -198,6 +201,12 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 		}
 		int count = getSqlSession().update(QueryName.EndSession.getQueryName(), params);
 		return (getLastUpdateCount(count) > 0 ? true : false);
+	}
+
+	@Override
+	public int nextTransactionId() {
+		Long id = selectLong(QueryName.GetNextTransactinoId.getQueryName(), null);
+		return id.intValue();
 	}
 
 }

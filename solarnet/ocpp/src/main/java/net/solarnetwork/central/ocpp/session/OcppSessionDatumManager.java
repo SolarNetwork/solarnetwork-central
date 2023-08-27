@@ -52,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
@@ -61,7 +62,6 @@ import net.solarnetwork.domain.datum.AtmosphericDatum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
-import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
 import net.solarnetwork.ocpp.domain.AuthorizationStatus;
@@ -90,7 +90,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -164,7 +164,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	private final AuthorizationService authService;
 	private final ChargePointDao chargePointDao;
-	private final ChargeSessionDao chargeSessionDao;
+	private final CentralChargeSessionDao chargeSessionDao;
 	private final DatumEntityDao datumDao;
 	private final ChargePointSettingsDao chargePointSettingsDao;
 	private DatumProcessor fluxPublisher;
@@ -194,7 +194,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppSessionDatumManager(AuthorizationService authService, ChargePointDao chargePointDao,
-			ChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
+			CentralChargeSessionDao chargeSessionDao, DatumEntityDao datumDao,
 			ChargePointSettingsDao chargePointSettingsDao) {
 		super();
 		this.authService = requireNonNullArgument(authService, "authService");
@@ -277,28 +277,26 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	}
 
-	private CentralChargePoint chargePoint(ChargePointIdentity identifier, String authId) {
+	private CentralChargePoint chargePoint(ChargePointIdentity identifier, String authId,
+			final Integer txId) {
 		CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identifier);
 		if ( cp == null ) {
 			throw new AuthorizationException(
 					String.format("ChargePoint %s not available.", identifier.getIdentifier()),
-					new AuthorizationInfo(authId, AuthorizationStatus.Invalid));
+					new AuthorizationInfo(authId, AuthorizationStatus.Invalid), txId);
 		}
 		return cp;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, noRollbackFor = AuthorizationException.class)
 	@Override
 	public ChargeSession startChargingSession(ChargeSessionStartInfo info)
 			throws AuthorizationException {
-		// check authorization
-		AuthorizationInfo authInfo = authService.authorize(info.getChargePointId(),
-				info.getAuthorizationId());
-		if ( authInfo == null || AuthorizationStatus.Accepted != authInfo.getStatus() ) {
-			throw new AuthorizationException(authInfo);
-		}
+		// get next transaction ID; this is required even if authorization/session checks fail
+		// to adhere to OCPP spec
+		final int txId = chargeSessionDao.nextTransactionId();
 
-		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId());
+		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(), txId);
 
 		// check for existing session, e.g. ConcurrentTx
 		ChargeSession sess = chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
@@ -307,18 +305,26 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			throw new AuthorizationException(
 					String.format("ChargeSession %s already active for Charge Point %s connector %d",
 							sess.getId(), info.getChargePointId(), info.getConnectorId()),
-					new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.ConcurrentTx));
+					new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.ConcurrentTx),
+					txId);
 		}
 
-		// persist a new session and then re-load to get the generated transaction ID
+		// persist a new session
 		try {
 			sess = new ChargeSession(UUID.randomUUID(), info.getTimestampStart(),
-					info.getAuthorizationId(), cp.getId(), info.getConnectorId(), 0);
+					info.getAuthorizationId(), cp.getId(), info.getConnectorId(), txId);
 			sess = chargeSessionDao.get(chargeSessionDao.save(sess));
 		} catch ( DataIntegrityViolationException e ) {
 			// assume this is from no matching Charge Point for the given chargePointId value
 			throw new AuthorizationException(new AuthorizationInfo(info.getAuthorizationId(),
 					AuthorizationStatus.Invalid, null, null));
+		}
+
+		// check authorization
+		AuthorizationInfo authInfo = authService.authorize(info.getChargePointId(),
+				info.getAuthorizationId());
+		if ( authInfo == null || AuthorizationStatus.Accepted != authInfo.getStatus() ) {
+			throw new AuthorizationException(authInfo, txId);
 		}
 
 		// generate Datum from start meter value
@@ -364,7 +370,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			// illegal transaction ID value
 			return null;
 		}
-		ChargePoint cp = chargePoint(identifier, null);
+		ChargePoint cp = chargePoint(identifier, null, transactionId);
 		return chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), transactionId);
 	}
 
@@ -372,7 +378,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	@Override
 	public Collection<ChargeSession> getActiveChargingSessions(ChargePointIdentity identifier) {
 		if ( identifier != null ) {
-			ChargePoint cp = chargePoint(identifier, null);
+			ChargePoint cp = chargePoint(identifier, null, null);
 			return chargeSessionDao.getIncompleteChargeSessionsForChargePoint(cp.getId());
 		}
 		return chargeSessionDao.getIncompleteChargeSessions();
@@ -381,7 +387,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public AuthorizationInfo endChargingSession(ChargeSessionEndInfo info) {
-		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId());
+		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(),
+				info.getTransactionId());
 		ChargeSession sess = chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(),
 				info.getTransactionId());
 		if ( sess == null ) {

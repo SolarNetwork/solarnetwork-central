@@ -294,5 +294,9 @@
 			AND ocpp_charge_sess.id = #{id,javaType=java.util.UUID}
 			AND ocpp_charge_sess.ended IS NULL
 	</update>
+	
+	<select id="get-next-transaction-id" resultType="Long" useCache="false" flushCache="true">
+		SELECT nextval('solarev.ocpp_charge_tx_seq');
+	</select>
 
 </mapper>

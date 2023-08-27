@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
 import static java.util.stream.StreamSupport.stream;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -36,7 +37,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +64,7 @@ import net.solarnetwork.ocpp.domain.UnitOfMeasure;
  * Test cases for the {@link MyBatisCentralChargeSessionDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -696,6 +699,21 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 				is(equalTo(sess.getEndReason())));
 		assertThat("Fetched session end auth ID unchanged", updated.getEndAuthId(),
 				is(equalTo(sess.getEndAuthId())));
+	}
+
+	@Test
+	public void nextTransactionId() {
+		// GIVEN
+		final int count = 5;
+
+		// WHEN
+		Set<Integer> ids = new LinkedHashSet<>(count);
+		for ( int i = 0; i < count; i++ ) {
+			ids.add(dao.nextTransactionId());
+		}
+
+		// THEN
+		then(ids).as("Unique IDs generated").hasSize(count);
 	}
 
 }
