@@ -30,6 +30,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DNP3_DATA_POINTS_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.INSTRUCTIONS_ISSUED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
@@ -102,7 +103,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -140,6 +141,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String datumPropertiesInKey = DATUM_PROPS_IN_KEY;
 	private String datumOutKey = DATUM_OUT_KEY;
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
+	private String instructionsIssuedKey = INSTRUCTIONS_ISSUED_KEY;
 	private String ocppChargersKey = OCPP_CHARGERS_KEY;
 	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
@@ -281,6 +283,16 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				}
 				items.add(item);
 			}
+			if ( usage.getInstructionsIssued().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, instructionsIssuedKey,
+						new BigDecimal(usage.getInstructionsIssued()),
+						usage.getInstructionsIssuedCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, INSTRUCTIONS_ISSUED_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
 			if ( usage.getOcppChargers().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, ocppChargersKey,
 						new BigDecimal(usage.getOcppChargers()), usage.getOcppChargersCost());
@@ -349,7 +361,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
 						invoice.getCreated(), nodeUsage.getDescription(),
 						nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
-						nodeUsage.getDatumDaysStored());
+						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued());
 				invoiceNodeUsages.add(u);
 				if ( !dryRun ) {
 					invoiceNodeUsageDao.save(u);
@@ -669,6 +681,30 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			throw new IllegalArgumentException("The datumDaysStoredKey argumust must not be null.");
 		}
 		this.datumDaysStoredKey = datumDaysStoredKey;
+	}
+
+	/**
+	 * Get the instructions issued key.
+	 * 
+	 * @return the key
+	 * @since 1.3
+	 */
+	public String getInstructionsIssuedKey() {
+		return instructionsIssuedKey;
+	}
+
+	/**
+	 * Set the instructions issued key.
+	 * 
+	 * @param instructionsIssuedKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.3
+	 */
+	public void setInstructionsIssuedKey(String instructionsIssuedKey) {
+		this.instructionsIssuedKey = requireNonNullArgument(instructionsIssuedKey,
+				"instructionsIssuedKey");
 	}
 
 	/**

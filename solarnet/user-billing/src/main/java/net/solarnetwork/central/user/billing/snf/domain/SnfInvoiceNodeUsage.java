@@ -37,17 +37,18 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice node usage details.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
 
-	private static final long serialVersionUID = -2673333468313188077L;
+	private static final long serialVersionUID = -2984725016470283705L;
 
 	private final String description;
 	private final BigInteger datumPropertiesIn;
 	private final BigInteger datumOut;
 	private final BigInteger datumDaysStored;
+	private final BigInteger instructionsIssued;
 
 	/**
 	 * Create new instance.
@@ -64,12 +65,15 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
 	 * @return the new instance
 	 */
 	public static SnfInvoiceNodeUsage nodeUsage(Long invoiceId, Long nodeId, Instant created,
-			long datumPropertiesIn, long datumOut, long datumDaysStored) {
+			long datumPropertiesIn, long datumOut, long datumDaysStored, long instructionsIssued) {
 		return new SnfInvoiceNodeUsage(invoiceId, nodeId, created, BigInteger.valueOf(datumPropertiesIn),
-				BigInteger.valueOf(datumOut), BigInteger.valueOf(datumDaysStored));
+				BigInteger.valueOf(datumOut), BigInteger.valueOf(datumDaysStored),
+				BigInteger.valueOf(instructionsIssued));
 	}
 
 	/**
@@ -111,6 +115,36 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the node ID
 	 * @param created
 	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @since 1.4
+	 */
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued) {
+		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, datumPropertiesIn, datumOut,
+				datumDaysStored, instructionsIssued);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
+	 * @param invoiceId
+	 *        the invoice ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
 	 * @param description
 	 *        the description
 	 * @param datumPropertiesIn
@@ -133,6 +167,38 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
 	 * 
+	 * @param invoiceId
+	 *        the invoice ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param description
+	 *        the description
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instruction issued count
+	 * @since 1.4
+	 */
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued) {
+		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
+				datumOut, datumDaysStored, instructionsIssued);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param created
@@ -146,7 +212,33 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 */
 	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, BigInteger datumPropertiesIn,
 			BigInteger datumOut, BigInteger datumDaysStored) {
-		this(id, created, null, datumPropertiesIn, datumOut, datumDaysStored);
+		this(id, created, (String) null, datumPropertiesIn, datumOut, datumDaysStored);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID; the related ID is a node ID
+	 * @param created
+	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
+	 * @since 1.4
+	 */
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, BigInteger datumPropertiesIn,
+			BigInteger datumOut, BigInteger datumDaysStored, BigInteger instructionsIssued) {
+		this(id, created, null, datumPropertiesIn, datumOut, datumDaysStored, instructionsIssued);
 	}
 
 	/**
@@ -171,11 +263,41 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 */
 	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
 			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+		this(id, created, description, datumPropertiesIn, datumOut, datumDaysStored, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID; the related ID is a node ID
+	 * @param description
+	 *        the description
+	 * @param created
+	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
+	 * @since 1.4
+	 */
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued) {
 		super(id, created);
 		this.description = description;
 		this.datumPropertiesIn = (datumPropertiesIn != null ? datumPropertiesIn : BigInteger.ZERO);
 		this.datumOut = (datumOut != null ? datumOut : BigInteger.ZERO);
 		this.datumDaysStored = (datumDaysStored != null ? datumDaysStored : BigInteger.ZERO);
+		this.instructionsIssued = instructionsIssued != null ? instructionsIssued : BigInteger.ZERO;
 	}
 
 	/**
@@ -199,7 +321,8 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		return Objects.equals(getId(), other.getId())
 				&& Objects.equals(datumPropertiesIn, other.datumPropertiesIn)
 				&& Objects.equals(datumOut, other.datumOut)
-				&& Objects.equals(datumDaysStored, other.datumDaysStored);
+				&& Objects.equals(datumDaysStored, other.datumDaysStored)
+				&& Objects.equals(instructionsIssued, other.instructionsIssued);
 		// @formatter:on
 	}
 
@@ -222,19 +345,23 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 			builder.append(getNodeId());
 			builder.append(", ");
 		}
-		if ( datumPropertiesIn != null ) {
+		if ( datumPropertiesIn.compareTo(BigInteger.ZERO) > 0 ) {
 			builder.append("datumPropertiesIn=");
 			builder.append(datumPropertiesIn);
 			builder.append(", ");
 		}
-		if ( datumOut != null ) {
+		if ( datumOut.compareTo(BigInteger.ZERO) > 0 ) {
 			builder.append("datumOut=");
 			builder.append(datumOut);
 			builder.append(", ");
 		}
-		if ( datumDaysStored != null ) {
+		if ( datumDaysStored.compareTo(BigInteger.ZERO) > 0 ) {
 			builder.append("datumDaysStored=");
 			builder.append(datumDaysStored);
+		}
+		if ( instructionsIssued.compareTo(BigInteger.ZERO) > 0 ) {
+			builder.append("instructionsIssued=");
+			builder.append(instructionsIssued);
 		}
 		builder.append("}");
 		return builder.toString();
@@ -251,6 +378,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		recs.add(new UsageInfo(NodeUsages.DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn)));
 		recs.add(new UsageInfo(NodeUsages.DATUM_OUT_KEY, new BigDecimal(datumOut)));
 		recs.add(new UsageInfo(NodeUsages.DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored)));
+		recs.add(new UsageInfo(NodeUsages.INSTRUCTIONS_ISSUED_KEY, new BigDecimal(instructionsIssued)));
 		return recs;
 	}
 
@@ -312,6 +440,16 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	@Override
 	public String getDescription() {
 		return description;
+	}
+
+	/**
+	 * Get the instructions issued count.
+	 * 
+	 * @return the instructionsIssued
+	 * @since 1.4
+	 */
+	public BigInteger getInstructionsIssued() {
+		return instructionsIssued;
 	}
 
 }

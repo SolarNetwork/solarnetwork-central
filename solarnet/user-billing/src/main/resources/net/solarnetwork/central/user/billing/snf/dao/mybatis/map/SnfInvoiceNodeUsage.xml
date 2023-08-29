@@ -10,6 +10,7 @@
 			, prop_count
 			, datum_q_count
 			, datum_s_count
+			, instr_issued_count
 		) VALUES (
 			 #{invoiceId}
 			, #{nodeId}
@@ -17,18 +18,20 @@
 			, #{datumPropertiesIn}
 			, #{datumOut}
 			, #{datumDaysStored}
+			, #{instructionsIssued}
 		)
 		ON CONFLICT (inv_id,node_id) DO NOTHING
 	</insert>
 	
 	<sql id="fragment-SnfInvoiceNodeUsage-full-result">
-		  invu.inv_id 			AS bill_invoice_node_usage_inv_id
-		, invu.node_id 			AS bill_invoice_node_usage_node_id
-		, invu.created 			AS bill_invoice_node_usage_created
-		, un.disp_name			AS bill_invoice_node_usage_node_name
-		, invu.prop_count 		AS bill_invoice_node_usage_prop_count
-		, invu.datum_q_count 	AS bill_invoice_node_usage_datum_q_count
-		, invu.datum_s_count 	AS bill_invoice_node_usage_datum_s_count
+		  invu.inv_id 				AS bill_invoice_node_usage_inv_id
+		, invu.node_id 				AS bill_invoice_node_usage_node_id
+		, invu.created 				AS bill_invoice_node_usage_created
+		, un.disp_name				AS bill_invoice_node_usage_node_name
+		, invu.prop_count 			AS bill_invoice_node_usage_prop_count
+		, invu.datum_q_count 		AS bill_invoice_node_usage_datum_q_count
+		, invu.datum_s_count 		AS bill_invoice_node_usage_datum_s_count
+		, invu.instr_issued_count	AS bill_invoice_node_usage_instr_issued_count
 	</sql>
 
 	<resultMap id="SnfInvoiceNodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage">
@@ -40,6 +43,7 @@
 			<arg column="bill_invoice_node_usage_prop_count" javaType="java.math.BigInteger"/>
 			<arg column="bill_invoice_node_usage_datum_q_count" javaType="java.math.BigInteger"/>
 			<arg column="bill_invoice_node_usage_datum_s_count" javaType="java.math.BigInteger"/>
+			<arg column="bill_invoice_node_usage_instr_issued_count" javaType="java.math.BigInteger"/>
 		</constructor>
 	</resultMap>
 
