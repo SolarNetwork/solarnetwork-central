@@ -34,13 +34,14 @@ import java.util.Objects;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NodeUsageCost {
 
 	private BigDecimal datumPropertiesInCost;
 	private BigDecimal datumDaysStoredCost;
 	private BigDecimal datumOutCost;
+	private BigDecimal instructionsIssuedCost;
 	private BigDecimal ocppChargersCost;
 	private BigDecimal oscpCapacityGroupsCost;
 	private BigDecimal dnp3DataPointsCost;
@@ -50,7 +51,7 @@ public class NodeUsageCost {
 	 */
 	public NodeUsageCost() {
 		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-				BigDecimal.ZERO);
+				BigDecimal.ZERO, BigDecimal.ZERO);
 	}
 
 	/**
@@ -129,6 +130,38 @@ public class NodeUsageCost {
 	/**
 	 * Constructor.
 	 * 
+	 * <p>
+	 * This constructor converts all costs to {@link BigDecimal} values.
+	 * </p>
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param instructionsIssuedCost
+	 *        the instructions issued code
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @since 1.3
+	 */
+	public NodeUsageCost(String datumPropertiesInCost, String datumOutCost, String datumDaysStoredCost,
+			String instructionsIssuedCost, String ocppChargersCost, String oscpCapacityGroupsCost,
+			String dnp3DataPointsCost) {
+		this(new BigDecimal(datumPropertiesInCost), new BigDecimal(datumOutCost),
+				new BigDecimal(datumDaysStoredCost), new BigDecimal(instructionsIssuedCost),
+				new BigDecimal(ocppChargersCost), new BigDecimal(oscpCapacityGroupsCost),
+				new BigDecimal(dnp3DataPointsCost));
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -183,10 +216,38 @@ public class NodeUsageCost {
 	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
 			BigDecimal datumDaysStoredCost, BigDecimal ocppChargersCost,
 			BigDecimal oscpCapacityGroupsCost, BigDecimal dnp3DataPointsCost) {
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, null, ocppChargersCost,
+				oscpCapacityGroupsCost, dnp3DataPointsCost);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param instructionsIssuedCost
+	 *        the instructions issued cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @since 1.3
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost,
+			BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
+			BigDecimal dnp3DataPointsCost) {
 		super();
 		setDatumPropertiesInCost(datumPropertiesInCost);
 		setDatumOutCost(datumOutCost);
 		setDatumDaysStoredCost(datumDaysStoredCost);
+		setInstructionsIssuedCost(instructionsIssuedCost);
 		setOcppChargersCost(ocppChargersCost);
 		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
 		setDnp3DataPointsCost(dnp3DataPointsCost);
@@ -299,6 +360,25 @@ public class NodeUsageCost {
 			datumOutCost = BigDecimal.ZERO;
 		}
 		this.datumOutCost = datumOutCost;
+	}
+
+	/**
+	 * Get the instructions issued cost.
+	 * 
+	 * @return the cost
+	 */
+	public BigDecimal getInstructionsIssuedCost() {
+		return instructionsIssuedCost;
+	}
+
+	/**
+	 * Set the instructions issued cost.
+	 * 
+	 * @param instructionsIssuedCost
+	 *        the cost to set
+	 */
+	public void setInstructionsIssuedCost(BigDecimal instructionsIssuedCost) {
+		this.instructionsIssuedCost = instructionsIssuedCost;
 	}
 
 	/**

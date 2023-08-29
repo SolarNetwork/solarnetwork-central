@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.3
  */
 public interface LocalizedInvoiceUsageRecordInfo {
@@ -54,6 +54,30 @@ public interface LocalizedInvoiceUsageRecordInfo {
 	 * @return the localized usage records
 	 */
 	List<LocalizedInvoiceItemUsageRecordInfo> getLocalizedUsageRecords();
+
+	/**
+	 * Get the count of localized usage records.
+	 * 
+	 * @return the count of available localized usage records
+	 * @since 1.2
+	 */
+	default int getLocalizedUsageRecordsCount() {
+		var list = getLocalizedUsageRecords();
+		return (list != null ? list.size() : 0);
+	}
+
+	/**
+	 * Get the count of localized usage records from an offset.
+	 * 
+	 * @param offset
+	 *        the offset to add to the record count
+	 * @return the count of available localized usage records
+	 * @since 1.2
+	 */
+	default int getLocalizedUsageRecordsCountOffset(int offset) {
+		var list = getLocalizedUsageRecords();
+		return (list != null ? list.size() : 0) + offset;
+	}
 
 	/**
 	 * Get the first available usage record, if available.

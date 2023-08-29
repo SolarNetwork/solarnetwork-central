@@ -56,12 +56,12 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
-	private static final long serialVersionUID = 4831471501141952602L;
+	private static final long serialVersionUID = 5442178658317850821L;
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
@@ -73,6 +73,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger datumPropertiesIn;
 	private BigInteger datumOut;
 	private BigInteger datumDaysStored;
+	private BigInteger instructionsIssued;
 	private BigInteger ocppChargers;
 	private BigInteger oscpCapacityGroups;
 	private BigInteger dnp3DataPoints;
@@ -82,6 +83,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] datumPropertiesInTiers;
 	private BigInteger[] datumOutTiers;
 	private BigInteger[] datumDaysStoredTiers;
+	private BigInteger[] instructionsIssuedTiers;
 	private BigInteger[] ocppChargersTiers;
 	private BigInteger[] oscpCapacityGroupsTiers;
 	private BigInteger[] dnp3DataPointsTiers;
@@ -134,6 +136,7 @@ public class NodeUsage extends BasicLongEntity
 		setDatumPropertiesIn(BigInteger.ZERO);
 		setDatumOut(BigInteger.ZERO);
 		setDatumDaysStored(BigInteger.ZERO);
+		setInstructionsIssued(BigInteger.ZERO);
 		setOcppChargers(BigInteger.ZERO);
 		setOscpCapacityGroups(BigInteger.ZERO);
 		setDnp3DataPoints(BigInteger.ZERO);
@@ -156,10 +159,16 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(datumOut);
 		builder.append(", datumDaysStored=");
 		builder.append(datumDaysStored);
-		builder.append(", datumDaysStoredCost=");
-		builder.append(costs.getDatumDaysStoredCost());
+		builder.append(", instructionsIssued=");
+		builder.append(instructionsIssued);
 		builder.append(", datumPropertiesInCost=");
 		builder.append(costs.getDatumPropertiesInCost());
+		builder.append(", datumOutCost=");
+		builder.append(costs.getDatumOutCost());
+		builder.append(", datumDaysStoredCost=");
+		builder.append(costs.getDatumDaysStoredCost());
+		builder.append(", instructionsIssuedCost=");
+		builder.append(costs.getInstructionsIssuedCost());
 		builder.append(", ocppChargersCost=");
 		builder.append(costs.getOcppChargersCost());
 		builder.append(", oscpCapacityGroupsCost=");
@@ -194,6 +203,7 @@ public class NodeUsage extends BasicLongEntity
 		return Objects.equals(datumPropertiesIn, other.datumPropertiesIn)
 				&& Objects.equals(datumOut, other.datumOut)
 				&& Objects.equals(datumDaysStored, other.datumDaysStored)
+				&& Objects.equals(instructionsIssued, other.instructionsIssued)
 				&& Objects.equals(ocppChargers, other.ocppChargers)
 				&& Objects.equals(oscpCapacityGroups, other.oscpCapacityGroups)
 				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints);
@@ -234,6 +244,8 @@ public class NodeUsage extends BasicLongEntity
 		recs.add(new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
 		recs.add(new UsageInfo(DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored),
 				costs.getDatumDaysStoredCost()));
+		recs.add(new UsageInfo(INSTRUCTIONS_ISSUED_KEY, new BigDecimal(instructionsIssued),
+				costs.getInstructionsIssuedCost()));
 		return recs;
 	}
 
@@ -539,6 +551,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_PROPS_IN_KEY}</li>
 	 * <li>{@link #DATUM_OUT_KEY}</li>
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
+	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
@@ -551,6 +564,7 @@ public class NodeUsage extends BasicLongEntity
 		result.put(DATUM_PROPS_IN_KEY, getDatumPropertiesInTiersCostBreakdown());
 		result.put(DATUM_OUT_KEY, getDatumOutTiersCostBreakdown());
 		result.put(DATUM_DAYS_STORED_KEY, getDatumDaysStoredTiersCostBreakdown());
+		result.put(INSTRUCTIONS_ISSUED_KEY, getInstructionsIssuedTiersCostBreakdown());
 		result.put(OCPP_CHARGERS_KEY, getOcppChargersTiersCostBreakdown());
 		result.put(OSCP_CAPACITY_GROUPS_KEY, getOscpCapacityGroupsTiersCostBreakdown());
 		result.put(DNP3_DATA_POINTS_KEY, getDnp3DataPointsTiersCostBreakdown());
@@ -567,6 +581,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_PROPS_IN_KEY}</li>
 	 * <li>{@link #DATUM_OUT_KEY}</li>
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
+	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
@@ -582,6 +597,8 @@ public class NodeUsage extends BasicLongEntity
 				new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
 		result.put(DATUM_DAYS_STORED_KEY, new UsageInfo(DATUM_DAYS_STORED_KEY,
 				new BigDecimal(datumDaysStored), costs.getDatumDaysStoredCost()));
+		result.put(INSTRUCTIONS_ISSUED_KEY, new UsageInfo(INSTRUCTIONS_ISSUED_KEY,
+				new BigDecimal(instructionsIssued), costs.getInstructionsIssuedCost()));
 		result.put(OCPP_CHARGERS_KEY, new UsageInfo(OCPP_CHARGERS_KEY, new BigDecimal(ocppChargers),
 				costs.getOcppChargersCost()));
 		result.put(OSCP_CAPACITY_GROUPS_KEY, new UsageInfo(OSCP_CAPACITY_GROUPS_KEY,
@@ -1050,4 +1067,119 @@ public class NodeUsage extends BasicLongEntity
 		}
 	}
 
+	/**
+	 * Get the count of Instructions issued.
+	 * 
+	 * @return the count
+	 * @since 2.4
+	 */
+	public BigInteger getInstructionsIssued() {
+		return instructionsIssued;
+	}
+
+	/**
+	 * Set the count of Instructions issued.
+	 * 
+	 * @param instructionsIssued
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.4
+	 */
+	public void setInstructionsIssued(BigInteger instructionsIssued) {
+		if ( instructionsIssued == null ) {
+			instructionsIssued = BigInteger.ZERO;
+		}
+		this.instructionsIssued = instructionsIssued;
+	}
+
+	/**
+	 * Get the cost of Instructions issued.
+	 * 
+	 * @return the cost
+	 * @since 2.4
+	 */
+	public BigDecimal getInstructionsIssuedCost() {
+		return costs.getInstructionsIssuedCost();
+	}
+
+	/**
+	 * Set the cost of Instructions issued.
+	 * 
+	 * @param instructionsIssuedCost
+	 *        the cost to set
+	 * @since 2.4
+	 */
+	public void setInstructionsIssuedCost(BigDecimal instructionsIssuedCost) {
+		costs.setInstructionsIssuedCost(instructionsIssuedCost);
+	}
+
+	/**
+	 * Get the Instructions issued tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 * @since 2.4
+	 */
+	@JsonIgnore
+	public List<NamedCost> getInstructionsIssuedTiersCostBreakdown() {
+		return tiersCostBreakdown(instructionsIssuedTiers, costsTiers,
+				NodeUsageCost::getInstructionsIssuedCost);
+	}
+
+	/**
+	 * Get the count of Instructions issued, per tier.
+	 * 
+	 * @return the counts
+	 * @since 2.4
+	 */
+	public BigInteger[] getInstructionsIssuedTiers() {
+		return instructionsIssuedTiers;
+	}
+
+	/**
+	 * Set the count of Instructions issued, per tier.
+	 * 
+	 * @param instructionsIssuedTiers
+	 *        the counts to set
+	 * @since 2.4
+	 */
+	public void setInstructionsIssuedTiers(BigInteger[] instructionsIssuedTiers) {
+		this.instructionsIssuedTiers = instructionsIssuedTiers;
+	}
+
+	/**
+	 * Set the count of Instructions issued, per tier, as decimals.
+	 * 
+	 * @param instructionsIssuedTiers
+	 *        the counts to set
+	 * @since 2.4
+	 */
+	public void setInstructionsIssuedTiersNumeric(BigDecimal[] instructionsIssuedTiers) {
+		this.instructionsIssuedTiers = decimalsToIntegers(instructionsIssuedTiers);
+	}
+
+	/**
+	 * Get the cost of Instructions issued, per tier.
+	 * 
+	 * @return the cost
+	 * @since 2.4
+	 */
+	public BigDecimal[] getInstructionsIssuedCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getInstructionsIssuedCost);
+	}
+
+	/**
+	 * Set the cost of Instructions issued, per tier.
+	 * 
+	 * @param instructionsIssuedCostTiers
+	 *        the costs to set
+	 * @since 2.4
+	 */
+	public void setInstructionsIssuedCostTiers(BigDecimal[] instructionsIssuedCostTiers) {
+		prepCostsTiers(instructionsIssuedCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (instructionsIssuedCostTiers != null
+					&& i < instructionsIssuedCostTiers.length ? instructionsIssuedCostTiers[i] : null);
+			costsTiers[i].setInstructionsIssuedCost(val);
+		}
+	}
 }

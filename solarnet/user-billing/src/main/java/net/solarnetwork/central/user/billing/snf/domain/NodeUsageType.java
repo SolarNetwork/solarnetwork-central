@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Enumeration of node usage types.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.3
  */
 public enum NodeUsageType implements NodeUsages {
@@ -40,14 +40,17 @@ public enum NodeUsageType implements NodeUsages {
 	/** Datum days stored usage. */
 	DatumDaysStored(3, DATUM_DAYS_STORED_KEY),
 
+	/** Instructions issued usage. */
+	InstructionsIssued(4, INSTRUCTIONS_ISSUED_KEY),
+
 	/** OCPP Charger usage. */
-	OcppChargers(4, OCPP_CHARGERS_KEY),
+	OcppChargers(5, OCPP_CHARGERS_KEY),
 
 	/** OSCP Capacity Group usage. */
-	OscpCapacityGroups(5, OSCP_CAPACITY_GROUPS_KEY),
+	OscpCapacityGroups(6, OSCP_CAPACITY_GROUPS_KEY),
 
 	/** DNP3 Data Points usage. */
-	Dnp3DataPoints(6, DNP3_DATA_POINTS_KEY),
+	Dnp3DataPoints(7, DNP3_DATA_POINTS_KEY),
 
 	;
 
@@ -87,18 +90,15 @@ public enum NodeUsageType implements NodeUsages {
 	 *         if {@code key} is not valid
 	 */
 	public static NodeUsageType forKey(String key) {
-		switch (key) {
-			case DATUM_PROPS_IN_KEY:
-				return DatumPropsIn;
-
-			case DATUM_OUT_KEY:
-				return DatumOut;
-
-			case DATUM_DAYS_STORED_KEY:
-				return DatumDaysStored;
-
-			default:
-				throw new IllegalArgumentException("Unknown NodeUsageType key value: " + key);
-		}
+		return switch (key) {
+			case DATUM_PROPS_IN_KEY -> DatumPropsIn;
+			case DATUM_OUT_KEY -> DatumOut;
+			case DATUM_DAYS_STORED_KEY -> DatumDaysStored;
+			case INSTRUCTIONS_ISSUED_KEY -> InstructionsIssued;
+			case OCPP_CHARGERS_KEY -> OcppChargers;
+			case OSCP_CAPACITY_GROUPS_KEY -> OscpCapacityGroups;
+			case DNP3_DATA_POINTS_KEY -> Dnp3DataPoints;
+			default -> throw new IllegalArgumentException("Unknown NodeUsageType key value: " + key);
+		};
 	}
 }
