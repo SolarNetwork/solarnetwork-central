@@ -160,7 +160,7 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 	}
 
 	/**
-	 * Set a list of statically assigned authorites based on a list of role
+	 * Set a list of statically assigned authorities based on a list of role
 	 * names.
 	 * 
 	 * <p>
