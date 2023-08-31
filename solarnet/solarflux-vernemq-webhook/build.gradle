@@ -1,0 +1,77 @@
+plugins {
+	id 'java'
+    id 'eclipse'
+	id 'org.springframework.boot' version '2.7.14'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+configurations {
+	all*.exclude group: 'com.amazonaws'
+	all*.exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
+	all*.exclude group: 'com.zaxxer', module: 'HikariCP'
+	all*.exclude group: 'io.netty'
+	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'net.sf.supercsv'
+	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'
+	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.pki.bc'
+	all*.exclude group: 'org.apache.commons', module: 'commons-compress'
+	all*.exclude group: 'org.eclipse.virgo.mirrored'
+	all*.exclude group: 'org.mybatis'
+	all*.exclude group: 'org.mybatis.spring.boot', module: 'mybatis-spring-boot-starter'
+	all*.exclude group: 'org.osgi'
+	all*.exclude group: 'org.osgi.core'
+	all*.exclude group: 'org.osgi.enterprise'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+	all*.exclude group: 'org.springframework', module: 'spring-messaging'
+	all*.exclude group: 'org.springframework', module: 'spring-websocket'
+	all*.exclude group: 'org.springframework.security'
+	all*.exclude group: 'software.amazon.awssdk'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+
+	implementation "org.springframework.boot:spring-boot-starter"
+	implementation "org.springframework.boot:spring-boot-starter-cache"
+	implementation "org.springframework.boot:spring-boot-starter-jdbc"
+	implementation "org.springframework.boot:spring-boot-starter-web"
+
+	// DB
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.apache.tomcat:tomcat-jdbc'
+		
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+
+	// JSON
+	implementation "com.fasterxml.jackson.core:jackson-annotations"
+	implementation "com.fasterxml.jackson.core:jackson-core"
+	implementation "com.fasterxml.jackson.core:jackson-databind"
+	implementation "com.fasterxml.jackson.datatype:jackson-datatype-joda"
+
+	// Utils
+    implementation 'com.github.veqryn:cidr-ip-trie:1.0.1'
+    
+    // Testing
+	testImplementation project(':solarnet-common-test')
+	testImplementation 'com.spotify:hamcrest-jackson:1.1.3'
+    testImplementation 'com.spotify:hamcrest-pojo:1.1.3'
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarFlux VerneMQ Webhook Server',
+					'Implementation-Version': archiveVersion
+	}
+}
+
+eclipse {
+	jdt {
+		javaRuntimeName 'JavaSE-17'
+	}
+}

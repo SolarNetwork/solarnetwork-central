@@ -1,0 +1,9 @@
+{
+    "peer_addr": "127.0.0.1",
+    "peer_port": 8888,
+    "username": "username",
+    "password": "password",
+    "mountpoint": "",
+    "client_id": "clientid",
+    "clean_session": false
+}

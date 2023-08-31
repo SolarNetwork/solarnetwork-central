@@ -1,0 +1,6 @@
+{
+    "nodeIds": [1,2,3],
+    "sourceIds": ["one","two","three"],
+    "minAggregation": "Month",
+    "notAfter": 1544388330000
+}
