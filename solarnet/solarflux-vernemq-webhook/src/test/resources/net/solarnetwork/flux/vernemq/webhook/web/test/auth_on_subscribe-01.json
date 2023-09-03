@@ -1,0 +1,10 @@
+{
+    "client_id": "clientid",
+    "mountpoint": "",
+    "username": "username",
+    "topics":
+        [{"topic": "a/b",
+          "qos": 1},
+         {"topic": "c/d",
+          "qos": 2}]
+}

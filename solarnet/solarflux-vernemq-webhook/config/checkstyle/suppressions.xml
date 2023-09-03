@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.0//EN"
+        "https://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
+<suppressions>
+	<suppress checks="NoFinalizer"
+		files="src/main/java/net/solarnetwork/nim/util/CachingFileInputStream.java"/>
+	
+	<!-- Ignore JavaDoc in tests. -->
+	<suppress checks="Javadoc.*" files="Tests$"/>
+</suppressions>

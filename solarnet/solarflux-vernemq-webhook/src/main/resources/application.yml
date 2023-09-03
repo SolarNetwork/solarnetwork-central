@@ -1,0 +1,68 @@
+# Default application properties.
+# 
+# Create an application.yml on your working directory to override these values,
+# or application-X.yml where X is the name of the active profile provided via
+# the JVM argument -Dspring.profiles.active=X
+
+# Default profile (tests)
+server:
+  port: 8080
+  address: "0.0.0.0"
+  
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5412/solarnetwork_unittest
+    username: solartest
+    password: solartest
+    platform: postgresql
+    initialize: false
+    tomcat:
+      initialSize: 3
+      maxActive: 15
+      minIdle: 1
+      maxIdle: 2
+      testOnBorrow: true
+      testWhileIdle: true
+      validationQuery: SELECT CURRENT_DATE
+      timeBetweenEvictionRunsMillis: 35000
+      minEvictableIdleTimeMillis: 55000
+      validationInterval: 35000
+      removeAbandoned: true
+      removeAbandonedTimeout: 600
+      jdbcInterceptors: "ConnectionState;StatementCache(prepared=true,callable=false,max=50);ResetAbandonedTimer"
+  jackson:
+    default-property-inclusion: non_null
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+  level:
+    net.solarnetwork: DEBUG
+
+debugMode: true
+
+---
+spring:
+  config.activate.on-profile: development
+  datasource:
+    url: jdbc:postgresql://localhost:5412/solarnetwork
+    username: solarauth
+    password: solarauth
+
+debugMode: true
+
+logging:
+  level:
+    net.solarnetwork: DEBUG
+
+---
+spring:
+  config.activate.on-profile: production
+
+debugMode: false
+
+logging:
+  level:
+    net.solarnetwork: INFO
+    
