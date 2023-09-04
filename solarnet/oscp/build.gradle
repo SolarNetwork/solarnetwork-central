@@ -68,9 +68,3 @@ dependencies {
 jar.manifest {
     attributes('Implementation-Version': version)
 }
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
-	}
-}

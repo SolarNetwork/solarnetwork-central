@@ -78,9 +78,3 @@ bootJar {
 					'Implementation-Version': archiveVersion
 	}
 }
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
-	}
-}

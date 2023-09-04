@@ -52,22 +52,9 @@ dependencies {
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 }
 
-eclipse {
-	project {
-		//natures 'net.sf.eclipsecs.core.CheckstyleNature'
-		//buildCommand 'net.sf.eclipsecs.core.CheckstyleBuilder'
-	}
-}
-
 bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarIn',
 					'Implementation-Version': archiveVersion
-	}
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
 	}
 }

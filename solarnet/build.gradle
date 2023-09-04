@@ -180,6 +180,21 @@ subprojects {
 		archiveClassifier = 'sources'
 	}
 
+    pluginManager.withPlugin('eclipse') { 
+		eclipse {
+			jdt {
+				javaRuntimeName 'JavaSE-17'
+				file {
+					withProperties { properties ->
+						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6
+						properties['org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode'] = 'enabled'
+						properties['org.eclipse.jdt.core.compiler.codegen.methodParameters'] = 'generate'
+					}
+				}
+			}
+		}
+    }
+    
 	// At a test failure, log the stack trace to the console so that we don't
 	// have to open the HTML in a browser.
 	test {
