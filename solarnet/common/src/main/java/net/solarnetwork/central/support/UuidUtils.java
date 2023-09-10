@@ -31,7 +31,9 @@ import java.util.UUID;
  * 
  * @author matt
  * @version 1.1
+ * @deprecated use {@code net.solarnetwork.util.UuidUtils} instead
  */
+@Deprecated(since = "1.17")
 public final class UuidUtils {
 
 	private UuidUtils() {

@@ -45,7 +45,9 @@ import net.solarnetwork.central.biz.UuidTimestampDecoder;
  * 
  * @author matt
  * @version 1.1
+ * @deprecated use {@code net.solarnetwork.util.UuidGenerator} instead
  */
+@Deprecated(since = "1.17")
 public class TimeBasedV7UuidGenerator implements UuidGenerator, UuidTimestampDecoder {
 
 	/**

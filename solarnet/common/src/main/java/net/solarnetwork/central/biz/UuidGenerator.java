@@ -29,8 +29,11 @@ import java.util.UUID;
  * 
  * @author matt
  * @version 1.0
+ * @deprecated use {@code net.solarnetwork.util.UuidGenerator} as a drop-in
+ *             replacement
  */
 @FunctionalInterface
+@Deprecated(since = "1.17")
 public interface UuidGenerator {
 
 	/**

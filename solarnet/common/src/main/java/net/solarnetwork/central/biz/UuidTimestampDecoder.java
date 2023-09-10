@@ -30,7 +30,10 @@ import java.util.UUID;
  * 
  * @author matt
  * @version 1.0
+ * @deprecated use {@code net.solarnetwork.util.UuidTimestampDecoder} as a
+ *             drop-in replacement
  */
+@Deprecated(since = "1.17")
 public interface UuidTimestampDecoder {
 
 	/**

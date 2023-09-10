@@ -53,7 +53,11 @@ import net.solarnetwork.web.security.WebConstants;
  * 
  * @author matt
  * @version 1.4
+ * @deprecated use
+ *             {@code net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint}
+ *             instead as a drop-in replacement
  */
+@Deprecated(since = "1.17")
 public class SecurityTokenAuthenticationEntryPoint
 		implements AuthenticationEntryPoint, Ordered, AccessDeniedHandler {
 
