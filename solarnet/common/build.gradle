@@ -81,7 +81,7 @@ dependencies {
 	api 'org.apache.commons:commons-compress:1.22'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
-	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
+	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.web:${snCommonWebVersion}"
 	
 	// Testing
