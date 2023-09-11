@@ -65,16 +65,16 @@ import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SecurityTokenAuthenticationFilterTest {
 

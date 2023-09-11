@@ -58,6 +58,7 @@ import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.web.security.AuthenticationData;
 import net.solarnetwork.web.security.AuthenticationDataFactory;
 import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
+import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Authentication filter for "SolarNetworkWS" style authentication.
@@ -74,7 +75,7 @@ import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
