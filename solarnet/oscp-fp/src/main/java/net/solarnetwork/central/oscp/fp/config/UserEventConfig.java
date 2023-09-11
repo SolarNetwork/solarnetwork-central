@@ -38,7 +38,6 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
-import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
 import net.solarnetwork.central.biz.dao.DaoUserEventBiz;
@@ -50,6 +49,7 @@ import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Configuration for user event handling.
@@ -61,7 +61,7 @@ import net.solarnetwork.util.StatCounter;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class UserEventConfig {

@@ -27,13 +27,13 @@ import java.util.UUID;
 import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
-import net.solarnetwork.central.biz.UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * UUID generator using time-based v1 UUIDs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class TimeBasedUuidGenerator implements UuidGenerator {
 

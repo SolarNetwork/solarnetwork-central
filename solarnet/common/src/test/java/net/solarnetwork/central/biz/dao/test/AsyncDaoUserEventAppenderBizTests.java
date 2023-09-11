@@ -56,26 +56,26 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.SucceededFuture;
-import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Test cases for the {@link AsyncDaoUserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncDaoUserEventAppenderBizTests {
 

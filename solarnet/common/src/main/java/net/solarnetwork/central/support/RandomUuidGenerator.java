@@ -23,13 +23,13 @@
 package net.solarnetwork.central.support;
 
 import java.util.UUID;
-import net.solarnetwork.central.biz.UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Generate random UUIDs.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class RandomUuidGenerator implements UuidGenerator {
 

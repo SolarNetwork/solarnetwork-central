@@ -23,8 +23,8 @@
 package net.solarnetwork.central.common.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
-import static net.solarnetwork.central.support.UuidUtils.createUuidV7Boundary;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.util.UuidUtils.createUuidV7Boundary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,7 +51,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.DeleteUserEvent;
  * Test cases for the {@link DeleteUserEvent} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class DeleteUserEventTests {

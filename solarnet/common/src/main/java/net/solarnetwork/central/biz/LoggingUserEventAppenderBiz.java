@@ -27,19 +27,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * {@link UserEventAppenderBiz} that simply logs events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LoggingUserEventAppenderBiz implements UserEventAppenderBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private final UuidGenerator uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE;
+	private final UuidGenerator uuidGenerator = TimeBasedV7UuidGenerator.INSTANCE_MICROS;
 
 	@Override
 	public UserEvent addEvent(Long userId, LogEventInfo info) {
