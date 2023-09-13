@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: OCPP'
 version = '1.13.0'
-archivesBaseName = 'solarnet-ocpp'
+
+base {
+	archivesName = 'solarnet-ocpp'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: Datum'
 version = '1.13.0'
-archivesBaseName = 'solarnet-datum'
+
+base {
+	archivesName = 'solarnet-datum'
+}
 
 configurations {
 	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'

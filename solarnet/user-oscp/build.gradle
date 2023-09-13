@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: User OSCP'
 version = '1.1.1'
-archivesBaseName = 'solarnet-user-oscp'
+
+base {
+	archivesName = 'solarnet-user-oscp'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

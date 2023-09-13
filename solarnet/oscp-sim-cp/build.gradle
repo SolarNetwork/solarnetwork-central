@@ -10,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarOSCP Capacity Provider Simulator'
 version = '1.0.0'
-archivesBaseName = 'solaroscp-sim-cp'
+
+base {
+	archivesName = 'solaroscp-sim-cp'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

@@ -10,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarIn'
 version = '1.15.0'
-archivesBaseName = 'solarin'
+
+base {
+	archivesName = 'solarin'
+}
 
 configurations {
 	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'

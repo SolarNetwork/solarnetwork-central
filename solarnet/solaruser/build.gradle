@@ -12,7 +12,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
 version = '1.19.2'
-archivesBaseName = 'solaruser'
+
+base {
+	archivesName = 'solaruser'
+}
 
 configurations {
 	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'

@@ -10,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarJobs'
 version = '1.7.0'
-archivesBaseName = 'solarjobs'
+
+base {
+	archivesName = 'solarjobs'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

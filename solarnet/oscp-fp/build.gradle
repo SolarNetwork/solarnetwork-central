@@ -10,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarOSCP Flexibility Provider'
 version = '1.6.0'
-archivesBaseName = 'solaroscp-fp'
+
+base {
+	archivesName = 'solaroscp-fp'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

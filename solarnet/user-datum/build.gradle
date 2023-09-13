@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: User Datum'
 version = '1.3.0'
-archivesBaseName = 'solarnet-user-datum'
+
+base {
+	archivesName = 'solarnet-user-datum'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

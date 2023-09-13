@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: Common Test'
 version = '1.1.0'
-archivesBaseName = 'solarnet-common-test'
+
+base {
+	archivesName = 'solarnet-common-test'
+}
 
 configurations {
 	all*.exclude group: 'io.moquette'

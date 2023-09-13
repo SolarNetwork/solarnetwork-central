@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: Instructor'
 version = '1.5.0'
-archivesBaseName = 'solarnet-instructor'
+
+base {
+	archivesName = 'solarnet-instructor'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

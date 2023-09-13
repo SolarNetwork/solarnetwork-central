@@ -10,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarDNP3'
 version = '1.0.0'
-archivesBaseName = 'solardnp3'
+
+base {
+	archivesName = 'solardnp3'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
