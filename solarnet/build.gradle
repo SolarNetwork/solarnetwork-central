@@ -11,8 +11,11 @@ subprojects {
 
 	group = "net.solarnetwork.central"
 
-	sourceCompatibility = 17
-	targetCompatibility = 17
+	java {
+		toolchain {
+	        languageVersion = JavaLanguageVersion.of(17)
+	    }
+	}
 
 	repositories {
 		mavenCentral()
@@ -23,6 +26,7 @@ subprojects {
 		compileJava,
 		compileTestJava
 	].each() {
+    	it.options.release = 17
 		it.options.compilerArgs += [
 			"-Xlint:all",
 			"-Xlint:-options",
@@ -46,9 +50,7 @@ subprojects {
 		attributes('Implementation-Title': name,
 		'Implementation-Version': version,
 		'Built-By': System.getProperty('user.name'),
-		'Built-JDK': System.getProperty('java.version'),
-		'Source-Compatibility': sourceCompatibility,
-		'Target-Compatibility': targetCompatibility)
+		'Built-JDK': System.getProperty('java.version'))
 	}
 
 	javadoc.options {
