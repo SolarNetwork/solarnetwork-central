@@ -93,7 +93,7 @@ subprojects {
 		javaxAnnotationVersion = '1.3.2'
 		jsonSchemaValidatorVersion = '1.0.73'
 		myBatisStarterVersion = '2.2.0'
-		snCommonVersion = '3.5.0'
+		snCommonVersion = '3.5.1'
 		snCommonMqttVersion = '4.0.0'
 		snCommonMqttNettyVersion = '3.0.1'
 		snCommonOcppVersion = '2.5.0'
