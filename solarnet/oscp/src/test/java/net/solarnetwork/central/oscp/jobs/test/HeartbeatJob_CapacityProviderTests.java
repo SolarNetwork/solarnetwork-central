@@ -83,7 +83,7 @@ public class HeartbeatJob_CapacityProviderTests {
 	private ArgumentCaptor<Supplier<String>> pathSupplierCaptor;
 
 	@Captor
-	ArgumentCaptor<Supplier<Object>> httpBodyCaptor;
+	private ArgumentCaptor<Object> httpBodyCaptor;
 
 	private HeartbeatJob job;
 
