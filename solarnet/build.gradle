@@ -114,21 +114,20 @@ subprojects {
 			// Test dependencies.
 			easymock: 'org.easymock:easymock:3.1',
 			hamcrest: 'org.hamcrest:hamcrest-library:2.2',
-			junit: 'org.junit.jupiter:junit-jupiter:5.8.0',
-			junit4: 'org.junit.vintage:junit-vintage-engine:5.8.0',
-			mockito: 'org.mockito:mockito-core:3.9.0',
-			mockitoJupiter: 'org.mockito:mockito-junit-jupiter:3.9.0'
+			junit4: 'org.junit.vintage:junit-vintage-engine',
+			mockito: 'org.mockito:mockito-core:5.5.0',
+			mockitoJupiter: 'org.mockito:mockito-junit-jupiter:5.5.0'
 		]
 	}
 	
 	ext['netty.version'] = '4.1.96.Final'
 	ext['snakeyaml.version'] = '2.0' // SECFIX
 	ext['spring-security.version']='5.8.1'
+	ext['junit-jupiter.version'] = '5.10.0'
 	
 	dependencies {
 		components { all(IvyVariantDerivationRule) }
-		testImplementation libraries.junit,
-				libraries.junit4,
+		testImplementation libraries.junit4,
 				libraries.hamcrest,
 				libraries.mockito,
 				libraries.mockitoJupiter,
