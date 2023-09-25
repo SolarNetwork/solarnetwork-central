@@ -48,7 +48,7 @@ import net.solarnetwork.util.ObjectUtils;
  * MyBatis implementation of {@link CentralChargeSessionDao}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport<ChargeSession, UUID>
 		implements CentralChargeSessionDao {
@@ -124,6 +124,16 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 		filter.setConnectorId(connectorId);
 		return selectFirst(QueryName.FindByIncomplete.getQueryName(),
 				singletonMap(FILTER_PROPERTY, filter));
+	}
+
+	@Override
+	public Collection<ChargeSession> getIncompleteChargeSessionsForConnector(long chargePointId,
+			int connectorId) {
+		BasicOcppCriteria filter = new BasicOcppCriteria();
+		filter.setChargePointId(chargePointId);
+		filter.setConnectorId(connectorId);
+		return selectList(QueryName.FindByIncomplete.getQueryName(),
+				singletonMap(FILTER_PROPERTY, filter), null, null);
 	}
 
 	@Override

@@ -298,22 +298,12 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(), txId);
 
-		// check for existing session, e.g. ConcurrentTx
-		ChargeSession sess = chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
-				info.getConnectorId());
-		if ( sess != null ) {
-			throw new AuthorizationException(
-					String.format("ChargeSession %s already active for Charge Point %s connector %d",
-							sess.getId(), info.getChargePointId(), info.getConnectorId()),
-					new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.ConcurrentTx),
-					txId);
-		}
-
 		// persist a new session
+		final ChargeSession sess;
 		try {
-			sess = new ChargeSession(UUID.randomUUID(), info.getTimestampStart(),
-					info.getAuthorizationId(), cp.getId(), info.getConnectorId(), txId);
-			sess = chargeSessionDao.get(chargeSessionDao.save(sess));
+			sess = chargeSessionDao.get(
+					chargeSessionDao.save(new ChargeSession(UUID.randomUUID(), info.getTimestampStart(),
+							info.getAuthorizationId(), cp.getId(), info.getConnectorId(), txId)));
 		} catch ( DataIntegrityViolationException e ) {
 			// assume this is from no matching Charge Point for the given chargePointId value
 			throw new AuthorizationException(new AuthorizationInfo(info.getAuthorizationId(),

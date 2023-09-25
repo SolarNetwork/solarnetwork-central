@@ -64,7 +64,7 @@ import net.solarnetwork.ocpp.domain.UnitOfMeasure;
  * Test cases for the {@link MyBatisCentralChargeSessionDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -240,6 +240,15 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		ChargeSession sess = dao.getIncompleteChargeSessionForConnector(last.getChargePointId(),
 				last.getConnectorId());
 		assertThat("Incomplete session found", sess, equalTo(last));
+	}
+
+	@Test
+	public void findIncompletes_conn() {
+		insert();
+
+		Collection<ChargeSession> sess = dao
+				.getIncompleteChargeSessionsForConnector(last.getChargePointId(), last.getConnectorId());
+		assertThat("Incomplete session found", sess, contains(last));
 	}
 
 	@Test
