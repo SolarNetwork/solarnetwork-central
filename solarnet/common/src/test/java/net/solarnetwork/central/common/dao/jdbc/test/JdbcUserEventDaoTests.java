@@ -48,22 +48,22 @@ import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.threeten.extra.MutableClock;
-import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Test cases for the {@link JdbcUserEventDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcUserEventDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 

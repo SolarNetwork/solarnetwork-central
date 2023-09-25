@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.14'
+	id 'org.springframework.boot' version '2.7.15'
 }
 
 apply plugin: 'java'
@@ -9,8 +9,11 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarQuery'
-version = '1.7.0'
-archivesBaseName = 'solarquery'
+version = '1.8.0'
+
+base {
+	archivesName = 'solarquery'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
@@ -47,11 +50,5 @@ bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarQuery',
 					'Implementation-Version': archiveVersion
-	}
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
 	}
 }

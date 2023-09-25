@@ -30,17 +30,17 @@ import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.biz.UuidTimestampDecoder;
 import net.solarnetwork.central.common.dao.BasicUserEventFilter;
 import net.solarnetwork.central.common.dao.UserEventMaintenanceDao.UserEventPurgeFilter;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidTimestampDecoder;
 
 /**
  * Delete {@link net.solarnetwork.central.domain.UserEvent} entities matching a
  * filter.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 

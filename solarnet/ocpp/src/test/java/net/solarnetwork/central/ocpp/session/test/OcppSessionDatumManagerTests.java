@@ -206,10 +206,7 @@ public class OcppSessionDatumManagerTests {
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
-		// verify concurrent tx
-		int connectorId = 1;
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), connectorId))
-				.andReturn(null);
+		final int connectorId = 1;
 
 		// create new session
 		Capture<ChargeSession> sessionCaptor = new Capture<>();
@@ -342,60 +339,6 @@ public class OcppSessionDatumManagerTests {
 	}
 
 	@Test
-	public void startSession_concurrentTx() {
-		// GIVEN
-
-		// get TX ID
-		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
-		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
-
-		// verify authorization
-		String identifier = UUID.randomUUID().toString();
-		ChargePointIdentity chargePointId = new ChargePointIdentity(identifier, "foo");
-		CentralChargePoint cp = new CentralChargePoint(UUID.randomUUID().getMostSignificantBits(),
-				UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().getMostSignificantBits(),
-				Instant.now(), new ChargePointInfo(identifier));
-		String idTag = UUID.randomUUID().toString().substring(0, 20);
-
-		// get ChargePoint
-		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
-
-		// verify concurrent tx
-		int connectorId = 1;
-		ChargeSession existingSess = new ChargeSession(UUID.randomUUID(), Instant.now().minusSeconds(60),
-				idTag, cp.getId(), connectorId, transactionId);
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), connectorId))
-				.andReturn(existingSess);
-
-		// WHEN
-		replayAll();
-
-		// @formatter:off
-		ChargeSessionStartInfo info = ChargeSessionStartInfo.builder()
-				.withTimestampStart(Instant.now())
-				.withChargePointId(chargePointId)
-				.withAuthorizationId(idTag)
-				.withConnectorId(connectorId)
-				.withMeterStart(1234)
-				.build();
-
-		// THEN
-		thenThrownBy(() -> {
-			manager.startChargingSession(info);
-		}).isInstanceOf(AuthorizationException.class)
-				.asInstanceOf(InstanceOfAssertFactories.type(AuthorizationException.class))
-				.as("Transaction ID provided")
-				.returns(transactionId, AuthorizationException::getTransactionId)
-				.extracting(AuthorizationException::getInfo)
-				.as("Auth info available")
-				.isNotNull()
-				.as("Authorization status is ConcurrentTx")
-				.returns(AuthorizationStatus.ConcurrentTx, AuthorizationInfo::getStatus)
-				;
-		// @formatter:on
-	}
-
-	@Test
 	public void startSession_authFailure() {
 		// GIVEN
 		String identifier = UUID.randomUUID().toString();
@@ -413,8 +356,6 @@ public class OcppSessionDatumManagerTests {
 
 		// verify concurrent tx
 		final int connectorId = 1;
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), connectorId))
-				.andReturn(null);
 
 		// create new session, even though auth failure
 		Capture<ChargeSession> sessionCaptor = new Capture<>();

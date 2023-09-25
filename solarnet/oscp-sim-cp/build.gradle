@@ -1,6 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '2.7.14'
+	id 'eclipse'
+	id 'org.springframework.boot' version '2.7.15'
 }
 
 apply plugin: 'java'
@@ -9,7 +10,10 @@ apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarOSCP Capacity Provider Simulator'
 version = '1.0.0'
-archivesBaseName = 'solaroscp-sim-cp'
+
+base {
+	archivesName = 'solaroscp-sim-cp'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'

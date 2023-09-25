@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.14' apply false
+	id 'org.springframework.boot' version '2.7.15' apply false
 }
 
 apply plugin: 'java-library'
@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: DNP3'
 version = '1.0.0'
-archivesBaseName = 'solarnet-dnp3'
+
+base {
+	archivesName = 'solarnet-dnp3'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
@@ -59,10 +62,4 @@ dependencies {
 
 jar.manifest {
     attributes('Implementation-Version': version)
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
-	}
 }

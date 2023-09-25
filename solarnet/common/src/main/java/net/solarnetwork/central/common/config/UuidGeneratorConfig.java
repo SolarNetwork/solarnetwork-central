@@ -24,14 +24,14 @@ package net.solarnetwork.central.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.biz.UuidGenerator;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Configuration for UUID generation.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class UuidGeneratorConfig {

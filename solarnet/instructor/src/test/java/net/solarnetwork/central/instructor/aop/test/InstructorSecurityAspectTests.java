@@ -123,9 +123,11 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
+
 		Set<Long> nodeIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
-			long nodeId = (long) (Math.random() * 1000) + 1000L;
+			long nodeId = nodeIdCounter++;
 			nodeIds.add(nodeId);
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
@@ -141,16 +143,18 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
+
 		Set<Long> nodeIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
-			long nodeId = (long) (Math.random() * 1000) + 1000L;
+			long nodeId = nodeIdCounter++;
 			nodeIds.add(nodeId);
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		}
 
 		// add one more node ID that is owned by another user
-		final Long nodeId = (long) (Math.random() * 1000) + 2000L;
+		final Long nodeId = nodeIdCounter++;
 		nodeIds.add(nodeId);
 		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
@@ -165,14 +169,17 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
+		long instrIdCounter = (long) (Math.random() * 1000) + 2000;
+
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
 		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = (long) (Math.random() * 1000) + 1000L;
+			Long nodeId = nodeIdCounter++;
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-			Long instrId = (long) (Math.random() * 1000) + 2000L;
+			Long instrId = instrIdCounter++;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 			instr.setId(instrId);
 			instructionIds.add(instrId);
@@ -189,14 +196,17 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
+		long instrIdCounter = (long) (Math.random() * 1000) + 2000;
+
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		List<NodeInstruction> instructions = new ArrayList<NodeInstruction>();
 		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = (long) (Math.random() * 1000) + 1000L;
+			Long nodeId = nodeIdCounter++;
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-			Long instrId = (long) (Math.random() * 1000) + 2000L;
+			Long instrId = instrIdCounter++;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 			instr.setId(instrId);
 			instructionIds.add(instrId);
@@ -204,11 +214,11 @@ public class InstructorSecurityAspectTests {
 		}
 
 		// add one more instruction that is owned by another user's ndoe
-		Long nodeId = (long) (Math.random() * 1000) - 1000L;
+		Long nodeId = nodeIdCounter++;
 		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		Long instrId = (long) (Math.random() * 1000) + 2000L;
+		Long instrId = instrIdCounter++;
 		NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 		instr.setId(instrId);
 		instructionIds.add(instrId);
@@ -249,25 +259,27 @@ public class InstructorSecurityAspectTests {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
 
+		long nodeIdCounter = (long) (Math.random() * 1000) + 1000L;
+		long instrIdCounter = (long) (Math.random() * 1000) + 2000;
 		Set<Long> instructionIds = new LinkedHashSet<Long>();
 		for ( int i = 0; i < 3; i++ ) {
-			Long nodeId = (long) (Math.random() * 1000) + 1000L;
+			Long nodeId = nodeIdCounter++;
 			SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
 			expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-			Long instrId = (long) (Math.random() * 1000) + 2000L;
+			Long instrId = instrIdCounter++;
 			NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 			instr.setId(instrId);
 			expect(nodeInstructionDao.get(instrId)).andReturn(instr);
 			instructionIds.add(instrId);
 		}
 
-		// add one more instruction that is owned by another user's ndoe
-		Long nodeId = (long) (Math.random() * 1000) - 1000L;
+		// add one more instruction that is owned by another user's node
+		Long nodeId = nodeIdCounter++;
 		SolarNodeOwnership ownership = ownershipFor(nodeId, -3L);
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
-		Long instrId = (long) (Math.random() * 1000) + 2000L;
+		Long instrId = instrIdCounter++;
 		NodeInstruction instr = new NodeInstruction("foo", Instant.now(), nodeId);
 		instr.setId(instrId);
 		expect(nodeInstructionDao.get(instrId)).andReturn(instr);

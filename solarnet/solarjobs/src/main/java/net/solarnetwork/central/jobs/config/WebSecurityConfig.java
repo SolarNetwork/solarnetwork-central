@@ -54,15 +54,15 @@ import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
-import net.solarnetwork.central.security.web.SecurityTokenAuthenticationEntryPoint;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
+import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Security configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @EnableWebSecurity

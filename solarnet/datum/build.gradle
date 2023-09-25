@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.14' apply false
+	id 'org.springframework.boot' version '2.7.15' apply false
 }
 
 apply plugin: 'java-library'
@@ -15,7 +15,10 @@ dependencyManagement {
 
 description = 'SolarNet: Datum'
 version = '1.13.0'
-archivesBaseName = 'solarnet-datum'
+
+base {
+	archivesName = 'solarnet-datum'
+}
 
 configurations {
 	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
@@ -53,10 +56,4 @@ dependencies {
 
 jar.manifest {
     attributes('Implementation-Version': version)
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
-	}
 }

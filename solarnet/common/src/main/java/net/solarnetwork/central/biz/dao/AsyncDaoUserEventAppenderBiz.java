@@ -36,23 +36,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.uuid.UUIDComparator;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.biz.UuidGenerator;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatCounter;
 import net.solarnetwork.util.StatCounter.Stat;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Asynchronous {@link UserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncDaoUserEventAppenderBiz
 		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {

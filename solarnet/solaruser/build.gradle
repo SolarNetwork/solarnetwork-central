@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.14'
+	id 'org.springframework.boot' version '2.7.15'
 }
 
 //apply plugin: 'checkstyle'
@@ -11,8 +11,11 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '1.19.2'
-archivesBaseName = 'solaruser'
+version = '1.20.0'
+
+base {
+	archivesName = 'solaruser'
+}
 
 configurations {
 	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
@@ -76,11 +79,5 @@ bootJar {
 	manifest {
 		attributes 	'Implementation-Title': 'SolarUser',
 					'Implementation-Version': archiveVersion
-	}
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
 	}
 }

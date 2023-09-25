@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.14' apply false
+	id 'org.springframework.boot' version '2.7.15' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,8 +14,11 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '1.16.2'
-archivesBaseName = 'solarnet-common'
+version = '1.17.0'
+
+base {
+	archivesName = 'solarnet-common'
+}
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
@@ -81,8 +84,8 @@ dependencies {
 	api 'org.apache.commons:commons-compress:1.22'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
-	api 'net.solarnetwork.common:net.solarnetwork.common.pki.bc:2.0.0'
-	api 'net.solarnetwork.common:net.solarnetwork.common.web:2.2.0'
+	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+	api "net.solarnetwork.common:net.solarnetwork.common.web:${snCommonWebVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
@@ -92,10 +95,4 @@ dependencies {
 
 jar.manifest {
     attributes('Implementation-Version': version)
-}
-
-eclipse {
-	jdt {
-		javaRuntimeName 'JavaSE-17'
-	}
 }

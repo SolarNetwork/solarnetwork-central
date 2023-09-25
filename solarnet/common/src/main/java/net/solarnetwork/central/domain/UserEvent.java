@@ -29,9 +29,9 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.central.support.UuidUtils;
 import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.util.UuidUtils;
 
 /**
  * An application event related to a user.
@@ -43,7 +43,7 @@ import net.solarnetwork.dao.Entity;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserEvent extends BasicIdentity<UserUuidPK>
 		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
@@ -141,7 +141,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	@Override
 	public Instant getCreated() {
-		return UuidUtils.extractTimestamp(getEventId(), true);
+		return UuidUtils.extractTimestamp(getEventId(), UuidUtils.V7_MICRO_COUNT_PRECISION);
 	}
 
 	/**

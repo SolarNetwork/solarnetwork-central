@@ -39,15 +39,16 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.domain.UserEvent;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidUtils;
 
 /**
  * Test cases for the {@link UserEventSerializer}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserEventSerializerTests {
 
@@ -70,7 +71,7 @@ public class UserEventSerializerTests {
 	@Before
 	public void setup() {
 		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(),
-				Clock.fixed(TEST_DATE, ZoneOffset.UTC), true);
+				Clock.fixed(TEST_DATE, ZoneOffset.UTC), UuidUtils.V7_MICRO_COUNT_PRECISION);
 		mapper = createObjectMapper();
 	}
 

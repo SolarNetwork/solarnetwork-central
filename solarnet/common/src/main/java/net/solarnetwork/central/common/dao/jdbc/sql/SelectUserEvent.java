@@ -29,18 +29,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.biz.UuidTimestampDecoder;
 import net.solarnetwork.central.common.dao.UserEventFilter;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.support.SearchFilterUtils;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.SearchFilter;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidTimestampDecoder;
 
 /**
  * Select for user events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectUserEvent
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {

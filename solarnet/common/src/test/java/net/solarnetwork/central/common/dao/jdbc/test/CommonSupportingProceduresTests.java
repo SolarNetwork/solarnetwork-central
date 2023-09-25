@@ -37,15 +37,15 @@ import javax.sql.DataSource;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import net.solarnetwork.central.support.TimeBasedV7UuidGenerator;
-import net.solarnetwork.central.support.UuidUtils;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.util.TimeBasedV7UuidGenerator;
+import net.solarnetwork.util.UuidUtils;
 
 /**
  * Test cases for common supporting database functions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport {
 
@@ -95,7 +95,7 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 		Instant t = LocalDateTime.of(2022, 8, 3, 17, 25, 0, 123456789).toInstant(ZoneOffset.UTC);
 		Clock fixed = Clock.fixed(t, ZoneOffset.UTC);
 		TimeBasedV7UuidGenerator generator = new TimeBasedV7UuidGenerator(new SecureRandom(), fixed,
-				true);
+				UuidUtils.V7_MICRO_COUNT_PRECISION);
 		UUID uuid = generator.generate();
 
 		// WHEN
@@ -113,7 +113,7 @@ public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport 
 		Instant t = LocalDateTime.of(2022, 8, 3, 17, 25, 0, 123).toInstant(ZoneOffset.UTC);
 		Clock fixed = Clock.fixed(t, ZoneOffset.UTC);
 		TimeBasedV7UuidGenerator generator = new TimeBasedV7UuidGenerator(new SecureRandom(), fixed,
-				true);
+				UuidUtils.V7_MICRO_COUNT_PRECISION);
 		UUID uuid = generator.generate();
 
 		// WHEN
