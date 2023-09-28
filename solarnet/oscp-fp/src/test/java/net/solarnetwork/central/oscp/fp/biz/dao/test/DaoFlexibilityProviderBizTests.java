@@ -666,6 +666,86 @@ public class DaoFlexibilityProviderBizTests {
 	}
 
 	@Test
+	public void updateGroupCapacityForecast_withSourceId() throws Exception {
+		// GIVEN
+		final String groupIdentifier = randomUUID().toString();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(
+				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
+						randomUUID().getMostSignificantBits()),
+				OscpRole.CapacityProvider);
+		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
+				Phase.All, new BigDecimal("3.3"), MeasurementUnit.kW);
+		final CapacityForecast forecast = new CapacityForecast(ForecastType.Consumption,
+				Collections.singletonList(amount));
+
+		// find the group
+		CapacityGroupConfiguration group = new CapacityGroupConfiguration(authInfo.userId(),
+				randomUUID().getMostSignificantBits(), Instant.now());
+		group.setCapacityOptimizerId(randomUUID().getMostSignificantBits());
+		group.setCapacityProviderId(authInfo.entityId());
+		group.setIdentifier(groupIdentifier);
+		given(capacityGroupDao.findForCapacityProvider(authInfo.userId(), authInfo.entityId(),
+				groupIdentifier)).willReturn(group);
+
+		// get the optimizer
+		CapacityOptimizerConfiguration conf = new CapacityOptimizerConfiguration(authInfo.userId(),
+				group.getCapacityOptimizerId(), Instant.now());
+		conf.setOscpVersion("2.0");
+		conf.setBaseUrl("http://localhost/" + UUID.randomUUID().toString());
+		conf.setRegistrationStatus(RegistrationStatus.Registered);
+		conf.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityOptimizerDao.get(conf.getId())).willReturn(conf);
+
+		// get the provider
+		var provider = new CapacityProviderConfiguration(authInfo.userId(),
+				group.getCapacityProviderId(), Instant.now());
+		provider.setOscpVersion("2.0");
+		provider.setBaseUrl(null);
+		provider.setRegistrationStatus(RegistrationStatus.Registered);
+		provider.setFlexibilityProviderId(randomUUID().getMostSignificantBits());
+		given(capacityProviderDao.get(provider.getId())).willReturn(provider);
+
+		// get the group publish settings
+		var settings = new CapacityGroupSettings(authInfo.userId(), group.getEntityId(), now());
+		settings.setPublishToSolarIn(true);
+		settings.setPublishToSolarFlux(true);
+		settings.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
+		settings.setNodeId(randomUUID().getMostSignificantBits());
+		given(capacitySettingsDao.resolveDatumPublishSettings(authInfo.userId(), groupIdentifier))
+				.willReturn(settings);
+
+		// verify node ID owned by user
+		var owner = BasicSolarNodeOwnership.ownershipFor(settings.getNodeId(), authInfo.userId());
+		given(nodeOwnershipDao.ownershipForNodeId(settings.getNodeId())).willReturn(owner);
+
+		// get the system auth token
+		final String sysToken = randomUUID().toString();
+		given(capacityOptimizerDao.getExternalSystemAuthToken(conf.getId())).willReturn(sysToken);
+
+		final String requestId = randomUUID().toString();
+
+		// call out to the external system UpdateGroupCapacityForecast endpoint
+		UpdateGroupCapacityForecast expectedPost = forecast
+				.toOscp20UpdateGroupCapacityValue(groupIdentifier);
+		String expectedPostJson = objectMapper.writeValueAsString(expectedPost);
+		mockExternalSystem
+				.expect(once(), requestTo(conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH))
+				.andExpect(method(HttpMethod.POST))
+				.andExpect(header(AUTHORIZATION, tokenAuthorizationHeader(sysToken)))
+				.andExpect(header(REQUEST_ID_HEADER, requestId))
+				.andExpect(header(ExternalSystemServiceProperties.SOURCE_ID_HEADER,
+						"/oscp/cp/UpdateGroupCapacityForecast/%d/%d/%s/c".formatted(
+								group.getCapacityProviderId(), group.getCapacityOptimizerId(),
+								group.getIdentifier())))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(expectedPostJson, false)).andRespond(withNoContent());
+
+		// WHEN
+		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
+	}
+
+	@Test
 	public void updateGroupCapacityForecast_noOptimizerUriWithDatumPublish() throws Exception {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();

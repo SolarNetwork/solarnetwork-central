@@ -26,7 +26,7 @@ package net.solarnetwork.central.oscp.domain;
  * Constants and helpers for OSCP external system service property handling.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface ExternalSystemServiceProperties {
 
@@ -102,4 +102,11 @@ public interface ExternalSystemServiceProperties {
 	 * @since 1.1
 	 */
 	String COMBINED_ASSET_ID = "group-combined-asset-id";
+
+	/**
+	 * An extra HTTP header for a SolarNetwork source ID value.
+	 * 
+	 * @since 1.2
+	 */
+	String SOURCE_ID_HEADER = "x-sn-source-id";
 }
