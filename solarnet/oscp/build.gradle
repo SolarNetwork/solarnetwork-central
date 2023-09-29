@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '1.7.0'
+version = '1.8.0'
 
 base {
 	archivesName = 'solarnet-oscp'
