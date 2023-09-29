@@ -57,6 +57,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
+import net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties;
 import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 
@@ -159,6 +160,17 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 				Object v = context.parameters().get(header);
 				if ( v != null ) {
 					headers.add(header, v.toString());
+				}
+			}
+
+			// support an "extra" HTTP headers parameter, of a Map<String,String> of arbitrary headers to include
+			Object extraHeadersParam = context.parameters()
+					.get(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS);
+			if ( extraHeadersParam instanceof Map<?, ?> m ) {
+				for ( Entry<?, ?> e : m.entrySet() ) {
+					if ( e.getKey() != null && e.getValue() != null ) {
+						headers.add(e.getKey().toString(), e.getValue().toString());
+					}
 				}
 			}
 		}
