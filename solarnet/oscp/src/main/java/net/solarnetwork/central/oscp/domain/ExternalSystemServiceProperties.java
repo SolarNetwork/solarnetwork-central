@@ -108,5 +108,5 @@ public interface ExternalSystemServiceProperties {
 	 * 
 	 * @since 1.2
 	 */
-	String SOURCE_ID_HEADER = "x-sn-source-id";
+	String SOURCE_ID_HEADER = "X-SN-Source-ID";
 }
