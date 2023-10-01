@@ -69,7 +69,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -389,6 +389,7 @@ public final class DatumSqlUtils {
 			buf.append(
 					"		OR s.node_id = ANY(ARRAY(SELECT solarcommon.jsonb_array_to_bigint_array(ut.jpolicy->'nodeIds')))\n");
 			buf.append("	)\n");
+			paramCount += 1;
 		}
 		if ( filter.hasLocationCriteria() ) {
 			Location l = filter.getLocation();
