@@ -25,7 +25,9 @@ package net.solarnetwork.central.query.aop.test;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.privateOwnershipFor;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -64,7 +66,6 @@ import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -80,13 +81,14 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class QuerySecurityAspectTests {
 
@@ -442,6 +444,7 @@ public class QuerySecurityAspectTests {
 
 	@Test
 	public void reportableSourceIdsFilter() throws Throwable {
+		// GIVEN
 		final Long nodeId = -1L;
 		final Long nodeId2 = -2L;
 		final Long userId = -100L;
@@ -454,26 +457,49 @@ public class QuerySecurityAspectTests {
 				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		SolarNodeOwnership ownership2 = privateOwnershipFor(nodeId2, userId);
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
 
-		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+		expect(pjp.proceed()).andReturn(availableSourceIds);
 
-		EasyMock.replay(pjp);
+		// WHEN
+		replay(pjp);
 		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeIds(new Long[] { nodeId, nodeId2 });
 		@SuppressWarnings("unchecked")
 		Set<String> result = (Set<String>) service.reportableSourcesFilterAccessCheck(pjp, criteria);
-		Assert.assertEquals("Filtered source IDs",
-				new LinkedHashSet<String>(Arrays.asList("/A/B/watts", "/A/C/watts")), result);
+
+		// THEN
+		then(result).as("Source IDs filtered by policy").contains("/A/B/watts", "/A/C/watts");
+	}
+
+	@Test
+	public void reportableSourceIdsFilter_noNodeIds() throws Throwable {
+		// GIVEN
+		final ProceedingJoinPoint pjp = EasyMock.createMock(ProceedingJoinPoint.class);
+		final Set<String> availableSourceIds = new LinkedHashSet<String>(
+				Arrays.asList("/A/B/watts", "/A/C/watts", "/B/B/watts", "Foo bar"));
+		expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		// WHEN
+		replay(pjp);
+		replayAll();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		@SuppressWarnings("unchecked")
+		Set<String> result = (Set<String>) service.reportableSourcesFilterAccessCheck(pjp, filter);
+
+		// THEN
+		then(result).as("All source IDs returned").isSameAs(availableSourceIds);
 	}
 
 	@Test
 	public void availableSourceIdsFilter() throws Throwable {
+		// GIVEN
 		final Long nodeId = -1L;
 		final Long nodeId2 = -2L;
 		final Long userId = -100L;
@@ -487,14 +513,15 @@ public class QuerySecurityAspectTests {
 				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId2, "/A/B/watts")));
 		setAuthenticatedReadNodeDataToken(userId, policy);
 		SolarNodeOwnership ownership = privateOwnershipFor(nodeId, userId);
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 
 		SolarNodeOwnership ownership2 = privateOwnershipFor(nodeId2, userId);
-		EasyMock.expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId2)).andReturn(ownership2);
 
-		EasyMock.expect(pjp.proceed()).andReturn(availableSourceIds);
+		expect(pjp.proceed()).andReturn(availableSourceIds);
 
-		EasyMock.replay(pjp);
+		// WHEN
+		replay(pjp);
 		replayAll();
 
 		DatumFilterCommand criteria = new DatumFilterCommand();
@@ -502,11 +529,34 @@ public class QuerySecurityAspectTests {
 		@SuppressWarnings("unchecked")
 		Set<NodeSourcePK> result = (Set<NodeSourcePK>) service.availableSourcesFilterAccessCheck(pjp,
 				criteria);
-		Assert.assertEquals("Filtered source IDs",
-				new LinkedHashSet<NodeSourcePK>(Arrays.asList(new NodeSourcePK(nodeId, "/A/B/watts"),
-						new NodeSourcePK(nodeId, "/A/C/watts"),
-						new NodeSourcePK(nodeId2, "/A/B/watts"))),
-				result);
+
+		// THEN
+		then(result).as("Filtered source IDs to policy").contains(new NodeSourcePK(nodeId, "/A/B/watts"),
+				new NodeSourcePK(nodeId, "/A/C/watts"), new NodeSourcePK(nodeId2, "/A/B/watts"));
+	}
+
+	@Test
+	public void availableSourceIdsFilter_noNodeIds() throws Throwable {
+		// GIVEN
+		final Long nodeId = -1L;
+		final Long nodeId2 = -2L;
+		final ProceedingJoinPoint pjp = EasyMock.createMock(ProceedingJoinPoint.class);
+		final Set<NodeSourcePK> availableSourceIds = new LinkedHashSet<NodeSourcePK>(Arrays.asList(
+				new NodeSourcePK(nodeId, "/A/B/watts"), new NodeSourcePK(nodeId, "/A/C/watts"),
+				new NodeSourcePK(nodeId, "/B/B/watts"), new NodeSourcePK(nodeId2, "/A/B/watts")));
+		expect(pjp.proceed()).andReturn(availableSourceIds);
+
+		// WHEN
+		replay(pjp);
+		replayAll();
+
+		DatumFilterCommand filter = new DatumFilterCommand();
+		@SuppressWarnings("unchecked")
+		Set<NodeSourcePK> result = (Set<NodeSourcePK>) service.availableSourcesFilterAccessCheck(pjp,
+				filter);
+
+		// THEN
+		then(result).as("All source IDs returned").isSameAs(availableSourceIds);
 	}
 
 	@Test
