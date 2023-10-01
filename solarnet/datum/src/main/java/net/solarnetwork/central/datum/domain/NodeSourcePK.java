@@ -23,12 +23,13 @@
 package net.solarnetwork.central.datum.domain;
 
 import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Primary key based on a node ID and source ID.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class NodeSourcePK extends BasicNodeSourcePK
 		implements Serializable, Cloneable, Comparable<NodeSourcePK>, ObjectSourcePK {
@@ -78,6 +79,7 @@ public class NodeSourcePK extends BasicNodeSourcePK
 	 * 
 	 * {@inheritDoc}
 	 */
+	@JsonIgnore
 	@Override
 	public Long getObjectId() {
 		return getNodeId();
