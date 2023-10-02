@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Search criteria for datum property name data.
  * 
@@ -40,6 +42,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return the property name, or {@literal null} if not available
 	 */
+	@JsonIgnore
 	default String getPropertyName() {
 		String[] names = getPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
@@ -64,6 +67,7 @@ public interface PropertyNameCriteria {
 	 * @return the instantaneous property name, or {@literal null} if not
 	 *         available
 	 */
+	@JsonIgnore
 	default String getInstantaneousPropertyName() {
 		String[] names = getInstantaneousPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
@@ -88,6 +92,7 @@ public interface PropertyNameCriteria {
 	 * @return the accumulating property name, or {@literal null} if not
 	 *         available
 	 */
+	@JsonIgnore
 	default String getAccumulatingPropertyName() {
 		String[] names = getAccumulatingPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
@@ -111,6 +116,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return the status property name, or {@literal null} if not available
 	 */
+	@JsonIgnore
 	default String getStatusPropertyName() {
 		String[] names = getStatusPropertyNames();
 		return (names != null && names.length > 0 ? names[0] : null);
@@ -128,6 +134,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return {@literal true} if the property name is non-null
 	 */
+	@JsonIgnore
 	default boolean hasPropertyNameCriteria() {
 		return getPropertyName() != null;
 	}
@@ -137,6 +144,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return {@literal true} if the instantaneous property name is non-null
 	 */
+	@JsonIgnore
 	default boolean hasInstantatneousPropertyNameCriteria() {
 		return getInstantaneousPropertyName() != null;
 	}
@@ -146,6 +154,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return {@literal true} if the accumulating property name is non-null
 	 */
+	@JsonIgnore
 	default boolean hasAccumulatingPropertyNameCriteria() {
 		return getAccumulatingPropertyName() != null;
 	}
@@ -155,6 +164,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return {@literal true} if the status property name is non-null
 	 */
+	@JsonIgnore
 	default boolean hasStatusPropertyNameCriteria() {
 		return getStatusPropertyName() != null;
 	}
@@ -165,6 +175,7 @@ public interface PropertyNameCriteria {
 	 * 
 	 * @return {@literal true} if the some property name criteria is non-null
 	 */
+	@JsonIgnore
 	default boolean hasAnyPropertyNameCriteria() {
 		return hasPropertyNameCriteria() || hasInstantatneousPropertyNameCriteria()
 				|| hasAccumulatingPropertyNameCriteria() || hasStatusPropertyNameCriteria();

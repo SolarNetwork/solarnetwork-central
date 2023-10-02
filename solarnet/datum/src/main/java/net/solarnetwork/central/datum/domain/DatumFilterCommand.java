@@ -971,6 +971,32 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
 	}
 
+	@JsonIgnore
+	@Override
+	public String getPropertyName() {
+		return GeneralLocationDatumMetadataFilter.super.getPropertyName();
+	}
+
+	/**
+	 * Set a single property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the {@code propertyNames} array,
+	 * as the first value. Calling this method replaces any existing
+	 * {@code propertyNames} value with a new array containing just the name
+	 * passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 2.4
+	 */
+	@JsonSetter
+	public void setPropertyName(String name) {
+		setPropertyNames(name == null ? null : new String[] { name });
+	}
+
 	@Override
 	public String[] getPropertyNames() {
 		return propertyNames;
@@ -985,6 +1011,32 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public void setPropertyNames(String[] propertyNames) {
 		this.propertyNames = propertyNames;
+	}
+
+	@JsonIgnore
+	@Override
+	public String getInstantaneousPropertyName() {
+		return GeneralLocationDatumMetadataFilter.super.getInstantaneousPropertyName();
+	}
+
+	/**
+	 * Set a single instantaneous property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the
+	 * {@code instantaneousPropertyNames} array, as the first value. Calling
+	 * this method replaces any existing {@code instantaneousPropertyNames}
+	 * value with a new array containing just the name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 2.4
+	 */
+	@JsonSetter
+	public void setInstantaneousPropertyName(String name) {
+		setInstantaneousPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
@@ -1003,6 +1055,32 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		this.instantaneousPropertyNames = instantaneousPropertyNames;
 	}
 
+	@JsonIgnore
+	@Override
+	public String getAccumulatingPropertyName() {
+		return GeneralLocationDatumMetadataFilter.super.getAccumulatingPropertyName();
+	}
+
+	/**
+	 * Set a single accumulating property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the
+	 * {@code accumulatingPropertyNames} array, as the first value. Calling this
+	 * method replaces any existing {@code accumulatingPropertyNames} value with
+	 * a new array containing just the name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 2.4
+	 */
+	@JsonSetter
+	public void setAccumulatingPropertyName(String name) {
+		setAccumulatingPropertyNames(name == null ? null : new String[] { name });
+	}
+
 	@Override
 	public String[] getAccumulatingPropertyNames() {
 		return accumulatingPropertyNames;
@@ -1017,6 +1095,32 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
 		this.accumulatingPropertyNames = accumulatingPropertyNames;
+	}
+
+	@JsonIgnore
+	@Override
+	public String getStatusPropertyName() {
+		return GeneralLocationDatumMetadataFilter.super.getStatusPropertyName();
+	}
+
+	/**
+	 * Set a single status property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the {@code statusPropertyNames}
+	 * array, as the first value. Calling this method replaces any existing
+	 * {@code statusPropertyNames} value with a new array containing just the
+	 * name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 2.4
+	 */
+	@JsonSetter
+	public void setStatusPropertyName(String name) {
+		setStatusPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override

@@ -596,6 +596,32 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setSourceIdMappings(SourceMappingCriteria.mappingsFrom(mappings));
 	}
 
+	@JsonIgnore
+	@Override
+	public String getPropertyName() {
+		return DatumCriteria.super.getPropertyName();
+	}
+
+	/**
+	 * Set a single property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the {@code propertyNames} array,
+	 * as the first value. Calling this method replaces any existing
+	 * {@code propertyNames} value with a new array containing just the name
+	 * passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 1.2
+	 */
+	@JsonSetter
+	public void setPropertyName(String name) {
+		setPropertyNames(name == null ? null : new String[] { name });
+	}
+
 	@Override
 	public String[] getPropertyNames() {
 		return propertyNames;
@@ -610,6 +636,32 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setPropertyNames(String[] propertyNames) {
 		this.propertyNames = propertyNames;
+	}
+
+	@JsonIgnore
+	@Override
+	public String getInstantaneousPropertyName() {
+		return DatumCriteria.super.getInstantaneousPropertyName();
+	}
+
+	/**
+	 * Set a single instantaneous property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the
+	 * {@code instantaneousPropertyNames} array, as the first value. Calling
+	 * this method replaces any existing {@code instantaneousPropertyNames}
+	 * value with a new array containing just the name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 1.2
+	 */
+	@JsonSetter
+	public void setInstantaneousPropertyName(String name) {
+		setInstantaneousPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
@@ -628,6 +680,32 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		this.instantaneousPropertyNames = instantaneousPropertyNames;
 	}
 
+	@JsonIgnore
+	@Override
+	public String getAccumulatingPropertyName() {
+		return DatumCriteria.super.getAccumulatingPropertyName();
+	}
+
+	/**
+	 * Set a single accumulating property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the
+	 * {@code accumulatingPropertyNames} array, as the first value. Calling this
+	 * method replaces any existing {@code accumulatingPropertyNames} value with
+	 * a new array containing just the name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 1.2
+	 */
+	@JsonSetter
+	public void setAccumulatingPropertyName(String name) {
+		setAccumulatingPropertyNames(name == null ? null : new String[] { name });
+	}
+
 	@Override
 	public String[] getAccumulatingPropertyNames() {
 		return accumulatingPropertyNames;
@@ -642,6 +720,32 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
 		this.accumulatingPropertyNames = accumulatingPropertyNames;
+	}
+
+	@JsonIgnore
+	@Override
+	public String getStatusPropertyName() {
+		return DatumCriteria.super.getStatusPropertyName();
+	}
+
+	/**
+	 * Set a single status property name.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single property name
+	 * at a time. The name is still stored on the {@code statusPropertyNames}
+	 * array, as the first value. Calling this method replaces any existing
+	 * {@code statusPropertyNames} value with a new array containing just the
+	 * name passed into this method.
+	 * </p>
+	 * 
+	 * @param name
+	 *        the name to set
+	 * @since 1.2
+	 */
+	@JsonSetter
+	public void setStatusPropertyName(String name) {
+		setStatusPropertyNames(name == null ? null : new String[] { name });
 	}
 
 	@Override
