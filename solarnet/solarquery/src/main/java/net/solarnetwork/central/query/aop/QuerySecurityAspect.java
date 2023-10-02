@@ -64,7 +64,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -184,8 +184,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	@Around("nodesReportableSources(filter)")
 	public Object reportableSourcesFilterAccessCheck(ProceedingJoinPoint pjp,
 			GeneralNodeDatumFilter filter) throws Throwable {
-		for ( Long nodeId : filter.getNodeIds() ) {
-			requireNodeReadAccess(nodeId);
+		if ( !ArrayUtils.isOnlyNull(filter.getNodeIds()) ) {
+			for ( Long nodeId : filter.getNodeIds() ) {
+				requireNodeReadAccess(nodeId);
+			}
 		}
 
 		// verify source IDs in result
@@ -214,8 +216,10 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 	@Around("nodesAvailableSources(filter)")
 	public Object availableSourcesFilterAccessCheck(ProceedingJoinPoint pjp,
 			GeneralNodeDatumFilter filter) throws Throwable {
-		for ( Long nodeId : filter.getNodeIds() ) {
-			requireNodeReadAccess(nodeId);
+		if ( !ArrayUtils.isOnlyNull(filter.getNodeIds()) ) {
+			for ( Long nodeId : filter.getNodeIds() ) {
+				requireNodeReadAccess(nodeId);
+			}
 		}
 
 		// verify source IDs in result

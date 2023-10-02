@@ -56,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SelectObjectStreamMetadata} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectObjectStreamMetadataTests {
 
@@ -552,6 +552,139 @@ public class SelectObjectStreamMetadataTests {
 				"loc-stream-meta-geo-tagsOr-sortLocSource.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, tagsArray);
+	}
+
+	@Test
+	public void prep_streamMeta_propertyNames() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setPropertyNames(new String[] { "a", "b" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array namesArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getPropertyNames()))).andReturn(namesArray);
+		stmt.setArray(1, namesArray);
+		stmt.setArray(2, namesArray);
+		stmt.setArray(3, namesArray);
+		namesArray.free();
+
+		// WHEN
+		replay(con, stmt, namesArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(),
+				equalToTextResource("node-stream-meta-propertyNames.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, namesArray);
+	}
+
+	@Test
+	public void prep_streamMeta_instantaneousPropertyNames() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setInstantaneousPropertyNames(new String[] { "a", "b" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array namesArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getInstantaneousPropertyNames())))
+				.andReturn(namesArray);
+		stmt.setArray(1, namesArray);
+		namesArray.free();
+
+		// WHEN
+		replay(con, stmt, namesArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"node-stream-meta-instantaneousPropertyNames.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, namesArray);
+	}
+
+	@Test
+	public void prep_streamMeta_accumulatingPropertyNames() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setAccumulatingPropertyNames(new String[] { "a", "b" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array namesArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getAccumulatingPropertyNames())))
+				.andReturn(namesArray);
+		stmt.setArray(1, namesArray);
+		namesArray.free();
+
+		// WHEN
+		replay(con, stmt, namesArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"node-stream-meta-accumulatingPropertyNames.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, namesArray);
+	}
+
+	@Test
+	public void prep_streamMeta_statusPropertyNames() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setStatusPropertyNames(new String[] { "a", "b" });
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		Array namesArray = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(filter.getStatusPropertyNames())))
+				.andReturn(namesArray);
+		stmt.setArray(1, namesArray);
+		namesArray.free();
+
+		// WHEN
+		replay(con, stmt, namesArray);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node)
+				.createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(),
+				equalToTextResource("node-stream-meta-statusPropertyNames.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, namesArray);
 	}
 
 }

@@ -22,59 +22,27 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.Filter;
-
 /**
  * Filter API for {@link GeneralNodeDatumMetadata}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface GeneralNodeDatumMetadataFilter extends Filter {
+public interface GeneralNodeDatumMetadataFilter extends GeneralDatumMetadataFilter {
 
 	/**
 	 * Get the first node ID. This returns the first available node ID from the
-	 * {@link #getNodeIds()} array, or <em>null</em> if not available.
+	 * {@link #getNodeIds()} array, or {@literal null} if not available.
 	 * 
-	 * @return the node ID, or <em>null</em> if not available
+	 * @return the node ID, or {@literal null} if not available
 	 */
 	public Long getNodeId();
 
 	/**
 	 * Get an array of node IDs.
 	 * 
-	 * @return array of node IDs (may be <em>null</em>)
+	 * @return array of node IDs (may be {@literal null})
 	 */
 	public Long[] getNodeIds();
-
-	/**
-	 * Get the first source ID. This returns the first available source ID from
-	 * the {@link #getSourceIds()} array, or <em>null</em> if not available.
-	 * 
-	 * @return the first source ID, or <em>null</em> if not available
-	 */
-	public String getSourceId();
-
-	/**
-	 * Get an array of source IDs.
-	 * 
-	 * @return array of source IDs (may be <em>null</em>)
-	 */
-	public String[] getSourceIds();
-
-	/**
-	 * Get the first tag. This returns the first available tag from the
-	 * {@link #getTags()} array, or <em>null</em> if not available.
-	 * 
-	 * @return the first tag, or <em>null</em> if not available
-	 */
-	public String getTag();
-
-	/**
-	 * Get an array of tags.
-	 * 
-	 * @return array of tags (may be <em>null</em>)
-	 */
-	public String[] getTags();
 
 }

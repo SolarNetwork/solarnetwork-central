@@ -22,16 +22,15 @@
 
 package net.solarnetwork.central.datum.domain;
 
-import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.Location;
 
 /**
  * Filter API for {@link GeneralLocationDatumMetadata}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface GeneralLocationDatumMetadataFilter extends Filter {
+public interface GeneralLocationDatumMetadataFilter extends GeneralDatumMetadataFilter {
 
 	/**
 	 * Get a location filter to restrict the results to. This provides a way to
@@ -45,48 +44,18 @@ public interface GeneralLocationDatumMetadataFilter extends Filter {
 
 	/**
 	 * Get the first location ID. This returns the first available location ID
-	 * from the {@link #getLocationIds()} array, or <em>null</em> if not
+	 * from the {@link #getLocationIds()} array, or {@literal null} if not
 	 * available.
 	 * 
-	 * @return the location ID, or <em>null</em> if not available
+	 * @return the location ID, or {@literal null} if not available
 	 */
 	public Long getLocationId();
 
 	/**
 	 * Get an array of location IDs.
 	 * 
-	 * @return array of location IDs (may be <em>null</em>)
+	 * @return array of location IDs (may be {@literal null})
 	 */
 	public Long[] getLocationIds();
-
-	/**
-	 * Get the first source ID. This returns the first available source ID from
-	 * the {@link #getSourceIds()} array, or <em>null</em> if not available.
-	 * 
-	 * @return the first source ID, or <em>null</em> if not available
-	 */
-	public String getSourceId();
-
-	/**
-	 * Get an array of source IDs.
-	 * 
-	 * @return array of source IDs (may be <em>null</em>)
-	 */
-	public String[] getSourceIds();
-
-	/**
-	 * Get the first tag. This returns the first available tag from the
-	 * {@link #getTags()} array, or <em>null</em> if not available.
-	 * 
-	 * @return the first tag, or <em>null</em> if not available
-	 */
-	public String getTag();
-
-	/**
-	 * Get an array of tags.
-	 * 
-	 * @return array of tags (may be <em>null</em>)
-	 */
-	public String[] getTags();
 
 }
