@@ -550,6 +550,29 @@ public class DatumUtilsTests {
 	}
 
 	@Test
+	public void criteriaFromFilter_datumFilterCommand_propertyNames() {
+		// GIVEN
+		DatumFilterCommand f = new DatumFilterCommand();
+		f.setPropertyNames(new String[] { "a", "b" });
+		f.setInstantaneousPropertyNames(new String[] { "c", "d" });
+		f.setAccumulatingPropertyNames(new String[] { "e", "f" });
+		f.setStatusPropertyNames(new String[] { "g", "h" });
+
+		// WHEN
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
+
+		// THEN
+		assertThat("Property names converted to search filter", c.getPropertyNames(),
+				arrayContaining(f.getPropertyNames()));
+		assertThat("Instantaneous roperty names converted to search filter",
+				c.getInstantaneousPropertyNames(), arrayContaining(f.getInstantaneousPropertyNames()));
+		assertThat("Accumulating roperty names converted to search filter",
+				c.getAccumulatingPropertyNames(), arrayContaining(f.getAccumulatingPropertyNames()));
+		assertThat("Status property names converted to search filter", c.getStatusPropertyNames(),
+				arrayContaining(f.getStatusPropertyNames()));
+	}
+
+	@Test
 	public void criteriaFromFilter_datumFilterCommand_tags_proxy() {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();

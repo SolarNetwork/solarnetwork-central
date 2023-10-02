@@ -33,10 +33,10 @@ import net.solarnetwork.dao.SortCriteria;
  * Search criteria for stream metadata related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 3.8
  */
 public interface StreamMetadataCriteria extends StreamCriteria, SourceCriteria, LocationCriteria,
-		UserCriteria, SecurityTokenCriteria, SortCriteria, SearchFilterCriteria {
+		UserCriteria, SecurityTokenCriteria, PropertyNameCriteria, SortCriteria, SearchFilterCriteria {
 
 }

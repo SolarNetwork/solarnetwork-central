@@ -53,13 +53,15 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
-		"combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "rollupTypes", "rollupTypeKeys",
-		"tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate", "localStartDate",
-		"localEndDate", "max", "offset", "sorts", "type", "location", "withoutTotalResultsCount" })
+		"combiningTypeKey", "nodeIdMappings", "sourceIdMappings", "propertyNames",
+		"instantaneousPropertyNames", "accumulatingPropertyNames", "statusPropertyNames", "rollupTypes",
+		"rollupTypeKeys", "tags", "metadataFilter", "dataPath", "mostRecent", "startDate", "endDate",
+		"localStartDate", "localEndDate", "max", "offset", "sorts", "type", "location",
+		"withoutTotalResultsCount" })
 public class DatumFilterCommand extends FilterSupport implements LocationDatumFilter, NodeDatumFilter,
 		AggregateNodeDatumFilter, GeneralLocationDatumFilter, AggregateGeneralLocationDatumFilter,
 		GeneralNodeDatumFilter, AggregateGeneralNodeDatumFilter, GeneralLocationDatumMetadataFilter,
@@ -90,6 +92,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private Map<String, Set<String>> sourceIdMappings;
 
 	private DatumRollupType[] datumRollupTypes;
+
+	private String[] propertyNames;
+	private String[] instantaneousPropertyNames;
+	private String[] accumulatingPropertyNames;
+	private String[] statusPropertyNames;
 
 	/**
 	 * Default constructor.
@@ -183,6 +190,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		}
 		if ( other instanceof ReadingTypeFilter f ) {
 			setReadingType(f.getReadingType());
+		}
+		if ( other instanceof GeneralDatumMetadataFilter f ) {
+			setPropertyNames(f.getPropertyNames());
+			setInstantaneousPropertyNames(f.getInstantaneousPropertyNames());
+			setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
+			setStatusPropertyNames(f.getStatusPropertyNames());
 		}
 	}
 
@@ -288,6 +301,26 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 			builder.append(Arrays.toString(datumRollupTypes));
 			builder.append(", ");
 		}
+		if ( propertyNames != null ) {
+			builder.append("propertyNames=");
+			builder.append(Arrays.toString(propertyNames));
+			builder.append(", ");
+		}
+		if ( instantaneousPropertyNames != null ) {
+			builder.append("instantaneousPropertyNames=");
+			builder.append(Arrays.toString(instantaneousPropertyNames));
+			builder.append(", ");
+		}
+		if ( accumulatingPropertyNames != null ) {
+			builder.append("accumulatingPropertyNames=");
+			builder.append(Arrays.toString(accumulatingPropertyNames));
+			builder.append(", ");
+		}
+		if ( statusPropertyNames != null ) {
+			builder.append("accumulatingPropertyNames=");
+			builder.append(Arrays.toString(accumulatingPropertyNames));
+			builder.append(", ");
+		}
 		builder.append("}");
 		return builder.toString();
 	}
@@ -335,6 +368,18 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		}
 		if ( sourceIdMappings != null ) {
 			filter.put("sourceIdMappings", sourceIdMappings);
+		}
+		if ( propertyNames != null ) {
+			filter.put("propertyNames", propertyNames);
+		}
+		if ( instantaneousPropertyNames != null ) {
+			filter.put("instantaneousPropertyNames", instantaneousPropertyNames);
+		}
+		if ( accumulatingPropertyNames != null ) {
+			filter.put("accumulatingPropertyNames", accumulatingPropertyNames);
+		}
+		if ( statusPropertyNames != null ) {
+			filter.put("statusPropertyNames", statusPropertyNames);
 		}
 		return filter;
 	}
@@ -884,6 +929,10 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		result = prime * result + Objects.hash(aggregation, readingType, combiningType, dataPath,
 				endDate, localEndDate, localStartDate, location, max, mostRecent, nodeIdMappings, offset,
 				sorts, sourceIdMappings, startDate, type, withoutTotalResultsCount);
+		result = prime * result + Arrays.hashCode(propertyNames);
+		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
+		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
+		result = prime * result + Arrays.hashCode(statusPropertyNames);
 		return result;
 	}
 
@@ -915,7 +964,75 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 				&& Objects.equals(offset, other.offset) && Objects.equals(sorts, other.sorts)
 				&& Objects.equals(sourceIdMappings, other.sourceIdMappings)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(type, other.type)
-				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Arrays.equals(propertyNames, other.propertyNames)
+				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
+				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
+				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
+	}
+
+	@Override
+	public String[] getPropertyNames() {
+		return propertyNames;
+	}
+
+	/**
+	 * Set the property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 2.4
+	 */
+	public void setPropertyNames(String[] propertyNames) {
+		this.propertyNames = propertyNames;
+	}
+
+	@Override
+	public String[] getInstantaneousPropertyNames() {
+		return instantaneousPropertyNames;
+	}
+
+	/**
+	 * Set the instantaneous property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 2.4
+	 */
+	public void setInstantaneousPropertyNames(String[] instantaneousPropertyNames) {
+		this.instantaneousPropertyNames = instantaneousPropertyNames;
+	}
+
+	@Override
+	public String[] getAccumulatingPropertyNames() {
+		return accumulatingPropertyNames;
+	}
+
+	/**
+	 * Set the accumulating property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 2.4
+	 */
+	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
+		this.accumulatingPropertyNames = accumulatingPropertyNames;
+	}
+
+	@Override
+	public String[] getStatusPropertyNames() {
+		return statusPropertyNames;
+	}
+
+	/**
+	 * Set the status property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 2.4
+	 */
+	public void setStatusPropertyNames(String[] statusPropertyNames) {
+		this.statusPropertyNames = statusPropertyNames;
 	}
 
 }

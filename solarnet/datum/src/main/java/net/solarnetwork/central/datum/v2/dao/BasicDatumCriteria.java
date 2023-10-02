@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Basic implementation of {@link DatumCriteria}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
@@ -73,6 +73,11 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private Map<Long, Set<Long>> objectIdMappings;
 	private Map<String, Set<String>> sourceIdMappings;
 
+	private String[] propertyNames;
+	private String[] instantaneousPropertyNames;
+	private String[] accumulatingPropertyNames;
+	private String[] statusPropertyNames;
+
 	/**
 	 * Default constructor.
 	 */
@@ -90,6 +95,10 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 				localEndDate, localStartDate, mostRecent, objectIdMappings, objectKind,
 				partialAggregation, readingType, sourceIdMappings, startDate, timeTolerance,
 				withoutTotalResultsCount);
+		result = prime * result + Arrays.hashCode(propertyNames);
+		result = prime * result + Arrays.hashCode(instantaneousPropertyNames);
+		result = prime * result + Arrays.hashCode(accumulatingPropertyNames);
+		result = prime * result + Arrays.hashCode(statusPropertyNames);
 		return result;
 	}
 
@@ -118,7 +127,11 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 				&& Objects.equals(startDate, other.startDate)
 				&& Arrays.equals(streamIds, other.streamIds)
 				&& Objects.equals(timeTolerance, other.timeTolerance)
-				&& withoutTotalResultsCount == other.withoutTotalResultsCount;
+				&& withoutTotalResultsCount == other.withoutTotalResultsCount
+				&& Arrays.equals(propertyNames, other.propertyNames)
+				&& Arrays.equals(instantaneousPropertyNames, other.instantaneousPropertyNames)
+				&& Arrays.equals(accumulatingPropertyNames, other.accumulatingPropertyNames)
+				&& Arrays.equals(statusPropertyNames, other.statusPropertyNames);
 	}
 
 	/**
@@ -145,6 +158,10 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setCombiningType(criteria.getCombiningType());
 		setObjectIdMappings(criteria.getObjectIdMappings());
 		setSourceIdMappings(criteria.getSourceIdMappings());
+		setPropertyNames(criteria.getPropertyNames());
+		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
+		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
+		setStatusPropertyNames(criteria.getStatusPropertyNames());
 		if ( criteria instanceof RecentCriteria ) {
 			setMostRecent(((RecentCriteria) criteria).isMostRecent());
 		}
@@ -248,6 +265,26 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		if ( readingType != null ) {
 			builder.append("readingType=");
 			builder.append(readingType);
+			builder.append(", ");
+		}
+		if ( propertyNames != null ) {
+			builder.append("propertyNames=");
+			builder.append(Arrays.toString(propertyNames));
+			builder.append(", ");
+		}
+		if ( instantaneousPropertyNames != null ) {
+			builder.append("instantaneousPropertyNames=");
+			builder.append(Arrays.toString(instantaneousPropertyNames));
+			builder.append(", ");
+		}
+		if ( accumulatingPropertyNames != null ) {
+			builder.append("accumulatingPropertyNames=");
+			builder.append(Arrays.toString(accumulatingPropertyNames));
+			builder.append(", ");
+		}
+		if ( statusPropertyNames != null ) {
+			builder.append("accumulatingPropertyNames=");
+			builder.append(Arrays.toString(accumulatingPropertyNames));
 			builder.append(", ");
 		}
 		builder.append("}");
@@ -557,6 +594,70 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 */
 	public void setSourceIdMaps(String[] mappings) {
 		setSourceIdMappings(SourceMappingCriteria.mappingsFrom(mappings));
+	}
+
+	@Override
+	public String[] getPropertyNames() {
+		return propertyNames;
+	}
+
+	/**
+	 * Set the property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 1.2
+	 */
+	public void setPropertyNames(String[] propertyNames) {
+		this.propertyNames = propertyNames;
+	}
+
+	@Override
+	public String[] getInstantaneousPropertyNames() {
+		return instantaneousPropertyNames;
+	}
+
+	/**
+	 * Set the instantaneous property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 1.2
+	 */
+	public void setInstantaneousPropertyNames(String[] instantaneousPropertyNames) {
+		this.instantaneousPropertyNames = instantaneousPropertyNames;
+	}
+
+	@Override
+	public String[] getAccumulatingPropertyNames() {
+		return accumulatingPropertyNames;
+	}
+
+	/**
+	 * Set the accumulating property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 1.2
+	 */
+	public void setAccumulatingPropertyNames(String[] accumulatingPropertyNames) {
+		this.accumulatingPropertyNames = accumulatingPropertyNames;
+	}
+
+	@Override
+	public String[] getStatusPropertyNames() {
+		return statusPropertyNames;
+	}
+
+	/**
+	 * Set the status property names.
+	 * 
+	 * @param propertyNames
+	 *        the names to set
+	 * @since 1.2
+	 */
+	public void setStatusPropertyNames(String[] statusPropertyNames) {
+		this.statusPropertyNames = statusPropertyNames;
 	}
 
 }

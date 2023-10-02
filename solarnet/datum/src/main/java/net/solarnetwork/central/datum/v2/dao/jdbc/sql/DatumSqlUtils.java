@@ -366,13 +366,29 @@ public final class DatumSqlUtils {
 	 */
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
+		if ( filter.getStreamIds() != null ) {
+			buf.append("\tAND s.stream_id = ANY(?)\n");
+			paramCount += 1;
+		}
 		if ( filter.getSourceIds() != null ) {
 			buf.append(
 					"\tAND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))\n");
 			paramCount += 1;
 		}
-		if ( filter.getStreamIds() != null ) {
-			buf.append("\tAND s.stream_id = ANY(?)\n");
+		if ( filter.hasPropertyNameCriteria() ) {
+			buf.append("	AND (s.names_i && ? OR s.names_a && ? OR s.names_s && ?)\n");
+			paramCount += 3;
+		}
+		if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+			buf.append("	AND s.names_i @> ?\n");
+			paramCount += 1;
+		}
+		if ( filter.hasAccumulatingPropertyNameCriteria() ) {
+			buf.append("	AND s.names_a @> ?\n");
+			paramCount += 1;
+		}
+		if ( filter.hasStatusPropertyNameCriteria() ) {
+			buf.append("	AND s.names_s @> ?\n");
 			paramCount += 1;
 		}
 		if ( filter.getUserIds() != null ) {
@@ -1032,6 +1048,28 @@ public final class DatumSqlUtils {
 			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
 				Array array = con.createArrayOf("text", filter.getSourceIds());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			if ( filter.hasPropertyNameCriteria() ) {
+				Array array = con.createArrayOf("text", filter.getPropertyNames());
+				stmt.setArray(++parameterOffset, array);
+				stmt.setArray(++parameterOffset, array);
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+				Array array = con.createArrayOf("text", filter.getInstantaneousPropertyNames());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			if ( filter.hasAccumulatingPropertyNameCriteria() ) {
+				Array array = con.createArrayOf("text", filter.getAccumulatingPropertyNames());
+				stmt.setArray(++parameterOffset, array);
+				array.free();
+			}
+			if ( filter.hasStatusPropertyNameCriteria() ) {
+				Array array = con.createArrayOf("text", filter.getStatusPropertyNames());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}

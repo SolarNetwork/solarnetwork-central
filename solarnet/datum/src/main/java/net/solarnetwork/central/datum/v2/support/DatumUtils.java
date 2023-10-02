@@ -66,6 +66,7 @@ import net.solarnetwork.central.datum.domain.UserFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.dao.PropertyNameCriteria;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -106,7 +107,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  * @since 2.8
  */
 public final class DatumUtils {
@@ -173,6 +174,10 @@ public final class DatumUtils {
 			c.setObjectIdMappings(f.getNodeIdMappings());
 			c.setSourceIdMappings(f.getSourceIdMappings());
 			c.setSearchFilter(f.getMetadataFilter());
+			c.setPropertyNames(f.getPropertyNames());
+			c.setInstantaneousPropertyNames(f.getInstantaneousPropertyNames());
+			c.setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
+			c.setStatusPropertyNames(f.getStatusPropertyNames());
 			tags = f.getTags();
 			if ( s == null || s.isEmpty() ) {
 				s = f.getSorts();
@@ -279,6 +284,12 @@ public final class DatumUtils {
 			}
 			if ( filter instanceof SourceMappingFilter f ) {
 				c.setSourceIdMappings(f.getSourceIdMappings());
+			}
+			if ( filter instanceof PropertyNameCriteria f ) {
+				c.setPropertyNames(f.getPropertyNames());
+				c.setInstantaneousPropertyNames(f.getInstantaneousPropertyNames());
+				c.setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
+				c.setStatusPropertyNames(f.getStatusPropertyNames());
 			}
 		}
 

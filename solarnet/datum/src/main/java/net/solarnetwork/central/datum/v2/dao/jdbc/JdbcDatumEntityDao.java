@@ -144,7 +144,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -889,6 +889,26 @@ public class JdbcDatumEntityDao
 
 		@Override
 		public String getSearchFilter() {
+			return null;
+		}
+
+		@Override
+		public String[] getPropertyNames() {
+			return null;
+		}
+
+		@Override
+		public String[] getInstantaneousPropertyNames() {
+			return null;
+		}
+
+		@Override
+		public String[] getAccumulatingPropertyNames() {
+			return null;
+		}
+
+		@Override
+		public String[] getStatusPropertyNames() {
 			return null;
 		}
 
