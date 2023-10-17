@@ -36,6 +36,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -68,6 +69,7 @@ import net.solarnetwork.util.ArrayUtils;
  */
 @Aspect
 @Component
+@Profile(AopServices.WITH_AOP_SECURITY)
 public class QuerySecurityAspect extends AuthorizationSupport {
 
 	public static final String FILTER_KEY_NODE_ID = "nodeId";
