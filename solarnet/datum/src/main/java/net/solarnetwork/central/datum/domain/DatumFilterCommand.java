@@ -249,6 +249,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( sourceIds != null && sourceIds.length > 0 ) {
 			builder.append("sourceIds=");
 			builder.append(Arrays.toString(sourceIds));
+			builder.append(", ");
 		}
 		builder.append("mostRecent=");
 		builder.append(mostRecent);
