@@ -33,13 +33,14 @@ import java.time.format.SignStyle;
 import java.time.temporal.IsoFields;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 
 /**
  * A complete configuration for a scheduled export job.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public interface Configuration {
@@ -109,6 +110,29 @@ public interface Configuration {
 	/** A runtime property for a filename extension. */
 	String PROP_FILENAME_EXTENSION = "ext";
 
+	/**
+	 * A runtime property for the configuration name.
+	 * 
+	 * @since 1.1
+	 */
+	String PROP_JOB_NAME = "jobName";
+
+	/**
+	 * A regular expression to remove unfriendly characters from file names
+	 * (like the {@link #PROP_JOB_NAME} parameter).
+	 * 
+	 * @since 1.1
+	 */
+	Pattern PROP_NAME_SANITIZER = Pattern.compile("(?U)[^\\w\\._-]+");
+
+	/**
+	 * A runtime property for the job export process time, as a millisecond Unix
+	 * epoch integer.
+	 * 
+	 * @since 1.1
+	 */
+	String PROP_CURRENT_TIME = "now";
+
 	// @formatter:off
 	/** A formatter for week, in {@literal YYYY'W'WWD} form. */
     DateTimeFormatter WEEK_DATE = new DateTimeFormatterBuilder()
@@ -163,6 +187,12 @@ public interface Configuration {
 			}
 			result.put(PROP_FILENAME_EXTENSION, ext);
 		}
+
+		if ( getName() != null ) {
+			result.put(PROP_JOB_NAME, PROP_NAME_SANITIZER.matcher(getName()).replaceAll("_"));
+		}
+
+		result.put(PROP_CURRENT_TIME, System.currentTimeMillis());
 
 		return result;
 	}

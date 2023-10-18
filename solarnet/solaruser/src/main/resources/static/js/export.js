@@ -351,6 +351,8 @@ $(document).ready(function() {
 				}
 			}
 			return data;
+		}, {
+			urlSerializer: (url) => url
 		});
 		return false;
 	})
@@ -377,6 +379,8 @@ $(document).ready(function() {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateDestinationConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, exportConfigs.destinationConfigs);
+		}, undefined, {
+			urlSerializer: (url) => url
 		});
 		return false;
 	})
@@ -405,6 +409,8 @@ $(document).ready(function() {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			populateOutputConfigs([res], true);
 			SolarReg.storeServiceConfiguration(res, exportConfigs.outputConfigs);
+		}, undefined, {
+			urlSerializer: (url) => url
 		});
 		return false;
 	})

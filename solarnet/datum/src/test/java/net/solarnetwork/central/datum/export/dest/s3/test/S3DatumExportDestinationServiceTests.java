@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -181,7 +182,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 
 	@Test
 	public void export() throws IOException {
-		// given
+		// GIVEN
 		AmazonS3 client = getS3Client();
 		cleanS3Folder(client);
 
@@ -191,6 +192,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 				.toInstant();
 
 		BasicConfiguration config = new BasicConfiguration();
+		config.setName(UUID.randomUUID().toString());
 
 		BasicDestinationConfiguration destConfig = new BasicDestinationConfiguration();
 		destConfig.setServiceIdentifier(service.getId());
@@ -204,7 +206,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 
 		DatumExportResource rsrc = getTestResource();
 
-		// when
+		// WHEN
 		List<Double> progress = new ArrayList<>(8);
 		service.export(config, Collections.singleton(rsrc), runtimeProps,
 				new ProgressListener<DatumExportService>() {
@@ -216,7 +218,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 					}
 				});
 
-		// then
+		// THEN
 		assertThat("Progress was made", progress, not(hasSize(0)));
 		assertThat("Progress complete", progress.get(progress.size() - 1), equalTo((Double) 1.0));
 
