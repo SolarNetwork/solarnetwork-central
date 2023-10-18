@@ -161,10 +161,18 @@ public class SelectDatum
 		buf.append("SELECT ");
 		if ( combine != null ) {
 			buf.append("s.vstream_id AS stream_id,\n");
-			buf.append("	s.obj_rank,\n");
-			buf.append("	s.source_rank,\n");
-			buf.append("	s.names_i,\n");
-			buf.append("	s.names_a,\n");
+			if ( aggregation == Aggregation.Week ) {
+				buf.append("	solarcommon.first(s.obj_rank) AS obj_rank,\n");
+				buf.append("	solarcommon.first(s.source_rank) AS source_rank,\n");
+				buf.append("	solarcommon.first(s.names_i) AS names_i,\n");
+				buf.append("	solarcommon.first(s.names_a) AS names_a,\n");
+
+			} else {
+				buf.append("	s.obj_rank,\n");
+				buf.append("	s.source_rank,\n");
+				buf.append("	s.names_i,\n");
+				buf.append("	s.names_a,\n");
+			}
 		} else {
 			buf.append("	datum.stream_id,\n");
 		}
@@ -361,8 +369,14 @@ public class SelectDatum
 		sqlFrom(buf);
 		sqlWhere(buf);
 		if ( aggregation == Aggregation.Week ) {
+			buf.append("GROUP BY ");
+			if ( combine != null ) {
+				buf.append("s.vstream_id");
+			} else {
+				buf.append("datum.stream_id");
+			}
 			buf.append(
-					"GROUP BY datum.stream_id, date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
+					", date_trunc('week', datum.ts_start AT TIME ZONE s.time_zone) AT TIME ZONE s.time_zone\n");
 		}
 		if ( combine != null ) {
 			if ( isMinuteAggregation() ) {
