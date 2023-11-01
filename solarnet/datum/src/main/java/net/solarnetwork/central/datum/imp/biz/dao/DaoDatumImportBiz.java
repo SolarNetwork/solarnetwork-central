@@ -61,6 +61,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.FileCopyUtils;
+import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -94,6 +95,9 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
@@ -108,7 +112,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -127,6 +131,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final DatumImportJobInfoDao jobInfoDao;
 	private final DatumEntityDao datumDao;
+	private final SecurityTokenDao securityTokenDao;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private AsyncTaskExecutor previewExecutor;
 	private ResourceStorageService resourceStorageService;
@@ -147,6 +152,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *        the executor, to perform import operations with
 	 * @param nodeOwnershipDao
 	 *        the user node DAO
+	 * @param securityTokenDao
+	 *        the security token DAO
 	 * @param jobInfoDao
 	 *        the job info DAO
 	 * @param datumDao
@@ -155,12 +162,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *         if any argument is {@literal null}
 	 */
 	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-			SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
-			DatumEntityDao datumDao) {
+			SolarNodeOwnershipDao userNodeDao, SecurityTokenDao securityTokenDao,
+			DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
 		super();
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeOwnershipDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.securityTokenDao = requireNonNullArgument(securityTokenDao, "securityTokenDao");
 		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 
@@ -231,6 +239,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		info.setImportState(
 				info.getConfig().isStage() ? DatumImportState.Staged : DatumImportState.Queued);
 		info.setGroupKey(groupKeyForRequest(request));
+		info.setTokenId(SecurityUtils.currentTokenId());
 
 		File f = saveToWorkDirectory(resource, id);
 		final ResourceStorageService rss = this.resourceStorageService;
@@ -538,20 +547,26 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public FilterResults<GeneralNodeDatumComponents> call() throws Exception {
-			Configuration config = info.getConfiguration();
+			final Configuration config = info.getConfiguration();
 			if ( config == null || config.getInputConfiguration() == null ) {
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
 			}
 
-			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(info.getUserId());
+			final SolarNodeOwnership[] ownerships = nodeOwnershipDao
+					.ownershipsForUserId(info.getUserId());
+			final SecurityPolicy policy = tokenPolicyForId(info.getTokenId());
+
 			final Set<Long> allowedNodeIds;
 			final Map<Long, ZoneId> tzMap;
 			if ( ownerships != null ) {
 				allowedNodeIds = new HashSet<>(ownerships.length);
 				tzMap = new HashMap<>(ownerships.length);
 				for ( SolarNodeOwnership ownership : ownerships ) {
-					allowedNodeIds.add(ownership.getNodeId());
-					tzMap.put(ownership.getNodeId(), ownership.getZone());
+					if ( policy == null || policy.getNodeIds() == null || policy.getNodeIds().isEmpty()
+							|| policy.getNodeIds().contains(ownership.getNodeId()) ) {
+						allowedNodeIds.add(ownership.getNodeId());
+						tzMap.put(ownership.getNodeId(), ownership.getZone());
+					}
 				}
 			} else {
 				allowedNodeIds = Collections.emptySet();
@@ -743,9 +758,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
 			}
 
-			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(info.getUserId());
-			Set<Long> allowedNodeIds = (ownerships != null ? Arrays.stream(ownerships)
-					.map(SolarNodeOwnership::getNodeId).collect(Collectors.toSet())
+			final SolarNodeOwnership[] ownerships = nodeOwnershipDao
+					.ownershipsForUserId(info.getUserId());
+			final SecurityPolicy policy = tokenPolicyForId(info.getTokenId());
+
+			Set<Long> allowedNodeIds = (ownerships != null
+					? Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId)
+							.filter(nodeId -> policy == null || policy.getNodeIds() == null
+									|| policy.getNodeIds().isEmpty()
+									|| policy.getNodeIds().contains(nodeId))
+							.collect(Collectors.toSet())
 					: Collections.emptySet());
 
 			LoadingTransactionMode txMode = LoadingTransactionMode.SingleTransaction;
@@ -775,7 +797,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 						if ( !allowedNodeIds.contains(d.getNodeId()) ) {
 							log.warn(
 									"Datum import job {} denied access to node {}; allowed nodes are: {}",
-									d.getNodeId(),
+									info.getId(), d.getNodeId(),
 									StringUtils.commaDelimitedStringFromCollection(allowedNodeIds));
 							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 						}
@@ -953,6 +975,43 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			jobInfoDao.updateJobProgress(id, percentComplete, loadedCount);
 		}
 
+	}
+
+	/**
+	 * Get a {@link SecurityToken} for a given token ID.
+	 * 
+	 * @param tokenId
+	 *        the ID of the token to get, or {@literal null}
+	 * @return the token, or {@literal null} if {@code token} is {@literal null}
+	 * @throws AuthorizationException
+	 *         if {@code token} is not {@literal null} but a
+	 *         {@link SecurityToken} is not found for it
+	 */
+	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
+		if ( tokenId == null ) {
+			return null;
+		}
+		SecurityToken token = securityTokenDao.securityTokenForId(tokenId);
+		if ( token == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		return token;
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for a given token ID.
+	 * 
+	 * @param tokenId
+	 *        the ID of the token to get, or {@literal null}
+	 * @return the policy, or {@literal null} if {@code token} is
+	 *         {@literal null} or the token has no policy
+	 * @throws AuthorizationException
+	 *         if {@code token} is not {@literal null} but a
+	 *         {@link SecurityToken} is not found for it
+	 */
+	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {
+		SecurityToken token = tokenForId(tokenId);
+		return token != null ? token.getPolicy() : null;
 	}
 
 	/**

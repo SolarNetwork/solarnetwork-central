@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -41,6 +42,7 @@ import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
@@ -176,6 +178,42 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		storeNewWithNodeId();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		assertEqual(token, this.userAuthToken);
+	}
+
+	@Test
+	public void securityToken_withNodeId() {
+		storeNewWithNodeId();
+		SecurityToken token = userAuthTokenDao.securityTokenForId(userAuthToken.getId());
+
+		// @formatter:off
+		then(token)
+			.as("Token returned")
+			.isNotNull()
+			.as("Token ID")
+			.returns(this.userAuthToken.getId(), SecurityToken::getToken)
+			.as("Token type")
+			.returns(this.userAuthToken.getType(), SecurityToken::getTokenType)
+			.as("User ID")
+			.returns(this.userAuthToken.getUserId(), SecurityToken::getUserId)
+			.as("Policy")
+			.returns(this.userAuthToken.getPolicy(), SecurityToken::getPolicy)
+			.as("Is token")
+			.returns(true, SecurityToken::isAuthenticatedWithToken)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void securityToken_notFound() {
+		storeNewWithNodeId();
+		SecurityToken token = userAuthTokenDao.securityTokenForId(UUID.randomUUID().toString());
+
+		// @formatter:off
+		then(token)
+			.as("Token is null")
+			.isNull()
+			;
+		// @formatter:on
 	}
 
 	@Test

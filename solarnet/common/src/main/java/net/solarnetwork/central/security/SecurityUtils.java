@@ -46,7 +46,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
  * Security helper methods.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SecurityUtils {
 
@@ -73,6 +73,15 @@ public class SecurityUtils {
 			SecurityContextHolder.getContext().setAuthentication(null);
 			throw e;
 		}
+	}
+
+	/**
+	 * Clear the current authentication.
+	 * 
+	 * @since 2.2
+	 */
+	public static void removeAuthentication() {
+		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
 	/**
@@ -303,6 +312,20 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Get the current {@link SecurityToken#getToken()}, if available.
+	 * 
+	 * @return the token, or {@literal null} if a token is not available
+	 * @since 2.2
+	 */
+	public static String currentTokenId() {
+		try {
+			return getCurrentToken().getToken();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+	}
+
+	/**
 	 * Get the current {@link SecurityUser}.
 	 * 
 	 * @return the current user, never {@literal null}
@@ -445,6 +468,27 @@ public class SecurityUtils {
 					: Collections.emptySet());
 		}
 		return restrictedToNodeIds;
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for the active user, if available.
+	 * 
+	 * @return The active user's policy, or {@code null}.
+	 * @since 2.2
+	 */
+	public static SecurityPolicy getActiveSecurityPolicy() {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+
+		if ( actor instanceof SecurityToken token ) {
+			return token.getPolicy();
+		}
+
+		return null;
 	}
 
 }

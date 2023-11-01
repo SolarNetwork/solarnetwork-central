@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
 import static org.springframework.util.FileCopyUtils.copy;
 import static org.springframework.util.FileCopyUtils.copyToByteArray;
 import java.io.File;
@@ -74,6 +75,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -99,6 +103,10 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.security.AuthenticatedToken;
+import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -123,6 +131,7 @@ public class DaoDatumImportBizTests {
 	private TaskScheduler scheduledExecutorService;
 	private AsyncTaskExecutor executorSercvice;
 	private SolarNodeOwnershipDao userNodeDao;
+	private SecurityTokenDao securityTokenDao;
 	private DatumImportJobInfoDao jobInfoDao;
 	private DatumEntityDao datumDao;
 	private ResourceStorageService resourceStorageService;
@@ -134,9 +143,9 @@ public class DaoDatumImportBizTests {
 	private class TestDaoDatumImportBiz extends DaoDatumImportBiz {
 
 		private TestDaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-				SolarNodeOwnershipDao userNodeDao, DatumImportJobInfoDao jobInfoDao,
-				DatumEntityDao datumDao) {
-			super(scheduler, executor, userNodeDao, jobInfoDao, datumDao);
+				SolarNodeOwnershipDao userNodeDao, SecurityTokenDao securityTokenDao,
+				DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
+			super(scheduler, executor, userNodeDao, securityTokenDao, jobInfoDao, datumDao);
 		}
 
 		@Override
@@ -155,17 +164,18 @@ public class DaoDatumImportBizTests {
 
 		jobInfoDao = EasyMock.createMock(DatumImportJobInfoDao.class);
 		userNodeDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
+		securityTokenDao = EasyMock.createMock(SecurityTokenDao.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		resourceStorageService = EasyMock.createMock(ResourceStorageService.class);
 
 		biz = new TestDaoDatumImportBiz(scheduledExecutorService, executorSercvice, userNodeDao,
-				jobInfoDao, datumDao);
+				securityTokenDao, jobInfoDao, datumDao);
 		biz.setPreviewExecutor(executorSercvice);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(scheduledExecutorService, executorSercvice, userNodeDao, jobInfoDao, datumDao,
-				loadingContext, resourceStorageService);
+		EasyMock.replay(scheduledExecutorService, executorSercvice, userNodeDao, securityTokenDao,
+				jobInfoDao, datumDao, loadingContext, resourceStorageService);
 	}
 
 	@After
@@ -237,6 +247,87 @@ public class DaoDatumImportBizTests {
 		assertThat("Input configuration service props",
 				info.getConfiguration().getInputConfiguration().getServiceProperties(),
 				equalTo(inputConfiguration.getServiceProperties()));
+		assertThat("Active token ID empty", info.getTokenId(), nullValue());
+
+		File dataFile = biz.getImportDataFile(info.getId());
+		assertThat("Data copied to file in work dir",
+				Arrays.equals(copyToByteArray(dataFile),
+						copyToByteArray(getClass().getResourceAsStream("test-data-01.csv"))),
+				equalTo(true));
+		dataFile.delete();
+	}
+
+	@Test
+	public void submitDatumImportRequest_withToken() throws IOException {
+		// given
+		BasicInputConfiguration inputConfiguration = new BasicInputConfiguration();
+		inputConfiguration.setName("Test CSV Input");
+		inputConfiguration.setTimeZoneId("UTC");
+		inputConfiguration.setServiceIdentifier("foo");
+		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
+		configuration.setInputConfiguration(inputConfiguration);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ClassPathResource("test-data-01.csv", getClass()), "text/csv");
+
+		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
+		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+
+			@Override
+			public UserUuidPK answer() throws Throwable {
+				return jobInfoCaptor.getValue().getId();
+			}
+		});
+		expect(jobInfoDao.get(assertWith(new Assertion<UserUuidPK>() {
+
+			@Override
+			public void check(UserUuidPK argument) throws Throwable {
+				assertThat(argument, equalTo(jobInfoCaptor.getValue().getId()));
+			}
+		}))).andAnswer(new IAnswer<DatumImportJobInfo>() {
+
+			@Override
+			public DatumImportJobInfo answer() throws Throwable {
+				return jobInfoCaptor.getValue();
+			}
+
+		});
+
+		// when
+		replayAll();
+		final String tokenId = UUID.randomUUID().toString();
+		SecurityUtils.becomeToken(tokenId, SecurityTokenType.User, TEST_USER_ID, null);
+		DatumImportReceipt receipt = null;
+		try {
+			receipt = biz.submitDatumImportRequest(request, resource);
+		} finally {
+			SecurityUtils.removeAuthentication();
+		}
+
+		// then
+		assertThat("Receipt returned", receipt, notNullValue());
+
+		DatumImportJobInfo info = jobInfoCaptor.getValue();
+		assertThat("Info user ID", info.getUserId(), equalTo(TEST_USER_ID));
+		assertThat("Configuration copied", info.getConfiguration(),
+				allOf(notNullValue(), not(sameInstance(configuration))));
+		assertThat("Configuration name", info.getConfiguration().getName(),
+				equalTo(configuration.getName()));
+		assertThat("Input configuration copied", info.getConfiguration().getInputConfiguration(),
+				allOf(notNullValue(), not(sameInstance(inputConfiguration))));
+		assertThat("Input configuration name", info.getConfiguration().getInputConfiguration().getName(),
+				equalTo(inputConfiguration.getName()));
+		assertThat("Input configuration zone",
+				info.getConfiguration().getInputConfiguration().getTimeZoneId(),
+				equalTo(inputConfiguration.getTimeZoneId()));
+		assertThat("Input configuration service ID",
+				info.getConfiguration().getInputConfiguration().getServiceIdentifier(),
+				equalTo(inputConfiguration.getServiceIdentifier()));
+		assertThat("Input configuration service props",
+				info.getConfiguration().getInputConfiguration().getServiceProperties(),
+				equalTo(inputConfiguration.getServiceProperties()));
+		assertThat("Active token ID saved", info.getTokenId(), equalTo(tokenId));
 
 		File dataFile = biz.getImportDataFile(info.getId());
 		assertThat("Data copied to file in work dir",
@@ -555,6 +646,171 @@ public class DaoDatumImportBizTests {
 		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
 		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
 		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+	}
+
+	@Test
+	public void performImport_withToken() throws Exception {
+		// given
+		List<GeneralNodeDatum> data = sampleData(5,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
+		biz.setInputServices(singletonList(new TestInputService(data)));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
+
+		final String tokenId = UUID.randomUUID().toString();
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		info.setTokenId(tokenId);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(TEST_NODE_ID_2, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership1, ownership2 }).anyTimes();
+
+		// auth token has policy that allows only one node ID
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(singleton(TEST_NODE_ID))
+				.build();
+		UserDetails userDetails = new User(tokenId, "secret", createAuthorityList("ROLE_USER"));
+		AuthenticatedToken authToken = new AuthenticatedToken(userDetails, SecurityTokenType.User,
+				TEST_USER_ID, policy);
+		expect(securityTokenDao.securityTokenForId(tokenId)).andReturn(authToken);
+
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andReturn(loadingContext);
+
+		Capture<GeneralNodeDatum> loadedDataCaptor = new Capture<GeneralNodeDatum>(CaptureType.ALL);
+		loadingContext.load(capture(loadedDataCaptor));
+		expectLastCall().times(data.size());
+
+		expect(loadingContext.getLoadedCount()).andAnswer(new IAnswer<Long>() {
+
+			private long count = 0;
+
+			@Override
+			public Long answer() throws Throwable {
+				return ++count;
+			}
+		}).times(data.size());
+
+		loadingContext.commit();
+
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
+		loadingContext.close();
+
+		// when
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+
+		// pretend to perform work via executor service
+		DatumImportResult result = taskCaptor.getValue().call();
+
+		// then
+		assertThat("Status returned", status, notNullValue());
+		for ( int i = 0; i < data.size(); i++ ) {
+			assertThat("Loaded data PK " + i, loadedDataCaptor.getValues().get(i).getId(),
+					equalTo(data.get(i).getId()));
+			assertThat("Loaded data samples " + i, loadedDataCaptor.getValues().get(i).getSamples(),
+					equalTo(data.get(i).getSamples()));
+			assertThat("Loaded data posted data set to import date", data.get(i).getPosted(),
+					equalTo(info.getImportDate()));
+		}
+
+		BulkLoadingDao.LoadingOptions loadingOpts = loadingOptionsCaptor.getValue();
+		assertThat("Loading tx mode", loadingOpts.getTransactionMode(),
+				equalTo(LoadingTransactionMode.SingleTransaction));
+		assertThat("Loading batch size", loadingOpts.getBatchSize(), nullValue());
+
+		assertThat("Import result available", result, notNullValue());
+		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
+		assertThat("Import succeeded", result.isSuccess(), equalTo(true));
+		assertThat("Import message", result.getMessage(), equalTo("Loaded " + data.size() + " datum."));
+		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
+	}
+
+	@Test
+	public void performImport_withToken_notAuthorized() throws Exception {
+		// given
+		List<GeneralNodeDatum> data = sampleData(5,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
+		biz.setInputServices(singletonList(new TestInputService(data)));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+		File dataFile = biz.getImportDataFile(pk);
+		copy(copyToByteArray(getClass().getResourceAsStream("test-data-01.csv")), dataFile);
+
+		final String tokenId = UUID.randomUUID().toString();
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		info.setTokenId(tokenId);
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		SolarNodeOwnership ownership2 = new BasicSolarNodeOwnership(TEST_NODE_ID_2, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership1, ownership2 }).anyTimes();
+
+		// auth token has policy that allows only OTHER node ID
+		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(singleton(TEST_NODE_ID_2))
+				.build();
+		UserDetails userDetails = new User(tokenId, "secret", createAuthorityList("ROLE_USER"));
+		AuthenticatedToken authToken = new AuthenticatedToken(userDetails, SecurityTokenType.User,
+				TEST_USER_ID, policy);
+		expect(securityTokenDao.securityTokenForId(tokenId)).andReturn(authToken);
+
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andReturn(loadingContext);
+
+		Long committedCount = 0L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
+		loadingContext.close();
+
+		// when
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+
+		// pretend to perform work via executor service
+		DatumImportResult result = taskCaptor.getValue().call();
+
+		// then
+		assertThat("Status returned", status, notNullValue());
+
+		BulkLoadingDao.LoadingOptions loadingOpts = loadingOptionsCaptor.getValue();
+		assertThat("Loading tx mode", loadingOpts.getTransactionMode(),
+				equalTo(LoadingTransactionMode.SingleTransaction));
+		assertThat("Loading batch size", loadingOpts.getBatchSize(), nullValue());
+
+		assertThat("Import result available", result, notNullValue());
+		assertThat("Import completion date set", result.getCompletionDate(), notNullValue());
+		assertThat("Import failed", result.isSuccess(), equalTo(false));
+		assertThat("Import message", result.getMessage(),
+				equalTo("Not authorized to load data for node " + TEST_NODE_ID + "."));
 		assertThat("Import loaded count", result.getLoadedCount(), equalTo(committedCount));
 	}
 

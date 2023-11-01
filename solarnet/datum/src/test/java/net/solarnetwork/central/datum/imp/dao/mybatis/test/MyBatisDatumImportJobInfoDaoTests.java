@@ -65,6 +65,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	private MyBatisDatumImportJobInfoDao dao;
 
 	private Long userId;
+	private String tokenId;
 	private DatumImportJobInfo info;
 	private TransactionTemplate txTemplate;
 
@@ -117,6 +118,22 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	@Test
+	public void storeNew_withTokenId() {
+		DatumImportJobInfo info = createTestInfo();
+		String tokenId = UUID.randomUUID().toString();
+		info.setTokenId(tokenId);
+		this.tokenId = tokenId;
+
+		UserUuidPK id = dao.store(info);
+		assertThat("Primary key assigned", id, notNullValue());
+		assertThat("Primary key matches", id, equalTo(info.getId()));
+
+		// stash results for other tests to use
+		info.setId(id);
+		this.info = info;
+	}
+
+	@Test
 	public void getByPrimaryKey() {
 		storeNew();
 		DatumImportJobInfo info = dao.get(this.info.getId());
@@ -127,6 +144,23 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Config", info.getConfig(), notNullValue());
 		assertThat("Import date", info.getImportDate(), notNullValue());
 		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
+	public void getByPrimaryKey_withTokenId() {
+		storeNew_withTokenId();
+		DatumImportJobInfo info = dao.get(this.info.getId());
+		assertThat("Found by PK", info, notNullValue());
+		assertThat("PK", info.getId(), equalTo(this.info.getId()));
+		assertThat("Created assigned", info.getCreated(), notNullValue());
+		assertThat("User ID", info.getUserId(), equalTo(this.userId));
+		assertThat("Config", info.getConfig(), notNullValue());
+		assertThat("Import date", info.getImportDate(), notNullValue());
+		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
+		assertThat("Token ID", info.getTokenId(), equalTo(this.tokenId));
 
 		// stash results for other tests to use
 		this.info = info;

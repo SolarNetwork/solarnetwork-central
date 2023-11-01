@@ -52,7 +52,6 @@
 		uat.user_id AS uat_user_id,
 		uat.disp_name AS uat_disp_name,
 		uat.description AS uat_description,
-		uat.auth_secret AS uat_auth_secret,
 		uat.status AS uat_status,
 		uat.token_type AS uat_token_type,
 		uat.jpolicy AS uat_jpolicy
@@ -97,5 +96,5 @@
 		WHERE
 			uat.auth_token = #{id}
 	</select>
-
+	
 </mapper>

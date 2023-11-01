@@ -30,7 +30,9 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
@@ -39,10 +41,10 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * MyBatis implementation of {@link UserAuthTokenDao}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken, String>
-		implements UserAuthTokenDao {
+		implements UserAuthTokenDao, SecurityTokenDao {
 
 	/** The query name used for {@link #findUserAuthTokensForUser(Long)}. */
 	public static final String QUERY_FOR_USER_ID = "find-UserAuthToken-for-UserID";
@@ -94,6 +96,12 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 		Snws2AuthorizationBuilder builder = new Snws2AuthorizationBuilder(tokenId).date(signingDate)
 				.signingKey(key);
 		return builder;
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public SecurityToken securityTokenForId(String tokenId) {
+		return selectFirst(getQueryForId(), tokenId);
 	}
 
 }

@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
@@ -69,6 +70,9 @@ public class DatumImportBizConfig {
 
 	@Autowired
 	private List<DatumImportInputFormatService> datumImportInputFormatServices;
+
+	@Autowired
+	private SecurityTokenDao securityTokenDao;
 
 	public static class DatumImportSettings {
 
@@ -161,7 +165,7 @@ public class DatumImportBizConfig {
 		taskExecutor.setConcurrencyLimit(settings.concurrentTasks);
 
 		DaoDatumImportBiz biz = new DaoDatumImportBiz(taskScheduler, taskExecutor, userNodeDao,
-				jobInfoDao, datumDao);
+				securityTokenDao, jobInfoDao, datumDao);
 		biz.setMaxPreviewCount(settings.previewMaxCount);
 		biz.setProgressLogCount(settings.progressLogCount);
 		biz.setCompletedTaskMinimumCacheTime(settings.completedTaskMinimumCacheTime);

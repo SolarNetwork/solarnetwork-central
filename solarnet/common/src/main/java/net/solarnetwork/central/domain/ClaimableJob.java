@@ -38,7 +38,7 @@ import net.solarnetwork.dao.Entity;
  * @param <PK>
  *        the job entity primary key type
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.44
  */
 public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Entity<PK> {
@@ -56,6 +56,16 @@ public interface ClaimableJob<C, R, S extends ClaimableJobState, PK> extends Ent
 	 * @return the job state
 	 */
 	S getJobState();
+
+	/**
+	 * Get the authorization token associated with this job, if any.
+	 * 
+	 * @return the authorization token, or {@literal null} if none
+	 * @since 2.1
+	 */
+	default String getTokenId() {
+		return null;
+	}
 
 	/**
 	 * Get a job group key.

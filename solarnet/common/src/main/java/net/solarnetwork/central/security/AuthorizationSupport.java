@@ -39,9 +39,9 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * Helper class for authorization needs, e.g. aspect implementations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public abstract class AuthorizationSupport {
+public class AuthorizationSupport {
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private PathMatcher pathMatcher;
@@ -66,7 +66,7 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * @return The {@link SolarNodeOwnershipDao}.
 	 */
-	protected SolarNodeOwnershipDao getNodeOwnershipDao() {
+	public SolarNodeOwnershipDao getNodeOwnershipDao() {
 		return nodeOwnershipDao;
 	}
 
@@ -81,6 +81,23 @@ public abstract class AuthorizationSupport {
 	 *         if the authorization check fails
 	 */
 	protected void requireNodeWriteAccess(Long nodeId) {
+		requireNodeWriteAccess(nodeId, log);
+	}
+
+	/**
+	 * Require the active user have "write" access to a given node ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param nodeId
+	 *        the node ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireNodeWriteAccess(Long nodeId, Logger log) {
 		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
@@ -142,6 +159,23 @@ public abstract class AuthorizationSupport {
 	 *         if the authorization check fails
 	 */
 	protected void requireNodeReadAccess(Long nodeId) {
+		requireNodeReadAccess(nodeId, log);
+	}
+
+	/**
+	 * Require the active user have "read" access to a given node ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param nodeId
+	 *        the node ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireNodeReadAccess(Long nodeId, Logger log) {
 		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
@@ -222,9 +256,25 @@ public abstract class AuthorizationSupport {
 	 *        the user ID to check
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
-	 * @since 1.1
 	 */
 	protected void requireUserWriteAccess(Long userId) {
+		requireUserWriteAccess(userId, log);
+	}
+
+	/**
+	 * Require the active user have "write" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireUserWriteAccess(Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
@@ -262,21 +312,9 @@ public abstract class AuthorizationSupport {
 	 * Get a {@link SecurityPolicy} for the active user, if available.
 	 * 
 	 * @return The active user's policy, or {@code null}.
-	 * @since 1.3
 	 */
-	protected SecurityPolicy getActiveSecurityPolicy() {
-		final SecurityActor actor;
-		try {
-			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
-			return null;
-		}
-
-		if ( actor instanceof SecurityToken token ) {
-			return token.getPolicy();
-		}
-
-		return null;
+	public SecurityPolicy getActiveSecurityPolicy() {
+		return SecurityUtils.getActiveSecurityPolicy();
 	}
 
 	/**
@@ -288,9 +326,25 @@ public abstract class AuthorizationSupport {
 	 *        the user ID to check
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
-	 * @since 1.1
 	 */
 	protected void requireUserReadAccess(Long userId) {
+		requireUserReadAccess(userId, log);
+	}
+
+	/**
+	 * Require the active user have "read" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireUserReadAccess(Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
@@ -360,9 +414,8 @@ public abstract class AuthorizationSupport {
 	 * @return The domain object to use.
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
-	 * @since 1.4
 	 */
-	protected <T> T policyEnforcerCheck(T domainObject) {
+	public <T> T policyEnforcerCheck(T domainObject) {
 		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node);
 	}
 
@@ -381,9 +434,8 @@ public abstract class AuthorizationSupport {
 	 * @return The domain object to use.
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
-	 * @since 1.4
 	 */
-	protected <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
+	public <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
 		if ( policy == null || domainObject == null ) {
@@ -433,7 +485,6 @@ public abstract class AuthorizationSupport {
 	 * Get the path matcher to use.
 	 * 
 	 * @return the path matcher
-	 * @since 1.4
 	 */
 	public PathMatcher getPathMatcher() {
 		return pathMatcher;
@@ -444,7 +495,6 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * @param pathMatcher
 	 *        the matcher to use
-	 * @since 1.4
 	 */
 	public void setPathMatcher(PathMatcher pathMatcher) {
 		this.pathMatcher = pathMatcher;
