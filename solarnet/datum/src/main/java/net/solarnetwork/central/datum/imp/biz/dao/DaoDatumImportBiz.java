@@ -60,6 +60,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -96,6 +97,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.support.BasicFilterResults;
@@ -771,6 +773,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 							.collect(Collectors.toSet())
 					: Collections.emptySet());
 			Set<String> allowedSourceIds = (policy != null ? policy.getSourceIds() : null);
+			Set<String> verifiedSourceIds = new HashSet<>(8);
+
+			AntPathMatcher sourceIdMatcher = null;
+			if ( allowedSourceIds != null && !allowedSourceIds.isEmpty() ) {
+				sourceIdMatcher = new AntPathMatcher();
+				sourceIdMatcher.setCachePatterns(false);
+				sourceIdMatcher.setCaseSensitive(true);
+			}
 
 			LoadingTransactionMode txMode = LoadingTransactionMode.SingleTransaction;
 			Integer batchSize = null;
@@ -804,12 +814,19 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
 						}
 						if ( allowedSourceIds != null && !allowedSourceIds.isEmpty()
-								&& !allowedSourceIds.contains(d.getSourceId()) ) {
-							log.warn(
-									"Datum import job {} denied access to source {}; allowed sources are: {}",
-									info.getId(), d.getSourceId(),
-									StringUtils.commaDelimitedStringFromCollection(allowedSourceIds));
-							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getSourceId());
+								&& !verifiedSourceIds.contains(d.getSourceId()) ) {
+							SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy,
+									info.getTokenId(), d, sourceIdMatcher);
+							try {
+								enforcer.verifySourceIds(new String[] { d.getSourceId() });
+								verifiedSourceIds.add(d.getSourceId());
+							} catch ( AuthorizationException authException ) {
+								log.warn(
+										"Datum import job {} denied access to source {}; allowed sources are: {}",
+										info.getId(), d.getSourceId(), StringUtils
+												.commaDelimitedStringFromCollection(allowedSourceIds));
+								throw new AuthorizationException(Reason.ACCESS_DENIED, d.getSourceId());
+							}
 						}
 						d.setPosted(info.getImportDate());
 						loader.load(d);
