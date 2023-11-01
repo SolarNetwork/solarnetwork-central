@@ -671,8 +671,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 				if ( e instanceof AuthorizationException ) {
 					AuthorizationException ae = (AuthorizationException) e;
 					if ( ae.getReason() == Reason.ACCESS_DENIED ) {
-						msg.append("Not authorized to load data for node ").append(ae.getId())
-								.append(".");
+						msg.append("Not authorized to load data for ")
+								.append(ae.getId() instanceof Long ? "node" : "source").append(" ")
+								.append(ae.getId()).append(".");
 					} else {
 						msg.append(ae.getMessage());
 					}
@@ -769,6 +770,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 									|| policy.getNodeIds().contains(nodeId))
 							.collect(Collectors.toSet())
 					: Collections.emptySet());
+			Set<String> allowedSourceIds = (policy != null ? policy.getSourceIds() : null);
 
 			LoadingTransactionMode txMode = LoadingTransactionMode.SingleTransaction;
 			Integer batchSize = null;
@@ -800,6 +802,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 									info.getId(), d.getNodeId(),
 									StringUtils.commaDelimitedStringFromCollection(allowedNodeIds));
 							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getNodeId());
+						}
+						if ( allowedSourceIds != null && !allowedSourceIds.isEmpty()
+								&& !allowedSourceIds.contains(d.getSourceId()) ) {
+							log.warn(
+									"Datum import job {} denied access to source {}; allowed sources are: {}",
+									info.getId(), d.getSourceId(),
+									StringUtils.commaDelimitedStringFromCollection(allowedSourceIds));
+							throw new AuthorizationException(Reason.ACCESS_DENIED, d.getSourceId());
 						}
 						d.setPosted(info.getImportDate());
 						loader.load(d);
