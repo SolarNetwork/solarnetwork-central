@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityUtilsTest.java - Oct 20, 2014 9:18:50 AM
+ * SecurityUtilsTests.java - Oct 20, 2014 9:18:50 AM
  * 
  * Copyright 2007-2014 SolarNetwork.net Dev Team
  * 
@@ -60,7 +60,7 @@ import net.solarnetwork.central.security.SecurityUtils;
  * @version 2.0
  */
 @ExtendWith(MockitoExtension.class)
-public class SecurityUtilsTest {
+public class SecurityUtilsTests {
 
 	private static final Long TEST_USER_ID = -1L;
 

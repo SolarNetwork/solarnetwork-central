@@ -1,5 +1,5 @@
 /* ==================================================================
- * LegacyPasswordEncoderTest.java - Mar 19, 2013 10:20:48 AM
+ * LegacyPasswordEncoderTests.java - Mar 19, 2013 10:20:48 AM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
@@ -36,7 +36,7 @@ import org.junit.Test;
  * @version 1.0
  */
 @SuppressWarnings("deprecation")
-public class LegacyPasswordEncoderTest {
+public class LegacyPasswordEncoderTests {
 
 	private static final String TEST_PASSWORD = "test.password";
 
