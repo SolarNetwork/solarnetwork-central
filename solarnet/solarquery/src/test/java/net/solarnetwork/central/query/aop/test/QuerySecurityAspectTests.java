@@ -342,8 +342,12 @@ public class QuerySecurityAspectTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
-		GeneralNodeDatumFilter result = service.userNodeAccessCheck(criteria);
-		Assert.assertEquals(nodeId, result.getNodeId());
+		try {
+			service.userNodeAccessCheck(criteria);
+			Assert.fail("Should have thrown SecurityException for non-owner user");
+		} catch ( AuthorizationException e ) {
+			Assert.assertEquals(Reason.ACCESS_DENIED, e.getReason());
+		}
 	}
 
 	@Test

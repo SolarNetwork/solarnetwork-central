@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.test;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
@@ -31,9 +35,12 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CommonTestUtils {
+
+	/** A random number generator. */
+	public static final SecureRandom RNG = new SecureRandom();
 
 	/**
 	 * Create a {@link Matcher} for a string that compares to the contents of a
@@ -71,4 +78,30 @@ public final class CommonTestUtils {
 		return Matchers.equalToCompressingWhiteSpace(txt);
 	}
 
+	/**
+	 * Get a random decimal number.
+	 * 
+	 * @return the random decimal number
+	 */
+	public static BigDecimal randomDecimal() {
+		return new BigDecimal(RNG.nextDouble(-1000.0, 1000.0)).setScale(4, RoundingMode.HALF_UP);
+	}
+
+	/**
+	 * Get a random string value.
+	 * 
+	 * @return the string
+	 */
+	public static String randomString() {
+		return UUID.randomUUID().toString().replace("-", "");
+	}
+
+	/**
+	 * Get a random long value.
+	 * 
+	 * @return the long
+	 */
+	public static Long randomLong() {
+		return RNG.nextLong();
+	}
 }
